@@ -168,6 +168,9 @@ void QueryCompiler::compilePipelineStages(
             if (builder.getWinDef() != nullptr) {
                 executionContext->setWindowDef(builder.getWinDef());
             }
+            if (builder.getJoinDef() != nullptr) {
+                executionContext->setJoinDef(builder.getJoinDef());
+            }
             if (builder.getSchema() != nullptr) {
                 executionContext->setInputSchema(builder.getSchema());
             }
@@ -190,6 +193,9 @@ void QueryCompiler::compilePipelineStages(
                 holder.joinHandler);
             if (builder.getWinDef() != nullptr) {
                 executionContext->setWindowDef(builder.getWinDef());
+            }
+            if (builder.getJoinDef() != nullptr) {
+                executionContext->setJoinDef(builder.getJoinDef());
             }
             if (builder.getSchema() != nullptr) {
                 executionContext->setInputSchema(builder.getSchema());

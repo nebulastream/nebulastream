@@ -17,8 +17,8 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     explicit JoinHandler(LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                          BaseExecutableJoinActionPtr<KeyType> executableJoinAction) : joinDefinition(joinDefinition),
-                                                                                   executablePolicyTrigger(executablePolicyTrigger),
-                                                                                   executableJoinAction(executableJoinAction) {
+                                                                                      executablePolicyTrigger(executablePolicyTrigger),
+                                                                                      executableJoinAction(executableJoinAction) {
         NES_DEBUG("Construct JoinHandler");
     }
 
@@ -79,12 +79,16 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
      * @param originId
      */
     void updateAllMaxTs(uint64_t ts, uint64_t originId) override {
-        //        //TODO: check if we still need this
         NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
-        //        for (auto& it : windowStateVariable->rangeAll()) {
-        //            NES_DEBUG("JoinHandler: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
-        //            it.second->updateMaxTs(ts, originId);
-        //        }
+        for (auto& it : leftJoinState->rangeAll()) {
+            NES_DEBUG("JoinHandler left: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
+            it.second->updateMaxTs(ts, originId);
+            NES_DEBUG("JoinHandler left: max is=" << it.second->getMaxTs(originId));
+        }
+        for (auto& it : rightJoinState->rangeAll()) {
+            NES_DEBUG("JoinHandler right: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
+            it.second->updateMaxTs(ts, originId);
+        }
     }
 
     /**

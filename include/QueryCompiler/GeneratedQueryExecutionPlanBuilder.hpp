@@ -158,6 +158,12 @@ class GeneratedQueryExecutionPlanBuilder {
     Windowing::LogicalWindowDefinitionPtr getWinDef();
 
     /**
+    * @brief Getter/setter the join definition
+    */
+    GeneratedQueryExecutionPlanBuilder& setJoinDef(const Join::LogicalJoinDefinitionPtr joinDef);
+    Join::LogicalJoinDefinitionPtr getJoinDef();
+
+    /**
      * @brief Getter/setter the input schema
      */
     GeneratedQueryExecutionPlanBuilder& setSchema(const SchemaPtr& schema);
@@ -176,6 +182,7 @@ class GeneratedQueryExecutionPlanBuilder {
     std::vector<PipelineStagePtr> stages;
     std::vector<OperatorNodePtr> leaves;
     Windowing::LogicalWindowDefinitionPtr winDef;
+    Join::LogicalJoinDefinitionPtr joinDef;
 
   public:
   private:

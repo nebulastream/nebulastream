@@ -121,6 +121,13 @@ class PipelineExecutionContext {
     SchemaPtr getInputSchema();
     void setInputSchema(SchemaPtr inputSchema);
 
+
+    /**
+     * @brief getter/sett join definition
+     */
+    void setJoinDef(Join::LogicalJoinDefinitionPtr joinDef);
+    Join::LogicalJoinDefinitionPtr getJoinDef();
+
   private:
     /**
      * @brief Id of the local qep that owns the pipeline
@@ -139,8 +146,11 @@ class PipelineExecutionContext {
     Windowing::AbstractWindowHandlerPtr windowHandler;
     Windowing::AbstractWindowHandlerPtr joinHandler;
 
-    // TODO remove this stuff from here
+
+        // TODO remove this stuff from here
     Windowing::LogicalWindowDefinitionPtr windowDef;
+    Join::LogicalJoinDefinitionPtr joinDef;
+
     SchemaPtr inputSchema;
 };
 

@@ -411,44 +411,54 @@ TEST_F(QueryDeploymentTest,  testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     NES_INFO("QueryDeploymentTest: Worker2 started SUCCESSFULLY");
 
     std::string outputFilePath =
-        "testDeployTwoWorkerMergeUsingTopDown.out";
+        "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
 
-    //register logical stream
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    std::string testSchemaFileName = "testSchema.hpp";
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
     std::ofstream out(testSchemaFileName);
-    out << testSchema;
+    out << window;
     out.close();
+    wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    wrk1->registerLogicalStream("car", testSchemaFileName);
-    //register physical stream
-    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 1,
-                                                                   "physical_car", "car");
-    wrk1->registerPhysicalStream(confCar);
+    //register logical stream qnv
+    std::string window2 =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName2 = "window.hpp";
+    std::ofstream out2(testSchemaFileName2);
+    out2 << window2;
+    out2.close();
+    wrk1->registerLogicalStream("window2", testSchemaFileName);
 
-    wrk2->registerLogicalStream("truck", testSchemaFileName);
-    //register physical stream
-    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                     1, 0, 1,
-                                                                     "physical_truck", "truck");
-    wrk2->registerPhysicalStream(confTruck);
+
+    //register physical stream R2000070
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
+                                                                  1, 3, 2,
+                                                                  "test_stream", "window", true);
+
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
+                                                                  1, 3, 2,
+                                                                  "test_stream", "window2", true);
+
+    wrk1->registerPhysicalStream(windowStream);
+    wrk2->registerPhysicalStream(windowStream2);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("car").join(Query::from("truck"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("id")),
-        Seconds(1))).sink(FileSinkDescriptor::create(")"
+    string query = R"(Query::from("window").join(Query::from("window2"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
     std::ifstream ifs(outputFilePath);
@@ -457,102 +467,30 @@ TEST_F(QueryDeploymentTest,  testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
+        "|1000|2000|1|2|\n"
+        "|1000|2000|4|2|\n"
+        "|1000|2000|12|2|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content=" << content);
-    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent=" << expectedContent);
+    NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): content=" << content);
+    NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_DEBUG("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    NES_DEBUG("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    NES_DEBUG("QueryDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    NES_DEBUG("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");

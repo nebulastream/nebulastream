@@ -31,6 +31,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 
 using namespace std;
 namespace NES {
@@ -154,6 +155,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
                               .addOperatorQueryPlan(generatableOperatorPlan);
 
         std::vector<WindowOperatorNodePtr> winOps = generatableOperatorPlan->getNodesByType<WindowOperatorNode>();
+        std::vector<JoinLogicalOperatorNodePtr> joinOps = generatableOperatorPlan->getNodesByType<JoinLogicalOperatorNode>();
+
         std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
@@ -164,6 +167,15 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             //currently we only support one window per query
             NES_NOT_IMPLEMENTED();
         }
+
+        if (joinOps.size() == 1) {
+            qepBuilder.setJoinDef(joinOps[0]->getJoinDefinition())
+                .setSchema(sourceOperators[0]->getInputSchema());
+        } else if (joinOps.size() > 1) {
+            //currently we only support one window per query
+            NES_NOT_IMPLEMENTED();
+        }
+
 
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {

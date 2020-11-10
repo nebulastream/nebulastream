@@ -41,4 +41,11 @@ Windowing::DistributionCharacteristicPtr LogicalJoinDefinition::getDistributionT
     return distributionType;
 }
 
+size_t LogicalJoinDefinition::getNumberOfInputEdges()
+{
+    //TODO: replace this with a different number, an issue for this exists
+    return 2;
+}
+
+
 };// namespace NES::Join
