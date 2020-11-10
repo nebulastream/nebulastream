@@ -28,13 +28,19 @@ class Z3ExpressionInferencePhase {
      * @brief Create instance of Z3ExpressionInferencePhase class
      * @return shared instance of the Z3ExpressionInferencePhase
      */
-    Z3ExpressionInferencePhasePtr create();
+    static Z3ExpressionInferencePhasePtr create();
 
     /**
      * @brief this method will compute the Z3 expression for all operators of the input query plan
      * @param queryPlan: the input query plan
      */
     void execute(QueryPlanPtr queryPlan);
+
+    /**
+     * @brief Get shared instance of z3 context
+     * @return context
+     */
+    z3::ContextPtr getContext() const;
 
     ~Z3ExpressionInferencePhase();
 

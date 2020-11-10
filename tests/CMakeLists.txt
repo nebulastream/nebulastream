@@ -282,6 +282,11 @@ add_executable(operator-to-FOL-util-tests "UnitTests/Optimizer/Utils/OperatorToZ
 target_link_libraries(operator-to-FOL-util-tests nes ${GTEST_LIBRARIES})
 add_test(NAME operator-to-FOL-util-tests COMMAND operator-to-FOL-util-tests)
 
+### Z3 Expression Inference Phase Test ###
+add_executable(z3-expression-inference-phase-test "UnitTests/Optimizer/Phases/Z3ExpressionInferencePhaseTest.cpp")
+target_link_libraries(z3-expression-inference-phase-test nes ${GTEST_LIBRARIES})
+add_test(NAME z3-expression-inference-phase-test COMMAND z3-expression-inference-phase-test)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
