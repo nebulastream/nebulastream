@@ -53,8 +53,4 @@ bool SliceMergingOperator::inferSchema() {
     return true;
 }
 
-void SliceMergingOperator::inferZ3Expression(z3::ContextPtr) {
-    NES_NOT_IMPLEMENTED();
-}
-
 }// namespace NES

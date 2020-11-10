@@ -18,7 +18,6 @@
 #define NES_INCLUDE_NODES_OPERATORS_SPECIALIZEDWINDOWOPERATORS_SLICEMERGINGOPERATOR_HPP_
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
-#include <z3++.h>
 
 namespace NES {
 
@@ -35,7 +34,6 @@ class SliceMergingOperator : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     virtual bool inferSchema() override;
-    void inferZ3Expression(z3::ContextPtr context) override;
 };
 
 }// namespace NES
