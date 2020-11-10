@@ -18,8 +18,6 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Util/Logger.hpp>
-#include <deque>
-#include <z3++.h>
 
 namespace NES {
 
@@ -64,10 +62,4 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
     copy->setOutputSchema(outputSchema);
     return copy;
 }
-
-void FilterLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
-    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    expr = std::make_shared<z3::expr>(OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
-}
-
 }// namespace NES

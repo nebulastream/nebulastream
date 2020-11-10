@@ -1,5 +1,5 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Phases/Z3ExpressionInferencePhase.hpp>
+#include <Optimizer/Phases/Z3ExpressionInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>

@@ -1,3 +1,4 @@
+
 # Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(QueryPlacement)
-add_subdirectory(QueryRewrite)
-add_subdirectory(QueryRefinement)
-add_subdirectory(QueryMerger)
-add_subdirectory(Utils)
-add_subdirectory(Phases)
+add_source_nes(
+        Z3ExpressionInferencePhase.cpp
+)

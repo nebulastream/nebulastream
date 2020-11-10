@@ -20,7 +20,6 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <z3++.h>
 
 namespace NES {
 
@@ -76,9 +75,5 @@ bool WindowComputationOperator::inferSchema() {
     } else {
         NES_THROW_RUNTIME_ERROR("WindowComputationOperator: type inference for non keyed streams is not supported");
     }
-}
-
-void WindowComputationOperator::inferZ3Expression(z3::ContextPtr) {
-    NES_NOT_IMPLEMENTED();
 }
 }// namespace NES

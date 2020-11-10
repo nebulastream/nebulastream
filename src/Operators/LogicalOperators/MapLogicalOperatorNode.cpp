@@ -19,7 +19,6 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
-#include <z3++.h>
 
 namespace NES {
 
@@ -75,9 +74,5 @@ OperatorNodePtr MapLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
-}
-void MapLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
-    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    expr = std::make_shared<z3::expr>(OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
 }
 }// namespace NES

@@ -18,8 +18,6 @@
 #define MAP_LOGICAL_OPERATOR_NODE_HPP
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <memory>
-#include <z3++.h>
 
 namespace NES {
 
@@ -48,7 +46,6 @@ class MapLogicalOperatorNode : public LogicalOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-    void inferZ3Expression(z3::ContextPtr context) override;
 
   private:
     FieldAssignmentExpressionNodePtr mapExpression;

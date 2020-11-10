@@ -23,7 +23,6 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <sstream>
-#include <z3++.h>
 
 namespace NES {
 
@@ -79,10 +78,4 @@ bool WindowLogicalOperatorNode::inferSchema() {
         NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
     }
 }
-
-void WindowLogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
-    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    expr = std::make_shared<z3::expr>(OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
-}
-
 }// namespace NES

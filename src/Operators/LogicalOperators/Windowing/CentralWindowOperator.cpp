@@ -75,9 +75,4 @@ bool CentralWindowOperator::inferSchema() {
         NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
     }
 }
-
-void CentralWindowOperator::inferZ3Expression(z3::ContextPtr) {
-    NES_NOT_IMPLEMENTED();
-}
-
 }// namespace NES
