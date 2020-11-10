@@ -1,5 +1,6 @@
 # ~~~ Configurations for the NES Coordinator ~~~
 
+
 # ~~ IPs and Ports ~~
 # Set IP address of NES Coordinator
 serverIp: 127.0.0.1
