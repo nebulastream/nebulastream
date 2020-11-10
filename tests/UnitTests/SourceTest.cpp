@@ -602,10 +602,10 @@ TEST_F(SourceTest, testYSBSource) {
             ->addField("current_ms", UINT64)
             ->addField("ip", INT32);
 
-    size_t numBuffers = 1;
+    size_t numBuffers = 2;
     size_t numTuples = 30;
 
-    auto source = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 0, numTuples);
+    auto source = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 1, numTuples);
 
     while (source->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = source->receiveData();
@@ -613,7 +613,7 @@ TEST_F(SourceTest, testYSBSource) {
 
         for (int i=0; i<numTuples; i++) {
             auto record = ysbRecords[i];
-            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+            std::cout << "i=" << i << " record.current_ms: " << record.current_ms << ", record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click") || !strcmp(record.event_type, "purchase")));
         }

@@ -42,19 +42,17 @@ struct __attribute__((packed)) ysbRecord {
 };
 // size 78 bytes
 
-ysbRecord generate() {
-    ysbRecord rec{};
+void generate(ysbRecord& rec) {
     strncpy(rec.user_id, "0", 16);
     strncpy(rec.page_id, "0", 16);
     strncpy(rec.campaign_id, "0", 16);
     strncpy(rec.ad_type, "banner78", 9);
     strncpy(rec.event_type, events[rand() % 3].c_str(), 9);
 
-    auto ts = std::chrono::system_clock::now().time_since_epoch();
-    rec.current_ms = std::chrono::duration_cast<std::chrono::milliseconds>(ts).count();
+    auto ts = std::chrono::high_resolution_clock::now();
+    rec.current_ms = ts.time_since_epoch().count();
 
     rec.ip = 0x01020304;
-    return rec;
 }
 
 YSBSource::YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
@@ -71,7 +69,8 @@ std::optional<TupleBuffer> YSBSource::receiveData() {
     for (uint64_t recordIndex = 0; recordIndex < numberOfTuplesPerBuffer; recordIndex++) {
         //generate tuple and copy record to buffer
         auto records = buf.getBufferAs<ysbRecord>();
-        records[recordIndex] = generate();
+        ysbRecord& rec = records[recordIndex];
+        generate(rec);
     }
     buf.setNumberOfTuples(numberOfTuplesPerBuffer);
     NES_DEBUG("YSBSource: Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes());
