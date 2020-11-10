@@ -29,7 +29,7 @@ void LogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("Inferring Z3 expressions for " << operatorNode->toString());
     expr = std::make_shared<z3::expr>(OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
-    for (auto child : children) {
+    for (auto& child : children) {
         child->as<LogicalOperatorNode>()->inferZ3Expression(context);
     }
 }
