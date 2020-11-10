@@ -17,7 +17,6 @@
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
-#include <z3++.h>
 
 namespace NES {
 
@@ -47,10 +46,6 @@ OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     return copy;
 }
 
-z3::expr WatermarkAssignerLogicalOperatorNode::getZ3Expression(z3::context& context) {
-    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    return OperatorToZ3ExprUtil::createForOperator(operatorNode, context);
-}
 Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::getWatermarkStrategyDescriptor() const {
     return watermarkStrategyDescriptor;
 }
