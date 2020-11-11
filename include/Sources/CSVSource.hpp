@@ -37,7 +37,7 @@ class CSVSource : public DataSource {
    * @param number of buffers to create
    */
     explicit CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
-                       const std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader, size_t sourceId);
+                       const std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader, SourceId sourceId);
 
     /**
      * @brief override the receiveData method for the csv source

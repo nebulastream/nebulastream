@@ -27,8 +27,8 @@ namespace NES {
 class BinarySourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath, size_t sourceId);
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath, size_t sourceId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath, SourceId sourceId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath, SourceId sourceId);
 
     /**
      * @brief Get the path of binary file
@@ -41,8 +41,8 @@ class BinarySourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath, size_t sourceId);
-    explicit BinarySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, size_t sourceId);
+    explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath, SourceId sourceId);
+    explicit BinarySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, SourceId sourceId);
 
     std::string filePath;
 };

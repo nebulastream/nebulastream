@@ -40,6 +40,7 @@ AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(Lo
                 case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<double>(windowDefinition);
                 case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<char>(windowDefinition);
                 case BasicPhysicalType::BOOLEAN: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<bool>(windowDefinition);
+                default: NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: basicKeyType is not supported");
             }
         } else {
             NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non basic key types");
@@ -66,6 +67,7 @@ AbstractWindowHandlerPtr WindowHandlerFactory::createJoinWindowHandler(Join::Log
             case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createJoinHandler<double>(joinDefinition);
             case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createJoinHandler<char>(joinDefinition);
             case BasicPhysicalType::BOOLEAN: return WindowHandlerFactoryDetails::createJoinHandler<bool>(joinDefinition);
+            default: NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: basicKeyType is not supported");
         }
     }
     NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non keyed aggregations");

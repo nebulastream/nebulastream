@@ -39,6 +39,7 @@
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <memory>
+#include <Operators/SourceId.hpp>
 
 namespace NES {
 
@@ -116,7 +117,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param Pointer to the tuple buffer containing the data
      * @param Pointer to the source at which the data arrived
      */
-    void addWork(const size_t sourceId, TupleBuffer& buf);
+    void addWork(const SourceId sourceId, TupleBuffer& buf);
 
     /**
      * @brief add work to the query manager, this methods is source-driven and is called
@@ -212,10 +213,10 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     std::deque<Task> taskQueue;
     ThreadPoolPtr threadPool;
 
-    std::map<size_t, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;
-    std::map<size_t, std::vector<size_t>> queryMapToSourceId;
+    std::map<SourceId, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;
+    std::map<SourceId, std::vector<SourceId>> queryMapToSourceId;
 
-    std::map<size_t, size_t> sourceIdToPipelineStage;
+    std::map<SourceId, uint64_t> sourceIdToPipelineStage;
 
     std::unordered_map<QuerySubPlanId, QueryExecutionPlanPtr> runningQEPs;
 

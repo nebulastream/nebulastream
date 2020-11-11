@@ -61,11 +61,6 @@ class PipelineExecutionContext {
         Windowing::AbstractWindowHandlerPtr joinHandler
         );
 
-//    explicit PipelineExecutionContext(
-//        QuerySubPlanId queryId,
-//        BufferManagerPtr bufferManager,
-//        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-//        Windowing::AbstractWindowHandlerPtr windowHandler = Windowing::AbstractWindowHandlerPtr());
     /**
      * @brief Allocates a new tuple buffer.
      * @return TupleBuffer

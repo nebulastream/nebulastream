@@ -25,7 +25,7 @@
 
 namespace NES {
 
-AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t initialGatheringInterval, size_t sourceId)
+AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t initialGatheringInterval, SourceId sourceId)
     : DataSource(schema, bufferManager, queryManager, sourceId) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval);
     this->gatheringInterval = initialGatheringInterval;

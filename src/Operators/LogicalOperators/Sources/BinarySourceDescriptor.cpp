@@ -19,15 +19,15 @@
 #include <utility>
 namespace NES {
 
-BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string filePath, size_t sourceId) : SourceDescriptor(std::move(schema), sourceId), filePath(std::move(filePath)) {}
+BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string filePath, SourceId sourceId) : SourceDescriptor(std::move(schema), sourceId), filePath(std::move(filePath)) {}
 
-BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, size_t sourceId) : SourceDescriptor(std::move(schema), std::move(streamName), sourceId), filePath(std::move(filePath)) {}
+BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, SourceId sourceId) : SourceDescriptor(std::move(schema), std::move(streamName), sourceId), filePath(std::move(filePath)) {}
 
-SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string filePath, size_t sourceId) {
+SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string filePath, SourceId sourceId) {
     return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(filePath), sourceId));
 }
 
-SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string filePath, size_t sourceId) {
+SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string filePath, SourceId sourceId) {
     return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), sourceId));
 }
 

@@ -17,13 +17,12 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <utility>
-#include <Util/UtilityFunctions.hpp>
 namespace NES {
 
-LogicalStreamSourceDescriptor::LogicalStreamSourceDescriptor(std::string streamName, size_t sourceId)
+LogicalStreamSourceDescriptor::LogicalStreamSourceDescriptor(std::string streamName, SourceId sourceId)
     : SourceDescriptor(Schema::create(), std::move(streamName), sourceId) {}
 
-SourceDescriptorPtr LogicalStreamSourceDescriptor::create(std::string streamName, size_t sourceId) {
+SourceDescriptorPtr LogicalStreamSourceDescriptor::create(std::string streamName, SourceId sourceId) {
     return std::make_shared<LogicalStreamSourceDescriptor>(LogicalStreamSourceDescriptor(std::move(streamName), sourceId));
 }
 

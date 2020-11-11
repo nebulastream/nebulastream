@@ -34,7 +34,7 @@ class AdaptiveSource : public DataSource {
      * @param queryManager
      */
     AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                   size_t initialGatheringInterval, size_t sourceId);
+                   size_t initialGatheringInterval, SourceId sourceId);
 
     /**
      * @brief Get type of source

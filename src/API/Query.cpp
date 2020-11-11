@@ -47,8 +47,14 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+
+    //we use a on time trigger as default that triggers every 1 second
     auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+
+    //we use a lazy NL join because this is currently the only one that is implemented
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
+
+    // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
     auto joinDefinition = Join::LogicalJoinDefinition::create(fieldAccess, windowType, distrType, triggerPolicy, triggerAction);
 
