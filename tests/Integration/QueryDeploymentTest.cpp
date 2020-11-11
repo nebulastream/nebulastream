@@ -459,7 +459,7 @@ TEST_F(QueryDeploymentTest,  testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 5));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),

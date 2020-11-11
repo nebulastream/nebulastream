@@ -36,6 +36,7 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
     thread = std::make_shared<std::thread>([handlerName, windowHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
         while (running) {
+            NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
             windowHandler->trigger();
         }
