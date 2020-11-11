@@ -840,6 +840,7 @@ SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serial
 
     if (auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
         auto serializedWatermarkStrategyDescriptor = SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
+        ExpressionSerializationUtil::serializeExpression(eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode(), serializedWatermarkStrategyDescriptor.mutable_onfield());
         serializedWatermarkStrategyDescriptor.set_delay(eventTimeWatermarkStrategyDescriptor->getDelay().getTime());
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
     } else if (auto processingTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::ProcessingTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
