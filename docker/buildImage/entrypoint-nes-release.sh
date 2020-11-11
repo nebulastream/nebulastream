@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-
 ## Setting up ssh keys inside the container for pushing tag information to git repo
 mkdir -p /root/.ssh/
 cat /ci_secret.txt | base64 --decode > ~/.ssh/id_rsa
