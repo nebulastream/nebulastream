@@ -6,6 +6,7 @@ add_source_nes(
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp
         JoinLogicalOperatorNode.cpp
+        WatermarkAssignerLogicalOperatorNode.cpp
 )
 
 add_subdirectory(Sinks)

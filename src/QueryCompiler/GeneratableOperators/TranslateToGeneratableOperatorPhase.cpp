@@ -90,15 +90,15 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         auto childOperator = GeneratableJoinOperator::create(operatorNode->as<JoinLogicalOperatorNode>());
         scanOperator->addChild(childOperator);
         return childOperator;
-    } else {
-        NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
-        NES_NOT_IMPLEMENTED();
-    }
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator = GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
         generatableParentOperator->addChild(watermarkAssignerOperator);
         return watermarkAssignerOperator;
+    } else {
+        NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
+        NES_NOT_IMPLEMENTED();
     }
+
     NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();
 }
