@@ -287,6 +287,11 @@ add_executable(z3-expression-inference-phase-test "UnitTests/Optimizer/Phases/Z3
 target_link_libraries(z3-expression-inference-phase-test nes ${GTEST_LIBRARIES})
 add_test(NAME z3-expression-inference-phase-test COMMAND z3-expression-inference-phase-test)
 
+### Circular Buffer Tests ###
+add_executable(circular-buffer-tests "UnitTests/CircularBufferTest.cpp")
+target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
+add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
