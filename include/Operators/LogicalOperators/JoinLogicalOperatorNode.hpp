@@ -25,13 +25,6 @@ class JoinLogicalOperatorNode : public LogicalOperatorNode {
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
 
-    /**
-    * @brief Get the First Order Logic formula representation for the logical operator
-    * @return and object of type Z3::expr.
-    */
-    z3::expr getZ3Expression(z3::context& context) override;
-
-
     Join::LogicalJoinDefinitionPtr getJoinDefinition();
 
   private:

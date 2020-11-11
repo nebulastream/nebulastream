@@ -752,27 +752,6 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                           .assign(getPartialAggregatesCall);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
 
-    //    get value of the tuple
-    auto valueVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinValue()->getStamp()), "joinValue");
-    auto valueVariableAttributeDeclaration =
-        context->code->structDeclaratonInputTuple.getVariableDeclaration(joinDef->getLeftJoinValue()->getFieldName());
-    auto valueVariableAttributeStatement = VarDeclStatement(valueVariableDeclaration)
-                                               .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                                                   VarRef(
-                                                       valueVariableAttributeDeclaration)));
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
-        valueVariableAttributeStatement));
-
-    // update partial aggregate with join tuple
-    // partialAggregates[current_slice_index].push_back(inputTuples[recordIndex]);
-    //TODO: activate for vector implementation
-    //    const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
-    //    auto getPartialAggregatesPushback = FunctionCallStatement("push_back");
-    //    getPartialAggregatesPushback.addParameter(
-    //        VarRef(valueVariableDeclaration));
-    //    auto statement = partialRef.copy()->accessRef(getPartialAggregatesPushback);
-    //    context->code->currentCodeInsertionPoint->addStatement(statement.copy());
-
     // update partial aggregate
     const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
     auto sum = Windowing::SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));

@@ -66,9 +66,5 @@ bool JoinLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-z3::expr JoinLogicalOperatorNode::getZ3Expression(z3::context& context) {
-    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    return OperatorToZ3ExprUtil::createForOperator(operatorNode, context);
-}
 
 }// namespace NES
