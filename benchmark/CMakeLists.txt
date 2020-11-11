@@ -62,6 +62,11 @@ if (NES_BUILD_BENCHMARKS)
     target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
 
+    ### Tuple Buffer Benchmark ###
+    add_executable(tuplebuffer-benchmark "BenchmarkSuite/TupleBufferBenchmark.cpp")
+    target_link_libraries(tuplebuffer-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME tuplebuffer-benchmark COMMAND tuplebuffer-benchmark --benchmark_out=tuplebuffer-benchmark.log --benchmark_out_format=json)
+
     ### Filter Queries Benchmark ###
     add_executable(filter-query-benchmark "BenchmarkSuite/FilterQueryBenchmarks.cpp")
     target_link_libraries(filter-query-benchmark nes)
