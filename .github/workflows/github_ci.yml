@@ -90,7 +90,7 @@ jobs:
         run: |
           echo "Preparing new debian package for NES"
           docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/executableImage/entrypoint-prepare-nes-package.sh nebulastream/nes-build-image:latest
-          nes_version="$(grep -o "NES_VERSION = .*" include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
+          nes_version="$(grep -o "NES_VERSION.*" include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
           echo "Preparing new executable image with version $nes_version"
           cd docker/executableImage/
           docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version
