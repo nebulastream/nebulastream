@@ -51,6 +51,8 @@ const string logo = "/********************************************************\n
 int main(int argc, char** argv) {
     std::cout << logo << std::endl;
 
+    std::string configurationFilePath = "";
+
     namespace po = boost::program_options;
     po::options_description desc("Nes Worker Options");
     std::string coordinatorPort = "0";
@@ -102,7 +104,9 @@ int main(int argc, char** argv) {
         "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
         "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
         "numWorkerThreads", po::value<uint16_t>(&numWorkerThreads)->default_value(numWorkerThreads),
-        "Set the number of worker threads.")("help", "Display help message");
+        "Set the number of worker threads.")(
+        "configurationFilePath", po::value<std::string>(&configurationFilePath)->default_value(configurationFilePath), "Path to the NES Worker Configurations YAML file.")(
+        "help", "Display help message");
 
     /* Parse parameters. */
     po::variables_map vm;
@@ -114,6 +118,43 @@ int main(int argc, char** argv) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+
+    if (configurationFilePath.empty()){
+        NES_INFO("NESCOORDINATORSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES Coordinator Configuration YAML file.");
+        return EXIT_FAILURE;
+    }
+    YAML::Node config;
+    try {
+        config = YAML::LoadFile(configurationFilePath);
+    } catch (const std::exception& e) {
+        NES_INFO("NESCOORDINATORSTARTER: Could not read yaml file. Check input path and location.");
+        return EXIT_FAILURE;
+    }
+
+    // Initializing IPs and Ports
+    auto rpcPort = config["rpcPort"].as<uint16_t>();
+    auto coordinatorIp = config["coordinatorIp"].as<std::string>();
+    auto coordinatorPort = config["coordinatorPort"].as<std::string>();
+    auto dataPort = config["dataPort"].as<uint16_t >();
+    auto localWorkerIp = config["localWorkerIp"].as<std::string>();
+    // Initializing Source Handling variables
+    auto sourceType = config["sourceType"].as<std::string>();
+    auto sourceConfig = config["sourceConfig"].as<std::string>();
+    auto sourceFrequency = config["sourceFrequency"].as<uint16_t>();
+    // Initializing Process Configuration variables
+    auto physicalStreamName = config["physicalStreamName"].as<std::string>();
+    auto logicalStreamName = config["logicalStreamName"].as<std::string>();
+    auto parentId = config["parentId"].as<std::string>();
+    auto logLevel = config["logLevel"].as<std::string>();
+    auto numberOfSlots = config["numberOfSlots"].as<uint16_t>();
+    auto numberOfBuffersToProduce = config["numberOfBuffersToProduce"].as<uint32_t>();
+
+    // set the default numberOfSlots to the number of processor
+    if (numberOfSlots == 0){
+        const auto processorCount = std::thread::hardware_concurrency();
+        numberOfSlots = processorCount;
+    }
+
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     if (vm.count("help")) {
@@ -122,17 +163,9 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    if (argc == 1) {
-        NES_INFO("Please specify at least the port you want to connect to");
-        NES_INFO("Basic Command Line Parameter");
-        NES_INFO(desc);
-        return 0;
-    }
-
-    // TODO remote calls to cout
-
-    uint64_t localPort = std::stol(rpcPort);
-    uint64_t zmqDataPort = std::stol(dataPort);
+    //TODO remote calls to cout
+    size_t localPort = rpcPort;
+    size_t zmqDataPort = dataPort;
     cout << "port=" << localPort << "localport=" << std::to_string(localPort) << " pid=" << getpid() << endl;
     NesWorkerPtr wrk =
         std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, localPort, zmqDataPort, numberOfSlots,
