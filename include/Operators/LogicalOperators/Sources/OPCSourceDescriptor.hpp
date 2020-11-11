@@ -36,14 +36,15 @@ class OPCSourceDescriptor : public SourceDescriptor {
                                       std::string url,
                                       UA_NodeId nodeId,
                                       std::string user,
-                                      std::string password);
+                                      std::string password,
+                                      SourceId sourceId);
 
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string streamName,
                                       std::string url,
                                       UA_NodeId nodeId,
                                       std::string user,
-                                      std::string password);
+                                      std::string password, SourceId sourceId);
 
     /**
      * @brief get OPC server url
@@ -71,10 +72,10 @@ class OPCSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit OPCSourceDescriptor(SchemaPtr schema, std::string url, UA_NodeId nodeId,
-                                 std::string user, std::string password);
+                                 std::string user, std::string password, SourceId sourceId);
 
     explicit OPCSourceDescriptor(SchemaPtr schema, std::string streamName, std::string url,
-                                 UA_NodeId nodeId, std::string user, std::string password);
+                                 UA_NodeId nodeId, std::string user, std::string password, SourceId sourceId);
 
     const std::string url;
     UA_NodeId nodeId;

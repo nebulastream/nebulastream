@@ -97,8 +97,8 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
 #ifdef ENABLE_OPC_BUILD
 
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url,
-                                    UA_NodeId nodeId, std::string user, std::string password) {
-    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password);
+                                    UA_NodeId nodeId, std::string user, std::string password, SourceId sourceId) {
+    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, sourceId);
 }
 #endif
 }// namespace NES
