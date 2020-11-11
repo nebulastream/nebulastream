@@ -313,27 +313,28 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string query = R"(Pattern::from("QnV").windowByKey(Attribute("sensor_id"), SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(15), Minutes(5)), Sum(Attribute("quantity"))).filter(Attribute("quantity") > 100).sink(FileSinkDescriptor::create(")"
+    std::string query = R"(Pattern::from("QnV").windowByKey(Attribute("sensor_id"), SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(15), Minutes(5)), Sum(Attribute("quantity"))).filter(Attribute("quantity") > 105).sink(FileSinkDescriptor::create(")"
                         + outputFilePath + "\")); ";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 0));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    NES_INFO("SimplePatternTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     //TODO Patternname waiting for String support in map operator
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:INT64|quantity:UINT64|PatternId:INT32|\n"
+        "|start:UINT64|end:UINT64|sensor_id:UINT64|quantity:UINT64|PatternId:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543625400000|1543626300000|2000073|71|1|\n"
-        "|1543624200000|1543625100000|2000073|72|1|\n"
-        "|1543622400000|1543623300000|2000073|77|1|\n"
+        "|1543623600000|1543624500000|2000073|107|1|\n"
+        "|1543622400000|1543623300000|2000073|107|1|\n"
         "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
