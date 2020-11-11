@@ -412,7 +412,7 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
     remove(outputFilePath.c_str());
 
     //register query
-    std::string query = R"(Pattern::from("QnV").windowByKey(Attribute("sensor_id"), SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("timestamp")), Minutes(15), Minutes(10)), Sum::on(Attribute("quantity"))).filter(Attribute("quantity") > 70).sink(FileSinkDescriptor::create(")"
+    std::string query = R"(Pattern::from("QnV").windowByKey(Attribute("sensor_id"), SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(15), Minutes(10)), Sum::on(Attribute("quantity"))).filter(Attribute("quantity") > 70).sink(FileSinkDescriptor::create(")"
                         + outputFilePath + "\")); ";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -492,7 +492,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamSingleOutput) {
 
     //register query
     std::string query = R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).sink(FileSinkDescriptor::create(")"
-                        + outputFilePath + "\")).selectionPolicy(\"Single_Output\"); ";
+                        + outputFilePath + R"(")).selectionPolicy("Single_Output"); )";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -533,7 +533,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamSingleOutput) {
  * Here, we test if we can use merge operator for patterns and create complex events with it
  * TODO issue for next milestone
  */
-TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge) {
+TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
