@@ -98,8 +98,8 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getSourceId());
                 sourceIdToQueryMap[source->getSourceId()].insert(qep);
                 queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
-                NES_DEBUG("QueryManager: Join QEP already found " << qep << " to Source" << source->getSourceId() << " add pipeline stage 1");
-                sourceIdToPipelineStage[source->getSourceId()] = 1;
+//                NES_DEBUG("QueryManager: Join QEP already found " << qep << " to Source" << source->getSourceId() << " add pipeline stage 1");
+//                sourceIdToPipelineStage[source->getSourceId()] = 1;
             } else {
                 NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
                 return false;
