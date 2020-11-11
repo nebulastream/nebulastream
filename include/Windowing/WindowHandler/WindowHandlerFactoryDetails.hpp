@@ -71,7 +71,6 @@ class WindowHandlerFactoryDetails {
         }
 
         //add compile method return handler
-        //create the action
         return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     }
 
@@ -87,28 +86,15 @@ class WindowHandlerFactoryDetails {
         }
 
         auto action = joinDefinition->getTriggerAction();
-//        Join::BaseExecutableJoinActionPtr<KeyType> executableActionTrigger;
         Join::ExecutableNestedLoopJoinTriggerActionPtr<KeyType> executableActionTrigger;
         if (action->getActionType() == Join::LazyNestedLoopJoin) {
-//            Join::ExecutableNestedLoopJoinTriggerActionPtr<KeyType> ptr = Join::ExecutableNestedLoopJoinTriggerAction<KeyType>::create(joinDefinition);
             executableActionTrigger = Join::ExecutableNestedLoopJoinTriggerAction<KeyType>::create(joinDefinition);
 
         } else {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
         }
 
-        //        auto action = joinDefinition->getTriggerAction();
-        //        BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
-        //        if (action->getActionType() == WindowAggregationTriggerAction) {
-        //            executableWindowAction = ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
-        //        } else if (action->getActionType() == SliceAggregationTriggerAction) {
-        //            executableWindowAction = ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
-        //        } else {
-        //            NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
-        //        }
-
         //add compile method return handler
-        //create the action
         return std::make_shared<Join::JoinHandler<KeyType>>(joinDefinition, executablePolicyTrigger, executableActionTrigger);
     }
 

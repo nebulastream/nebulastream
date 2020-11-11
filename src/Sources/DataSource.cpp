@@ -34,7 +34,7 @@
 namespace NES {
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                       size_t sourceId)
+                       SourceId sourceId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
       sourceId(sourceId) {
@@ -220,9 +220,4 @@ size_t DataSource::getGatheringInterval() const {
     return gatheringInterval;
 }
 
-
-
-
-
 }// namespace NES
-

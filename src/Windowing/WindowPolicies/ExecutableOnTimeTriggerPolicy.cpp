@@ -50,7 +50,6 @@ bool ExecutableOnTimeTriggerPolicy::stop() {
     if (!running) {
         NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called but was already not running");
         return true;
-//        return false;
     }
     running = false;
 

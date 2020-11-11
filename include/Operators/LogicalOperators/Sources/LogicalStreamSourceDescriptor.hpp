@@ -32,14 +32,14 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
      * @param streamName Name of this stream
      * @return SourceDescriptorPtr
      */
-    static SourceDescriptorPtr create(std::string streamName, size_t sourceId);
+    static SourceDescriptorPtr create(std::string streamName, SourceId sourceId);
 
     bool equal(SourceDescriptorPtr other) override;
 
     std::string toString() override;
 
   private:
-    explicit LogicalStreamSourceDescriptor(std::string streamName, size_t sourceId);
+    explicit LogicalStreamSourceDescriptor(std::string streamName, SourceId sourceId);
 };
 
 typedef std::shared_ptr<LogicalStreamSourceDescriptor> LogicalStreamSourceDescriptorPtr;

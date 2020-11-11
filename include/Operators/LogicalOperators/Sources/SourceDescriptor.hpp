@@ -20,6 +20,7 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
+#include <Operators/SourceId.hpp>
 
 namespace NES {
 
@@ -36,13 +37,13 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Creates a new source descriptor without a streamName.
      * @param schema the source schema
      */
-    explicit SourceDescriptor(SchemaPtr schema, size_t sourceId);
+    explicit SourceDescriptor(SchemaPtr schema, SourceId sourceId);
 
     /**
     * @brief Creates a new source descriptor with a streamName.
     * @param schema the source schema
     */
-    SourceDescriptor(SchemaPtr schema, std::string streamName, size_t sourceId);
+    SourceDescriptor(SchemaPtr schema, std::string streamName, SourceId sourceId);
 
     /**
      * @brief Returns the schema, which is produced by this source descriptor
@@ -54,7 +55,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
    * @brief Get Source ID
    * @return
    */
-    size_t getSourceId();
+    SourceId getSourceId();
 
     /**
      * @brief Set a new schema for the descriptor
@@ -123,7 +124,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
   private:
     SchemaPtr schema;
     std::string streamName;
-    size_t sourceId;
+    SourceId sourceId;
 };
 
 }// namespace NES

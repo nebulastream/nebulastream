@@ -29,7 +29,7 @@ namespace NES {
 
 DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                              const uint64_t numbersOfBufferToProduce,
-                             size_t frequency, size_t sourceId)
+                             size_t frequency, SourceId sourceId)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, sourceId) {
     NES_DEBUG("DefaultSource:" << this << " creating");
     this->gatheringInterval = frequency;

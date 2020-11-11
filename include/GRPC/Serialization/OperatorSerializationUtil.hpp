@@ -19,6 +19,8 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorId.hpp>
+#include <Operators/SourceId.hpp>
+
 #include <memory>
 namespace NES {
 

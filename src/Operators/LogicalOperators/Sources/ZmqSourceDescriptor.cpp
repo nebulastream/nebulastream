@@ -20,18 +20,18 @@
 
 namespace NES {
 
-SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string host, uint16_t port, size_t sourceId) {
+SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string host, uint16_t port, SourceId sourceId) {
     return std::make_shared<ZmqSourceDescriptor>(ZmqSourceDescriptor(std::move(schema), std::move(host), port, sourceId));
 }
 
-SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port, size_t sourceId) {
+SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port, SourceId sourceId) {
     return std::make_shared<ZmqSourceDescriptor>(ZmqSourceDescriptor(std::move(schema), std::move(streamName), std::move(host), port, sourceId));
 }
 
-ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port, size_t sourceId)
+ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port, SourceId sourceId)
     : SourceDescriptor(std::move(schema), sourceId), host(std::move(host)), port(port) {}
 
-ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port, size_t sourceId)
+ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port, SourceId sourceId)
     : SourceDescriptor(std::move(schema), std::move(streamName), sourceId), host(std::move(host)), port(port) {}
 
 const std::string& ZmqSourceDescriptor::getHost() const {

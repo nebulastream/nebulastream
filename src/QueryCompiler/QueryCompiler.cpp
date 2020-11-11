@@ -93,27 +93,16 @@ void generateExecutablePipelines(
             }
             Windowing::AbstractWindowHandlerPtr windowHandlerPtr = nullptr;
             Windowing::AbstractWindowHandlerPtr joinHandlerPtr = nullptr;
-            if(currContext->hasWindow())
-            {
+            if (currContext->hasWindow()) {
                 NES_DEBUG("generateExecutablePipelines add window handler");
                 windowHandlerPtr = currContext->getWindow();
             }
-            if(currContext->hasJoin())
-            {
+            if (currContext->hasJoin()) {
                 NES_DEBUG("generateExecutablePipelines add join handler");
                 joinHandlerPtr = currContext->getJoin();
             }
 
-            //context->getWindow()
-            //yes it is a source
-
-
             accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandlerPtr, joinHandlerPtr);
-//            if (currContext->hasWindow()) {
-//                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, currContext->getWindow());
-//            } else {
-//                accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, nullptr);
-//            }
             if (consumerPipelineStateId >= 0) {
                 accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }

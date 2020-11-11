@@ -72,7 +72,6 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createDefaultCompilerFlags();
     flags->addFlag("--shared");
     flags->addFlag("-xc++ ");
-    flags->addFlag("-O0 ");
     flags->addFlag("-I" + IncludePath);
     flags->addFlag("-o" + libraryName);
     flags->addFlag(filename);

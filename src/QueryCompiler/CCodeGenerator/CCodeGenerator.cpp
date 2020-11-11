@@ -1102,7 +1102,6 @@ BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration
     auto tf = getTypeFactory();
     auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(KeyType) + " >");
     return VarRef(pipelineContextVariable).accessRef(call);
-    //    NES_THROW_RUNTIME_ERROR("join handler not implemented yet");
 }
 
 BinaryOperatorStatement CCodeGenerator::getStateVariable(VariableDeclaration windowHandlerVariable) {

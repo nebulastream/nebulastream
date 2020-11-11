@@ -72,7 +72,7 @@ class GeneratedQueryExecutionPlanBuilder {
     QueryManagerPtr getQueryManager() const;
 
     /**
-     * @return total number of pipeline staggers in the qep
+     * @return total number of pipeline stages in the qep
      */
     size_t getNumberOfPipelineStages() const;
 

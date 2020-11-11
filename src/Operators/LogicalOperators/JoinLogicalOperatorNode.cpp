@@ -29,7 +29,6 @@ bool JoinLogicalOperatorNode::inferSchema() {
     OperatorNode::inferSchema();
     if (getChildren().size() != 2) {
         NES_THROW_RUNTIME_ERROR("JoinLogicalOperator: Join need two child operators.");
-        return false;
     }
     auto child1 = getChildren()[0]->as<LogicalOperatorNode>();
     auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
@@ -39,8 +38,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
     if (!schema1->equals(schema2)) {
         NES_THROW_RUNTIME_ERROR("JoinLogicalOperator: the two input streams have different schema.");
-        return false;
     }
+
     // infer the data type of the key field.
     joinDefinition->getJoinKey()->inferStamp(inputSchema);
 
