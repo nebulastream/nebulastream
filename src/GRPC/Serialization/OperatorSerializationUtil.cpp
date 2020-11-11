@@ -791,7 +791,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         memcpy(ident, opcSerializedSourceDescriptor.identifier().data(), opcSerializedSourceDescriptor.identifier().length());
         ident[opcSerializedSourceDescriptor.identifier().length()] = '\0';
         UA_NodeId nodeId = UA_NODEID_STRING(opcSerializedSourceDescriptor.namespaceindex(), ident);
-        return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), nodeId, opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password());
+        return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), nodeId, opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password(), serializedSourceDetails->sourceid());
     }
 #endif
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {

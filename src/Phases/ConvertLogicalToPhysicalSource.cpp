@@ -76,7 +76,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         NES_INFO("ConvertLogicalToPhysicalSource: Creating OPC source");
         const OPCSourceDescriptorPtr opcSourceDescriptor = sourceDescriptor->as<OPCSourceDescriptor>();
         return createOPCSource(opcSourceDescriptor->getSchema(), bufferManager, queryManager, opcSourceDescriptor->getUrl(),
-                               opcSourceDescriptor->getNodeId(), opcSourceDescriptor->getUser(), opcSourceDescriptor->getPassword());
+                               opcSourceDescriptor->getNodeId(), opcSourceDescriptor->getUser(), opcSourceDescriptor->getPassword(), sourceDescriptor->getSourceId());
 #endif
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating sense source");

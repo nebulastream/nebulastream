@@ -98,7 +98,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const OPCSourcePtr opcSourcePtr = std::dynamic_pointer_cast<OPCSource>(dataSource);
             const SourceDescriptorPtr opcSourceDescriptor = OPCSourceDescriptor::create(opcSourcePtr->getSchema(), opcSourcePtr->getUrl(),
                                                                                         opcSourcePtr->getNodeId(), opcSourcePtr->getUser(),
-                                                                                        opcSourcePtr->getPassword());
+                                                                                        opcSourcePtr->getPassword(), dataSource->getSourceId());
             return opcSourceDescriptor;
         }
 #endif

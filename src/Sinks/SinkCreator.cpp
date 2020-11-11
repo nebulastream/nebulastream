@@ -29,6 +29,7 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
+#include <Operators/SourceId.hpp>
 
 namespace NES {
 
@@ -99,6 +100,7 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
 
 #ifdef ENABLE_OPC_BUILD
 const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::string url, UA_NodeId nodeId, std::string user, std::string password) {
+    NES_DEBUG("plz fix me" << parentPlanId);
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<OPCSink>(format, url, nodeId, user, password);
 }
