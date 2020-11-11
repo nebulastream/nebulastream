@@ -21,17 +21,6 @@
 
 namespace NES {
 
-// 78 bytes
-static const auto YSB_SCHEMA = Schema::create()
-    ->addField("user_id", DataTypeFactory::createFixedChar(16))
-    ->addField("page_id", DataTypeFactory::createFixedChar(16))
-    ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
-    ->addField("ad_type", DataTypeFactory::createFixedChar(9))
-    ->addField("event_type", DataTypeFactory::createFixedChar(9))
-    ->addField("current_ms", UINT64)
-    ->addField("ip", INT32);
-
-
 class YSBSource : public DefaultSource {
   public:
     explicit YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, size_t numberOfTuplesPerBuffer, size_t frequency, bool endlessRepeat);
@@ -45,6 +34,30 @@ class YSBSource : public DefaultSource {
      * @return returns string describing the binary source
      */
     const std::string toString() const override;
+
+    static SchemaPtr YSB_SCHEMA();
+
+  public:
+    struct __attribute__((packed)) ysbRecord {
+        uint16_t user_id;
+        uint16_t page_id;
+        uint16_t campaign_id;
+        uint16_t ad_type;
+        uint16_t event_type;
+        int64_t current_ms;
+        uint32_t ip;
+
+        ysbRecord(const ysbRecord& rhs) {
+            user_id = rhs.user_id;
+            page_id = rhs.page_id;
+            campaign_id = rhs.campaign_id;
+            ad_type = rhs.ad_type;
+            event_type = rhs.event_type;
+            current_ms = rhs.current_ms;
+            ip = rhs.ip;
+        }
+    };
+    // size 78 bytes
 
   private:
     size_t numberOfTuplesPerBuffer;

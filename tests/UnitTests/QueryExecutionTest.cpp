@@ -56,32 +56,6 @@
 
 using namespace NES;
 
-struct __attribute__((packed)) ysbRecord {
-    char user_id[16];
-    char page_id[16];
-    char campaign_id[16];
-    char ad_type[9];
-    char event_type[9];
-    int64_t current_ms;
-    uint32_t ip;
-
-    ysbRecord() {
-        event_type[0] = '-';// invalid record
-        current_ms = 0;
-        ip = 0;
-    }
-
-    ysbRecord(const ysbRecord& rhs) {
-        memcpy(&user_id, &rhs.user_id, 16);
-        memcpy(&page_id, &rhs.page_id, 16);
-        memcpy(&campaign_id, &rhs.campaign_id, 16);
-        memcpy(&ad_type, &rhs.ad_type, 9);
-        memcpy(&event_type, &rhs.event_type, 9);
-        current_ms = rhs.current_ms;
-        ip = rhs.ip;
-    }
-};
-
 class QueryExecutionTest : public testing::Test {
   public:
     /* Will be called before a test is executed. */
@@ -697,7 +671,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     int numBuf = 3;
     int numTup = 50;
 
-    auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1, numTup, false);
+    auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, false);
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1);
 
     //TODO: make query work
@@ -711,7 +685,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
                      .sink(DummySink::create());
 
     //TODO: change schema to match the appropriate output schema
-    auto testSink = TestSink::create(/*expected result buffer*/ numBuf, YSB_SCHEMA, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ numBuf, YSBSource::YSB_SCHEMA(), nodeEngine->getBufferManager());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -745,13 +719,13 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     size_t noBufs = 0;
     for (auto buf : testSink->resultBuffers) {
         noBufs++;
-        auto ysbRecords = buf.getBufferAs<ysbRecord>();
+        auto ysbRecords = buf.getBufferAs<YSBSource::ysbRecord>();
         std::cout << "---------------------------------------------" << std::endl;
         for (int i = 0; i < numTup; i++) {
             auto record = ysbRecords[i];
-            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
-            EXPECT_STREQ(record.ad_type, "banner78");
-            EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click") || !strcmp(record.event_type, "purchase")));
+            std::cout << "i=" << i << " record.current_ms: " << record.current_ms << ", record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+            EXPECT_TRUE(0 <= record.campaign_id && record.campaign_id < 10000);
+            EXPECT_TRUE(0 <= record.event_type && record.event_type < 3);
         }
     }
     EXPECT_EQ(noBufs, numBuf);
