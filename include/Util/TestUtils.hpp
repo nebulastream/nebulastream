@@ -209,7 +209,8 @@ class TestUtils {
                 sleep(1);
                 continue;
             }
-            if (cmp(statistics[0]->getProcessedBuffers(), expectedResult)) {
+            size_t processed = statistics[0]->getProcessedBuffers();
+            if (cmp(processed, expectedResult)) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct procBuffer=" << statistics[0]->getProcessedBuffers()
                                                                                     << " procTasks=" << statistics[0]->getProcessedTasks()
                                                                                     << " procWatermarks=" << statistics[0]->getProcessedWatermarks());

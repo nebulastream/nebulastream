@@ -35,7 +35,7 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 
-    bool successYsb = addLogicalStream("ysb", YSB_SCHEMA);
+    bool successYsb = addLogicalStream("ysb", YSBSource::YSB_SCHEMA());
     if (!successYsb) {
         NES_ERROR("StreamCatalog::addDefaultStreams: error while add ysb");
         throw Exception("Error while addDefaultStreams StreamCatalog");
