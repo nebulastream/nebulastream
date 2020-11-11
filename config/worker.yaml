@@ -19,10 +19,34 @@ localWorkerIp: "127.0.0.1"
 
 
 # ~~ Source Handling ~~
-# Set the source type (must be either CSVSource or DefaultSource)
+# Set the source type (available options: DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, TestSource, BinarySource, SenseSource, NetworkSource, AdaptiveSource)
 sourceType: ""
 
-# Set source configuration (e.g. path to a CSV file)
+# Set source configuration. Options depend on source type.
+# DefaultSource: "" (not needed)
+# CSVSource: String with path to CSV file.
+# OPCSource: String set up as follows: "url;namespaceIndex;identifier;user;pwd"
+#            where the url is a string containing the full OPC server url,
+#            namespaceIndex is a uint16_t providing the namespaceIndex for the nodeId,
+#            identifier is a string containing the nodeId identifier,
+#            user is a string containing the user name for server authentication ToDo: Implement server authentication.
+#            pwd is a string containing the password for server authentication
+# ZMQSource: String set up as: "host;port"
+#            where host is a string containing the zmq host's ip address
+#            and port is a uint16_t containing the zmq port
+# KafkaSource: String set up as follows: "brokers;topic;groupId;autoCommit;kafkaConnectTimeout"
+#            where brokers is a string containing the brokers's ip address,
+#            topic is a string containing the topic,
+#            groupId is a string containing the groupId,
+#            autoCommit is a boolean value where 1 equals true, and 0 equals false,
+#            kafkaConnectTimeout is a uint16_t providing the time out for the connection
+# BinarySource: String with path to binary file.
+# SenseSource: String with udsf inside
+# NetworkSource: String set up as follows: "queryId;operatorId;partitionId;subpartitionId"
+#            where queryId is a uint64_t
+#            operatorId is a uint64_t
+#            partitionId is a uint64_t
+#            subpartitionId is a uint64_t
 sourceConfig: ""
 
 # Set sampling frequency of source
