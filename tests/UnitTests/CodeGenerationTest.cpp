@@ -1273,10 +1273,12 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     WindowTriggerPolicyPtr triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
-    Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+    Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(),
+                                                                                                                   "key")->as<FieldAccessExpressionNode>(),
                                                                                  TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),
                                                                                  distrType, triggerPolicy, triggerAction);
 
+    context1->isLeftSide = true;
     codeGenerator->generateCodeForJoin(joinDef, context1);
 
     /* compile code to pipeline stage */
