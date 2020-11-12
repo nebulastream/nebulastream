@@ -174,8 +174,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedSourceDescriptor = SerializableOperator_SourceDetails();
         details.UnpackTo(&serializedSourceDescriptor);
         // de-serialize source descriptor
-        auto sourceDescriptor = deserializeSourceDescriptor(&serializedSourceDescriptor);
-        operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, sourceDescriptor->getSourceId());
+        auto sourceDescriptor = deserializeSourceDescriptor(&serializedSourceDescriptor, serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_SinkDetails>()) {
         // de-serialize sink operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to SinkLogicalOperator");
@@ -639,12 +639,11 @@ SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOpe
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     serializeSourceSourceDescriptor(sourceDescriptor, &sourceDetails);
-    NES_DEBUG("OperatorSerializationUtil::serializeSourceOperator sourceid=" << sourceDetails.sourceid());
     return sourceDetails;
 }
 
-OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails) {
-    auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails);
+OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails, OperatorId operatorId) {
+    auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails, operatorId);
     return LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
 }
 
@@ -662,7 +661,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableO
 
 SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor, SerializableOperator_SourceDetails* sourceDetails) {
     // serialize a source descriptor and all its properties depending of its type
-    NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with id=" << sourceDescriptor->getSourceId() << " string=" << sourceDescriptor->toString());
+    NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with =" << sourceDescriptor->toString());
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         // serialize zmq source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor");
@@ -761,13 +760,12 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
-    sourceDetails->set_sourceid(sourceDescriptor->getSourceId());
     return sourceDetails;
 }
 
-SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails) {
+SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails, OperatorId operatorId) {
     // de-serialize source details and all its properties to a SourceDescriptor
-    NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor id = " << serializedSourceDetails->sourceid()<< " string=" << serializedSourceDetails->DebugString());
+    NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor id=" << serializedSourceDetails->DebugString());
     const auto& serializedSourceDescriptor = serializedSourceDetails->sourcedescriptor();
 
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor>()) {
@@ -777,7 +775,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&zmqSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(zmqSerializedSourceDescriptor.release_sourceschema());
-        return ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port(), serializedSourceDetails->sourceid());
+        return ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port(), operatorId);
     }
 #ifdef ENABLE_OPC_BUILD
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
@@ -791,7 +789,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         memcpy(ident, opcSerializedSourceDescriptor.identifier().data(), opcSerializedSourceDescriptor.identifier().length());
         ident[opcSerializedSourceDescriptor.identifier().length()] = '\0';
         UA_NodeId nodeId = UA_NODEID_STRING(opcSerializedSourceDescriptor.namespaceindex(), ident);
-        return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), nodeId, opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password(), serializedSourceDetails->sourceid());
+        return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), nodeId, opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password(), operatorId);
     }
 #endif
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
@@ -813,7 +811,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&defaultSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(defaultSerializedSourceDescriptor.release_sourceschema());
-        return DefaultSourceDescriptor::create(schema, defaultSerializedSourceDescriptor.numbufferstoprocess(), defaultSerializedSourceDescriptor.frequency(), serializedSourceDetails->sourceid());
+        return DefaultSourceDescriptor::create(schema, defaultSerializedSourceDescriptor.numbufferstoprocess(), defaultSerializedSourceDescriptor.frequency(), operatorId);
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor>()) {
         // de-serialize binary source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as BinarySourceDescriptor");
@@ -821,7 +819,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&binarySerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(binarySerializedSourceDescriptor.release_sourceschema());
-        return BinarySourceDescriptor::create(schema, binarySerializedSourceDescriptor.filepath(), serializedSourceDetails->sourceid());
+        return BinarySourceDescriptor::create(schema, binarySerializedSourceDescriptor.filepath(), operatorId);
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>()) {
         // de-serialize csv source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as CsvSourceDescriptor");
@@ -832,7 +830,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         return CsvSourceDescriptor::create(schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(),
                                            csvSerializedSourceDescriptor.numberoftuplestoproduceperbuffer(),
                                            csvSerializedSourceDescriptor.numbufferstoprocess(), csvSerializedSourceDescriptor.frequency(),
-                                           csvSerializedSourceDescriptor.endlessrepeat(), csvSerializedSourceDescriptor.skipheader(), serializedSourceDetails->sourceid());
+                                           csvSerializedSourceDescriptor.endlessrepeat(), csvSerializedSourceDescriptor.skipheader(), operatorId);
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
         // de-serialize sense source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as SenseSourceDescriptor");
@@ -840,7 +838,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&senseSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(senseSerializedSourceDescriptor.release_sourceschema());
-        return SenseSourceDescriptor::create(schema, senseSerializedSourceDescriptor.udfs(), serializedSourceDetails->sourceid());
+        return SenseSourceDescriptor::create(schema, senseSerializedSourceDescriptor.udfs(), operatorId);
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor>()) {
         // de-serialize logical stream source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as LogicalStreamSourceDescriptor");
@@ -848,7 +846,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
-        SourceDescriptorPtr logicalStreamSourceDescriptor = LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname(), serializedSourceDetails->sourceid());
+        SourceDescriptorPtr logicalStreamSourceDescriptor = LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname(), operatorId);
         logicalStreamSourceDescriptor->setSchema(schema);
         return logicalStreamSourceDescriptor;
     } else {

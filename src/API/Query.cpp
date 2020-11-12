@@ -78,6 +78,15 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
     auto joinDefinition = Join::LogicalJoinDefinition::create(fieldAccess, windowType, distrType, triggerPolicy, triggerAction);
 
+    // check if query contain watermark assigner, and add if missing (as default behaviour)
+    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+        } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
+        }
+    }
+
     OperatorNodePtr op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);

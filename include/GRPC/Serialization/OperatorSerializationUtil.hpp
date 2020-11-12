@@ -19,7 +19,7 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorId.hpp>
-#include <Operators/SourceId.hpp>
+#include <Operators/OperatorId.hpp>
 
 #include <memory>
 namespace NES {
@@ -86,7 +86,7 @@ class OperatorSerializationUtil {
      * @param sourceDetails The serialized source operator details.
      * @return SourceLogicalOperatorNodePtr
      */
-    static OperatorNodePtr deserializeSourceOperator(SerializableOperator_SourceDetails* sourceDetails);
+    static OperatorNodePtr deserializeSourceOperator(SerializableOperator_SourceDetails* sourceDetails, OperatorId operatorId);
 
     /**
      * @brief Serializes an sink operator and all its properties to a SerializableOperator_SinkDetails object.
@@ -145,7 +145,7 @@ class OperatorSerializationUtil {
      * @param sourceDetails The serialized source operator details.
      * @return SourceDescriptorPtr
      */
-    static SourceDescriptorPtr deserializeSourceDescriptor(SerializableOperator_SourceDetails* sourceDetails);
+    static SourceDescriptorPtr deserializeSourceDescriptor(SerializableOperator_SourceDetails* sourceDetails, OperatorId operatorId);
 
     /**
      * @brief Serializes an sink descriptor and all its properties to a SerializableOperator_SinkDetails object.

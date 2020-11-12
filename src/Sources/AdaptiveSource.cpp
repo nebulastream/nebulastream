@@ -25,8 +25,8 @@
 
 namespace NES {
 
-AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t initialGatheringInterval, SourceId sourceId)
-    : DataSource(schema, bufferManager, queryManager, sourceId) {
+AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t initialGatheringInterval, OperatorId operatorId)
+    : DataSource(schema, bufferManager, queryManager, operatorId) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval);
     this->gatheringInterval = initialGatheringInterval;
 }
@@ -45,8 +45,8 @@ std::optional<TupleBuffer> AdaptiveSource::receiveData() {
 }
 
 void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
-    setThreadName("AdaptSrc-%d", getSourceId());
-    std::string thName = "AdaptSrc-" + getSourceId();
+    setThreadName("AdaptSrc-%d", operatorId);
+    std::string thName = "AdaptSrc-" + operatorId;
 
     if (!bufferManager) {
         NES_ERROR("AdaptiveSource:" << this << ", BufferManager not set");
@@ -58,12 +58,12 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
         throw std::logic_error("AdaptiveSource: QueryManager not set");
     }
 
-    if (this->sourceId == 0) {
+    if (this->operatorId == 0) {
         NES_FATAL_ERROR("AdaptiveSource: No ID assigned. Running_routine is not possible!");
         throw std::logic_error("AdaptiveSource: No ID assigned. Running_routine is not possible!");
     }
 
-    NES_DEBUG("AdaptiveSource " << this->getSourceId() << ": Running Data Source of type=" << this->getType());
+    NES_DEBUG("AdaptiveSource " << this->operatorId << ": Running Data Source of type=" << this->getType());
     size_t cnt = 0;
 
     while (this->isRunning()) {
@@ -74,12 +74,12 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
                 auto optBuf = this->receiveData();
                 if (!!optBuf) {
                     auto& buf = optBuf.value();
-                    NES_DEBUG("AdaptiveSource " << this->getSourceId()
+                    NES_DEBUG("AdaptiveSource " << this->operatorId
                                                 << " string=" << this->toString()
                                                 << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                 << " iteration=" << cnt);
 
-                    queryManager->addWork(this->sourceId, buf);
+                    queryManager->addWork(this->operatorId, buf);
                     cnt++;
                 }
             }
@@ -90,6 +90,6 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
             continue;
         }
     }
-    NES_DEBUG("AdaptiveSource " << this->getSourceId() << ": end running");
+    NES_DEBUG("AdaptiveSource " << this->operatorId << ": end running");
 }
 }// namespace NES

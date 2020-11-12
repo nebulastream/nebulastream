@@ -29,8 +29,8 @@ namespace NES {
 
 DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                              const uint64_t numbersOfBufferToProduce,
-                             size_t frequency, SourceId sourceId)
-    : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, sourceId) {
+                             size_t frequency, OperatorId operatorId)
+    : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, operatorId) {
     NES_DEBUG("DefaultSource:" << this << " creating");
     this->gatheringInterval = frequency;
 }
@@ -84,7 +84,7 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
     }
     buf.setNumberOfTuples(tupleCnt);
     // TODO move this to trace
-    NES_DEBUG("Source: id=" << sourceId << " Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes()
+    NES_DEBUG("Source: id=" << operatorId << " Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes()
                                                << "\n"
                                                << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
     buf.setWatermark(this->watermark->getWatermark());

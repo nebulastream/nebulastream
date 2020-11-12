@@ -118,7 +118,6 @@ message SerializableOperator{
     }
 
     google.protobuf.Any sourceDescriptor = 1;
-    uint64 sourceId = 2;
   }
 
   /**

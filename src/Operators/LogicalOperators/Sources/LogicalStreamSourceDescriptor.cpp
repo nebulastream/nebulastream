@@ -19,11 +19,11 @@
 #include <utility>
 namespace NES {
 
-LogicalStreamSourceDescriptor::LogicalStreamSourceDescriptor(std::string streamName, SourceId sourceId)
-    : SourceDescriptor(Schema::create(), std::move(streamName), sourceId) {}
+LogicalStreamSourceDescriptor::LogicalStreamSourceDescriptor(std::string streamName, OperatorId operatorId)
+    : SourceDescriptor(Schema::create(), std::move(streamName), operatorId) {}
 
-SourceDescriptorPtr LogicalStreamSourceDescriptor::create(std::string streamName, SourceId sourceId) {
-    return std::make_shared<LogicalStreamSourceDescriptor>(LogicalStreamSourceDescriptor(std::move(streamName), sourceId));
+SourceDescriptorPtr LogicalStreamSourceDescriptor::create(std::string streamName, OperatorId operatorId) {
+    return std::make_shared<LogicalStreamSourceDescriptor>(LogicalStreamSourceDescriptor(std::move(streamName), operatorId));
 }
 
 bool LogicalStreamSourceDescriptor::equal(SourceDescriptorPtr other) {

@@ -163,7 +163,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {
-                                           }, nullptr, nullptr) {
+                                           }, nullptr, nullptr, nullptr, nullptr, nullptr) {
             // nop
         }
     };
@@ -238,7 +238,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContext&) {
-                                           }, nullptr, nullptr) {
+                                           }, nullptr, nullptr, nullptr, nullptr, nullptr) {
             // nop
         }
     };
@@ -309,7 +309,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
         MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {
-                                           }, nullptr, nullptr) {
+                                           }, nullptr, nullptr, nullptr, nullptr, nullptr) {
             // nop
         }
     };

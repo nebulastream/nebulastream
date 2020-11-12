@@ -67,8 +67,8 @@ class SimpleBenchmarkSource : public DataSource {
             throw std::logic_error("SimpleBenchmarkSource: BufferManager not set");
         }
 
-        if (!this->sourceId.empty()) {
-            NES_DEBUG("SimpleBenchmarkSource " << this->getSourceId() << ": SimpleBenchmarkSource of type=" << getType());
+        if (!this->operatorId.empty()) {
+            NES_DEBUG("SimpleBenchmarkSource " << this->getOperatorId() << ": SimpleBenchmarkSource of type=" << getType());
             size_t numberOfTuplesPerPeriod = (ingestionRate*BenchmarkUtils::periodLengthInSeconds);
 
             NES_DEBUG("SimpleBenchmarkSource: " << "ingestionRate * periodLengthInSeconds = "
@@ -92,7 +92,7 @@ class SimpleBenchmarkSource : public DataSource {
                     if (!!optBuf) {
                         // here we got a valid buffer
                         auto& buf = optBuf.value();
-                        queryManager->addWork(this->sourceId, buf);
+                        queryManager->addWork(this->operatorId, buf);
 
                         cntTuples += curNumberOfTuplesPerBuffer;
                     }

@@ -629,9 +629,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     NES_DEBUG("CCodeGenerator: Generate code for join" << joinDef);
 
     auto code = context->code;
-    /**
-     * within the loop
-     */
+
+    //-------------------------
     //        NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>* state_variable = (NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>*) state_var;
     auto windowManagerVarDeclaration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto"), "windowManager");
@@ -665,6 +664,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         context->code->variableInitStmts.emplace_back(VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
     }
 
+    /**
+    * within the loop
+    */
     // Read key value from record
     // int64_t key = windowTuples[recordIndex].key;
     //TODO we have to change this depending on the pipeline

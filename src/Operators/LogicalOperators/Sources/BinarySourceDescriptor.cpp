@@ -19,16 +19,16 @@
 #include <utility>
 namespace NES {
 
-BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string filePath, SourceId sourceId) : SourceDescriptor(std::move(schema), sourceId), filePath(std::move(filePath)) {}
+BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string filePath, OperatorId operatorId) : SourceDescriptor(std::move(schema), operatorId), filePath(std::move(filePath)) {}
 
-BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, SourceId sourceId) : SourceDescriptor(std::move(schema), std::move(streamName), sourceId), filePath(std::move(filePath)) {}
+BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, OperatorId operatorId) : SourceDescriptor(std::move(schema), std::move(streamName), operatorId), filePath(std::move(filePath)) {}
 
-SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string filePath, SourceId sourceId) {
-    return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(filePath), sourceId));
+SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string filePath, OperatorId operatorId) {
+    return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(filePath), operatorId));
 }
 
-SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string filePath, SourceId sourceId) {
-    return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), sourceId));
+SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string filePath, OperatorId operatorId) {
+    return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), operatorId));
 }
 
 const std::string& BinarySourceDescriptor::getFilePath() const {

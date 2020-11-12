@@ -29,7 +29,7 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
-#include <Operators/SourceId.hpp>
+#include <Operators/OperatorId.hpp>
 
 namespace NES {
 

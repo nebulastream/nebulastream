@@ -24,7 +24,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
-#include <Operators/SourceId.hpp>
+#include <Operators/OperatorId.hpp>
 namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -58,7 +58,7 @@ class DataSource : public Reconfigurable {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, SourceId sourceId);
+    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, OperatorId operatorId);
 
     DataSource() = delete;
 
@@ -155,12 +155,6 @@ class DataSource : public Reconfigurable {
     virtual ~DataSource();
 
     /**
-   * @brief Get source id
-   */
-
-    const size_t getSourceId() const;
-
-    /**
      * @brief Get number of buffers to be processed
      */
     size_t getNumBuffersToProcess() const;
@@ -170,14 +164,14 @@ class DataSource : public Reconfigurable {
      */
     size_t getGatheringInterval() const;
 
-
+    OperatorId getOperatorId();
   protected:
     SchemaPtr schema;
     size_t generatedTuples;
     size_t generatedBuffers;
     size_t numBuffersToProcess;
     std::atomic<size_t> gatheringInterval;
-    SourceId sourceId;
+    OperatorId operatorId;
     SourceType type;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;

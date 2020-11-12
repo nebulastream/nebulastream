@@ -53,6 +53,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
                   StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
                   TupleBuffer& tupleBuffer) {
+#ifdef EXTENDEDDEBUGGING
         //Print the state content for debugging purposes
         NES_TRACE("leftJoinState content=");
         for (auto& [key, val] : leftJoinState->rangeAll()) {
@@ -79,11 +80,17 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             }
             NES_TRACE(" last watermark=" << val->getLastWatermark() << " minwatermark=" << val->getMinWatermark() << " allMaxTs=" << val->getAllMaxTs());
         }
-
+#endif
         // iterate over all keys in both window states and perform the join
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction doing the nested loop join");
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
             NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: leftHashTable" << toString() << " check key=" << leftHashTable.first << " nextEdge=" << leftHashTable.second->nextEdge);
+//            auto handle = rightJoinSate->get(leftHashTable.first);
+//            if (handle.contains()) {
+//                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: found join pair for key " << leftHashTable.first);
+//                joinWindows(leftHashTable.first, leftHashTable.second, rightJoinSate->get(leftHashTable.first).value(), tupleBuffer);
+//            }
+
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: rightHashTable" << toString() << " check key=" << rightHashTable.first << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
@@ -214,10 +221,6 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             //TODO: we have to determine which windows and keys to delete
             tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
-        //TODO: remove content from state
-
-        //        leftStore->setLastWatermark(watermarkLeft);
-        //        rightStore->setLastWatermark(watermarkRight);
     }
 
     /**
