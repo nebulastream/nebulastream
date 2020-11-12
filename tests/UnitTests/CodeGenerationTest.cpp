@@ -1325,7 +1325,8 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
             results.push_back(agg);
         }
     }
-
+    cout << "results[0]=" << results[0] << endl;
+    cout << "results[1]=" << results[1] << endl;
     EXPECT_EQ(results[0], 5);
     EXPECT_EQ(results[1], 5);
 }

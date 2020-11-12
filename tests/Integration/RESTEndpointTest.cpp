@@ -50,7 +50,7 @@ class RESTEndpointTest : public testing::Test {
     std::string ipAddress = "127.0.0.1";
 };
 
-TEST_F(RESTEndpointTest, Disabled_testGetExecutionPlanFromWithSingleWorker) {
+TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
