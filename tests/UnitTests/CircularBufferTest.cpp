@@ -44,7 +44,7 @@ class CircularBufferTest : public testing::Test {
         std::cout << "Tear down CircularBufferTest test class." << std::endl;
     }
 
-    size_t testCapacity = 3;
+    uint64_t testCapacity = 3;
     int testValue = 1;
 };
 
