@@ -386,15 +386,14 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
         rowNumber++;
-        if ((rowNumber > 3 && rowNumber < 6) || (rowNumber > 8 && rowNumber < 11) ) {
+        if ((rowNumber > 3 && rowNumber < 6) || (rowNumber > 8 && rowNumber < 11)) {
             std::vector<string> content = UtilityFunctions::split(line, '|');
             if (content.at(0) == "R2000073") {
                 NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): content=" << content.at(2));
                 NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): expContent= 102.629631");
                 EXPECT_EQ(content.at(2), "102.629631");
                 resultWrk1 = true;
-            }
-            else {
+            } else {
                 NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): content=" << content.at(2));
                 NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): expContent= 108.166664");
                 EXPECT_EQ(content.at(2), "108.166664");
@@ -440,17 +439,17 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidUserQueryWithTumblin
     web::http::client::http_client clientSchema(
         "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
     clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
+                                                                                  NES_INFO("get first then");
+                                                                                  return response.extract_json();
+                                                                              })
         .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_returnSchema = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
+            try {
+                NES_INFO("set return");
+                json_returnSchema = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("error while setting return");
+                NES_ERROR("error " << e.what());
+            }
         })
         .wait();
 
@@ -569,17 +568,17 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingMonitoringTwoWorker) {
     web::http::client::http_client client("http://localhost:8081/v1/nes/monitoring/metrics/");
 
     client.request(web::http::methods::GET).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
+                                               NES_INFO("get first then");
+                                               return response.extract_json();
+                                           })
         .then([&json_return](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_INFO("error while setting return");
-              NES_INFO("error " << e.what());
-          }
+            try {
+                NES_INFO("set return");
+                json_return = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
+            }
         })
         .wait();
 
@@ -600,6 +599,90 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingMonitoringTwoWorker) {
     EXPECT_TRUE(!v2T.empty());
     EXPECT_TRUE(!v3S.empty());
     EXPECT_TRUE(!v3T.empty());
+
+    NES_INFO("Killing worker 1 process->PID: " << workerPid1);
+    workerProc1.terminate();
+    NES_INFO("Killing worker 2 process->PID: " << workerPid2);
+    workerProc2.terminate();
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
+    coordinatorProc.terminate();
+}
+
+TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
+    size_t numBuffers = 20;
+    size_t numTuples = 10;
+
+    NES_INFO(" start coordinator");
+    std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.txt";
+    remove(outputFilePath.c_str());
+
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
+    bp::child coordinatorProc(cmdCoord.c_str());
+
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+    sleep(2);
+
+    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352 --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
+        + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=1 --endlessRepeat=on";
+    bp::child workerProc1(cmdWrk1.c_str());
+    NES_INFO("started worker 1 with pid = " << workerProc1.id());
+
+    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354 --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
+        + std::to_string(numBuffers) + " --sourceFrequency=1 --endlessRepeat=on";
+
+    bp::child workerProc2(cmdWrk2.c_str());
+    NES_INFO("started worker 2 with pid = " << workerProc2.id());
+
+    size_t coordinatorPid = coordinatorProc.id();
+    size_t workerPid1 = workerProc1.id();
+    size_t workerPid2 = workerProc2.id();
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << "\"Query::from(\\\"ysb\\\").sink(FileSinkDescriptor::create(\\\"";
+    ss << outputFilePath;
+    ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+    string body = ss.str();
+
+    web::json::value json_return;
+
+    web::http::client::http_client client(
+        "http://127.0.0.1:8081/v1/nes/query/execute-query");
+    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
+                                                                      NES_INFO("get first then");
+                                                                      return response.extract_json();
+                                                                  })
+        .then([&json_return](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("set return");
+                json_return = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_INFO("error while setting return");
+                NES_INFO("error " << e.what());
+            }
+        })
+        .wait();
+
+    QueryId queryId = json_return.at("queryId").as_integer();
+
+    NES_INFO("try to acc return");
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, numBuffers));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    NES_INFO("ContinuousSourceTest: content=" << content);
+    EXPECT_TRUE(!content.empty());
+
+    int response = remove(outputFilePath.c_str());
+    EXPECT_TRUE(response == 0);
 
     NES_INFO("Killing worker 1 process->PID: " << workerPid1);
     workerProc1.terminate();
