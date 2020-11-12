@@ -676,7 +676,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
 
     //TODO: make query work
     auto query = TestQuery::from(ysbSource->getSchema())
-        //.filter(Attribute("event_type")=="purchase")
+        .filter(Attribute("event_type")>1)
         //             .windowByKey(
         //                 Attribute("campaign_id"),
         //                 TumblingWindow::of(
