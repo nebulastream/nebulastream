@@ -45,7 +45,7 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static const size_t timeout = 60;//TODO:increase it again to 30
+    static const size_t timeout = 30;//TODO:increase it again to 30
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
