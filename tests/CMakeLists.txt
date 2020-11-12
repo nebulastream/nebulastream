@@ -303,6 +303,12 @@ add_executable(window-deployment-test "Integration/WindowDeploymentTest.cpp")
 target_link_libraries(window-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-deployment-test COMMAND window-deployment-test)
 
+
+### mergeDeploymentTest ###
+add_executable(merge-deployment-test "Integration/MergeDeploymentTest.cpp")
+target_link_libraries(merge-deployment-test nes ${GTEST_LIBRARIES})
+add_test(NAME merge-deployment-test COMMAND merge-deployment-test)
+
 ### ContiniousSourceTest ###
 add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
 target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})

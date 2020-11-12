@@ -34,7 +34,10 @@ const std::string MergeLogicalOperatorNode::toString() const {
 }
 
 bool MergeLogicalOperatorNode::inferSchema() {
-    OperatorNode::inferSchema();
+    if(!OperatorNode::inferSchema())
+    {
+        return false;
+    }
     if (getChildren().size() != 2) {
         NES_THROW_RUNTIME_ERROR("MergeLogicalOperator: merge need two child operators.");
         return false;
@@ -46,7 +49,8 @@ bool MergeLogicalOperatorNode::inferSchema() {
     auto schema2 = child2->getInputSchema();
 
     if (!schema1->equals(schema2)) {
-        NES_THROW_RUNTIME_ERROR("MergeLogicalOperator: the two input streams have different schema.");
+        NES_ERROR("MergeLogicalOperator: the two input streams have different schema.");
+        return false;
     }
     return true;
 }

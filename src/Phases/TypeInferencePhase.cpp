@@ -56,7 +56,10 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     // to this end we call at each sink the infer method to propagate the schemata across the whole query.
     auto sinks = queryPlan->getSinkOperators();
     for (auto sink : sinks) {
-        sink->inferSchema();
+        if(!sink->inferSchema())
+        {
+            return nullptr;
+        }
     }
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
     return queryPlan;
