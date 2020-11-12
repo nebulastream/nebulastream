@@ -16,8 +16,8 @@
 
 #include <gtest/gtest.h>
 
-#include <Util/Logger.hpp>
 #include <Util/CircularBuffer.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
