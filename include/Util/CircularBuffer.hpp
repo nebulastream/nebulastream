@@ -35,7 +35,7 @@ class CircularBuffer {
      * @brief The ctor of the circ buffer, takes a size parameter.
      * @param size of the internal buffer
      */
-    explicit CircularBuffer(size_t size) : maxSize(size),
+    explicit CircularBuffer(uint64_t size) : maxSize(size),
                                            buffer(std::make_unique<T[]>(size)){};
 
     /**
@@ -105,7 +105,7 @@ class CircularBuffer {
      * @brief Return total capacity of buffer.
      * @return value of maxSize
      */
-    size_t capacity() const {
+    uint64_t capacity() const {
         return this->maxSize;
     }
 
@@ -113,8 +113,8 @@ class CircularBuffer {
      * @brief Return size of buffer (no. of items).
      * @return head - tail and + maxSize if tail > head
      */
-    size_t size() const {
-        size_t size = this->maxSize;
+    uint64_t size() const {
+        uint64_t size = this->maxSize;
         if (!this->full) {
             size = (this->head >= this->tail)
                 ? this->head - this->tail
@@ -127,17 +127,17 @@ class CircularBuffer {
     /**
      * @brief indicates writes
      */
-    size_t head = 0;
+    uint64_t head = 0;
 
     /**
      * @brief indicates reads
      */
-    size_t tail = 0;
+    uint64_t tail = 0;
 
     /**
      * @brief maximum size of buffer
      */
-    const size_t maxSize;
+    const uint64_t maxSize;
 
     /**
      * @brief the buffer, of type T[]
