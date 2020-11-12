@@ -58,7 +58,10 @@ class PipelineExecutionContext {
         BufferManagerPtr bufferManager,
         std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
         Windowing::AbstractWindowHandlerPtr windowHandler,
-        Windowing::AbstractWindowHandlerPtr joinHandler
+        Windowing::AbstractWindowHandlerPtr joinHandler,
+        Windowing::LogicalWindowDefinitionPtr windowDef,
+        Join::LogicalJoinDefinitionPtr joinDef,
+        SchemaPtr inputSchema
         );
 
     /**
@@ -78,7 +81,6 @@ class PipelineExecutionContext {
      * @return
      */
     Windowing::LogicalWindowDefinitionPtr getWindowDef();
-    void setWindowDef(Windowing::LogicalWindowDefinitionPtr windowDef);
 
     /**
      * @brief
@@ -99,7 +101,7 @@ class PipelineExecutionContext {
      */
     template<template<class> class WindowHandlerType, class KeyType>
     auto getJoinHandler() {
-        return std::dynamic_pointer_cast<NES::Join::JoinHandler<KeyType>>(joinHandler);
+        return std::dynamic_pointer_cast<WindowHandlerType<KeyType>>(joinHandler);
     }
 
     template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
@@ -107,20 +109,15 @@ class PipelineExecutionContext {
         return std::dynamic_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowHandler);
     }
 
-    // TODO remove above
-
     /**
-     * @brief getter/setter input schema
+     * @brief getter input schema
      * @return
      */
     SchemaPtr getInputSchema();
-    void setInputSchema(SchemaPtr inputSchema);
-
 
     /**
-     * @brief getter/sett join definition
+     * @brief getter join definition
      */
-    void setJoinDef(Join::LogicalJoinDefinitionPtr joinDef);
     Join::LogicalJoinDefinitionPtr getJoinDef();
 
   private:
@@ -141,8 +138,6 @@ class PipelineExecutionContext {
     Windowing::AbstractWindowHandlerPtr windowHandler;
     Windowing::AbstractWindowHandlerPtr joinHandler;
 
-
-        // TODO remove this stuff from here
     Windowing::LogicalWindowDefinitionPtr windowDef;
     Join::LogicalJoinDefinitionPtr joinDef;
 

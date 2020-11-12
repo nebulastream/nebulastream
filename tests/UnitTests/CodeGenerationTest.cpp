@@ -99,7 +99,7 @@ class TestPipelineExecutionContext : public PipelineExecutionContext {
             0, std::move(bufferManager), [this](TupleBuffer& buffer, WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            std::move(windowHandler), std::move(joinHandler)){
+            std::move(windowHandler), std::move(joinHandler), nullptr, nullptr, nullptr) {
             // nop
         };
 
@@ -925,7 +925,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
             buff.isValid();
         },
         windowHandler,
-        nullptr);                                                                                //valid check due to compiler error for unused var
+        nullptr, windowDefinition, nullptr, input_schema);                                                                                //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
@@ -984,7 +984,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
             buff.isValid();
         },
         windowHandler,
-        nullptr);//valid check due to compiler error for unused var
+        nullptr, windowDefinition, nullptr, input_schema);//valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
@@ -1044,7 +1044,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
             buff.isValid();
         },
         windowHandler,
-        nullptr);                                                                                //valid check due to compiler error for unused var
+        nullptr, windowDefinition, nullptr, schema);                                                                                //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
@@ -1294,7 +1294,7 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
             buff.isValid();
         },
         nullptr,
-        joinHandler); //valid check due to compiler error for unused var
+        joinHandler, nullptr, joinDef, input_schema); //valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
     joinHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 

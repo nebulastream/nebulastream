@@ -19,16 +19,16 @@
 #include <utility>
 namespace NES {
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema, SourceId sourceId) : schema(std::move(schema)), streamName(), sourceId(sourceId) {}
+SourceDescriptor::SourceDescriptor(SchemaPtr schema, OperatorId operatorId) : schema(std::move(schema)), streamName(), operatorId(operatorId) {}
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string streamName, SourceId sourceId) : schema(std::move(schema)), streamName(std::move(streamName)), sourceId(sourceId) {}
+SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string streamName, OperatorId operatorId) : schema(std::move(schema)), streamName(std::move(streamName)), operatorId(operatorId) {}
 
 SchemaPtr SourceDescriptor::getSchema() {
     return schema;
 }
 
-SourceId SourceDescriptor::getSourceId() {
-    return sourceId;
+OperatorId SourceDescriptor::getOperatorId() {
+    return operatorId;
 }
 
 std::string SourceDescriptor::getStreamName() {

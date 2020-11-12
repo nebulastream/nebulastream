@@ -45,7 +45,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             NES_INFO("ConvertPhysicalToLogicalSource: Creating ZMQ source");
             const ZmqSourcePtr zmqSourcePtr = std::dynamic_pointer_cast<ZmqSource>(dataSource);
             SourceDescriptorPtr zmqSourceDescriptor =
-                ZmqSourceDescriptor::create(dataSource->getSchema(), zmqSourcePtr->getHost(), zmqSourcePtr->getPort(), dataSource->getSourceId());
+                ZmqSourceDescriptor::create(dataSource->getSchema(), zmqSourcePtr->getHost(), zmqSourcePtr->getPort(), dataSource->getOperatorId());
             return zmqSourceDescriptor;
         }
         case DEFAULT_SOURCE: {
@@ -54,14 +54,14 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const SourceDescriptorPtr defaultSourceDescriptor =
                 DefaultSourceDescriptor::create(defaultSourcePtr->getSchema(),
                                                 defaultSourcePtr->getNumBuffersToProcess(),
-                                                defaultSourcePtr->getGatheringInterval(), dataSource->getSourceId());
+                                                defaultSourcePtr->getGatheringInterval(), dataSource->getOperatorId());
             return defaultSourceDescriptor;
         }
         case BINARY_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Binary File source");
             const BinarySourcePtr binarySourcePtr = std::dynamic_pointer_cast<BinarySource>(dataSource);
             const SourceDescriptorPtr binarySourceDescriptor =
-                BinarySourceDescriptor::create(binarySourcePtr->getSchema(), binarySourcePtr->getFilePath(), dataSource->getSourceId());
+                BinarySourceDescriptor::create(binarySourcePtr->getSchema(), binarySourcePtr->getFilePath(), dataSource->getOperatorId());
             return binarySourceDescriptor;
         }
         case CSV_SOURCE: {
@@ -75,7 +75,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
                                             csvSourcePtr->getNumBuffersToProcess(),
                                             csvSourcePtr->getGatheringInterval(),
                                             csvSourcePtr->isEndlessRepeat(),
-                                            csvSourcePtr->getSkipHeader(), dataSource->getSourceId());
+                                            csvSourcePtr->getSkipHeader(), dataSource->getOperatorId());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD
@@ -98,7 +98,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const OPCSourcePtr opcSourcePtr = std::dynamic_pointer_cast<OPCSource>(dataSource);
             const SourceDescriptorPtr opcSourceDescriptor = OPCSourceDescriptor::create(opcSourcePtr->getSchema(), opcSourcePtr->getUrl(),
                                                                                         opcSourcePtr->getNodeId(), opcSourcePtr->getUser(),
-                                                                                        opcSourcePtr->getPassword(), dataSource->getSourceId());
+                                                                                        opcSourcePtr->getPassword(), dataSource->getOperatorId());
             return opcSourceDescriptor;
         }
 #endif
@@ -106,7 +106,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             NES_INFO("ConvertPhysicalToLogicalSource: Creating sense source");
             const SenseSourcePtr senseSourcePtr = std::dynamic_pointer_cast<SenseSource>(dataSource);
             const SourceDescriptorPtr senseSourceDescriptor =
-                SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdsf(), dataSource->getSourceId());
+                SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdsf(), dataSource->getOperatorId());
             return senseSourceDescriptor;
         }
         default: {

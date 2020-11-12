@@ -41,34 +41,34 @@
 namespace NES {
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
-    SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, SourceId sourceId) {
-    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1, sourceId);
+    SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, OperatorId operatorId) {
+    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1, operatorId);
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t numbersOfBufferToProduce, size_t frequency, SourceId sourceId) {
-    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, sourceId);
+    SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t numbersOfBufferToProduce, size_t frequency, OperatorId operatorId) {
+    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId);
 }
 
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, SourceId sourceId) {
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, OperatorId operatorId) {
     return std::make_shared<DefaultSource>(
-        Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager, queryManager, /**bufferCnt*/ 1, /*frequency*/ 1, sourceId);
+        Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager, queryManager, /**bufferCnt*/ 1, /*frequency*/ 1, operatorId);
 }
 
 const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                     const std::string& host,
-                                    const uint16_t port, SourceId sourceId) {
-    return std::make_shared<ZmqSource>(schema, bufferManager, queryManager, host, port, sourceId);
+                                    const uint16_t port, OperatorId operatorId) {
+    return std::make_shared<ZmqSource>(schema, bufferManager, queryManager, host, port, operatorId);
 }
 
 const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                           const std::string& pathToFile, SourceId sourceId) {
-    return std::make_shared<BinarySource>(schema, bufferManager, queryManager, pathToFile, sourceId);
+                                           const std::string& pathToFile, OperatorId operatorId) {
+    return std::make_shared<BinarySource>(schema, bufferManager, queryManager, pathToFile, operatorId);
 }
 
 const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                      const std::string& udfs, SourceId sourceId) {
-    return std::make_shared<SenseSource>(schema, bufferManager, queryManager, udfs, sourceId);
+                                      const std::string& udfs, OperatorId operatorId) {
+    return std::make_shared<SenseSource>(schema, bufferManager, queryManager, udfs, operatorId);
 }
 
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
@@ -78,9 +78,9 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         size_t numbersOfBufferToProduce,
                                         size_t frequency,
                                         bool endlessRepeat,
-                                        bool skipHeader, SourceId sourceId) {
+                                        bool skipHeader, OperatorId operatorId) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
-                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat, skipHeader, sourceId);
+                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat, skipHeader, operatorId);
 }
 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
@@ -97,8 +97,8 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
 #ifdef ENABLE_OPC_BUILD
 
 const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url,
-                                    UA_NodeId nodeId, std::string user, std::string password, SourceId sourceId) {
-    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, sourceId);
+                                    UA_NodeId nodeId, std::string user, std::string password, OperatorId operatorId) {
+    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId);
 }
 #endif
 }// namespace NES

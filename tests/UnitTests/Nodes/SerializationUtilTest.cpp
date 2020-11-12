@@ -174,7 +174,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = ZmqSourceDescriptor::create(schema, "localhost", 42, 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor, 1);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
@@ -183,7 +183,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
         auto source = OPCSourceDescriptor::create(schema, "localhost", nodeId, "", "", 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor, 1);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 #endif
@@ -191,14 +191,14 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = BinarySourceDescriptor::create(schema, "localhost", 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor, 1);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
     {
         auto source = CsvSourceDescriptor::create(schema, "localhost", ",", 0, 10, 10, true, false, 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor, 1);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
         std::string json_string;
         auto options = google::protobuf::util::JsonOptions();
@@ -210,21 +210,21 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = DefaultSourceDescriptor::create(schema, 55, 42, 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor, 1);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
     {
         auto source = LogicalStreamSourceDescriptor::create("localhost", 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor, 1);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
     {
         auto source = SenseSourceDescriptor::create(schema, "senseusf", 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor, 1);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
@@ -232,7 +232,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         Network::NesPartition nesPartition{1, 22, 33, 44};
         auto source = Network::NetworkSourceDescriptor::create(schema, nesPartition);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor, 1);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 }

@@ -35,7 +35,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                       size_t frequency,
                                       bool endlessRepeat,
                                       bool skipHeader,
-                                      SourceId sourceId);
+                                      OperatorId operatorId);
 
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string streamName,
@@ -46,7 +46,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                       size_t frequency,
                                       bool endlessRepeat,
                                       bool skipHeader,
-                                      SourceId sourceId);
+                                      OperatorId operatorId);
 
     /**
      * @brief get file path for reading the csv file
@@ -97,7 +97,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                  size_t frequency,
                                  bool endlessRepeat,
                                  bool skipHeader,
-                                 SourceId sourceId);
+                                 OperatorId operatorId);
 
     explicit CsvSourceDescriptor(SchemaPtr schema,
                                  std::string streamName,
@@ -108,7 +108,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
                                  size_t frequency,
                                  bool endlessRepeat,
                                  bool skipHeader,
-                                 SourceId sourceId);
+                                 OperatorId operatorId);
 
     std::string filePath;
     std::string delimiter;

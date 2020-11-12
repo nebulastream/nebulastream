@@ -43,7 +43,7 @@ class ZmqSource : public DataSource {
                        QueryManagerPtr queryManager,
                        const std::string& host,
                        const uint16_t port,
-                       SourceId sourceId);
+                       OperatorId operatorId);
 
     /**
      * @brief destructor of zmq sink that disconnects the queue before deconstruction

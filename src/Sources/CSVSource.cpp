@@ -32,8 +32,8 @@ namespace NES {
 
 CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
                      const std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess,
-                     size_t frequency, bool endlessRepeat, bool skipHeader, SourceId sourceId)
-    : DataSource(schema, bufferManager, queryManager, sourceId),
+                     size_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId)
+    : DataSource(schema, bufferManager, queryManager, operatorId),
       filePath(filePath),
       delimiter(delimiter),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),

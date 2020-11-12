@@ -29,9 +29,13 @@ PipelineExecutionContext::PipelineExecutionContext(
     BufferManagerPtr bufferManager,
     std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
     Windowing::AbstractWindowHandlerPtr windowHandler,
-    Windowing::AbstractWindowHandlerPtr joinHandler
+    Windowing::AbstractWindowHandlerPtr joinHandler,
+    Windowing::LogicalWindowDefinitionPtr windowDef,
+    Join::LogicalJoinDefinitionPtr joinDef,
+    SchemaPtr inputSchema
     )
-    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)), windowHandler(windowHandler), joinHandler(joinHandler) {
+    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)), windowHandler(windowHandler), joinHandler(joinHandler), windowDef(windowDef), joinDef(joinDef), inputSchema(inputSchema)
+{
     // nop
 }
 
@@ -52,19 +56,8 @@ Join::LogicalJoinDefinitionPtr PipelineExecutionContext::getJoinDef() {
     return joinDef;
 }
 
-void PipelineExecutionContext::setJoinDef(Join::LogicalJoinDefinitionPtr joinDef)
-{
-    this->joinDef = joinDef;
-}
-
-void PipelineExecutionContext::setWindowDef(Windowing::LogicalWindowDefinitionPtr windowDef) {
-    this->windowDef = windowDef;
-}
 SchemaPtr PipelineExecutionContext::getInputSchema() {
     return inputSchema;
-}
-void PipelineExecutionContext::setInputSchema(SchemaPtr inputSchema) {
-    this->inputSchema = inputSchema;
 }
 
 }// namespace NES

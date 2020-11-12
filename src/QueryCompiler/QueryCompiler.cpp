@@ -153,16 +153,10 @@ void QueryCompiler::compilePipelineStages(
                     }
                 },
                 holder.windowHandler,
-                holder.joinHandler);
-            if (builder.getWinDef() != nullptr) {
-                executionContext->setWindowDef(builder.getWinDef());
-            }
-            if (builder.getJoinDef() != nullptr) {
-                executionContext->setJoinDef(builder.getJoinDef());
-            }
-            if (builder.getSchema() != nullptr) {
-                executionContext->setInputSchema(builder.getSchema());
-            }
+                holder.joinHandler,
+                builder.getWinDef(),
+                builder.getJoinDef(),
+                builder.getSchema());
         } else {
             // invoke sink
             auto& sinks = builder.getSinks();
@@ -179,16 +173,10 @@ void QueryCompiler::compilePipelineStages(
                     }
                 },
                 holder.windowHandler,
-                holder.joinHandler);
-            if (builder.getWinDef() != nullptr) {
-                executionContext->setWindowDef(builder.getWinDef());
-            }
-            if (builder.getJoinDef() != nullptr) {
-                executionContext->setJoinDef(builder.getJoinDef());
-            }
-            if (builder.getSchema() != nullptr) {
-                executionContext->setInputSchema(builder.getSchema());
-            }
+                holder.joinHandler,
+                builder.getWinDef(),
+                builder.getJoinDef(),
+                builder.getSchema());
         }
         PipelineStagePtr pipelineStage = PipelineStage::create(
             stageId,

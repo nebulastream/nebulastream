@@ -42,7 +42,7 @@ uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, PipelineExecutionCon
 }// namespace detail
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId)
-    : taskQueue(), sourceIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId) {
+    : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId) {
     NES_DEBUG("Init QueryManager::QueryManager");
     reconfigurationExecutable = std::make_shared<CompiledExecutablePipeline>(detail::reconfigurationTaskEntryPoint);
 }
@@ -69,9 +69,9 @@ void QueryManager::destroy() {
     std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
     NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
     taskQueue.clear();
-    NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToQueryMap.size());
+    NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << operatorIdToQueryMap.size());
 
-    sourceIdToQueryMap.clear();
+    operatorIdToQueryMap.clear();
     queryToStatisticsMap.clear();
 
     NES_DEBUG("QueryManager::resetQueryManager finished");
@@ -92,73 +92,69 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
         // source already exists, add qep to source set if not there
-        if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
-            if (sourceIdToQueryMap[source->getSourceId()].find(qep) == sourceIdToQueryMap[source->getSourceId()].end()) {
+        if (operatorIdToQueryMap.find(source->getOperatorId()) != operatorIdToQueryMap.end()) {
+            if (operatorIdToQueryMap[source->getOperatorId()].find(qep) == operatorIdToQueryMap[source->getOperatorId()].end()) {
                 // qep not found in list, add it
-                NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getSourceId());
-                sourceIdToQueryMap[source->getSourceId()].insert(qep);
+                NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getOperatorId());
+                operatorIdToQueryMap[source->getOperatorId()].insert(qep);
                 queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
-//                NES_DEBUG("QueryManager: Join QEP already found " << qep << " to Source" << source->getSourceId() << " add pipeline stage 1");
-//                sourceIdToPipelineStage[source->getSourceId()] = 1;
+                //                NES_DEBUG("QueryManager: Join QEP already found " << qep << " to Source" << source->getOperatorId() << " add pipeline stage 1");
+                //                operatorIdToPipelineStage[source->getOperatorId()] = 1;
             } else {
-                NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.");
+                NES_DEBUG("QueryManager: Source " << source->getOperatorId() << " and QEP already exist.");
                 return false;
             }
             // source does not exist, add source and unordered_set containing the qep
         } else {
-            NES_DEBUG("QueryManager: Source " << source->getSourceId()
+            NES_DEBUG("QueryManager: Source " << source->getOperatorId()
                                               << " not found. Creating new element with with qep " << qep);
             std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
-            sourceIdToQueryMap[source->getSourceId()] = qepSet;
+            operatorIdToQueryMap[source->getOperatorId()] = qepSet;
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
-            queryMapToSourceId[qep->getQueryId()].push_back(source->getSourceId());
-            if(isBinaryOperator)
-            {
-                if(queryMapToSourceId[qep->getQueryId()].size() == 1)
-                {
-                    NES_DEBUG("QueryManager: mm.size() == 1 " << qep << " to Source" << source->getSourceId());
-                    sourceIdToPipelineStage[source->getSourceId()] = 0;
-                }
-                else
-                {
-                    sourceIdToPipelineStage[source->getSourceId()] = 1;
+            queryMapToOperatorId[qep->getQueryId()].push_back(source->getOperatorId());
+            if (isBinaryOperator) {
+                if (queryMapToOperatorId[qep->getQueryId()].size() == 1) {
+                    NES_DEBUG("QueryManager: mm.size() == 1 " << qep << " to Source" << source->getOperatorId());
+                    operatorIdToPipelineStage[source->getOperatorId()] = 0;
+                } else {
+                    operatorIdToPipelineStage[source->getOperatorId()] = 1;
                 }
             }
-            NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << source->getSourceId());
+            NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << source->getOperatorId());
         }
     }
 
     return true;
 }
 
-void QueryManager::addWork(const SourceId sourceId, TupleBuffer& buf) {
-    std::shared_lock queryLock(queryMutex);// we need this lock because sourceIdToQueryMap can be concurrently modified
+void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
+    std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
     std::unique_lock workQueueLock(workMutex);
-#ifdef extendedDebugging
+#ifdef EXTENDEDDEBUGGING
     std::stringstream ss;
-    ss << " sourceid=" << sourceId << "map at sourceIdToQueryMap ";
-    for (std::map<size_t, std::unordered_set<QueryExecutionPlanPtr>>::const_iterator it = sourceIdToQueryMap.begin();
-         it != sourceIdToQueryMap.end(); ++it) {
-        ss << " sourceId=" << it->first;
+    ss << " sourceid=" << operatorId << "map at operatorIdToQueryMap ";
+    for (std::map<size_t, std::unordered_set<QueryExecutionPlanPtr>>::const_iterator it = operatorIdToQueryMap.begin();
+         it != operatorIdToQueryMap.end(); ++it) {
+        ss << " operatorId=" << it->first;
         for (auto& a : it->second) {
             ss << " \t qepID=" << a->getQueryId() << " subqep=" << a->getQuerySubPlanId() << " stages=" << a->getStageSize();
         }
     }
 
     std::stringstream ss2;
-    ss2 << " sourceid=" << sourceId << "map at sourceIdToPipelineStage ";
-    for (std::map<size_t, size_t>::const_iterator it = sourceIdToPipelineStage.begin();
-         it != sourceIdToPipelineStage.end(); ++it) {
-        ss2 << " sourceId=" << it->first << " pipeStage=" << it->second;
+    ss2 << " sourceid=" << operatorId << "map at operatorIdToPipelineStage ";
+    for (std::map<size_t, size_t>::const_iterator it = operatorIdToPipelineStage.begin();
+         it != operatorIdToPipelineStage.end(); ++it) {
+        ss2 << " operatorId=" << it->first << " pipeStage=" << it->second;
     }
 
     std::stringstream ss3;
-    ss3 << " sourceid=" << sourceId << "map at queryMapToSourceId ";
-    for (std::map<size_t, std::vector<size_t>>::const_iterator it = queryMapToSourceId.begin();
-         it != queryMapToSourceId.end(); ++it) {
+    ss3 << " sourceid=" << operatorId << "map at queryMapToOperatorId ";
+    for (std::map<size_t, std::vector<size_t>>::const_iterator it = queryMapToOperatorId.begin();
+         it != queryMapToOperatorId.end(); ++it) {
         ss3 << " queryID=" << it->first;
         for (auto& a : it->second) {
-            ss3 << "sourceId=" << a;
+            ss3 << "operatorId=" << a;
         }
     }
 
@@ -166,15 +162,15 @@ void QueryManager::addWork(const SourceId sourceId, TupleBuffer& buf) {
     NES_TRACE(ss2.str());
     NES_TRACE(ss3.str());
 #endif
-    for (const auto& qep : sourceIdToQueryMap[sourceId]) {
+    for (const auto& qep : operatorIdToQueryMap[operatorId]) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
-        size_t stageId = sourceIdToPipelineStage[sourceId];
-        NES_DEBUG("QueryManager: added Task for stage " << stageId << " sourceID=" << sourceId);
+        size_t stageId = operatorIdToPipelineStage[operatorId];
+        NES_DEBUG("QueryManager: added Task for stage " << stageId << " sourceID=" << operatorId);
 
-        taskQueue.emplace_back(qep->getStage(sourceIdToPipelineStage[sourceId]), buf);
+        taskQueue.emplace_back(qep->getStage(operatorIdToPipelineStage[operatorId]), buf);
 
-        NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << sourceId << " for QEP " << qep
+        NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << operatorId << " for QEP " << qep
                                               << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
     }
     cv.notify_all();
@@ -218,21 +214,21 @@ bool QueryManager::deregisterQuery(QueryExecutionPlanPtr qep) {
 
     for (const auto& source : sources) {
         NES_DEBUG("QueryManager: stop source " << source->toString());
-        if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
+        if (operatorIdToQueryMap.find(source->getOperatorId()) != operatorIdToQueryMap.end()) {
             // source exists, remove qep from source if there
-            if (sourceIdToQueryMap[source->getSourceId()].find(qep) != sourceIdToQueryMap[source->getSourceId()].end()) {
+            if (operatorIdToQueryMap[source->getOperatorId()].find(qep) != operatorIdToQueryMap[source->getOperatorId()].end()) {
                 // qep found, remove it
-                NES_DEBUG("QueryManager: Removing QEP " << qep << " from source" << source->getSourceId());
-                if (sourceIdToQueryMap[source->getSourceId()].erase(qep) == 0) {
-                    NES_FATAL_ERROR("QueryManager: Removing QEP " << qep << " for source " << source->getSourceId()
+                NES_DEBUG("QueryManager: Removing QEP " << qep << " from source" << source->getOperatorId());
+                if (operatorIdToQueryMap[source->getOperatorId()].erase(qep) == 0) {
+                    NES_FATAL_ERROR("QueryManager: Removing QEP " << qep << " for source " << source->getOperatorId()
                                                                   << " failed!");
                     succeed = false;
                 }
 
                 // if source has no qeps remove the source from map
-                if (sourceIdToQueryMap[source->getSourceId()].empty()) {
-                    if (sourceIdToQueryMap.erase(source->getSourceId()) == 0) {
-                        NES_FATAL_ERROR("QueryManager: Removing source " << source->getSourceId() << " failed!");
+                if (operatorIdToQueryMap[source->getOperatorId()].empty()) {
+                    if (operatorIdToQueryMap.erase(source->getOperatorId()) == 0) {
+                        NES_FATAL_ERROR("QueryManager: Removing source " << source->getOperatorId() << " failed!");
                         succeed = false;
                     }
                 }
@@ -252,9 +248,9 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
             NES_DEBUG("QueryManager: stop source " << source->toString());
             // TODO what if two qeps use the same source
 
-            if (sourceIdToQueryMap[source->getSourceId()].size() != 1) {
+            if (operatorIdToQueryMap[source->getOperatorId()].size() != 1) {
                 NES_WARNING("QueryManager: could not stop source " << source->toString() << " because other qeps are using it n="
-                                                                   << sourceIdToQueryMap[source->getSourceId()].size());
+                                                                   << operatorIdToQueryMap[source->getOperatorId()].size());
             } else {
                 NES_DEBUG("QueryManager: stop source " << source->toString() << " because only " << qep << " is using it");
                 bool success = source->stop();
@@ -292,7 +288,7 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     auto pipelineContext = std::make_shared<PipelineExecutionContext>(
         queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&) {
         },
-        nullptr, nullptr);
+        nullptr, nullptr, nullptr, nullptr, nullptr);
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     {
         std::unique_lock lock(workMutex);

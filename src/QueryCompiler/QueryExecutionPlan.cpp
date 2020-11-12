@@ -38,9 +38,8 @@ QueryId QueryExecutionPlan::getQueryId() {
     return queryId;
 }
 
-std::vector<PipelineStagePtr>& QueryExecutionPlan::getStages()
-{
-        return stages;
+std::vector<PipelineStagePtr>& QueryExecutionPlan::getStages() {
+    return stages;
 }
 
 QuerySubPlanId QueryExecutionPlan::getQuerySubPlanId() const {
@@ -129,8 +128,7 @@ PipelineStagePtr QueryExecutionPlan::getStage(size_t index) const {
     return stages[index];
 }
 
-size_t QueryExecutionPlan::getStageSize() const
-{
+size_t QueryExecutionPlan::getStageSize() const {
     return stages.size();
 }
 

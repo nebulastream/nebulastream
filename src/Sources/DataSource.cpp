@@ -34,36 +34,38 @@
 namespace NES {
 
 DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                       SourceId sourceId)
+                       OperatorId operatorId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
-      sourceId(sourceId) {
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source with schema");
+      operatorId(operatorId) {
+    NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->bufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
 
     watermark = std::make_shared<Windowing::ProcessingTimeWatermarkGenerator>();
-
+}
+OperatorId DataSource::getOperatorId() {
+    return operatorId;
 }
 
 SchemaPtr DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
     stop();
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Destroy Data Source.");
+    NES_DEBUG("DataSource " << operatorId << ": Destroy Data Source.");
 }
 
 bool DataSource::start() {
-    NES_DEBUG("DataSource " << this->getSourceId() << ": start source " << this);
+    NES_DEBUG("DataSource " << operatorId << ": start source " << this);
     auto barrier = std::make_shared<ThreadBarrier>(2);
     std::unique_lock lock(startStopMutex);
     if (running) {
-        NES_WARNING("DataSource " << this->getSourceId() << ": is already running " << this);
+        NES_WARNING("DataSource " << operatorId << ": is already running " << this);
         return false;
     }
     running = true;
     type = getType();
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread");
+    NES_DEBUG("DataSource " << operatorId << ": Spawn thread");
     thread = std::make_shared<std::thread>([this, barrier]() {
         barrier->wait();
         runningRoutine(bufferManager, queryManager);
@@ -74,10 +76,10 @@ bool DataSource::start() {
 
 bool DataSource::stop() {
     std::unique_lock lock(startStopMutex);
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called and source is "
+    NES_DEBUG("DataSource " << operatorId << ": Stop called and source is "
                             << (running ? "running" : "not running"));
     if (!running) {
-        NES_DEBUG("DataSource " << this->getSourceId() << " is not running");
+        NES_DEBUG("DataSource " << operatorId << " is not running");
         return false;
     }
     running = false;
@@ -100,7 +102,7 @@ bool DataSource::stop() {
                 ret = true;
                 thread.reset();
             } else {
-                NES_DEBUG("DataSource " << this->getSourceId() << ": Thread is not joinable");
+                NES_DEBUG("DataSource " << operatorId << ": Thread is not joinable");
                 return false;
             }
         }
@@ -124,7 +126,7 @@ bool DataSource::isRunning() { return running; }
 void DataSource::setGatheringInterval(size_t interval) { this->gatheringInterval = interval; }
 
 void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
-    std::string thName = "DataSrc-" + getSourceId();
+    std::string thName = "DataSrc-" + operatorId;
     setThreadName(thName.c_str());
 
     if (!queryManager) {
@@ -137,8 +139,8 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
     }
     auto lastTimeStamp = std::chrono::system_clock::now();
 
-    if (this->sourceId != 0) {
-        NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source of type=" << getType());
+    if (this->operatorId != 0) {
+        NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType());
         size_t cnt = 0;
         while (running) {
             bool recNow = false;
@@ -161,8 +163,8 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                         auto buffer = bufferManager->getBufferBlocking();
                         buffer.setWatermark(watermark->getWatermark());
                         buffer.setNumberOfTuples(0);
-                        buffer.setOriginId(sourceId);
-                        queryManager->addWork(this->sourceId, buffer);
+                        buffer.setOriginId(operatorId);
+                        queryManager->addWork(this->operatorId, buffer);
                     }
                 }
             }
@@ -181,23 +183,23 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                 //this checks we received a valid output buffer
                 if (!!optBuf) {
                     auto& buf = optBuf.value();
-                    NES_DEBUG("DataSource " << this->getSourceId() << " type=" << getType()
+                    NES_DEBUG("DataSource " << operatorId << " type=" << getType()
                                             << " string=" << toString()
                                             << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                             << " iteration=" << cnt
-                              << " sourceid=" << this->sourceId << " orgID=" <<this->sourceId );
-                    buf.setOriginId(sourceId);
+                                            << " operatorId=" << this->operatorId << " orgID=" << this->operatorId);
+                    buf.setOriginId(operatorId);
                     buf.setWatermark(watermark->getWatermark());
-                    queryManager->addWork(sourceId, buf);
+                    queryManager->addWork(operatorId, buf);
                     cnt++;
                 }
             } else {
                 NES_DEBUG("DataSource "
-                          << this->getSourceId() << ": Receiving thread terminated ... stopping because cnt=" << cnt
+                          << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
                           << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
                 return;
             }
-            NES_DEBUG("DataSource " << this->getSourceId() << ": Data Source finished processing iteration " << cnt);
+            NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
             NES_DEBUG("DataSource::runningRoutine: exist routine " << this);
         }
     }//end of if souce not empty
@@ -209,8 +211,6 @@ size_t DataSource::getNumberOfGeneratedTuples() { return generatedTuples; };
 size_t DataSource::getNumberOfGeneratedBuffers() { return generatedBuffers; };
 
 std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
-
-const size_t DataSource::getSourceId() const { return sourceId; }
 
 size_t DataSource::getNumBuffersToProcess() const {
     return numBuffersToProcess;

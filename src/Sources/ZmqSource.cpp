@@ -32,8 +32,8 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                      BufferManagerPtr bufferManager,
                      QueryManagerPtr queryManager,
                      const std::string& host,
-                     const uint16_t port, SourceId sourceId)
-    : DataSource(schema, bufferManager, queryManager, sourceId),
+                     const uint16_t port, OperatorId operatorId)
+    : DataSource(schema, bufferManager, queryManager, operatorId),
       host(host.substr(0, host.find(":"))),
       port(port),
       connected(false),
