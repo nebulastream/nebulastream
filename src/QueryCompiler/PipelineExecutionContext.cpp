@@ -18,9 +18,8 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <utility>
 #include <Windowing/LogicalJoinDefinition.hpp>
-
+#include <utility>
 
 namespace NES {
 
@@ -32,10 +31,8 @@ PipelineExecutionContext::PipelineExecutionContext(
     Windowing::AbstractWindowHandlerPtr joinHandler,
     Windowing::LogicalWindowDefinitionPtr windowDef,
     Join::LogicalJoinDefinitionPtr joinDef,
-    SchemaPtr inputSchema
-    )
-    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)), windowHandler(windowHandler), joinHandler(joinHandler), windowDef(windowDef), joinDef(joinDef), inputSchema(inputSchema)
-{
+    SchemaPtr inputSchema)
+    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)), windowHandler(windowHandler), joinHandler(joinHandler), windowDef(windowDef), joinDef(joinDef), inputSchema(inputSchema) {
     // nop
 }
 

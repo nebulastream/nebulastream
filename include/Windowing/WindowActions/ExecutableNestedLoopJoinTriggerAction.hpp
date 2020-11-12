@@ -85,11 +85,11 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction doing the nested loop join");
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
             NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: leftHashTable" << toString() << " check key=" << leftHashTable.first << " nextEdge=" << leftHashTable.second->nextEdge);
-//            auto handle = rightJoinSate->get(leftHashTable.first);
-//            if (handle.contains()) {
-//                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: found join pair for key " << leftHashTable.first);
-//                joinWindows(leftHashTable.first, leftHashTable.second, rightJoinSate->get(leftHashTable.first).value(), tupleBuffer);
-//            }
+            //            auto handle = rightJoinSate->get(leftHashTable.first);
+            //            if (handle.contains()) {
+            //                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: found join pair for key " << leftHashTable.first);
+            //                joinWindows(leftHashTable.first, leftHashTable.second, rightJoinSate->get(leftHashTable.first).value(), tupleBuffer);
+            //            }
 
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: rightHashTable" << toString() << " check key=" << rightHashTable.first << " nextEdge=" << rightHashTable.second->nextEdge);

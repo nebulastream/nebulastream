@@ -37,5 +37,5 @@ class BaseJoinActionDescriptor {
     JoinActionType action;
 };
 
-}// namespace NES::Windowing
+}// namespace NES::Join
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_JOINACTIONDESCRIPTOR_HPP_

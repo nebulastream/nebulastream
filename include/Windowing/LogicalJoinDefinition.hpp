@@ -56,6 +56,7 @@ class LogicalJoinDefinition {
     DistributionCharacteristicPtr getDistributionType() const;
 
     size_t getNumberOfInputEdges();
+
   private:
     FieldAccessExpressionNodePtr joinKey;
     WindowTriggerPolicyPtr triggerPolicy;

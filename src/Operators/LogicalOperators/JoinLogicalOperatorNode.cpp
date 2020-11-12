@@ -15,12 +15,12 @@
 */
 
 #include <API/Schema.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <z3++.h>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES {
 
@@ -60,10 +60,10 @@ bool JoinLogicalOperatorNode::inferSchema() {
     joinDefinition->getJoinKey()->inferStamp(inputSchema);
 
     outputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField(AttributeField::create("key", joinDefinition->getJoinKey()->getStamp()))
-        ->addField(AttributeField::create("value", joinDefinition->getJoinKey()->getStamp()));
+                       ->addField(createField("start", UINT64))
+                       ->addField(createField("end", UINT64))
+                       ->addField(AttributeField::create("key", joinDefinition->getJoinKey()->getStamp()))
+                       ->addField(AttributeField::create("value", joinDefinition->getJoinKey()->getStamp()));
 
     return true;
 }
@@ -81,6 +81,5 @@ bool JoinLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
-
 
 }// namespace NES

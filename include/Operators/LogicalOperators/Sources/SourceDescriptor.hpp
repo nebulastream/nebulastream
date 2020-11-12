@@ -17,10 +17,10 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
+#include <Operators/OperatorId.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
-#include <Operators/OperatorId.hpp>
 namespace NES {
 
 class SourceDescriptor;
@@ -49,7 +49,6 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @return SchemaPtr
      */
     SchemaPtr getSchema();
-
 
     /**
      * @brief Set a new schema for the descriptor
@@ -116,6 +115,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     virtual ~SourceDescriptor() = default;
 
     OperatorId getOperatorId();
+
   private:
     SchemaPtr schema;
     std::string streamName;

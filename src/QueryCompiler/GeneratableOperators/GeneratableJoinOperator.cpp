@@ -39,7 +39,7 @@ void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 void GeneratableJoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-        codegen->generateCodeForJoin(joinDefinition, context);
+    codegen->generateCodeForJoin(joinDefinition, context);
 }
 
 GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNodePtr logicalJoinOperator, OperatorId id) {
@@ -49,7 +49,6 @@ GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNo
 GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr schemaP, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id) : JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
     setInputSchema(schemaP);
     setOutputSchema(schemaP);
-
 }
 
 const std::string GeneratableJoinOperator::toString() const {

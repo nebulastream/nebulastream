@@ -63,7 +63,8 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     uint32_t ret = !executablePipeline->execute(inputBuffer, pipelineContext, workerContext);
 
     // only get the window manager and state if the pipeline has a window handler.
-    uint64_t maxWaterMark = inputBuffer.getWatermark();;
+    uint64_t maxWaterMark = inputBuffer.getWatermark();
+    ;
 
     if (hasWindowHandler() && maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
@@ -92,7 +93,6 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
         NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnBuffer");
         pipelineContext->getJoinHandler()->trigger();
     }
-
 
     return ret;
 }

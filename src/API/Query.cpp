@@ -32,9 +32,9 @@
 
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <iostream>
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 
 namespace NES {
 

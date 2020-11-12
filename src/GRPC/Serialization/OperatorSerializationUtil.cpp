@@ -57,18 +57,18 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>

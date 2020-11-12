@@ -19,12 +19,12 @@
 
 #include <API/Schema.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
+#include <Operators/OperatorId.hpp>
 #include <Windowing/Watermark/Watermark.hpp>
 #include <atomic>
 #include <mutex>
 #include <optional>
 #include <thread>
-#include <Operators/OperatorId.hpp>
 namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -165,6 +165,7 @@ class DataSource : public Reconfigurable {
     size_t getGatheringInterval() const;
 
     OperatorId getOperatorId();
+
   protected:
     SchemaPtr schema;
     size_t generatedTuples;

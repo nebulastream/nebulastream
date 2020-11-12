@@ -61,8 +61,7 @@ class PipelineExecutionContext {
         Windowing::AbstractWindowHandlerPtr joinHandler,
         Windowing::LogicalWindowDefinitionPtr windowDef,
         Join::LogicalJoinDefinitionPtr joinDef,
-        SchemaPtr inputSchema
-        );
+        SchemaPtr inputSchema);
 
     /**
      * @brief Allocates a new tuple buffer.

@@ -72,8 +72,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         std::stringstream ss;
         ss << "AG:" << pipelineStageId << +"-" << nextPipeline->getQepParentId();
         std::string triggerType;
-        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete ||
-            windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Complete || windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
             triggerType = "Combining";
         } else {
             triggerType = "Slicing";
@@ -147,7 +146,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return windowStateVariable;
     }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() override{
+    LogicalWindowDefinitionPtr getWindowDefinition() override {
         return windowDefinition;
     }
 

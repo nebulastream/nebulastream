@@ -32,7 +32,6 @@ typedef std::shared_ptr<GeneratableMergeOperator> GeneratableMergeOperatorPtr;
 class GeneratableJoinOperator;
 typedef std::shared_ptr<GeneratableJoinOperator> GeneratableJoinOperatorPtr;
 
-
 class GeneratableCompleteWindowOperator;
 typedef std::shared_ptr<GeneratableCompleteWindowOperator> GeneratableWindowOperatorPtr;
 

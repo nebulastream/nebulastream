@@ -51,7 +51,7 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
                            ->addField("value", this->windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(windowSchema);
 
-//        windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
+        //        windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, TupleBuffer& tupleBuffer) {
@@ -175,7 +175,7 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
     }
 
   private:
-//    StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
+    //    StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
     SchemaPtr windowSchema;

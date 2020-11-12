@@ -22,7 +22,6 @@ namespace NES::Join {
 class LogicalJoinDefinition;
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
 
-
 class JoinActionDescriptor;
 typedef std::shared_ptr<JoinActionDescriptor> JoinActionDescriptorPtr;
 
@@ -31,12 +30,10 @@ class ExecutableNestedLoopJoinTriggerAction;
 template<class KeyType>
 using ExecutableNestedLoopJoinTriggerActionPtr = std::shared_ptr<ExecutableNestedLoopJoinTriggerAction<KeyType>>;
 
-
 template<class KeyType>
 class BaseExecutableJoinAction;
 template<class KeyType>
 using BaseExecutableJoinActionPtr = std::shared_ptr<BaseExecutableJoinAction<KeyType>>;
-
 
 class BaseJoinActionDescriptor;
 typedef std::shared_ptr<BaseJoinActionDescriptor> BaseJoinActionDescriptorPtr;

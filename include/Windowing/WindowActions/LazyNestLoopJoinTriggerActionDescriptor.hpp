@@ -28,6 +28,6 @@ class LazyNestLoopJoinTriggerActionDescriptor : public BaseJoinActionDescriptor 
   private:
     LazyNestLoopJoinTriggerActionDescriptor();
 };
-}// namespace NES::Windowing
+}// namespace NES::Join
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_LAZYNESTEDLOOP_HPP
