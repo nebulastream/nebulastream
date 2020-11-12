@@ -46,7 +46,6 @@ class CircularBufferTest : public testing::Test {
 
     size_t testCapacity = 3;
     int testValue = 1;
-    int testAdditionalValue = 2;
 };
 
 TEST_F(CircularBufferTest, initialState) {
