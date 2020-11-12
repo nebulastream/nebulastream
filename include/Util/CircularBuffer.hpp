@@ -36,7 +36,7 @@ class CircularBuffer {
      * @param size of the internal buffer
      */
     explicit CircularBuffer(size_t size) : maxSize(size),
-                                           buffer(std::unique_ptr<T[]>(new T[size])){};
+                                           buffer(std::make_unique<T[]>(size)){};
 
     /**
      * @brief Writes an item to a slot in the buffer. Wraps around
