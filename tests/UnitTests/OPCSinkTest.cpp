@@ -14,34 +14,33 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <gtest/gtest.h>
 #ifdef ENABLE_OPC_BUILD
-#include <string>
-#include <cstring>
-#include <thread>
-#include <NodeEngine/QueryManager.hpp>
-#include <open62541/server.h>
-#include <open62541/server_config_default.h>
-#include <open62541/plugin/pki_default.h>
 #include <API/Schema.hpp>
-#include <Util/Logger.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cstring>
+#include <open62541/plugin/pki_default.h>
+#include <open62541/server.h>
+#include <open62541/server_config_default.h>
+#include <string>
+#include <thread>
 
 #include <NodeEngine/NodeEngine.hpp>
 
 const std::string& url = "opc.tcp://localhost:4840";
 static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
 static volatile UA_Boolean running = true;
-static UA_Server *server = UA_Server_new();
+static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
 class OPCSinkTest : public testing::Test {
   public:
-
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES_DEBUG("OPCSINKTEST::SetUpTestCase()");
@@ -51,8 +50,8 @@ class OPCSinkTest : public testing::Test {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         NES::setupLogging("OPCSinkTest.log", NES::LOG_DEBUG);
         test_schema =
-                Schema::create()
-                        ->addField("var", UINT32);
+            Schema::create()
+                ->addField("var", UINT32);
     }
 
     /* Will be called after a test is executed. */
@@ -62,17 +61,17 @@ class OPCSinkTest : public testing::Test {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_DEBUG("OPCSINKTEST::TearDownTestCases() Tear down OPCSourceTest test class." );
+        NES_DEBUG("OPCSINKTEST::TearDownTestCases() Tear down OPCSourceTest test class.");
     }
 
     static void
-    addVariable(UA_Server *server) {
+    addVariable(UA_Server* server) {
         /* Define the attribute of the myInteger variable node */
         UA_VariableAttributes attr = UA_VariableAttributes_default;
         UA_Int32 myInteger = 42;
         UA_Variant_setScalar(&attr.value, &myInteger, &UA_TYPES[UA_TYPES_INT32]);
-        attr.description = UA_LOCALIZEDTEXT("en-US","the answer");
-        attr.displayName = UA_LOCALIZEDTEXT("en-US","the answer");
+        attr.description = UA_LOCALIZEDTEXT("en-US", "the answer");
+        attr.displayName = UA_LOCALIZEDTEXT("en-US", "the answer");
         attr.dataType = UA_TYPES[UA_TYPES_INT32].typeId;
         attr.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
 
@@ -87,7 +86,7 @@ class OPCSinkTest : public testing::Test {
     }
 
     static void
-    writeVariable(UA_Server *server) {
+    writeVariable(UA_Server* server) {
         UA_NodeId myIntegerNodeId = UA_NODEID_STRING(1, "the.answer");
 
         /* Write a different integer value */
@@ -116,14 +115,15 @@ class OPCSinkTest : public testing::Test {
         UA_Server_write(server, &wv);
     }
 
-    static void startServer(){
+    static void startServer() {
         UA_ServerConfig_setDefault(UA_Server_getConfig(server));
         addVariable(server);
         writeVariable(server);
         UA_StatusCode retval = UA_Server_run(server, &running);
+        std::cout << " retval is=" << retval << std::endl;
     }
 
-    static void stopServer(){
+    static void stopServer() {
         running = false;
         UA_Server_delete(server);
     }
@@ -184,16 +184,16 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     write_buffer.release();
     nodeEngine->stop();
     auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31337, conf);
-    auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId, user, password);
+    auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId, user, password, 1);
     auto tuple_buffer = opcSource->receiveData();
     stopServer();
     size_t value = 0;
-    auto *tuple = (uint32_t *) tuple_buffer->getBuffer();
-    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) Received value is: " << *(uint32_t *) tuple_buffer->getBuffer());
+    auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) Received value is: " << *(uint32_t*) tuple_buffer->getBuffer());
     value = *tuple;
     size_t expected = 45;
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) expected value is: " << expected << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
 }
-}
+}// namespace NES
 #endif
