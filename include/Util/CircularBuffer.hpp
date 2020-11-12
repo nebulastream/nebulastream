@@ -17,19 +17,34 @@
 #ifndef NES_CIRCULARBUFFER_H_
 #define NES_CIRCULARBUFFER_H_
 
-#include <mutex>
 #include <memory>
+#include <mutex>
 namespace NES {
 
+/**
+ * @brief A templated class for a circular buffer. The implementation
+ * is header-only. Currently the structure supports write/read/reset
+ * and checks for isFull/isEmpty/capacity/size.
+ *
+ * @tparam T - type of the value in the buffer slots.
+ */
 template<class T>
 class CircularBuffer {
   public:
-    explicit CircularBuffer(size_t size) :
-        maxSize(size),
-        buffer(std::unique_ptr<T[]>(new T[size])) {};
+    /**
+     * @brief The ctor of the circ buffer, takes a size parameter.
+     * @param size of the internal buffer
+     */
+    explicit CircularBuffer(size_t size) : maxSize(size),
+                                           buffer(std::unique_ptr<T[]>(new T[size])){};
 
-    void write(T item)
-    {
+    /**
+     * @brief Writes an item to a slot in the buffer. Wraps around
+     * using modulo. This can potentially change to mod2.
+     *
+     * @param item to write
+     */
+    void write(T item) {
         std::unique_lock<std::mutex> lock(mutex);
         this->buffer[this->head] = item;
 
@@ -41,8 +56,14 @@ class CircularBuffer {
         this->full = this->head == this->tail;
     }
 
-    T read()
-    {
+    /**
+     * @brief Reads an item from the next slot in the buffer.
+     * If the buffer is empty, it returns a default value. The
+     * tail is wrapped around using tail+1 mod maxSize.
+     *
+     * @return the next value from the buffer
+     */
+    T read() {
         std::unique_lock<std::mutex> lock(mutex);
         if (this->isEmpty()) {
             return T();
@@ -55,46 +76,80 @@ class CircularBuffer {
         return value;
     }
 
-    void reset()
-    {
+    /**
+     * @brief Resets the buffer, by moving head to tail.
+     */
+    void reset() {
         std::unique_lock<std::mutex> lock(mutex);
         this->head = this->tail;
         this->full = false;
     }
 
-    bool isEmpty() const
-    {
+    /**
+     * @brief Checks if buffer is empty.
+     * @return true if not full and buffer is same as tail
+     */
+    bool isEmpty() const {
         return !this->full && (this->head == this->tail);
     }
 
-    bool isFull() const
-    {
+    /**
+     * @brief Checks is buffer is full.
+     * @return value of full
+     */
+    bool isFull() const {
         return this->full;
     }
 
-    size_t capacity() const
-    {
+    /**
+     * @brief Return total capacity of buffer.
+     * @return value of maxSize
+     */
+    size_t capacity() const {
         return this->maxSize;
     }
 
-    size_t size() const
-    {
+    /**
+     * @brief Return size of buffer (no. of items).
+     * @return head - tail and + maxSize if tail > head
+     */
+    size_t size() const {
         size_t size = this->maxSize;
-        if(!this->full) {
+        if (!this->full) {
             size = (this->head >= this->tail)
-                   ? this->head - this->tail
-                   : this->maxSize + this->head - this->tail;
+                ? this->head - this->tail
+                : this->maxSize + this->head - this->tail;
         }
         return size;
     }
 
   private:
-    std::mutex mutex;
+    /**
+     * @brief indicates writes
+     */
     size_t head = 0;
+
+    /**
+     * @brief indicates reads
+     */
     size_t tail = 0;
+
+    /**
+     * @brief maximum size of buffer
+     */
     const size_t maxSize;
-    bool full = false;
+
+    /**
+     * @brief the buffer, of type T[]
+     */
     std::unique_ptr<T[]> buffer;
+
+    /**
+     * @brief state of fullness
+     */
+    bool full = false;
+
+    std::mutex mutex;
 };
 
 }// namespace NES
