@@ -181,7 +181,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
 #if ENABLE_OPC_BUILD
     {
         UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
-        auto source = OPCSourceDescriptor::create(schema, "localhost", nodeId, "", "");
+        auto source = OPCSourceDescriptor::create(schema, "localhost", nodeId, "", "", 1);
         auto serializedSourceDescriptor = OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
@@ -465,7 +465,7 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
     auto schema = Schema::create();
     schema->addField("f1", INT32);
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
-    auto source = LogicalOperatorFactory::createSourceOperator(OPCSourceDescriptor::create(schema, "localhost", nodeId, "", ""));
+    auto source = LogicalOperatorFactory::createSourceOperator(OPCSourceDescriptor::create(schema, "localhost", nodeId, "", "", 1));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
