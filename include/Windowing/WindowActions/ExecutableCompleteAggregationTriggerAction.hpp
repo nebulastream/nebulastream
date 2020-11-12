@@ -150,7 +150,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
                 NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
-                                                                              << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
+                                                                                                << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
                     partialFinalAggregates[windowId] = executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
@@ -209,7 +209,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     }
 
   private:
-//    StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
+    //    StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
     SchemaPtr windowSchema;

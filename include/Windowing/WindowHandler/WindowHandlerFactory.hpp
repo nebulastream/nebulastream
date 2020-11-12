@@ -43,7 +43,7 @@ class WindowHandlerFactory {
    * @param joinDefinition window definition
    * @return AbstractWindowHandlerPtr
    */
-    static AbstractWindowHandlerPtr createJoinWindowHandler(Join::LogicalJoinDefinitionPtr  joinDefinition);
+    static AbstractWindowHandlerPtr createJoinWindowHandler(Join::LogicalJoinDefinitionPtr joinDefinition);
 };
 }// namespace NES::Windowing
 

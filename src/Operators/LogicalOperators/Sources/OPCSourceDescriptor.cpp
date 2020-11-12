@@ -37,7 +37,7 @@ SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, std::string st
 
 OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user,
                                          std::string password, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), operatorId), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password))  {}
+    : SourceDescriptor(std::move(schema), operatorId), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password)) {}
 
 OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema, std::string streamName, std::string url, UA_NodeId nodeId, std::string user,
                                          std::string password, OperatorId operatorId)

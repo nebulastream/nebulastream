@@ -26,4 +26,4 @@ GeneratableWindowOperator::GeneratableWindowOperator(Windowing::LogicalWindowDef
 Windowing::AbstractWindowHandlerPtr GeneratableWindowOperator::createWindowHandler() {
     return Windowing::WindowHandlerFactory::createAggregationWindowHandler(windowDefinition);
 }
-}// namespace nes
+}// namespace NES

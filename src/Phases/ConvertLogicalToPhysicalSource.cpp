@@ -53,7 +53,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Binary File source");
         const BinarySourceDescriptorPtr binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
-        return  createBinaryFileSource(binarySourceDescriptor->getSchema(), bufferManager, queryManager,
+        return createBinaryFileSource(binarySourceDescriptor->getSchema(), bufferManager, queryManager,
                                       binarySourceDescriptor->getFilePath(), sourceDescriptor->getOperatorId());
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");

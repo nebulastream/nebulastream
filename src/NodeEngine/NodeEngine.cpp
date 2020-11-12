@@ -17,6 +17,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -31,7 +32,6 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 
 using namespace std;
 namespace NES {
@@ -175,7 +175,6 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             //currently we only support one window per query
             NES_NOT_IMPLEMENTED();
         }
-
 
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {

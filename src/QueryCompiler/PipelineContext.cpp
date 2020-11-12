@@ -43,7 +43,6 @@ Windowing::AbstractWindowHandlerPtr PipelineContext::getJoin() {
     return this->joinHandler;
 }
 
-
 bool PipelineContext::hasWindow() const {
     return this->windowHandler != nullptr;
 }

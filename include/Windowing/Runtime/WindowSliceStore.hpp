@@ -135,11 +135,9 @@ class WindowSliceStore {
         return originIdToMaxTsMap.size();
     };
 
-    std::string getAllMaxTs()
-    {
+    std::string getAllMaxTs() {
         std::stringstream ss;
-        for(auto& a : originIdToMaxTsMap)
-        {
+        for (auto& a : originIdToMaxTsMap) {
             ss << " id=" << a.first << " val=" << a.second;
         }
         return ss.str();

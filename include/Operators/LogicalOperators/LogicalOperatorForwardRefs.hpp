@@ -32,10 +32,10 @@ typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 }// namespace NES::Windowing
 
-namespace NES::Join{
+namespace NES::Join {
 class LogicalJoinDefinition;
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
-}
+}// namespace NES::Join
 namespace NES {
 
 class LogicalOperatorNode;

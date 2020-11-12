@@ -16,6 +16,7 @@
 
 #include <Network/NetworkSink.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
@@ -29,7 +30,6 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
-#include <Operators/OperatorId.hpp>
 
 namespace NES {
 

@@ -31,8 +31,8 @@
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <Util/Logger.hpp>
 #include <Operators/OperatorId.hpp>
+#include <Util/Logger.hpp>
 #include <open62541/types.h>
 
 namespace NES {

@@ -30,4 +30,4 @@ LazyNestLoopJoinTriggerActionDescriptor::LazyNestLoopJoinTriggerActionDescriptor
     : BaseJoinActionDescriptor(LazyNestedLoopJoin) {
 }
 
-}// namespace NES::Windowing
+}// namespace NES::Join
