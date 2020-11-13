@@ -49,6 +49,10 @@
 #include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
 
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
+#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
+
+
 #include <Windowing/WindowingForwardRefs.hpp>
 
 using namespace NES::Windowing;
@@ -118,7 +122,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation,TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType(), trigger, triggerAction);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType(), trigger, triggerAction);
 
     auto windowManager = new WindowManager(windowDef->getWindowType());
     uint64_t ts = 10;
@@ -135,7 +139,6 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     // ASSERT_EQ(buffers_count, buffers_managed);
     ASSERT_EQ(aggregates[sliceIndex], 2);
 }
-
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
@@ -163,8 +166,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {
-                                           }, nullptr, nullptr, nullptr, nullptr, nullptr) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(
+            0, nullptr, [](TupleBuffer&, WorkerContextRef) {
+            },
+            nullptr, nullptr, nullptr, nullptr, nullptr) {
             // nop
         }
     };
@@ -196,38 +201,21 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
-    struct ResultTuple {
-        ResultTuple(uint64_t start,
-                    uint64_t end,
-                    uint64_t key,
-                    uint64_t value) : start(start),
-                                     end(end),
-                                     key(key),
-                                     value(value) {
-        }
-        uint64_t start;
-        uint64_t end;
-        uint64_t key;
-        uint64_t value;
-    };
-
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDef, exec);
-    std::vector<ResultTuple> resutls;
-//    windowAction->aggregateWindows(10, store, windowDef, resutls);
-//    windowAction->aggregateWindows(10, store, windowDef, resutls);
+    std::vector<NES::Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::ResultTuple> res;
+    windowAction->aggregateWindows(10, store, windowDef, res);
+    windowAction->aggregateWindows(10, store, windowDef, res);
 
-    size_t tupleCnt = buf.getNumberOfTuples();
+    std::cout << "result=" << std::endl;
+    for (auto& a : res) {
+        std::cout << a.start << "," << a.end << "," << a.key << "," << a.value << std::endl;
+    }
 
-    ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
-
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
-    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+    ASSERT_EQ(res[0].start, 0);
+    ASSERT_EQ(res[0].end, 10);
+    ASSERT_EQ(res[0].key, 10);
+    ASSERT_EQ(res[0].value, 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
@@ -253,8 +241,10 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContext&) {
-                                           }, nullptr, nullptr, nullptr, nullptr, nullptr) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(
+            0, nullptr, [](TupleBuffer&, WorkerContext&) {
+            },
+            nullptr, nullptr, nullptr, nullptr, nullptr) {
             // nop
         }
     };
@@ -288,24 +278,24 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
-//    windowAction->aggregateWindows(10, store, windowDef, nullptr, nullptr, nextPipeline, 1);
-//    windowAction->aggregateWindows(11, store, windowDef, nullptr, nullptr, nextPipeline, 1);
+    std::vector<NES::Windowing::ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::ResultTuple> res;
+    windowAction->aggregateWindows(10, store, windowDef, res);
+    windowAction->aggregateWindows(11, store, windowDef, res);
 
-    ASSERT_NE(buf.getBuffer(), nullptr);
+    std::cout << "result=" << std::endl;
+    for (auto& a : res) {
+        std::cout << a.start << "," << a.end << "," << a.key << "," << a.value << std::endl;
+    }
 
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
-    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
-
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+    ASSERT_EQ(res[0].start, 0);
+    ASSERT_EQ(res[0].end, 10);
+    ASSERT_EQ(res[0].key, 10);
+    ASSERT_EQ(res[0].value, 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
-
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -313,7 +303,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(), 0, trigger, triggerAction);
     auto exec = ExecutableSumAggregation<int64_t>::create();
     auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
-    auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
+    auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
       public:
@@ -324,32 +314,34 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     class MockedPipelineExecutionContext : public PipelineExecutionContext {
       public:
-        MockedPipelineExecutionContext() : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) {
-                                           }, nullptr, nullptr, nullptr, nullptr, nullptr) {
+        MockedPipelineExecutionContext() : PipelineExecutionContext(
+            0, nullptr, [](TupleBuffer&, WorkerContextRef) {
+            },
+            nullptr, nullptr, nullptr, nullptr, nullptr) {
             // nop
         }
     };
     auto executable = std::make_shared<MockedExecutablePipeline>();
     auto context = std::make_shared<MockedPipelineExecutionContext>();
     auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
-    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
+    windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
-    auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(w)->getTypedWindowState();
+    auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(windowHandler)->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
 
     uint64_t ts = 7;
-    w->updateAllMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store);
+    windowHandler->updateAllMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
     store->setLastWatermark(7);
 
     ts = 14;
-    w->updateAllMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store);
+    windowHandler->updateAllMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
@@ -359,22 +351,20 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    //    auto typedWindowHandler = w->as<int64_t, int64_t, int64_t, int64_t>();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
-//    windowAction->aggregateWindows(10, store, windowDef, nullptr, nullptr, nextPipeline, 1);
-//    windowAction->aggregateWindows(11, store, windowDef, nullptr, nullptr, nextPipeline, 1);
+    std::vector<NES::Windowing::ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::ResultTuple> res;
+    windowAction->aggregateWindows(10, store, windowDef, res);
+    windowAction->aggregateWindows(11, store, windowDef, res);
 
-    size_t tupleCnt = buf.getNumberOfTuples();
+    std::cout << "result=" << std::endl;
+    for (auto& a : res) {
+        std::cout << a.start << "," << a.end << "," << a.key << "," << a.value << std::endl;
+    }
 
-    ASSERT_NE(buf.getBuffer(), nullptr);
-    ASSERT_EQ(tupleCnt, 1);
-
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
-    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
-    ASSERT_EQ(tuples[0], 0);
-    ASSERT_EQ(tuples[1], 10);
-    ASSERT_EQ(tuples[2], 10);
-    ASSERT_EQ(tuples[3], 1);
+    ASSERT_EQ(res[0].start, 0);
+    ASSERT_EQ(res[0].end, 10);
+    ASSERT_EQ(res[0].key, 10);
+    ASSERT_EQ(res[0].value, 1);
 }
 
 }// namespace NES

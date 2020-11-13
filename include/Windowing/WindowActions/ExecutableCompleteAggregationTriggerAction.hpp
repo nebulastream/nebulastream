@@ -58,7 +58,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         ResultTuple(uint64_t start,
                     uint64_t end,
                     KeyType key,
-                    KeyType value) : start(start),
+                    FinalAggregateType value) : start(start),
                                      end(end),
                                      key(key),
                                      value(value) {
@@ -66,7 +66,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         uint64_t start;
         uint64_t end;
         KeyType key;
-        KeyType value;
+        FinalAggregateType value;
     };
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, QueryManagerPtr queryManager,
