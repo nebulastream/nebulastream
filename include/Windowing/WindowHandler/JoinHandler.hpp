@@ -73,20 +73,7 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     void trigger() override {
         NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString()
                                                     << " origin id=" << originId);
-        auto tupleBuffer = bufferManager->getBufferBlocking();
-        tupleBuffer.setOriginId(originId);
-        executableJoinAction->doAction(leftJoinState, rightJoinState, tupleBuffer);
-
-        if (tupleBuffer.getNumberOfTuples() > 0) {
-            NES_DEBUG("JoinHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
-                                                                  << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, executableJoinAction->getJoinSchema())
-                                                                  << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << executableJoinAction->toString()
-                                                                  << std::endl);
-            //forward buffer to next pipeline stage
-            queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
-        } else {
-            NES_WARNING("JoinHandler: output buffer size is 0 and therefore now buffer is forwarded");
-        }
+        executableJoinAction->doAction(leftJoinState, rightJoinState, queryManager, bufferManager, nextPipeline, originId);
     }
 
     /**

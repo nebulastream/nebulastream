@@ -166,11 +166,9 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
         size_t stageId = operatorIdToPipelineStage[operatorId];
-        NES_DEBUG("QueryManager: added Task for stage " << stageId << " sourceID=" << operatorId);
-
         taskQueue.emplace_back(qep->getStage(operatorIdToPipelineStage[operatorId]), buf);
 
-        NES_DEBUG("QueryManager: added Task " << taskQueue.back().toString() << " for query " << operatorId << " for QEP " << qep
+        NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId << " for QEP " << qep
                                               << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
     }
     cv.notify_all();
@@ -369,7 +367,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
     std::unique_lock lock(workMutex);
     // dispatch buffer as task
     taskQueue.emplace_back(std::move(nextPipeline), buffer);
-    NES_TRACE("QueryManager: added Task " << taskQueue.back().toString() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
+    NES_TRACE("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
     cv.notify_all();
 }
 

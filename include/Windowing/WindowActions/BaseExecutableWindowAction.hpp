@@ -27,7 +27,10 @@ class BaseExecutableWindowAction {
      * @brief This function does the action
      * @return bool indicating success
      */
-    virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, TupleBuffer& tupleBuffer) = 0;
+    virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, QueryManagerPtr queryManager,
+                          BufferManagerPtr bufferManager,
+                          PipelineStagePtr nextPipeline,
+                          uint64_t originId) = 0;
 
     virtual std::string toString() = 0;
 

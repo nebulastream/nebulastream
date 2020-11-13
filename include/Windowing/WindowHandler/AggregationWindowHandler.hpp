@@ -87,20 +87,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         NES_DEBUG("AggregationWindowHandler: run window action " << executableWindowAction->toString()
                                                                  << " distribution type=" << windowDefinition->getDistributionType()->toString()
                                                                  << " origin id=" << originId);
-        auto tupleBuffer = bufferManager->getBufferBlocking();
-        tupleBuffer.setOriginId(originId);
-        executableWindowAction->doAction(getTypedWindowState(), tupleBuffer);
-
-        if (tupleBuffer.getNumberOfTuples() > 0) {
-            NES_DEBUG("AggregationWindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records, content="
-                                                                               << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, executableWindowAction->getWindowSchema())
-                                                                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << executableWindowAction->toString()
-                                                                               << std::endl);
-            //forward buffer to next pipeline stage
-            queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
-        } else {
-            NES_WARNING("AggregationWindowHandler: output buffer size is 0 and therefore now buffer is forwarded");
-        }
+        executableWindowAction->doAction(getTypedWindowState(), queryManager, bufferManager, nextPipeline, originId);
     }
 
     /**

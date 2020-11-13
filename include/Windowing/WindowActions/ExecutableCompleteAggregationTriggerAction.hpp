@@ -54,15 +54,43 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         windowTupleLayout = createRowLayout(windowSchema);
     }
 
-    bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, TupleBuffer& tupleBuffer) {
+    struct ResultTuple {
+        ResultTuple(uint64_t start,
+                    uint64_t end,
+                    KeyType key,
+                    KeyType value) : start(start),
+                                     end(end),
+                                     key(key),
+                                     value(value) {
+        }
+        uint64_t start;
+        uint64_t end;
+        KeyType key;
+        KeyType value;
+    };
+
+    bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, QueryManagerPtr queryManager,
+                  BufferManagerPtr bufferManager,
+                  PipelineStagePtr nextPipeline,
+                  uint64_t originId) {
+        std::vector<ResultTuple> results;
         // iterate over all keys in the window state
+
         for (auto& it : windowStateVariable->rangeAll()) {
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction: " << toString() << " check key=" << it.first << "nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
-            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer);//put key into this
-            // TODO we currently have no handling in the case the tuple buffer is full
+            aggregateWindows(it.first, it.second, this->windowDefinition, results);//put key into this
         }
+
+        //write results
+        if (results.size() != 0) {
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: writeResultRecord write " << results.size() << " records");
+            writeResults(queryManager, bufferManager, nextPipeline, originId, results);
+        } else {
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: writeResultRecord no records to write");
+        }
+
         return true;
     }
 
@@ -110,7 +138,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     void aggregateWindows(KeyType key,
                           WindowSliceStore<PartialAggregateType>* store,
                           LogicalWindowDefinitionPtr windowDefinition,
-                          TupleBuffer& tupleBuffer) {
+                          std::vector<ResultTuple>& results) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -149,7 +177,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
                                                                                                 << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
@@ -159,26 +187,82 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                 }
             }
         }
-        // calculate the final aggregate
-        for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
-            auto window = windows[i];
-            auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
-            NES_DEBUG("Window Handler: write key=" << key << " value=" << value << " window.start()="
-                                                   << window.getStartTs() << " window.getEndTs()="
-                                                   << window.getEndTs() << " tupleBuffer.getNumberOfTuples())" << tupleBuffer.getNumberOfTuples());
-            writeResultRecord<FinalAggregateType>(tupleBuffer,
-                                                  tupleBuffer.getNumberOfTuples(),
-                                                  window.getStartTs(),
-                                                  window.getEndTs(),
-                                                  key,
-                                                  value);
 
-            //TODO: we have to determine which windows and keys to delete
-            tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+        if (windows.size() != 0) {
+            for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
+                auto window = windows[i];
+                auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: write key=" << key
+                                                                                   << " value=" << value << " window.start()="
+                                                                                   << window.getStartTs() << " window.getEndTs()="
+                                                                                   << window.getEndTs() );
+                results.push_back(ResultTuple(window.getStartTs(), window.getEndTs(), key, value));
+            }
+        } else {
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: joinWindows: no window qualifies");
         }
-        //TODO: remove content from state
 
         store->setLastWatermark(watermark);
+    }
+
+    /**
+     * @brief This method writes the content of the window in n buffers
+     * @param key
+     * @param partialFinalAggregates
+     * @param windows
+     * @param queryManager
+     * @param bufferManager
+     * @param nextPipeline
+     * @param originId
+     */
+    void writeResults(QueryManagerPtr queryManager,
+                      BufferManagerPtr bufferManager,
+                      PipelineStagePtr nextPipeline,
+                      uint64_t originId,
+                      std::vector<ResultTuple>& results) {
+
+        //calculate buffer requirements
+        size_t requiredBufferSpace = results.size() * windowSchema->getSchemaSizeInBytes();
+        size_t numberOfRequiredBuffers = std::ceil((double) requiredBufferSpace / (double) bufferManager->getBufferSize());
+        NES_DEBUG("writeAggregates: allocate " << numberOfRequiredBuffers << " buffers for " << results.size() << " tuples");
+
+        //allocate buffer
+        std::vector<TupleBuffer> buffers(numberOfRequiredBuffers);
+        for (size_t i = 0; i < numberOfRequiredBuffers; i++) {
+            buffers[i] = bufferManager->getBufferBlocking();
+            buffers[i].setOriginId(originId);
+        }
+
+        size_t bufferIdx = 0;
+        // calculate the final aggregate
+        for (size_t i = 0; i < results.size(); i++) {
+
+            writeResultRecord<KeyType>(buffers[bufferIdx],
+                                       buffers[bufferIdx].getNumberOfTuples(),
+                                       results[i].start,
+                                       results[i].end,
+                                       results[i].key,
+                                       results[i].value);
+
+            //TODO: we have to determine which windows and keys to delete
+
+            //detect if buffer is full
+            buffers[bufferIdx].setNumberOfTuples(buffers[bufferIdx].getNumberOfTuples() + 1);
+            if (i * windowSchema->getSchemaSizeInBytes() > (bufferIdx + 1) * bufferManager->getBufferSize() || i == results.size() - 1) {
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: Dispatch output buffer with "
+                          << " i * windowSchema->getSchemaSizeInBytes()=" << i * windowSchema->getSchemaSizeInBytes() << " i=" << i << " idx=" << bufferIdx
+                          << " windowSchema->getSchemaSizeInBytes()=" << windowSchema->getSchemaSizeInBytes()
+                          << " bufferManager->getBufferSize()=" << bufferManager->getBufferSize()
+                          << " results.size()=" << results.size()
+                          << buffers[bufferIdx].getNumberOfTuples() << " records, content="
+                          << UtilityFunctions::prettyPrintTupleBuffer(buffers[bufferIdx], windowSchema)
+                          << " originId=" << buffers[bufferIdx].getOriginId() << "windowAction=" << toString()
+                          << std::endl);
+                //forward buffer to next pipeline stage
+                queryManager->addWorkForNextPipeline(buffers[bufferIdx], nextPipeline);
+                bufferIdx++;
+            }
+        }
     }
 
     /**
