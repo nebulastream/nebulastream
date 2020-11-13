@@ -169,7 +169,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         taskQueue.emplace_back(qep->getStage(operatorIdToPipelineStage[operatorId]), buf);
 
         NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId << " for QEP " << qep
-                                              << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
+                                                         << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
     }
     cv.notify_all();
 }
@@ -374,15 +374,17 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
     NES_INFO("QueryManager::completedWork: Work for task=" << task.toString());
     std::unique_lock lock(statisticsMutex);
-    auto statistics = queryToStatisticsMap.find(task.getPipelineStage()->getQepParentId());
+    if (queryToStatisticsMap.contains(task.getPipelineStage()->getQepParentId())) {
+        auto statistics = queryToStatisticsMap.find(task.getPipelineStage()->getQepParentId());
 
-    statistics->incProcessedTasks();
-    if (task.isWatermarkOnly()) {
-        statistics->incProcessedWatermarks();
-    } else if (!task.getPipelineStage()->isReconfiguration()) {
-        statistics->incProcessedBuffers();
+        statistics->incProcessedTasks();
+        if (task.isWatermarkOnly()) {
+            statistics->incProcessedWatermarks();
+        } else if (!task.getPipelineStage()->isReconfiguration()) {
+            statistics->incProcessedBuffers();
+        }
+        statistics->incProcessedTuple(task.getNumberOfTuples());
     }
-    statistics->incProcessedTuple(task.getNumberOfTuples());
 }
 
 QueryExecutionPlan::QueryExecutionPlanStatus QueryManager::getQepStatus(QuerySubPlanId id) {
