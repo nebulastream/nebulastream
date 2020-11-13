@@ -30,7 +30,10 @@ class BaseExecutableJoinAction {
      */
     virtual bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
                           StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
-                          TupleBuffer& tupleBuffer) = 0;
+                          QueryManagerPtr queryManager,
+                          BufferManagerPtr bufferManager,
+                          PipelineStagePtr nextPipeline,
+                          uint64_t originId) = 0;
 
     virtual std::string toString() = 0;
 

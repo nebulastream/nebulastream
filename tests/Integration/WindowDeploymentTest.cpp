@@ -91,7 +91,10 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
-    sleep(17);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
@@ -235,7 +238,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 /**
  * @brief test central tumbling window and processing time
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryProcessingTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployOneWorkerCentralTumblingWindowQueryProcessingTime) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -270,9 +273,11 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryProces
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
-    sleep(20);
-    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
-    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+//    sleep(20);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 4));
 
     std::ifstream f(outputFilePath);
     std::cout << "file content=" << std::endl;
@@ -361,7 +366,11 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTi
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
-    sleep(25);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
     NES_DEBUG("wakeup");
 
     ifstream my_file("testDeployOneWorkerCentralSlidingWindowQueryEventTime.out");
@@ -413,7 +422,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTi
 /**
  * @brief test distributed tumbling window and processing time
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedTumblingWindowQueryProcessingTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployOneWorkerDistributedTumblingWindowQueryProcessingTime) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -440,11 +449,11 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedTumblingWindowQueryPr
                    "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"query.out\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    cout << "wait start" << endl;
-    sleep(10);
-    cout << "wakeup" << endl;
-    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, queryCatalog, 1));
-    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, queryCatalog, 1));
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     std::ifstream f("query.out");
     std::cout << "file content=" << std::endl;
@@ -528,15 +537,17 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedTumblingWindowQueryEv
     wrk2->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"ts\")), "
                    "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    cout << "wait start" << endl;
-    sleep(20);
-    cout << "wakeup" << endl;
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+
 
     ifstream outFile(outputFilePath);
     EXPECT_TRUE(outFile.good());
@@ -639,8 +650,11 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
-    sleep(25);
-    NES_DEBUG("wakeup");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     ifstream my_file("testDeployOneWorkerCentralSlidingWindowQueryEventTime.out");
     EXPECT_TRUE(my_file.good());

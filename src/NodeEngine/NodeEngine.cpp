@@ -424,6 +424,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
         // create a string for logging of the identity which corresponds to the
         // queryId::operatorId::partitionId::subpartitionId
         //TODO: dont use strings for lookups
+        NES_DEBUG("NodeEngine::onDataBuffer addWork operator=" << nesPartition.getOperatorId() << " buffer=" << buffer << " orid=" << buffer.getOriginId());
         queryManager->addWork(nesPartition.getOperatorId(), buffer);
     } else {
         // partition is not registered, discard the buffer

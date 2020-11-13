@@ -136,6 +136,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     ASSERT_EQ(aggregates[sliceIndex], 2);
 }
 
+
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
@@ -195,11 +196,26 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
+    struct ResultTuple {
+        ResultTuple(uint64_t start,
+                    uint64_t end,
+                    uint64_t key,
+                    uint64_t value) : start(start),
+                                     end(end),
+                                     key(key),
+                                     value(value) {
+        }
+        uint64_t start;
+        uint64_t end;
+        uint64_t key;
+        uint64_t value;
+    };
+
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDef, exec);
-
-    windowAction->aggregateWindows(10, store, windowDef, buf);
-    windowAction->aggregateWindows(10, store, windowDef, buf);
+    std::vector<ResultTuple> resutls;
+//    windowAction->aggregateWindows(10, store, windowDef, resutls);
+//    windowAction->aggregateWindows(10, store, windowDef, resutls);
 
     size_t tupleCnt = buf.getNumberOfTuples();
 
@@ -272,8 +288,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
-    windowAction->aggregateWindows(10, store, windowDef, buf);
-    windowAction->aggregateWindows(11, store, windowDef, buf);//this call should not change anything
+//    windowAction->aggregateWindows(10, store, windowDef, nullptr, nullptr, nextPipeline, 1);
+//    windowAction->aggregateWindows(11, store, windowDef, nullptr, nullptr, nextPipeline, 1);
 
     ASSERT_NE(buf.getBuffer(), nullptr);
 
@@ -345,8 +361,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     //    auto typedWindowHandler = w->as<int64_t, int64_t, int64_t, int64_t>();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
-    windowAction->aggregateWindows(10, store, windowDef, buf);
-    windowAction->aggregateWindows(11, store, windowDef, buf);
+//    windowAction->aggregateWindows(10, store, windowDef, nullptr, nullptr, nextPipeline, 1);
+//    windowAction->aggregateWindows(11, store, windowDef, nullptr, nullptr, nextPipeline, 1);
 
     size_t tupleCnt = buf.getNumberOfTuples();
 
