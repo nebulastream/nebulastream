@@ -200,22 +200,22 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     std::cout << aggregates[sliceIndex] << std::endl;
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
-
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDef, exec);
-    std::vector<NES::Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::ResultTuple> res;
-    windowAction->aggregateWindows(10, store, windowDef, res);
-    windowAction->aggregateWindows(10, store, windowDef, res);
+    windowAction->aggregateWindows(10, store, windowDef, buf);
+    windowAction->aggregateWindows(10, store, windowDef, buf);
 
-    std::cout << "result=" << std::endl;
-    for (auto& a : res) {
-        std::cout << a.start << "," << a.end << "," << a.key << "," << a.value << std::endl;
-    }
+    size_t tupleCnt = buf.getNumberOfTuples();
 
-    ASSERT_EQ(res[0].start, 0);
-    ASSERT_EQ(res[0].end, 10);
-    ASSERT_EQ(res[0].key, 10);
-    ASSERT_EQ(res[0].value, 1);
+    ASSERT_NE(buf.getBuffer(), nullptr);
+    ASSERT_EQ(tupleCnt, 1);
+
+    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
+    ASSERT_EQ(tuples[0], 0);
+    ASSERT_EQ(tuples[1], 10);
+    ASSERT_EQ(tuples[2], 10);
+    ASSERT_EQ(tuples[3], 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
@@ -275,22 +275,22 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     std::cout << aggregates[sliceIndex] << std::endl;
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
-
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
-    std::vector<NES::Windowing::ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::ResultTuple> res;
-    windowAction->aggregateWindows(10, store, windowDef, res);
-    windowAction->aggregateWindows(11, store, windowDef, res);
+    windowAction->aggregateWindows(10, store, windowDef, buf);
+    windowAction->aggregateWindows(11, store, windowDef, buf);
 
-    std::cout << "result=" << std::endl;
-    for (auto& a : res) {
-        std::cout << a.start << "," << a.end << "," << a.key << "," << a.value << std::endl;
-    }
+    size_t tupleCnt = buf.getNumberOfTuples();
 
-    ASSERT_EQ(res[0].start, 0);
-    ASSERT_EQ(res[0].end, 10);
-    ASSERT_EQ(res[0].key, 10);
-    ASSERT_EQ(res[0].value, 1);
+    ASSERT_NE(buf.getBuffer(), nullptr);
+    ASSERT_EQ(tupleCnt, 1);
+
+    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
+    ASSERT_EQ(tuples[0], 0);
+    ASSERT_EQ(tuples[1], 10);
+    ASSERT_EQ(tuples[2], 10);
+    ASSERT_EQ(tuples[3], 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
@@ -352,19 +352,19 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
-    std::vector<NES::Windowing::ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::ResultTuple> res;
-    windowAction->aggregateWindows(10, store, windowDef, res);
-    windowAction->aggregateWindows(11, store, windowDef, res);
+    windowAction->aggregateWindows(10, store, windowDef, buf);
+    windowAction->aggregateWindows(11, store, windowDef, buf);
+    size_t tupleCnt = buf.getNumberOfTuples();
 
-    std::cout << "result=" << std::endl;
-    for (auto& a : res) {
-        std::cout << a.start << "," << a.end << "," << a.key << "," << a.value << std::endl;
-    }
+    ASSERT_NE(buf.getBuffer(), nullptr);
+    ASSERT_EQ(tupleCnt, 1);
 
-    ASSERT_EQ(res[0].start, 0);
-    ASSERT_EQ(res[0].end, 10);
-    ASSERT_EQ(res[0].key, 10);
-    ASSERT_EQ(res[0].value, 1);
+    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3] << std::endl;
+    ASSERT_EQ(tuples[0], 0);
+    ASSERT_EQ(tuples[1], 10);
+    ASSERT_EQ(tuples[2], 10);
+    ASSERT_EQ(tuples[3], 1);
 }
 
 }// namespace NES
