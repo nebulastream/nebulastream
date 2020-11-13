@@ -73,7 +73,7 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     void trigger() override {
         NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString()
                                                     << " origin id=" << originId);
-        executableJoinAction->doAction(leftJoinState, rightJoinState, queryManager, bufferManager, nextPipeline, originId);
+        executableJoinAction->doAction(leftJoinState, rightJoinState);
     }
 
     /**
@@ -109,6 +109,8 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         this->leftJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<KeyType>*>("leftSide");
         this->rightJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<KeyType>*>("rightSide");
         this->nextPipeline = nextPipeline;
+
+        executableJoinAction->setup(queryManager, bufferManager, nextPipeline, originId);
 
         NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
         return true;

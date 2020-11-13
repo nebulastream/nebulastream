@@ -41,7 +41,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         return std::make_shared<Join::ExecutableNestedLoopJoinTriggerAction<KeyType>>(joinDefintion);
     }
 
-    ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
+    ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition){
         windowSchema = Schema::create()
                            ->addField(createField("start", UINT64))
                            ->addField(createField("end", UINT64))
@@ -50,28 +50,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         windowTupleLayout = createRowLayout(windowSchema);
     }
 
-    struct ResultTuple {
-        ResultTuple(uint64_t start,
-                    uint64_t end,
-                    KeyType key,
-                    KeyType value) : start(start),
-                                     end(end),
-                                     key(key),
-                                     value(value)
-        {
-        }
-        uint64_t start;
-        uint64_t end;
-        KeyType key;
-        KeyType value;
-    };
-
     bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
-                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
-                  QueryManagerPtr queryManager,
-                  BufferManagerPtr bufferManager,
-                  PipelineStagePtr nextPipeline,
-                  uint64_t originId) {
+                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate) {
 #ifdef EXTENDEDDEBUGGING
         //Print the state content for debugging purposes
         NES_TRACE("leftJoinState content=");
@@ -100,8 +80,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             NES_TRACE(" last watermark=" << val->getLastWatermark() << " minwatermark=" << val->getMinWatermark() << " allMaxTs=" << val->getAllMaxTs());
         }
 #endif
-
-        std::vector<ResultTuple> results;
+        auto tupleBuffer = this->bufferManager->getBufferBlocking();
+        tupleBuffer.setOriginId(this->originId);
         // iterate over all keys in both window states and perform the join
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction doing the nested loop join");
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
@@ -113,19 +93,20 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                     if (leftHashTable.first == rightHashTable.first) {
 
                         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: found join pair for key " << leftHashTable.first);
-                        joinWindows(leftHashTable.first, leftHashTable.second, rightHashTable.second, results);
+                        joinWindows(leftHashTable.first, leftHashTable.second, rightHashTable.second, tupleBuffer);
                     }
                 }
             }
         }
 
-        //write results
-        if (results.size() != 0) {
-            NES_DEBUG("writeResultRecord write " << results.size() << " records");
-            writeResults(queryManager, bufferManager, nextPipeline, originId, results);
-        } else {
-            NES_DEBUG("writeResultRecord no records to write");
-        }
+        //write remaining buffer
+        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: Dispatch last buffer output buffer with "
+                      << tupleBuffer.getNumberOfTuples() << " records, content="
+                      << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
+                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
+                      << std::endl);
+        //forward buffer to next  pipeline stage
+        this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
 
         //update the last seen watermark for ALL keys as the loop above only calls the joinMehtod for matching keys
         auto windowType = joinDefinition->getWindowType();
@@ -183,8 +164,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   */
     void joinWindows(KeyType key,
                      WindowSliceStore<KeyType>* leftStore,
-                     WindowSliceStore<KeyType>* rightStore,
-                     std::vector<ResultTuple>& results) {
+                     WindowSliceStore<KeyType>* rightStore, TupleBuffer& tupleBuffer) {
 
         // TODO we should add a allowed lateness to support out of order events
         auto watermarkLeft = getWatermark(leftStore);
@@ -227,6 +207,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             }
         }
 
+
         if (windows.size() != 0) {
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto window = windows[i];
@@ -234,70 +215,35 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: write key=" << key
                                                                               << " value=" << value << " window.start()="
                                                                               << window.getStartTs() << " window.getEndTs()="
-                                                                              << window.getEndTs());
-                results.push_back(ResultTuple(window.getStartTs(), window.getEndTs(), key, value));
+                                                                              << window.getEndTs()
+                                                                              << " partialFinalAggregates.size=" << partialFinalAggregates.size() << " i=" << i);
+
+                writeResultRecord<KeyType>(tupleBuffer,
+                                           tupleBuffer.getNumberOfTuples(),
+                                           window.getStartTs(),
+                                           window.getEndTs(),
+                                           key,
+                                           value);
+
+                //detect if buffer is full
+                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+                if (tupleBuffer.getNumberOfTuples() * windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
+                    //write full buffer
+                    NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: Dispatch output buffer with "
+                              << tupleBuffer.getNumberOfTuples() << " records, content="
+                              << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
+                              << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
+                              << std::endl);
+                    //forward buffer to next  pipeline stage
+                    this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
+
+                    // request new buffer
+                    tupleBuffer = this->bufferManager->getBufferBlocking();
+                    tupleBuffer.setOriginId(this->originId);
+                }
             }
         } else {
             NES_DEBUG("joinWindows: no window qualifies");
-        }
-    }
-
-    /**
-     * @brief This method writes the content of the window in n buffers
-     * @param key
-     * @param partialFinalAggregates
-     * @param windows
-     * @param queryManager
-     * @param bufferManager
-     * @param nextPipeline
-     * @param originId
-     */
-    void writeResults(QueryManagerPtr queryManager,
-                      BufferManagerPtr bufferManager,
-                      PipelineStagePtr nextPipeline,
-                      uint64_t originId,
-                      std::vector<ResultTuple>& results) {
-        size_t bufferIdx = 0;
-
-        //calculate buffer requirements
-        size_t requiredBufferSpace = results.size() * windowSchema->getSchemaSizeInBytes();
-        size_t numberOfRequiredBuffers = std::ceil((double) requiredBufferSpace / (double) bufferManager->getBufferSize());
-        NES_DEBUG("writeAggregates: allocate " << numberOfRequiredBuffers << " buffers for " << results.size() << " tuples");
-
-        //allocate buffer
-        std::vector<TupleBuffer> buffers(numberOfRequiredBuffers);
-        for (size_t i = 0; i < numberOfRequiredBuffers; i++) {
-            buffers[i] = bufferManager->getBufferBlocking();
-            buffers[i].setOriginId(originId);
-        }
-
-        for (size_t i = 0; i < results.size(); i++) {
-
-            writeResultRecord<KeyType>(buffers[bufferIdx],
-                                       buffers[bufferIdx].getNumberOfTuples(),
-                                       results[i].start,
-                                       results[i].end,
-                                       results[i].key,
-                                       results[i].value);
-
-            //detect if buffer is full
-            buffers[bufferIdx].setNumberOfTuples(buffers[bufferIdx].getNumberOfTuples() + 1);
-            //if new buffer has to be created or
-            if (i * windowSchema->getSchemaSizeInBytes() > (bufferIdx + 1) * bufferManager->getBufferSize()
-                || i == results.size() - 1) {
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: Dispatch output buffer with "
-                          << " i * windowSchema->getSchemaSizeInBytes()=" << i * windowSchema->getSchemaSizeInBytes() << " i=" << i << " idx=" << bufferIdx
-                          << " windowSchema->getSchemaSizeInBytes()=" << windowSchema->getSchemaSizeInBytes()
-                          << " bufferManager->getBufferSize()=" << bufferManager->getBufferSize()
-                          << " results.size()=" << results.size()
-                          << buffers[bufferIdx].getNumberOfTuples() << " records, content="
-                          << UtilityFunctions::prettyPrintTupleBuffer(buffers[bufferIdx], windowSchema)
-                          << " originId=" << buffers[bufferIdx].getOriginId() << "windowAction=" << toString()
-                          << std::endl);
-                //forward buffer to next pipeline stage
-                queryManager->addWorkForNextPipeline(buffers[bufferIdx], nextPipeline);
-                bufferIdx++;
-            }
         }
     }
 

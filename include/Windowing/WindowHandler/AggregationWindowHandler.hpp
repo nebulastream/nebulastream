@@ -87,7 +87,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         NES_DEBUG("AggregationWindowHandler: run window action " << executableWindowAction->toString()
                                                                  << " distribution type=" << windowDefinition->getDistributionType()->toString()
                                                                  << " origin id=" << originId);
-        executableWindowAction->doAction(getTypedWindowState(), queryManager, bufferManager, nextPipeline, originId);
+        executableWindowAction->doAction(getTypedWindowState());
     }
 
     /**
@@ -119,6 +119,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         this->windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
         this->nextPipeline = nextPipeline;
 
+        executableWindowAction->setup(queryManager, bufferManager, nextPipeline, originId);
         NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
         return true;
     }

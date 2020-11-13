@@ -27,14 +27,27 @@ class BaseExecutableWindowAction {
      * @brief This function does the action
      * @return bool indicating success
      */
-    virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, QueryManagerPtr queryManager,
-                          BufferManagerPtr bufferManager,
-                          PipelineStagePtr nextPipeline,
-                          uint64_t originId) = 0;
+    virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable) = 0;
 
     virtual std::string toString() = 0;
 
+    void setup(QueryManagerPtr queryManager,
+               BufferManagerPtr bufferManager,
+               PipelineStagePtr nextPipeline,
+               uint64_t originId) {
+        this->queryManager = queryManager;
+        this->bufferManager = bufferManager;
+        this->nextPipeline = nextPipeline;
+        this->originId = originId;
+    }
+
     virtual SchemaPtr getWindowSchema() = 0;
+
+  protected:
+    QueryManagerPtr queryManager;
+    BufferManagerPtr bufferManager;
+    PipelineStagePtr nextPipeline;
+    uint64_t originId;
 };
 }// namespace NES::Windowing
 

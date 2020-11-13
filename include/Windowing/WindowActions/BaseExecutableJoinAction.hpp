@@ -29,15 +29,27 @@ class BaseExecutableJoinAction {
      * @return bool indicating success
      */
     virtual bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
-                          StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
-                          QueryManagerPtr queryManager,
-                          BufferManagerPtr bufferManager,
-                          PipelineStagePtr nextPipeline,
-                          uint64_t originId) = 0;
+                          StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate) = 0;
 
     virtual std::string toString() = 0;
 
     virtual SchemaPtr getJoinSchema() = 0;
+
+    void setup(QueryManagerPtr queryManager,
+               BufferManagerPtr bufferManager,
+               PipelineStagePtr nextPipeline,
+               uint64_t originId) {
+        this->queryManager = queryManager;
+        this->bufferManager = bufferManager;
+        this->nextPipeline = nextPipeline;
+        this->originId = originId;
+    }
+
+  protected:
+    QueryManagerPtr queryManager;
+    BufferManagerPtr bufferManager;
+    PipelineStagePtr nextPipeline;
+    uint64_t originId;
 };
 }// namespace NES::Join
 
