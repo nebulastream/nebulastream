@@ -616,10 +616,6 @@ TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
     cout << "queryid=" << queryId << endl;
     ASSERT_TRUE(!TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-//    NES_INFO("MergeDeploymentTest: Remove query");
-//    queryService->validateAndQueueStopRequest(queryId);
-//    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     NES_INFO("MergeDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
