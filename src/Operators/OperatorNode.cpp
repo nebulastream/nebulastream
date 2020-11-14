@@ -39,8 +39,7 @@ SchemaPtr OperatorNode::getOutputSchema() const {
 bool OperatorNode::inferSchema() {
     // We assume that all children operators have the same output schema otherwise this plan is not valid
     for (const auto& child : children) {
-        if(!child->as<OperatorNode>()->inferSchema())
-        {
+        if (!child->as<OperatorNode>()->inferSchema()) {
             return false;
         }
     }
