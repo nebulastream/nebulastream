@@ -93,7 +93,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ysb source");
         const YSBSourceDescriptorPtr ysbSourceDescriptor = sourceDescriptor->as<YSBSourceDescriptor>();
         return createYSBSource(bufferManager, queryManager, ysbSourceDescriptor->getNumberOfTuplesToProducePerBuffer(), ysbSourceDescriptor->getNumBuffersToProcess(),
-                               ysbSourceDescriptor->getFrequency(), ysbSourceDescriptor->isEndlessRepeat());
+                               ysbSourceDescriptor->getFrequency(), ysbSourceDescriptor->isEndlessRepeat(), ysbSourceDescriptor->getOperatorId());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

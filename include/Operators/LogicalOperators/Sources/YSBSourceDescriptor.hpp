@@ -30,13 +30,15 @@ class YSBSourceDescriptor : public SourceDescriptor {
     static SourceDescriptorPtr create(size_t numberOfTuplesToProducePerBuffer,
                                       size_t numBuffersToProcess,
                                       size_t frequency,
-                                      bool endlessRepeat);
+                                      bool endlessRepeat,
+                                      OperatorId operatorId);
 
     static SourceDescriptorPtr create(std::string streamName,
                                       size_t numberOfTuplesToProducePerBuffer,
                                       size_t numBuffersToProcess,
                                       size_t frequency,
-                                      bool endlessRepeat);
+                                      bool endlessRepeat,
+                                      OperatorId operatorId);
 
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;
@@ -50,13 +52,15 @@ class YSBSourceDescriptor : public SourceDescriptor {
     explicit YSBSourceDescriptor(size_t numberOfTuplesToProducePerBuffer,
                                  size_t numBuffersToProcess,
                                  size_t frequency,
-                                 bool endlessRepeat);
+                                 bool endlessRepeat,
+                                 OperatorId operatorId);
 
     explicit YSBSourceDescriptor(std::string streamName,
                                  size_t numberOfTuplesToProducePerBuffer,
                                  size_t numBuffersToProcess,
                                  size_t frequency,
-                                 bool endlessRepeat);
+                                 bool endlessRepeat,
+                                 OperatorId operatorId);
 
   private:
     size_t numBuffersToProcess;

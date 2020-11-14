@@ -595,7 +595,7 @@ TEST_F(SourceTest, testYSBSource) {
     size_t numBuffers = 2;
     size_t numTuples = 30;
 
-    auto source = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, numTuples, 1, false);
+    auto source = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, numTuples, 1, false, 1);
     SchemaPtr schema = source->getSchema();
 
 

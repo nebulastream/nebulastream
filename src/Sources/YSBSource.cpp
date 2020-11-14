@@ -56,8 +56,8 @@ void generate(YSBSource::ysbRecord& rec) {
 }
 
 YSBSource::YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
-                     size_t numberOfTuplesPerBuffer, size_t frequency, bool endlessRepeat)
-    : DefaultSource(YSB_SCHEMA(), bufferManager, queryManager, numbersOfBufferToProduce, frequency),
+                     size_t numberOfTuplesPerBuffer, size_t frequency, bool endlessRepeat, OperatorId operatorId)
+    : DefaultSource(YSB_SCHEMA(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       numberOfTuplesPerBuffer(numberOfTuplesPerBuffer),
       endlessRepeat(endlessRepeat) {}
 
