@@ -34,8 +34,7 @@ const std::string MergeLogicalOperatorNode::toString() const {
 }
 
 bool MergeLogicalOperatorNode::inferSchema() {
-    if(!OperatorNode::inferSchema())
-    {
+    if (!OperatorNode::inferSchema()) {
         return false;
     }
     if (getChildren().size() != 2) {
