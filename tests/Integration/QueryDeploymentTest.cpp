@@ -95,7 +95,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
-    
+
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
                                                                      1, 0, 3,
