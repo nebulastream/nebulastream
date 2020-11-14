@@ -21,23 +21,23 @@
 
 namespace NES {
 
-SourceDescriptorPtr YSBSourceDescriptor::create(size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat) {
-    return std::make_shared<YSBSourceDescriptor>(YSBSourceDescriptor(numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat));
+SourceDescriptorPtr YSBSourceDescriptor::create(size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, OperatorId operatorId) {
+    return std::make_shared<YSBSourceDescriptor>(YSBSourceDescriptor(numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat, operatorId));
 }
 
-SourceDescriptorPtr YSBSourceDescriptor::create(std::string streamName, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat) {
-    return std::make_shared<YSBSourceDescriptor>(YSBSourceDescriptor(std::move(streamName), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat));
+SourceDescriptorPtr YSBSourceDescriptor::create(std::string streamName, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, OperatorId operatorId) {
+    return std::make_shared<YSBSourceDescriptor>(YSBSourceDescriptor(std::move(streamName), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat, operatorId));
 }
 
-YSBSourceDescriptor::YSBSourceDescriptor(size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat)
-    : SourceDescriptor(YSBSource::YSB_SCHEMA()),
+YSBSourceDescriptor::YSBSourceDescriptor(size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, OperatorId operatorId)
+    : SourceDescriptor(YSBSource::YSB_SCHEMA(), operatorId),
       numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       frequency(frequency),
       endlessRepeat(endlessRepeat) {}
 
-YSBSourceDescriptor::YSBSourceDescriptor(std::string streamName, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat)
-    : SourceDescriptor(YSBSource::YSB_SCHEMA(), std::move(streamName)),
+YSBSourceDescriptor::YSBSourceDescriptor(std::string streamName, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, OperatorId operatorId)
+    : SourceDescriptor(YSBSource::YSB_SCHEMA(), std::move(streamName), operatorId),
       numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       frequency(frequency),

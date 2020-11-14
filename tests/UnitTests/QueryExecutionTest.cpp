@@ -671,12 +671,12 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     int numBuf = 3;
     int numTup = 50;
 
-    auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, false);
+    auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, false, 1);
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, 1);
 
     //TODO: make query work
     auto query = TestQuery::from(ysbSource->getSchema())
-        .filter(Attribute("event_type")>1)
+        //.filter(Attribute("event_type")>1)
         //             .windowByKey(
         //                 Attribute("campaign_id"),
         //                 TumblingWindow::of(
