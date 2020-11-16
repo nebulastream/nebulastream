@@ -207,7 +207,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             }
         }
 
-
+        uint64_t cnt = tupleBuffer.getNumberOfTuples();
         if (windows.size() != 0) {
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto window = windows[i];
@@ -219,18 +219,18 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                                               << " partialFinalAggregates.size=" << partialFinalAggregates.size() << " i=" << i);
 
                 writeResultRecord<KeyType>(tupleBuffer,
-                                           tupleBuffer.getNumberOfTuples(),
+                                           cnt,
                                            window.getStartTs(),
                                            window.getEndTs(),
                                            key,
                                            value);
 
                 //detect if buffer is full
-                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
-                if (tupleBuffer.getNumberOfTuples() * windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
+                cnt++;
+                if (cnt * windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
                     //write full buffer
                     NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: Dispatch output buffer with "
-                              << tupleBuffer.getNumberOfTuples() << " records, content="
+                              << cnt << " records, content="
                               << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                               << std::endl);
@@ -240,8 +240,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                     // request new buffer
                     tupleBuffer = this->bufferManager->getBufferBlocking();
                     tupleBuffer.setOriginId(this->originId);
+                    cnt = 0;
                 }
             }
+            tupleBuffer.setNumberOfTuples(cnt);
         } else {
             NES_DEBUG("joinWindows: no window qualifies");
         }
