@@ -101,14 +101,18 @@ TEST_F(Z3ValidationTest, evaluateValidBinssomialEquation) {
     //Define int constants
     sort sort = c.string_sort();
     expr x = c.constant(c.str_symbol("x"), sort);
+    expr y = c.int_const("Y");
 
     expr valX = c.string_val("x");
-    expr valY = c.string_val("x");
+    expr valY = c.int_val(10);
 
-    //Add equations to
-    //    s.add(x > 1);
-    //    s.add(y > 1);
-    s.add(x == valX && x == valY);
+    //Add equations
+    auto xEqualValX = to_expr(c, Z3_mk_eq(c, x, valX));
+    auto xEqualValY = to_expr(c, Z3_mk_ge(c, y, valY));
+    Z3_ast arr[] = {xEqualValX, xEqualValY};
+
+    auto expt = to_expr(c, Z3_mk_and(c, 2, arr));
+    s.add(expt);
 
     //Assert
     ASSERT_EQ(s.check(), sat);

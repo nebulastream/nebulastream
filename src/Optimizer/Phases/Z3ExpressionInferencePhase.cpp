@@ -22,15 +22,14 @@
 
 namespace NES::Optimizer {
 
-Z3ExpressionInferencePhase::Z3ExpressionInferencePhase() {
-    context = std::make_shared<z3::context>();
+Z3ExpressionInferencePhase::Z3ExpressionInferencePhase(z3::ContextPtr context): context(context) {
     NES_DEBUG("Z3ExpressionInferencePhase()");
 }
 
 Z3ExpressionInferencePhase::~Z3ExpressionInferencePhase() { NES_DEBUG("~Z3ExpressionInferencePhase()"); }
 
-Z3ExpressionInferencePhasePtr Z3ExpressionInferencePhase::create() {
-    return std::make_shared<Z3ExpressionInferencePhase>(Z3ExpressionInferencePhase());
+Z3ExpressionInferencePhasePtr Z3ExpressionInferencePhase::create(z3::ContextPtr context) {
+    return std::make_shared<Z3ExpressionInferencePhase>(Z3ExpressionInferencePhase(context));
 }
 
 void Z3ExpressionInferencePhase::execute(QueryPlanPtr queryPlan) {

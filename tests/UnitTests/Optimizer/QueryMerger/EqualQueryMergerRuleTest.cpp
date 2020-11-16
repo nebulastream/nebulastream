@@ -30,9 +30,10 @@
 #include <Optimizer/Phases/Z3ExpressionInferencePhase.hpp>
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <z3++.h>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 
 using namespace NES;
 
@@ -48,11 +49,7 @@ class EqualQueryMergerRuleTest : public testing::Test {
         NES_INFO("Setup EqualQueryMergerRuleTest test case.");
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         streamCatalog = std::make_shared<StreamCatalog>();
-        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-        streamCatalog->addPhysicalStream("car", sce);
+        streamCatalog->addLogicalStream("car", schema);
     }
 
     /* Will be called before a test is executed. */
@@ -96,9 +93,14 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
-    Optimizer::Z3ExpressionInferencePhasePtr z3InferencePhase = NES::Optimizer::Z3ExpressionInferencePhase::create();
+    auto z3InferencePhase = Optimizer::Z3ExpressionInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
+
+    auto equalQueryMergerRule = Optimizer::EqualQueryMergerRule::create(context);
+    bool isEqual = equalQueryMergerRule->apply(queryPlan1, queryPlan2);
+
+    ASSERT_TRUE(isEqual);
 
     //    auto globalQueryPlan = GlobalQueryPlan::create();
     //    globalQueryPlan->addQueryPlan(queryPlan1);

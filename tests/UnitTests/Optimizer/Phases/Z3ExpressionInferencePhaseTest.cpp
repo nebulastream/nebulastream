@@ -19,6 +19,7 @@
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/Z3ExpressionInferencePhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -63,7 +64,8 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto z3ExpressionInferencePhase = Z3ExpressionInferencePhase::create();
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3ExpressionInferencePhase = Z3ExpressionInferencePhase::create(context);
 
     auto query1 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan1 = query1.getQueryPlan();
@@ -89,6 +91,17 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     Z3_ast arrays[] = {mapOperators1[0]->getZ3Expression(), !mapOperators2[0]->getZ3Expression()};
     solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
+    ASSERT_EQ(result, z3::unsat);
+
+    auto srcOperators1 = plan1->getOperatorByType<SourceLogicalOperatorNode>();
+    auto srcOperators2 = plan2->getOperatorByType<SourceLogicalOperatorNode>();
+
+    ASSERT_EQ(srcOperators1.size(), 1);
+    ASSERT_EQ(srcOperators2.size(), 1);
+
+    Z3_ast arrays1[] = {srcOperators1[0]->getZ3Expression(), !srcOperators2[0]->getZ3Expression()};
+    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays1)));
+    result = solver.check();
     ASSERT_EQ(result, z3::unsat);
 }
 }// namespace NES::Optimizer
