@@ -29,6 +29,9 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <iostream>
+#include <yaml/Yaml.hpp>
+#include <memory>
+#include <string>
 
 namespace po = boost::program_options;
 using namespace NES;
@@ -87,39 +90,39 @@ int main(int argc, const char* argv[]) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+    if (vm.count("help")) {
+        NES_INFO("Basic Command Line Parameter ");
+        NES_INFO(serverOptions);
+        return 0;
+    }
+
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
+    NES_DEBUG("Read config from file: " << configurationFilePath);
 
     if (configurationFilePath.empty()){
         NES_INFO("NESCOORDINATORSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES Coordinator Configuration YAML file.");
         return EXIT_FAILURE;
     }
-    YAML::Node config;
+    Yaml::Node config;
     try {
-        config = YAML::LoadFile(configurationFilePath);
+        Yaml::Parse(config,configurationFilePath.c_str());
     } catch (const std::exception& e) {
-        NES_INFO("NESCOORDINATORSTARTER: Could not read yaml file. Check input path and location.");
-        return EXIT_FAILURE;
+        NES_ERROR("NESWORKERSTARTER: Cannot read configuration file with file path: " << configurationFilePath);
     }
 
     // Initializing variables
-    auto restPort = config["restPort"].as<uint16_t>();
-    auto rpcPort = config["coordinatorPort"].as<uint16_t>();
-    auto serverIp = config["serverIp"].as<std::string>();
-    auto logLevel = config["logLevel"].as<std::string>();
-    auto numberOfSlots = config["numberOfSlots"].as<uint16_t>();
-    auto enableQueryMerging = config["enableQueryMerging"].as<bool>();
+    auto restPort = config["restPort"].As<uint16_t>();
+    auto rpcPort = config["coordinatorPort"].As<uint16_t>();
+    auto serverIp = config["serverIp"].As<string>();
+    auto numberOfSlots = config["numberOfSlots"].As<uint16_t>();
+    bool enableQueryMerging = config["enableQueryMerging"].As<bool>();
 
     if (numberOfSlots == 0){
         const auto processorCount = std::thread::hardware_concurrency();
         numberOfSlots = processorCount;
     }
 
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
-
-    if (vm.count("help")) {
-        NES_INFO("Basic Command Line Parameter ");
-        NES_INFO(serverOptions);
-        return 0;
-    }
+    NES_DEBUG("start coordinator ip=" << serverIp << " with rpc port " << rpcPort << " restPort=" << restPort << " numberOfSlots=" << numberOfSlots);
 
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd =
@@ -130,4 +133,5 @@ int main(int argc, const char* argv[]) {
     crd->startCoordinator(/**blocking**/ true);//blocking call
     crd->stopCoordinator(true);
     NES_INFO("coordinator started");
+
 }
