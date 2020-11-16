@@ -37,7 +37,7 @@ void YSBSource::generate(YSBSource::YsbRecord& rec) {
     rec.campaignId = rand() % 10000;
 
     rec.eventType = tmpEventType;
-    tmpEventType = (tmpEventType+1) % 3;
+    tmpEventType = (tmpEventType + 1) % 3;
 
     auto ts = std::chrono::high_resolution_clock::now();
     rec.currentMs = ts.time_since_epoch().count();

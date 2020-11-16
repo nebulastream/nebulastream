@@ -57,8 +57,7 @@ class YSBSource : public DefaultSource {
   public:
     struct __attribute__((packed)) YsbRecord {
         YsbRecord() = default;
-        YsbRecord(uint16_t userId, uint16_t pageId, uint16_t campaignId, uint16_t adType, uint16_t eventType, uint64_t currentMs, uint32_t ip):
-        userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs), ip(ip){}
+        YsbRecord(uint16_t userId, uint16_t pageId, uint16_t campaignId, uint16_t adType, uint16_t eventType, uint64_t currentMs, uint32_t ip) : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs), ip(ip) {}
 
         uint16_t userId;
         uint16_t pageId;
