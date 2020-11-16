@@ -385,6 +385,9 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());
     }
+    {
+        NES_WARNING("queryToStatisticsMap not set, this should only happen for testing")
+    }
 }
 
 QueryExecutionPlan::QueryExecutionPlanStatus QueryManager::getQepStatus(QuerySubPlanId id) {
