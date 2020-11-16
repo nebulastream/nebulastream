@@ -51,7 +51,7 @@ namespace NES {
 
 std::string UtilityFunctions::trim(std::string s) {
     auto not_space = [](char c) {
-      return isspace(c) == 0;
+        return isspace(c) == 0;
     };
     // trim left
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
@@ -133,7 +133,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "}" << std::endl;
         code << "}" << std::endl;
         NES_DEBUG("UtilityFunctions: query code \n"
-                      << code.str());
+                  << code.str());
         Compiler compiler;
         CompiledCodePtr compiled_code = compiler.compile(code.str(), true);
         if (!code) {
@@ -182,8 +182,8 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
 
         typedef Schema (*CreateSchemaFunctionPtr)();
         CreateSchemaFunctionPtr func = compiled_code
-            ->getFunctionPointer<CreateSchemaFunctionPtr>(
-                "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
+                                           ->getFunctionPointer<CreateSchemaFunctionPtr>(
+                                               "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
         }
