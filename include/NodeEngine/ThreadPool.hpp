@@ -39,7 +39,7 @@ class ThreadPool {
     /**
      * @brief default constructor
      */
-    ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, size_t numThreads = 1);
+    ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint16_t numThreads);
 
     /**
      * @brief default destructor
@@ -84,20 +84,20 @@ class ThreadPool {
      * @note this effect will take place after the next restart
      * @param number of threads
      */
-    void setNumberOfThreadsWithoutRestart(size_t size);
+    void setNumberOfThreadsWithoutRestart(uint16_t size);
 
     /**
       * @brief set the number of threads in the thread pool
       * @param number of threads
       * @caution this will restart the engine
       */
-    void setNumberOfThreadsWithRestart(size_t size);
+    void setNumberOfThreadsWithRestart(uint16_t size);
 
     /**
      * @brief get the current number of threads in thread pool
      * @return number of current threads
      */
-    size_t getNumberOfThreads();
+    uint16_t getNumberOfThreads();
 
     /**
      *@brief restart the node engine
@@ -108,7 +108,7 @@ class ThreadPool {
     //indicating if the thread pool is running, used for multi-thread execution
     const uint64_t nodeId;
     std::atomic<bool> running;
-    std::atomic<size_t> numThreads;
+    std::atomic<uint16_t> numThreads;
     std::vector<std::thread> threads;
     std::mutex reconfigLock;
     QueryManagerPtr queryManager;

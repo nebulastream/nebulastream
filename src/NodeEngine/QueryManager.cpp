@@ -46,9 +46,8 @@ uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, PipelineExecutionCon
 }
 }// namespace detail
 
-QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId)
-    : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)),
-      nodeEngineId(nodeEngineId) {
+QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
+    : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId), numThreads(numThreads) {
     NES_DEBUG("Init QueryManager::QueryManager");
     reconfigurationExecutable = std::make_shared<CompiledExecutablePipeline>(detail::reconfigurationTaskEntryPoint);
 }
@@ -59,11 +58,10 @@ QueryManager::~QueryManager() {
 }
 
 bool QueryManager::startThreadPool() {
-    NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId);
+    NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     NES_ASSERT(threadPool == nullptr, "thread pool already running");
-    threadPool = std::make_shared<ThreadPool>(nodeEngineId, shared_from_this());
-    nodeEngineId = nodeEngineId;
+    threadPool = std::make_shared<ThreadPool>(nodeEngineId, shared_from_this(), numThreads);
     return threadPool->start();
 }
 
