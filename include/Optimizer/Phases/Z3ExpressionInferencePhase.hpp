@@ -44,7 +44,7 @@ class Z3ExpressionInferencePhase {
      * @brief Create instance of Z3ExpressionInferencePhase class
      * @return shared instance of the Z3ExpressionInferencePhase
      */
-    static Z3ExpressionInferencePhasePtr create();
+    static Z3ExpressionInferencePhasePtr create(z3::ContextPtr context);
 
     /**
      * @brief this method will compute the Z3 expression for all operators of the input query plan
@@ -61,7 +61,7 @@ class Z3ExpressionInferencePhase {
     ~Z3ExpressionInferencePhase();
 
   private:
-    explicit Z3ExpressionInferencePhase();
+    explicit Z3ExpressionInferencePhase(z3::ContextPtr context);
     z3::ContextPtr context;
 };
 }// namespace NES::Optimizer

@@ -83,7 +83,7 @@ class EqualQueryMergerRule {
      * @brief apply the rule on Global Query Plan
      * @param globalQueryPlan : the global query plan
      */
-    void apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan2);
+    bool apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan2);
 
   private:
     explicit EqualQueryMergerRule(z3::ContextPtr context);

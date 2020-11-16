@@ -14,7 +14,9 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/EqualQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -31,17 +33,37 @@ EqualQueryMergerRulePtr EqualQueryMergerRule::create(z3::ContextPtr context) {
     return std::make_shared<EqualQueryMergerRule>(EqualQueryMergerRule(context));
 }
 
-void EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan2) {
+bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan2) {
     auto roots1 = queryPlan1->getRootOperators();
     auto roots2 = queryPlan2->getRootOperators();
 
-    z3::expr_vector expressions(*context);
+    z3::expr_vector expressions1(*context);
+
     for (auto& root : roots1) {
         auto family = root->getAndFlattenAllChildren();
-        for(auto& member: family){
-            member->as<LogicalOperatorNode>()->getZ3Expression();
+        for (auto& member : family) {
+            z3::expr x = member->as<LogicalOperatorNode>()->getZ3Expression();
+            expressions1.push_back(x);
         }
     }
+    z3::expr mkAnd1 = z3::mk_and(expressions1).simplify();
+
+    z3::expr_vector expressions2(*context);
+    for (auto& root : roots2) {
+        auto family = root->getAndFlattenAllChildren();
+        for (auto& member : family) {
+            expressions2.push_back(member->as<LogicalOperatorNode>()->getZ3Expression());
+        }
+    }
+
+    z3::expr mkAnd2 = z3::mk_and(expressions2).simplify();
+
+    Z3_ast arrays[] = {mkAnd1, !mkAnd2};
+    auto expr = z3::to_expr(*context, Z3_mk_and(*context, 2, arrays));
+
+    z3::solver solver(*context);
+    solver.add(expr);
+    return solver.check() == z3::unsat;
 }
 
 }// namespace NES::Optimizer

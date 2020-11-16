@@ -23,6 +23,7 @@ namespace NES {
 LogicalOperatorNode::LogicalOperatorNode(uint64_t id) : expr(nullptr), OperatorNode(id) {}
 
 z3::expr& LogicalOperatorNode::getZ3Expression() { return *expr; }
+
 void LogicalOperatorNode::inferZ3Expression(z3::ContextPtr context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("Inferring Z3 expressions for " << operatorNode->toString());
