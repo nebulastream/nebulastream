@@ -685,7 +685,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
                      .sink(DummySink::create());
 
     //TODO: change schema to match the appropriate output schema
-    auto testSink = TestSink::create(/*expected result buffer*/ numBuf, YSBSource::YSB_SCHEMA(), nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ numBuf, YSBSource::YsbSchema(), nodeEngine->getBufferManager());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -719,13 +719,13 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     size_t noBufs = 0;
     for (auto buf : testSink->resultBuffers) {
         noBufs++;
-        auto ysbRecords = buf.getBufferAs<YSBSource::ysbRecord>();
+        auto ysbRecords = buf.getBufferAs<YSBSource::YsbRecord>();
         std::cout << "---------------------------------------------" << std::endl;
         for (int i = 0; i < numTup; i++) {
             auto record = ysbRecords[i];
-            std::cout << "i=" << i << " record.current_ms: " << record.current_ms << ", record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
-            EXPECT_TRUE(0 <= record.campaign_id && record.campaign_id < 10000);
-            EXPECT_TRUE(0 <= record.event_type && record.event_type < 3);
+            std::cout << "i=" << i << " record.current_ms: " << record.currentMs << ", record.ad_type: " << record.adType << ", record.event_type: " << record.eventType << std::endl;
+            EXPECT_TRUE(0 <= record.campaignId && record.campaignId < 10000);
+            EXPECT_TRUE(0 <= record.eventType && record.eventType < 3);
         }
     }
     EXPECT_EQ(noBufs, numBuf);

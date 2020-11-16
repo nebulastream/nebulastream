@@ -36,33 +36,59 @@ class YSBSource : public DefaultSource {
      */
     const std::string toString() const override;
 
-    static SchemaPtr YSB_SCHEMA();
+    static SchemaPtr YsbSchema() {
+        return Schema::create()
+            ->addField("user_id", UINT16)
+            ->addField("page_id", UINT16)
+            ->addField("campaign_id", UINT16)
+            ->addField("ad_type", UINT16)
+            ->addField("event_type", UINT16)
+            ->addField("current_ms", UINT64)
+            ->addField("ip", INT32);
+    };
 
   public:
-    struct __attribute__((packed)) ysbRecord {
-        uint16_t user_id;
-        uint16_t page_id;
-        uint16_t campaign_id;
-        uint16_t ad_type;
-        uint16_t event_type;
-        int64_t current_ms;
+    struct __attribute__((packed)) YsbRecord {
+        YsbRecord() = default;
+        YsbRecord(uint16_t userId, uint16_t pageId, uint16_t campaignId, uint16_t adType, uint16_t eventType, uint64_t currentMs, uint32_t ip):
+        userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs), ip(ip){}
+
+        uint16_t userId;
+        uint16_t pageId;
+        uint16_t campaignId;
+        uint16_t adType;
+        uint16_t eventType;
+        uint64_t currentMs;
         uint32_t ip;
 
-        ysbRecord(const ysbRecord& rhs) {
-            user_id = rhs.user_id;
-            page_id = rhs.page_id;
-            campaign_id = rhs.campaign_id;
-            ad_type = rhs.ad_type;
-            event_type = rhs.event_type;
-            current_ms = rhs.current_ms;
+        YsbRecord(const YsbRecord& rhs) {
+            userId = rhs.userId;
+            pageId = rhs.pageId;
+            campaignId = rhs.campaignId;
+            adType = rhs.adType;
+            eventType = rhs.eventType;
+            currentMs = rhs.currentMs;
             ip = rhs.ip;
         }
+
+        std::string toString() const {
+            return "YsbRecord(userId=" + std::to_string(userId)
+                + ", pageId=" + std::to_string(pageId)
+                + ", campaignId=" + std::to_string(campaignId)
+                + ", adType=" + std::to_string(adType)
+                + ", eventType=" + std::to_string(eventType)
+                + ", currentMs=" + std::to_string(currentMs)
+                + ", ip=" + std::to_string(ip);
+        }
     };
-    // size 78 bytes
+
+  private:
+    void generate(YSBSource::YsbRecord& rec);
 
   private:
     size_t numberOfTuplesPerBuffer;
     bool endlessRepeat;
+    uint8_t tmpEventType;
 };
 
 typedef std::shared_ptr<YSBSource> YSBSourcePtr;

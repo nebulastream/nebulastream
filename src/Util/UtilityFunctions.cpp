@@ -239,12 +239,11 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
 }
 
 std::vector<std::string> UtilityFunctions::split(const std::string& s, char delim) {
-    std::vector<std::string> elems;
     std::stringstream ss(s);
-    std::string number;
-    std::getline(ss, number, delim);
-    while (std::getline(ss, number, delim)) {
-        elems.push_back(number);
+    std::string item;
+    std::vector<std::string> elems;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
     }
     return elems;
 }

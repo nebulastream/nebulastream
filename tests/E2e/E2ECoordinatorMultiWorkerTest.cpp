@@ -609,8 +609,10 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingMonitoringTwoWorker) {
 }
 
 TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
-    size_t numBuffers = 20;
+    size_t numBuffers = 1;
     size_t numTuples = 10;
+    size_t expectedBuffers = 2;
+    size_t expectedLinesOut = 26;
 
     NES_INFO(" start coordinator");
     std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.txt";
@@ -628,7 +630,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
     string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354 --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
-        + std::to_string(numBuffers) + " --sourceFrequency=1 --endlessRepeat=on";
+        + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=1 --endlessRepeat=on";
 
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
@@ -671,7 +673,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, numBuffers));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, expectedBuffers));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -680,6 +682,10 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
 
     NES_INFO("ContinuousSourceTest: content=" << content);
     EXPECT_TRUE(!content.empty());
+
+    size_t n = std::count(content.begin(), content.end(), '\n');
+    NES_INFO("Number of lines " << n);
+    EXPECT_TRUE(n == expectedLinesOut);
 
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);

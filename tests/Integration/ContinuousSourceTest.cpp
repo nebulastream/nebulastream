@@ -20,6 +20,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Services/QueryService.hpp>
+#include <Sources/YSBSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
@@ -1290,11 +1291,41 @@ TEST_F(ContinuousSourceTest, testYSB) {
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
+
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
 
     NES_INFO("ContinuousSourceTest: content=" << content);
     EXPECT_TRUE(!content.empty());
+
+    std::ifstream infile(filePath.c_str());
+    std::string line;
+    int lineCnt = 0;
+    while (std::getline(infile, line))
+    {
+        if (lineCnt > 0) {
+            auto token = UtilityFunctions::split(line, ',');
+            YSBSource::YsbRecord rec{};
+            rec.userId = stoi(token[0]);
+            rec.pageId = stoi(token[1]);
+            rec.campaignId = stoi(token[2]);
+            rec.adType = stoi(token[3]);
+            rec.eventType = stoi(token[4]);
+            rec.currentMs = stoull(token[5]);
+            rec.ip = stoul(token[6]);
+
+            NES_INFO("ContinuousSourceTest: YsbTuple: " << rec.toString());
+            EXPECT_TRUE(rec.userId == 0);
+            EXPECT_TRUE(rec.pageId == 0);
+            EXPECT_TRUE(rec.adType == 0);
+            EXPECT_TRUE(rec.campaignId >= 0 && rec.campaignId < 10000);
+            EXPECT_TRUE(rec.eventType >= 0 && rec.eventType < 3);
+            EXPECT_EQ(rec.eventType, (lineCnt-1)%3);
+            EXPECT_TRUE(rec.currentMs > 0);
+            EXPECT_TRUE(rec.ip > 0);
+        }
+        lineCnt++;
+    }
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
