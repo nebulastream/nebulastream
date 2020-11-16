@@ -654,7 +654,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<QueryManager>(bufferManager, 0);
+        auto queryManager = std::make_shared<QueryManager>(bufferManager, 0, 1);
         auto networkManagerCreator = [=](NodeEnginePtr engine) {
             return Network::NetworkManager::create(hostname, port, Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager);

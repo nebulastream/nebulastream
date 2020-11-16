@@ -59,12 +59,13 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @brief this creates a new NodeEngine
      * @param hostname the ip address for the network manager
      * @param port the port for the network manager
+     * @param numThreads the number of worker threads for this nodeEngine
      * @param bufferSize the buffer size for the buffer manager
      * @param numBuffers the number of buffers for the buffer manager
      * @return
      */
-    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
-                                              size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
+
+    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads = 1,  size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
 
     /**
      * @brief Create a node engine and gather node information

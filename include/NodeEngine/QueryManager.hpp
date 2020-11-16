@@ -78,7 +78,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @brief
      * @param bufferManager
      */
-    explicit QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId);
+    explicit QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads);
 
     ~QueryManager();
 
@@ -229,6 +229,8 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     CompiledExecutablePipelinePtr reconfigurationExecutable;
 
     size_t nodeEngineId;
+
+    uint16_t numThreads;
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

@@ -40,8 +40,12 @@ class SimpleBenchmarkSource : public DataSource {
   public:
     uint64_t numberOfTuplesPerBuffer;
 
-    SimpleBenchmarkSource(const SchemaPtr& schema, const BufferManagerPtr& bufferManager, const QueryManagerPtr& queryManager,
-                          uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer)
+    SimpleBenchmarkSource(const SchemaPtr& schema,
+                          const BufferManagerPtr& bufferManager,
+                          const QueryManagerPtr& queryManager,
+                          uint64_t ingestionRate,
+                          uint64_t numberOfTuplesPerBuffer)
+
         : DataSource(schema, bufferManager, queryManager, 1) {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
@@ -64,7 +68,7 @@ class SimpleBenchmarkSource : public DataSource {
             throw std::logic_error("SimpleBenchmarkSource: BufferManager not set");
         }
 
-        if (!this->operatorId) {
+        if (this->operatorId != 0) {
             NES_DEBUG("SimpleBenchmarkSource " << this->getOperatorId() << ": SimpleBenchmarkSource of type=" << getType());
             size_t numberOfTuplesPerPeriod = (ingestionRate * BenchmarkUtils::periodLengthInSeconds);
 

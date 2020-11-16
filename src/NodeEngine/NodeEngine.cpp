@@ -39,13 +39,12 @@ namespace NES {
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
-std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
-                                               size_t bufferSize, size_t numBuffers) {
+std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads, size_t bufferSize, size_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId);
+        auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");
             throw Exception("Error while creating partition manager");

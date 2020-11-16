@@ -30,8 +30,9 @@ namespace NES::Benchmarking {
 uint64_t BenchmarkUtils::runSingleExperimentSeconds;
 uint64_t BenchmarkUtils::periodLengthInSeconds;
 
-void BenchmarkUtils::createRangeVector(std::vector<uint64_t>& vector, uint64_t start, uint64_t stop, uint64_t stepSize) {
-    for (uint64_t i = start; i < stop; i += stepSize) {
+
+template<typename T> void BenchmarkUtils::createRangeVector(std::vector<T>& vector, T start, T stop, T stepSize){
+    for(T i = start; i < stop; i += stepSize){
         vector.push_back(i);
     }
 }
@@ -117,8 +118,11 @@ std::string BenchmarkUtils::getStatisticsAsCSV(QueryStatistics* statistic, Schem
         + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes());
 }
 
-void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, DataSourcePtr benchmarkSource,
-                                  DataSinkPtr benchmarkSink, NodeEnginePtr nodeEngine, Query query, uint64_t workerThreads) {
+void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec,
+                         DataSourcePtr benchmarkSource,
+                         DataSinkPtr benchmarkSink,
+                         NodeEnginePtr nodeEngine,
+                         Query query){
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -141,7 +145,7 @@ void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, 
     nodeEngine->registerQueryInNodeEngine(plan);
     NES_INFO("QEP for " << queryPlan->toString() << " was registered in NodeEngine. Starting query now...");
 
-    NES_INFO("Starting benchmark with workerThreads=" << workerThreads);
+    NES_INFO("Starting query...");
     nodeEngine->startQuery(1);
     recordStatistics(statisticsVec, nodeEngine);
 

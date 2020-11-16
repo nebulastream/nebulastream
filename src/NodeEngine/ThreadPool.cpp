@@ -26,8 +26,14 @@
 #include <string.h>
 namespace NES {
 
-ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, size_t numThreads)
-    : running(false), numThreads(numThreads), nodeId(nodeId), threads(), queryManager(queryManager) {}
+
+ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint16_t numThreads)
+    : running(false),
+      numThreads(numThreads),
+      nodeId(nodeId),
+      threads(),
+      queryManager(queryManager) {
+}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");
@@ -114,13 +120,17 @@ void ThreadPool::restart() {
     start();
 }
 
-void ThreadPool::setNumberOfThreadsWithoutRestart(size_t size) { numThreads = size; }
 
-void ThreadPool::setNumberOfThreadsWithRestart(size_t size) {
+void ThreadPool::setNumberOfThreadsWithoutRestart(uint16_t size) {
+    numThreads = size;
+}
+void ThreadPool::setNumberOfThreadsWithRestart(uint16_t size) {
     numThreads = size;
     restart();
 }
 
-size_t ThreadPool::getNumberOfThreads() { return numThreads; }
+uint16_t ThreadPool::getNumberOfThreads() {
+    return numThreads;
+}
 
 }// namespace NES

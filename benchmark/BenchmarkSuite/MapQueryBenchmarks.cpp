@@ -33,15 +33,19 @@ int main() {
 
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector(allIngestionRates, 50 * 1000 * 1000, 70 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 50 * 1000 * 1000, 70 * 1000 * 1000, 10 * 1000 * 1000);
     //BenchmarkUtils::createRangeVector(allIngestionRates, 50 * 1000 * 1000, 180 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
-    BenchmarkUtils::createRangeVector(allExperimentsDuration, 10, 20, 10);
+    BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 10, 20, 10);
 
     std::vector<uint64_t> allPeriodLengths;
-    BenchmarkUtils::createRangeVector(allPeriodLengths, 1, 2, 1);
-    BenchmarkUtils::createRangeVector(allPeriodLengths, 2, 3, 1);
+    BenchmarkUtils::createRangeVector<uint64_t>(allPeriodLengths, 1, 2, 1);
+
+    std::vector<uint16_t> allWorkerThreads;
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 3, 1);
+
+
 
     std::string benchmarkFolderName = "MapQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName))
@@ -49,13 +53,14 @@ int main() {
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
     auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
-    BM_AddBenchmark(
-        "BM_SimpleMapQuery",
-        TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()), 1,
-        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
-                                      ingestionRate),
-        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), "", "")
-        //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
+    BM_AddBenchmark("BM_SimpleMapQuery",
+                    TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
+                    SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema, ingestionRate),
+                    SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
+                    "",
+                    "");
+    //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
 
-        return 0;
+
+    return 0;
 }
