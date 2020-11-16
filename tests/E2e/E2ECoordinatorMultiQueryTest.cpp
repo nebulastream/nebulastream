@@ -182,7 +182,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
 /**
  * @brief This test starts two workers and a coordinator and submit too many queries such that we test if the error-prone process
  */
-TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
+TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
     NES_INFO(" start coordinator");
     std::string pathQuery1 = "query1.out";
     std::string pathQuery2 = "query2.out";
@@ -335,7 +335,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 /**
  * @brief This test starts two workers and a coordinator and submits two pattern-queries
  */
-TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
     NES_INFO(" start coordinator");
     std::string pathPattern1 = "patternQnV1.out";
     std::string pathPattern2 = "patternQnV2.out";
