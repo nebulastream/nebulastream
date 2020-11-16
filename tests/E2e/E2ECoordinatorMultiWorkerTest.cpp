@@ -543,7 +543,7 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidUserQueryWithTumblin
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, testExecutingMonitoringTwoWorker) {
+TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
