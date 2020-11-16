@@ -499,7 +499,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = "ValidUserQueryWithTumbWindowFileOutputTestResult2.txt";
@@ -667,7 +667,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSlidingWindowFileOutput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = "ValidUserQueryWithSlidWindowFileOutputTestResult2.txt";
