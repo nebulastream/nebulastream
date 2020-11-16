@@ -18,7 +18,6 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
 #include <utility>
 
 namespace NES {

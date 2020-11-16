@@ -23,27 +23,6 @@
 #include <memory>
 namespace NES {
 
-class SourceLogicalOperatorNode;
-typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
-
-class SinkLogicalOperatorNode;
-typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
-
-class WatermarkAssignerLogicalOperatorNode;
-typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
-
-class CentralWindowOperator;
-typedef std::shared_ptr<CentralWindowOperator> CentralWindowOperatorPtr;
-
-class SourceDescriptor;
-typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
-
-class SinkDescriptor;
-typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
-
-class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
-
 class SerializableOperator;
 class SerializableOperator_SourceDetails;
 class SerializableOperator_SinkDetails;

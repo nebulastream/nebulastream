@@ -21,9 +21,9 @@
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
-using namespace NES;
+namespace NES{
 
 WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
     : nodeEngine(nodeEngine) {
@@ -116,4 +116,5 @@ Status WorkerRPCServer::RequestMonitoringData(ServerContext*, const MonitoringRe
         NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: " << ex.what());
         return Status::CANCELLED;
     }
+}
 }

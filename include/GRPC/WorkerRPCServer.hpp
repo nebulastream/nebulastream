@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-#pragma once
-#include <NodeEngine/NodeEngine.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
@@ -27,6 +25,10 @@ using grpc::ServerContext;
 using grpc::Status;
 
 namespace NES {
+
+class NodeEngine;
+typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
+
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
     WorkerRPCServer(NodeEnginePtr nodeEngine);

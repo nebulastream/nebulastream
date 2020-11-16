@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-#pragma once
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
@@ -27,6 +25,10 @@ using grpc::ServerContext;
 using grpc::Status;
 
 namespace NES {
+
+class CoordinatorEngine;
+typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
+
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
     CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine);
