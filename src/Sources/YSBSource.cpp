@@ -19,7 +19,6 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 #include <algorithm>
 #include <atomic>
@@ -30,36 +29,28 @@
 
 namespace NES {
 
-SchemaPtr YSBSource::YSB_SCHEMA() {
-    return Schema::create()
-        ->addField("user_id", UINT16)
-        ->addField("page_id", UINT16)
-        ->addField("campaign_id", UINT16)
-        ->addField("ad_type", UINT16)
-        ->addField("event_type", UINT16)
-        ->addField("current_ms", UINT64)
-        ->addField("ip", INT32);
-}
+void YSBSource::generate(YSBSource::YsbRecord& rec) {
+    rec.userId = 0;
+    rec.pageId = 0;
+    rec.adType = 0;
 
-void generate(YSBSource::ysbRecord& rec) {
-    rec.user_id = 0;
-    rec.page_id = 0;
-    rec.ad_type = 0;
+    rec.campaignId = rand() % 10000;
 
-    rec.campaign_id = rand() % 10000;
-    rec.event_type = rand() % 3;
+    rec.eventType = tmpEventType;
+    tmpEventType = (tmpEventType+1) % 3;
 
     auto ts = std::chrono::high_resolution_clock::now();
-    rec.current_ms = ts.time_since_epoch().count();
+    rec.currentMs = ts.time_since_epoch().count();
 
     rec.ip = 0x01020304;
 }
 
 YSBSource::YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
                      size_t numberOfTuplesPerBuffer, size_t frequency, bool endlessRepeat, OperatorId operatorId)
-    : DefaultSource(YSB_SCHEMA(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
+    : DefaultSource(YsbSchema(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       numberOfTuplesPerBuffer(numberOfTuplesPerBuffer),
-      endlessRepeat(endlessRepeat) {}
+      endlessRepeat(endlessRepeat),
+      tmpEventType(0) {}
 
 std::optional<TupleBuffer> YSBSource::receiveData() {
     NES_DEBUG("YSBSource:" << this << " requesting buffer");
@@ -70,7 +61,7 @@ std::optional<TupleBuffer> YSBSource::receiveData() {
     NES_DEBUG("YSBSource: Filling buffer with " << numberOfTuplesPerBuffer << " tuples.");
     for (uint64_t recordIndex = 0; recordIndex < numberOfTuplesPerBuffer; recordIndex++) {
         //generate tuple and copy record to buffer
-        auto records = buf.getBufferAs<YSBSource::ysbRecord>();
+        auto records = buf.getBufferAs<YSBSource::YsbRecord>();
         auto& rec = records[recordIndex];
         generate(rec);
     }

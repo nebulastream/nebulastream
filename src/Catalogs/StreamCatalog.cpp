@@ -35,10 +35,13 @@ void StreamCatalog::addDefaultStreams() {
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 
-    bool successYsb = addLogicalStream("ysb", YSBSource::YSB_SCHEMA());
+    bool successYsb = addLogicalStream("ysb", YSBSource::YsbSchema());
     if (!successYsb) {
         NES_ERROR("StreamCatalog::addDefaultStreams: error while add ysb");
         throw Exception("Error while addDefaultStreams StreamCatalog");
+    }
+    else {
+        NES_ERROR("StreamCatalog::addDefaultStreams: Ysb added");
     }
 
     //TODO I think we should get rid of this soon

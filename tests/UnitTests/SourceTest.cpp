@@ -601,13 +601,13 @@ TEST_F(SourceTest, testYSBSource) {
 
     while (source->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = source->receiveData();
-        auto ysbRecords = optBuf->getBufferAs<YSBSource::ysbRecord>();
+        auto ysbRecords = optBuf->getBufferAs<YSBSource::YsbRecord>();
 
         for (int i=0; i<numTuples; i++) {
             auto record = ysbRecords[i];
-            std::cout << "i=" << i << " record.current_ms: " << record.current_ms << ", record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
-            EXPECT_TRUE(0 <= record.campaign_id && record.campaign_id < 10000);
-            EXPECT_TRUE(0 <= record.event_type && record.event_type < 3);
+            std::cout << "i=" << i << " record.current_ms: " << record.currentMs << ", record.ad_type: " << record.adType << ", record.event_type: " << record.eventType << std::endl;
+            EXPECT_TRUE(0 <= record.campaignId && record.campaignId < 10000);
+            EXPECT_TRUE(0 <= record.eventType && record.eventType < 3);
         }
     }
 
