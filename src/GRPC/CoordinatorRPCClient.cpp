@@ -19,6 +19,8 @@
 #include <Util/Logger.hpp>
 #include <boost/filesystem.hpp>
 #include <string>
+#include <Catalogs/PhysicalStreamConfig.hpp>
+
 namespace NES {
 
 CoordinatorRPCClient::CoordinatorRPCClient(std::string address)

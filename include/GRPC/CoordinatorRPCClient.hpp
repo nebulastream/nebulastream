@@ -20,7 +20,6 @@
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <CoordinatorRPCService.pb.h>
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
 
@@ -31,6 +30,9 @@ using grpc::Status;
 namespace NES {
 
 class NodeStats;
+
+class PhysicalStreamConfig;
+typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
 class CoordinatorRPCClient {
   public:

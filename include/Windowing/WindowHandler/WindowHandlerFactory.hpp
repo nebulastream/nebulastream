@@ -16,18 +16,23 @@
 
 #ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERFACTORY_HPP_
 #define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERFACTORY_HPP_
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
-#include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
-#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
-#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
-#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
-#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+
 #include <memory>
+
+namespace NES::Join{
+
+class LogicalJoinDefinition;
+typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
+
+}
+
 namespace NES::Windowing {
+
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+
+class AbstractWindowHandler;
+typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 
 class WindowHandlerFactory {
   public:

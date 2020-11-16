@@ -17,13 +17,19 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
-#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <functional>
 #include <memory>
 
+
+namespace NES::Join{
+class LogicalJoinDefinition;
+typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
+}
+
+
 namespace NES {
+
 class WorkerContext;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -60,7 +66,7 @@ class PipelineExecutionContext {
         Windowing::AbstractWindowHandlerPtr windowHandler,
         Windowing::AbstractWindowHandlerPtr joinHandler,
         Windowing::LogicalWindowDefinitionPtr windowDef,
-        Join::LogicalJoinDefinitionPtr joinDef,
+        NES::Join::LogicalJoinDefinitionPtr joinDef,
         SchemaPtr inputSchema);
 
     /**

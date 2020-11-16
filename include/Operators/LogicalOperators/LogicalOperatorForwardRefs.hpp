@@ -65,6 +65,28 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 class BroadcastLogicalOperatorNode;
 typedef std::shared_ptr<BroadcastLogicalOperatorNode> BroadcastLogicalOperatorNodePtr;
 
+class SourceLogicalOperatorNode;
+typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+
+class SinkLogicalOperatorNode;
+typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+
+class WatermarkAssignerLogicalOperatorNode;
+typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
+
+class CentralWindowOperator;
+typedef std::shared_ptr<CentralWindowOperator> CentralWindowOperatorPtr;
+
+class SourceDescriptor;
+typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
+
+class SinkDescriptor;
+typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
+
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
+
 }// namespace NES
 
 #endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_

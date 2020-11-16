@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
@@ -26,6 +24,7 @@
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <utility>
 
 namespace NES {
