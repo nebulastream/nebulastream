@@ -212,7 +212,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         if (windows.size() != 0) {
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
-                auto& value = partialFinalAggregates[i];
+                auto value = partialFinalAggregates[i];
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction: write key=" << key
                                                                               << " value=" << value << " window.start()="
                                                                               << window.getStartTs() << " window.getEndTs()="
