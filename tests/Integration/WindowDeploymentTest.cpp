@@ -238,7 +238,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 /**
  * @brief test central tumbling window and processing time
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryProcessingTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployOneWorkerCentralTumblingWindowQueryProcessingTime) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -421,7 +421,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralSlidingWindowQueryEventTi
 /**
  * @brief test distributed tumbling window and processing time
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedTumblingWindowQueryProcessingTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployOneWorkerDistributedTumblingWindowQueryProcessingTime) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
