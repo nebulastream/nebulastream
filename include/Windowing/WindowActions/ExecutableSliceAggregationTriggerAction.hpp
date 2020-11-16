@@ -159,6 +159,8 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
                               << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                               << std::endl);
+                    tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
+
                     //forward buffer to next  pipeline stage
                     this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
 
