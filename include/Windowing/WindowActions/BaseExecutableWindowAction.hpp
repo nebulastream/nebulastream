@@ -41,13 +41,17 @@ class BaseExecutableWindowAction {
         this->originId = originId;
     }
 
-    virtual SchemaPtr getWindowSchema() = 0;
+    SchemaPtr getWindowSchema() {
+        return windowSchema;
+    }
 
   protected:
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     PipelineStagePtr nextPipeline;
     uint64_t originId;
+    SchemaPtr windowSchema;
+
 };
 }// namespace NES::Windowing
 

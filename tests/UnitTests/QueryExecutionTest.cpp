@@ -323,7 +323,6 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     EXPECT_EQ(resultBuffer.getWatermark(), 14-millisecondOfDelay);
 }
 
-
 /**
  * @brief This tests creates a windowed query.
  * WindowSource -> windowOperator -> windowScan -> TestSink
@@ -486,7 +485,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
 }
-
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
@@ -565,7 +563,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
 }
-
 // P1 = Source1 -> filter1
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
