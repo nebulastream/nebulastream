@@ -573,6 +573,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     nodeEngine->stopQuery(1);
 }
 
+/*
+ * In this test we use a slide size that is equivalent to the slice size, to test if slicing works proper for small slides as well
+ */
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
