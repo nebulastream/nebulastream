@@ -44,7 +44,14 @@ class YSBSource : public DefaultSource {
             ->addField("ad_type", UINT16)
             ->addField("event_type", UINT16)
             ->addField("current_ms", UINT64)
-            ->addField("ip", INT32);
+            ->addField("ip", INT32)
+            ->addField("d1", UINT64)
+            ->addField("d2", UINT64)
+            ->addField("d3", UINT64)
+            ->addField("d4", UINT64)
+            ->addField("d5", UINT64)
+            ->addField("d6", UINT64)
+            ->addField("d7", UINT64);
     };
 
   public:
@@ -60,6 +67,15 @@ class YSBSource : public DefaultSource {
         uint16_t eventType;
         uint64_t currentMs;
         uint32_t ip;
+
+        // placeholder to reach 78 bytes
+        uint64_t dummy1;
+        uint64_t dummy2;
+        uint64_t dummy3;
+        uint64_t dummy4;
+        uint64_t dummy5;
+        uint64_t dummy6;
+        uint64_t dummy7;
 
         YsbRecord(const YsbRecord& rhs) {
             userId = rhs.userId;
@@ -81,6 +97,7 @@ class YSBSource : public DefaultSource {
                 + ", ip=" + std::to_string(ip);
         }
     };
+    // 78 bytes
 
   private:
     void generate(YSBSource::YsbRecord& rec);

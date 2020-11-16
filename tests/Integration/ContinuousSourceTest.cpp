@@ -1327,6 +1327,8 @@ TEST_F(ContinuousSourceTest, testYSB) {
         lineCnt++;
     }
 
+    EXPECT_EQ(sizeof(YSBSource::YsbRecord), 78);
+
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 
