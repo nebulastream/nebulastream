@@ -216,8 +216,8 @@ class TestUtils {
                 return true;
             }
             NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer=" << statistics[0]->getProcessedBuffers()
-                                                                                   << " procTasks=" << statistics[0]->getProcessedTasks()
-                                                                                   << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+                                                                                                << " procTasks=" << statistics[0]->getProcessedTasks()
+                                                                                                << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
             sleep(1);
         }
         NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout");
@@ -260,15 +260,15 @@ class TestUtils {
                 return true;
             }
             NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer=" << statistics[0]->getProcessedBuffers()
-                                                                                   << " procTasks=" << statistics[0]->getProcessedTasks());
+                                                                                                     << " procTasks=" << statistics[0]->getProcessedTasks());
 
             sleep(1);
         }
         //FIXME: handle vector of statistics properly in #977
         NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result=" << expectedResult
-                                                                                                            << " processedBuffer=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers()
-                                                                                                            << " processedTasks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks()
-                                                                                                            << " procWatermarks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
+                                                                                                                              << " processedBuffer=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers()
+                                                                                                                              << " processedTasks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks()
+                                                                                                                              << " procWatermarks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
         return false;
     }
 

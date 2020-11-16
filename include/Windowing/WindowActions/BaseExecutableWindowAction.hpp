@@ -51,7 +51,6 @@ class BaseExecutableWindowAction {
     PipelineStagePtr nextPipeline;
     uint64_t originId;
     SchemaPtr windowSchema;
-
 };
 }// namespace NES::Windowing
 

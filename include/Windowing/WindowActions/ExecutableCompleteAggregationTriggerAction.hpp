@@ -47,10 +47,10 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                                                std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) : windowDefinition(windowDefinition),
                                                                                                                                                                                 executableWindowAggregation(executableWindowAggregation) {
         this->windowSchema = Schema::create()
-                           ->addField(createField("start", UINT64))
-                           ->addField(createField("end", UINT64))
-                           ->addField("key", windowDefinition->getOnKey()->getStamp())
-                           ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+                                 ->addField(createField("start", UINT64))
+                                 ->addField(createField("end", UINT64))
+                                 ->addField("key", windowDefinition->getOnKey()->getStamp())
+                                 ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         windowTupleLayout = createRowLayout(this->windowSchema);
     }
 
