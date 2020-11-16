@@ -124,18 +124,20 @@ class WindowHandlerFactoryDetails {
         if (physicalInputType->isBasicType()) {
             auto basicInputType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalInputType);
             switch (basicInputType->getNativeType()) {
-                case BasicPhysicalType::UINT_8: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint8_t>(windowDefinition);
-                case BasicPhysicalType::UINT_16: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint16_t>(windowDefinition);
-                case BasicPhysicalType::UINT_32: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint32_t>(windowDefinition);
+//                case BasicPhysicalType::UINT_8: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint8_t>(windowDefinition);
+//                case BasicPhysicalType::UINT_16: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint16_t>(windowDefinition);
+//                case BasicPhysicalType::UINT_32: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint32_t>(windowDefinition);
                 case BasicPhysicalType::UINT_64: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint64_t>(windowDefinition);
-                case BasicPhysicalType::INT_8: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int8_t>(windowDefinition);
-                case BasicPhysicalType::INT_16: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int16_t>(windowDefinition);
-                case BasicPhysicalType::INT_32: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int32_t>(windowDefinition);
+//                case BasicPhysicalType::INT_8: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int8_t>(windowDefinition);
+//                case BasicPhysicalType::INT_16: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int16_t>(windowDefinition);
+//                case BasicPhysicalType::INT_32: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int32_t>(windowDefinition);
                 case BasicPhysicalType::INT_64: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int64_t>(windowDefinition);
-                case BasicPhysicalType::FLOAT: return createWindowHandlerForAggregationForKeyAndInput<KeyType, float>(windowDefinition);
-                case BasicPhysicalType::DOUBLE: return createWindowHandlerForAggregationForKeyAndInput<KeyType, double>(windowDefinition);
-                case BasicPhysicalType::CHAR:
-                case BasicPhysicalType::BOOLEAN: NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: we dont support aggregation of Chars or Booleans");
+//                case BasicPhysicalType::FLOAT: return createWindowHandlerForAggregationForKeyAndInput<KeyType, float>(windowDefinition);
+//                case BasicPhysicalType::DOUBLE: return createWindowHandlerForAggregationForKeyAndInput<KeyType, double>(windowDefinition);
+//                case BasicPhysicalType::CHAR:
+//                case BasicPhysicalType::BOOLEAN:
+                default:
+                                    NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: we dont support aggregation of Chars or Booleans");
             };
         }
         NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non basic input types");
