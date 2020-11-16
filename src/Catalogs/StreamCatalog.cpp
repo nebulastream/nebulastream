@@ -39,8 +39,7 @@ void StreamCatalog::addDefaultStreams() {
     if (!successYsb) {
         NES_ERROR("StreamCatalog::addDefaultStreams: error while add ysb");
         throw Exception("Error while addDefaultStreams StreamCatalog");
-    }
-    else {
+    } else {
         NES_ERROR("StreamCatalog::addDefaultStreams: Ysb added");
     }
 

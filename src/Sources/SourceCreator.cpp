@@ -85,7 +85,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
 }
 
 const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-    size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, OperatorId operatorId) {
+                                    size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, OperatorId operatorId) {
     return std::make_shared<YSBSource>(bufferManager, queryManager, numBuffersToProcess, numberOfTuplesToProducePerBuffer, frequency, endlessRepeat, operatorId);
 }
 

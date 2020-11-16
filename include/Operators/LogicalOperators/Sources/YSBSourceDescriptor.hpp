@@ -73,5 +73,4 @@ typedef std::shared_ptr<YSBSourceDescriptor> YSBSourceDescriptorPtr;
 
 }// namespace NES
 
-
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_YSBSOURCEDESCRIPTOR_HPP_
