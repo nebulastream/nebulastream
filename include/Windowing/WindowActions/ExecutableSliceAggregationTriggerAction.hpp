@@ -133,6 +133,7 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
         auto partialAggregates = store->getPartialAggregates();
         NES_DEBUG("BaseExecutableWindowActionPtr: trigger " << slices.size() << " slices");
 
+        uint64_t cnt = tupleBuffer.getNumberOfTuples();
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end
             if (slices[sliceId].getEndTs() <= watermark) {
@@ -141,18 +142,18 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
                                                                                                                << sliceId);
 
                 writeResultRecord<PartialAggregateType>(tupleBuffer,
-                                                        tupleBuffer.getNumberOfTuples(),
+                                                        cnt,
                                                         slices[sliceId].getStartTs(),
                                                         slices[sliceId].getEndTs(),
                                                         key,
                                                         partialAggregates[sliceId]);
 
+                cnt++;
                 //detect if buffer is full
-                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
                 if (tupleBuffer.getNumberOfTuples() * windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
                     //write full buffer
                     NES_DEBUG("ExecutableSliceAggregationTriggerAction: Dispatch output buffer with "
-                                  << tupleBuffer.getNumberOfTuples() << " records, content="
+                                  << cnt << " records, content="
                                   << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                                   << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                                   << std::endl);
@@ -162,7 +163,9 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
                     // request new buffer
                     tupleBuffer = this->bufferManager->getBufferBlocking();
                     tupleBuffer.setOriginId(this->originId);
+                    cnt = 0;
                 }
+                tupleBuffer.setNumberOfTuples(cnt);
                 store->removeSlicesUntil(sliceId);
             } else {
                 NES_DEBUG("ExecutableSliceAggregationTriggerAction SL: Dont write result");

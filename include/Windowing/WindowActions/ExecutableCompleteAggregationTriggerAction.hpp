@@ -171,6 +171,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
             }
         }
 
+        uint64_t cnt = tupleBuffer.getNumberOfTuples();
         if (windows.size() != 0) {
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto window = windows[i];
@@ -180,17 +181,17 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                                                                                    << window.getStartTs() << " window.getEndTs()="
                                                                                    << window.getEndTs());
                 writeResultRecord<KeyType>(tupleBuffer,
-                                           tupleBuffer.getNumberOfTuples(),
+                                           cnt,
                                            window.getStartTs(),
                                            window.getEndTs(),
                                            key,
                                            value);
-                tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
+                cnt++;
 
-                if (tupleBuffer.getNumberOfTuples() * windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
+                if (cnt * windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
                     //write full buffer
                     NES_DEBUG("ExecutableSliceAggregationTriggerAction: Dispatch output buffer with "
-                              << tupleBuffer.getNumberOfTuples() << " records, content="
+                              << cnt << " records, content="
                               << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                               << std::endl);
@@ -200,8 +201,10 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                     // request new buffer
                     tupleBuffer = this->bufferManager->getBufferBlocking();
                     tupleBuffer.setOriginId(this->originId);
+                    cnt = 0;
                 }
-            }
+            }//end of for
+            tupleBuffer.setNumberOfTuples(cnt);
         } else {
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction: joinWindows: no window qualifies");
         }
