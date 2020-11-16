@@ -120,34 +120,35 @@ int main(int argc, char** argv) {
     }
 
     if (configurationFilePath.empty()){
-        NES_INFO("NESCOORDINATORSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES Coordinator Configuration YAML file.");
+        NES_INFO("NESWORKERSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES Coordinator Configuration YAML file.");
         return EXIT_FAILURE;
     }
-    YAML::Node config;
+    Yaml::Node config;
     try {
-        config = YAML::LoadFile(configurationFilePath);
+        Yaml::Parse(config,configurationFilePath.c_str());
     } catch (const std::exception& e) {
-        NES_INFO("NESCOORDINATORSTARTER: Could not read yaml file. Check input path and location.");
-        return EXIT_FAILURE;
+        std::cerr <<"NESWORKERSTARTER: Cannot read configuration file with file path: " << configurationFilePath << std::endl;
     }
 
     // Initializing IPs and Ports
-    auto rpcPort = config["rpcPort"].as<uint16_t>();
-    auto coordinatorIp = config["coordinatorIp"].as<std::string>();
-    auto coordinatorPort = config["coordinatorPort"].as<std::string>();
-    auto dataPort = config["dataPort"].as<uint16_t >();
-    auto localWorkerIp = config["localWorkerIp"].as<std::string>();
+    auto rpcPort = config["rpcPort"].As<uint16_t>();
+    auto coordinatorIp = config["coordinatorIp"].As<string>();
+    auto coordinatorPort = config["coordinatorPort"].As<string>();
+    auto dataPort = config["dataPort"].As<uint16_t>();
+    auto localWorkerIp = config["serverIp"].As<string>();
     // Initializing Source Handling variables
-    auto sourceType = config["sourceType"].as<std::string>();
-    auto sourceConfig = config["sourceConfig"].as<std::string>();
-    auto sourceFrequency = config["sourceFrequency"].as<uint16_t>();
+    auto sourceType = config["sourceType"].As<string>();
+    auto sourceConfig = config["sourceConfig"].As<string>();
+    auto sourceFrequency = config["sourceFrequency"].As<uint16_t>();
     // Initializing Process Configuration variables
-    auto physicalStreamName = config["physicalStreamName"].as<std::string>();
-    auto logicalStreamName = config["logicalStreamName"].as<std::string>();
-    auto parentId = config["parentId"].as<std::string>();
-    auto logLevel = config["logLevel"].as<std::string>();
-    auto numberOfSlots = config["numberOfSlots"].as<uint16_t>();
-    auto numberOfBuffersToProduce = config["numberOfBuffersToProduce"].as<uint32_t>();
+    auto physicalStreamName = config["physicalStreamName"].As<string>();
+    auto logicalStreamName = config["logicalStreamName"].As<string>();
+    auto parentId = config["parentId"].As<string>();
+    auto logLevel = config["logLevel"].As<string>();
+    auto numberOfSlots = config["numberOfSlots"].As<uint16_t>();
+    auto numberOfBuffersToProduce = config["numberOfBuffersToProduce"].As<uint32_t>();
+
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     // set the default numberOfSlots to the number of processor
     if (numberOfSlots == 0){
