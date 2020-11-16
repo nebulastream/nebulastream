@@ -239,6 +239,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                               << std::endl);
                     //forward buffer to next  pipeline stage
+                    tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
 
                     // request new buffer
