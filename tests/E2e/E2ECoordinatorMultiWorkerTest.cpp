@@ -285,7 +285,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
+TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
@@ -388,15 +388,15 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingValidSimplePatternWithFil
         rowNumber++;
         if ((rowNumber > 3 && rowNumber < 6) || (rowNumber > 8 && rowNumber < 11)) {
             std::vector<string> content = UtilityFunctions::split(line, '|');
-            if (content.at(0) == "R2000073") {
+            if (content.at(1) == "R2000073") {
                 NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): content=" << content.at(2));
                 NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): expContent= 102.629631");
-                EXPECT_EQ(content.at(2), "102.629631");
+                EXPECT_EQ(content.at(3), "102.629631");
                 resultWrk1 = true;
             } else {
                 NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): content=" << content.at(2));
                 NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): expContent= 108.166664");
-                EXPECT_EQ(content.at(2), "108.166664");
+                EXPECT_EQ(content.at(3), "108.166664");
                 resultWrk2 = true;
             }
         }
