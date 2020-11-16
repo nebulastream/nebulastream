@@ -177,7 +177,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         if (windows.size() != 0) {
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
-                auto& value = executableWindowAggregation->lower(partialFinalAggregates[i]);
+                auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
                 NES_TRACE("ExecutableCompleteAggregationTriggerAction: write key=" << key
                                                                                    << " value=" << value << " window.start()="
                                                                                    << window.getStartTs() << " window.getEndTs()="
