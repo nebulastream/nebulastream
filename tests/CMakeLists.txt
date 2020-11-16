@@ -292,6 +292,11 @@ add_executable(circular-buffer-tests "UnitTests/CircularBufferTest.cpp")
 target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
 add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
 
+### Z3 Expression Inference Phase Test ###
+add_executable(equal-query-merger-rule-tests "UnitTests/Optimizer/QueryMerger/EqualQueryMergerRuleTest.cpp")
+target_link_libraries(equal-query-merger-rule-tests nes ${GTEST_LIBRARIES})
+add_test(NAME equal-query-merger-rule-tests COMMAND equal-query-merger-rule-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
