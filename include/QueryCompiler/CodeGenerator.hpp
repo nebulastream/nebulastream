@@ -114,6 +114,7 @@ class CodeGenerator {
 
     /**
      * @brief Code generation for a watermark assigner operator.
+     * @param watermarkStrategy strategy used for watermark assignment.
      * @param context The context of the current pipeline.
      * @return flag if the generation was successful.
      */
