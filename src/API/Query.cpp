@@ -36,6 +36,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <iostream>
 
+
 namespace NES {
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
@@ -69,7 +70,7 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
 
     //we use a on time trigger as default that triggers every 1 second
-    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
 
     //we use a lazy NL join because this is currently the only one that is implemented
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
@@ -95,8 +96,9 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
 
 Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add window operator");
-    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
     auto windowDefinition = LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy, triggerAction);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
@@ -120,8 +122,9 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
     auto windowDefinition = Windowing::LogicalWindowDefinition::create(fieldAccess, aggregation, windowType,
                                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy, triggerAction);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);

@@ -61,6 +61,8 @@ typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationPtr;
 using namespace NES::API;
 using namespace NES::Windowing;
 
+static const uint64_t defaultTriggerTimeInMs = 1000;
+
 /**
  * User interface to create stream processing queries.
  * The current api exposes method to create queries using all currently supported operators.

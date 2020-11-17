@@ -76,7 +76,6 @@ bool WindowComputationOperator::inferSchema() {
         outputSchema = Schema::create()
                            ->addField(createField("start", UINT64))
                            ->addField(createField("end", UINT64))
-                           ->addField(AttributeField::create("key", windowAggregation->on()->getStamp()))
                            ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
         return true;
     }
