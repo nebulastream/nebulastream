@@ -24,7 +24,15 @@ namespace NES {
 /**
  * @brief A templated class for a circular buffer. The implementation
  * is header-only. Currently the structure supports write/read/reset
- * and checks for isFull/isEmpty/capacity/size.
+ * and checks for isFull/isEmpty/capacity/size. The isFull/isEmpty
+ * bools are used to not waste a slot in the buffer and guard
+ * from reading from an empty buffer as well as writing to a
+ * full buffer, signalling wrap-around.
+ *
+ * Refs:
+ * - https://www.boost.org/doc/libs/1_74_0/doc/html/boost/circular_buffer.html
+ * - https://embeddedartistry.com/blog/2017/05/17/creating-a-circular-buffer-in-c-and-c
+ * - https://www.approxion.com/category/circular-adventures/page/1/
  *
  * @tparam T - type of the value in the buffer slots.
  */
@@ -36,30 +44,40 @@ class CircularBuffer {
      * @param size of the internal buffer
      */
     explicit CircularBuffer(uint64_t size) : maxSize(size),
-                                           buffer(std::make_unique<T[]>(size)){};
+                                             buffer(std::make_unique<T[]>(size)),
+                                             mutex(){};
 
     /**
      * @brief Writes an item to a slot in the buffer. Wraps around
-     * using modulo. This can potentially change to mod2.
+     * using modulo. This can potentially change to mod2. See
+     * ref #2 in class docu.
+     *
+     * We immediately write an item to the current head. If
+     * the buffer is full, we move the tail to mod maxSize.
+     * We move the head to mod maxSize regardless. Full is
+     * assigned the result of current head equals current
+     * tail.
      *
      * @param item to write
      */
     void write(T item) {
         std::unique_lock<std::mutex> lock(mutex);
-        this->buffer[this->head] = item;
+        buffer[head] = item;
 
-        if (this->full) {
-            this->tail = (this->tail + 1) % this->maxSize;
+        if (full) {
+            tail = (tail + 1) % maxSize;
         }
 
-        this->head = (this->head + 1) % this->maxSize;
-        this->full = this->head == this->tail;
+        head = (head + 1) % maxSize;
+        full = head == tail;
     }
 
     /**
      * @brief Reads an item from the next slot in the buffer.
-     * If the buffer is empty, it returns a default value. The
-     * tail is wrapped around using tail+1 mod maxSize.
+     * If the buffer is empty, it returns a default value.
+     * The full flag is now false and a slot is available
+     * for writing. The tail is wrapped around using
+     * tail+1 mod maxSize.
      *
      * @return the next value from the buffer
      */
@@ -69,9 +87,9 @@ class CircularBuffer {
             return T();
         }
 
-        auto value = this->buffer[this->tail];
-        this->full = false;
-        this->tail = (this->tail + 1) % this->maxSize;
+        auto value = buffer[tail];
+        full = false;
+        tail = (tail + 1) % maxSize;
 
         return value;
     }
@@ -81,8 +99,8 @@ class CircularBuffer {
      */
     void reset() {
         std::unique_lock<std::mutex> lock(mutex);
-        this->head = this->tail;
-        this->full = false;
+        head = tail;
+        full = false;
     }
 
     /**
@@ -90,7 +108,7 @@ class CircularBuffer {
      * @return true if not full and buffer is same as tail
      */
     bool isEmpty() const {
-        return !this->full && (this->head == this->tail);
+        return !full && (head == tail);
     }
 
     /**
@@ -98,7 +116,7 @@ class CircularBuffer {
      * @return value of full
      */
     bool isFull() const {
-        return this->full;
+        return full;
     }
 
     /**
@@ -106,7 +124,7 @@ class CircularBuffer {
      * @return value of maxSize
      */
     uint64_t capacity() const {
-        return this->maxSize;
+        return maxSize;
     }
 
     /**
@@ -114,39 +132,29 @@ class CircularBuffer {
      * @return head - tail and + maxSize if tail > head
      */
     uint64_t size() const {
-        uint64_t size = this->maxSize;
-        if (!this->full) {
-            size = (this->head >= this->tail)
-                ? this->head - this->tail
-                : this->maxSize + this->head - this->tail;
+        uint64_t size = maxSize;
+        if (!full) {
+            size = (head >= tail)
+                ? head - tail
+                : maxSize + head - tail;
         }
         return size;
     }
 
   private:
-    /**
-     * @brief indicates writes
-     */
+    // indicates writes
     uint64_t head = 0;
 
-    /**
-     * @brief indicates reads
-     */
+    // indicates reads
     uint64_t tail = 0;
 
-    /**
-     * @brief maximum size of buffer
-     */
+    // maximum size of buffer
     const uint64_t maxSize;
 
-    /**
-     * @brief the buffer, of type T[]
-     */
+    // the buffer, of type T[]
     std::unique_ptr<T[]> buffer;
 
-    /**
-     * @brief state of fullness
-     */
+    // state of fullness
     bool full = false;
 
     std::mutex mutex;
