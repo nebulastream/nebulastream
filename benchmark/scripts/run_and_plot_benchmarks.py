@@ -143,7 +143,7 @@ def millify(n):
 
 	return '{:.1f}{}'.format(n / 10**(3 * idx), PRE_SI_UNIT[idx])
 
-def autolabel(rects):
+def autolabel(rects, ax):
 	"""Attach a text label above each bar in *rects*, displaying its height."""
 	for rect in rects:
 		height = rect.get_height()
@@ -238,7 +238,12 @@ def plotDataAllBenchmarks(allBenchmarks):
 		if benchmark.customPlottingFile:
 			try:
 				for csvFile in benchmark.resultCsvFiles:
-					customExecPythonFile(benchmark.customPlottingFile, locals={"resultCsvFile" : csvFile}, globals={"millify" : millify, "built" : __builtins__})
+					customExecPythonFile(benchmark.customPlottingFile, locals={"resultCsvFile" : csvFile}, 
+										globals={	"millify" : millify, 
+													"SimpleDataPoint" : SimpleDataPoint, 
+													"built" : __builtins__,
+													"printHighlight" : printHighlight,
+													"autolabel" : autolabel})
 			except Exception as e:
 				cntErr += 1
 				printFail(f"Could not plot {benchmark.name} with custom plottingFile!!!")
@@ -296,7 +301,9 @@ def defaultPlotBenchmark(benchmark):
 
 		
 		highestTuplesPerSecondIngestrate = groups["TuplesPerSecond"].mean().keys().to_list()[groups["TuplesPerSecond"].mean().argmax()]
-		avgHighestThroughputStr = "Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["TuplesPerSecond"].mean().max(), highestTuplesPerSecondIngestrate)
+		highestAvgThrougput = groups["TuplesPerSecond"].mean().max()
+		avgHighestThroughputStr = f"Highest avg throughput of {highestAvgThrougput:e} tup/s was achieved with (ingestionrate,workerThreads) of {highestTuplesPerSecondIngestrate}"
+		
 		printHighlight(avgHighestThroughputStr)
 		print2Log(avgHighestThroughputStr)
 
@@ -308,9 +315,9 @@ def defaultPlotBenchmark(benchmark):
 		print2Log(overallHighestThroughputStr)
 
 		allWorkerThreads 	= set([dataPoint.workerThreads for dataPoint in allDataPoints])
-		allIngestionRate 	= { workerThreads : [] for workerThreads in allWorkerThreads}
-		allyErr 			= { workerThreads : [] for workerThreads in allWorkerThreads}
-		allyValues			= { workerThreads : [] for workerThreads in allWorkerThreads}
+		allIngestionRate 	= { workerThreads : [] for workerThreads in allWorkerThreads }
+		allyErr 			= { workerThreads : [] for workerThreads in allWorkerThreads }
+		allyValues			= { workerThreads : [] for workerThreads in allWorkerThreads }
 
 		for workerThreads in allWorkerThreads:
 			for dataPoint in allDataPoints:
@@ -324,7 +331,7 @@ def defaultPlotBenchmark(benchmark):
 			rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
 			ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
 			ax.set_xticklabels([f"{millify(x)}" for x in allIngestionRate[workerThreads]])
-			autolabel(rects)
+			autolabel(rects, ax)
 
 			plt.title(f"WorkerThreads: {workerThreads}")
 			plt.savefig(os.path.join(folder, f"avg_througput_{benchmark.name}_{workerThreads}.png"))
@@ -374,7 +381,7 @@ if __name__ == '__main__':
 
 	endTimeStamp = datetime.now()
 
-	print("---------------------------------------------------")
+	print("\n\n---------------------------------------------------")
 	message = f"Running benchmark errors = {errRunBenchmarks}"
 	if errRunBenchmarks == 0:
 		printSuccess(message)
