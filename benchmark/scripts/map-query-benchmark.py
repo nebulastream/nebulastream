@@ -56,15 +56,14 @@ for i, ((ingestionRate, workerThreads), gbf) in enumerate(groups):
 
 
 highestTuplesPerSecondIngestrate = groups["TuplesPerSecond"].mean().keys().to_list()[groups["TuplesPerSecond"].mean().argmax()]
-avgHighestThroughputStr = "Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["TuplesPerSecond"].mean().max(), highestTuplesPerSecondIngestrate)
-printHighlight(avgHighestThroughputStr)
+highestAvgThrougput = groups["TuplesPerSecond"].mean().max()
+avgHighestThroughputStr = f"Highest avg throughput of {highestAvgThrougput:e} tup/s was achieved with (ingestionrate,workerThreads) of {highestTuplesPerSecondIngestrate}"
 print2Log(avgHighestThroughputStr)
 
 # Get maximum throughput
 overallHighestThroughput = fileDataFrame["TuplesPerSecond"].max()
 overallHighestThroughputRow = str(fileDataFrame.iloc[fileDataFrame["TuplesPerSecond"].argmax()].drop("BM_Name").to_dict())
 overallHighestThroughputStr = "Overall highest throughput of {:e} tup/s was achieved with {}".format(overallHighestThroughput, overallHighestThroughputRow)
-printHighlight(overallHighestThroughputStr)
 print2Log(overallHighestThroughputStr)
 
 allWorkerThreads 	= set([dataPoint.workerThreads for dataPoint in allDataPoints])
@@ -84,7 +83,7 @@ for workerThreads in allWorkerThreads:
 	rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
 	ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
 	ax.set_xticklabels([f"{millify(x)}" for x in allIngestionRate[workerThreads]])
-	autolabel(rects)
+	autolabel(rects, ax)
 
 	plt.title(f"WorkerThreads: {workerThreads}")
-	plt.savefig(os.path.join(folder, f"avg_througput_{benchmark.name}_{workerThreads}.png"))
+	plt.savefig(os.path.join(folder, f"avg_througput_map_query_{workerThreads}.png"))
