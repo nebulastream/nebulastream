@@ -30,7 +30,7 @@
 namespace NES {
 
 void YSBSource::generate(YSBSource::YsbRecord& rec) {
-    rec.userId = 0;
+    rec.userId = 1;
     rec.pageId = 0;
     rec.adType = 0;
 

@@ -618,18 +618,18 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
+    string cmdCoord = "../nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
 
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
 
-    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352 --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
+    string cmdWrk1 = "../nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352 --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
         + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
-    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354 --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
+    string cmdWrk2 = "../nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354 --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
         + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=1 --endlessRepeat=on";
 
     bp::child workerProc2(cmdWrk2.c_str());
@@ -641,10 +641,11 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"ysb\\\").sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"ysb\\\").windowByKey(Attribute(\\\"campaign_id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Seconds(10)), Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
+
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
@@ -687,8 +688,8 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     NES_INFO("Number of lines " << n);
     EXPECT_TRUE(n == expectedLinesOut);
 
-    int response = remove(outputFilePath.c_str());
-    EXPECT_TRUE(response == 0);
+    //int response = remove(outputFilePath.c_str());
+    //EXPECT_TRUE(response == 0);
 
     NES_INFO("Killing worker 1 process->PID: " << workerPid1);
     workerProc1.terminate();
