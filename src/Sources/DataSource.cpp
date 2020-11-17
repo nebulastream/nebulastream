@@ -126,7 +126,7 @@ bool DataSource::isRunning() { return running; }
 void DataSource::setGatheringInterval(size_t interval) { this->gatheringInterval = interval; }
 
 void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
-    std::string thName = "DataSrc-" + operatorId;
+    std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
     if (!queryManager) {
