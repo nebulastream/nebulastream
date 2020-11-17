@@ -60,7 +60,6 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
             this->windowSchema = Schema::create()
                 ->addField(createField("start", UINT64))
                 ->addField(createField("end", UINT64))
-                ->addField("key", windowDefinition->getWindowAggregation()->as()->getStamp())
                 ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         }
 
