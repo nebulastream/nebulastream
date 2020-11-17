@@ -38,20 +38,18 @@ class YSBSource : public DefaultSource {
 
     static SchemaPtr YsbSchema() {
         return Schema::create()
-            ->addField("user_id", UINT16)
-            ->addField("page_id", UINT16)
-            ->addField("campaign_id", UINT16)
-            ->addField("ad_type", UINT16)
-            ->addField("event_type", UINT16)
+            ->addField("user_id", UINT64)
+            ->addField("page_id", UINT64)
+            ->addField("campaign_id", UINT64)
+            ->addField("ad_type", UINT64)
+            ->addField("event_type", UINT64)
             ->addField("current_ms", UINT64)
-            ->addField("ip", INT32)
+            ->addField("ip", UINT64)
+
             ->addField("d1", UINT64)
             ->addField("d2", UINT64)
-            ->addField("d3", UINT64)
-            ->addField("d4", UINT64)
-            ->addField("d5", UINT64)
-            ->addField("d6", UINT64)
-            ->addField("d7", UINT64);
+            ->addField("d3", UINT32)
+            ->addField("d4", UINT16);
     };
 
   public:
@@ -59,22 +57,19 @@ class YSBSource : public DefaultSource {
         YsbRecord() = default;
         YsbRecord(uint16_t userId, uint16_t pageId, uint16_t campaignId, uint16_t adType, uint16_t eventType, uint64_t currentMs, uint32_t ip) : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs), ip(ip) {}
 
-        uint16_t userId;
-        uint16_t pageId;
-        uint16_t campaignId;
-        uint16_t adType;
-        uint16_t eventType;
+        uint64_t userId;
+        uint64_t pageId;
+        uint64_t campaignId;
+        uint64_t adType;
+        uint64_t eventType;
         uint64_t currentMs;
-        uint32_t ip;
+        uint64_t ip;
 
         // placeholder to reach 78 bytes
         uint64_t dummy1{0};
         uint64_t dummy2{0};
-        uint64_t dummy3{0};
-        uint64_t dummy4{0};
-        uint64_t dummy5{0};
-        uint64_t dummy6{0};
-        uint64_t dummy7{0};
+        uint32_t dummy3{0};
+        uint16_t dummy4{0};
 
         YsbRecord(const YsbRecord& rhs) {
             userId = rhs.userId;
@@ -96,6 +91,7 @@ class YSBSource : public DefaultSource {
                 + ", ip=" + std::to_string(ip);
         }
     };
+    static_assert(sizeof(YsbRecord) == 78, "YSBSource: The record must be 78 bytes.");
     // 78 bytes
 
   private:
