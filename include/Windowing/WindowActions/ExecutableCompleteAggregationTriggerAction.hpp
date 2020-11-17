@@ -31,6 +31,7 @@
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Windowing {
