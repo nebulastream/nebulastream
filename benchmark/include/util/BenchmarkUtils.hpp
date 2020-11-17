@@ -39,8 +39,11 @@ class BenchmarkUtils {
     /**
     * @brief creates a vector with a range of [start, stop) and step size
     */
-
-    template<typename T> static void createRangeVector(std::vector<T>& vector, T start, T stop, T stepSize);
+    template<typename T> static void createRangeVector(std::vector<T>& vector, T start, T stop, T stepSize) {
+        for (T i = start; i < stop; i += stepSize) {
+            vector.push_back(i);
+        }
+    }
 
     /**
      * @brief creates a list with values drawn from an uniform distribution of the range [0,999]. The list size is totalNumberOfTuples
@@ -126,7 +129,8 @@ NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG
                         std::vector<QueryStatistics*> statisticsVec;\
                         NES_WARNING("Starting benchmark with " + std::to_string(ingestionRate)\
                                         + ", " + std::to_string(BenchmarkUtils::runSingleExperimentSeconds)\
-                                        + ", " + std::to_string(BenchmarkUtils::periodLengthInSeconds));\
+                                        + ", " + std::to_string(BenchmarkUtils::periodLengthInSeconds)                      \
+                                        + ", " + std::to_string(workerThreads));\
                         DataSourcePtr thisSource = (benchmarkSource);                                                                                 \
                         DataSinkPtr thisSink = (benchmarkSink);\
                         SchemaPtr thisSchema = (benchmarkSchema);\

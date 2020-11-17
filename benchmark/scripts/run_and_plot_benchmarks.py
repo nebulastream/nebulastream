@@ -49,6 +49,13 @@ class Benchmark(object):
 		return f"<{self.name}>\n\t<{self.executable}>\n\t<{self.customPlottingFile}>\n\t<{self.resultCsvFiles}>"
 		
 
+class SimpleDataPoint(object):
+	"""docstring for SimpleDataPoint"""
+	def __init__(self, ingestionRate, workerThreads, yValue, yErr):
+		self.ingestionRate = ingestionRate
+		self.workerThreads = workerThreads
+		self.yErr = yErr
+		self.yValue = yValue
 
 #Params:
 #	<benchmark names> (names of executables that will be run, if this is empty all possible benchmark executables will be run)
@@ -136,6 +143,16 @@ def millify(n):
 
 	return '{:.1f}{}'.format(n / 10**(3 * idx), PRE_SI_UNIT[idx])
 
+def autolabel(rects):
+	"""Attach a text label above each bar in *rects*, displaying its height."""
+	for rect in rects:
+		height = rect.get_height()
+		ax.annotate('{}'.format(millify(height)),
+					xy=(rect.get_x() + rect.get_width() / 2, height),
+					xytext=(0, 3),  # 3 points vertical offset
+					textcoords="offset points",
+					ha='center', va='bottom')
+
 
 def customExecPythonFile(file, globals=None, locals=None):
 	if globals is None:
@@ -183,6 +200,7 @@ def printAllBenchmarks(allBenchmarks):
 def runAllBenchmarks(allBenchmarks, benchmarkFolder):
 	cntErr = 0
 	for benchmarkName in allBenchmarks:
+		startTimeStamp = datetime.now()
 		benchmark = allBenchmarks[benchmarkName]
 		beforeFolders = getAllFolders(os.getcwd())
 		
@@ -198,7 +216,10 @@ def runAllBenchmarks(allBenchmarks, benchmarkFolder):
 			printFail(f"Could not run {benchmark.name}!!!\n")
 			continue
 
-		printSuccess(f"Done running benchmark {benchmark.name}!\n")
+		delta = datetime.now() - startTimeStamp
+		hours = int(delta.total_seconds() // 3600)
+		minutes = int(delta.total_seconds() % 3600) // 60
+		printSuccess(f"Done running benchmark {benchmark.name} in {hours}h{minutes}m!\n")
 
 		newFolders = [f for f in getAllFolders(os.getcwd()) if not f in beforeFolders and os.path.isdir(f)]
 
@@ -253,7 +274,6 @@ def defaultPlotBenchmark(benchmark):
 			if list(row) == headerAsList:
 				duplicateHeaderIndexes.append(i)
 
-		print(duplicateHeaderIndexes)
 		fileDataFrame = fileDataFrame.drop(index=duplicateHeaderIndexes)
 		fileDataFrame.to_csv(csvFile, index=False)
 		fileDataFrame = pd.read_csv(csvFile)
@@ -266,18 +286,15 @@ def defaultPlotBenchmark(benchmark):
 		fileDataFrame = pd.read_csv(csvFile)
 
 		# Calculate avg throughput for one ingestionrate
-		groups = fileDataFrame.groupby(by="Ingestionrate", sort=True)
-		xData = []
-		yData = []
-		yErr = []
+		groups = fileDataFrame.groupby(by=["Ingestionrate", "WorkerThreads"], sort=True)
+		allDataPoints = []
 
-		for i, (ingestionRate, gbf) in enumerate(groups):
-			print("Ingestionrate {:e} has throughput of {:e} tup/s".format(float(ingestionRate), gbf["TuplesPerSecond"].mean()))
-			xData.append(ingestionRate)
-			yData.append((gbf["TuplesPerSecond"]).mean())
-			yErr.append(gbf["TuplesPerSecond"].std())
-			
+		for i, ((ingestionRate, workerThreads), gbf) in enumerate(groups):
+			print("Ingestionrate {:e} has throughput of {:e} tup/s with {} workerThreads".format(float(ingestionRate), gbf["TuplesPerSecond"].mean(), workerThreads))
+			dataPoint = SimpleDataPoint(ingestionRate, workerThreads, gbf["TuplesPerSecond"].mean(), gbf["TuplesPerSecond"].std())
+			allDataPoints.append(dataPoint)
 
+		
 		highestTuplesPerSecondIngestrate = groups["TuplesPerSecond"].mean().keys().to_list()[groups["TuplesPerSecond"].mean().argmax()]
 		avgHighestThroughputStr = "Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["TuplesPerSecond"].mean().max(), highestTuplesPerSecondIngestrate)
 		printHighlight(avgHighestThroughputStr)
@@ -290,16 +307,27 @@ def defaultPlotBenchmark(benchmark):
 		printHighlight(overallHighestThroughputStr)
 		print2Log(overallHighestThroughputStr)
 
+		allWorkerThreads 	= set([dataPoint.workerThreads for dataPoint in allDataPoints])
+		allIngestionRate 	= { workerThreads : [] for workerThreads in allWorkerThreads}
+		allyErr 			= { workerThreads : [] for workerThreads in allWorkerThreads}
+		allyValues			= { workerThreads : [] for workerThreads in allWorkerThreads}
 
-		plt.figure(figsize=(8, 16))
-		plt.barh(np.arange(0, len(xData)), yData, xerr=yErr)
-		plt.yticks(np.arange(0, len(xData)), [f"{millify(x)}\n{millify(y)}" for x,y in zip(xData, yData)])
-		plt.savefig(os.path.join(folder, f"avg_througput_over_same_ingestrate_{benchmark.name}_{i}.png"))
+		for workerThreads in allWorkerThreads:
+			for dataPoint in allDataPoints:
+				if dataPoint.workerThreads == workerThreads:
+					allIngestionRate[workerThreads].append(dataPoint.ingestionRate)
+					allyErr[workerThreads].append(dataPoint.yErr)
+					allyValues[workerThreads].append(dataPoint.yValue)
 
-		plt.figure(figsize=(8, 16))
-		plt.barh(np.arange(0, len(fileDataFrame)), fileDataFrame["TuplesPerSecond"])
-		plt.yticks(np.arange(0, len(fileDataFrame)), [millify(x) for x in fileDataFrame["TuplesPerSecond"]])
-		plt.savefig(os.path.join(folder, f"throughput_overall_{benchmark.name}_{counterCsvFile}.png"))
+		for workerThreads in allWorkerThreads:
+			fig, ax = plt.subplots(figsize=(24, 8))
+			rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
+			ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
+			ax.set_xticklabels([f"{millify(x)}" for x in allIngestionRate[workerThreads]])
+			autolabel(rects)
+
+			plt.title(f"WorkerThreads: {workerThreads}")
+			plt.savefig(os.path.join(folder, f"avg_througput_{benchmark.name}_{workerThreads}.png"))
 
 
 if __name__ == '__main__':

@@ -31,13 +31,7 @@ uint64_t BenchmarkUtils::runSingleExperimentSeconds;
 uint64_t BenchmarkUtils::periodLengthInSeconds;
 
 
-template<typename T> void BenchmarkUtils::createRangeVector(std::vector<T>& vector, T start, T stop, T stepSize){
-    for(T i = start; i < stop; i += stepSize){
-        vector.push_back(i);
-    }
-}
-
-void BenchmarkUtils::createUniformData(std::list<uint64_t>& dataList, uint64_t totalNumberOfTuples) {
+ void BenchmarkUtils::createUniformData(std::list<uint64_t>& dataList, uint64_t totalNumberOfTuples) {
     // uniform distribution
     int min = 0, max = 999;
 
