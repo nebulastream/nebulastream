@@ -26,6 +26,7 @@
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <QueryCompiler/PipelineStage.hpp>
 
 namespace NES::Join {
 template<class KeyType>
