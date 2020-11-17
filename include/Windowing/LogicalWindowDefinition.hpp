@@ -28,12 +28,14 @@ class LogicalWindowDefinition {
      * @param windowAggregation
      * @param windowType
      * @param distChar
+     * @param numberOfInputEdges
      * @param window trigger policy
      * @param window action
      */
     explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
+                                     uint64_t numberOfInputEdges,
                                      WindowTriggerPolicyPtr triggerPolicy,
                                      WindowActionDescriptorPtr windowAction);
 
@@ -60,12 +62,14 @@ class LogicalWindowDefinition {
      * @param windowAggregation
      * @param windowType
      * @param window trigger policy
+     * @param numberOfInputEdges
      * @param window action
      * @return Window Definition
      */
     static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation,
                                              WindowTypePtr windowType,
                                              DistributionCharacteristicPtr distChar,
+                                             uint64_t numberOfInputEdges,
                                              WindowTriggerPolicyPtr triggerPolicy,
                                              WindowActionDescriptorPtr windowAction);
 

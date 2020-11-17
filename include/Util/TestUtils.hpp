@@ -67,15 +67,15 @@ class TestUtils {
             //FIXME: handle vector of statistics properly in #977
             if (ptr->getQueryStatistics(queryId)[0]->getProcessedBuffers() == expectedResult
                 && ptr->getQueryStatistics(queryId)[0]->getProcessedTasks() == expectedResult) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct");
+                NES_DEBUG("checkCompleteOrTimeout: NodeEnginePtr results are correct");
                 return true;
             }
             NES_DEBUG(
-                "checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)[0]->getProcessedTuple()
+                "checkCompleteOrTimeout: NodeEnginePtr sleep because val=" << ptr->getQueryStatistics(queryId)[0]->getProcessedTuple()
                                                              << " < " << expectedResult);
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
+        NES_DEBUG("checkCompleteOrTimeout: NodeEnginePtr expected results are not reached after timeout");
         return false;
     }
 
@@ -145,7 +145,7 @@ class TestUtils {
                                                              << " < " << expectedResult);
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
+        NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout");
         return false;
     }
 
@@ -175,7 +175,7 @@ class TestUtils {
             }
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
+        NES_DEBUG("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
         return false;
     }
 

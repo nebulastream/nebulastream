@@ -58,7 +58,7 @@ bool WindowLogicalOperatorNode::inferSchema() {
 
     WindowOperatorNode::inferSchema();
     // infer the default input and output schema
-    NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
+    NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
@@ -75,7 +75,7 @@ bool WindowLogicalOperatorNode::inferSchema() {
                            ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
         return true;
     } else {
-        NES_THROW_RUNTIME_ERROR("SliceCreationOperator: type inference for non keyed streams is not supported");
+        NES_THROW_RUNTIME_ERROR("WindowLogicalOperatorNode : type inference for non keyed streams is not supported");
     }
 }
 }// namespace NES

@@ -479,16 +479,23 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     auto windowHandlerVariableDeclration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto"), "windowHandler");
 
-    NES_ASSERT(!window->getOnKey()->getStamp()->isUndefined(), "window on key is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
-    auto getWindowHandlerStatement = getAggregationWindowHandler(
-        context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
-        window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
-        window->getWindowAggregation()->getFinalAggregateStamp());
-    context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+    if (window->isKeyed()) {
+        auto getWindowHandlerStatement = getAggregationWindowHandler(
+            context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
+            window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
+            window->getWindowAggregation()->getFinalAggregateStamp());
+        context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+    } else {
+        auto getWindowHandlerStatement = getAggregationWindowHandler(
+            context->code->varDeclarationExecutionContext, window->getWindowAggregation()->on()->getStamp(),
+            window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
+            window->getWindowAggregation()->getFinalAggregateStamp());
+        context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+    }
 
     auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
@@ -785,16 +792,23 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto windowHandlerVariableDeclration = VariableDeclaration::create(
         tf->createAnonymusDataType("auto"), "windowHandler");
 
-    NES_ASSERT(!window->getOnKey()->getStamp()->isUndefined(), "window on key is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
-    auto getWindowHandlerStatement = getAggregationWindowHandler(
-        context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
-        window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
-        window->getWindowAggregation()->getFinalAggregateStamp());
-    context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+    if (window->isKeyed()) {
+        auto getWindowHandlerStatement = getAggregationWindowHandler(
+            context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
+            window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
+            window->getWindowAggregation()->getFinalAggregateStamp());
+        context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+    } else {
+        auto getWindowHandlerStatement = getAggregationWindowHandler(
+            context->code->varDeclarationExecutionContext, window->getWindowAggregation()->on()->getStamp(),
+            window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
+            window->getWindowAggregation()->getFinalAggregateStamp());
+        context->code->variableInitStmts.emplace_back(VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+    }
 
     auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
     context->code->variableInitStmts.emplace_back(VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
@@ -847,15 +861,24 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 
     // Read key value from record
     //        int64_t key = windowTuples[recordIndex].key;
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(window->getOnKey()->getStamp()), window->getOnKey()->getFieldName());
+    DataTypePtr dataType;
+    if (window->isKeyed()) {
+        dataType = window->getOnKey()->getStamp();
+    }
+    else
+    {
+        dataType = window->getWindowAggregation()->on()->getStamp();
+    }
 
+    //TODO this is not nice but we cannot create an empty one or a ptr
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration =
             context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getOnKey()->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
-                                                 .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                                                     VarRef(
-                                                         keyVariableAttributeDeclaration)));
+            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                VarRef(
+                    keyVariableAttributeDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
             keyVariableAttributeStatement));
     } else {
