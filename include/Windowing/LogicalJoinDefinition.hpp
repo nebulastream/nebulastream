@@ -20,13 +20,12 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
-using namespace Windowing;
 
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, DistributionCharacteristicPtr distributionType, WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction);
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType, Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction);
 
-    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, DistributionCharacteristicPtr distributionType, WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction);
+    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType, Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction);
 
     /**
     * @brief getter/setter for on left join key
