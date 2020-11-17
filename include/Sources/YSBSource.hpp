@@ -55,7 +55,7 @@ class YSBSource : public DefaultSource {
   public:
     struct __attribute__((packed)) YsbRecord {
         YsbRecord() = default;
-        YsbRecord(uint16_t userId, uint16_t pageId, uint16_t campaignId, uint16_t adType, uint16_t eventType, uint64_t currentMs, uint32_t ip) : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs), ip(ip) {}
+        YsbRecord(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs, uint64_t ip) : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs), ip(ip) {}
 
         uint64_t userId;
         uint64_t pageId;
@@ -100,7 +100,7 @@ class YSBSource : public DefaultSource {
   private:
     size_t numberOfTuplesPerBuffer;
     bool endlessRepeat;
-    uint8_t tmpEventType;
+    uint64_t tmpEventType;
     uint64_t currentMs;
 };
 
