@@ -203,7 +203,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                     NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
                     partialFinalAggregates[windowId] = partialFinalAggregates[windowId] + partialAggregatesLeft[sliceId] + partialAggregatesRight[sliceId];
                 } else {
-                    NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: condition not true");
+                    NES_TRACE("ExecutableNestedLoopJoinTriggerAction: condition not true");
                 }
             }
         }

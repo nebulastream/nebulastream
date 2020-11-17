@@ -917,7 +917,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
+    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
@@ -976,7 +976,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
+    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
@@ -1036,7 +1036,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
+    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(

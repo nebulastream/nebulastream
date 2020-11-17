@@ -46,12 +46,24 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
 
     ExecutableCompleteAggregationTriggerAction(LogicalWindowDefinitionPtr windowDefinition,
                                                std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) : windowDefinition(windowDefinition),
-                                                                                                                                                                                executableWindowAggregation(executableWindowAggregation) {
-        this->windowSchema = Schema::create()
-                                 ->addField(createField("start", UINT64))
-                                 ->addField(createField("end", UINT64))
-                                 ->addField("key", windowDefinition->getOnKey()->getStamp())
-                                 ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+
+                                                                                                                                                                                                    executableWindowAggregation(executableWindowAggregation){
+        if(windowDefinition->isKeyed()){
+            this->windowSchema = Schema::create()
+                ->addField(createField("start", UINT64))
+                ->addField(createField("end", UINT64))
+                ->addField("key", windowDefinition->getOnKey()->getStamp())
+                ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+        }
+        else
+        {
+            this->windowSchema = Schema::create()
+                ->addField(createField("start", UINT64))
+                ->addField(createField("end", UINT64))
+                ->addField("key", windowDefinition->getWindowAggregation()->as()->getStamp())
+                ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+        }
+
         windowTupleLayout = createRowLayout(this->windowSchema);
     }
 
@@ -71,7 +83,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
             //write remaining buffer
-            NES_DEBUG("ExecutableCompleteAggregationTriggerActionhh: Dispatch last buffer output buffer with "
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: Dispatch last buffer output buffer with "
                       << tupleBuffer.getNumberOfTuples() << " records, content="
                       << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()

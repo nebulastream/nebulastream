@@ -93,14 +93,24 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
     return *this;
 }
 
-Query& Query::window(const Windowing::WindowTypePtr, const Windowing::WindowAggregationPtr) {
-    NES_THROW_RUNTIME_ERROR("Query: Global windowing is currently not supported");
-    /*
+Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add window operator");
-    auto windowDefinition = LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType());
+    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto windowDefinition = LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy, triggerAction);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
+
+    // check if query contain watermark assigner, and add if missing (as default behaviour)
+    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+        } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
+            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
+        }
+    }
+
     queryPlan->appendOperatorAsNewRoot(windowOperator);
-    return *this;*/
+    return *this;
 }
 
 Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation) {
@@ -110,10 +120,10 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto tiggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = Windowing::LogicalWindowDefinition::create(fieldAccess, aggregation, windowType,
-                                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, tiggerPolicy, triggerAction);
+                                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy, triggerAction);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)

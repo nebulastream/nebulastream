@@ -122,7 +122,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType(), trigger, triggerAction);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
     auto windowManager = new WindowManager(windowDef->getWindowType());
     uint64_t ts = 10;
@@ -154,7 +154,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto exec = ExecutableSumAggregation<uint64_t>::create();
-    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, exec);
+    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, exec);
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
@@ -229,7 +229,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto windowDef = Windowing::LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction);
 
     auto exec = ExecutableSumAggregation<int64_t>::create();
-    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
+    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
@@ -302,7 +302,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)), DistributionCharacteristic::createCombiningWindowType(), 0, trigger, triggerAction);
     auto exec = ExecutableSumAggregation<int64_t>::create();
-    auto wAbstr = WindowHandlerFactoryDetails::createAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
+    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec);
     auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {

@@ -49,8 +49,8 @@ class WindowHandlerFactoryDetails {
     * @return AbstractWindowHandlerPtr
     */
     template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-    static AbstractWindowHandlerPtr createAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
-                                                            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
+    static AbstractWindowHandlerPtr createKeyedAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
+                                                                 std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
         auto policy = windowDefinition->getTriggerPolicy();
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {
@@ -74,45 +74,21 @@ class WindowHandlerFactoryDetails {
         return std::make_shared<AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     }
 
-    template<class KeyType>
-    static AbstractWindowHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
-        auto policy = joinDefinition->getTriggerPolicy();
-        BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
-        if (policy->getPolicyType() == triggerOnTime) {
-            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerPolicyDescription>(policy);
-            executablePolicyTrigger = ExecutableOnTimeTriggerPolicy::create(triggerDesc->getTriggerTimeInMs());
-        } else {
-            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
-        }
-
-        auto action = joinDefinition->getTriggerAction();
-        Join::ExecutableNestedLoopJoinTriggerActionPtr<KeyType> executableActionTrigger;
-        if (action->getActionType() == Join::LazyNestedLoopJoin) {
-            executableActionTrigger = Join::ExecutableNestedLoopJoinTriggerAction<KeyType>::create(joinDefinition);
-
-        } else {
-            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
-        }
-
-        //add compile method return handler
-        return std::make_shared<Join::JoinHandler<KeyType>>(joinDefinition, executablePolicyTrigger, executableActionTrigger);
-    }
-
     template<class KeyType, class InputType>
     static AbstractWindowHandlerPtr createWindowHandlerForAggregationForKeyAndInput(LogicalWindowDefinitionPtr windowDefinition) {
         auto onField = windowDefinition->getWindowAggregation()->on();
         auto asField = windowDefinition->getWindowAggregation()->as();
         switch (windowDefinition->getWindowAggregation()->getType()) {
             case WindowAggregationDescriptor::Avg:
-                return createAggregationWindow<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create());
+                return createKeyedAggregationWindow<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create());
             case WindowAggregationDescriptor::Count:
-                return createAggregationWindow<KeyType, InputType, CountType, CountType>(windowDefinition, ExecutableCountAggregation<InputType>::create());
+                return createKeyedAggregationWindow<KeyType, InputType, CountType, CountType>(windowDefinition, ExecutableCountAggregation<InputType>::create());
             case WindowAggregationDescriptor::Max:
-                return createAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMaxAggregation<InputType>::create());
+                return createKeyedAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMaxAggregation<InputType>::create());
             case WindowAggregationDescriptor::Min:
-                return createAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMinAggregation<InputType>::create());
+                return createKeyedAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableMinAggregation<InputType>::create());
             case WindowAggregationDescriptor::Sum:
-                return createAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create());
+                return createKeyedAggregationWindow<KeyType, InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create());
         }
         NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: Avg aggregation currently not supported");
     };
@@ -144,6 +120,75 @@ class WindowHandlerFactoryDetails {
         }
         NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: currently we dont support non basic input types");
     };
+
+    template<class InputType>
+    static AbstractWindowHandlerPtr createWindowHandlerForAggregationForInputType(LogicalWindowDefinitionPtr windowDefinition) {
+        auto onField = windowDefinition->getWindowAggregation()->on();
+        auto asField = windowDefinition->getWindowAggregation()->as();
+        switch (windowDefinition->getWindowAggregation()->getType()) {
+            case WindowAggregationDescriptor::Avg:
+                return createNonKeyedAggregationWindow<InputType, AVGPartialType<InputType>, AVGResultType>(windowDefinition, ExecutableAVGAggregation<InputType>::create());
+            case WindowAggregationDescriptor::Count:
+                return createNonKeyedAggregationWindow<InputType, CountType, CountType>(windowDefinition, ExecutableCountAggregation<InputType>::create());
+            case WindowAggregationDescriptor::Max:
+                return createNonKeyedAggregationWindow<InputType, InputType, InputType>(windowDefinition, ExecutableMaxAggregation<InputType>::create());
+            case WindowAggregationDescriptor::Min:
+                return createNonKeyedAggregationWindow<InputType, InputType, InputType>(windowDefinition, ExecutableMinAggregation<InputType>::create());
+            case WindowAggregationDescriptor::Sum:
+                return createNonKeyedAggregationWindow<InputType, InputType, InputType>(windowDefinition, ExecutableSumAggregation<InputType>::create());
+        }
+        NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: Avg aggregation currently not supported");
+    };
+
+    template<class InputType, class PartialAggregateType, class FinalAggregateType>
+    static AbstractWindowHandlerPtr createNonKeyedAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
+                                                                 std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
+        auto policy = windowDefinition->getTriggerPolicy();
+        BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
+        if (policy->getPolicyType() == triggerOnTime) {
+            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerPolicyDescription>(policy);
+            executablePolicyTrigger = ExecutableOnTimeTriggerPolicy::create(triggerDesc->getTriggerTimeInMs());
+        } else {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        }
+
+        auto action = windowDefinition->getTriggerAction();
+        BaseExecutableWindowActionPtr<InputType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
+        if (action->getActionType() == WindowAggregationTriggerAction) {
+            executableWindowAction = ExecutableCompleteAggregationTriggerAction<InputType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+        } else if (action->getActionType() == SliceAggregationTriggerAction) {
+            executableWindowAction = ExecutableSliceAggregationTriggerAction<InputType, InputType, PartialAggregateType, FinalAggregateType>::create(windowDefinition, executableWindowAggregation);
+        } else {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+        }
+
+        //add compile method return handler
+        return std::make_shared<AggregationWindowHandler<InputType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
+    }
+
+    template<class KeyType>
+    static AbstractWindowHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
+        auto policy = joinDefinition->getTriggerPolicy();
+        BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
+        if (policy->getPolicyType() == triggerOnTime) {
+            OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<OnTimeTriggerPolicyDescription>(policy);
+            executablePolicyTrigger = ExecutableOnTimeTriggerPolicy::create(triggerDesc->getTriggerTimeInMs());
+        } else {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        }
+
+        auto action = joinDefinition->getTriggerAction();
+        Join::ExecutableNestedLoopJoinTriggerActionPtr<KeyType> executableActionTrigger;
+        if (action->getActionType() == Join::LazyNestedLoopJoin) {
+            executableActionTrigger = Join::ExecutableNestedLoopJoinTriggerAction<KeyType>::create(joinDefinition);
+
+        } else {
+            NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        }
+
+        //add compile method return handler
+        return std::make_shared<Join::JoinHandler<KeyType>>(joinDefinition, executablePolicyTrigger, executableActionTrigger);
+    }
 };
 }// namespace NES::Windowing
 

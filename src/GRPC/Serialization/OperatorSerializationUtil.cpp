@@ -536,7 +536,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
 
     LogicalOperatorNodePtr ptr;
     if (!windowDetails->has_onkey()) {
-        auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, trigger, action);
+        auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, 1, trigger, action);
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
@@ -765,7 +765,7 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
 
 SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails, OperatorId operatorId) {
     // de-serialize source details and all its properties to a SourceDescriptor
-    NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor id=" << serializedSourceDetails->DebugString());
+    NES_TRACE("OperatorSerializationUtil:: de-serialized SourceDescriptor id=" << serializedSourceDetails->DebugString());
     const auto& serializedSourceDescriptor = serializedSourceDetails->sourcedescriptor();
 
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor>()) {

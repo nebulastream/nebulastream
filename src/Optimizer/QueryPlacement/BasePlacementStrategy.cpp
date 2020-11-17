@@ -61,8 +61,8 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, st
         NES_TRACE("BasePlacementStrategy: Get all topology nodes for the logical source stream");
         const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
         if (sourceNodes.empty()) {
-            NES_ERROR("BasePlacementStrategy: No source found in the topology for stream " << streamName << "for query with id : " << queryId);
-            throw QueryPlacementException("BasePlacementStrategy: No source found in the topology for stream " + streamName + "for query with id : " + std::to_string(queryId));
+            NES_ERROR("BasePlacementStrategy: No source found in the topology for stream " << streamName << " for query with id : " << queryId);
+            throw QueryPlacementException("BasePlacementStrategy: No source found in the topology for stream " + streamName + " for query with id : " + std::to_string(queryId));
         }
         mapOfSourceToTopologyNodes[streamName] = sourceNodes;
         NES_TRACE("BasePlacementStrategy: Find the topology sub graph for the source nodes.");

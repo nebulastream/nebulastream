@@ -73,7 +73,12 @@ bool WindowComputationOperator::inferSchema() {
                            ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
         return true;
     } else {
-        NES_THROW_RUNTIME_ERROR("WindowComputationOperator: type inference for non keyed streams is not supported");
+        outputSchema = Schema::create()
+                           ->addField(createField("start", UINT64))
+                           ->addField(createField("end", UINT64))
+                           ->addField(AttributeField::create("key", windowAggregation->on()->getStamp()))
+                           ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
+        return true;
     }
 }
 }// namespace NES
