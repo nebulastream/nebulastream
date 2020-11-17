@@ -66,6 +66,7 @@ class CCodeGenerator : public CodeGenerator {
 
     /**
      * @brief Code generation for a watermark assigner operator.
+     * @param watermarkStrategy strategy used for watermark assignment.
      * @param context The context of the current pipeline.
      * @return flag if the generation was successful.
      */
@@ -151,6 +152,8 @@ class CCodeGenerator : public CodeGenerator {
     BinaryOperatorStatement getRightJoinState(VariableDeclaration windowHandlerVariable);
 
     BinaryOperatorStatement getWindowManager(VariableDeclaration);
+
+    void generateCodeForWatermarkUpdater(PipelineContextPtr context, VariableDeclaration handler);
 
     StructDeclaration getStructDeclarationFromWindow(std::string structName);
     CompilerPtr compiler;

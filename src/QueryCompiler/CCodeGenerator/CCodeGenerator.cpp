@@ -384,10 +384,19 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 
         context->code->currentCodeInsertionPoint->addStatement(setWatermarkStatement.createCopy());
     } else {
-        NES_ERROR("GeneratableWatermarkAssignerOperator: cannot generate code for watermark strategy " << watermarkStrategy);
+        NES_ERROR("CCodeGenerator: cannot generate code for watermark strategy " << watermarkStrategy);
     }
 
     return true;
+}
+
+void CCodeGenerator::generateCodeForWatermarkUpdater(PipelineContextPtr context, VariableDeclaration handler) {
+    // updateAllMaxTs(maxWaterMark, inputBuffer.getOriginId())
+    auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateAllMaxTs");
+    updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
+    updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
+    auto updateAllWatermarkTsFunctionCallStatement = VarRef(handler).accessPtr(updateAllWatermarkTsFunctionCall);
+    context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
 }
 
 void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
@@ -620,6 +629,9 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         }
     }
 
+    // Generate code for watermark updater
+    // i.e., calling updateAllMaxTs
+    generateCodeForWatermarkUpdater(context, windowHandlerVariableDeclration);
     return true;
 }
 
@@ -771,6 +783,10 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
+
+    // Generate code for watermark updater
+    // i.e., calling updateAllMaxTs
+    generateCodeForWatermarkUpdater(context, windowJoinVariableDeclration);
     return true;
 }
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) {
@@ -981,6 +997,10 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
+
+    // Generate code for watermark updater
+    // i.e., calling updateAllMaxTs
+    generateCodeForWatermarkUpdater(context, windowHandlerVariableDeclration);
     return true;
 }
 
