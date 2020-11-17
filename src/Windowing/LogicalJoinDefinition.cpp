@@ -20,8 +20,8 @@ namespace NES::Join {
 
 LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey,
                                              Windowing::WindowTypePtr windowType,
-                                             DistributionCharacteristicPtr distributionType,
-                                             WindowTriggerPolicyPtr triggerPolicy,
+                                             Windowing::DistributionCharacteristicPtr distributionType,
+                                             Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                              BaseJoinActionDescriptorPtr triggerAction)
     : joinKey(joinKey),
       windowType(windowType),
@@ -31,8 +31,8 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKe
 }
 LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKey,
                                                        Windowing::WindowTypePtr windowType,
-                                                       DistributionCharacteristicPtr distributionType,
-                                                       WindowTriggerPolicyPtr triggerPolicy,
+                                                       Windowing::DistributionCharacteristicPtr distributionType,
+                                                       Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                                        BaseJoinActionDescriptorPtr triggerAction) {
     return std::make_shared<Join::LogicalJoinDefinition>(joinKey, windowType, distributionType, triggerPolicy, triggerAction);
 }

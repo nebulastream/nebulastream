@@ -107,8 +107,8 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         // Initialize JoinHandler Manager
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable
-        this->leftJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<KeyType>*>("leftSide");
-        this->rightJoinState = &StateManager::instance().registerState<KeyType, WindowSliceStore<KeyType>*>("rightSide");
+        this->leftJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("leftSide");
+        this->rightJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("rightSide");
         this->nextPipeline = nextPipeline;
 
         executableJoinAction->setup(queryManager, bufferManager, nextPipeline, originId);

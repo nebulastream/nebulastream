@@ -18,6 +18,7 @@
 #define NES_INCLUDE_JOIN_LOGICALJOINDEFINITION_HPP_
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <cstdint>
 
 namespace NES::Join {
 
@@ -40,7 +41,7 @@ class LogicalJoinDefinition {
     /**
      * @brief getter for on trigger policy
      */
-    WindowTriggerPolicyPtr getTriggerPolicy() const;
+    Windowing::WindowTriggerPolicyPtr getTriggerPolicy() const;
 
     /**
      * @brief getter for on trigger action
@@ -52,16 +53,16 @@ class LogicalJoinDefinition {
      * @brief getter for on distribution type
      * @return distributionType
     */
-    DistributionCharacteristicPtr getDistributionType() const;
+    Windowing::DistributionCharacteristicPtr getDistributionType() const;
 
     size_t getNumberOfInputEdges();
 
   private:
     FieldAccessExpressionNodePtr joinKey;
-    WindowTriggerPolicyPtr triggerPolicy;
+    Windowing::WindowTriggerPolicyPtr triggerPolicy;
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;
-    DistributionCharacteristicPtr distributionType;
+    Windowing::DistributionCharacteristicPtr distributionType;
     size_t numberOfInputEdges;
 };
 
