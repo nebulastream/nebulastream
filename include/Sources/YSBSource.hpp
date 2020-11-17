@@ -68,13 +68,13 @@ class YSBSource : public DefaultSource {
         uint32_t ip;
 
         // placeholder to reach 78 bytes
-        uint64_t dummy1;
-        uint64_t dummy2;
-        uint64_t dummy3;
-        uint64_t dummy4;
-        uint64_t dummy5;
-        uint64_t dummy6;
-        uint64_t dummy7;
+        uint64_t dummy1{0};
+        uint64_t dummy2{0};
+        uint64_t dummy3{0};
+        uint64_t dummy4{0};
+        uint64_t dummy5{0};
+        uint64_t dummy6{0};
+        uint64_t dummy7{0};
 
         YsbRecord(const YsbRecord& rhs) {
             userId = rhs.userId;
@@ -105,6 +105,7 @@ class YSBSource : public DefaultSource {
     size_t numberOfTuplesPerBuffer;
     bool endlessRepeat;
     uint8_t tmpEventType;
+    uint64_t currentMs;
 };
 
 typedef std::shared_ptr<YSBSource> YSBSourcePtr;

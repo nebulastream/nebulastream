@@ -1246,8 +1246,8 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
 }
 
 TEST_F(ContinuousSourceTest, testYSB) {
-    size_t producedBuffers = 30;
-    size_t producedTuples = 2;
+    size_t producedBuffers = 2;
+    size_t producedTuples = 5;
 
     //TODO: writing of csv file works, now make test green
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -1277,7 +1277,8 @@ TEST_F(ContinuousSourceTest, testYSB) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register query
-    std::string queryString = R"(Query::from("ysb").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string queryString = R"(Query::from("ysb").windowByKey(Attribute("campaign_id"), TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(1)), Sum(Attribute("user_id"))).sink(FileSinkDescriptor::create(")"
+        + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
@@ -1315,7 +1316,7 @@ TEST_F(ContinuousSourceTest, testYSB) {
             rec.ip = stoul(token[6]);
 
             NES_INFO("ContinuousSourceTest: YsbTuple: " << rec.toString());
-            EXPECT_TRUE(rec.userId == 0);
+            EXPECT_TRUE(rec.userId == 1);
             EXPECT_TRUE(rec.pageId == 0);
             EXPECT_TRUE(rec.adType == 0);
             EXPECT_TRUE(rec.campaignId >= 0 && rec.campaignId < 10000);
