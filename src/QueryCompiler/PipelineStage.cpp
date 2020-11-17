@@ -63,10 +63,7 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     uint64_t maxWaterMark = inputBuffer.getWatermark();
 
     if (hasWindowHandler() && maxWaterMark != 0) {
-        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId()
-                                                               << " for handler="
-                                                               << pipelineContext->getWindowHandler()->toString());
-        pipelineContext->getWindowHandler()->updateMaxTs(maxWaterMark, inputBuffer.getOriginId());
+        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
         if (pipelineContext->getWindowDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
             NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnWatermarkChange");
             pipelineContext->getWindowHandler()->trigger();
@@ -81,7 +78,6 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
 
     if (hasJoinHandler() && maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
-        pipelineContext->getJoinHandler()->updateMaxTs(maxWaterMark, inputBuffer.getOriginId());
         if (pipelineContext->getJoinDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
             NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnWatermarkChange");
             pipelineContext->getJoinHandler()->trigger();
