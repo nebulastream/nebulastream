@@ -24,46 +24,67 @@ import math
 
 
 # Load data into data frame 
-#resultCsvFile = "/media/sf_NES/nebulastream/benchmark/scripts/20201030_093604/MapQueries_30-10-2020_09-36-14_v0.0.161/BM_SimpleMapQuery_results.csv"
 folder = os.path.dirname(resultCsvFile)
-mapQueryFileDF = pd.read_csv(resultCsvFile)
+fileDataFrame = pd.read_csv(resultCsvFile)
+
+# Delete all rows that contain header
+headerAsList = list(fileDataFrame)
+duplicateHeaderIndexes = []
+for i, row in fileDataFrame.iterrows():
+	if list(row) == headerAsList:
+		duplicateHeaderIndexes.append(i)
+
+fileDataFrame = fileDataFrame.drop(index=duplicateHeaderIndexes)
+fileDataFrame.to_csv(resultCsvFile, index=False)
+fileDataFrame = pd.read_csv(resultCsvFile)
 
 # Adding bytesPerSecond and tuplesPerSecond columns
-mapQueryFileDF["TuplesPerSecond"] = mapQueryFileDF["ProcessedTuples"] / mapQueryFileDF["PeriodLength"]
-mapQueryFileDF["BytesPerSecond"] = mapQueryFileDF["ProcessedBytes"] / mapQueryFileDF["PeriodLength"]
+fileDataFrame["TuplesPerSecond"] = fileDataFrame["ProcessedTuples"] / fileDataFrame["PeriodLength"]
+fileDataFrame["BytesPerSecond"] = fileDataFrame["ProcessedBytes"] / fileDataFrame["PeriodLength"]
 
+fileDataFrame.to_csv(resultCsvFile, index=False)
+fileDataFrame = pd.read_csv(resultCsvFile)
 
 # Calculate avg throughput for one ingestionrate
-mapQueryFileDF.drop(mapQueryFileDF.loc[mapQueryFileDF['Ingestionrate'] < 1e6].index, inplace=True)
-groups = mapQueryFileDF.groupby(by="Ingestionrate", sort=True)
-xData = []
-yData = []
-yErr = []
+groups = fileDataFrame.groupby(by=["Ingestionrate", "WorkerThreads"], sort=True)
+allDataPoints = []
 
-for i, (ingestionRate, gbf) in enumerate(groups):
-	print("Ingestionrate {:e} has throughput of {:e} tup/s".format(float(ingestionRate), gbf["TuplesPerSecond"].mean()))
-	xData.append(ingestionRate)
-	yData.append(gbf["TuplesPerSecond"].mean())
-	yErr.append(gbf["TuplesPerSecond"].std())
-	
+for i, ((ingestionRate, workerThreads), gbf) in enumerate(groups):
+	print("Ingestionrate {:e} has throughput of {:e} tup/s with {} workerThreads".format(float(ingestionRate), gbf["TuplesPerSecond"].mean(), workerThreads))
+	dataPoint = SimpleDataPoint(ingestionRate, workerThreads, gbf["TuplesPerSecond"].mean(), gbf["TuplesPerSecond"].std())
+	allDataPoints.append(dataPoint)
+
 
 highestTuplesPerSecondIngestrate = groups["TuplesPerSecond"].mean().keys().to_list()[groups["TuplesPerSecond"].mean().argmax()]
-
-print2Log("Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["TuplesPerSecond"].mean().max(), highestTuplesPerSecondIngestrate), __file__)
+avgHighestThroughputStr = "Highest avg throughput of {:e} tup/s was achieved with ingestionrate of {:e}".format(groups["TuplesPerSecond"].mean().max(), highestTuplesPerSecondIngestrate)
+printHighlight(avgHighestThroughputStr)
+print2Log(avgHighestThroughputStr)
 
 # Get maximum throughput
-overallHighestThroughput = mapQueryFileDF["TuplesPerSecond"].max()
-overallHighestThroughputRow = str(mapQueryFileDF.iloc[mapQueryFileDF["TuplesPerSecond"].argmax()].drop("BM_Name").to_dict())
-print2Log("Overall highest throughput of {:e} tup/s was achieved with {}".format(overallHighestThroughput, overallHighestThroughputRow), __file__)
+overallHighestThroughput = fileDataFrame["TuplesPerSecond"].max()
+overallHighestThroughputRow = str(fileDataFrame.iloc[fileDataFrame["TuplesPerSecond"].argmax()].drop("BM_Name").to_dict())
+overallHighestThroughputStr = "Overall highest throughput of {:e} tup/s was achieved with {}".format(overallHighestThroughput, overallHighestThroughputRow)
+printHighlight(overallHighestThroughputStr)
+print2Log(overallHighestThroughputStr)
 
+allWorkerThreads 	= set([dataPoint.workerThreads for dataPoint in allDataPoints])
+allIngestionRate 	= { workerThreads : [] for workerThreads in allWorkerThreads }
+allyErr 			= { workerThreads : [] for workerThreads in allWorkerThreads }
+allyValues			= { workerThreads : [] for workerThreads in allWorkerThreads }
 
-plt.figure(figsize=(8, 16))
-plt.barh(np.arange(0, len(xData)), yData, xerr=yErr)
-plt.yticks(np.arange(0, len(xData)), [f"{millify(x)}\n{millify(y)}" for x,y in zip(xData, yData)])
-plt.savefig(os.path.join(folder, "avg_througput_over_same_ingestrate_map_query.png"))
+for workerThreads in allWorkerThreads:
+	for dataPoint in allDataPoints:
+		if dataPoint.workerThreads == workerThreads:
+			allIngestionRate[workerThreads].append(dataPoint.ingestionRate)
+			allyErr[workerThreads].append(dataPoint.yErr)
+			allyValues[workerThreads].append(dataPoint.yValue)
 
+for workerThreads in allWorkerThreads:
+	fig, ax = plt.subplots(figsize=(24, 8))
+	rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
+	ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
+	ax.set_xticklabels([f"{millify(x)}" for x in allIngestionRate[workerThreads]])
+	autolabel(rects)
 
-plt.figure(figsize=(8, 16))
-plt.barh(np.arange(0, len(mapQueryFileDF)), mapQueryFileDF["TuplesPerSecond"])
-plt.yticks(np.arange(0, len(mapQueryFileDF)), [millify(x) for x in mapQueryFileDF["TuplesPerSecond"]])
-plt.savefig(os.path.join(folder, "throughput_overall_map_query.png"))
+	plt.title(f"WorkerThreads: {workerThreads}")
+	plt.savefig(os.path.join(folder, f"avg_througput_{benchmark.name}_{workerThreads}.png"))

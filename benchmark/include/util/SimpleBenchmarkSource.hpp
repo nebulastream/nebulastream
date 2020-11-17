@@ -77,6 +77,7 @@ class SimpleBenchmarkSource : public DataSource {
                       << "\nnumberOfTuplesPerBuffer = " << numberOfTuplesPerBuffer);
 
             auto optBuf = receiveData();
+            uint64_t nextPeriodStartTime = 0;
             while (isRunning()) {
                 auto startTimeSendBuffers =
                     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
@@ -101,29 +102,24 @@ class SimpleBenchmarkSource : public DataSource {
                     NES_DEBUG("SimpleBenchmarkSource: cntTuples=" << cntTuples
                                                                   << " numberOfTuplesPerPeriod=" << numberOfTuplesPerPeriod);
                 }
-                uint64_t endTimeSendBuffers =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
 
-                uint64_t nextPeriodStartTime = uint64_t(startTimeSendBuffers + (BenchmarkUtils::periodLengthInSeconds * 1000));
+                uint64_t endTimeSendBuffers = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
+                nextPeriodStartTime = uint64_t(startTimeSendBuffers + (BenchmarkUtils::periodLengthInSeconds*1000));
                 NES_DEBUG("SimpleBenchmarkSource:\n-startTimeSendBuffers=\t" << startTimeSendBuffers << "\n-endTimeSendBuffers=\t"
                                                                              << endTimeSendBuffers << "\n-nextPeriodStartTime=\t"
                                                                              << nextPeriodStartTime);
 
                 if (nextPeriodStartTime < endTimeSendBuffers) {
-                    NES_ERROR("Creating buffer(s) for SimpleBenchmarkSource took longer than periodLength. nextPeriodStartTime="
-                              << nextPeriodStartTime << " endTimeSendBuffers=" << endTimeSendBuffers);
-                    throw RuntimeException("Creating buffer(s) for SimpleBenchmarkSource took longer than periodLength!!!");
+                    NES_ERROR(
+                        "Creating buffer(s) for SimpleBenchmarkSource took longer than periodLength. nextPeriodStartTime="
+                            << nextPeriodStartTime << " endTimeSendBuffers=" << endTimeSendBuffers);
+                    //throw RuntimeException("Creating buffer(s) for SimpleBenchmarkSource took longer than periodLength!!!");
                 }
 
-                uint64_t curTime =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
+                uint64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 while (curTime < nextPeriodStartTime) {
-                    curTime =
-                        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-                            .count();
+                    curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 }
             }
 
