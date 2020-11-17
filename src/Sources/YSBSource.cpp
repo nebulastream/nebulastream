@@ -20,6 +20,7 @@
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger.hpp>
 
+#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <atomic>
 #include <bitset>
@@ -30,6 +31,7 @@
 namespace NES {
 
 void YSBSource::generate(YSBSource::YsbRecord& rec) {
+    memset(&rec, 0, sizeof(YsbRecord));
     rec.userId = 1;
     rec.pageId = 0;
     rec.adType = 0;
@@ -39,8 +41,7 @@ void YSBSource::generate(YSBSource::YsbRecord& rec) {
     rec.eventType = tmpEventType;
     tmpEventType = (tmpEventType + 1) % 3;
 
-    auto ts = std::chrono::high_resolution_clock::now();
-    rec.currentMs = ts.time_since_epoch().count();
+    rec.currentMs = currentMs;
 
     rec.ip = 0x01020304;
 }
@@ -57,11 +58,13 @@ std::optional<TupleBuffer> YSBSource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
 
     NES_DEBUG("YSBSource:" << this << " got buffer");
+    auto ts = std::chrono::high_resolution_clock::now();
+    currentMs = ts.time_since_epoch().count();
 
     NES_DEBUG("YSBSource: Filling buffer with " << numberOfTuplesPerBuffer << " tuples.");
+    auto records = buf.getBufferAs<YSBSource::YsbRecord>();
     for (uint64_t recordIndex = 0; recordIndex < numberOfTuplesPerBuffer; recordIndex++) {
         //generate tuple and copy record to buffer
-        auto records = buf.getBufferAs<YSBSource::YsbRecord>();
         auto& rec = records[recordIndex];
         generate(rec);
     }
@@ -72,6 +75,8 @@ std::optional<TupleBuffer> YSBSource::receiveData() {
     //update statistics
     generatedTuples += numberOfTuplesPerBuffer;
     generatedBuffers++;
+
+    NES_DEBUG("YSBSource: Buffer: " << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
 
     return buf;
 }

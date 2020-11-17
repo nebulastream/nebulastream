@@ -59,16 +59,23 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
     size_t contentSize = bufferContent.length();
     if (inputBuffer.getBufferSize() < contentSize) {
         NES_DEBUG("CsvFormat::getData: content is larger than one buffer");
-        size_t numberOfBuffers = contentSize / inputBuffer.getBufferSize();
-        for (size_t i = 0; i < numberOfBuffers; i++) {
-            std::string copyString = bufferContent.substr(0, contentSize);
-            bufferContent = bufferContent.substr(contentSize, bufferContent.length() - contentSize);
-            NES_DEBUG("CsvFormat::getData: copy string=" << copyString << " new content=" << bufferContent);
+        size_t numberOfBuffers = std::ceil(double (contentSize) / double (inputBuffer.getBufferSize()));
+        for (size_t i = 0; i < numberOfBuffers-1; i++) {
             auto buf = this->bufferManager->getBufferBlocking();
+            std::string copyString = bufferContent.substr(0, buf.getBufferSize());
+            bufferContent = bufferContent.substr(buf.getBufferSize(), bufferContent.length() - buf.getBufferSize());
+            NES_TRACE("CsvFormat::getData: copy string=" << copyString << " new content=" << bufferContent);
+            NES_ASSERT(copyString.size()<=buf.getBufferSize(), "CsvFormat: Buffer is too small and wont fit.");
             std::copy(copyString.begin(), copyString.end(), buf.getBuffer());
-            buf.setNumberOfTuples(contentSize);
-            buffers.push_back(buf);
+            buf.setNumberOfTuples(buf.getBufferSize());
+            buffers.emplace_back(buf);
         }
+        auto buf = this->bufferManager->getBufferBlocking();
+        NES_ASSERT(bufferContent.size()<=buf.getBufferSize(), "CsvFormat: Remaining is too big and wont fit.");
+        std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
+        buf.setNumberOfTuples(buf.getBufferSize());
+        buffers.emplace_back(buf);
+
         NES_DEBUG("CsvFormat::getData: successfully copied buffer=" << numberOfBuffers);
     } else {
         NES_DEBUG("CsvFormat::getData: content fits in one buffer");
