@@ -680,6 +680,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
                         (std::istreambuf_iterator<char>()));
 
     string expectedContent =
+        "+----------------------------------------------------+\n"
         "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|10000|20000|1|1740|\n"
