@@ -25,12 +25,13 @@
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 
 namespace NES::Join {
 template<class KeyType>
 class JoinHandler : public Windowing::AbstractWindowHandler {
   public:
-    explicit JoinHandler(LogicalJoinDefinitionPtr joinDefinition,
+    explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                          BaseExecutableJoinActionPtr<KeyType> executableJoinAction) : joinDefinition(joinDefinition),
                                                                                       executablePolicyTrigger(executablePolicyTrigger),
@@ -131,11 +132,12 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     auto getRightJoinState() {
         return rightJoinState;
     }
+
     LogicalJoinDefinitionPtr getJoinDefinition() {
         return joinDefinition;
     }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() override {
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() override {
         return nullptr;
     }
 
