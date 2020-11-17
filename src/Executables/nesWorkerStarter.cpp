@@ -140,13 +140,16 @@ int main(int argc, char** argv) {
     auto sourceType = config["sourceType"].As<string>();
     auto sourceConfig = config["sourceConfig"].As<string>();
     auto sourceFrequency = config["sourceFrequency"].As<uint16_t>();
+    auto endlessRepeat = config["endlessRepeat"].As<string>();;
+    auto skipHeader = config["skipHeader"].As<bool>();
+    auto numberOfBuffersToProduce = config["numberOfBuffersToProduce"].As<uint32_t>();
+    auto numberOfTuplesToProducePerBuffer = config["numberOfTuplesToProducePerBuffer"].As<uint16_t>();
     // Initializing Process Configuration variables
     auto physicalStreamName = config["physicalStreamName"].As<string>();
     auto logicalStreamName = config["logicalStreamName"].As<string>();
     auto parentId = config["parentId"].As<string>();
     auto logLevel = config["logLevel"].As<string>();
     auto numberOfSlots = config["numberOfSlots"].As<uint16_t>();
-    auto numberOfBuffersToProduce = config["numberOfBuffersToProduce"].As<uint32_t>();
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
