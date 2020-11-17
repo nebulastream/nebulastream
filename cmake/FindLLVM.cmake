@@ -90,8 +90,6 @@ else ()
                 OUTPUT_STRIP_TRAILING_WHITESPACE
                 ${_quiet_arg}
         )
-#        message("llvm config" ${LLVM_CONFIG})
-#        message("Result Code " ${result_code})
         if (result_code)
             _LLVM_FAIL("Failed to execute llvm-config ('${LLVM_CONFIG}', result code: '${result_code})'")
         else ()
