@@ -37,7 +37,7 @@ std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
     std::vector<TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("TextFormat::getData: write watermark-on ly buffer");
+        NES_WARNING("TextFormat::getData: write watermark-only buffer");
         buffers.push_back(inputBuffer);
         return buffers;
     }

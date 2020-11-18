@@ -45,7 +45,7 @@ namespace NES {
 class E2ECoordinatorWorkerTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("E2ECoordinatorWorkerTest.log", NES::LOG_TRACE);
+        NES::setupLogging("E2ECoordinatorWorkerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
 
@@ -608,7 +608,6 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     coordinatorProc.terminate();
 }
 
-#define deb
 TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     size_t numBuffers = 3;
     size_t numTuples = 10;
@@ -617,12 +616,10 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-#ifdef deb
     string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
-#endif
     string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352 --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
         + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(cmdWrk1.c_str());
@@ -634,9 +631,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
-#ifdef deb
     size_t coordinatorPid = coordinatorProc.id();
-#endif
     size_t workerPid1 = workerProc1.id();
     size_t workerPid2 = workerProc2.id();
 
@@ -684,10 +679,6 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
 
     NES_INFO("ContinuousSourceTest: content=" << content);
     EXPECT_TRUE(!content.empty());
-//
-//    size_t n = std::count(content.begin(), content.end(), '\n');
-//    NES_INFO("Number of lines " << n);
-//    EXPECT_TRUE(n == expectedLinesOut);
 
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
@@ -696,10 +687,8 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     workerProc1.terminate();
     NES_INFO("Killing worker 2 process->PID: " << workerPid2);
     workerProc2.terminate();
-#ifdef deb
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
     coordinatorProc.terminate();
-#endif
 }
 
 }// namespace NES

@@ -198,7 +198,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                     && i + 1 < partialFinalAggregates.size()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
-                    NES_DEBUG("ExecutableSliceAggregationTriggerAction: Dispatch output buffer with "
+                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction: Dispatch output buffer with "
                               << currentNumberOfTuples << " records, content="
                               << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
