@@ -16,11 +16,13 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <API/AttributeField.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <sstream>
@@ -38,11 +40,13 @@ class StatementBuilder {
     static StatementBuilder create(const std::string& struct_name);
 };
 
-FunctionBuilder::FunctionBuilder(const std::string& function_name) : name(function_name) {}
+FunctionDefinition::FunctionDefinition(const std::string& functionName) : name(functionName) {}
 
-FunctionBuilder FunctionBuilder::create(const std::string& function_name) { return FunctionBuilder(function_name); }
+FunctionDefinitionPtr FunctionDefinition::create(const std::string& functionName) {
+    return std::make_shared<FunctionDefinition>(functionName);
+}
 
-FunctionDeclaration FunctionBuilder::build() {
+DeclarationPtr FunctionDefinition::getDeclaration() {
     std::stringstream function;
     if (!returnType) {
         function << "void";
@@ -58,8 +62,8 @@ FunctionDeclaration FunctionBuilder::build() {
     function << "){";
 
     function << std::endl << "/* variable declarations */" << std::endl;
-    for (uint64_t i = 0; i < variable_declarations.size(); ++i) {
-        function << variable_declarations[i].getCode() << ";";
+    for (uint64_t i = 0; i < variablDeclarations.size(); ++i) {
+        function << variablDeclarations[i].getCode() << ";";
     }
     function << std::endl << "/* statements section */" << std::endl;
     for (uint64_t i = 0; i < statements.size(); ++i) {
@@ -67,27 +71,27 @@ FunctionDeclaration FunctionBuilder::build() {
     }
     function << "}";
 
-    return FunctionDeclaration(function.str());
+    return FunctionDeclaration::create(function.str());
 }
 
-FunctionBuilder& FunctionBuilder::returns(GeneratableDataTypePtr type) {
-    returnType = type;
-    return *this;
+FunctionDefinitionPtr FunctionDefinition::returns(GeneratableDataTypePtr type) {
+    returnType = std::move(type);
+    return shared_from_this();
 }
 
-FunctionBuilder& FunctionBuilder::addParameter(VariableDeclaration var_decl) {
-    parameters.push_back(var_decl);
-    return *this;
+FunctionDefinitionPtr FunctionDefinition::addParameter(VariableDeclaration variableDeclaration) {
+    parameters.emplace_back(variableDeclaration);
+    return shared_from_this();
 }
-FunctionBuilder& FunctionBuilder::addStatement(StatementPtr statement) {
+FunctionDefinitionPtr FunctionDefinition::addStatement(StatementPtr statement) {
     if (statement)
-        statements.push_back(statement);
-    return *this;
+        statements.emplace_back(statement);
+    return shared_from_this();
 }
 
-FunctionBuilder& FunctionBuilder::addVariableDeclaration(VariableDeclaration vardecl) {
-    variable_declarations.push_back(vardecl);
-    return *this;
+FunctionDefinitionPtr FunctionDefinition::addVariableDeclaration(VariableDeclaration variableDeclaration) {
+    variablDeclarations.emplace_back(variableDeclaration);
+    return shared_from_this();
 }
 
 }// namespace NES

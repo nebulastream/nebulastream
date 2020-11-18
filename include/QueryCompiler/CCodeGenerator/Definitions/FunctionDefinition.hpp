@@ -14,40 +14,38 @@
     limitations under the License.
 */
 
-#pragma once
+
+#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDEFINITION_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDEFINITION_HPP_
 
 #include <memory>
 #include <string>
-
-#include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 
 namespace NES {
 
-class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+class FunctionDefinition : public std::enable_shared_from_this<FunctionDefinition>{
 
-class GeneratableDataType;
-typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
+  public:
+    static FunctionDefinitionPtr create(const std::string& functionName);
+    FunctionDefinition(const std::string& functionName);
 
-class FunctionBuilder {
+    FunctionDefinitionPtr returns(GeneratableDataTypePtr returnType);
+    FunctionDefinitionPtr addParameter(VariableDeclaration variableDeclaration);
+    FunctionDefinitionPtr addStatement(StatementPtr statement);
+    FunctionDefinitionPtr addVariableDeclaration(VariableDeclaration variableDeclaration);
+    DeclarationPtr getDeclaration();
+
   private:
     std::string name;
     GeneratableDataTypePtr returnType;
     std::vector<VariableDeclaration> parameters;
-    std::vector<VariableDeclaration> variable_declarations;
+    std::vector<VariableDeclaration> variablDeclarations;
     std::vector<StatementPtr> statements;
-    FunctionBuilder(const std::string& function_name);
 
-  public:
-    static FunctionBuilder create(const std::string& function_name);
-
-    FunctionBuilder& returns(GeneratableDataTypePtr returnType_);
-    FunctionBuilder& addParameter(VariableDeclaration var_decl);
-    FunctionBuilder& addStatement(StatementPtr statement);
-    FunctionBuilder& addVariableDeclaration(VariableDeclaration var_decl);
-    FunctionDeclaration build();
 };
 
-}// namespace NES
+}// namespace
+#endif NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDEFINITION_HPP_

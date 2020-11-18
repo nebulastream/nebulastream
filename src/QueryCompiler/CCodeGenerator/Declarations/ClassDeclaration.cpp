@@ -14,23 +14,23 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/ClassDeclaration.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
 
-FunctionDeclaration::FunctionDeclaration(Code code) : functionCode(code) {}
+ClassDeclaration::ClassDeclaration(Code code) : functionCode(code) {}
 
-FunctionDeclarationPtr FunctionDeclaration::create(Code code) {
-    return std::make_shared<FunctionDeclaration>(code);
+ClassDeclarationPtr ClassDeclaration::create(Code code) {
+    return std::make_shared<ClassDeclaration>(code);
 }
 
-const GeneratableDataTypePtr FunctionDeclaration::getType() const { return GeneratableDataTypePtr(); }
-const std::string FunctionDeclaration::getIdentifierName() const { return ""; }
+const GeneratableDataTypePtr ClassDeclaration::getType() const { return GeneratableDataTypePtr(); }
+const std::string ClassDeclaration::getIdentifierName() const { return ""; }
 
-const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
+const Code ClassDeclaration::getTypeDefinitionCode() const { return Code(); }
 
-const Code FunctionDeclaration::getCode() const { return functionCode; }
-const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
+const Code ClassDeclaration::getCode() const { return functionCode; }
+const DeclarationPtr ClassDeclaration::copy() const { return std::make_shared<ClassDeclaration>(*this); }
 
 }// namespace NES

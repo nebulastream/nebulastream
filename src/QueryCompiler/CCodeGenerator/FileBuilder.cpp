@@ -36,8 +36,8 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <Windowing/WindowHandler/JoinHandler.hpp>" << std::endl;
     return builder;
 }
-FileBuilder& FileBuilder::addDeclaration(const Declaration& decl) {
-    declations << decl.getCode() << ";";
+FileBuilder& FileBuilder::addDeclaration(DeclarationPtr declaration) {
+    declations << declaration->getCode() << ";";
     return *this;
 }
 CodeFile FileBuilder::build() {

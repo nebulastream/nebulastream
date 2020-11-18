@@ -24,7 +24,7 @@
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
@@ -609,35 +609,35 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
     emitTupleBuffer.addParameter(VarRef(varDeclWorkerContext));
-    auto mainFunction = FunctionBuilder::create("compiled_query")
-                            .returns(tf.createDataType(DataTypeFactory::createInt32()))
-                            .addParameter(varDeclTupleBuffers)
-                            .addParameter(varDeclPipelineExecutionContext)
-                            .addParameter(varDeclWorkerContext)
-                            .addVariableDeclaration(varDeclReturn)
-                            .addVariableDeclaration(varDeclTuple)
-                            .addVariableDeclaration(varDeclResultTuple)
-                            .addVariableDeclaration(varDeclSum)
-                            .addStatement(initTuplePtr.copy())
-                            .addStatement(initResultTupleBufferPtr.copy())
-                            .addStatement(initResultTuplePtr.copy())
-                            .addStatement(StatementPtr(new ForLoopStatement(loopStmt)))
-                            .addStatement(
+    auto mainFunction = FunctionDefinition::create("compiled_query")
+                            ->returns(tf.createDataType(DataTypeFactory::createInt32()))
+                            ->addParameter(varDeclTupleBuffers)
+        ->addParameter(varDeclPipelineExecutionContext)
+        ->addParameter(varDeclWorkerContext)
+        ->addVariableDeclaration(varDeclReturn)
+        ->addVariableDeclaration(varDeclTuple)
+        ->addVariableDeclaration(varDeclResultTuple)
+        ->addVariableDeclaration(varDeclSum)
+        ->addStatement(initTuplePtr.copy())
+        ->addStatement(initResultTupleBufferPtr.copy())
+        ->addStatement(initResultTuplePtr.copy())
+        ->addStatement(StatementPtr(new ForLoopStatement(loopStmt)))
+        ->addStatement(
                                 /*   result_tuples[0].sum = sum; */
                                 VarRef(varDeclResultTuple)[Constant(tf.createValueType(DataTypeFactory::createBasicValue(
                                                                DataTypeFactory::createInt32(), "0")))]
                                     .accessRef(VarRef(varDeclFieldResultTupleSum))
                                     .assign(VarRef(varDeclSum))
                                     .copy())
-                            .addStatement(VarRef(varDeclPipelineExecutionContext).accessRef(emitTupleBuffer).copy())
+        ->addStatement(VarRef(varDeclPipelineExecutionContext).accessRef(emitTupleBuffer).copy())
                             /* return ret; */
 
-                            .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(varDeclReturn))))
-                            .build();
+        ->addStatement(StatementPtr(new ReturnStatement(VarRefStatement(varDeclReturn))))
+        ->getDeclaration();
 
     auto file = FileBuilder::create("query.cpp")
-                    .addDeclaration(structDeclTuple)
-                    .addDeclaration(structDeclResultTuple)
+                    .addDeclaration(structDeclTuple.copy())
+                    .addDeclaration(structDeclResultTuple.copy())
                     .addDeclaration(mainFunction)
                     .build();
 

@@ -14,21 +14,21 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDECLARATION_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDECLARATION_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CLASSDECLARATION_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CLASSDECLARATION_HPP_
 
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 
 namespace NES {
 
-class FunctionDeclaration : public Declaration {
+class ClassDeclaration : public Declaration {
   private:
     Code functionCode;
 
   public:
-    FunctionDeclaration(Code code);
-    static FunctionDeclarationPtr create(Code code);
+    ClassDeclaration(Code code);
+    static ClassDeclarationPtr create(Code code);
 
     virtual const GeneratableDataTypePtr getType() const override;
     virtual const std::string getIdentifierName() const override;
@@ -40,4 +40,4 @@ class FunctionDeclaration : public Declaration {
 };
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDECLARATION_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CLASSDECLARATION_HPP_
