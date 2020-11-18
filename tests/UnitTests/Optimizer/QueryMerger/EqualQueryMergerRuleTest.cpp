@@ -71,7 +71,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
+                       .filter(Attribute("id") < 43)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -92,6 +92,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
+
 
     auto z3InferencePhase = Optimizer::Z3ExpressionInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);

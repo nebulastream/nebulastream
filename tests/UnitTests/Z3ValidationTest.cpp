@@ -108,8 +108,8 @@ TEST_F(Z3ValidationTest, evaluateValidBinssomialEquation) {
 
     //Add equations
     auto xEqualValX = to_expr(c, Z3_mk_eq(c, x, valX));
-    auto xEqualValY = to_expr(c, Z3_mk_ge(c, y, valY));
-    Z3_ast arr[] = {xEqualValX, xEqualValY};
+    auto yEqualValY = to_expr(c, Z3_mk_ge(c, y, valY));
+    Z3_ast arr[] = {xEqualValX, yEqualValY};
 
     auto expt = to_expr(c, Z3_mk_and(c, 2, arr));
     s.add(expt);
@@ -137,6 +137,7 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     s.add(x > 1);
     s.add(y > 1);
     s.add(x + y < 1);
+
     //Assert
     ASSERT_EQ(s.check(), unsat);
 
@@ -155,4 +156,43 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     //Assert
     ASSERT_EQ(s.check(), unsat);
 }
+
+/**
+   @brief Validate for <tt>x > 1 and y > 1 that y + x < 1 </tt>.
+*/
+TEST_F(Z3ValidationTest, simplifyEquation) {
+
+    // create a context
+    context c;
+    //Create an instance of the solver
+    solver s(c);
+
+    //Define int constants
+    expr x = c.int_const("x");
+    expr y = c.int_const("y");
+
+    //Add equations
+    Z3_ast arr[] = {x==x+2,x>3};
+    auto expr = z3::to_expr(c, Z3_mk_and(c, 2, arr)).simplify();
+    NES_INFO(expr);
+
+    //Assert
+    ASSERT_EQ(s.check(), unsat);
+
+    //Same equation written using api
+    s.reset();
+    auto one = c.int_val(1);
+    auto xLessThanOne = to_expr(c, Z3_mk_gt(c, x, one));
+    auto yLessThanOne = to_expr(c, Z3_mk_gt(c, y, one));
+    Z3_ast args[] = {x, y};
+    auto xPlusY = to_expr(c, Z3_mk_add(c, 2, args));
+    auto xPlusYLessThanOne = to_expr(c, Z3_mk_lt(c, xPlusY, one));
+
+    s.add(xLessThanOne);
+    s.add(yLessThanOne);
+    s.add(xPlusYLessThanOne);
+    //Assert
+    ASSERT_EQ(s.check(), unsat);
+}
+
 }// namespace NES

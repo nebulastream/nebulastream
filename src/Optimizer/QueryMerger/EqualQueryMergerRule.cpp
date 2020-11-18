@@ -46,7 +46,7 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
             expressions1.push_back(x);
         }
     }
-    z3::expr mkAnd1 = z3::mk_and(expressions1).simplify();
+    z3::expr mkAnd1 = z3::mk_and(expressions1);
 
     z3::expr_vector expressions2(*context);
     for (auto& root : roots2) {
@@ -56,7 +56,7 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
         }
     }
 
-    z3::expr mkAnd2 = z3::mk_and(expressions2).simplify();
+    z3::expr mkAnd2 = z3::mk_and(expressions2);
 
     Z3_ast arrays[] = {mkAnd1, !mkAnd2};
     auto expr = z3::to_expr(*context, Z3_mk_and(*context, 2, arrays));
