@@ -137,25 +137,29 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
         NES_ERROR("bufferManager not set");
         throw std::logic_error("DataSource: BufferManager not set");
     }
-    auto lastTimeStamp = std::chrono::system_clock::now();
+    auto ts = std::chrono::system_clock::now();
+    std::chrono::seconds lastTimeStampSec = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch());
 
     if (this->operatorId != 0) {
         NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType());
         size_t cnt = 0;
         while (running) {
             bool recNow = false;
-            auto now = std::chrono::system_clock::now();
+            auto tsNow = std::chrono::system_clock::now();
+            std::chrono::seconds nowInSec = std::chrono::duration_cast<std::chrono::seconds>(tsNow.time_since_epoch());
+
             //this check checks if the gathering interval is less than one second or it is a ZMQ_Source, in both cases we do not need to create a watermark-only buffer
             if (gatheringInterval <= 1 || type == ZMQ_SOURCE) {
                 NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type=" << getType());
-                if (gatheringInterval == 0 || (lastTimeStamp != now && now.time_since_epoch().count() % gatheringInterval == 0)) {
-                    NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer");
+                if (gatheringInterval == 0 || lastTimeStampSec != nowInSec) {//&& now.time_since_epoch().count() % gatheringInterval == 0)
+                    NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval=" << gatheringInterval << " tsNow=" << lastTimeStampSec.count() << " now=" << nowInSec.count());
                     recNow = true;
+                    lastTimeStampSec = nowInSec;
                 }
             } else {
                 //check each second
-                if (now != lastTimeStamp) {                                       //we are in another second
-                    if (now.time_since_epoch().count() % gatheringInterval == 0) {//produce a regular buffer
+                if (nowInSec != lastTimeStampSec) {                                       //we are in another second
+                    if (nowInSec.count() % gatheringInterval == 0) {//produce a regular buffer
                         NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                         recNow = true;
                     } else {//produce watermark only buffer
@@ -166,9 +170,9 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                         buffer.setOriginId(operatorId);
                         queryManager->addWork(this->operatorId, buffer);
                     }
+                    lastTimeStampSec = nowInSec;
                 }
             }
-            lastTimeStamp = now;
 
             //repeat test
             if (!recNow) {

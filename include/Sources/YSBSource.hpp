@@ -102,6 +102,7 @@ class YSBSource : public DefaultSource {
     bool endlessRepeat;
     uint64_t tmpEventType;
     uint64_t currentMs;
+    uint64_t startMs;
 };
 
 typedef std::shared_ptr<YSBSource> YSBSourcePtr;

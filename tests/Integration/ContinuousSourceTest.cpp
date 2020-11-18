@@ -1246,7 +1246,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
 }
 
 TEST_F(ContinuousSourceTest, testYSB) {
-    size_t producedBuffers = 2;
+    size_t producedBuffers = 10;
     size_t producedTuples = 5;
 
     //TODO: writing of csv file works, now make test green
@@ -1277,7 +1277,7 @@ TEST_F(ContinuousSourceTest, testYSB) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register query
-    std::string queryString = R"(Query::from("ysb").windowByKey(Attribute("campaign_id"), TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(1)), Sum(Attribute("user_id"))).sink(FileSinkDescriptor::create(")"
+    std::string queryString = R"(Query::from("ysb").windowByKey(Attribute("campaign_id"), TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(1)), Sum(Attribute("user_id"))).sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -1285,7 +1285,7 @@ TEST_F(ContinuousSourceTest, testYSB) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, producedBuffers));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, producedBuffers));
-
+    
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
