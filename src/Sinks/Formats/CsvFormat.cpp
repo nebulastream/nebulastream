@@ -59,19 +59,19 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
     size_t contentSize = bufferContent.length();
     if (inputBuffer.getBufferSize() < contentSize) {
         NES_DEBUG("CsvFormat::getData: content is larger than one buffer");
-        size_t numberOfBuffers = std::ceil(double (contentSize) / double (inputBuffer.getBufferSize()));
-        for (size_t i = 0; i < numberOfBuffers-1; i++) {
+        size_t numberOfBuffers = std::ceil(double(contentSize) / double(inputBuffer.getBufferSize()));
+        for (size_t i = 0; i < numberOfBuffers - 1; i++) {
             auto buf = this->bufferManager->getBufferBlocking();
             std::string copyString = bufferContent.substr(0, buf.getBufferSize());
             bufferContent = bufferContent.substr(buf.getBufferSize(), bufferContent.length() - buf.getBufferSize());
             NES_TRACE("CsvFormat::getData: copy string=" << copyString << " new content=" << bufferContent);
-            NES_ASSERT(copyString.size()<=buf.getBufferSize(), "CsvFormat: Buffer is too small and wont fit.");
+            NES_ASSERT(copyString.size() <= buf.getBufferSize(), "CsvFormat: Buffer is too small and wont fit.");
             std::copy(copyString.begin(), copyString.end(), buf.getBuffer());
             buf.setNumberOfTuples(buf.getBufferSize());
             buffers.emplace_back(buf);
         }
         auto buf = this->bufferManager->getBufferBlocking();
-        NES_ASSERT(bufferContent.size()<=buf.getBufferSize(), "CsvFormat: Remaining is too big and wont fit.");
+        NES_ASSERT(bufferContent.size() <= buf.getBufferSize(), "CsvFormat: Remaining is too big and wont fit.");
         std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
         buf.setNumberOfTuples(buf.getBufferSize());
         buffers.emplace_back(buf);
