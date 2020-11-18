@@ -14,34 +14,34 @@
     limitations under the License.
 */
 
+
 #include <gtest/gtest.h>
-#include <Catalogs/PhysicalStreamConfig.hpp>
 #ifdef ENABLE_OPC_BUILD
-#include <string>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <cstring>
 #include <iostream>
+#include <string>
+#include <future>
 
+#include <open62541/plugin/pki_default.h>
 #include <open62541/server.h>
 #include <open62541/server_config_default.h>
-#include <open62541/plugin/pki_default.h>
 
 #include <API/Schema.hpp>
-#include <Util/Logger.hpp>
-#include <Sources/SourceCreator.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Util/Logger.hpp>
 #include <thread>
 
 const std::string& url = "opc.tcp://localhost:4840";
-static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
+//static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
 static volatile UA_Boolean running = true;
-static UA_Server *server = UA_Server_new();
+static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
 class OPCSourceTest : public testing::Test {
   public:
-
-
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES_DEBUG("OPCSOURCETEST::SetUpTestCase()");
@@ -52,8 +52,8 @@ class OPCSourceTest : public testing::Test {
         NES::setupLogging("OPCSourceTest.log", NES::LOG_DEBUG);
 
         test_schema =
-                Schema::create()
-                        ->addField("var", UINT32);
+            Schema::create()
+                ->addField("var", UINT32);
 
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
         auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
@@ -64,7 +64,6 @@ class OPCSourceTest : public testing::Test {
         buffer_size = bufferManager->getBufferSize();
 
         ASSERT_GT(buffer_size, 0);
-
     }
 
     /* Will be called after a test is executed. */
@@ -74,17 +73,17 @@ class OPCSourceTest : public testing::Test {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_DEBUG("OPCSOURCETEST::TearDownTestCases() Tear down OPCSourceTest test class." );
+        NES_DEBUG("OPCSOURCETEST::TearDownTestCases() Tear down OPCSourceTest test class.");
     }
 
     static void
-    addVariable(UA_Server *server) {
+    addVariable(UA_Server* server) {
         /* Define the attribute of the myInteger variable node */
         UA_VariableAttributes attr = UA_VariableAttributes_default;
         UA_Int32 myInteger = 42;
         UA_Variant_setScalar(&attr.value, &myInteger, &UA_TYPES[UA_TYPES_INT32]);
-        attr.description = UA_LOCALIZEDTEXT("en-US","the answer");
-        attr.displayName = UA_LOCALIZEDTEXT("en-US","the answer");
+        attr.description = UA_LOCALIZEDTEXT("en-US", "the answer");
+        attr.displayName = UA_LOCALIZEDTEXT("en-US", "the answer");
         attr.dataType = UA_TYPES[UA_TYPES_INT32].typeId;
         attr.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
 
@@ -99,7 +98,7 @@ class OPCSourceTest : public testing::Test {
     }
 
     static void
-    writeVariable(UA_Server *server) {
+    writeVariable(UA_Server* server) {
         UA_NodeId myIntegerNodeId = UA_NODEID_STRING(1, "the.answer");
 
         /* Write a different integer value */
@@ -128,15 +127,16 @@ class OPCSourceTest : public testing::Test {
         UA_Server_write(server, &wv);
     }
 
-    static void startServer(){
+    static void startServer(std::promise<bool>& p) {
         UA_ServerConfig_setDefault(UA_Server_getConfig(server));
         addVariable(server);
         writeVariable(server);
+        p.set_value(true);
         UA_StatusCode retval = UA_Server_run(server, &running);
         std::cout << " retval is=" << retval << std::endl;
     }
 
-    static void stopServer(){
+    static void stopServer() {
         running = false;
         UA_Server_delete(server);
     }
@@ -150,7 +150,6 @@ class OPCSourceTest : public testing::Test {
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
     const std::string user = "";
     const std::string password = "";
-
 };
 
 /**
@@ -184,19 +183,23 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
  */
 
 TEST_F(OPCSourceTest, OPCSourceValue) {
-    std::thread t1(startServer);
+    std::promise<bool> p;
+    std::thread t1([&p]() {
+        startServer(p);
+    });
     t1.detach();
     auto test_schema = Schema::create()
-                ->addField("var", UINT32);
+                           ->addField("var", UINT32);
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1);
+    p.get_future().get();
     auto tuple_buffer = opcSource->receiveData();
     stopServer();
     size_t value = 0;
-    auto *tuple = (uint32_t *) tuple_buffer->getBuffer();
+    auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
     value = *tuple;
     size_t expected = 43;
     NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
 }
-}
+}// namespace NES
 #endif
