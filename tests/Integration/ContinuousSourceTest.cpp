@@ -1307,23 +1307,8 @@ TEST_F(ContinuousSourceTest, testYSB) {
         if (lineCnt > 0) {
             auto token = UtilityFunctions::split(line, ',');
             YSBSource::YsbRecord rec{};
-            rec.userId = stoi(token[0]);
-            rec.pageId = stoi(token[1]);
             rec.campaignId = stoi(token[2]);
-            rec.adType = stoi(token[3]);
-            rec.eventType = stoi(token[4]);
-            rec.currentMs = stoull(token[5]);
-            rec.ip = stoul(token[6]);
-
-            NES_INFO("ContinuousSourceTest: YsbTuple: " << rec.toString());
-            EXPECT_TRUE(rec.userId == 1);
-            EXPECT_TRUE(rec.pageId == 0);
-            EXPECT_TRUE(rec.adType == 0);
             EXPECT_TRUE(rec.campaignId >= 0 && rec.campaignId < 10000);
-            EXPECT_TRUE(rec.eventType >= 0 && rec.eventType < 3);
-            EXPECT_EQ(rec.eventType, (lineCnt-1)%3);
-            EXPECT_TRUE(rec.currentMs > 0);
-            EXPECT_TRUE(rec.ip > 0);
         }
         lineCnt++;
     }
