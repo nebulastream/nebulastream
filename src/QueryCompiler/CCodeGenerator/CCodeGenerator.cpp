@@ -19,8 +19,11 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ContinueStatement.hpp>
@@ -1147,38 +1150,42 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 std::string CCodeGenerator::generateCode(GeneratedCodePtr code) {
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();
-    FunctionBuilder functionBuilder = FunctionBuilder::create("compiled_query")
-                                          .returns(tf->createDataType(DataTypeFactory::createUInt32()))
-                                          .addParameter(code->varDeclarationInputBuffer)
-                                          .addParameter(code->varDeclarationExecutionContext)
-                                          .addParameter(code->varDeclarationWorkerContext);
+    auto functionBuilder = FunctionDefinition::create("compiled_query")
+                                          ->returns(tf->createDataType(DataTypeFactory::createUInt32()))
+                                          ->addParameter(code->varDeclarationInputBuffer)
+                                          ->addParameter(code->varDeclarationExecutionContext)
+                                          ->addParameter(code->varDeclarationWorkerContext);
     code->variableDeclarations.push_back(code->varDeclarationNumberOfResultTuples);
     for (auto& variableDeclaration : code->variableDeclarations) {
-        functionBuilder.addVariableDeclaration(variableDeclaration);
+        functionBuilder->addVariableDeclaration(variableDeclaration);
     }
     for (auto& variableStatement : code->variableInitStmts) {
-        functionBuilder.addStatement(variableStatement);
+        functionBuilder->addStatement(variableStatement);
     }
 
     /* here comes the code for the processing loop */
-    functionBuilder.addStatement(code->forLoopStmt);
+    functionBuilder->addStatement(code->forLoopStmt);
 
     /* add statements executed after the for loop, for example cleanup code */
     for (auto& stmt : code->cleanupStmts) {
-        functionBuilder.addStatement(stmt);
+        functionBuilder->addStatement(stmt);
     }
 
     /* add return statement */
-    functionBuilder.addStatement(code->returnStmt);
+    functionBuilder->addStatement(code->returnStmt);
 
     FileBuilder fileBuilder = FileBuilder::create("query.cpp");
     /* add core declarations */
-    fileBuilder.addDeclaration(code->structDeclaratonInputTuple);
+    fileBuilder.addDeclaration(code->structDeclaratonInputTuple.copy());
     /* add generic declarations by operators*/
     for (auto& typeDeclaration : code->typeDeclarations) {
-        fileBuilder.addDeclaration(typeDeclaration);
+        fileBuilder.addDeclaration(typeDeclaration.copy());
     }
-    CodeFile file = fileBuilder.addDeclaration(functionBuilder.build()).build();
+
+    auto executablePipeline = ClassDefinition::create("ExecutablePipeline");
+    executablePipeline->addMethod(ClassDefinition::Public, functionBuilder);
+    fileBuilder.addDeclaration(executablePipeline->getDeclaration());
+    CodeFile file = fileBuilder.addDeclaration(functionBuilder->getDeclaration()).build();
     return file.code;
 }
 
