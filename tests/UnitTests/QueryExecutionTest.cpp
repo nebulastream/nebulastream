@@ -481,13 +481,12 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto& resultBuffer = testSink->get(0);
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
     NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent =
         "+----------------------------------------------------+\n"
         "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
         "+----------------------------------------------------+\n"
-        "|5|15|1|10|\n"
         "|0|10|1|10|\n"
         "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
@@ -559,13 +558,12 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto& resultBuffer = testSink->get(0);
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
     NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent =
         "+----------------------------------------------------+\n"
         "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
         "+----------------------------------------------------+\n"
-        "|10|25|1|10|\n"
         "|5|20|1|20|\n"
         "|0|15|1|10|\n"
         "+----------------------------------------------------+";

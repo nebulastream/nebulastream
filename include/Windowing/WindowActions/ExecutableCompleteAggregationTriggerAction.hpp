@@ -47,20 +47,18 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     ExecutableCompleteAggregationTriggerAction(LogicalWindowDefinitionPtr windowDefinition,
                                                std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) : windowDefinition(windowDefinition),
 
-                                                                                                                                                                                                    executableWindowAggregation(executableWindowAggregation){
-        if(windowDefinition->isKeyed()){
+                                                                                                                                                                                executableWindowAggregation(executableWindowAggregation) {
+        if (windowDefinition->isKeyed()) {
             this->windowSchema = Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField("key", windowDefinition->getOnKey()->getStamp())
-                ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
-        }
-        else
-        {
+                                     ->addField(createField("start", UINT64))
+                                     ->addField(createField("end", UINT64))
+                                     ->addField("key", windowDefinition->getOnKey()->getStamp())
+                                     ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+        } else {
             this->windowSchema = Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+                                     ->addField(createField("start", UINT64))
+                                     ->addField(createField("end", UINT64))
+                                     ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         }
 
         windowTupleLayout = createRowLayout(this->windowSchema);
@@ -246,8 +244,12 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, ValueType value) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
-        windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
-        windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+        if (windowDefinition->isKeyed()) {
+            windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
+            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+        } else {
+            windowTupleLayout->getValueField<ValueType>(index, 2)->write(tupleBuffer, value);
+        }
     }
 
   private:
