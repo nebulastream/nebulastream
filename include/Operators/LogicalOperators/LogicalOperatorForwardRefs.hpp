@@ -86,7 +86,6 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
-
 }// namespace NES
 
 #endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_

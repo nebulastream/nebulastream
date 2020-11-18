@@ -28,18 +28,20 @@ AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(Lo
         if (physicalKeyType->isBasicType()) {
             auto basicKeyType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalKeyType);
             switch (basicKeyType->getNativeType()) {
-//                case BasicPhysicalType::UINT_8: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint8_t>(windowDefinition);
-//                case BasicPhysicalType::UINT_16: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint16_t>(windowDefinition);
-//                case BasicPhysicalType::UINT_32: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint32_t>(windowDefinition);
-                case BasicPhysicalType::UINT_64: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint64_t>(windowDefinition);
-//                case BasicPhysicalType::INT_8: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int8_t>(windowDefinition);
-//                case BasicPhysicalType::INT_16: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int16_t>(windowDefinition);
-//                case BasicPhysicalType::INT_32: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int32_t>(windowDefinition);
-                case BasicPhysicalType::INT_64: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int64_t>(windowDefinition);
-//                case BasicPhysicalType::FLOAT: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<float>(windowDefinition);
-//                case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<double>(windowDefinition);
-//                case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<char>(windowDefinition);
-//                case BasicPhysicalType::BOOLEAN: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<bool>(windowDefinition);
+                    //                case BasicPhysicalType::UINT_8: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint8_t>(windowDefinition);
+                    //                case BasicPhysicalType::UINT_16: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint16_t>(windowDefinition);
+                    //                case BasicPhysicalType::UINT_32: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint32_t>(windowDefinition);
+                case BasicPhysicalType::UINT_64:
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint64_t>(windowDefinition);
+                    //                case BasicPhysicalType::INT_8: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int8_t>(windowDefinition);
+                    //                case BasicPhysicalType::INT_16: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int16_t>(windowDefinition);
+                    //                case BasicPhysicalType::INT_32: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int32_t>(windowDefinition);
+                case BasicPhysicalType::INT_64:
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int64_t>(windowDefinition);
+                    //                case BasicPhysicalType::FLOAT: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<float>(windowDefinition);
+                    //                case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<double>(windowDefinition);
+                    //                case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<char>(windowDefinition);
+                    //                case BasicPhysicalType::BOOLEAN: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<bool>(windowDefinition);
                 default: NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: basicKeyType is not supported");
             }
         } else {
@@ -55,18 +57,20 @@ AbstractWindowHandlerPtr WindowHandlerFactory::createJoinWindowHandler(Join::Log
     if (physicalKeyType->isBasicType()) {
         auto basicKeyType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalKeyType);
         switch (basicKeyType->getNativeType()) {
-//            case BasicPhysicalType::UINT_8: return WindowHandlerFactoryDetails::createJoinHandler<uint8_t>(joinDefinition);
-//            case BasicPhysicalType::UINT_16: return WindowHandlerFactoryDetails::createJoinHandler<uint16_t>(joinDefinition);
-//            case BasicPhysicalType::UINT_32: return WindowHandlerFactoryDetails::createJoinHandler<uint32_t>(joinDefinition);
-            case BasicPhysicalType::UINT_64: return WindowHandlerFactoryDetails::createJoinHandler<uint64_t>(joinDefinition);
-//            case BasicPhysicalType::INT_8: return WindowHandlerFactoryDetails::createJoinHandler<int8_t>(joinDefinition);
-//            case BasicPhysicalType::INT_16: return WindowHandlerFactoryDetails::createJoinHandler<int16_t>(joinDefinition);
-//            case BasicPhysicalType::INT_32: return WindowHandlerFactoryDetails::createJoinHandler<int32_t>(joinDefinition);
-            case BasicPhysicalType::INT_64: return WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDefinition);
-//            case BasicPhysicalType::FLOAT: return WindowHandlerFactoryDetails::createJoinHandler<float>(joinDefinition);
-//            case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createJoinHandler<double>(joinDefinition);
-//            case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createJoinHandler<char>(joinDefinition);
-//            case BasicPhysicalType::BOOLEAN: return WindowHandlerFactoryDetails::createJoinHandler<bool>(joinDefinition);
+                //            case BasicPhysicalType::UINT_8: return WindowHandlerFactoryDetails::createJoinHandler<uint8_t>(joinDefinition);
+                //            case BasicPhysicalType::UINT_16: return WindowHandlerFactoryDetails::createJoinHandler<uint16_t>(joinDefinition);
+                //            case BasicPhysicalType::UINT_32: return WindowHandlerFactoryDetails::createJoinHandler<uint32_t>(joinDefinition);
+            case BasicPhysicalType::UINT_64:
+                return WindowHandlerFactoryDetails::createJoinHandler<uint64_t>(joinDefinition);
+                //            case BasicPhysicalType::INT_8: return WindowHandlerFactoryDetails::createJoinHandler<int8_t>(joinDefinition);
+                //            case BasicPhysicalType::INT_16: return WindowHandlerFactoryDetails::createJoinHandler<int16_t>(joinDefinition);
+                //            case BasicPhysicalType::INT_32: return WindowHandlerFactoryDetails::createJoinHandler<int32_t>(joinDefinition);
+            case BasicPhysicalType::INT_64:
+                return WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDefinition);
+                //            case BasicPhysicalType::FLOAT: return WindowHandlerFactoryDetails::createJoinHandler<float>(joinDefinition);
+                //            case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createJoinHandler<double>(joinDefinition);
+                //            case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createJoinHandler<char>(joinDefinition);
+                //            case BasicPhysicalType::BOOLEAN: return WindowHandlerFactoryDetails::createJoinHandler<bool>(joinDefinition);
             default: NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: basicKeyType is not supported");
         }
     }
