@@ -22,11 +22,11 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <Catalogs/PhysicalStreamConfig.hpp>
 
 using namespace NES;
 
@@ -41,17 +41,14 @@ using namespace NES;
 class ZMQTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES_DEBUG("Setup ZMQTest test class.");
-    }
+    static void SetUpTestCase() { NES_DEBUG("Setup ZMQTest test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() {
         NES_DEBUG("Setup ZMQTest test case.");
         NES::setupLogging("ZMQTest.log", NES::LOG_DEBUG);
 
-        address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":")
-            + std::to_string(LOCAL_PORT);
+        address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":") + std::to_string(LOCAL_PORT);
 
         test_data = {{0, 100, 1, 99, 2, 98, 3, 97}};
         test_data_size = test_data.size() * sizeof(uint32_t);
@@ -61,14 +58,10 @@ class ZMQTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_DEBUG("Setup ZMQTest test case.");
-    }
+    void TearDown() { NES_DEBUG("Setup ZMQTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_DEBUG("Tear down ZMQTest test class.");
-    }
+    static void TearDownTestCase() { NES_DEBUG("Tear down ZMQTest test class."); }
 
     size_t tupleCnt;
     std::string address;
@@ -85,7 +78,8 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
 
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
-    auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), LOCAL_HOST, LOCAL_PORT, 1);
+    auto zmq_source =
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), LOCAL_HOST, LOCAL_PORT, 1);
     std::cout << zmq_source->toString() << std::endl;
     // bufferManager->resizeFixedBufferSize(test_data_size);
 

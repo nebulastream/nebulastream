@@ -31,13 +31,14 @@
 
 namespace NES {
 
-std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
+std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                                         TypeInferencePhasePtr typeInferencePhase,
                                                          StreamCatalogPtr streamCatalog) {
     return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
 }
 
-TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
-                                 StreamCatalogPtr streamCatalog)
+TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                 TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
@@ -69,10 +70,10 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     NES_DEBUG("TopDownStrategy: clear the temporary map : " << queryId);
     operatorToExecutionNodeMap.clear();
     pinnedOperatorLocationMap.clear();
-    NES_DEBUG("TopDownStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
+    NES_DEBUG(
+        "TopDownStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
 
-    NES_DEBUG("TopDownStrategy: Update Global Execution Plan : \n"
-              << globalExecutionPlan->getAsString());
+    NES_DEBUG("TopDownStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
     return runTypeInferencePhase(queryId);
 }
 
@@ -89,7 +90,8 @@ void TopDownStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
         TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sinkOperator->getId());
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("TopDownStrategy: Unable to find resources on the physical node for placement of sink operator");
-            throw QueryPlacementException("TopDownStrategy: Unable to find resources on the physical node for placement of sink operator");
+            throw QueryPlacementException(
+                "TopDownStrategy: Unable to find resources on the physical node for placement of sink operator");
         }
         placeOperator(queryId, sinkOperator, candidateTopologyNode);
     }
@@ -99,7 +101,8 @@ void TopDownStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
 void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("TopDownStrategy: Place " << operatorNode);
-    if ((operatorNode->isNAryOperator() || operatorNode->instanceOf<SourceLogicalOperatorNode>()) && !operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+    if ((operatorNode->isNAryOperator() || operatorNode->instanceOf<SourceLogicalOperatorNode>())
+        && !operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
 
         NES_TRACE("TopDownStrategy: Received an NAry operator for placement.");
         NES_TRACE("TopDownStrategy: Get the topology nodes where parent operators are placed.");
@@ -117,23 +120,28 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
 
         if (!candidateTopologyNode) {
             NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator " << operatorNode);
-            throw QueryPlacementException("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator " + operatorNode->toString());
+            throw QueryPlacementException("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
+                                          + operatorNode->toString());
         }
 
         if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
             NES_DEBUG("TopDownStrategy: Received Source operator for placement.");
 
             auto pinnedSourceOperatorLocation = getTopologyNodeForPinnedOperator(operatorNode->getId());
-            if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId() || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
+            if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId()
+                || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
                 candidateTopologyNode = pinnedSourceOperatorLocation;
             } else {
-                NES_ERROR("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be placed.");
-                throw QueryPlacementException("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be placed.");
+                NES_ERROR(
+                    "TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be placed.");
+                throw QueryPlacementException(
+                    "TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be placed.");
             }
 
             if (candidateTopologyNode->getAvailableResources() == 0) {
                 NES_ERROR("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
-                throw QueryPlacementException("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
+                throw QueryPlacementException(
+                    "TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
             }
         }
     }
@@ -147,7 +155,8 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
             NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
             candidateTopologyNode = topology->findCommonNodeBetween(childNodes, {candidateTopologyNode});
             if (candidateTopologyNode && candidateTopologyNode->getAvailableResources() > 0) {
-                NES_DEBUG("TopDownStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
+                NES_DEBUG(
+                    "TopDownStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
                 break;
             }
         }
@@ -167,7 +176,8 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
     NES_TRACE("TopDownStrategy: Add the query plan to the candidate execution node.");
     if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
         NES_ERROR("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
-        throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " + queryId);
+        throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query "
+                                      + queryId);
     }
     NES_TRACE("TopDownStrategy: Update the global execution plan with candidate execution node");
     globalExecutionPlan->addExecutionNode(candidateExecutionNode);
@@ -186,10 +196,12 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
     }
 }
 
-QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode) {
+QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator,
+                                                              ExecutionNodePtr executionNode) {
 
     OperatorNodePtr candidateOperatorCopy = candidateOperator->copy();
-    NES_DEBUG("TopDownStrategy: Get candidate query plan for the operator " << candidateOperator << " on execution node with id " << executionNode->getId());
+    NES_DEBUG("TopDownStrategy: Get candidate query plan for the operator " << candidateOperator << " on execution node with id "
+                                                                            << executionNode->getId());
     NES_TRACE("TopDownStrategy: Get all query sub plans for the query id on the execution node.");
     std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
     QueryPlanPtr candidateQueryPlan;
@@ -225,7 +237,8 @@ QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId, O
             candidateQueryPlan = QueryPlan::create();
             candidateQueryPlan->setQueryId(queryId);
             candidateQueryPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
-            NES_TRACE("TopDownStrategy: Prepare a new query plan and add the root of the query plans with parent operators as the root of the new query plan.");
+            NES_TRACE("TopDownStrategy: Prepare a new query plan and add the root of the query plans with parent operators as "
+                      "the root of the new query plan.");
             for (auto& queryPlanWithChildren : queryPlansWithParent) {
                 for (auto& root : queryPlanWithChildren->getRootOperators()) {
                     candidateQueryPlan->addRootOperator(root);
@@ -247,7 +260,8 @@ QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId, O
             return candidateQueryPlan;
         }
     }
-    NES_TRACE("TopDownStrategy: no query plan exists with the parent operator of the input logical operator. Returning an empty query plan.");
+    NES_TRACE("TopDownStrategy: no query plan exists with the parent operator of the input logical operator. Returning an empty "
+              "query plan.");
     candidateQueryPlan = QueryPlan::create();
     candidateQueryPlan->setQueryId(queryId);
     candidateQueryPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());

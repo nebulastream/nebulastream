@@ -37,18 +37,13 @@ typedef std::unique_ptr<OutputChannel> OutputChannelPtr;
 
 class OutputChannel {
   public:
-    explicit OutputChannel(
-        zmq::socket_t&& zmqSocket,
-        const ChannelId channelId,
-        const std::string address);
+    explicit OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string address);
 
   public:
     /**
      * @brief close the output channel and release resources
      */
-    ~OutputChannel() {
-        close();
-    }
+    ~OutputChannel() { close(); }
 
     OutputChannel(const OutputChannel&) = delete;
 
@@ -65,11 +60,8 @@ class OutputChannel {
      * @param retryTimes the number of retries before the methods will raise error
      * @return
      */
-    static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext,
-                                   const std::string address,
-                                   NesPartition nesPartition,
-                                   ExchangeProtocol& protocol,
-                                   std::chrono::seconds waitTime,
+    static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext, const std::string address,
+                                   NesPartition nesPartition, ExchangeProtocol& protocol, std::chrono::seconds waitTime,
                                    uint8_t retryTimes);
 
     /**

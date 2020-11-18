@@ -20,9 +20,7 @@ namespace NES {
 
 CompilerFlags::CompilerFlags() {}
 
-CompilerFlagsPtr CompilerFlags::create() {
-    return std::make_shared<CompilerFlags>(CompilerFlags());
-}
+CompilerFlagsPtr CompilerFlags::create() { return std::make_shared<CompilerFlags>(CompilerFlags()); }
 
 CompilerFlagsPtr CompilerFlags::createDefaultCompilerFlags() {
     auto flags = create();
@@ -52,13 +50,9 @@ CompilerFlagsPtr CompilerFlags::createOptimizingCompilerFlags() {
     return flags;
 }
 
-void CompilerFlags::addFlag(std::string flag) {
-    compilerFlags.push_back(flag);
-}
+void CompilerFlags::addFlag(std::string flag) { compilerFlags.push_back(flag); }
 
-std::vector<std::string> CompilerFlags::getFlags() {
-    return compilerFlags;
-}
+std::vector<std::string> CompilerFlags::getFlags() { return compilerFlags; }
 
 CompilerFlagsPtr CompilerFlags::createDebuggingCompilerFlags() {
     auto flags = createDefaultCompilerFlags();

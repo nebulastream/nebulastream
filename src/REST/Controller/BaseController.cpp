@@ -101,9 +101,7 @@ void BaseController::badRequestImpl(const web::http::http_request& message, cons
     message.reply(response);
 }
 
-utility::string_t BaseController::getPath(http_request& message) {
-    return web::uri::decode(message.relative_uri().path());
-}
+utility::string_t BaseController::getPath(http_request& message) { return web::uri::decode(message.relative_uri().path()); }
 
 void BaseController::handleException(const web::http::http_request& message, const std::exception& exc) {
     json::value errorResponse{};

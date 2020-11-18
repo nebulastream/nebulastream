@@ -30,9 +30,7 @@ bool NegateExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string NegateExpressionNode::toString() const {
-    return "NegateNode(" + stamp->toString() + ")";
-}
+const std::string NegateExpressionNode::toString() const { return "NegateNode(" + stamp->toString() + ")"; }
 
 ExpressionNodePtr NegateExpressionNode::create(const ExpressionNodePtr child) {
     auto equals = std::make_shared<NegateExpressionNode>();
@@ -45,12 +43,10 @@ void NegateExpressionNode::inferStamp(SchemaPtr schema) {
     ExpressionNode::inferStamp(schema);
     // check if children stamp is correct
     if (!child()->isPredicate()) {
-        NES_THROW_RUNTIME_ERROR(
-            "Negate Expression Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
+        NES_THROW_RUNTIME_ERROR("Negate Expression Node: the stamp of child must be boolean, but was: "
+                                + child()->getStamp()->toString());
     }
 }
-ExpressionNodePtr NegateExpressionNode::copy() {
-    return std::make_shared<NegateExpressionNode>(NegateExpressionNode(this));
-}
+ExpressionNodePtr NegateExpressionNode::copy() { return std::make_shared<NegateExpressionNode>(NegateExpressionNode(this)); }
 
 }// namespace NES

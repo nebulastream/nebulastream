@@ -30,13 +30,7 @@ using namespace log4cxx::helpers;
 
 namespace NES {
 
-enum DebugLevel {
-    LOG_NONE,
-    LOG_WARNING,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_TRACE
-};
+enum DebugLevel { LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 
 static std::string getDebugLevelAsString(DebugLevel level) {
     if (level == LOG_NONE) {
@@ -74,59 +68,59 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 
 // LoggerPtr logger(Logger::getLogger("NES"));
 
-#define NES_TRACE(TEXT)                 \
-    do {                                \
-        LOG4CXX_TRACE(NESLogger, TEXT); \
+#define NES_TRACE(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        LOG4CXX_TRACE(NESLogger, TEXT);                                                                                          \
     } while (0)
-#define NES_DEBUG(TEXT)                 \
-    do {                                \
-        LOG4CXX_DEBUG(NESLogger, TEXT); \
+#define NES_DEBUG(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        LOG4CXX_DEBUG(NESLogger, TEXT);                                                                                          \
     } while (0)
-#define NES_TRACE(TEXT)                 \
-    do {                                \
-        LOG4CXX_TRACE(NESLogger, TEXT); \
+#define NES_TRACE(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        LOG4CXX_TRACE(NESLogger, TEXT);                                                                                          \
     } while (0)
-#define NES_INFO(TEXT)                 \
-    do {                               \
-        LOG4CXX_INFO(NESLogger, TEXT); \
+#define NES_INFO(TEXT)                                                                                                           \
+    do {                                                                                                                         \
+        LOG4CXX_INFO(NESLogger, TEXT);                                                                                           \
     } while (0)
-#define NES_WARNING(TEXT)              \
-    do {                               \
-        LOG4CXX_WARN(NESLogger, TEXT); \
+#define NES_WARNING(TEXT)                                                                                                        \
+    do {                                                                                                                         \
+        LOG4CXX_WARN(NESLogger, TEXT);                                                                                           \
     } while (0)
-#define NES_ERROR(TEXT)                 \
-    do {                                \
-        LOG4CXX_ERROR(NESLogger, TEXT); \
+#define NES_ERROR(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        LOG4CXX_ERROR(NESLogger, TEXT);                                                                                          \
     } while (0)
-#define NES_FATAL_ERROR(TEXT)           \
-    do {                                \
-        LOG4CXX_ERROR(NESLogger, TEXT); \
-    } while (0)
-
-#define NES_THROW_RUNTIME_ERROR(TEXT)     \
-    do {                                  \
-        NES::collectAndPrintStacktrace(); \
-        NES_FATAL_ERROR(TEXT);            \
-        throw std::runtime_error(TEXT);   \
+#define NES_FATAL_ERROR(TEXT)                                                                                                    \
+    do {                                                                                                                         \
+        LOG4CXX_ERROR(NESLogger, TEXT);                                                                                          \
     } while (0)
 
-#define NES_ASSERT(CONDITION, TEXT)                                                 \
-    do {                                                                            \
-        if (!(CONDITION)) {                                                         \
-            NES::collectAndPrintStacktrace();                                       \
-            NES_FATAL_ERROR(TEXT);                                                  \
-            throw std::runtime_error("NES Runtime Error on condition " #CONDITION); \
-        }                                                                           \
+#define NES_THROW_RUNTIME_ERROR(TEXT)                                                                                            \
+    do {                                                                                                                         \
+        NES::collectAndPrintStacktrace();                                                                                        \
+        NES_FATAL_ERROR(TEXT);                                                                                                   \
+        throw std::runtime_error(TEXT);                                                                                          \
+    } while (0)
+
+#define NES_ASSERT(CONDITION, TEXT)                                                                                              \
+    do {                                                                                                                         \
+        if (!(CONDITION)) {                                                                                                      \
+            NES::collectAndPrintStacktrace();                                                                                    \
+            NES_FATAL_ERROR(TEXT);                                                                                               \
+            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);                                              \
+        }                                                                                                                        \
     } while (0)
 
 #ifdef NES_DEBUG
-#define NES_VERIFY(CONDITION, TEXT)                                                 \
-    do {                                                                            \
-        if (!(CONDITION)) {                                                         \
-            NES::collectAndPrintStacktrace();                                       \
-            NES_FATAL_ERROR(TEXT);                                                  \
-            throw std::runtime_error("NES Runtime Error on condition " #CONDITION); \
-        }                                                                           \
+#define NES_VERIFY(CONDITION, TEXT)                                                                                              \
+    do {                                                                                                                         \
+        if (!(CONDITION)) {                                                                                                      \
+            NES::collectAndPrintStacktrace();                                                                                    \
+            NES_FATAL_ERROR(TEXT);                                                                                               \
+            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);                                              \
+        }                                                                                                                        \
     } while (0)
 #else
 #define NES_VERIFY(...) ((void) 0)
@@ -135,9 +129,7 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 static void setupLogging(std::string logFileName, DebugLevel level) {
     std::cout << "Logger: SETUP_LOGGING" << std::endl;
     // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout(
-            "%d{MMM dd yyyy HH:mm:ss} %c: %l %X{threadName} [%-5t] [%p] : %m%n"));
+    log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l %X{threadName} [%-5t] [%p] : %m%n"));
 
     // create FileAppender
     LOG4CXX_DECODE_CHAR(fileName, logFileName);
@@ -158,8 +150,7 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
     } else if (level == LOG_TRACE) {
         NESLogger->setLevel(log4cxx::Level::getTrace());
     } else {
-        NES_ERROR(
-            "setupLogging: log level not supported " << getDebugLevelAsString(level));
+        NES_ERROR("setupLogging: log level not supported " << getDebugLevelAsString(level));
         throw Exception("Error while setup logging");
     }
 
@@ -167,10 +158,10 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
     NESLogger->addAppender(console);
 }
 
-#define NES_NOT_IMPLEMENTED()                   \
-    do {                                        \
-        NES_ERROR("Function Not Implemented!"); \
-        throw Exception("not implemented");     \
+#define NES_NOT_IMPLEMENTED()                                                                                                    \
+    do {                                                                                                                         \
+        NES_ERROR("Function Not Implemented!");                                                                                  \
+        throw Exception("not implemented");                                                                                      \
     } while (0)
 
 }// namespace NES

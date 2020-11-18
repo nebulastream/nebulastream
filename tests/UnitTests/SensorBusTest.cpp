@@ -56,9 +56,7 @@ class SensorBusTest : public testing::Test {
         NES_INFO("Setup SourceBusTest test class.");
     }
 
-    static void TearDownTestCase() {
-        std::cout << "Tear down NetworkStackTest class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down NetworkStackTest class." << std::endl; }
 
     /**
    * Assume file descriptor will be in /dev/i2c-1.
@@ -72,18 +70,15 @@ class SensorBusTest : public testing::Test {
     void SetUp() override {
         NES_DEBUG("Setup SourceBusTest test case.");
         bus_file_allocated_id = 1;
-        snprintf(path_to_bus_str, 19,
-                 "/dev/i2c-%d",
-                 bus_file_allocated_id);
+        snprintf(path_to_bus_str, 19, "/dev/i2c-%d", bus_file_allocated_id);
         sensor_address_in_bus = 0x1c;
         data_size = 4;
-        timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        timeStamp =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         sensorBus = std::make_shared<I2CBus>(path_to_bus_str);
     }
 
-    void TearDown() override {
-        NES_DEBUG("Tear down SourceBusTest test case.");
-    }
+    void TearDown() override { NES_DEBUG("Tear down SourceBusTest test case."); }
 };
 
 /**

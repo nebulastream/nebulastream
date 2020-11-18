@@ -14,13 +14,12 @@
     limitations under the License.
 */
 
-
 #include <benchmark/benchmark.h>
 
-static void BM_SkeletonFunction(benchmark::State& state){
+static void BM_SkeletonFunction(benchmark::State& state) {
     // Initialize and set up benchmark function
 
-    for(auto singleState : state){
+    for (auto singleState : state) {
         // Everything here gets timed
     }
 }

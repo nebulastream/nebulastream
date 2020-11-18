@@ -20,13 +20,9 @@
 
 namespace NES {
 
-QueryMergerPhasePtr QueryMergerPhase::create() {
-    return std::make_shared<QueryMergerPhase>(QueryMergerPhase());
-}
+QueryMergerPhasePtr QueryMergerPhase::create() { return std::make_shared<QueryMergerPhase>(QueryMergerPhase()); }
 
-QueryMergerPhase::QueryMergerPhase() {
-    this->l0QueryMergerRule = L0QueryMergerRule::create();
-}
+QueryMergerPhase::QueryMergerPhase() { this->l0QueryMergerRule = L0QueryMergerRule::create(); }
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
     NES_DEBUG("QueryMergerPhase: Executing query merger phase.");

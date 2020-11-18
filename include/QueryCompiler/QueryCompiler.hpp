@@ -65,10 +65,8 @@ class QueryCompiler {
     void compile(GeneratedQueryExecutionPlanBuilder&, OperatorNodePtr queryPlan);
 
   private:
-    void compilePipelineStages(
-        GeneratedQueryExecutionPlanBuilder& queryExecutionPlanBuilder,
-        CodeGeneratorPtr codeGenerator,
-        PipelineContextPtr context);
+    void compilePipelineStages(GeneratedQueryExecutionPlanBuilder& queryExecutionPlanBuilder, CodeGeneratorPtr codeGenerator,
+                               PipelineContextPtr context);
 };
 
 QueryCompilerPtr createDefaultQueryCompiler();

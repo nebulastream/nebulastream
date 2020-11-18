@@ -86,8 +86,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 
-        std::string streamName = queryCodeSnippet.substr(
-            queryCodeSnippet.find("::from("));
+        std::string streamName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
         streamName = streamName.substr(7, streamName.find(")") - 7);
         NES_DEBUG(" UtilityFunctions: stream name = " << streamName);
 
@@ -132,8 +131,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << newQuery << std::endl;
         code << "}" << std::endl;
         code << "}" << std::endl;
-        NES_DEBUG("UtilityFunctions: query code \n"
-                  << code.str());
+        NES_DEBUG("UtilityFunctions: query code \n" << code.str());
         Compiler compiler;
         CompiledCodePtr compiled_code = compiler.compile(code.str(), true);
         if (!code) {
@@ -141,8 +139,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         }
 
         typedef Query (*CreateQueryFunctionPtr)();
-        CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>(
-            "_ZN3NES11createQueryEv");
+        CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>("_ZN3NES11createQueryEv");
         if (!func) {
             NES_ERROR("UtilityFunctions: Error retrieving function! Symbol not found!");
         }
@@ -151,13 +148,10 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
 
         return std::make_shared<Query>(query);
     } catch (std::exception& exc) {
-        NES_ERROR(
-            "UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet
-                                                                                    << exc.what());
+        NES_ERROR("UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet << exc.what());
         throw;
     } catch (...) {
-        NES_ERROR(
-            "UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR("UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
 }
@@ -181,9 +175,8 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
         }
 
         typedef Schema (*CreateSchemaFunctionPtr)();
-        CreateSchemaFunctionPtr func = compiled_code
-                                           ->getFunctionPointer<CreateSchemaFunctionPtr>(
-                                               "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
+        CreateSchemaFunctionPtr func = compiled_code->getFunctionPointer<CreateSchemaFunctionPtr>(
+            "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
         }
@@ -192,12 +185,10 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
         return std::make_shared<Schema>(query);
 
     } catch (std::exception& exc) {
-        NES_ERROR(
-            "Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR("Failed to create the query from input code string: " << queryCodeSnippet);
         throw;
     } catch (...) {
-        NES_ERROR(
-            "Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR("Failed to create the query from input code string: " << queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
 }
@@ -268,7 +259,8 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, Schema
         auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
         offsets.push_back(physicalType->size());
         types.push_back(physicalType);
-        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") + std::to_string(physicalType->size()));
+        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
+                  + std::to_string(physicalType->size()));
     }
 
     uint32_t prefix_sum = 0;
@@ -276,20 +268,21 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, Schema
         uint32_t val = offsets[i];
         offsets[i] = prefix_sum;
         prefix_sum += val;
-        NES_DEBUG("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString() + std::string(": ") + std::to_string(offsets[i]));
+        NES_DEBUG("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString()
+                  + std::string(": ") + std::to_string(offsets[i]));
     }
 
     str << "+----------------------------------------------------+" << std::endl;
     str << "|";
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        str << schema->get(i)->name << ":" << physicalDataTypeFactory.getPhysicalType(schema->get(i)->dataType)->toString() << "|";
+        str << schema->get(i)->name << ":" << physicalDataTypeFactory.getPhysicalType(schema->get(i)->dataType)->toString()
+            << "|";
     }
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
 
     auto buf = buffer.getBufferAs<char>();
-    for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
-         i += schema->getSchemaSizeInBytes()) {
+    for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes(); i += schema->getSchemaSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
             void* value = &buf[i + offsets[s]];

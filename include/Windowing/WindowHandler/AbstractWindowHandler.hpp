@@ -67,7 +67,8 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) = 0;
+    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
+                       uint32_t pipelineStageId, uint64_t originId) = 0;
 
     /**
      * @brief Returns window manager.

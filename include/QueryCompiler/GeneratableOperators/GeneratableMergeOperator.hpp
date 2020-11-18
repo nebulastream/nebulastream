@@ -30,7 +30,8 @@ class GeneratableMergeOperator : public MergeLogicalOperatorNode, public Generat
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableMergeOperator
      */
-    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator,
+                                              OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

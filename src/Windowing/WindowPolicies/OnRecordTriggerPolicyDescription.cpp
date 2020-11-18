@@ -22,12 +22,8 @@ WindowTriggerPolicyPtr OnRecordTriggerPolicyDescription::create() {
     return std::make_shared<OnRecordTriggerPolicyDescription>(OnRecordTriggerPolicyDescription());
 }
 
-TriggerType OnRecordTriggerPolicyDescription::getPolicyType() {
-    return this->policy;
-}
+TriggerType OnRecordTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
-OnRecordTriggerPolicyDescription::OnRecordTriggerPolicyDescription()
-    : BaseWindowTriggerPolicyDescriptor(triggerOnRecord) {
-}
+OnRecordTriggerPolicyDescription::OnRecordTriggerPolicyDescription() : BaseWindowTriggerPolicyDescriptor(triggerOnRecord) {}
 
 }// namespace NES::Windowing

@@ -27,21 +27,15 @@ namespace NES {
 
 KafkaSink::KafkaSink() {}
 
-KafkaSink::KafkaSink(SchemaPtr schema,
-                     const std::string& brokers,
-                     const std::string& topic,
-                     const size_t kafkaProducerTimeout)
-    : DataSink(schema),
-      brokers(brokers),
-      topic(topic),
+KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic, const size_t kafkaProducerTimeout)
+    : DataSink(schema), brokers(brokers), topic(topic),
       kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
 
-    config = {
-        {"metadata.broker.list", brokers.c_str()}};
+    config = {{"metadata.broker.list", brokers.c_str()}};
 
     _connect();
-    NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers
-                            << ", topic " << topic << ", partition " << partition);
+    NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers << ", topic " << topic << ", partition "
+                            << partition);
 }
 
 KafkaSink::~KafkaSink() {}
@@ -49,8 +43,7 @@ KafkaSink::~KafkaSink() {}
 bool KafkaSink::writeData(TupleBuffer& input_buffer) {
     NES_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer);
     try {
-        cppkafka::Buffer buffer(input_buffer.getBuffer(),
-                                input_buffer.getBufferSize());
+        cppkafka::Buffer buffer(input_buffer.getBuffer(), input_buffer.getBufferSize());
         msgBuilder->payload(buffer);
 
         NES_DEBUG("KAFKASINK buffer to send " << buffer.get_size() << " bytes, content: " << msgBuilder->payload());
@@ -96,18 +89,10 @@ void KafkaSink::_connect() {
     // }
 }
 
-SinkType KafkaSink::getType() const {
-    return KAFKA_SINK;
-}
-const std::string KafkaSink::getBrokers() const {
-    return brokers;
-}
-const std::string KafkaSink::getTopic() const {
-    return topic;
-}
-const uint64_t KafkaSink::getKafkaProducerTimeout() const {
-    return kafkaProducerTimeout.count();
-}
+SinkType KafkaSink::getType() const { return KAFKA_SINK; }
+const std::string KafkaSink::getBrokers() const { return brokers; }
+const std::string KafkaSink::getTopic() const { return topic; }
+const uint64_t KafkaSink::getKafkaProducerTimeout() const { return kafkaProducerTimeout.count(); }
 
 }// namespace NES
 #endif

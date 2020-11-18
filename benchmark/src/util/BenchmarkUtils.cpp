@@ -16,27 +16,27 @@
 
 #include <util/BenchmarkUtils.hpp>
 
-#include <cstdint>
-#include <vector>
-#include <list>
-#include <random>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Version/version.hpp>
+#include <cstdint>
+#include <list>
+#include <random>
+#include <vector>
 
-namespace NES::Benchmarking{
+namespace NES::Benchmarking {
 
 uint64_t BenchmarkUtils::runSingleExperimentSeconds;
 uint64_t BenchmarkUtils::periodLengthInSeconds;
 
-void BenchmarkUtils::createRangeVector(std::vector<uint64_t>& vector, uint64_t start, uint64_t stop, uint64_t stepSize){
-    for(uint64_t i = start; i < stop; i += stepSize){
+void BenchmarkUtils::createRangeVector(std::vector<uint64_t>& vector, uint64_t start, uint64_t stop, uint64_t stepSize) {
+    for (uint64_t i = start; i < stop; i += stepSize) {
         vector.push_back(i);
     }
 }
 
- void BenchmarkUtils::createUniformData(std::list<uint64_t>& dataList, uint64_t totalNumberOfTuples) {
+void BenchmarkUtils::createUniformData(std::list<uint64_t>& dataList, uint64_t totalNumberOfTuples) {
     // uniform distribution
     int min = 0, max = 999;
 
@@ -58,20 +58,22 @@ uint64_t BenchmarkUtils::calcExpectedTuplesSelectivity(std::list<uint64_t> list,
     uint64_t countExpectedTuples = 0;
 
     for (unsigned long& listIterator : list) {
-        if (listIterator < selectivity) ++countExpectedTuples;
+        if (listIterator < selectivity)
+            ++countExpectedTuples;
     }
 
     return countExpectedTuples;
 }
 
 void BenchmarkUtils::recordStatistics(std::vector<QueryStatistics*>& statisticsVec, NodeEnginePtr nodeEngine) {
-    for(size_t i = 0; i < BenchmarkUtils::runSingleExperimentSeconds + 1; ++i){
-        int64_t nextPeriodStartTime = BenchmarkUtils::periodLengthInSeconds * 1000 + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    for (size_t i = 0; i < BenchmarkUtils::runSingleExperimentSeconds + 1; ++i) {
+        int64_t nextPeriodStartTime = BenchmarkUtils::periodLengthInSeconds * 1000
+            + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(1);
-        for (auto it : queryStatisticsPtrs){
+        for (auto it : queryStatisticsPtrs) {
 
-            auto *statistics = new QueryStatistics();
+            auto* statistics = new QueryStatistics();
             statistics->setProcessedBuffers(it->getProcessedBuffers());
             statistics->setProcessedTasks(it->getProcessedTasks());
             statistics->setProcessedTuple(it->getProcessedTuple());
@@ -79,17 +81,20 @@ void BenchmarkUtils::recordStatistics(std::vector<QueryStatistics*>& statisticsV
             statisticsVec.push_back(statistics);
             NES_WARNING("Statistic: " << it->getQueryStatisticsAsString());
         }
-        auto curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        while(curTime < nextPeriodStartTime){
-            curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto curTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        while (curTime < nextPeriodStartTime) {
+            curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                          .count();
         }
     }
 }
 
-void BenchmarkUtils::computeDifferenceOfStatistics(std::vector<QueryStatistics*>& statisticsVec){
-    for(size_t i = statisticsVec.size() - 1; i > 1; --i){
+void BenchmarkUtils::computeDifferenceOfStatistics(std::vector<QueryStatistics*>& statisticsVec) {
+    for (size_t i = statisticsVec.size() - 1; i > 1; --i) {
         statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());
-        statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers() - statisticsVec[i - 1]->getProcessedBuffers());
+        statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers()
+                                              - statisticsVec[i - 1]->getProcessedBuffers());
         statisticsVec[i]->setProcessedTasks(statisticsVec[i]->getProcessedTasks() - statisticsVec[i - 1]->getProcessedTasks());
     }
 
@@ -106,20 +111,14 @@ std::string BenchmarkUtils::getCurDateTimeStringWithNESVersion() {
     return oss.str();
 }
 
-std::string BenchmarkUtils::getStatisticsAsCSV(QueryStatistics* statistic, SchemaPtr schema){
-    return  "," + std::to_string(statistic->getProcessedBuffers()) +
-        "," + std::to_string(statistic->getProcessedTasks()) +
-        "," + std::to_string(statistic->getProcessedTuple()) +
-        "," + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes());
+std::string BenchmarkUtils::getStatisticsAsCSV(QueryStatistics* statistic, SchemaPtr schema) {
+    return "," + std::to_string(statistic->getProcessedBuffers()) + "," + std::to_string(statistic->getProcessedTasks()) + ","
+        + std::to_string(statistic->getProcessedTuple()) + ","
+        + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes());
 }
 
-
-void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec,
-                         DataSourcePtr benchmarkSource,
-                         DataSinkPtr benchmarkSink,
-                         NodeEnginePtr nodeEngine,
-                         Query query,
-                         uint64_t workerThreads){
+void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, DataSourcePtr benchmarkSource,
+                                  DataSinkPtr benchmarkSink, NodeEnginePtr nodeEngine, Query query, uint64_t workerThreads) {
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -129,14 +128,14 @@ void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec,
     auto generateableOperators = translatePhase->transform(query.getQueryPlan()->getRootOperators()[0]);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
-                    .setQueryManager(nodeEngine->getQueryManager())
-                    .setBufferManager(nodeEngine->getBufferManager())
-                    .setCompiler(nodeEngine->getCompiler())
-                    .setQueryId(1)
-                    .setQuerySubPlanId(1)
-                    .addSource(benchmarkSource)
-                    .addSink(benchmarkSink)
-                    .addOperatorQueryPlan(generateableOperators);
+                       .setQueryManager(nodeEngine->getQueryManager())
+                       .setBufferManager(nodeEngine->getBufferManager())
+                       .setCompiler(nodeEngine->getCompiler())
+                       .setQueryId(1)
+                       .setQuerySubPlanId(1)
+                       .addSource(benchmarkSource)
+                       .addSink(benchmarkSink)
+                       .addOperatorQueryPlan(generateableOperators);
 
     auto plan = builder.build();
     nodeEngine->registerQueryInNodeEngine(plan);
@@ -153,6 +152,5 @@ void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec,
     NES_WARNING("Query was stopped!");
 
     computeDifferenceOfStatistics(statisticsVec);
-
 }
-}
+}// namespace NES::Benchmarking

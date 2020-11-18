@@ -54,8 +54,7 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
      * @param rootNode : sink node
      * @param nesExecutionPlanPtr : nes execution plan
      */
-    void addForwardOperators(std::vector<NESTopologyEntryPtr> pathForPlacement,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
+    void addForwardOperators(std::vector<NESTopologyEntryPtr> pathForPlacement, NESExecutionPlanPtr nesExecutionPlanPtr) const;
 
     /**
      * @brief Finds all the nodes that can be used for performing FWD operator

@@ -19,19 +19,19 @@
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <Util/Logger.hpp>
 #include <cstdint>
 #include <cstring>
 #include <sstream>
 #include <string>
-#include <Util/Logger.hpp>
 
 namespace NES {
 
-KafkaSource::KafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string brokers,
-                         const std::string topic, const std::string groupId, bool autoCommit,
+KafkaSource::KafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                         const std::string brokers, const std::string topic, const std::string groupId, bool autoCommit,
                          uint64_t kafkaConsumerTimeout)
-    : DataSource(schema, bufferManager, queryManager), brokers(brokers), topic(topic), groupId(groupId),
-      autoCommit(autoCommit), kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
+    : DataSource(schema, bufferManager, queryManager), brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
+      kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
 
     config = {{"metadata.broker.list", brokers.c_str()},
               {"group.id", groupId},
@@ -60,8 +60,7 @@ std::optional<TupleBuffer> KafkaSource::receiveData() {
             const size_t tupleSize = schema->getSchemaSizeInBytes();
             const size_t tupleCnt = msg.get_payload().get_size() / tupleSize;
 
-            NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize
-                                                 << ", msg: " << msg.get_payload());
+            NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << ", msg: " << msg.get_payload());
 
             std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
             buffer.setNumberOfTuples(tupleCnt);
@@ -91,8 +90,8 @@ void KafkaSource::_connect() {
     consumer->set_assignment_callback([&](cppkafka::TopicPartitionList& topicPartitions) {
         for (auto&& tpp : topicPartitions) {
             if (tpp.get_offset() == cppkafka::TopicPartition::Offset::OFFSET_INVALID) {
-                NES_WARNING("topic " << tpp.get_topic() << ", partition " << tpp.get_partition()
-                                     << " get invalid offset " << tpp.get_offset());
+                NES_WARNING("topic " << tpp.get_topic() << ", partition " << tpp.get_partition() << " get invalid offset "
+                                     << tpp.get_offset());
                 // TODO: enforce to set offset to -1 or abort ?
                 auto tuple = consumer->query_offsets(tpp);
                 size_t high = std::get<1>(tuple);
@@ -111,33 +110,19 @@ void KafkaSource::_connect() {
 
 SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }
 
-const std::string KafkaSource::getBrokers() const {
-    return brokers;
-}
+const std::string KafkaSource::getBrokers() const { return brokers; }
 
-const std::string KafkaSource::getTopic() const {
-    return topic;
-}
+const std::string KafkaSource::getTopic() const { return topic; }
 
-const std::string KafkaSource::getGroupId() const {
-    return groupId;
-}
+const std::string KafkaSource::getGroupId() const { return groupId; }
 
-bool KafkaSource::isAutoCommit() const {
-    return autoCommit;
-}
+bool KafkaSource::isAutoCommit() const { return autoCommit; }
 
-const cppkafka::Configuration& KafkaSource::getConfig() const {
-    return config;
-}
+const cppkafka::Configuration& KafkaSource::getConfig() const { return config; }
 
-const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const {
-    return kafkaConsumerTimeout;
-}
+const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const { return kafkaConsumerTimeout; }
 
-const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const {
-    return consumer;
-}
+const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const { return consumer; }
 
 }// namespace NES
 #endif

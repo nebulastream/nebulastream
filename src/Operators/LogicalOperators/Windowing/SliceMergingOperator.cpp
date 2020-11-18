@@ -21,8 +21,7 @@
 namespace NES {
 
 SliceMergingOperator::SliceMergingOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
-    : WindowOperatorNode(windowDefinition, id) {
-}
+    : WindowOperatorNode(windowDefinition, id) {}
 
 const std::string SliceMergingOperator::toString() const {
     std::stringstream ss;
@@ -30,13 +29,9 @@ const std::string SliceMergingOperator::toString() const {
     return ss.str();
 }
 
-bool SliceMergingOperator::isIdentical(NodePtr rhs) const {
-    return equal(rhs) && rhs->as<SliceMergingOperator>()->getId() == id;
-}
+bool SliceMergingOperator::isIdentical(NodePtr rhs) const { return equal(rhs) && rhs->as<SliceMergingOperator>()->getId() == id; }
 
-bool SliceMergingOperator::equal(const NodePtr rhs) const {
-    return rhs->instanceOf<SliceMergingOperator>();
-}
+bool SliceMergingOperator::equal(const NodePtr rhs) const { return rhs->instanceOf<SliceMergingOperator>(); }
 
 OperatorNodePtr SliceMergingOperator::copy() {
     auto copy = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition, id);
@@ -49,7 +44,8 @@ bool SliceMergingOperator::inferSchema() {
 
     WindowOperatorNode::inferSchema();
 
-    NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
+    NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema "
+              << inputSchema->toString());
     return true;
 }
 

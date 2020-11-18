@@ -23,35 +23,21 @@ namespace NES {
 
 namespace Network {
 
-NetworkSink::NetworkSink(
-    SchemaPtr schema,
-    QuerySubPlanId parentPlanId,
-    NetworkManagerPtr networkManager,
-    const NodeLocation nodeLocation,
-    NesPartition nesPartition,
-    BufferManagerPtr bufferManager,
-    QueryManagerPtr queryManager,
-    std::chrono::seconds waitTime,
-    uint8_t retryTimes)
-    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId),
-      networkManager(std::move(networkManager)), nodeLocation(nodeLocation),
-      nesPartition(nesPartition), queryManager(queryManager),
-      waitTime(waitTime), retryTimes(retryTimes) {
+NetworkSink::NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkManagerPtr networkManager,
+                         const NodeLocation nodeLocation, NesPartition nesPartition, BufferManagerPtr bufferManager,
+                         QueryManagerPtr queryManager, std::chrono::seconds waitTime, uint8_t retryTimes)
+    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
+      nodeLocation(nodeLocation), nesPartition(nesPartition), queryManager(queryManager), waitTime(waitTime),
+      retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());
 }
 
-std::string NetworkSink::toString() {
-    return "NETWORK_SINK";
-}
+std::string NetworkSink::toString() { return "NETWORK_SINK"; }
 
-SinkMediumTypes NetworkSink::getSinkMediumType() {
-    return NETWORK_SINK;
-}
+SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
-NetworkSink::~NetworkSink() {
-    NES_INFO("NetworkSink: Destructor called " << nesPartition);
-}
+NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesPartition); }
 
 bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) {
     auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
@@ -70,9 +56,7 @@ void NetworkSink::shutdown() {
     queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(parentPlanId, Destroy, this), true);
 }
 
-const std::string NetworkSink::toString() const {
-    return "NetworkSink: " + nesPartition.toString();
-}
+const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
 void NetworkSink::reconfigure(ReconfigurationTask& task, WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << parentPlanId);
@@ -80,17 +64,17 @@ void NetworkSink::reconfigure(ReconfigurationTask& task, WorkerContext& workerCo
     switch (task.getType()) {
         case Initialize: {
             //            NES_ASSERT(queryManager->getQepStatus(parentPlanId) == QueryExecutionPlan::Running, "parent plan not running on net sink " << nesPartition);
-            auto channel = networkManager->registerSubpartitionProducer(
-                nodeLocation, nesPartition,
-                waitTime, retryTimes);
+            auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
-            NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread " << NesThread::getId());
+            NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "
+                                                                      << NesThread::getId());
             break;
         }
         case Destroy: {
             workerContext.releaseChannel(nesPartition.getOperatorId());
-            NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread " << NesThread::getId());
+            NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
+                                                                        << NesThread::getId());
             break;
         }
         default: {

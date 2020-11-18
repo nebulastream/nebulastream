@@ -46,9 +46,7 @@ class MergeDeploymentTest : public testing::Test {
         restPort = restPort + 2;
     }
 
-    void TearDown() {
-        std::cout << "Tear down MergeDeploymentTest class." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down MergeDeploymentTest class." << std::endl; }
 
     std::string ipAddress = "127.0.0.1";
 };
@@ -64,19 +62,20 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest: Worker2 started successfully");
 
-    std::string outputFilePath =
-        "testDeployTwoWorkerMergeUsingBottomUp.out";
+    std::string outputFilePath = "testDeployTwoWorkerMergeUsingBottomUp.out";
     remove(outputFilePath.c_str());
 
     //register logical stream
@@ -88,23 +87,20 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 3,
-                                                                   "physical_car", "car");
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
     //register physical stream
-    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                     1, 0, 3,
-                                                                     "physical_truck", "truck");
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest: Submit query");
-    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query =
+        "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -114,8 +110,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -231,19 +226,20 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest: Worker2 started successfully");
 
-    std::string outputFilePath =
-        "testDeployTwoWorkerMergeUsingTopDown.out";
+    std::string outputFilePath = "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
 
     //register logical stream
@@ -255,23 +251,20 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 3,
-                                                                   "physical_car", "car");
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
     //register physical stream
-    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                     1, 0, 3,
-                                                                     "physical_truck", "truck");
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest: Submit query");
-    string query = R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+    string query =
+        R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -281,8 +274,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -387,7 +379,6 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("MergeDeploymentTest: Test finished");
 }
 
-
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
@@ -399,19 +390,20 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest: Worker2 started successfully");
 
-    std::string outputFilePath =
-        "testDeployTwoWorkerMergeUsingTopDown.out";
+    std::string outputFilePath = "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
 
     //register logical stream
@@ -423,23 +415,20 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 3,
-                                                                   "physical_car", "car");
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
     //register physical stream
-    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                     0, 0, 3,
-                                                                     "physical_truck", "truck");
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "", 0, 0, 3, "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest: Submit query");
-    string query = R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+    string query =
+        R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -449,8 +438,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -565,19 +553,20 @@ TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest: Worker2 started successfully");
 
-    std::string outputFilePath =
-        "testDeployTwoWorkerMergeUsingTopDown.out";
+    std::string outputFilePath = "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
 
     //register logical stream
@@ -589,9 +578,7 @@ TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 3,
-                                                                   "physical_car", "car");
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     std::string testSchema2 = "Schema::create()->addField(\"id\", BasicType::UINT16)->addField(\"id2\", BasicType::UINT64);";
@@ -601,16 +588,15 @@ TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
     out2.close();
     wrk2->registerLogicalStream("truck", testSchemaFileName2);
     //register physical stream
-    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                     1, 0, 3,
-                                                                     "physical_truck", "truck");
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest: Submit query");
-    string query = R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+    string query =
+        R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     cout << "queryid=" << queryId << endl;

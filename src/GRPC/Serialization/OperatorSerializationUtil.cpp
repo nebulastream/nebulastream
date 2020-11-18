@@ -77,7 +77,8 @@
 
 namespace NES {
 
-SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodePtr operatorNode, SerializableOperator* serializedOperator) {
+SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodePtr operatorNode,
+                                                                   SerializableOperator* serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // serialize source operator
@@ -140,7 +141,8 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         // serialize watermarkAssigner operator
         NES_TRACE("OperatorSerializationUtil:: serialize to WatermarkAssignerLogicalOperatorNode");
-        auto watermarkAssignerDetail = serializeWatermarkAssignerOperator(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
+        auto watermarkAssignerDetail =
+            serializeWatermarkAssignerOperator(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
         serializedOperator->mutable_details()->PackFrom(watermarkAssignerDetail);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
@@ -160,7 +162,8 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         serializeOperator(child->as<OperatorNode>(), serializedChild);
     }
 
-    NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to " << serializedOperator->details().type_url());
+    NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to "
+                                                       << serializedOperator->details().type_url());
     return serializedOperator;
 }
 
@@ -212,8 +215,10 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedMapOperator = SerializableOperator_MapDetails();
         details.UnpackTo(&serializedMapOperator);
         // de-serialize map expression
-        auto fieldAssignmentExpression = ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
-        operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(), serializedOperator->operatorid());
+        auto fieldAssignmentExpression =
+            ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
+        operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(),
+                                                                 serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
@@ -232,7 +237,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedWatermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
         details.UnpackTo(&serializedWatermarkStrategyDetails);
         auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(&serializedWatermarkStrategyDetails);
-        operatorNode = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor,
+                                                                               serializedOperator->operatorid());
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }
@@ -241,7 +247,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_outputschema()));
     // de-serialize operator input schema
     operatorNode->setInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
-    NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to " << operatorNode->toString());
+    NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to "
+                                                          << operatorNode->toString());
     return operatorNode;
 }
 
@@ -284,8 +291,10 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
 
     // serialize aggregation
     auto windowAggregation = windowDetails.mutable_windowaggregation();
-    ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->as(), windowAggregation->mutable_asfield());
-    ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->on(), windowAggregation->mutable_onfield());
+    ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->as(),
+                                                     windowAggregation->mutable_asfield());
+    ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->on(),
+                                                     windowAggregation->mutable_onfield());
 
     switch (windowDefinition->getWindowAggregation()->getType()) {
         case Windowing::WindowAggregationDescriptor::Count:
@@ -300,8 +309,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         case Windowing::WindowAggregationDescriptor::Sum:
             windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
             break;
-        default:
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+        default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
     }
 
     auto windowTrigger = windowDetails.mutable_triggerpolicy();
@@ -309,7 +317,8 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     switch (windowDefinition->getTriggerPolicy()->getPolicyType()) {
         case Windowing::TriggerType::triggerOnTime: {
             windowTrigger->set_type(SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnTime);
-            Windowing::OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(windowDefinition->getTriggerPolicy());
+            Windowing::OnTimeTriggerDescriptionPtr triggerDesc =
+                std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(windowDefinition->getTriggerPolicy());
             windowTrigger->set_timeinms(triggerDesc->getTriggerTimeInMs());
             break;
         }
@@ -347,11 +356,14 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
 
     auto distributionCharacteristics = SerializableOperator_WindowDetails_DistributionCharacteristic();
     if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
-        windowDetails.mutable_distrchar()->set_distr(SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete);
+        windowDetails.mutable_distrchar()->set_distr(
+            SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete);
     } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Combining) {
-        windowDetails.mutable_distrchar()->set_distr(SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining);
+        windowDetails.mutable_distrchar()->set_distr(
+            SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining);
     } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Slicing) {
-        windowDetails.mutable_distrchar()->set_distr(SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing);
+        windowDetails.mutable_distrchar()->set_distr(
+            SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -396,7 +408,8 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
     switch (joinDefinition->getTriggerPolicy()->getPolicyType()) {
         case Windowing::TriggerType::triggerOnTime: {
             windowTrigger->set_type(SerializableOperator_JoinDetails_TriggerPolicy_Type_triggerOnTime);
-            Windowing::OnTimeTriggerDescriptionPtr triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(joinDefinition->getTriggerPolicy());
+            Windowing::OnTimeTriggerDescriptionPtr triggerDesc =
+                std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(joinDefinition->getTriggerPolicy());
             windowTrigger->set_timeinms(triggerDesc->getTriggerTimeInMs());
             break;
         }
@@ -430,18 +443,22 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
 
     auto distributionCharacteristics = SerializableOperator_JoinDetails_DistributionCharacteristic();
     if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
-        joinDetails.mutable_distrchar()->set_distr(SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Complete);
+        joinDetails.mutable_distrchar()->set_distr(
+            SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Complete);
     } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Combining) {
-        joinDetails.mutable_distrchar()->set_distr(SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Combining);
+        joinDetails.mutable_distrchar()->set_distr(
+            SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Combining);
     } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Slicing) {
-        joinDetails.mutable_distrchar()->set_distr(SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Slicing);
+        joinDetails.mutable_distrchar()->set_distr(
+            SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Slicing);
     } else {
         NES_NOT_IMPLEMENTED();
     }
     return joinDetails;
 }
 
-WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* windowDetails, OperatorId operatorId) {
+WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* windowDetails,
+                                                                           OperatorId operatorId) {
     auto serializedWindowAggregation = windowDetails->windowaggregation();
     auto serializedTriggerPolicy = windowDetails->triggerpolicy();
     auto serializedAction = windowDetails->action();
@@ -463,7 +480,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_COUNT) {
         aggregation = Windowing::CountAggregationDescriptor::create(onField, asField);
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: " << serializedWindowAggregation.DebugString());
+        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: "
+                        << serializedWindowAggregation.DebugString());
     }
 
     Windowing::WindowTriggerPolicyPtr trigger;
@@ -494,26 +512,38 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         auto serializedTimeCharacterisitc = serializedTumblingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
-            auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
+            auto eventTimeField =
+                AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field), Windowing::TimeMeasure(serializedTumblingWindow.size()));
-        } else if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(), Windowing::TimeMeasure(serializedTumblingWindow.size()));
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
+        } else if (serializedTimeCharacterisitc.type()
+                   == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(),
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
+                            << serializedTimeCharacterisitc.DebugString());
         }
     } else if (serializedWindowType.Is<SerializableOperator_WindowDetails_SlidingWindow>()) {
         auto serializedSlidingWindow = SerializableOperator_WindowDetails_SlidingWindow();
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
         auto serializedTimeCharacterisitc = serializedSlidingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
-            auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
+            auto eventTimeField =
+                AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field), Windowing::TimeMeasure(serializedSlidingWindow.size()), Windowing::TimeMeasure(serializedSlidingWindow.slide()));
-        } else if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(), Windowing::TimeMeasure(serializedSlidingWindow.size()), Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+        } else if (serializedTimeCharacterisitc.type()
+                   == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
+                            << serializedTimeCharacterisitc.DebugString());
         }
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
@@ -522,13 +552,16 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     auto distrChar = windowDetails->distrchar();
     Windowing::DistributionCharacteristicPtr distChar;
     if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete");
+        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete");
         distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
+        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Combining);
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
+        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Slicing);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -538,29 +571,46 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     if (!windowDetails->has_onkey()) {
         auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, 1, trigger, action);
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)->as<CentralWindowOperator>();
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
+                ->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)->as<WindowComputationOperator>();
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
+                ->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef, operatorId)->as<SliceCreationOperator>();
+            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef, operatorId)
+                ->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }
     } else {
-        auto keyAccessExpression = ExpressionSerializationUtil::deserializeExpression(windowDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
+        auto keyAccessExpression =
+            ExpressionSerializationUtil::deserializeExpression(windowDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger, action), operatorId)->as<CentralWindowOperator>();
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(
+                       Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger,
+                                                                  action),
+                       operatorId)
+                ->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, windowDetails->numberofinputedges(), trigger, action), operatorId)->as<WindowComputationOperator>();
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(
+                       Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar,
+                                                                  windowDetails->numberofinputedges(), trigger, action),
+                       operatorId)
+                ->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger, action), operatorId)->as<SliceCreationOperator>();
+            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(
+                       Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger,
+                                                                  action),
+                       operatorId)
+                ->as<SliceCreationOperator>();
         } else {
             NES_NOT_IMPLEMENTED();
         }
     }
 }
 
-JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(SerializableOperator_JoinDetails* joinDetails, OperatorId operatorId) {
+JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(SerializableOperator_JoinDetails* joinDetails,
+                                                                              OperatorId operatorId) {
     auto serializedTriggerPolicy = joinDetails->triggerpolicy();
     auto serializedAction = joinDetails->action();
 
@@ -592,26 +642,38 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         auto serializedTimeCharacterisitc = serializedTumblingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_JoinDetails_TimeCharacteristic_Type_EventTime) {
-            auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
+            auto eventTimeField =
+                AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field), Windowing::TimeMeasure(serializedTumblingWindow.size()));
-        } else if (serializedTimeCharacterisitc.type() == SerializableOperator_JoinDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(), Windowing::TimeMeasure(serializedTumblingWindow.size()));
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
+        } else if (serializedTimeCharacterisitc.type()
+                   == SerializableOperator_JoinDetails_TimeCharacteristic_Type_ProcessingTime) {
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(),
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
+                            << serializedTimeCharacterisitc.DebugString());
         }
     } else if (serializedWindowType.Is<SerializableOperator_JoinDetails_SlidingWindow>()) {
         auto serializedSlidingWindow = SerializableOperator_JoinDetails_SlidingWindow();
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
         auto serializedTimeCharacterisitc = serializedSlidingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_JoinDetails_TimeCharacteristic_Type_EventTime) {
-            auto eventTimeField = AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
+            auto eventTimeField =
+                AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field), Windowing::TimeMeasure(serializedSlidingWindow.size()), Windowing::TimeMeasure(serializedSlidingWindow.slide()));
-        } else if (serializedTimeCharacterisitc.type() == SerializableOperator_JoinDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(), Windowing::TimeMeasure(serializedSlidingWindow.size()), Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
+        } else if (serializedTimeCharacterisitc.type()
+                   == SerializableOperator_JoinDetails_TimeCharacteristic_Type_ProcessingTime) {
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.size()),
+                                                  Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: " << serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
+                            << serializedTimeCharacterisitc.DebugString());
         }
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
@@ -619,7 +681,8 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
 
     LogicalOperatorNodePtr ptr;
     auto distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
-    auto keyAccessExpression = ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
+    auto keyAccessExpression =
+        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
     auto joinDefinition = Join::LogicalJoinDefinition::create(keyAccessExpression, window, distChar, trigger, action);
     auto retValue = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<JoinLogicalOperatorNode>();
     return retValue;
@@ -635,14 +698,16 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     //        NES_NOT_IMPLEMENTED();
     //    }
 }
-SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator) {
+SerializableOperator_SourceDetails
+OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator) {
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     serializeSourceSourceDescriptor(sourceDescriptor, &sourceDetails);
     return sourceDetails;
 }
 
-OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails, OperatorId operatorId) {
+OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails,
+                                                                     OperatorId operatorId) {
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails, operatorId);
     return LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
 }
@@ -659,28 +724,34 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableO
     return LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
 }
 
-SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor, SerializableOperator_SourceDetails* sourceDetails) {
+SerializableOperator_SourceDetails*
+OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor,
+                                                           SerializableOperator_SourceDetails* sourceDetails) {
     // serialize a source descriptor and all its properties depending of its type
     NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with =" << sourceDescriptor->toString());
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         // serialize zmq source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor");
         auto zmqSourceDescriptor = sourceDescriptor->as<ZmqSourceDescriptor>();
         auto zmqSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor();
         zmqSerializedSourceDescriptor.set_host(zmqSourceDescriptor->getHost());
         zmqSerializedSourceDescriptor.set_port(zmqSourceDescriptor->getPort());
         // serialize source schema
-        SchemaSerializationUtil::serializeSchema(zmqSourceDescriptor->getSchema(), zmqSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(zmqSourceDescriptor->getSchema(),
+                                                 zmqSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(zmqSerializedSourceDescriptor);
     }
 #ifdef ENABLE_OPC_BUILD
     else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {
         // serialize opc source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
         auto opcSourceDescriptor = sourceDescriptor->as<OPCSourceDescriptor>();
         auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
         char* ident = (char*) UA_malloc(sizeof(char) * opcSourceDescriptor->getNodeId().identifier.string.length + 1);
-        memcpy(ident, opcSourceDescriptor->getNodeId().identifier.string.data, opcSourceDescriptor->getNodeId().identifier.string.length);
+        memcpy(ident, opcSourceDescriptor->getNodeId().identifier.string.data,
+               opcSourceDescriptor->getNodeId().identifier.string.length);
         ident[opcSourceDescriptor->getNodeId().identifier.string.length] = '\0';
         opcSerializedSourceDescriptor.set_identifier(ident);
         opcSerializedSourceDescriptor.set_url(opcSourceDescriptor->getUrl());
@@ -689,72 +760,91 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
         opcSerializedSourceDescriptor.set_user(opcSourceDescriptor->getUser());
         opcSerializedSourceDescriptor.set_password(opcSourceDescriptor->getPassword());
         // serialize source schema
-        SchemaSerializationUtil::serializeSchema(opcSourceDescriptor->getSchema(), opcSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(opcSourceDescriptor->getSchema(),
+                                                 opcSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
     }
 #endif
     else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         // serialize network source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
         auto networkSourceDescriptor = sourceDescriptor->as<Network::NetworkSourceDescriptor>();
         auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_queryid(networkSourceDescriptor->getNesPartition().getQueryId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_operatorid(networkSourceDescriptor->getNesPartition().getOperatorId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_partitionid(networkSourceDescriptor->getNesPartition().getPartitionId());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(networkSourceDescriptor->getNesPartition().getSubpartitionId());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_queryid(
+            networkSourceDescriptor->getNesPartition().getQueryId());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_operatorid(
+            networkSourceDescriptor->getNesPartition().getOperatorId());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_partitionid(
+            networkSourceDescriptor->getNesPartition().getPartitionId());
+        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(
+            networkSourceDescriptor->getNesPartition().getSubpartitionId());
         // serialize source schema
-        SchemaSerializationUtil::serializeSchema(networkSourceDescriptor->getSchema(), networkSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(networkSourceDescriptor->getSchema(),
+                                                 networkSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(networkSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
         // serialize default source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor");
         auto defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
         defaultSerializedSourceDescriptor.set_frequency(defaultSourceDescriptor->getFrequency());
         defaultSerializedSourceDescriptor.set_numbufferstoprocess(defaultSourceDescriptor->getNumbersOfBufferToProduce());
         // serialize source schema
-        SchemaSerializationUtil::serializeSchema(defaultSourceDescriptor->getSchema(), defaultSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(defaultSourceDescriptor->getSchema(),
+                                                 defaultSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(defaultSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
         // serialize binary source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor");
         auto binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
         auto binarySerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor();
         binarySerializedSourceDescriptor.set_filepath(binarySourceDescriptor->getFilePath());
         // serialize source schema
-        SchemaSerializationUtil::serializeSchema(binarySourceDescriptor->getSchema(), binarySerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(binarySourceDescriptor->getSchema(),
+                                                 binarySerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(binarySerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         // serialize csv source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
         auto csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         csvSerializedSourceDescriptor.set_filepath(csvSourceDescriptor->getFilePath());
         csvSerializedSourceDescriptor.set_frequency(csvSourceDescriptor->getFrequency());
         csvSerializedSourceDescriptor.set_delimiter(csvSourceDescriptor->getDelimiter());
-        csvSerializedSourceDescriptor.set_numberoftuplestoproduceperbuffer(csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer());
+        csvSerializedSourceDescriptor.set_numberoftuplestoproduceperbuffer(
+            csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer());
         csvSerializedSourceDescriptor.set_numbufferstoprocess(csvSourceDescriptor->getNumBuffersToProcess());
         csvSerializedSourceDescriptor.set_endlessrepeat(csvSourceDescriptor->isEndlessRepeat());
         // serialize source schema
-        SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(), csvSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(),
+                                                 csvSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(csvSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
         // serialize sense source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor");
         auto senseSourceDescriptor = sourceDescriptor->as<SenseSourceDescriptor>();
         auto senseSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor();
         senseSerializedSourceDescriptor.set_udfs(senseSourceDescriptor->getUdfs());
         // serialize source schema
-        SchemaSerializationUtil::serializeSchema(senseSourceDescriptor->getSchema(), senseSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(senseSourceDescriptor->getSchema(),
+                                                 senseSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(senseSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
         // serialize logical stream source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor");
         auto logicalStreamSourceDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
-        auto logicalStreamSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
+        auto logicalStreamSerializedSourceDescriptor =
+            SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
         // serialize source schema
-        SchemaSerializationUtil::serializeSchema(logicalStreamSourceDescriptor->getSchema(), logicalStreamSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(logicalStreamSourceDescriptor->getSchema(),
+                                                 logicalStreamSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
@@ -763,7 +853,9 @@ SerializableOperator_SourceDetails* OperatorSerializationUtil::serializeSourceSo
     return sourceDetails;
 }
 
-SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails, OperatorId operatorId) {
+SourceDescriptorPtr
+OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails,
+                                                       OperatorId operatorId) {
     // de-serialize source details and all its properties to a SourceDescriptor
     NES_TRACE("OperatorSerializationUtil:: de-serialized SourceDescriptor id=" << serializedSourceDetails->DebugString());
     const auto& serializedSourceDescriptor = serializedSourceDetails->sourcedescriptor();
@@ -775,7 +867,8 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&zmqSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(zmqSerializedSourceDescriptor.release_sourceschema());
-        return ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port(), operatorId);
+        return ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port(),
+                                           operatorId);
     }
 #ifdef ENABLE_OPC_BUILD
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
@@ -789,7 +882,9 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         memcpy(ident, opcSerializedSourceDescriptor.identifier().data(), opcSerializedSourceDescriptor.identifier().length());
         ident[opcSerializedSourceDescriptor.identifier().length()] = '\0';
         UA_NodeId nodeId = UA_NODEID_STRING(opcSerializedSourceDescriptor.namespaceindex(), ident);
-        return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), nodeId, opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password(), operatorId);
+        return OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), nodeId,
+                                           opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password(),
+                                           operatorId);
     }
 #endif
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
@@ -811,7 +906,8 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&defaultSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(defaultSerializedSourceDescriptor.release_sourceschema());
-        return DefaultSourceDescriptor::create(schema, defaultSerializedSourceDescriptor.numbufferstoprocess(), defaultSerializedSourceDescriptor.frequency(), operatorId);
+        return DefaultSourceDescriptor::create(schema, defaultSerializedSourceDescriptor.numbufferstoprocess(),
+                                               defaultSerializedSourceDescriptor.frequency(), operatorId);
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor>()) {
         // de-serialize binary source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as BinarySourceDescriptor");
@@ -827,10 +923,11 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.release_sourceschema());
-        return CsvSourceDescriptor::create(schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(),
-                                           csvSerializedSourceDescriptor.numberoftuplestoproduceperbuffer(),
-                                           csvSerializedSourceDescriptor.numbufferstoprocess(), csvSerializedSourceDescriptor.frequency(),
-                                           csvSerializedSourceDescriptor.endlessrepeat(), csvSerializedSourceDescriptor.skipheader(), operatorId);
+        return CsvSourceDescriptor::create(
+            schema, csvSerializedSourceDescriptor.filepath(), csvSerializedSourceDescriptor.delimiter(),
+            csvSerializedSourceDescriptor.numberoftuplestoproduceperbuffer(), csvSerializedSourceDescriptor.numbufferstoprocess(),
+            csvSerializedSourceDescriptor.frequency(), csvSerializedSourceDescriptor.endlessrepeat(),
+            csvSerializedSourceDescriptor.skipheader(), operatorId);
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
         // de-serialize sense source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as SenseSourceDescriptor");
@@ -842,11 +939,13 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor>()) {
         // de-serialize logical stream source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as LogicalStreamSourceDescriptor");
-        auto logicalStreamSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
+        auto logicalStreamSerializedSourceDescriptor =
+            SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
-        SourceDescriptorPtr logicalStreamSourceDescriptor = LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname(), operatorId);
+        SourceDescriptorPtr logicalStreamSourceDescriptor =
+            LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname(), operatorId);
         logicalStreamSourceDescriptor->setSchema(schema);
         return logicalStreamSourceDescriptor;
     } else {
@@ -854,17 +953,21 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(Seria
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
 }
-SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor, SerializableOperator_SinkDetails* sinkDetails) {
+SerializableOperator_SinkDetails*
+OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor,
+                                                   SerializableOperator_SinkDetails* sinkDetails) {
     // serialize a sink descriptor and all its properties depending of its type
     NES_DEBUG("OperatorSerializationUtil:: serialized SinkDescriptor ");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         // serialize print sink descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor();
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         // serialize zmq sink descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor");
         auto zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor();
         serializedSinkDescriptor.set_port(zmqSinkDescriptor->getPort());
@@ -875,11 +978,13 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
 #ifdef ENABLE_OPC_BUILD
     else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
         // serialize opc sink descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor");
         auto opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         auto opcSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
         char* ident = (char*) UA_malloc(sizeof(char) * opcSinkDescriptor->getNodeId().identifier.string.length + 1);
-        memcpy(ident, opcSinkDescriptor->getNodeId().identifier.string.data, opcSinkDescriptor->getNodeId().identifier.string.length);
+        memcpy(ident, opcSinkDescriptor->getNodeId().identifier.string.data,
+               opcSinkDescriptor->getNodeId().identifier.string.length);
         ident[opcSinkDescriptor->getNodeId().identifier.string.length] = '\0';
         opcSerializedSinkDescriptor.set_identifier(ident);
         free(ident);
@@ -893,7 +998,8 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
 #endif
     else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
         // serialize zmq sink descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor");
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();
         //set details of NesPartition
@@ -917,7 +1023,8 @@ SerializableOperator_SinkDetails* OperatorSerializationUtil::serializeSinkDescri
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         // serialize file sink descriptor. The file sink has different types which have to be set correctly
-        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as SerializableOperator_SinkDetails_SerializableFileSinkDescriptor");
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableFileSinkDescriptor");
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
 
@@ -957,7 +1064,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as ZmqSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        return ZmqSinkDescriptor::create(serializedSinkDescriptor.host(), serializedSinkDescriptor.port(), serializedSinkDescriptor.isinternal());
+        return ZmqSinkDescriptor::create(serializedSinkDescriptor.host(), serializedSinkDescriptor.port(),
+                                         serializedSinkDescriptor.isinternal());
     }
 #ifdef ENABLE_OPC_BUILD
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor>()) {
@@ -969,7 +1077,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         memcpy(ident, opcSerializedSinkDescriptor.identifier().data(), opcSerializedSinkDescriptor.identifier().length());
         ident[opcSerializedSinkDescriptor.identifier().length()] = '\0';
         UA_NodeId nodeId = UA_NODEID_STRING(opcSerializedSinkDescriptor.namespaceindex(), ident);
-        return OPCSinkDescriptor::create(opcSerializedSinkDescriptor.url(), nodeId, opcSerializedSinkDescriptor.user(), opcSerializedSinkDescriptor.password());
+        return OPCSinkDescriptor::create(opcSerializedSinkDescriptor.url(), nodeId, opcSerializedSinkDescriptor.user(),
+                                         opcSerializedSinkDescriptor.password());
     }
 #endif
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {
@@ -977,28 +1086,30 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as NetworkSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        Network::NesPartition nesPartition{serializedSinkDescriptor.nespartition().queryid(),
-                                           serializedSinkDescriptor.nespartition().operatorid(),
-                                           serializedSinkDescriptor.nespartition().partitionid(),
-                                           serializedSinkDescriptor.nespartition().subpartitionid()};
+        Network::NesPartition nesPartition{
+            serializedSinkDescriptor.nespartition().queryid(), serializedSinkDescriptor.nespartition().operatorid(),
+            serializedSinkDescriptor.nespartition().partitionid(), serializedSinkDescriptor.nespartition().subpartitionid()};
         Network::NodeLocation nodeLocation{serializedSinkDescriptor.nodelocation().nodeid(),
                                            serializedSinkDescriptor.nodelocation().hostname(),
                                            serializedSinkDescriptor.nodelocation().port()};
         auto waitTime = std::chrono::seconds(serializedSinkDescriptor.waittime());
-        return Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, waitTime, serializedSinkDescriptor.retrytimes());
+        return Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, waitTime,
+                                                      serializedSinkDescriptor.retrytimes());
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as FileSinkDescriptor");
-        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), serializedSinkDescriptor.sinkformat(), serializedSinkDescriptor.append() == true ? "APPEND" : "OVERWRITE");
+        return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(), serializedSinkDescriptor.sinkformat(),
+                                          serializedSinkDescriptor.append() == true ? "APPEND" : "OVERWRITE");
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails->DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
 }
 
-SerializableOperator_WatermarkStrategyDetails OperatorSerializationUtil::serializeWatermarkAssignerOperator(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator) {
+SerializableOperator_WatermarkStrategyDetails
+OperatorSerializationUtil::serializeWatermarkAssignerOperator(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize watermark assigner operator ");
 
     auto watermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
@@ -1007,16 +1118,23 @@ SerializableOperator_WatermarkStrategyDetails OperatorSerializationUtil::seriali
     return watermarkStrategyDetails;
 }
 
-SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails) {
+SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
+    SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails) {
     NES_TRACE("OperatorSerializationUtil:: serialize watermark strategy ");
 
-    if (auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
-        auto serializedWatermarkStrategyDescriptor = SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
-        ExpressionSerializationUtil::serializeExpression(eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode(), serializedWatermarkStrategyDescriptor.mutable_onfield());
+    if (auto eventTimeWatermarkStrategyDescriptor =
+            std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
+        auto serializedWatermarkStrategyDescriptor =
+            SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
+        ExpressionSerializationUtil::serializeExpression(eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode(),
+                                                         serializedWatermarkStrategyDescriptor.mutable_onfield());
         serializedWatermarkStrategyDescriptor.set_delay(eventTimeWatermarkStrategyDescriptor->getDelay().getTime());
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
-    } else if (auto processingTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::ProcessingTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
-        auto serializedWatermarkStrategyDescriptor = SerializableOperator_WatermarkStrategyDetails_SerializableProcessingTimeWatermarkStrategyDescriptor();
+    } else if (auto processingTimeWatermarkStrategyDescriptor =
+                   std::dynamic_pointer_cast<Windowing::ProcessingTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
+        auto serializedWatermarkStrategyDescriptor =
+            SerializableOperator_WatermarkStrategyDetails_SerializableProcessingTimeWatermarkStrategyDescriptor();
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Watermark Strategy Descriptor Type");
@@ -1024,21 +1142,27 @@ SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serial
     }
     return watermarkStrategyDetails;
 }
-Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserializeWatermarkStrategyDescriptor(SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails) {
+Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserializeWatermarkStrategyDescriptor(
+    SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails) {
     NES_TRACE("OperatorSerializationUtil:: de-serialize watermark strategy ");
     const auto& deserializedWatermarkStrategyDescriptor = watermarkStrategyDetails->strategy();
-    if (deserializedWatermarkStrategyDescriptor.Is<SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor>()) {
+    if (deserializedWatermarkStrategyDescriptor
+            .Is<SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor>()) {
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized WatermarkStrategy as EventTimeWatermarkStrategyDescriptor");
-        auto serializedEventTimeWatermarkStrategyDescriptor = SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
+        auto serializedEventTimeWatermarkStrategyDescriptor =
+            SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
         deserializedWatermarkStrategyDescriptor.UnpackTo(&serializedEventTimeWatermarkStrategyDescriptor);
 
-        auto onField = ExpressionSerializationUtil::deserializeExpression(serializedEventTimeWatermarkStrategyDescriptor.mutable_onfield())
-                           ->as<FieldAccessExpressionNode>();
+        auto onField =
+            ExpressionSerializationUtil::deserializeExpression(serializedEventTimeWatermarkStrategyDescriptor.mutable_onfield())
+                ->as<FieldAccessExpressionNode>();
         NES_DEBUG("OperatorSerializationUtil:: deserialized field name " << onField->getFieldName());
-        auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute(onField->getFieldName()), Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.delay()));
+        auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            Attribute(onField->getFieldName()), Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.delay()));
         return eventTimeWatermarkStrategyDescriptor;
-    } else if (deserializedWatermarkStrategyDescriptor.Is<SerializableOperator_WatermarkStrategyDetails_SerializableProcessingTimeWatermarkStrategyDescriptor>()) {
+    } else if (deserializedWatermarkStrategyDescriptor
+                   .Is<SerializableOperator_WatermarkStrategyDetails_SerializableProcessingTimeWatermarkStrategyDescriptor>()) {
         return Windowing::ProcessingTimeWatermarkStrategyDescriptor::create();
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Serialized Watermark Strategy Descriptor Type");

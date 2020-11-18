@@ -23,13 +23,9 @@
 
 namespace NES {
 
-std::string FileSink::toString() {
-    return "FILE_SINK";
-}
+std::string FileSink::toString() { return "FILE_SINK"; }
 
-SinkMediumTypes FileSink::getSinkMediumType() {
-    return FILE_SINK;
-}
+SinkMediumTypes FileSink::getSinkMediumType() { return FILE_SINK; }
 
 FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append, QuerySubPlanId parentPlanId)
     : SinkMedium(std::move(format), parentPlanId) {
@@ -59,17 +55,15 @@ const std::string FileSink::toString() const {
     return ss.str();
 }
 
-void FileSink::setup() {
-}
+void FileSink::setup() {}
 
-void FileSink::shutdown() {
-}
+void FileSink::shutdown() {}
 
 bool FileSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     std::unique_lock lock(writeMutex);
 
-    NES_DEBUG("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString()
-                                            << " and mode " << this->getAppendAsString());
+    NES_DEBUG("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString() << " and mode "
+                                            << this->getAppendAsString());
 
     if (!inputBuffer.isValid()) {
         NES_ERROR("FileSink::writeData input buffer invalid");
@@ -84,7 +78,8 @@ bool FileSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
                 size_t idx = filePath.rfind(".");
                 std::string shrinkedPath = filePath.substr(0, idx + 1);
                 std::string schemaFile = shrinkedPath + "schema";
-                NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString() << " to file=" << schemaFile);
+                NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString()
+                                                             << " to file=" << schemaFile);
                 outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
             } else {
                 outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
@@ -108,7 +103,8 @@ bool FileSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     for (auto buffer : dataBuffers) {
         NES_DEBUG("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
         if (sinkFormat->getSinkFormat() == NES_FORMAT) {
-            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+            outputFile.write((char*) buffer.getBuffer(),
+                             buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         } else {
             outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
         }
@@ -118,8 +114,6 @@ bool FileSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     return true;
 }
 
-const std::string FileSink::getFilePath() const {
-    return filePath;
-}
+const std::string FileSink::getFilePath() const { return filePath; }
 
 }// namespace NES

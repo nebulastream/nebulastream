@@ -76,7 +76,8 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
                     operatorIdToOperatorMap[childOperatorId] = childOperator;
                 }
                 operatorNode->addChild(childOperator);
-                NES_TRACE("QueryPlanSerializationUtil: Adding the children operators to the Queue in order to Deserializing its children operators");
+                NES_TRACE("QueryPlanSerializationUtil: Adding the children operators to the Queue in order to Deserializing its "
+                          "children operators");
                 operatorsToDeserialize.push_back(childToDeserialize);
             }
         }

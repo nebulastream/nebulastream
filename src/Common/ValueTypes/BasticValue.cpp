@@ -20,17 +20,11 @@ namespace NES {
 
 BasicValue::BasicValue(DataTypePtr type, std::string value) : ValueType(type), value(value) {}
 
-bool BasicValue::isBasicValue() {
-    return true;
-}
+bool BasicValue::isBasicValue() { return true; }
 
-std::string BasicValue::toString() {
-    return "BasicValue";
-}
+std::string BasicValue::toString() { return "BasicValue"; }
 
-std::string BasicValue::getValue() {
-    return value;
-}
+std::string BasicValue::getValue() { return value; }
 
 bool BasicValue::isEquals(ValueTypePtr valueType) {
     if (!valueType->isBasicValue())

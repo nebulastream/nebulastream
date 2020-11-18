@@ -100,7 +100,8 @@ class OperatorSerializationUtil {
      * @param operatorId: id of the operator to be deserialized
      * @return WindowOperatorNodePtr
      */
-    static WindowOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* windowDetails, OperatorId operatorId);
+    static WindowOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* windowDetails,
+                                                           OperatorId operatorId);
 
     /**
      * @brief De-serializes the SerializableOperator_JoinDetails and all its properties back to a join operatorNodePtr
@@ -108,7 +109,8 @@ class OperatorSerializationUtil {
      * @param operatorId: id of the operator to be deserialized
      * @return JoinLogicalOperatorNode
      */
-    static JoinLogicalOperatorNodePtr deserializeJoinOperator(SerializableOperator_JoinDetails* joinDetails, OperatorId operatorId);
+    static JoinLogicalOperatorNodePtr deserializeJoinOperator(SerializableOperator_JoinDetails* joinDetails,
+                                                              OperatorId operatorId);
 
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.
@@ -116,14 +118,16 @@ class OperatorSerializationUtil {
      * @param sourceDetails The source details object.
      * @return the serialized SerializableOperator_SourceDetails.
      */
-    static SerializableOperator_SourceDetails* serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor, SerializableOperator_SourceDetails* sourceDetails);
+    static SerializableOperator_SourceDetails* serializeSourceSourceDescriptor(SourceDescriptorPtr sourceDescriptor,
+                                                                               SerializableOperator_SourceDetails* sourceDetails);
 
     /**
      * @brief De-serializes the SerializableOperator_SourceDetails and all its properties back to a sink SourceDescriptorPtr.
      * @param sourceDetails The serialized source operator details.
      * @return SourceDescriptorPtr
      */
-    static SourceDescriptorPtr deserializeSourceDescriptor(SerializableOperator_SourceDetails* sourceDetails, OperatorId operatorId);
+    static SourceDescriptorPtr deserializeSourceDescriptor(SerializableOperator_SourceDetails* sourceDetails,
+                                                           OperatorId operatorId);
 
     /**
      * @brief Serializes an sink descriptor and all its properties to a SerializableOperator_SinkDetails object.
@@ -131,7 +135,8 @@ class OperatorSerializationUtil {
      * @param sinkDetails The sink details object.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_SinkDetails* serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor, SerializableOperator_SinkDetails* sinkDetails);
+    static SerializableOperator_SinkDetails* serializeSinkDescriptor(SinkDescriptorPtr sinkDescriptor,
+                                                                     SerializableOperator_SinkDetails* sinkDetails);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink SinkDescriptorPtr.
@@ -145,7 +150,8 @@ class OperatorSerializationUtil {
      * @param watermark assigner logical operator node
      * @return serialized watermark operator
      */
-    static SerializableOperator_WatermarkStrategyDetails serializeWatermarkAssignerOperator(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator);
+    static SerializableOperator_WatermarkStrategyDetails
+    serializeWatermarkAssignerOperator(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator);
 
     /*
      * @brief Serializes a watermark strategy descriptor
@@ -153,14 +159,17 @@ class OperatorSerializationUtil {
      * @param watermarkDetails The watermark strategy details object
      * @return  the serialized watermark strategy
      */
-    static SerializableOperator_WatermarkStrategyDetails* serializeWatermarkStrategyDescriptor(Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails);
+    static SerializableOperator_WatermarkStrategyDetails*
+    serializeWatermarkStrategyDescriptor(Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
+                                         SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails);
 
     /*
      * @brief de-serialize to WatermarkStrategyDescriptor
      * @param watermarkStrategyDetails details of serializable watermarkstrategy
      * @return WatermarkStrategyDescriptor
      */
-    static Windowing::WatermarkStrategyDescriptorPtr deserializeWatermarkStrategyDescriptor(SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails);
+    static Windowing::WatermarkStrategyDescriptorPtr
+    deserializeWatermarkStrategyDescriptor(SerializableOperator_WatermarkStrategyDetails* watermarkStrategyDetails);
 };
 
 }// namespace NES

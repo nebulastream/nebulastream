@@ -29,7 +29,5 @@ const CodeExpressionPtr UserDefinedDataType::getCode() const {
 
 UserDefinedDataType::~UserDefinedDataType() {}
 
-CodeExpressionPtr UserDefinedDataType::getDeclarationCode(std::string) {
-    return getCode();
-}
+CodeExpressionPtr UserDefinedDataType::getDeclarationCode(std::string) { return getCode(); }
 }// namespace NES

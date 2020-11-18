@@ -43,9 +43,7 @@ class RESTEndpointTest : public testing::Test {
         restPort = restPort + 2;
     }
 
-    static void TearDownTestCase() {
-        NES_INFO("Tear down RESTEndpointTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 
     std::string ipAddress = "127.0.0.1";
 };
@@ -58,7 +56,8 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
@@ -85,26 +84,31 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     string getExecutionPlanRequestBody = getExecutionPlanStringStream.str();
     web::json::value getExecutionPlanJsonReturn;
 
-    web::http::client::http_client getExecutionPlanClient(
-        "http://127.0.0.1:8083/v1/nes/query/execution-plan");
-    getExecutionPlanClient.request(web::http::methods::GET, _XPLATSTR("/"), getExecutionPlanRequestBody).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
+    web::http::client::http_client getExecutionPlanClient("http://127.0.0.1:8083/v1/nes/query/execution-plan");
+    getExecutionPlanClient.request(web::http::methods::GET, _XPLATSTR("/"), getExecutionPlanRequestBody)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
         })
         .then([&getExecutionPlanJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("get execution-plan: set return");
-              getExecutionPlanJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("get execution-plan: error while setting return");
-              NES_ERROR("get execution-plan: error " << e.what());
-          }
+            try {
+                NES_INFO("get execution-plan: set return");
+                getExecutionPlanJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("get execution-plan: error while setting return");
+                NES_ERROR("get execution-plan: error " << e.what());
+            }
         })
         .wait();
 
     NES_INFO("get execution-plan: try to acc return");
     NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.serialize());
-    auto expected = "{\"executionNodes\":[{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(5)\\n  SOURCE(1)\\n\",\"querySubPlanId\":1}]}],\"executionNodeId\":2,\"topologyNodeId\":2,\"topologyNodeIpAddress\":\"127.0.0.1\"},{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(3)\\n  SOURCE(4)\\n\",\"querySubPlanId\":2}]}],\"executionNodeId\":1,\"topologyNodeId\":1,\"topologyNodeIpAddress\":\"127.0.0.1\"}]}";
+    auto expected =
+        "{\"executionNodes\":[{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(5)\\n  "
+        "SOURCE(1)\\n\",\"querySubPlanId\":1}]}],\"executionNodeId\":2,\"topologyNodeId\":2,\"topologyNodeIpAddress\":\"127.0.0."
+        "1\"},{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(3)\\n  "
+        "SOURCE(4)\\n\",\"querySubPlanId\":2}]}],\"executionNodeId\":1,\"topologyNodeId\":1,\"topologyNodeIpAddress\":\"127.0.0."
+        "1\"}]}";
     NES_DEBUG("getExecutionPlan response: expected = " << expected);
     ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);
 

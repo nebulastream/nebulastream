@@ -17,28 +17,19 @@
 #ifndef NES_TESTS_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_
 #define NES_TESTS_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_
 
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <API/Schema.hpp>
-namespace NES{
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+namespace NES {
 
-class SchemaSourceDescriptor: public SourceDescriptor{
+class SchemaSourceDescriptor : public SourceDescriptor {
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema){
-        return std::make_shared<SchemaSourceDescriptor>(schema);
-    }
-    explicit SchemaSourceDescriptor(SchemaPtr schema): SourceDescriptor(schema, 1){
-
-    }
-    std::string toString() override {
-        return "Schema Source Descriptor";
-    }
-    bool equal(SourceDescriptorPtr other) override {
-        return other->getSchema()->equals(this->getSchema());
-    }
+    static SourceDescriptorPtr create(SchemaPtr schema) { return std::make_shared<SchemaSourceDescriptor>(schema); }
+    explicit SchemaSourceDescriptor(SchemaPtr schema) : SourceDescriptor(schema, 1) {}
+    std::string toString() override { return "Schema Source Descriptor"; }
+    bool equal(SourceDescriptorPtr other) override { return other->getSchema()->equals(this->getSchema()); }
     ~SchemaSourceDescriptor() override = default;
 };
 
-
-}
+}// namespace NES
 
 #endif//NES_TESTS_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_

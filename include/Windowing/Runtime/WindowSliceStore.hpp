@@ -28,10 +28,9 @@ namespace NES::Windowing {
 template<class PartialAggregateType>
 class WindowSliceStore {
   public:
-    WindowSliceStore(PartialAggregateType value) : defaultValue(value),
-                                                   sliceMetaData(std::vector<SliceMetaData>()),
-                                                   partialAggregates(std::vector<PartialAggregateType>()) {
-    }
+    WindowSliceStore(PartialAggregateType value)
+        : defaultValue(value), sliceMetaData(std::vector<SliceMetaData>()),
+          partialAggregates(std::vector<PartialAggregateType>()) {}
 
     /**
     * @brief Get the corresponding slide index for a particular timestamp ts.
@@ -64,76 +63,63 @@ class WindowSliceStore {
     /**
      * @return most current slice'index.
      */
-    inline uint64_t getCurrentSliceIndex() {
-        return sliceMetaData.size() - 1;
-    }
+    inline uint64_t getCurrentSliceIndex() { return sliceMetaData.size() - 1; }
 
     /**
      * @brief Remove slices between index 0 and pos.
      * @param pos the position till we want to remove slices.
      */
     inline void removeSlicesUntil(uint64_t pos) {
-        sliceMetaData.erase(sliceMetaData.begin(), sliceMetaData.size() > pos ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
-        partialAggregates.erase(partialAggregates.begin(), partialAggregates.size() > pos ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
-        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size() << " aggs=" << partialAggregates.size());
+        sliceMetaData.erase(sliceMetaData.begin(),
+                            sliceMetaData.size() > pos ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
+        partialAggregates.erase(partialAggregates.begin(),
+                                partialAggregates.size() > pos ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
+        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
+                                                                                  << " aggs=" << partialAggregates.size());
     }
 
     /**
      * @brief Checks if the slice store is empty.
      * @return true if empty.
      */
-    inline uint64_t empty() {
-        return sliceMetaData.empty();
-    }
+    inline uint64_t empty() { return sliceMetaData.empty(); }
 
     /**
      * @brief Gets the slice meta data.
      * @return vector of slice meta data.
      */
-    inline std::vector<SliceMetaData>& getSliceMetadata() {
-        return sliceMetaData;
-    }
+    inline std::vector<SliceMetaData>& getSliceMetadata() { return sliceMetaData; }
 
     /**
      * @brief Gets partial aggregates.
      * @return vector of partial aggregates.
      */
-    inline std::vector<PartialAggregateType>& getPartialAggregates() {
-        return partialAggregates;
-    }
+    inline std::vector<PartialAggregateType>& getPartialAggregates() { return partialAggregates; }
 
     /**
      * @brief Gets the last processed watermark
      * @return watermark
      */
-    [[nodiscard]] uint64_t getLastWatermark() const {
-        return lastWatermark;
-    }
+    [[nodiscard]] uint64_t getLastWatermark() const { return lastWatermark; }
 
     /**
      * @brief Sets the last watermark
      * @param lastWatermark
      */
-    void setLastWatermark(uint64_t lastWatermark) {
-        this->lastWatermark = lastWatermark;
-    }
+    void setLastWatermark(uint64_t lastWatermark) { this->lastWatermark = lastWatermark; }
 
     /**
      * @brief Gets the maximal processed ts per origin id.
      * @param originId
      * @return max ts.
      */
-    uint32_t getMaxTs(uint32_t originId) {
-        return originIdToMaxTsMap[originId];
-    };
+    uint32_t getMaxTs(uint32_t originId) { return originIdToMaxTsMap[originId]; };
 
     /**
      * @brief Gets number of mappings.
      * @return size of origin map.
      */
-    uint64_t getNumberOfMappings() {
-        return originIdToMaxTsMap.size();
-    };
+    uint64_t getNumberOfMappings() { return originIdToMaxTsMap.size(); };
 
     std::string getAllMaxTs() {
         std::stringstream ss;
@@ -152,9 +138,11 @@ class WindowSliceStore {
             NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet");
             return 0;//TODO: we have to figure out how many downstream positions are there
         }
-        std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-            return a.second < b.second;
-        });
+        std::map<uint64_t, uint64_t>::iterator min =
+            std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(),
+                             [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
+                                 return a.second < b.second;
+                             });
         NES_DEBUG("getMinWatermark() return min =" << min->second);
         return min->second;
     };

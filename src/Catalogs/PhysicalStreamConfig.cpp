@@ -19,78 +19,48 @@
 #include <sstream>
 namespace NES {
 
-PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std::string sourceConfig, uint32_t sourceFrequency, uint32_t numberOfTuplesToProducePerBuffer,
-                                                     uint32_t numberOfBuffersToProduce, std::string physicalStreamName, std::string logicalStreamName,
+PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std::string sourceConfig, uint32_t sourceFrequency,
+                                                     uint32_t numberOfTuplesToProducePerBuffer, uint32_t numberOfBuffersToProduce,
+                                                     std::string physicalStreamName, std::string logicalStreamName,
                                                      bool endlessRepeat, bool skipHeader) {
-    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                                                                       numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endlessRepeat, skipHeader));
+    return std::make_shared<PhysicalStreamConfig>(
+        PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
+                             numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endlessRepeat, skipHeader));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
-                                           std::string sourceConfig,
-                                           size_t sourceFrequency,
-                                           size_t numberOfTuplesToProducePerBuffer,
-                                           size_t numberOfBuffersToProduce,
-                                           std::string physicalStreamName,
-                                           std::string logicalStreamName,
-                                           bool endlessRepeat,
+PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, size_t sourceFrequency,
+                                           size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
+                                           std::string physicalStreamName, std::string logicalStreamName, bool endlessRepeat,
                                            bool skipHeader)
-    : sourceType(sourceType),
-      sourceConfig(sourceConfig),
-      sourceFrequency(sourceFrequency),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      numberOfBuffersToProduce(numberOfBuffersToProduce),
-      physicalStreamName(physicalStreamName),
-      logicalStreamName(logicalStreamName),
-      endlessRepeat(endlessRepeat),
+    : sourceType(sourceType), sourceConfig(sourceConfig), sourceFrequency(sourceFrequency),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProduce(numberOfBuffersToProduce),
+      physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), endlessRepeat(endlessRepeat),
       skipHeader(skipHeader){};
 
 std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;
-    ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig
-       << " sourceFrequency=" << sourceFrequency << " numberOfTuplesToProducePerBuffer="
-       << numberOfTuplesToProducePerBuffer << " numberOfBuffersToProduce="
-       << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
-       << " logicalStreamName=" << logicalStreamName
-       << " endlessRepeat=" << endlessRepeat;
+    ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig << " sourceFrequency=" << sourceFrequency
+       << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
+       << " numberOfBuffersToProduce=" << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
+       << " logicalStreamName=" << logicalStreamName << " endlessRepeat=" << endlessRepeat;
     return ss.str();
 }
 
-const std::string& PhysicalStreamConfig::getSourceType() const {
-    return sourceType;
-}
+const std::string& PhysicalStreamConfig::getSourceType() const { return sourceType; }
 
-const std::string& PhysicalStreamConfig::getSourceConfig() const {
-    return sourceConfig;
-}
+const std::string& PhysicalStreamConfig::getSourceConfig() const { return sourceConfig; }
 
-uint32_t PhysicalStreamConfig::getSourceFrequency() const {
-    return sourceFrequency;
-}
+uint32_t PhysicalStreamConfig::getSourceFrequency() const { return sourceFrequency; }
 
-uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const {
-    return numberOfTuplesToProducePerBuffer;
-}
+uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
-uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const {
-    return numberOfBuffersToProduce;
-}
+uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
-const std::string PhysicalStreamConfig::getPhysicalStreamName() const {
-    return physicalStreamName;
-}
+const std::string PhysicalStreamConfig::getPhysicalStreamName() const { return physicalStreamName; }
 
-const std::string PhysicalStreamConfig::getLogicalStreamName() const {
-    return logicalStreamName;
-}
-bool PhysicalStreamConfig::isEndlessRepeat() const {
-    return endlessRepeat;
-}
-void PhysicalStreamConfig::setEndlessRepeat(bool endlessRepeat) {
-    this->endlessRepeat = endlessRepeat;
-}
+const std::string PhysicalStreamConfig::getLogicalStreamName() const { return logicalStreamName; }
+bool PhysicalStreamConfig::isEndlessRepeat() const { return endlessRepeat; }
+void PhysicalStreamConfig::setEndlessRepeat(bool endlessRepeat) { this->endlessRepeat = endlessRepeat; }
 
-bool PhysicalStreamConfig::getSkipHeader() const {
-    return skipHeader;
-}
+bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
 }// namespace NES

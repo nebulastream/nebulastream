@@ -27,8 +27,6 @@ CodeGenerator::CodeGenerator() = default;
 
 CodeGenerator::~CodeGenerator() = default;
 
-CompilerTypesFactoryPtr CodeGenerator::getTypeFactory() {
-    return std::make_shared<CompilerTypesFactory>();
-}
+CompilerTypesFactoryPtr CodeGenerator::getTypeFactory() { return std::make_shared<CompilerTypesFactory>(); }
 
 }// namespace NES

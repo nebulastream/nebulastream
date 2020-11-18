@@ -28,8 +28,8 @@
 namespace NES {
 namespace Network {
 
-ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads,
-                     ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager)
+ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol,
+                     BufferManagerPtr bufferManager)
     : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
       exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
     NES_DEBUG("ZmqServer: Creating ZmqServer()");
@@ -176,7 +176,8 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     // react after announcement is received
                     auto returnMessage = exchangeProtocol.onClientAnnouncement(receivedMsg);
                     if (returnMessage.isOk() || returnMessage.isPartitionNotFound()) {
-                        sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket, outIdentityEnvelope, returnMessage);
+                        sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket, outIdentityEnvelope,
+                                                                              returnMessage);
                         break;
                     }
                     auto errMess = Messages::ErrorMessage(receivedMsg.getChannelId(), returnMessage.getErrorType());

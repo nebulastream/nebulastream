@@ -26,9 +26,7 @@ BreadthFirstNodeIterator::iterator BreadthFirstNodeIterator::begin() { return it
 
 BreadthFirstNodeIterator::iterator BreadthFirstNodeIterator::end() { return iterator(); }
 
-BreadthFirstNodeIterator::iterator::iterator(NodePtr current) {
-    workQueue.push(current);
-}
+BreadthFirstNodeIterator::iterator::iterator(NodePtr current) { workQueue.push(current); }
 
 BreadthFirstNodeIterator::iterator::iterator() = default;
 

@@ -38,10 +38,13 @@
 
 namespace NES {
 
-BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr, TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
-    : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog), pinnedOperatorLocationMap(), operatorToExecutionNodeMap() {}
+BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr,
+                                             TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
+    : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase),
+      streamCatalog(streamCatalog), pinnedOperatorLocationMap(), operatorToExecutionNodeMap() {}
 
-void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
+void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
+                                                             std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
 
     NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
     NES_TRACE("BasePlacementStrategy: Clear the previous pinned operator mapping");
@@ -61,8 +64,10 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, st
         NES_TRACE("BasePlacementStrategy: Get all topology nodes for the logical source stream");
         const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
         if (sourceNodes.empty()) {
-            NES_ERROR("BasePlacementStrategy: No source found in the topology for stream " << streamName << " for query with id : " << queryId);
-            throw QueryPlacementException("BasePlacementStrategy: No source found in the topology for stream " + streamName + " for query with id : " + std::to_string(queryId));
+            NES_ERROR("BasePlacementStrategy: No source found in the topology for stream " << streamName
+                                                                                           << " for query with id : " << queryId);
+            throw QueryPlacementException("BasePlacementStrategy: No source found in the topology for stream " + streamName
+                                          + " for query with id : " + std::to_string(queryId));
         }
         mapOfSourceToTopologyNodes[streamName] = sourceNodes;
         NES_TRACE("BasePlacementStrategy: Find the topology sub graph for the source nodes.");
@@ -90,7 +95,8 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, st
 
     if (rootNodes.empty()) {
         NES_ERROR("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
-        throw QueryPlacementException("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
+        throw QueryPlacementException(
+            "BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
     }
 
     TopologyNodePtr rootNode = rootNodes[0]->as<TopologyNode>();
@@ -100,19 +106,24 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, st
         pinnedOperatorLocationMap[sinkOperator->getId()] = rootNode;
     }
 
-    NES_DEBUG("BasePlacementStrategy: Update the source to topology node map using the source nodes from the merged topology graph");
+    NES_DEBUG(
+        "BasePlacementStrategy: Update the source to topology node map using the source nodes from the merged topology graph");
     for (auto& entry : mapOfSourceToTopologyNodes) {
-        NES_TRACE("BasePlacementStrategy: Taking nodes from the merged sub graphs and replacing the initial source topology nodes.");
+        NES_TRACE(
+            "BasePlacementStrategy: Taking nodes from the merged sub graphs and replacing the initial source topology nodes.");
         std::vector<TopologyNodePtr> sourceNodes;
         for (auto sourceNode : entry.second) {
-            auto found = std::find_if(mergedGraphSourceNodes.begin(), mergedGraphSourceNodes.end(), [&](const TopologyNodePtr& sourceNodeToUse) {
-                return sourceNode->getId() == sourceNodeToUse->getId();
-            });
+            auto found = std::find_if(mergedGraphSourceNodes.begin(), mergedGraphSourceNodes.end(),
+                                      [&](const TopologyNodePtr& sourceNodeToUse) {
+                                          return sourceNode->getId() == sourceNodeToUse->getId();
+                                      });
             if (found == mergedGraphSourceNodes.end()) {
                 NES_ERROR("BasePlacementStrategy: unable to locate the initial source node in the merged sub graph.");
-                throw QueryPlacementException("BasePlacementStrategy: unable to locate the initial source node in the merged sub graph.");
+                throw QueryPlacementException(
+                    "BasePlacementStrategy: unable to locate the initial source node in the merged sub graph.");
             }
-            NES_TRACE("BasePlacementStrategy: Inserting the source node from the merged graph into the new source node location.");
+            NES_TRACE(
+                "BasePlacementStrategy: Inserting the source node from the merged graph into the new source node location.");
             sourceNodes.push_back(*found);
         }
         NES_TRACE("BasePlacementStrategy: Updating the source to topology node map.");
@@ -126,13 +137,15 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId, st
         std::vector<TopologyNodePtr> topologyNodes = mapOfSourceToTopologyNodes[logicalSourceName];
         if (topologyNodes.empty()) {
             NES_ERROR("BasePlacementStrategy: unable to find topology nodes for logical source " << logicalSourceName);
-            throw QueryPlacementException("BasePlacementStrategy: unable to find topology nodes for logical source " + logicalSourceName);
+            throw QueryPlacementException("BasePlacementStrategy: unable to find topology nodes for logical source "
+                                          + logicalSourceName);
         }
 
         TopologyNodePtr candidateTopologyNode = topologyNodes[0];
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
-            throw QueryPlacementException("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
+            throw QueryPlacementException(
+                "BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
         }
         pinnedOperatorLocationMap[sourceNode->getId()] = candidateTopologyNode;
         topologyNodes.erase(topologyNodes.begin());
@@ -166,24 +179,29 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNodeForPinnedOperator(uint64_t
     TopologyNodePtr candidateTopologyNode = pinnedOperatorLocationMap[operatorId];
     if (candidateTopologyNode->getAvailableResources() == 0) {
         NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
-        throw QueryPlacementException("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
+        throw QueryPlacementException(
+            "BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
     }
     return candidateTopologyNode;
 }
 
-OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode) {
+OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId,
+                                                                 const TopologyNodePtr& sourceTopologyNode) {
 
     NES_DEBUG("BasePlacementStrategy: create Network Sink operator");
-    Network::NodeLocation nodeLocation(sourceTopologyNode->getId(), sourceTopologyNode->getIpAddress(), sourceTopologyNode->getDataPort());
+    Network::NodeLocation nodeLocation(sourceTopologyNode->getId(), sourceTopologyNode->getIpAddress(),
+                                       sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
-    OperatorNodePtr networkSink = LogicalOperatorFactory::createSinkOperator(Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
+    OperatorNodePtr networkSink = LogicalOperatorFactory::createSinkOperator(
+        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
     return networkSink;
 }
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId, SchemaPtr inputSchema, uint64_t operatorId) {
     NES_DEBUG("BasePlacementStrategy: create Network Source operator");
     const Network::NesPartition nesPartition = Network::NesPartition(queryId, operatorId, 0, 0);
-    OperatorNodePtr networkSource = LogicalOperatorFactory::createSourceOperator(Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition), operatorId);
+    OperatorNodePtr networkSource = LogicalOperatorFactory::createSourceOperator(
+        Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition), operatorId);
     return networkSource;
 }
 
@@ -225,12 +243,14 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
         if (executionNode->getId() != parentExecutionNode->getId()) {
             NES_TRACE("BasePlacementStrategy: Parent and its child operator are placed on different physical node.");
 
-            NES_TRACE("BasePlacementStrategy: Find the nodes between the topology node (inclusive) for child and parent operators.");
+            NES_TRACE(
+                "BasePlacementStrategy: Find the nodes between the topology node (inclusive) for child and parent operators.");
             TopologyNodePtr sourceNode = executionNode->getTopologyNode();
             TopologyNodePtr destinationNode = parentExecutionNode->getTopologyNode();
             std::vector<TopologyNodePtr> nodesBetween = topology->findTopologyNodesBetween(sourceNode, destinationNode);
 
-            NES_TRACE("BasePlacementStrategy: For all the nodes between the topology node for child and parent operators add respective source or sink operator.");
+            NES_TRACE("BasePlacementStrategy: For all the nodes between the topology node for child and parent operators add "
+                      "respective source or sink operator.");
             const SchemaPtr& inputSchema = operatorNode->getOutputSchema();
             uint64_t sourceOperatorId = UtilityFunctions::getNextOperatorId();
             for (int i = 0; i < nodesBetween.size(); i++) {
@@ -242,8 +262,10 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                     for (auto& querySubPlan : querySubPlans) {
                         OperatorNodePtr targetUpStreamOperator = querySubPlan->getOperatorWithId(operatorNode->getId());
                         if (targetUpStreamOperator) {
-                            NES_TRACE("BasePlacementStrategy: Add network sink operator as root of the query plan with child operator.");
-                            OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
+                            NES_TRACE("BasePlacementStrategy: Add network sink operator as root of the query plan with child "
+                                      "operator.");
+                            OperatorNodePtr networkSink =
+                                createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
                             targetUpStreamOperator->addParent(networkSink);
                             querySubPlan->removeAsRootOperator(targetUpStreamOperator);
                             querySubPlan->addRootOperator(networkSink);
@@ -253,7 +275,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                     }
                     if (!found) {
                         NES_ERROR("BasePlacementStrategy: unable to place network sink operator for the child operator");
-                        throw QueryPlacementException("BasePlacementStrategy: unable to place network sink operator for the child operator");
+                        throw QueryPlacementException(
+                            "BasePlacementStrategy: unable to place network sink operator for the child operator");
                     }
                     continue;
                 }
@@ -274,7 +297,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                     }
                     if (!found) {
                         NES_WARNING("BasePlacementStrategy: unable to place network source operator for the parent operator");
-                        throw QueryPlacementException("BasePlacementStrategy: unable to place network source operator for the parent operator");
+                        throw QueryPlacementException(
+                            "BasePlacementStrategy: unable to place network source operator for the parent operator");
                     }
                     continue;
                 }
@@ -282,7 +306,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                 NES_TRACE("BasePlacementStrategy: Find the execution node for the topology node.");
                 ExecutionNodePtr candidateExecutionNode = getExecutionNode(nodesBetween[i]);
 
-                NES_TRACE("BasePlacementStrategy: Create a new query plan and add pair of network source and network sink operators.");
+                NES_TRACE(
+                    "BasePlacementStrategy: Create a new query plan and add pair of network source and network sink operators.");
                 QueryPlanPtr querySubPlan = QueryPlan::create();
                 querySubPlan->setQueryId(queryId);
                 querySubPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
@@ -309,7 +334,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
     }
 }
 
-void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNode) {// check if the topology of the execution node is a root node
+void BasePlacementStrategy::addExecutionNodeAsRoot(
+    ExecutionNodePtr& executionNode) {// check if the topology of the execution node is a root node
     NES_TRACE("BasePlacementStrategy: Adding new execution node with id: " << executionNode->getTopologyNode()->getId());
     // Check if the candidateTopologyNode is a root node of the topology
     if (executionNode->getTopologyNode()->getParents().empty()) {

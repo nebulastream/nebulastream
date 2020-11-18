@@ -22,12 +22,9 @@ BaseJoinActionDescriptorPtr LazyNestLoopJoinTriggerActionDescriptor::create() {
     return std::make_shared<LazyNestLoopJoinTriggerActionDescriptor>(LazyNestLoopJoinTriggerActionDescriptor());
 }
 
-JoinActionType LazyNestLoopJoinTriggerActionDescriptor::getActionType() {
-    return this->action;
-}
+JoinActionType LazyNestLoopJoinTriggerActionDescriptor::getActionType() { return this->action; }
 
 LazyNestLoopJoinTriggerActionDescriptor::LazyNestLoopJoinTriggerActionDescriptor()
-    : BaseJoinActionDescriptor(LazyNestedLoopJoin) {
-}
+    : BaseJoinActionDescriptor(LazyNestedLoopJoin) {}
 
 }// namespace NES::Join

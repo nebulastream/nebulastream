@@ -46,7 +46,8 @@ const DataSinkPtr createTestSink();
  * @return a data sink pointer
  */
 
-const DataSinkPtr createCSVFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& filePath, bool append);
+const DataSinkPtr createCSVFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                    const std::string& filePath, bool append);
 
 /**
  * @brief create a binary test sink with a schema
@@ -90,8 +91,8 @@ const DataSinkPtr createJSONFileSink(SchemaPtr schema, QuerySubPlanId parentPlan
  * @param internal refers to the usage of this zmq sink as a fwd operator such that we dont have to send the schema, only the data
  * @return a data sink pointer
  */
-const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& host,
-                                    const uint16_t port);
+const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                    const std::string& host, const uint16_t port);
 #ifdef ENABLE_OPC_BUILD
 /**
  * @brief create a OPC test sink with a schema
@@ -103,7 +104,8 @@ const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanI
  * @param password as string to log in to the OPC server
  * @return a data sink pointer
  */
-const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::string url, UA_NodeId nodeId, std::string user, std::string password);
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::string url,
+                                UA_NodeId nodeId, std::string user, std::string password);
 #endif
 /**
  * @brief create a ZMQ test sink with a schema and CSV format output
@@ -113,8 +115,8 @@ const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, N
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& host,
-                                   const uint16_t port);
+const DataSinkPtr createCSVZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                   const std::string& host, const uint16_t port);
 
 /**
  * @brief create a ZMQ test sink with a schema and NES_FORMAT format output
@@ -124,8 +126,8 @@ const DataSinkPtr createCSVZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& host,
-                                      const uint16_t port, bool internal);
+const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                      const std::string& host, const uint16_t port, bool internal);
 
 /**
  * @brief create a print test sink with a schema

@@ -19,12 +19,9 @@
 
 namespace NES::Windowing {
 
-ProcessingTimeWatermarkStrategy::ProcessingTimeWatermarkStrategy() {
-}
+ProcessingTimeWatermarkStrategy::ProcessingTimeWatermarkStrategy() {}
 ProcessingTimeWatermarkStrategyPtr ProcessingTimeWatermarkStrategy::create() {
     return std::make_shared<ProcessingTimeWatermarkStrategy>();
 }
-WatermarkStrategy::Type ProcessingTimeWatermarkStrategy::getType() {
-    return WatermarkStrategy::ProcessingTimeWatermark;
-}
+WatermarkStrategy::Type ProcessingTimeWatermarkStrategy::getType() { return WatermarkStrategy::ProcessingTimeWatermark; }
 }//namespace NES::Windowing

@@ -25,13 +25,11 @@
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
-    : nodeEngine(nodeEngine) {
+WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine) : nodeEngine(nodeEngine) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
-Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request,
-                                      RegisterQueryReply* reply) {
+Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId());
     bool success;
@@ -52,8 +50,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     }
 }
 
-Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryRequest* request,
-                                        UnregisterQueryReply* reply) {
+Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for " << request->queryid());
     bool success = nodeEngine->unregisterQuery(request->queryid());
     if (success) {
@@ -67,8 +64,7 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryReq
     }
 }
 
-Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* request,
-                                   StartQueryReply* reply) {
+Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* request, StartQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for " << request->queryid());
     bool success = nodeEngine->startQuery(request->queryid());
     if (success) {
@@ -82,8 +78,7 @@ Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* requ
     }
 }
 
-Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* request,
-                                  StopQueryReply* reply) {
+Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* request, StopQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StopQuery: got request for " << request->queryid());
     bool success = nodeEngine->stopQuery(request->queryid());
     if (success) {

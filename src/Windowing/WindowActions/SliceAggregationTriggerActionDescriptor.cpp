@@ -22,12 +22,9 @@ WindowActionDescriptorPtr SliceAggregationTriggerActionDescriptor::create() {
     return std::make_shared<SliceAggregationTriggerActionDescriptor>(SliceAggregationTriggerActionDescriptor());
 }
 
-ActionType SliceAggregationTriggerActionDescriptor::getActionType() {
-    return this->action;
-}
+ActionType SliceAggregationTriggerActionDescriptor::getActionType() { return this->action; }
 
 SliceAggregationTriggerActionDescriptor::SliceAggregationTriggerActionDescriptor()
-    : BaseWindowActionDescriptor(SliceAggregationTriggerAction) {
-}
+    : BaseWindowActionDescriptor(SliceAggregationTriggerAction) {}
 
 }// namespace NES::Windowing

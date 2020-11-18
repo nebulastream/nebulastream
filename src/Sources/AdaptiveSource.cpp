@@ -25,15 +25,14 @@
 
 namespace NES {
 
-AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t initialGatheringInterval, OperatorId operatorId)
+AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                               size_t initialGatheringInterval, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval);
     this->gatheringInterval = initialGatheringInterval;
 }
 
-SourceType AdaptiveSource::getType() const {
-    return ADAPTIVE_SOURCE;
-}
+SourceType AdaptiveSource::getType() const { return ADAPTIVE_SOURCE; }
 
 std::optional<TupleBuffer> AdaptiveSource::receiveData() {
     NES_DEBUG("AdaptiveSource::receiveData called");
@@ -74,8 +73,7 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
                 auto optBuf = this->receiveData();
                 if (!!optBuf) {
                     auto& buf = optBuf.value();
-                    NES_DEBUG("AdaptiveSource " << this->operatorId
-                                                << " string=" << this->toString()
+                    NES_DEBUG("AdaptiveSource " << this->operatorId << " string=" << this->toString()
                                                 << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                 << " iteration=" << cnt);
 

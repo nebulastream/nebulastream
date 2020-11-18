@@ -20,13 +20,9 @@
 
 namespace NES {
 
-CompoundStatement::CompoundStatement()
-    : statements() {
-}
+CompoundStatement::CompoundStatement() : statements() {}
 
-const StatementPtr CompoundStatement::createCopy() const {
-    return std::make_shared<CompoundStatement>(*this);
-}
+const StatementPtr CompoundStatement::createCopy() const { return std::make_shared<CompoundStatement>(*this); }
 
 StatementType CompoundStatement::getStamentType() const { return StatementType::COMPOUND_STMT; }
 
@@ -43,7 +39,6 @@ void CompoundStatement::addStatement(StatementPtr stmt) {
         statements.push_back(stmt);
 }
 
-CompoundStatement::~CompoundStatement() {
-}
+CompoundStatement::~CompoundStatement() {}
 
 }// namespace NES

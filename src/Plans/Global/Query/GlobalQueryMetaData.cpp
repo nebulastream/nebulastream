@@ -24,9 +24,11 @@
 namespace NES {
 
 GlobalQueryMetaData::GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes)
-    : globalQueryId(PlanIdGenerator::getNextGlobalQueryId()), queryIds(std::move(queryIds)), sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)), deployed(false), newMetaData(true) {}
+    : globalQueryId(PlanIdGenerator::getNextGlobalQueryId()), queryIds(std::move(queryIds)),
+      sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)), deployed(false), newMetaData(true) {}
 
-GlobalQueryMetaDataPtr GlobalQueryMetaData::create(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
+GlobalQueryMetaDataPtr GlobalQueryMetaData::create(std::set<QueryId> queryIds,
+                                                   std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
     return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(std::move(queryIds), std::move(sinkGlobalQueryNodes)));
 }
 
@@ -43,7 +45,8 @@ void GlobalQueryMetaData::addNewSinkGlobalQueryNodes(const std::set<GlobalQueryN
 }
 
 bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
-    NES_DEBUG("GlobalQueryMetaData: Remove the Query Id " << queryId << " and associated Global Query Nodes with sink operators.");
+    NES_DEBUG("GlobalQueryMetaData: Remove the Query Id " << queryId
+                                                          << " and associated Global Query Nodes with sink operators.");
     auto found = std::find(queryIds.begin(), queryIds.end(), queryId);
     if (found == queryIds.end()) {
         NES_WARNING("GlobalQueryMetaData: Unable to find query Id " << queryId << " in Global Query Metadata " << globalQueryId);
@@ -163,13 +166,9 @@ std::set<GlobalQueryNodePtr> GlobalQueryMetaData::getSinkGlobalQueryNodes() {
     return sinkGlobalQueryNodes;
 }
 
-std::set<QueryId> GlobalQueryMetaData::getQueryIds() {
-    return queryIds;
-}
+std::set<QueryId> GlobalQueryMetaData::getQueryIds() { return queryIds; }
 
-GlobalQueryId GlobalQueryMetaData::getGlobalQueryId() const {
-    return globalQueryId;
-}
+GlobalQueryId GlobalQueryMetaData::getGlobalQueryId() const { return globalQueryId; }
 
 void GlobalQueryMetaData::clear() {
     NES_DEBUG("GlobalQueryMetaData: clearing all metadata information.");

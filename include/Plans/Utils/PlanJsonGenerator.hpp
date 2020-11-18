@@ -51,7 +51,8 @@ class PlanJsonGenerator {
      * @param id of the query
      * @return
      */
-    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan, QueryId queryId = INVALID_QUERY_ID);
+    static web::json::value getExecutionPlanAsJson(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                   QueryId queryId = INVALID_QUERY_ID);
 
   private:
     /**

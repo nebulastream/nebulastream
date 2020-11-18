@@ -14,16 +14,16 @@
     limitations under the License.
 */
 
-#include <map>
-#include <vector>
-#include <cstdlib>
-#include <iostream>
-#include <thread>
-#include <gtest/gtest.h>
-#include <NodeEngine/BufferManager.hpp>
 #include <API/Schema.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <cstdlib>
+#include <gtest/gtest.h>
+#include <iostream>
+#include <map>
+#include <thread>
+#include <vector>
 
 //#define DEBUG_OUTPUT
 
@@ -36,69 +36,63 @@ class MemoryLayoutTest : public testing::Test {
         NES::setupLogging("MemoryLayoutTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MemoryLayout test class.");
         bufferManager = std::make_shared<BufferManager>(4096, 10);
-
     }
-    static void TearDownTestCase() {
-        std::cout << "Tear down MemoryLayout test class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down MemoryLayout test class." << std::endl; }
 };
 
 TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
-    SchemaPtr schema = Schema::create()
-        ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT8)
-        ->addField("t3", BasicType::UINT8);
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
     auto buf = bufferManager->getBufferBlocking();
     auto layout = createRowLayout(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/0)->write(buf, recordIndex);
-        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/1)->write(buf, recordIndex);
-        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/2)->write(buf, recordIndex);
+        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 0)->write(buf, recordIndex);
+        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 1)->write(buf, recordIndex);
+        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 2)->write(buf, recordIndex);
     }
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        auto value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/0)->read(buf);
+        auto value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 0)->read(buf);
         ASSERT_EQ(value, recordIndex);
 
-        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/1)->read(buf);
+        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 1)->read(buf);
         ASSERT_EQ(value, recordIndex);
 
-        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/2)->read(buf);
+        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 2)->read(buf);
         ASSERT_EQ(value, recordIndex);
     }
 }
 
 TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
     SchemaPtr schema = Schema::create()
-        ->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()))
-        ->addField("t2", BasicType::UINT8)
-        ->addField("t3", BasicType::UINT8);
+                           ->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()))
+                           ->addField("t2", BasicType::UINT8)
+                           ->addField("t3", BasicType::UINT8);
 
     TupleBuffer buf = bufferManager->getBufferBlocking();
     auto layout = createRowLayout(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        auto arrayField = layout->getArrayField(recordIndex,  /*fieldIndex*/0);
+        auto arrayField = layout->getArrayField(recordIndex, /*fieldIndex*/ 0);
         arrayField[0]->asValueField<int64_t>()->write(buf, 10);
         layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 1)->write(buf, recordIndex);
         layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 2)->write(buf, recordIndex);
     }
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        auto arrayField = layout->getArrayField(recordIndex, /*fieldIndex*/0);
+        auto arrayField = layout->getArrayField(recordIndex, /*fieldIndex*/ 0);
         auto value = arrayField[0]->asValueField<int64_t>()->read(buf);
         ASSERT_EQ(value, 10);
 
-        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/1)->read(buf);
+        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 1)->read(buf);
         ASSERT_EQ(value, recordIndex);
 
-        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/2)->read(buf);
+        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 2)->read(buf);
         ASSERT_EQ(value, recordIndex);
     }
 }
 
 TEST_F(MemoryLayoutTest, rowLayoutTestArrayAsPointerField) {
-    SchemaPtr schema = Schema::create()
-        ->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
+    SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
 
     TupleBuffer buf = bufferManager->getBufferBlocking();
     auto layout = createRowLayout(schema);
@@ -110,11 +104,11 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArrayAsPointerField) {
     }
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        auto array = layout->getFieldPointer<int64_t>(buf, recordIndex, /*fieldIndex*/0);
+        auto array = layout->getFieldPointer<int64_t>(buf, recordIndex, /*fieldIndex*/ 0);
         for (uint64_t arrayIndex = 0; arrayIndex < 10; arrayIndex++) {
             ASSERT_EQ(array[arrayIndex], arrayIndex);
         }
     }
 }
 
-}
+}// namespace NES

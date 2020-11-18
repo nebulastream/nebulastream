@@ -48,14 +48,10 @@ class LogicalSourceExpansionRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
-    }
+    void TearDown() { NES_INFO("Setup LogicalSourceExpansionRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down LogicalSourceExpansionRuleTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down LogicalSourceExpansionRuleTest test class."); }
 };
 
 void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
@@ -63,10 +59,11 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                                                      /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                                                      /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                                                      /**Logical Stream Name**/ "test_stream");
+    PhysicalStreamConfigPtr streamConf =
+        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+                                     /**Logical Stream Name**/ "test_stream");
 
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
@@ -81,8 +78,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     const std::string logicalStreamName = "default_logical";
-    Query query = Query::from(logicalStreamName)
-                      .sink(printSinkDescriptor);
+    Query query = Query::from(logicalStreamName).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
@@ -103,7 +99,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const std::string logicalStreamName = "default_logical";
 
     // Prepare
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName,1));
+    auto sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName, 1));
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
@@ -113,7 +110,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     sinkOperator1->addChild(sourceOperator);
     sinkOperator2->addChild(sourceOperator);
 
-    QueryPlanPtr queryPlan =  QueryPlan::create();
+    QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -137,7 +134,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const std::string logicalStreamName = "default_logical";
 
     // Prepare
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName,1));
+    auto sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName, 1));
 
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
     filterOperator->addChild(sourceOperator);
@@ -150,7 +148,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     sinkOperator1->addChild(filterOperator);
     sinkOperator2->addChild(filterOperator);
 
-    QueryPlanPtr queryPlan =  QueryPlan::create();
+    QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -175,10 +173,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     const std::string logicalStreamName = "default_logical";
-    Query query = Query::from(logicalStreamName)
-                      .map(Attribute("value") = 40)
-                      .filter(Attribute("id") < 45)
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from(logicalStreamName).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
@@ -200,8 +196,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     const std::string logicalStreamName = "default_logical";
-    Query subQuery = Query::from(logicalStreamName)
-                         .map(Attribute("value") = 50);
+    Query subQuery = Query::from(logicalStreamName).map(Attribute("value") = 50);
 
     Query query = Query::from(logicalStreamName)
                       .map(Attribute("value") = 40)

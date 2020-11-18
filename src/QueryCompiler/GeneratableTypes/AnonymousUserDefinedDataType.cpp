@@ -33,8 +33,6 @@ CodeExpressionPtr AnonymousUserDefinedDataType::getDeclarationCode(std::string i
 }
 
 AnonymousUserDefinedDataType::~AnonymousUserDefinedDataType() {}
-const CodeExpressionPtr AnonymousUserDefinedDataType::getCode() const {
-    return std::make_shared<CodeExpression>(name);
-}
+const CodeExpressionPtr AnonymousUserDefinedDataType::getCode() const { return std::make_shared<CodeExpression>(name); }
 
 }// namespace NES

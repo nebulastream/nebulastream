@@ -43,30 +43,21 @@ namespace NES {
 class OPCSinkTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES_DEBUG("OPCSINKTEST::SetUpTestCase()");
-    }
+    static void SetUpTestCase() { NES_DEBUG("OPCSINKTEST::SetUpTestCase()"); }
 
     void SetUp() {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         NES::setupLogging("OPCSinkTest.log", NES::LOG_DEBUG);
-        test_schema =
-            Schema::create()
-                ->addField("var", UINT32);
+        test_schema = Schema::create()->addField("var", UINT32);
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() {
-        NES_DEBUG("OPCSINKTEST::TearDown() Tear down OPCSourceTest");
-    }
+    void TearDown() { NES_DEBUG("OPCSINKTEST::TearDown() Tear down OPCSourceTest"); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_DEBUG("OPCSINKTEST::TearDownTestCases() Tear down OPCSourceTest test class.");
-    }
+    static void TearDownTestCase() { NES_DEBUG("OPCSINKTEST::TearDownTestCases() Tear down OPCSourceTest test class."); }
 
-    static void
-    addVariable(UA_Server* server) {
+    static void addVariable(UA_Server* server) {
         /* Define the attribute of the myInteger variable node */
         UA_VariableAttributes attr = UA_VariableAttributes_default;
         UA_Int32 myInteger = 42;
@@ -81,13 +72,11 @@ class OPCSinkTest : public testing::Test {
         UA_QualifiedName myIntegerName = UA_QUALIFIEDNAME(1, "the answer");
         UA_NodeId parentNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
         UA_NodeId parentReferenceNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES);
-        UA_Server_addVariableNode(server, myIntegerNodeId, parentNodeId,
-                                  parentReferenceNodeId, myIntegerName,
+        UA_Server_addVariableNode(server, myIntegerNodeId, parentNodeId, parentReferenceNodeId, myIntegerName,
                                   UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE), attr, NULL, NULL);
     }
 
-    static void
-    writeVariable(UA_Server* server) {
+    static void writeVariable(UA_Server* server) {
         UA_NodeId myIntegerNodeId = UA_NODEID_STRING(1, "the.answer");
 
         /* Write a different integer value */
@@ -171,7 +160,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
 
     std::promise<bool> p;
     std::thread t1([&p]() {
-      startServer(p);
+        startServer(p);
     });
     t1.detach();
 
@@ -183,13 +172,15 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     write_buffer.getBuffer<uint32_t>()[0] = 45;
     write_buffer.setNumberOfTuples(1);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
-    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: " << UtilityFunctions::prettyPrintTupleBuffer(write_buffer, test_schema));
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: "
+              << UtilityFunctions::prettyPrintTupleBuffer(write_buffer, test_schema));
     opcSink->writeData(write_buffer, wctx);
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();
     nodeEngine->stop();
     auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31337, conf);
-    auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId, user, password, 1);
+    auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId,
+                                     user, password, 1);
     auto tuple_buffer = opcSource->receiveData();
     stopServer();
     size_t value = 0;
@@ -197,7 +188,8 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) Received value is: " << *(uint32_t*) tuple_buffer->getBuffer());
     value = *tuple;
     size_t expected = 45;
-    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) expected value is: " << expected << ". Received value is: " << value);
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) expected value is: " << expected
+                                                                                   << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
 }
 }// namespace NES

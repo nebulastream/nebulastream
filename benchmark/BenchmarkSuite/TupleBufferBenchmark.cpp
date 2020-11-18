@@ -32,17 +32,28 @@ namespace NES::Benchmarking {
 #define benchmarkSchemaI32 (Schema::create()->addField("key", BasicType::INT32)->addField("value", BasicType::INT32))
 #define benchmarkSchemaI64 (Schema::create()->addField("key", BasicType::INT64)->addField("value", BasicType::INT64))
 
-struct TupleI8  { int8_t key; int8_t value; };
-struct TupleI16 { int16_t key; int16_t value; };
-struct TupleI32 { int32_t key; int32_t value; };
-struct TupleI64 { int64_t key; int64_t value; };
-
+struct TupleI8 {
+    int8_t key;
+    int8_t value;
+};
+struct TupleI16 {
+    int16_t key;
+    int16_t value;
+};
+struct TupleI32 {
+    int32_t key;
+    int32_t value;
+};
+struct TupleI64 {
+    int64_t key;
+    int64_t value;
+};
 
 /**
  * @brief In this version, the rowLayout will be created for every tuple insertion
   * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64
  */
-static void BM_DefaultFilling_V1(benchmark::State& state){
+static void BM_DefaultFilling_V1(benchmark::State& state) {
     SchemaPtr benchmarkSchema;
     switch (state.range(0)) {
         case 0: benchmarkSchema = benchmarkSchemaI8; break;
@@ -56,10 +67,10 @@ static void BM_DefaultFilling_V1(benchmark::State& state){
     auto bufferManager = nodeEngine->getBufferManager();
     auto buffer = bufferManager->getBufferBlocking();
 
-    uint64_t maxTuplesPerBuffer = bufferManager->getBufferSize()/benchmarkSchema->getSchemaSizeInBytes();
+    uint64_t maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
 
-    switch (state.range(0)){
-        case 0:{
+    switch (state.range(0)) {
+        case 0: {
             for (auto singleState : state) {
                 for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     createRowLayout(benchmarkSchema)->getValueField<int8_t>(i, 0)->write(buffer, 42);
@@ -68,7 +79,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state){
             }
             break;
         }
-        case 1:{
+        case 1: {
             for (auto singleState : state) {
                 for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     createRowLayout(benchmarkSchema)->getValueField<int16_t>(i, 0)->write(buffer, 42);
@@ -77,7 +88,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state){
             }
             break;
         }
-        case 2:{
+        case 2: {
             for (auto singleState : state) {
                 for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 0)->write(buffer, 42);
@@ -86,7 +97,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state){
             }
             break;
         }
-        default:{
+        default: {
             for (auto singleState : state) {
                 for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     createRowLayout(benchmarkSchema)->getValueField<int64_t>(i, 0)->write(buffer, 42);
@@ -104,7 +115,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state){
  * @brief In this version, the rowLayout will be created once and then used
   * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64
  */
-static void BM_DefaultFilling_V2(benchmark::State& state){
+static void BM_DefaultFilling_V2(benchmark::State& state) {
     SchemaPtr benchmarkSchema;
     switch (state.range(0)) {
         case 0: benchmarkSchema = benchmarkSchemaI8; break;
@@ -118,9 +129,9 @@ static void BM_DefaultFilling_V2(benchmark::State& state){
     auto bufferManager = nodeEngine->getBufferManager();
     auto buffer = bufferManager->getBufferBlocking();
 
-    uint64_t maxTuplesPerBuffer = bufferManager->getBufferSize()/benchmarkSchema->getSchemaSizeInBytes();
-    switch (state.range(0)){
-        case 0:{
+    uint64_t maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
+    switch (state.range(0)) {
+        case 0: {
             for (auto singleState : state) {
                 auto rowLayout = createRowLayout(benchmarkSchema);
                 for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
@@ -130,7 +141,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state){
             }
             break;
         }
-        case 1:{
+        case 1: {
             for (auto singleState : state) {
                 auto rowLayout = createRowLayout(benchmarkSchema);
                 for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
@@ -140,7 +151,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state){
             }
             break;
         }
-        case 2:{
+        case 2: {
             for (auto singleState : state) {
                 auto rowLayout = createRowLayout(benchmarkSchema);
                 for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
@@ -150,7 +161,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state){
             }
             break;
         }
-        default:{
+        default: {
             for (auto singleState : state) {
                 auto rowLayout = createRowLayout(benchmarkSchema);
                 for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
@@ -169,7 +180,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state){
  *
   * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64
  */
-static void BM_CustomFilling(benchmark::State& state){
+static void BM_CustomFilling(benchmark::State& state) {
 
     SchemaPtr benchmarkSchema;
     switch (state.range(0)) {
@@ -184,9 +195,9 @@ static void BM_CustomFilling(benchmark::State& state){
     auto bufferManager = nodeEngine->getBufferManager();
     auto buffer = bufferManager->getBufferBlocking();
 
-    uint64_t maxTuplesPerBuffer = bufferManager->getBufferSize()/benchmarkSchema->getSchemaSizeInBytes();
-    switch (state.range(0)){
-        case 0:{
+    uint64_t maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
+    switch (state.range(0)) {
+        case 0: {
             for (auto singleState : state) {
                 auto tupleIt = buffer.getBuffer<TupleI8>();
                 for (size_t i = 0; i < maxTuplesPerBuffer; i++) {
@@ -197,7 +208,7 @@ static void BM_CustomFilling(benchmark::State& state){
             break;
         }
 
-        case 1:{
+        case 1: {
             for (auto singleState : state) {
                 auto tupleIt = buffer.getBuffer<TupleI16>();
                 for (size_t i = 0; i < maxTuplesPerBuffer; i++) {
@@ -208,7 +219,7 @@ static void BM_CustomFilling(benchmark::State& state){
             break;
         }
 
-        case 2:{
+        case 2: {
             for (auto singleState : state) {
                 auto tupleIt = buffer.getBuffer<TupleI32>();
                 for (size_t i = 0; i < maxTuplesPerBuffer; i++) {
@@ -231,14 +242,12 @@ static void BM_CustomFilling(benchmark::State& state){
         }
     }
 
-
     state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
 }
 
-BENCHMARK(BM_DefaultFilling_V1) ->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_DefaultFilling_V2) ->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_CustomFilling)     ->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-
+BENCHMARK(BM_DefaultFilling_V1)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_DefaultFilling_V2)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_CustomFilling)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 int main(int argc, char** argv) {
     NES::setupLogging("TupleBufferBenchmark.log", LOG_WARNING);
@@ -248,4 +257,4 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-}
+}// namespace NES::Benchmarking

@@ -30,7 +30,8 @@
 
 namespace NES {
 
-DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor, NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) {
+DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor,
+                                                         NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) {
     NES_ASSERT(nodeEngine, "Invalid node engine");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
@@ -39,36 +40,38 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
-        return createBinaryZmqSink(schema, querySubPlanId, nodeEngine, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort(), zmqSinkDescriptor->isInternal());
+        return createBinaryZmqSink(schema, querySubPlanId, nodeEngine, zmqSinkDescriptor->getHost(), zmqSinkDescriptor->getPort(),
+                                   zmqSinkDescriptor->isInternal());
     }
 #ifdef ENABLE_KAFKA_BUILD
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
         return createKafkaSinkWithSchema(schema, querySubPlanId, kafkaSinkDescriptor->getBrokers(),
-                                         kafkaSinkDescriptor->getTopic(),
-                                         kafkaSinkDescriptor->getTimeout());
+                                         kafkaSinkDescriptor->getTopic(), kafkaSinkDescriptor->getTimeout());
     }
 #endif
 #ifdef ENABLE_OPC_BUILD
     else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
-        return createOPCSink(schema, querySubPlanId, nodeEngine, opcSinkDescriptor->getUrl(),
-                             opcSinkDescriptor->getNodeId(),
-                             opcSinkDescriptor->getUser(),
-                             opcSinkDescriptor->getPassword());
+        return createOPCSink(schema, querySubPlanId, nodeEngine, opcSinkDescriptor->getUrl(), opcSinkDescriptor->getNodeId(),
+                             opcSinkDescriptor->getUser(), opcSinkDescriptor->getPassword());
     }
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormatAsString());
+        NES_INFO(
+            "ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
-            return createCSVFileSink(schema, querySubPlanId, nodeEngine, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getAppend());
+            return createCSVFileSink(schema, querySubPlanId, nodeEngine, fileSinkDescriptor->getFileName(),
+                                     fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
-            return createBinaryNESFileSink(schema, querySubPlanId, nodeEngine, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getAppend());
+            return createBinaryNESFileSink(schema, querySubPlanId, nodeEngine, fileSinkDescriptor->getFileName(),
+                                           fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
-            return createTextFileSink(schema, querySubPlanId, nodeEngine, fileSinkDescriptor->getFileName(), fileSinkDescriptor->getAppend());
+            return createTextFileSink(schema, querySubPlanId, nodeEngine, fileSinkDescriptor->getFileName(),
+                                      fileSinkDescriptor->getAppend());
         } else {
             NES_ERROR("createDataSink: unsupported format");
             throw std::invalid_argument("Unknown File format");

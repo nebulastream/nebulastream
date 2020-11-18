@@ -21,14 +21,9 @@
 #include <cmath>
 namespace NES {
 
-Float::Float(int8_t bits, double lowerBound, double upperBound) : Numeric(bits),
-                                                                  lowerBound(lowerBound),
-                                                                  upperBound(upperBound) {
-}
+Float::Float(int8_t bits, double lowerBound, double upperBound) : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
 
-bool Float::isFloat() {
-    return true;
-}
+bool Float::isFloat() { return true; }
 
 bool Float::isEquals(DataTypePtr otherDataType) {
     if (otherDataType->isFloat()) {
@@ -37,12 +32,8 @@ bool Float::isEquals(DataTypePtr otherDataType) {
     }
     return false;
 }
-double Float::getLowerBound() const {
-    return lowerBound;
-}
-double Float::getUpperBound() const {
-    return upperBound;
-}
+double Float::getLowerBound() const { return lowerBound; }
+double Float::getUpperBound() const { return upperBound; }
 DataTypePtr Float::join(DataTypePtr otherDataType) {
     if (otherDataType->isFloat()) {
         auto otherFloat = as<Float>(otherDataType);
@@ -60,8 +51,6 @@ DataTypePtr Float::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
 
-std::string Float::toString() {
-    return "(Float)";
-}
+std::string Float::toString() { return "(Float)"; }
 
 }// namespace NES

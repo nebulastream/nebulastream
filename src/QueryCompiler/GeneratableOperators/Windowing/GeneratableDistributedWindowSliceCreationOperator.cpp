@@ -33,15 +33,17 @@ void GeneratableSlicingWindowOperator::consume(CodeGeneratorPtr codegen, Pipelin
     context->setWindow(windowHandler);
     codegen->generateCodeForSlicingWindow(getWindowDefinition(), generatableWindowAggregation, context);
 }
-GeneratableDistributedlWindowSliceCreationOperatorPtr GeneratableSlicingWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                                                                               GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                                                               OperatorId id) {
-    return std::make_shared<GeneratableSlicingWindowOperator>(GeneratableSlicingWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
+GeneratableDistributedlWindowSliceCreationOperatorPtr
+GeneratableSlicingWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                         GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
+    return std::make_shared<GeneratableSlicingWindowOperator>(
+        GeneratableSlicingWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
 }
 
-GeneratableSlicingWindowOperator::GeneratableSlicingWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
-    : GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {
-}
+GeneratableSlicingWindowOperator::GeneratableSlicingWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                                                   GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                                                   OperatorId id)
+    : GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {}
 
 const std::string GeneratableSlicingWindowOperator::toString() const {
     std::stringstream ss;

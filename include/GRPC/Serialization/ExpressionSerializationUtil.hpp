@@ -38,7 +38,8 @@ class ExpressionSerializationUtil {
     * @param serializedExpression The corresponding protobuff object, which is used to capture the state of the object.
     * @return the modified serializedExpression
     */
-    static SerializableExpression* serializeExpression(ExpressionNodePtr expressionNode, SerializableExpression* serializedExpression);
+    static SerializableExpression* serializeExpression(ExpressionNodePtr expressionNode,
+                                                       SerializableExpression* serializedExpression);
 
     /**
      * @brief De-serializes the SerializableExpression and all its children to a corresponding ExpressionNodePtr

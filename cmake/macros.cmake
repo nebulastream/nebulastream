@@ -44,15 +44,15 @@ endmacro()
 find_program(CLANG_FORMAT_EXE clang-format)
 
 macro(project_enable_clang_format)
-    set(HEADER_FILES)
-    set(SOURCE_FILES)
-    get_header_nes(HEADER_FILES)
-    get_source_nes(SOURCE_FILES)
-    set(ALL_SOURCE_FILES ${SOURCE_FILES} ${HEADER_FILES})
-    #message(${ALL_SOURCE_FILES})
+    string(CONCAT FORMAT_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/benchmark,"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src,"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests,"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if (NOT ${CLANG_FORMAT_EXE} STREQUAL "CLANG_FORMAT_EXE-NOTFOUND")
         message("-- clang-format found, whole source formatting enabled through 'format' target.")
-        add_custom_target(format COMMAND clang-format -style=file -i ${ALL_SOURCE_FILES})
+        add_custom_target(format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py clang-format ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} --fix USES_TERMINAL)
+        add_custom_target(format-check COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py clang-format ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} USES_TERMINAL)
     else ()
         message(FATAL_ERROR "clang-format is not installed.")
     endif ()

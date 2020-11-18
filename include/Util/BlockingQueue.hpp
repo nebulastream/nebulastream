@@ -37,12 +37,9 @@ class BlockingQueue {
     std::condition_variable notEmpty;
 
   public:
-    BlockingQueue()
-        : capacity(0){};
+    BlockingQueue() : capacity(0){};
 
-    inline BlockingQueue(size_t capacity)
-        : capacity(capacity) {
-    }
+    inline BlockingQueue(size_t capacity) : capacity(capacity) {}
 
     inline void setCapacity(size_t capacity) {
         std::unique_lock<std::mutex> lock(queueMutex);

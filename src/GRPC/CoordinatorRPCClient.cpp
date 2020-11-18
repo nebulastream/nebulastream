@@ -23,8 +23,7 @@
 
 namespace NES {
 
-CoordinatorRPCClient::CoordinatorRPCClient(std::string address)
-    : address(address) {
+CoordinatorRPCClient::CoordinatorRPCClient(std::string address) : address(address) {
     NES_DEBUG("CoordinatorRPCClient(): creating channels to address =" << address);
     rpcChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
@@ -37,9 +36,7 @@ CoordinatorRPCClient::CoordinatorRPCClient(std::string address)
     workerId = SIZE_MAX;
 }
 
-CoordinatorRPCClient::~CoordinatorRPCClient() {
-    NES_DEBUG("~CoordinatorRPCClient()");
-}
+CoordinatorRPCClient::~CoordinatorRPCClient() { NES_DEBUG("~CoordinatorRPCClient()"); }
 
 bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfigPtr conf) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf->toString() << " workerID=" << workerId);
@@ -64,29 +61,25 @@ bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfigPtr conf) 
         NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream error="
-                  << status.error_code() << ": "
-                  << status.error_message());
+        NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream error=" << status.error_code() << ": "
+                                                                         << status.error_message());
         return reply.success();
     }
 }
 
-bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
-                                                 std::string filePath) {
+bool CoordinatorRPCClient::registerLogicalStream(std::string streamName, std::string filePath) {
     NES_DEBUG("CoordinatorRPCClient: registerLogicalStream " << streamName << " with path" << filePath);
 
     // Check if file can be found on system and read.
     boost::filesystem::path path{filePath.c_str()};
-    if (!boost::filesystem::exists(path)
-        || !boost::filesystem::is_regular_file(path)) {
+    if (!boost::filesystem::exists(path) || !boost::filesystem::is_regular_file(path)) {
         NES_ERROR("CoordinatorRPCClient: file does not exits");
         throw Exception("files does not exist");
     }
 
     /* Read file from file system. */
     std::ifstream ifs(path.string().c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                            (std::istreambuf_iterator<char>()));
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     RegisterLogicalStreamRequest request;
     request.set_id(workerId);
@@ -103,18 +96,13 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName,
         NES_DEBUG("CoordinatorRPCClient::registerLogicalStream: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream error="
-                  << status.error_code() << ": "
-                  << status.error_message());
+        NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream error=" << status.error_code() << ": " << status.error_message());
         return reply.success();
     }
 }
 
-bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamName,
-                                                    std::string physicalStreamName) {
-    NES_DEBUG(
-        "CoordinatorRPCClient: unregisterPhysicalStream physical stream"
-        << physicalStreamName << " from logical stream ");
+bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamName, std::string physicalStreamName) {
+    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalStreamName << " from logical stream ");
 
     UnregisterPhysicalStreamRequest request;
     request.set_id(workerId);
@@ -131,9 +119,8 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
         NES_DEBUG("CoordinatorRPCClient::unregisterPhysicalStream: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream error="
-                  << status.error_code() << ": "
-                  << status.error_message());
+        NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream error=" << status.error_code() << ": "
+                                                                           << status.error_message());
         return reply.success();
     }
 }
@@ -155,9 +142,8 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
         NES_DEBUG("CoordinatorRPCClient::unregisterLogicalStream: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream error="
-                  << status.error_code() << ": "
-                  << status.error_message());
+        NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream error=" << status.error_code() << ": "
+                                                                          << status.error_message());
         return reply.success();
     }
 }
@@ -179,16 +165,12 @@ bool CoordinatorRPCClient::addParent(size_t parentId) {
         NES_DEBUG("CoordinatorRPCClient::addParent: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::addParent error="
-                  << status.error_code() << ": "
-                  << status.error_message());
+        NES_DEBUG(" CoordinatorRPCClient::addParent error=" << status.error_code() << ": " << status.error_message());
         return reply.success();
     }
 }
 
-size_t CoordinatorRPCClient::getId() {
-    return workerId;
-}
+size_t CoordinatorRPCClient::getId() { return workerId; }
 
 bool CoordinatorRPCClient::removeParent(size_t parentId) {
     NES_DEBUG("CoordinatorRPCClient: removeParent parentId" << parentId << " workerId=" << workerId);
@@ -207,9 +189,7 @@ bool CoordinatorRPCClient::removeParent(size_t parentId) {
         NES_DEBUG("CoordinatorRPCClient::removeParent: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::removeParent error="
-                  << status.error_code() << ": "
-                  << status.error_message());
+        NES_DEBUG(" CoordinatorRPCClient::removeParent error=" << status.error_code() << ": " << status.error_message());
         return reply.success();
     }
 }
@@ -230,9 +210,7 @@ bool CoordinatorRPCClient::unregisterNode() {
         NES_DEBUG("CoordinatorRPCClient::unregisterNode: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" CoordinatorRPCClient::unregisterNode error="
-                  << status.error_code() << ": "
-                  << status.error_message());
+        NES_DEBUG(" CoordinatorRPCClient::unregisterNode error=" << status.error_code() << ": " << status.error_message());
         return reply.success();
     }
 }
@@ -267,9 +245,7 @@ bool CoordinatorRPCClient::registerNode(std::string ipAddress, int64_t grpcPort,
         this->workerId = reply.id();
         return true;
     } else {
-        NES_ERROR(" CoordinatorRPCClient::registerNode error="
-                  << status.error_code() << ": "
-                  << status.error_message());
+        NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
         return false;
     }
 }

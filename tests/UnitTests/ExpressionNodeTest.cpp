@@ -14,34 +14,29 @@
     limitations under the License.
 */
 
+#include <API/Query.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <API/Query.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES {
 
 class ExpressionNodeTest : public testing::Test {
   public:
-    void SetUp() {
+    void SetUp() {}
 
-    }
-
-    void TearDown() {
-        NES_DEBUG("Tear down ExpressionNodeTest Test.");
-    }
+    void TearDown() { NES_DEBUG("Tear down ExpressionNodeTest Test."); }
 
   protected:
-
     static void setupLogging() {
         NES::setupLogging("ExpressionNodeTest.log", NES::LOG_DEBUG);
         NES_DEBUG("Setup ExpressionNodeTest test class.");
@@ -68,8 +63,7 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
 }
 
 TEST_F(ExpressionNodeTest, attributeStampInference) {
-    auto schema = Schema::create()
-        ->addField("f1", INT8);
+    auto schema = Schema::create()->addField("f1", INT8);
 
     auto attribute = Attribute("f1").getExpressionNode();
     // check if the attribute field is initially undefined
@@ -89,17 +83,17 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
 
 TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
     auto schema = Schema::create()
-        ->addField("f1", INT8)
-        ->addField("f2", INT64)
-        ->addField("f3", FLOAT64)
-        ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
+                      ->addField("f1", INT8)
+                      ->addField("f2", INT64)
+                      ->addField("f3", FLOAT64)
+                      ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto addExpression = Attribute("f1") + 10;
     ASSERT_TRUE(addExpression->getStamp()->isUndefined());
     addExpression->inferStamp(schema);
     ASSERT_TRUE(addExpression->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
 
-    auto mulExpression = Attribute("f2")*10;
+    auto mulExpression = Attribute("f2") * 10;
     ASSERT_TRUE(mulExpression->getStamp()->isUndefined());
     mulExpression->inferStamp(schema);
     ASSERT_TRUE(mulExpression->getStamp()->isEquals(DataTypeFactory::createType(INT64)));
@@ -117,10 +111,10 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
 
 TEST_F(ExpressionNodeTest, inferPredicateTest) {
     auto schema = Schema::create()
-        ->addField("f1", INT8)
-        ->addField("f2", INT64)
-        ->addField("f3", BOOLEAN)
-        ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
+                      ->addField("f1", INT8)
+                      ->addField("f2", INT64)
+                      ->addField("f3", BOOLEAN)
+                      ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto equalsExpression = Attribute("f1") == 10;
     equalsExpression->inferStamp(schema);
@@ -152,14 +146,14 @@ TEST_F(ExpressionNodeTest, inferPredicateTest) {
 
 TEST_F(ExpressionNodeTest, inferAssertionTest) {
     auto schema = Schema::create()
-        ->addField("f1", INT8)
-        ->addField("f2", INT64)
-        ->addField("f3", BOOLEAN)
-        ->addField("f3",  DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
+                      ->addField("f1", INT8)
+                      ->addField("f2", INT64)
+                      ->addField("f3", BOOLEAN)
+                      ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
-    auto assertion = Attribute("f1") = 10*(33 + Attribute("f1"));
+    auto assertion = Attribute("f1") = 10 * (33 + Attribute("f1"));
     assertion->inferStamp(schema);
     ASSERT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
 }
 
-} // namespace NES
+}// namespace NES

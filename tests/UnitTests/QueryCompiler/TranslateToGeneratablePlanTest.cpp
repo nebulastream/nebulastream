@@ -16,13 +16,13 @@
 
 #include <API/Query.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/DumpContext.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Util/DumpContext.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
@@ -49,8 +49,8 @@
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 using namespace std;
 
@@ -105,9 +105,7 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         parents.clear();
     }
 
-    void TearDown() {
-        NES_DEBUG("Tear down LogicalOperatorNode Test.");
-    }
+    void TearDown() { NES_DEBUG("Tear down LogicalOperatorNode Test."); }
 
   protected:
     bool removed;
@@ -119,7 +117,8 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
     LogicalOperatorNodePtr sourceOp;
 
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
-    LogicalOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy, filterOp7Copy;
+    LogicalOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy,
+        filterOp7Copy;
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};
@@ -164,11 +163,9 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowOperator = LogicalOperatorFactory::createWindowOperator(
-        LogicalWindowDefinition::create(
-            Attribute("id"),
-            Sum(Attribute("value")),
-            TumblingWindow::of(ProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(),0, trigger, triggerAction));
+    auto windowOperator = LogicalOperatorFactory::createWindowOperator(LogicalWindowDefinition::create(
+        Attribute("id"), Sum(Attribute("value")), TumblingWindow::of(ProcessingTime(), Seconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction));
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
 

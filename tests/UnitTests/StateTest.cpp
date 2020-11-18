@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <Util/Logger.hpp>
+#include <gtest/gtest.h>
 #include <log4cxx/appender.h>
 
 #include <State/StateManager.hpp>
@@ -29,15 +29,12 @@ class StateTest : public testing::Test {
 
         NES_INFO("Setup StateTest test class.");
     }
-    static void TearDownTestCase() {
-        std::cout << "Tear down StateTest test class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down StateTest test class." << std::endl; }
 };
 
 TEST_F(StateTest, estAddClear) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager
-        .registerState<uint32_t, uint32_t>("window-content-0");
+    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-0");
     auto kv = var[23];
 
     EXPECT_EQ(!!kv, false);
@@ -46,7 +43,7 @@ TEST_F(StateTest, estAddClear) {
 
     EXPECT_EQ(kv.value(), 43);
 
-    kv.clear();  // unexpected bahavior afterwards
+    kv.clear();// unexpected bahavior afterwards
 
     bool catched = false;
     try {
@@ -59,8 +56,7 @@ TEST_F(StateTest, estAddClear) {
 
 TEST_F(StateTest, testEmplaceClear) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager
-        .registerState<uint32_t, uint32_t>("window-content-1");
+    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-1");
     auto kv = var[23];
 
     EXPECT_EQ(!!kv, false);
@@ -69,7 +65,7 @@ TEST_F(StateTest, testEmplaceClear) {
 
     EXPECT_EQ(kv.value(), 43);
 
-    kv.clear();  // unexpected bahavior afterwards
+    kv.clear();// unexpected bahavior afterwards
 
     bool catched = false;
     try {
@@ -82,8 +78,7 @@ TEST_F(StateTest, testEmplaceClear) {
 
 TEST_F(StateTest, testMultipleAddLookup) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager
-        .registerState<uint32_t, uint32_t>("window-content-2");
+    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-2");
 
     std::unordered_map<uint32_t, uint32_t> map;
 
@@ -105,30 +100,29 @@ TEST_F(StateTest, testMultipleAddLookup) {
 
 TEST_F(StateTest, testMultipleAddLookupMt) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager
-        .registerState<uint32_t, uint32_t>("window-content-3");
+    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-3");
 
     std::vector<std::thread> t;
 
     std::mutex mutex;
     std::unordered_map<uint32_t, uint32_t> map;
     constexpr uint32_t num_threads = 4;
-    constexpr uint32_t max_values = 2000000/num_threads;
+    constexpr uint32_t max_values = 2000000 / num_threads;
 
     for (uint32_t i = 0; i < num_threads; i++) {
         t.emplace_back([&var, &map, &mutex]() {
-          std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-          for (size_t i = 0; i < max_values; i++) {
+            std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
+            for (size_t i = 0; i < max_values; i++) {
 
-              uint32_t key = rand();
-              uint32_t val = rand();
+                uint32_t key = rand();
+                uint32_t val = rand();
 
-              var[key] = val;
+                var[key] = val;
 
-              lock.lock();
-              map[key] = val;
-              lock.unlock();
-          }
+                lock.lock();
+                map[key] = val;
+                lock.unlock();
+            }
         });
     }
 
@@ -143,35 +137,33 @@ TEST_F(StateTest, testMultipleAddLookupMt) {
         auto val = it.second;
         EXPECT_EQ(var[key].value(), val);
     }
-
 }
 
 TEST_F(StateTest, testAddRangeMt) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager
-        .registerState<uint32_t, uint32_t>("window-content-4");
+    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-4");
 
     std::vector<std::thread> t;
 
     std::mutex mutex;
     std::unordered_map<uint32_t, uint32_t> map;
     constexpr uint32_t num_threads = 4;
-    constexpr uint32_t max_values = 2000000/num_threads;
+    constexpr uint32_t max_values = 2000000 / num_threads;
 
     for (uint32_t i = 0; i < num_threads; i++) {
         t.emplace_back([&var, &map, &mutex]() {
-          std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-          for (size_t i = 0; i < max_values; i++) {
+            std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
+            for (size_t i = 0; i < max_values; i++) {
 
-              uint32_t key = rand();
-              uint32_t val = rand();
+                uint32_t key = rand();
+                uint32_t val = rand();
 
-              var[key] = val;
+                var[key] = val;
 
-              lock.lock();
-              map[key] = val;
-              lock.unlock();
-          }
+                lock.lock();
+                map[key] = val;
+                lock.unlock();
+            }
         });
     }
 
@@ -191,24 +183,18 @@ TEST_F(StateTest, testAddRangeMt) {
             EXPECT_EQ(map[key], val);
         }
     }
-
 }
 
 struct window_metadata {
     uint64_t start;
     uint64_t end;
 
-    explicit window_metadata(uint64_t s, uint64_t e)
-        :
-        start(s),
-        end(e) {
-    }
+    explicit window_metadata(uint64_t s, uint64_t e) : start(s), end(e) {}
 };
 
 TEST_F(StateTest, testStruct) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, window_metadata*>& var = stateManager
-        .registerState<uint32_t, window_metadata*>("window-content-5");
+    StateVariable<uint32_t, window_metadata*>& var = stateManager.registerState<uint32_t, window_metadata*>("window-content-5");
 
     for (size_t i = 0; i < 8192; i++) {
 
@@ -223,4 +209,4 @@ TEST_F(StateTest, testStruct) {
     }
 }
 
-}
+}// namespace NES

@@ -57,13 +57,11 @@ FunctionDeclaration FunctionBuilder::build() {
     }
     function << "){";
 
-    function << std::endl
-             << "/* variable declarations */" << std::endl;
+    function << std::endl << "/* variable declarations */" << std::endl;
     for (size_t i = 0; i < variable_declarations.size(); ++i) {
         function << variable_declarations[i].getCode() << ";";
     }
-    function << std::endl
-             << "/* statements section */" << std::endl;
+    function << std::endl << "/* statements section */" << std::endl;
     for (size_t i = 0; i < statements.size(); ++i) {
         function << statements[i]->getCode()->code_ << ";";
     }

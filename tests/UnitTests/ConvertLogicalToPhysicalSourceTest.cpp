@@ -16,16 +16,16 @@
 
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
-#include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Util/Logger.hpp>
-#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 class ConvertLogicalToPhysicalSourceTest : public testing::Test {
@@ -37,9 +37,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test class.");
     }
 
-    static void TearDownTestCase() {
-        std::cout << "Tear down ConvertLogicalToPhysicalSourceTest test class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSourceTest test class." << std::endl; }
 
     void SetUp() {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
@@ -57,12 +55,11 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysica
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, "csv.log", ",", 0, 10, 10, true, false, 1);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
-    EXPECT_EQ(csvFileSource->getType(),  CSV_SOURCE);
+    EXPECT_EQ(csvFileSource->getType(), CSV_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogicalToPhysicalSource) {
-    std::string filePath =
-        "../tests/test_data/ysb-tuples-100-campaign-100.bin";
+    std::string filePath = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = BinarySourceDescriptor::create(schema, filePath, 1);
     DataSourcePtr binaryFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
@@ -79,7 +76,8 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogicalToPhysicalSou
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = KafkaSourceDescriptor::create(schema, "localhost:9092", "topic", /**group Id**/ "groupId", /**auto commit*/ true, /**timeout*/ 1000);
+    SourceDescriptorPtr sourceDescriptor = KafkaSourceDescriptor::create(
+        schema, "localhost:9092", "topic", /**group Id**/ "groupId", /**auto commit*/ true, /**timeout*/ 1000);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
     EXPECT_EQ(csvFileSource->getType(), KAFKA_SOURCE);
 }
@@ -93,7 +91,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalS
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/1, 1);
+    SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/ 1, 1);
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
     EXPECT_EQ(senseSource->getType(), DEFAULT_SOURCE);
 }
@@ -105,5 +103,4 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingNetworkLogicalToPhysica
     DataSourcePtr networkSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, engine);
     EXPECT_EQ(networkSource->getType(), NETWORK_SOURCE);
 }
-}
-
+}// namespace NES

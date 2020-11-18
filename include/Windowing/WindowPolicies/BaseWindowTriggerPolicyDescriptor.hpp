@@ -20,12 +20,7 @@
 
 namespace NES::Windowing {
 
-enum TriggerType {
-    triggerOnTime,
-    triggerOnRecord,
-    triggerOnBuffer,
-    triggerOnWatermarkChange
-};
+enum TriggerType { triggerOnTime, triggerOnRecord, triggerOnBuffer, triggerOnWatermarkChange };
 
 class BaseWindowTriggerPolicyDescriptor {
   public:

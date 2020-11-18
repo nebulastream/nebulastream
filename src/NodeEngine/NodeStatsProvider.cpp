@@ -39,9 +39,7 @@ namespace NES {
 
 NodeStatsProvider::NodeStatsProvider() : nbrProcessors(0), nodeStats(NodeStats()) {}
 
-NodeStatsProviderPtr NodeStatsProvider::create() {
-    return std::make_shared<NodeStatsProvider>();
-}
+NodeStatsProviderPtr NodeStatsProvider::create() { return std::make_shared<NodeStatsProvider>(); }
 
 void NodeStatsProvider::update() {
     nodeStats.Clear();
@@ -64,9 +62,7 @@ void NodeStatsProvider::readCpuStats() {
         // line starts with "cpu"
         if (!line.compare(0, 3, "cpu")) {
             std::istringstream ss(line);
-            std::vector<std::string> tokens{
-                std::istream_iterator<std::string>{ss},
-                std::istream_iterator<std::string>{}};
+            std::vector<std::string> tokens{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
 
             // check columns
             if (tokens.size() != 11) {
@@ -94,13 +90,9 @@ void NodeStatsProvider::readCpuStats() {
     this->nbrProcessors = numberOfPreccessors;
 }
 
-void NodeStatsProvider::setClientName(std::string clientName) {
-    this->clientName = std::move(clientName);
-};
+void NodeStatsProvider::setClientName(std::string clientName) { this->clientName = std::move(clientName); };
 
-void NodeStatsProvider::setClientPort(std::string clientPort) {
-    this->clientPort = std::move(clientPort);
-};
+void NodeStatsProvider::setClientPort(std::string clientPort) { this->clientPort = std::move(clientPort); };
 
 std::string NodeStatsProvider::getClientName() {
     std::string host = clientName;
@@ -170,20 +162,14 @@ void NodeStatsProvider::readNetworkStats() {
         interface->set_name(ifa->ifa_name);
 
         if (family == AF_INET) {
-            s = getnameinfo(ifa->ifa_addr,
-                            sizeof(struct sockaddr_in),
-                            host, NI_MAXHOST,
-                            NULL, 0, NI_NUMERICHOST);
+            s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             if (s != 0) {
                 NES_ERROR("NodeProperties: could not read Network statistics: getnameinfo failed");
                 continue;
             }
             interface->set_host(host);
         } else if (family == AF_INET6) {
-            s = getnameinfo(ifa->ifa_addr,
-                            sizeof(struct sockaddr_in6),
-                            host, NI_MAXHOST,
-                            NULL, 0, NI_NUMERICHOST);
+            s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
             if (s != 0) {
                 NES_ERROR("NodeProperties: could not read Network statistics: getnameinfo failed");
                 continue;
@@ -201,8 +187,7 @@ void NodeStatsProvider::readNetworkStats() {
     }
 }
 #elif defined(__APPLE__) || defined(__MACH__)
-void NodeStatsProvider::readNetworkStats() {
-}
+void NodeStatsProvider::readNetworkStats() {}
 #else
 #error "Unsupported platform"
 #endif
@@ -235,8 +220,7 @@ void NodeStatsProvider::readMemStats() {
     delete sinfo;
 }
 #else
-void NodeStatsProvider::readMemStats() {
-}
+void NodeStatsProvider::readMemStats() {}
 #endif
 
 #if defined(__linux__)
@@ -259,12 +243,9 @@ void NodeStatsProvider::readDiskStats() {
     delete svfs;
 }
 #else
-void NodeStatsProvider::readDiskStats() {
-}
+void NodeStatsProvider::readDiskStats() {}
 #endif
 
-NodeStats NodeStatsProvider::getNodeStats() {
-    return nodeStats;
-}
+NodeStats NodeStatsProvider::getNodeStats() { return nodeStats; }
 
 }// namespace NES

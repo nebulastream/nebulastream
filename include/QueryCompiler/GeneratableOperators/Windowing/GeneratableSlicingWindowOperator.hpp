@@ -30,7 +30,9 @@ class GeneratableSlicingWindowOperator : public GeneratableWindowOperator {
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableSlicingWindowOperator
      */
-    static GeneratableDistributedlWindowSliceCreationOperatorPtr create(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableDistributedlWindowSliceCreationOperatorPtr
+    create(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation,
+           OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -53,7 +55,8 @@ class GeneratableSlicingWindowOperator : public GeneratableWindowOperator {
     const std::string toString() const override;
 
   private:
-    explicit GeneratableSlicingWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);
+    explicit GeneratableSlicingWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                              GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);
 };
 
 }// namespace NES

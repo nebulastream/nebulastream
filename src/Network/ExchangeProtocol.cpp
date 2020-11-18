@@ -24,9 +24,9 @@ namespace Network {
 // Important invariant: never leak the protocolListener pointer
 // there is a hack that disables the reference counting
 
-ExchangeProtocol::ExchangeProtocol(
-    std::shared_ptr<PartitionManager> partitionManager,
-    std::shared_ptr<ExchangeProtocolListener> protocolListener) : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)) {
+ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
+                                   std::shared_ptr<ExchangeProtocolListener> protocolListener)
+    : partitionManager(std::move(partitionManager)), protocolListener(std::move(protocolListener)) {
     NES_ASSERT(this->partitionManager, "Wrong parameter partitionManager is null");
     NES_ASSERT(this->protocolListener, "Wrong parameter ExchangeProtocolListener is null");
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
@@ -60,13 +60,9 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, TupleBuffer& buffer) 
     protocolListener->onDataBuffer(nesPartition, buffer);
 }
 
-void ExchangeProtocol::onServerError(const Messages::ErrorMessage error) {
-    protocolListener->onServerError(error);
-}
+void ExchangeProtocol::onServerError(const Messages::ErrorMessage error) { protocolListener->onServerError(error); }
 
-void ExchangeProtocol::onChannelError(const Messages::ErrorMessage error) {
-    protocolListener->onChannelError(error);
-}
+void ExchangeProtocol::onChannelError(const Messages::ErrorMessage error) { protocolListener->onChannelError(error); }
 
 void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage) {
     NES_DEBUG("ExchangeProtocol: EndOfStream message received from " << endOfStreamMessage.getChannelId().toString());
@@ -76,9 +72,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     protocolListener->onEndOfStream(endOfStreamMessage);
 }
 
-std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const {
-    return partitionManager;
-}
+std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const { return partitionManager; }
 
 }// namespace Network
 }// namespace NES

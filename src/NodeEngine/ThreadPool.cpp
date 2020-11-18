@@ -27,12 +27,7 @@
 namespace NES {
 
 ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, size_t numThreads)
-    : running(false),
-      numThreads(numThreads),
-      nodeId(nodeId),
-      threads(),
-      queryManager(queryManager) {
-}
+    : running(false), numThreads(numThreads), nodeId(nodeId), threads(), queryManager(queryManager) {}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");
@@ -96,9 +91,8 @@ bool ThreadPool::start() {
 
 bool ThreadPool::stop() {
     std::unique_lock<std::mutex> lock(reconfigLock);
-    NES_DEBUG(
-        "ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads
-                                              << " threads");
+    NES_DEBUG("ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads
+                                                    << " threads");
     /* wake up all threads in the query manager,
      * so they notice the change in the run variable */
     NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
@@ -120,17 +114,13 @@ void ThreadPool::restart() {
     start();
 }
 
-void ThreadPool::setNumberOfThreadsWithoutRestart(size_t size) {
-    numThreads = size;
-}
+void ThreadPool::setNumberOfThreadsWithoutRestart(size_t size) { numThreads = size; }
 
 void ThreadPool::setNumberOfThreadsWithRestart(size_t size) {
     numThreads = size;
     restart();
 }
 
-size_t ThreadPool::getNumberOfThreads() {
-    return numThreads;
-}
+size_t ThreadPool::getNumberOfThreads() { return numThreads; }
 
 }// namespace NES

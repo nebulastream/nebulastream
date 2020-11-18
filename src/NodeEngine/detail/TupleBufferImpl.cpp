@@ -39,8 +39,7 @@ namespace detail {
 // ------------------ Core Mechanism for Buffer recycling ----------------------
 // -----------------------------------------------------------------------------
 
-MemorySegment::MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size),
-                                                           controlBlock(other.controlBlock) {}
+MemorySegment::MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size), controlBlock(other.controlBlock) {}
 
 MemorySegment& MemorySegment::operator=(const MemorySegment& other) {
     ptr = other.ptr;
@@ -74,9 +73,8 @@ MemorySegment::~MemorySegment() {
     }
 }
 
-BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) : referenceCounter(0), numberOfTuples(0), owner(owner),
-                                                                                                                      recycleCallback(recycleCallback), watermark(0), originId(0) {
-}
+BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback)
+    : referenceCounter(0), numberOfTuples(0), owner(owner), recycleCallback(recycleCallback), watermark(0), originId(0) {}
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
@@ -97,9 +95,7 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
     return *this;
 }
 
-MemorySegment* BufferControlBlock::getOwner() {
-    return owner;
-}
+MemorySegment* BufferControlBlock::getOwner() { return owner; }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 /**
@@ -155,16 +151,13 @@ void BufferControlBlock::dumpOwningThreadInfo() {
     NES_ERROR("Buffer " << getOwner() << " has " << referenceCounter.load() << " live references");
     for (auto& item : owningThreads) {
         for (auto& v : item.second) {
-            NES_ERROR("Thread " << v.threadName << " has buffer " << getOwner()
-                                << " requested on callstack: " << v.callstack);
+            NES_ERROR("Thread " << v.threadName << " has buffer " << getOwner() << " requested on callstack: " << v.callstack);
         }
     }
 }
 #endif
 
-uint32_t BufferControlBlock::getReferenceCount() {
-    return referenceCounter.load();
-}
+uint32_t BufferControlBlock::getReferenceCount() { return referenceCounter.load(); }
 
 bool BufferControlBlock::release() {
     uint32_t prevRefCnt;
@@ -193,27 +186,15 @@ bool BufferControlBlock::release() {
     return false;
 }
 
-size_t BufferControlBlock::getNumberOfTuples() const {
-    return numberOfTuples;
-}
+size_t BufferControlBlock::getNumberOfTuples() const { return numberOfTuples; }
 
-void BufferControlBlock::setNumberOfTuples(size_t numberOfTuples) {
-    this->numberOfTuples = numberOfTuples;
-}
+void BufferControlBlock::setNumberOfTuples(size_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
 
-int64_t BufferControlBlock::getWatermark() const {
-    return watermark;
-}
+int64_t BufferControlBlock::getWatermark() const { return watermark; }
 
-void BufferControlBlock::setWatermark(int64_t watermark) {
-    this->watermark = watermark;
-}
-const uint64_t BufferControlBlock::getOriginId() const {
-    return originId;
-}
-void BufferControlBlock::setOriginId(uint64_t originId) {
-    this->originId = originId;
-}
+void BufferControlBlock::setWatermark(int64_t watermark) { this->watermark = watermark; }
+const uint64_t BufferControlBlock::getOriginId() const { return originId; }
+void BufferControlBlock::setOriginId(uint64_t originId) { this->originId = originId; }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack)
@@ -221,8 +202,7 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threa
     // nop
 }
 
-BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo()
-    : threadName("NOT-SAMPLED"), callstack("NOT-SAMPLED") {
+BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT-SAMPLED"), callstack("NOT-SAMPLED") {
     // nop
 }
 #endif
@@ -260,8 +240,7 @@ void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
                 u_int8_t* orgVal = (u_int8_t*) buffer + offset + i * tupleSize;
                 memcpy((char*) buffer + offset + i * tupleSize, orgVal, fieldSize);
             } else if (physicalField->toString() == "UINT16") {
-                u_int16_t* orgVal = (u_int16_t*) ((char*) buffer + offset
-                                                  + i * tupleSize);
+                u_int16_t* orgVal = (u_int16_t*) ((char*) buffer + offset + i * tupleSize);
                 u_int16_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (physicalField->toString() == "UINT32") {
@@ -289,25 +268,21 @@ void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
                 int64_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (physicalField->toString() == "FLOAT32") {
-                NES_WARNING(
-                    "TupleBuffer::revertEndianness: float conversation is not totally supported, please check results");
+                NES_WARNING("TupleBuffer::revertEndianness: float conversation is not totally supported, please check results");
                 uint32_t* orgVal = (uint32_t*) ((char*) buffer + offset + i * tupleSize);
                 uint32_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (physicalField->toString() == "FLOAT64") {
-                NES_WARNING(
-                    "TupleBuffer::revertEndianness: double conversation is not totally supported, please check results");
+                NES_WARNING("TupleBuffer::revertEndianness: double conversation is not totally supported, please check results");
                 uint64_t* orgVal = (uint64_t*) ((char*) buffer + offset + i * tupleSize);
                 uint64_t val = boost::endian::endian_reverse(*orgVal);
                 memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
             } else if (physicalField->toString() == "CHAR") {
                 //TODO: I am not sure if we have to convert char at all because it is one byte only
-                throw new Exception(
-                    "Data type float is currently not supported for endian conversation");
+                throw new Exception("Data type float is currently not supported for endian conversation");
             } else {
-                throw new Exception(
-                    "Data type " + field->getDataType()->toString()
-                    + " is currently not supported for endian conversation");
+                throw new Exception("Data type " + field->getDataType()->toString()
+                                    + " is currently not supported for endian conversation");
             }
             offset += fieldSize;
         }

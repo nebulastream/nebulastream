@@ -69,8 +69,7 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, cons
     //get index where the schema for MemoryMetrics is starting
     auto i = schema->getIndex(prefix + "TOTAL_RAM");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
-        && UtilityFunctions::endsWith(schema->fields[i]->name, "TOTAL_RAM")
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "TOTAL_RAM")
         && UtilityFunctions::endsWith(schema->fields[i + 12]->name, "LOADS_15MIN")) {
         //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
         auto layout = createRowLayout(schema);
@@ -94,15 +93,12 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, cons
 }
 
 bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
-    return TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM
-        && SHARED_RAM == rhs.SHARED_RAM && BUFFER_RAM == rhs.BUFFER_RAM && FREE_SWAP == rhs.FREE_SWAP
-        && TOTAL_HIGH == rhs.TOTAL_HIGH && FREE_HIGH == rhs.FREE_HIGH && PROCS == rhs.PROCS
-        && MEM_UNIT == rhs.MEM_UNIT && LOADS_1MIN == rhs.LOADS_1MIN && LOADS_5MIN == rhs.LOADS_5MIN
-        && LOADS_15MIN == rhs.LOADS_15MIN;
+    return TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM && SHARED_RAM == rhs.SHARED_RAM
+        && BUFFER_RAM == rhs.BUFFER_RAM && FREE_SWAP == rhs.FREE_SWAP && TOTAL_HIGH == rhs.TOTAL_HIGH
+        && FREE_HIGH == rhs.FREE_HIGH && PROCS == rhs.PROCS && MEM_UNIT == rhs.MEM_UNIT && LOADS_1MIN == rhs.LOADS_1MIN
+        && LOADS_5MIN == rhs.LOADS_5MIN && LOADS_15MIN == rhs.LOADS_15MIN;
 }
 
-bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const {
-    return !(rhs == *this);
-}
+bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs == *this); }
 
 }// namespace NES

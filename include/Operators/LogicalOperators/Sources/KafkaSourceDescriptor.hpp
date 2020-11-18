@@ -27,19 +27,10 @@ namespace NES {
 class KafkaSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string brokers,
-                                      std::string topic,
-                                      std::string groupId,
-                                      bool autoCommit,
-                                      uint64_t kafkaConnectTimeout, OperatorId operatorId);
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string streamName,
-                                      std::string brokers,
-                                      std::string topic,
-                                      std::string groupId,
-                                      bool autoCommit,
-                                      uint64_t kafkaConnectTimeout, OperatorId operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string brokers, std::string topic, std::string groupId,
+                                      bool autoCommit, uint64_t kafkaConnectTimeout, OperatorId operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string brokers, std::string topic,
+                                      std::string groupId, bool autoCommit, uint64_t kafkaConnectTimeout, OperatorId operatorId);
 
     /**
      * @brief Get the list of kafka brokers
@@ -71,19 +62,10 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit KafkaSourceDescriptor(SchemaPtr schema,
-                                   std::string brokers,
-                                   std::string topic,
-                                   std::string groupId,
-                                   bool autoCommit,
+    explicit KafkaSourceDescriptor(SchemaPtr schema, std::string brokers, std::string topic, std::string groupId, bool autoCommit,
                                    uint64_t kafkaConnectTimeout, OperatorId operatorId);
-    explicit KafkaSourceDescriptor(SchemaPtr schema,
-                                   std::string streamName,
-                                   std::string brokers,
-                                   std::string topic,
-                                   std::string groupId,
-                                   bool autoCommit,
-                                   uint64_t kafkaConnectTimeout, OperatorId operatorId);
+    explicit KafkaSourceDescriptor(SchemaPtr schema, std::string streamName, std::string brokers, std::string topic,
+                                   std::string groupId, bool autoCommit, uint64_t kafkaConnectTimeout, OperatorId operatorId);
     std::string brokers;
     std::string topic;
     std::string groupId;

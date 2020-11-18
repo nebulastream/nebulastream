@@ -23,10 +23,7 @@ namespace NES {
 
 class QueryStatistics {
   public:
-    QueryStatistics() : processedTasks(0),
-                        processedTuple(0),
-                        processedBuffers(0),
-                        processedWatermarks(0){};
+    QueryStatistics() : processedTasks(0), processedTuple(0), processedBuffers(0), processedWatermarks(0){};
 
     /**
      * @brief getter for processedTasks

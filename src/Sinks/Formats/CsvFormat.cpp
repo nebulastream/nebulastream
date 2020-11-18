@@ -23,8 +23,7 @@
 #include <iostream>
 namespace NES {
 
-CsvFormat::CsvFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
-}
+CsvFormat::CsvFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
 
 std::optional<TupleBuffer> CsvFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
@@ -87,12 +86,8 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
     return buffers;
 }
 
-std::string CsvFormat::toString() {
-    return "CSV_FORMAT";
-}
+std::string CsvFormat::toString() { return "CSV_FORMAT"; }
 
-SinkFormatTypes CsvFormat::getSinkFormat() {
-    return CSV_FORMAT;
-}
+SinkFormatTypes CsvFormat::getSinkFormat() { return CSV_FORMAT; }
 
 }// namespace NES

@@ -39,12 +39,8 @@ TimeCharacteristicPtr TimeCharacteristic::createProcessingTime() {
     return std::make_shared<TimeCharacteristic>(Type::ProcessingTime);
 }
 
-AttributeFieldPtr TimeCharacteristic::getField() {
-    return field;
-}
+AttributeFieldPtr TimeCharacteristic::getField() { return field; }
 
-TimeCharacteristic::Type TimeCharacteristic::getType() {
-    return type;
-}
+TimeCharacteristic::Type TimeCharacteristic::getType() { return type; }
 
 }// namespace NES::Windowing

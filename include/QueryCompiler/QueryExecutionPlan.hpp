@@ -48,14 +48,9 @@ class QueryExecutionPlan {
     };
 
   protected:
-    explicit QueryExecutionPlan(
-        QueryId queryId,
-        QuerySubPlanId querySubPlanId,
-        std::vector<DataSourcePtr>&& sources,
-        std::vector<DataSinkPtr>&& sinks,
-        std::vector<PipelineStagePtr>&& stages,
-        QueryManagerPtr&& queryManager,
-        BufferManagerPtr&& bufferManager);
+    explicit QueryExecutionPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
+                                std::vector<DataSinkPtr>&& sinks, std::vector<PipelineStagePtr>&& stages,
+                                QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 
   public:
     virtual ~QueryExecutionPlan();
@@ -99,9 +94,7 @@ class QueryExecutionPlan {
     /**
      * @brief Gets number of pipeline stages.
      */
-    uint32_t numberOfPipelineStages() {
-        return stages.size();
-    }
+    uint32_t numberOfPipelineStages() { return stages.size(); }
 
     QueryManagerPtr getQueryManager();
 

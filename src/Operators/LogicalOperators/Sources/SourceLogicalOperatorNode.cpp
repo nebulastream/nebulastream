@@ -42,9 +42,7 @@ const std::string SourceLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() {
-    return sourceDescriptor;
-}
+SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() { return sourceDescriptor; }
 bool SourceLogicalOperatorNode::inferSchema() {
     inputSchema = sourceDescriptor->getSchema();
     outputSchema = sourceDescriptor->getSchema();

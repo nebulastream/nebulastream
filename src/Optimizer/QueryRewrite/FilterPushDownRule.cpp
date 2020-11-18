@@ -30,9 +30,7 @@
 
 namespace NES {
 
-FilterPushDownRulePtr FilterPushDownRule::create() {
-    return std::make_shared<FilterPushDownRule>(FilterPushDownRule());
-}
+FilterPushDownRulePtr FilterPushDownRule::create() { return std::make_shared<FilterPushDownRule>(FilterPushDownRule()); }
 
 FilterPushDownRule::FilterPushDownRule() {}
 
@@ -51,9 +49,10 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
 
     NES_INFO("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
 
-    std::sort(filterOperators.begin(), filterOperators.end(), [](FilterLogicalOperatorNodePtr lhs, FilterLogicalOperatorNodePtr rhs) {
-        return lhs->getId() < rhs->getId();
-    });
+    std::sort(filterOperators.begin(), filterOperators.end(),
+              [](FilterLogicalOperatorNodePtr lhs, FilterLogicalOperatorNodePtr rhs) {
+                  return lhs->getId() < rhs->getId();
+              });
 
     NES_INFO("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (auto filterOperator : filterOperators) {
@@ -100,8 +99,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
             if (predicateFieldManipulated) {
                 OperatorNodePtr copyOptr = filterOperator->duplicate();
-                if (!(copyOptr->removeAndJoinParentAndChildren()
-                      && node->insertBetweenThisAndParentNodes(copyOptr))) {
+                if (!(copyOptr->removeAndJoinParentAndChildren() && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
@@ -130,8 +128,7 @@ bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodeP
 
         NES_INFO("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
-            const FieldAccessExpressionNodePtr
-                accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
 
             NES_INFO("FilterPushDownRule: Check if the input field name is same as the FieldAccessExpression field name");
             if (accessExpressionNode->getFieldName() == fieldName) {

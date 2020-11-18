@@ -18,8 +18,7 @@
 #include <Windowing/Watermark/EventTimeWatermarkGenerator.hpp>
 namespace NES::Windowing {
 
-EventTimeWatermarkGenerator::EventTimeWatermarkGenerator() {
-}
+EventTimeWatermarkGenerator::EventTimeWatermarkGenerator() {}
 
 uint64_t EventTimeWatermarkGenerator::getWatermark() {
     NES_NOT_IMPLEMENTED();

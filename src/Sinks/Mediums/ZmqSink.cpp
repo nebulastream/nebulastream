@@ -28,28 +28,14 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-std::string ZmqSink::toString() {
-    return "ZMQ_SINK";
-}
+std::string ZmqSink::toString() { return "ZMQ_SINK"; }
 
-SinkMediumTypes ZmqSink::getSinkMediumType() {
-    return ZMQ_SINK;
-}
+SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
 
-ZmqSink::ZmqSink(SinkFormatPtr format,
-                 const std::string& host,
-                 const uint16_t port,
-                 bool internal,
-                 QuerySubPlanId parentPlanId)
-    : SinkMedium(format, parentPlanId),
-      host(host.substr(0, host.find(":"))),
-      port(port),
-      connected(false),
-      internal(internal),
-      context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_PUSH)) {
-    NES_DEBUG(
-        "ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
+ZmqSink::ZmqSink(SinkFormatPtr format, const std::string& host, const uint16_t port, bool internal, QuerySubPlanId parentPlanId)
+    : SinkMedium(format, parentPlanId), host(host.substr(0, host.find(":"))), port(port), connected(false), internal(internal),
+      context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
+    NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }
 
 ZmqSink::~ZmqSink() {
@@ -58,8 +44,7 @@ ZmqSink::~ZmqSink() {
     if (success) {
         NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
     } else {
-        NES_ERROR(
-            "ZmqSink  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected");
+        NES_ERROR("ZmqSink  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected");
         throw Exception("ZMQ Sink destruction failed");
     }
     NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
@@ -69,8 +54,7 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     connect();
     if (!connected) {
-        NES_DEBUG(
-            "ZmqSink  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");
+        NES_DEBUG("ZmqSink  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");
         throw Exception("Write to zmq sink failed");
     }
 
@@ -109,15 +93,13 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
             schemaWritten = true;
             NES_DEBUG("ZmqSink::writeData: schema written");
         }
-        {
-            NES_DEBUG("ZmqSink::writeData: no schema written");
-        }
+        { NES_DEBUG("ZmqSink::writeData: no schema written"); }
     } else {
         NES_DEBUG("ZmqSink::getData: schema already written");
     }
 
-    NES_DEBUG("ZmqSink  " << this << ": writes buffer " << inputBuffer
-                          << " with tupleCnt =" << inputBuffer.getNumberOfTuples() << " watermark=" << inputBuffer.getWatermark());
+    NES_DEBUG("ZmqSink  " << this << ": writes buffer " << inputBuffer << " with tupleCnt =" << inputBuffer.getNumberOfTuples()
+                          << " watermark=" << inputBuffer.getWatermark());
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
         try {
@@ -199,12 +181,8 @@ bool ZmqSink::disconnect() {
     return !connected;
 }
 
-int ZmqSink::getPort() {
-    return this->port;
-}
+int ZmqSink::getPort() { return this->port; }
 
-const std::string ZmqSink::getHost() const {
-    return host;
-}
+const std::string ZmqSink::getHost() const { return host; }
 
 }// namespace NES

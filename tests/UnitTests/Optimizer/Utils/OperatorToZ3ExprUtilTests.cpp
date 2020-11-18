@@ -46,14 +46,10 @@ class OperatorToZ3ExprUtilTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_INFO("Setup OperatorToFOLUtilTest test case.");
-    }
+    void TearDown() { NES_INFO("Setup OperatorToFOLUtilTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down OperatorToFOLUtilTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down OperatorToFOLUtilTest test class."); }
 };
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithExactPredicates) {

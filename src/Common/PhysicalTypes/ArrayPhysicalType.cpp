@@ -21,26 +21,18 @@
 
 namespace NES {
 
-ArrayPhysicalType::ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr physicalComponentType) : PhysicalType(type), length(length), physicalComponentType(physicalComponentType) {
-}
+ArrayPhysicalType::ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr physicalComponentType)
+    : PhysicalType(type), length(length), physicalComponentType(physicalComponentType) {}
 
 PhysicalTypePtr ArrayPhysicalType::create(DataTypePtr type, uint64_t length, PhysicalTypePtr component) {
     return std::make_shared<ArrayPhysicalType>(type, length, component);
 }
 
-bool ArrayPhysicalType::isArrayType() {
-    return true;
-}
+bool ArrayPhysicalType::isArrayType() { return true; }
 
-uint64_t ArrayPhysicalType::size() const {
-    return physicalComponentType->size() * length;
-}
-const PhysicalTypePtr ArrayPhysicalType::getPhysicalComponentType() const {
-    return physicalComponentType;
-}
-const uint64_t ArrayPhysicalType::getLength() const {
-    return length;
-}
+uint64_t ArrayPhysicalType::size() const { return physicalComponentType->size() * length; }
+const PhysicalTypePtr ArrayPhysicalType::getPhysicalComponentType() const { return physicalComponentType; }
+const uint64_t ArrayPhysicalType::getLength() const { return length; }
 std::string ArrayPhysicalType::convertRawToString(void* data) {
     std::stringstream str;
 

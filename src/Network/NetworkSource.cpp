@@ -22,28 +22,22 @@ namespace NES {
 namespace Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                             NetworkManagerPtr networkManager, NesPartition nesPartition) : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId()),
-                                                                                            networkManager(networkManager),
-                                                                                            nesPartition(nesPartition) {
+                             NetworkManagerPtr networkManager, NesPartition nesPartition)
+    : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId()), networkManager(networkManager),
+      nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
     NES_ASSERT(this->networkManager, "Invalid network manager");
 }
 
-NetworkSource::~NetworkSource() {
-    NES_DEBUG("NetworkSink: Destroying NetworkSource " << nesPartition.toString());
-}
+NetworkSource::~NetworkSource() { NES_DEBUG("NetworkSink: Destroying NetworkSource " << nesPartition.toString()); }
 
 std::optional<TupleBuffer> NetworkSource::receiveData() {
     NES_THROW_RUNTIME_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
 }
 
-SourceType NetworkSource::getType() const {
-    return NETWORK_SOURCE;
-}
+SourceType NetworkSource::getType() const { return NETWORK_SOURCE; }
 
-const std::string NetworkSource::toString() const {
-    return "NetworkSource: " + nesPartition.toString();
-}
+const std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
 
 bool NetworkSource::start() {
     NES_DEBUG("NetworkSource: start called on " << nesPartition);

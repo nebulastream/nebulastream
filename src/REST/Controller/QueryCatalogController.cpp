@@ -24,7 +24,8 @@
 
 namespace NES {
 
-QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorWeakPtr coordinator, GlobalQueryPlanPtr globalQueryPlan)
+QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorWeakPtr coordinator,
+                                               GlobalQueryPlanPtr globalQueryPlan)
     : queryCatalog(queryCatalog), coordinator(coordinator), globalQueryPlan(globalQueryPlan) {
     NES_DEBUG("QueryCatalogController()");
 }
@@ -49,18 +50,17 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     }
 
                     if (queries.size() == 0) {
-                        NES_DEBUG(
-                            "QueryCatalogController: handleGet -queries: no registered query with status " + queryStatus
-                            + " was found.");
+                        NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query with status " + queryStatus
+                                  + " was found.");
                         noContentImpl(message);
                     } else {
                         successMessageImpl(message, result);
                     }
                     return;
                 } catch (const std::exception& exc) {
-                    NES_ERROR(
-                        "QueryCatalogController: handleGet -queries: Exception occurred while building the query plan for user request:"
-                        << exc.what());
+                    NES_ERROR("QueryCatalogController: handleGet -queries: Exception occurred while building the query plan for "
+                              "user request:"
+                              << exc.what());
                     handleException(message, exc);
                     return;
                 } catch (...) {
@@ -89,9 +89,9 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     }
                     return;
                 } catch (const std::exception& exc) {
-                    NES_ERROR(
-                        "QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the query plan for user request:"
-                        << exc.what());
+                    NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
+                              "query plan for user request:"
+                              << exc.what());
                     handleException(message, exc);
                     return;
                 } catch (...) {
@@ -124,9 +124,9 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {
-                    NES_ERROR(
-                        "QueryCatalogController: handleGet -getNumberOfProducedBuffers: Exception occurred while fetching the number of buffers:"
-                        << exc.what());
+                    NES_ERROR("QueryCatalogController: handleGet -getNumberOfProducedBuffers: Exception occurred while fetching "
+                              "the number of buffers:"
+                              << exc.what());
                     handleException(message, exc);
                     return;
                 } catch (...) {

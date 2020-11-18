@@ -18,20 +18,13 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
-ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(stamp) {
-}
+ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(stamp) {}
 
-bool ExpressionNode::isPredicate() {
-    return stamp->isBoolean();
-}
+bool ExpressionNode::isPredicate() { return stamp->isBoolean(); }
 
-const DataTypePtr ExpressionNode::getStamp() const {
-    return stamp;
-}
+const DataTypePtr ExpressionNode::getStamp() const { return stamp; }
 
-void ExpressionNode::setStamp(DataTypePtr stamp) {
-    this->stamp = stamp;
-}
+void ExpressionNode::setStamp(DataTypePtr stamp) { this->stamp = stamp; }
 
 void ExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp on all children nodes
@@ -40,7 +33,6 @@ void ExpressionNode::inferStamp(SchemaPtr schema) {
     }
 }
 
-ExpressionNode::ExpressionNode(ExpressionNode* other) : stamp(other->stamp) {
-}
+ExpressionNode::ExpressionNode(ExpressionNode* other) : stamp(other->stamp) {}
 
 }// namespace NES

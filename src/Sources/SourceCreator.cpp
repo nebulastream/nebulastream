@@ -41,24 +41,26 @@
 
 namespace NES {
 
-const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
-    SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, OperatorId operatorId) {
+const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, BufferManagerPtr bufferManager,
+                                                                  QueryManagerPtr queryManager, OperatorId operatorId) {
     return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1, operatorId);
 }
 
-const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, size_t numbersOfBufferToProduce, size_t frequency, OperatorId operatorId) {
+const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager,
+                                                                   QueryManagerPtr queryManager, size_t numbersOfBufferToProduce,
+                                                                   size_t frequency, OperatorId operatorId) {
     return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId);
 }
 
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, OperatorId operatorId) {
-    return std::make_shared<DefaultSource>(
-        Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager, queryManager, /**bufferCnt*/ 1, /*frequency*/ 1, operatorId);
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager,
+                                                                             QueryManagerPtr queryManager,
+                                                                             OperatorId operatorId) {
+    return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager,
+                                           queryManager, /**bufferCnt*/ 1, /*frequency*/ 1, operatorId);
 }
 
 const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    const std::string& host,
-                                    const uint16_t port, OperatorId operatorId) {
+                                    const std::string& host, const uint16_t port, OperatorId operatorId) {
     return std::make_shared<ZmqSource>(schema, bufferManager, queryManager, host, port, operatorId);
 }
 
@@ -73,20 +75,19 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
 }
 
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                        const std::string& pathToFile,
-                                        const std::string& delimiter,
-                                        size_t numberOfTuplesToProducePerBuffer,
-                                        size_t numbersOfBufferToProduce,
-                                        size_t frequency,
-                                        bool endlessRepeat,
-                                        bool skipHeader, OperatorId operatorId) {
+                                        const std::string& pathToFile, const std::string& delimiter,
+                                        size_t numberOfTuplesToProducePerBuffer, size_t numbersOfBufferToProduce,
+                                        size_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
-                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat, skipHeader, operatorId);
+                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat,
+                                       skipHeader, operatorId);
 }
 
 const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, OperatorId operatorId) {
-    return std::make_shared<YSBSource>(bufferManager, queryManager, numBuffersToProcess, numberOfTuplesToProducePerBuffer, frequency, endlessRepeat, operatorId);
+                                    size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                    bool endlessRepeat, OperatorId operatorId) {
+    return std::make_shared<YSBSource>(bufferManager, queryManager, numBuffersToProcess, numberOfTuplesToProducePerBuffer,
+                                       frequency, endlessRepeat, operatorId);
 }
 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
@@ -94,16 +95,19 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr buffe
     return std::make_shared<Network::NetworkSource>(schema, bufferManager, queryManager, networkManager, nesPartition);
 }
 #ifdef ENABLE_KAFKA_BUILD
-const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string brokers, std::string topic, std::string groupId,
-                                      bool autoCommit, uint64_t kafkaConsumerTimeout) {
-    return std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, groupId, autoCommit, kafkaConsumerTimeout);
+const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                      std::string brokers, std::string topic, std::string groupId, bool autoCommit,
+                                      uint64_t kafkaConsumerTimeout) {
+    return std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, groupId, autoCommit,
+                                         kafkaConsumerTimeout);
 }
 #endif
 
 #ifdef ENABLE_OPC_BUILD
 
-const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url,
-                                    UA_NodeId nodeId, std::string user, std::string password, OperatorId operatorId) {
+const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                    std::string url, UA_NodeId nodeId, std::string user, std::string password,
+                                    OperatorId operatorId) {
     return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId);
 }
 #endif

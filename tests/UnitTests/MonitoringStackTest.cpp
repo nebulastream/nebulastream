@@ -16,21 +16,21 @@
 
 #include <gtest/gtest.h>
 
-#include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
+#include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/IntCounter.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
+#include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
-#include <Util/UtilityFunctions.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <Components/NesWorker.hpp>
 #include <CoordinatorRPCService.pb.h>
@@ -58,9 +58,7 @@ class MonitoringStackTest : public testing::Test {
         NES_INFO("MonitoringStackTest: Setup MonitoringStackTest test class.");
     }
 
-    static void TearDownTestCase() {
-        std::cout << "MonitoringStackTest: Tear down MonitoringStackTest class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest class." << std::endl; }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
@@ -70,16 +68,14 @@ class MonitoringStackTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
-        std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl;
-    }
+    void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
     CpuMetrics cpuMetrics = cpuStats.measure();
     ASSERT_TRUE(cpuMetrics.getNumCores() > 0);
-    for (int i=0; i< cpuMetrics.getNumCores(); i++){
+    for (int i = 0; i < cpuMetrics.getNumCores(); i++) {
         ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
     }
     ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
@@ -93,7 +89,7 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memMetrics = memStats.measure();
     ASSERT_TRUE(memMetrics.FREE_RAM > 0);
 
-    NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM/(1024*1024) << "gb");
+    NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM / (1024 * 1024) << "gb");
 }
 
 TEST_F(MonitoringStackTest, testDiskStats) {
@@ -124,7 +120,7 @@ TEST_F(MonitoringStackTest, testMetric) {
     // test with simple data types
     metrics.emplace_back(1);
     Metric m0 = metrics[0];
-    ASSERT_TRUE(getMetricType(m0)==MetricType::UnknownType);
+    ASSERT_TRUE(getMetricType(m0) == MetricType::UnknownType);
     int valueInt = m0.getValue<int>();
     ASSERT_TRUE(valueInt == 1);
     metricsMap.insert({"sdf", 1});
@@ -320,9 +316,9 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
     NES_INFO("MonitoringStackTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, NodeType::Sensor);
-    bool retStart1 = wrk1->start(false,false);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
 
@@ -338,9 +334,9 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = crd->workerRpcClient->requestMonitoringData(destAddress, plan, tupleBuffer);
 
-    NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
-    ASSERT_TRUE(schema->getSize()>1);
-    ASSERT_TRUE(tupleBuffer.getNumberOfTuples()==1);
+    NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
+    ASSERT_TRUE(schema->getSize() > 1);
+    ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 
     NES_INFO("MonitoringStackTest: Stopping worker");
@@ -360,9 +356,9 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
     NES_INFO("MonitoringStackTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
-                                                    port + 10, port + 11, NodeType::Sensor);
-    bool retStart1 = wrk1->start(false,false);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
 
@@ -376,12 +372,12 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
 
     auto iterations = 50;
 
-    for (int i=0; i<=iterations; i++) {
+    for (int i = 0; i <= iterations; i++) {
         auto [schema, tupleBuffer] = crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan);
 
-        NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port+10));
-        ASSERT_TRUE(schema->getSize()>1);
-        ASSERT_TRUE(tupleBuffer.getNumberOfTuples()==1);
+        NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
+        ASSERT_TRUE(schema->getSize() > 1);
+        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
         tupleBuffer.release();
         schema.reset();
     }
@@ -397,6 +393,4 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     EXPECT_TRUE(retStopCord);
 }
 
-
-
-}
+}// namespace NES

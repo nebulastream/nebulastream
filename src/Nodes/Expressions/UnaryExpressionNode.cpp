@@ -22,10 +22,6 @@ UnaryExpressionNode::UnaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std
 
 UnaryExpressionNode::UnaryExpressionNode(UnaryExpressionNode* other) : ExpressionNode(other) {}
 
-void UnaryExpressionNode::setChild(ExpressionNodePtr child) {
-    addChildWithEqual(child);
-}
-ExpressionNodePtr UnaryExpressionNode::child() const {
-    return children[0]->as<ExpressionNode>();
-}
+void UnaryExpressionNode::setChild(ExpressionNodePtr child) { addChildWithEqual(child); }
+ExpressionNodePtr UnaryExpressionNode::child() const { return children[0]->as<ExpressionNode>(); }
 }// namespace NES

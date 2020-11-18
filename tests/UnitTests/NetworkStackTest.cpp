@@ -58,33 +58,25 @@ class NetworkStackTest : public testing::Test {
         NES_INFO("Setup NetworkStackTest test class.");
     }
 
-    static void TearDownTestCase() {
-        std::cout << "Tear down NetworkStackTest class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down NetworkStackTest class." << std::endl; }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override {
-        NES_INFO("Setup NetworkStackTest test case.");
-    }
+    void SetUp() override { NES_INFO("Setup NetworkStackTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
-        std::cout << "Tear down NetworkStackTest test case." << std::endl;
-    }
+    void TearDown() override { std::cout << "Tear down NetworkStackTest test case." << std::endl; }
 };
 
 class TestSink : public SinkMedium {
   public:
-    SinkMediumTypes getSinkMediumType() {
-        return SinkMediumTypes::PRINT_SINK;
-    }
+    SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
-    TestSink(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
+    TestSink(SchemaPtr schema, BufferManagerPtr bufferManager)
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
 
     bool writeData(TupleBuffer& input_buffer, WorkerContextRef) override {
         std::unique_lock lock(m);
-        NES_DEBUG("TestSink:\n"
-                  << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
+        NES_DEBUG("TestSink:\n" << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 
         uint64_t sum = 0;
         for (size_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {
@@ -95,9 +87,7 @@ class TestSink : public SinkMedium {
         return true;
     }
 
-    const std::string toString() const override {
-        return "";
-    }
+    const std::string toString() const override { return ""; }
 
     void setup() override{};
 
@@ -105,9 +95,7 @@ class TestSink : public SinkMedium {
 
     ~TestSink() override{};
 
-    std::string toString() override {
-        return "PRINT_SINK";
-    }
+    std::string toString() override { return "PRINT_SINK"; }
 
   public:
     std::mutex m;
@@ -125,15 +113,11 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 
 class DummyExchangeProtocolListener : public ExchangeProtocolListener {
   public:
-    void onDataBuffer(NesPartition, TupleBuffer&) override {
-    }
-    void onEndOfStream(Messages::EndOfStreamMessage) override {
-    }
-    void onServerError(Messages::ErrorMessage) override {
-    }
+    void onDataBuffer(NesPartition, TupleBuffer&) override {}
+    void onEndOfStream(Messages::EndOfStreamMessage) override {}
+    void onServerError(Messages::ErrorMessage) override {}
 
-    void onChannelError(Messages::ErrorMessage) override {
-    }
+    void onChannelError(Messages::ErrorMessage) override {}
 };
 
 TEST_F(NetworkStackTest, serverMustStartAndStop) {
@@ -171,16 +155,11 @@ TEST_F(NetworkStackTest, startCloseChannel) {
           public:
             InternalListener(std::promise<bool>& p) : completed(p) {}
 
-            void onDataBuffer(NesPartition, TupleBuffer&) override {
-            }
-            void onEndOfStream(Messages::EndOfStreamMessage) override {
-                completed.set_value(true);
-            }
-            void onServerError(Messages::ErrorMessage) override {
-            }
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
+            void onServerError(Messages::ErrorMessage) override {}
 
-            void onChannelError(Messages::ErrorMessage) override {
-            }
+            void onChannelError(Messages::ErrorMessage) override {}
 
           private:
             std::promise<bool>& completed;
@@ -202,8 +181,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel =
-            netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
+        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 3);
         senderChannel->close();
         senderChannel.reset();
 
@@ -230,31 +208,23 @@ TEST_F(NetworkStackTest, testSendData) {
             std::atomic<bool>& bufferReceived;
 
             ExchangeListener(std::atomic<bool>& bufferReceived, std::promise<bool>& completedProm)
-                : bufferReceived(bufferReceived), completedProm(completedProm) {
-            }
+                : bufferReceived(bufferReceived), completedProm(completedProm) {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buf) override {
-                bufferReceived = (buf.getBufferSize() == bufferSize)
-                    && (id.getQueryId(), 1) && (id.getOperatorId(), 22) && (id.getPartitionId(), 333)
-                    && (id.getSubpartitionId(), 444);
+                bufferReceived = (buf.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
+                    && (id.getPartitionId(), 333) && (id.getSubpartitionId(), 444);
             }
-            void onEndOfStream(Messages::EndOfStreamMessage) override {
-                completedProm.set_value(true);
-            }
-            void onServerError(Messages::ErrorMessage) override {
-            }
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
+            void onServerError(Messages::ErrorMessage) override {}
 
-            void onChannelError(Messages::ErrorMessage) override {
-            }
+            void onChannelError(Messages::ErrorMessage) override {}
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = NetworkManager::create(
-            "127.0.0.1",
-            31337,
-            ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
+            "127.0.0.1", 31337, ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
             buffMgr);
 
         std::thread t([&netManager, &nesPartition, &completedProm, &completed] {
@@ -270,8 +240,7 @@ TEST_F(NetworkStackTest, testSendData) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel =
-            netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
+        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -308,36 +277,28 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             std::atomic<std::size_t>& bufferReceived;
 
             ExchangeListener(std::atomic<std::size_t>& bufferReceived, std::promise<bool>& completedProm)
-                : bufferReceived(bufferReceived), completedProm(completedProm) {
-            }
+                : bufferReceived(bufferReceived), completedProm(completedProm) {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
-                ASSERT_EQ((buffer.getBufferSize() == bufferSize)
-                              && (id.getQueryId(), 1) && (id.getOperatorId(), 22) && (id.getPartitionId(), 333)
-                              && (id.getSubpartitionId(), 444),
+                ASSERT_EQ((buffer.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
+                              && (id.getPartitionId(), 333) && (id.getSubpartitionId(), 444),
                           true);
                 for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                     ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
                 }
                 bufferReceived++;
             }
-            void onEndOfStream(Messages::EndOfStreamMessage) override {
-                completedProm.set_value(true);
-            }
-            void onServerError(Messages::ErrorMessage) override {
-            }
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
+            void onServerError(Messages::ErrorMessage) override {}
 
-            void onChannelError(Messages::ErrorMessage) override {
-            }
+            void onChannelError(Messages::ErrorMessage) override {}
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = NetworkManager::create(
-            "127.0.0.1",
-            31337,
-            ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
+            "127.0.0.1", 31337, ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
             buffMgr);
 
         std::thread t([&netManager, &nesPartition, &completedProm] {
@@ -347,8 +308,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel =
-            netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
+        auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -405,8 +365,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
             std::promise<bool>& channelError;
 
             ExchangeListener(std::promise<bool>& serverError, std::promise<bool>& channelError)
-                : serverError(serverError), channelError(channelError) {
-            }
+                : serverError(serverError), channelError(channelError) {}
 
             void onServerError(Messages::ErrorMessage errorMsg) override {
                 errorCallsServer++;
@@ -426,27 +385,20 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                 ASSERT_EQ(errorMsg.getErrorType(), Messages::kPartitionNotRegisteredError);
             }
 
-            void onDataBuffer(NesPartition, TupleBuffer&) override {
-            }
-            void onEndOfStream(Messages::EndOfStreamMessage) override {
-            }
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage) override {}
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = NetworkManager::create(
-            "127.0.0.1",
-            31337,
-            ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(serverError, channelError)),
+            "127.0.0.1", 31337, ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(serverError, channelError)),
             buffMgr);
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto channel = netManager->registerSubpartitionProducer(
-            nodeLocation,
-            NesPartition(1, 22, 333, 4445),
-            std::chrono::seconds(1),
-            retryTimes);
+        auto channel = netManager->registerSubpartitionProducer(nodeLocation, NesPartition(1, 22, 333, 4445),
+                                                                std::chrono::seconds(1), retryTimes);
 
         ASSERT_EQ(channel, nullptr);
         ASSERT_EQ(serverError.get_future().get(), true);
@@ -481,14 +433,11 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
           public:
             ExchangeListenerImpl(std::array<std::atomic<std::size_t>, numSendingThreads>& bufferCounter,
                                  std::vector<std::promise<bool>>& completedPromises)
-                : bufferCounter(bufferCounter), completedPromises(completedPromises) {
-            }
+                : bufferCounter(bufferCounter), completedPromises(completedPromises) {}
 
-            void onServerError(Messages::ErrorMessage) override {
-            }
+            void onServerError(Messages::ErrorMessage) override {}
 
-            void onChannelError(Messages::ErrorMessage) override {
-            }
+            void onChannelError(Messages::ErrorMessage) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
                 for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
@@ -506,10 +455,8 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
         auto buffMgr = std::make_shared<BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = NetworkManager::create(
-            "127.0.0.1",
-            31337,
-            ExchangeProtocol(partMgr, std::make_shared<ExchangeListenerImpl>(bufferCounter, completedPromises)),
-            buffMgr);
+            "127.0.0.1", 31337,
+            ExchangeProtocol(partMgr, std::make_shared<ExchangeListenerImpl>(bufferCounter, completedPromises)), buffMgr);
 
         std::thread receivingThread([&netManager, &nesPartitions, &completedPromises] {
             // register the incoming channel
@@ -530,8 +477,8 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             std::thread sendingThread([&, i] {
                 // register the incoming channel
                 NesPartition nesPartition(i, i + 10, i + 20, i + 30);
-                auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition,
-                                                                              std::chrono::seconds(2), 10);
+                auto senderChannel =
+                    netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(2), 10);
 
                 if (senderChannel == nullptr) {
                     NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
@@ -590,8 +537,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             atomic<int>& bufferCnt;
 
             ExchangeListener(std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)
-                : completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt), eosCnt(0) {
-            }
+                : completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt), eosCnt(0) {}
 
             void onServerError(Messages::ErrorMessage ex) override {
                 if (ex.getErrorType() != Messages::kPartitionNotRegisteredError) {
@@ -599,8 +545,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                 }
             }
 
-            void onChannelError(Messages::ErrorMessage) override {
-            }
+            void onChannelError(Messages::ErrorMessage) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer&) override {
                 if (nesPartition == id) {
@@ -620,10 +565,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         auto bMgr = std::make_shared<BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = NetworkManager::create(
-            "127.0.0.1",
-            31337,
-            ExchangeProtocol(pManager, std::make_shared<ExchangeListener>(completed, nesPartition, bufferCnt)),
-            bMgr);
+            "127.0.0.1", 31337,
+            ExchangeProtocol(pManager, std::make_shared<ExchangeListener>(completed, nesPartition, bufferCnt)), bMgr);
 
         std::thread receivingThread([this, &pManager, &netManager, &nesPartition, &completed] {
             // register the incoming channel
@@ -678,9 +621,8 @@ TEST_F(NetworkStackTest, testNetworkSource) {
     NesPartition nesPartition{1, 22, 33, 44};
 
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
-    auto networkSource = std::make_unique<NetworkSource>(
-        schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-        netManager, nesPartition);
+    auto networkSource = std::make_unique<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                         netManager, nesPartition);
     ASSERT_TRUE(networkSource->start());
 
     ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionCounter(nesPartition), 0);
@@ -699,39 +641,28 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
                                                          nodeEngine->getNetworkManager(), nesPartition);
     ASSERT_TRUE(networkSource->start());
 
-    auto networkSink = std::make_shared<NetworkSink>(schema, 0, nodeEngine->getNetworkManager(), nodeLocation, nesPartition, nodeEngine->getBufferManager(), nullptr);
+    auto networkSink = std::make_shared<NetworkSink>(schema, 0, nodeEngine->getNetworkManager(), nodeLocation, nesPartition,
+                                                     nodeEngine->getBufferManager(), nullptr);
 
     ASSERT_TRUE(networkSource->stop());
 }
 
 template<typename MockedNodeEngine, typename... ExtraParameters>
-std::shared_ptr<MockedNodeEngine> createMockedEngine(
-    const std::string& hostname,
-    uint16_t port,
-    size_t bufferSize,
-    size_t numBuffers,
-    ExtraParameters&&... extraParams) {
+std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname, uint16_t port, size_t bufferSize,
+                                                     size_t numBuffers, ExtraParameters&&... extraParams) {
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<QueryManager>(bufferManager, 0);
         auto networkManagerCreator = [=](NodeEnginePtr engine) {
-            return Network::NetworkManager::create(
-                hostname,
-                port,
-                Network::ExchangeProtocol(partitionManager, engine),
-                bufferManager);
+            return Network::NetworkManager::create(hostname, port, Network::ExchangeProtocol(partitionManager, engine),
+                                                   bufferManager);
         };
         auto compiler = createDefaultQueryCompiler();
-        return std::make_shared<MockedNodeEngine>(
-            std::move(streamConf),
-            std::move(bufferManager),
-            std::move(queryManager),
-            std::move(networkManagerCreator),
-            std::move(partitionManager),
-            std::move(compiler),
-            std::forward<ExtraParameters>(extraParams)...);
+        return std::make_shared<MockedNodeEngine>(std::move(streamConf), std::move(bufferManager), std::move(queryManager),
+                                                  std::move(networkManagerCreator), std::move(partitionManager),
+                                                  std::move(compiler), std::forward<ExtraParameters>(extraParams)...);
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
@@ -758,19 +689,14 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         atomic<int> eosCnt = 0;
         atomic<int>& bufferCnt;
 
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf,
-                                  BufferManagerPtr&& bufferManager,
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf, BufferManagerPtr&& bufferManager,
                                   QueryManagerPtr&& queryManager,
                                   std::function<Network::NetworkManagerPtr(NodeEnginePtr)>&& networkManagerCreator,
-                                  Network::PartitionManagerPtr&& partitionManager,
-                                  QueryCompilerPtr&& queryCompiler,
-                                  std::promise<bool>& completed,
-                                  NesPartition nesPartition,
-                                  std::atomic<int>& bufferCnt)
-            : NodeEngine(std::move(streamConf), std::move(bufferManager), std::move(queryManager), std::move(networkManagerCreator), std::move(partitionManager),
-                         std::move(queryCompiler), 0),
-              completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt) {
-        }
+                                  Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler,
+                                  std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)
+            : NodeEngine(std::move(streamConf), std::move(bufferManager), std::move(queryManager),
+                         std::move(networkManagerCreator), std::move(partitionManager), std::move(queryCompiler), 0),
+              completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt) {}
         void onDataBuffer(Network::NesPartition id, TupleBuffer&) override {
             if (nesPartition == id) {
                 bufferCnt++;
@@ -791,19 +717,17 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             }
         }
 
-        void onChannelError(Network::Messages::ErrorMessage message) override {
-            NodeEngine::onChannelError(message);
-        }
+        void onChannelError(Network::Messages::ErrorMessage message) override { NodeEngine::onChannelError(message); }
     };
 
-    auto nodeEngine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337, bufferSize, buffersManaged, completed, nesPartition, bufferCnt);
+    auto nodeEngine =
+        createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337, bufferSize, buffersManaged, completed, nesPartition, bufferCnt);
     try {
         auto netManager = nodeEngine->getNetworkManager();
 
         std::thread receivingThread([&]() {
             // register the incoming channel
-            NetworkSource source(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                 netManager, nesPartition);
+            NetworkSource source(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), netManager, nesPartition);
             ASSERT_TRUE(source.start());
             ASSERT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
             completed.get_future().get();
@@ -860,8 +784,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                           netManager, nesPartition);
     auto testSink = std::make_shared<TestSink>(schema, nodeEngine->getBufferManager());
 
-    auto query = TestQuery::from(schema)
-                     .sink(DummySink::create());
+    auto query = TestQuery::from(schema).sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -879,13 +802,12 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                 .setQuerySubPlanId(1);
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1);
-    auto networkSink = std::make_shared<NetworkSink>(schema, 2, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto testSource =
+        createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), 1);
+    auto networkSink = std::make_shared<NetworkSink>(schema, 2, netManager, nodeLocation, nesPartition,
+                                                     nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
 
-    auto query2 = TestQuery::from(schema)
-                      .filter(Attribute("id") < 5)
-                      .sink(DummySink::create());
+    auto query2 = TestQuery::from(schema).filter(Attribute("id") < 5).sink(DummySink::create());
 
     auto queryPlan2 = typeInferencePhase->execute(query2.getQueryPlan());
     auto generatableOperators2 = translatePhase->transform(queryPlan2->getRootOperators()[0]);

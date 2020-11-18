@@ -28,13 +28,9 @@ OperatorNode::OperatorNode(uint64_t id) : id(id), inputSchema(Schema::create()),
     NES_INFO("Creating Operator " << id);
 }
 
-SchemaPtr OperatorNode::getInputSchema() const {
-    return inputSchema;
-}
+SchemaPtr OperatorNode::getInputSchema() const { return inputSchema; }
 
-SchemaPtr OperatorNode::getOutputSchema() const {
-    return outputSchema;
-}
+SchemaPtr OperatorNode::getOutputSchema() const { return outputSchema; }
 
 bool OperatorNode::inferSchema() {
     // We assume that all children operators have the same output schema otherwise this plan is not valid
@@ -58,21 +54,13 @@ bool OperatorNode::inferSchema() {
     return true;
 }
 
-size_t OperatorNode::getId() const {
-    return id;
-}
+size_t OperatorNode::getId() const { return id; }
 
-void OperatorNode::setId(size_t id) {
-    OperatorNode::id = id;
-}
+void OperatorNode::setId(size_t id) { OperatorNode::id = id; }
 
-void OperatorNode::setInputSchema(SchemaPtr inputSchema) {
-    this->inputSchema = std::move(inputSchema);
-}
+void OperatorNode::setInputSchema(SchemaPtr inputSchema) { this->inputSchema = std::move(inputSchema); }
 
-void OperatorNode::setOutputSchema(SchemaPtr outputSchema) {
-    this->outputSchema = std::move(outputSchema);
-}
+void OperatorNode::setOutputSchema(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
 
 bool OperatorNode::isNAryOperator() {
     //has multiple child operator

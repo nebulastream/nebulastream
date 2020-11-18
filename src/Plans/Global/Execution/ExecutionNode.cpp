@@ -29,7 +29,8 @@
 
 namespace NES {
 
-ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) : id(physicalNode->getId()), topologyNode(physicalNode) {
+ExecutionNode::ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode)
+    : id(physicalNode->getId()), topologyNode(physicalNode) {
     QueryPlanPtr queryPlan = QueryPlan::create();
     queryPlan->appendOperatorAsNewRoot(operatorNode);
     queryPlan->setQueryId(queryId);
@@ -142,8 +143,8 @@ bool ExecutionNode::updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPt
 }
 
 const std::string ExecutionNode::toString() const {
-    return "ExecutionNode(id:" + std::to_string(id) + ", ip:" + topologyNode->getIpAddress() + ", topologyNodeId:"
-        + std::to_string(topologyNode->getId()) + ")";
+    return "ExecutionNode(id:" + std::to_string(id) + ", ip:" + topologyNode->getIpAddress()
+        + ", topologyNodeId:" + std::to_string(topologyNode->getId()) + ")";
 }
 
 ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode) {
@@ -154,28 +155,21 @@ ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode
     return std::make_shared<ExecutionNode>(ExecutionNode(physicalNode));
 }
 
-uint64_t ExecutionNode::getId() {
-    return id;
-}
+uint64_t ExecutionNode::getId() { return id; }
 
-TopologyNodePtr ExecutionNode::getTopologyNode() {
-    return topologyNode;
-}
+TopologyNodePtr ExecutionNode::getTopologyNode() { return topologyNode; }
 
-std::map<QueryId, std::vector<QueryPlanPtr>> ExecutionNode::getAllQuerySubPlans() {
-    return mapOfQuerySubPlans;
-}
+std::map<QueryId, std::vector<QueryPlanPtr>> ExecutionNode::getAllQuerySubPlans() { return mapOfQuerySubPlans; }
 
-bool ExecutionNode::equal(NodePtr rhs) const {
-    return rhs->as<ExecutionNode>()->getId() == id;
-}
+bool ExecutionNode::equal(NodePtr rhs) const { return rhs->as<ExecutionNode>()->getId() == id; }
 const std::vector<std::string> ExecutionNode::toMultilineString() {
     std::vector<std::string> lines;
     lines.push_back(toString());
 
     for (auto mapOfQuerySubPlan : mapOfQuerySubPlans) {
         for (auto queryPlan : mapOfQuerySubPlan.second) {
-            lines.push_back("QuerySubPlan(queryId:" + std::to_string(mapOfQuerySubPlan.first) + ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
+            lines.push_back("QuerySubPlan(queryId:" + std::to_string(mapOfQuerySubPlan.first)
+                            + ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
 
             // Split the string representation of the queryPlan into multiple lines
             std::string s = queryPlan->toString();

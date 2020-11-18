@@ -26,11 +26,9 @@ typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
 
 class SystemCompilerCompiledCode : public CompiledCode {
   public:
-    SystemCompilerCompiledCode(SharedLibraryPtr library,
-                               const std::string& baseName);
+    SystemCompilerCompiledCode(SharedLibraryPtr library, const std::string& baseName);
 
-    static CompiledCodePtr create(SharedLibraryPtr library,
-                                  const std::string& baseName);
+    static CompiledCodePtr create(SharedLibraryPtr library, const std::string& baseName);
 
     ~SystemCompilerCompiledCode() override;
 

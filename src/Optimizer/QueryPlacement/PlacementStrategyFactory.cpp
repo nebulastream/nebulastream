@@ -20,11 +20,11 @@
 
 namespace NES {
 
-std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                                                             TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog) {
+std::unique_ptr<BasePlacementStrategy>
+PlacementStrategyFactory::getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                      TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog) {
     switch (stringToPlacementStrategyType[strategyName]) {
-        case BottomUp:
-            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         case TopDown:
             return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
             // FIXME: enable them with issue #755
@@ -33,8 +33,7 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(std
             //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
             //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
             //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
-        default:
-            return nullptr;
+        default: return nullptr;
     }
 }
 

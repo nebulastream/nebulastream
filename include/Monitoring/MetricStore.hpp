@@ -26,9 +26,7 @@ namespace NES {
  */
 class MetricStore {
   public:
-    MetricStore() {
-        NES_NOT_IMPLEMENTED();
-    }
+    MetricStore() { NES_NOT_IMPLEMENTED(); }
 };
 
 }// namespace NES

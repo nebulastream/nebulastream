@@ -90,7 +90,8 @@ z3::expr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(ExpressionNode
         auto right = createForExpression(divExpressionNode->getRight(), context);
         return to_expr(context, Z3_mk_div(context, left, right));
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the arithmetical expression node: " + expression->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the arithmetical expression node: "
+                            + expression->toString());
 }
 
 z3::expr ExpressionToZ3ExprUtil::createForLogicalExpressions(ExpressionNodePtr expression, z3::context& context) {

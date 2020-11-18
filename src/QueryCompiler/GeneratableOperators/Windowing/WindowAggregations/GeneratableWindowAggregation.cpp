@@ -19,6 +19,7 @@
 
 namespace NES {
 
-GeneratableWindowAggregation::GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) : aggregationDescriptor(std::move(aggregationDescriptor)) {}
+GeneratableWindowAggregation::GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
+    : aggregationDescriptor(std::move(aggregationDescriptor)) {}
 
 }// namespace NES

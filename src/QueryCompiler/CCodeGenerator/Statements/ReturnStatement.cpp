@@ -20,9 +20,7 @@ namespace NES {
 
 ReturnStatement::ReturnStatement(VarRefStatement var_ref) : var_ref_(var_ref) {}
 
-StatementType ReturnStatement::getStamentType() const {
-    return RETURN_STMT;
-}
+StatementType ReturnStatement::getStamentType() const { return RETURN_STMT; }
 
 const CodeExpressionPtr ReturnStatement::getCode() const {
     std::stringstream stmt;
@@ -30,9 +28,7 @@ const CodeExpressionPtr ReturnStatement::getCode() const {
     return std::make_shared<CodeExpression>(stmt.str());
 }
 
-const StatementPtr ReturnStatement::createCopy() const {
-    return std::make_shared<ReturnStatement>(*this);
-}
+const StatementPtr ReturnStatement::createCopy() const { return std::make_shared<ReturnStatement>(*this); }
 
 ReturnStatement::~ReturnStatement() {}
 

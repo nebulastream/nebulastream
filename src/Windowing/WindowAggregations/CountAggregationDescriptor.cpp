@@ -21,10 +21,13 @@
 
 namespace NES::Windowing {
 
-CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
-CountAggregationDescriptor::CountAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field)
+    : WindowAggregationDescriptor(std::move(field)) {}
+CountAggregationDescriptor::CountAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
+    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
 
-WindowAggregationPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField) {
+WindowAggregationPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
+                                                        FieldAccessExpressionNodePtr asField) {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
@@ -33,9 +36,7 @@ WindowAggregationPtr CountAggregationDescriptor::on() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
-WindowAggregationDescriptor::Type CountAggregationDescriptor::getType() {
-    return Count;
-}
+WindowAggregationDescriptor::Type CountAggregationDescriptor::getType() { return Count; }
 
 void CountAggregationDescriptor::inferStamp(SchemaPtr) {
     // a count aggregation is always on an int 64
@@ -44,13 +45,7 @@ void CountAggregationDescriptor::inferStamp(SchemaPtr) {
 WindowAggregationPtr CountAggregationDescriptor::copy() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
-DataTypePtr CountAggregationDescriptor::getInputStamp() {
-    return DataTypeFactory::createInt64();
-}
-DataTypePtr CountAggregationDescriptor::getPartialAggregateStamp() {
-    return DataTypeFactory::createInt64();
-}
-DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp() {
-    return DataTypeFactory::createInt64();
-}
+DataTypePtr CountAggregationDescriptor::getInputStamp() { return DataTypeFactory::createInt64(); }
+DataTypePtr CountAggregationDescriptor::getPartialAggregateStamp() { return DataTypeFactory::createInt64(); }
+DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp() { return DataTypeFactory::createInt64(); }
 }// namespace NES::Windowing

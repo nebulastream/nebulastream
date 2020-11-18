@@ -30,37 +30,20 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-Predicate::Predicate(const BinaryOperatorType& op,
-                     const UserAPIExpressionPtr left,
-                     const UserAPIExpressionPtr right,
-                     const std::string& functionCallOverload,
-                     bool bracket) : op(op),
-                                     left(left),
-                                     right(right),
-                                     bracket(bracket),
-                                     functionCallOverload(functionCallOverload) {}
+Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right,
+                     const std::string& functionCallOverload, bool bracket)
+    : op(op), left(left), right(right), bracket(bracket), functionCallOverload(functionCallOverload) {}
 
-Predicate::Predicate(const BinaryOperatorType& op,
-                     const UserAPIExpressionPtr left,
-                     const UserAPIExpressionPtr right,
-                     bool bracket) : op(op),
-                                     left(left),
-                                     right(right),
-                                     bracket(bracket),
-                                     functionCallOverload("") {}
+Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right,
+                     bool bracket)
+    : op(op), left(left), right(right), bracket(bracket), functionCallOverload("") {}
 
-UserAPIExpressionPtr Predicate::copy() const {
-    return std::make_shared<Predicate>(*this);
-}
+UserAPIExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
 
 const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code) const {
     if (functionCallOverload.empty()) {
         if (bracket)
-            return BinaryOperatorStatement(*(left->generateCode(code)),
-                                           op,
-                                           *(right->generateCode(code)),
-                                           BRACKETS)
-                .copy();
+            return BinaryOperatorStatement(*(left->generateCode(code)), op, *(right->generateCode(code)), BRACKETS).copy();
         return BinaryOperatorStatement(*(left->generateCode(code)), op, *(right->generateCode(code))).copy();
     } else {
         std::stringstream str;
@@ -69,14 +52,14 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code) cons
         expr.addParameter(right->generateCode(code));
         auto tf = CompilerTypesFactory();
         if (bracket)
-            return BinaryOperatorStatement(expr,
-                                           op,
-                                           (ConstantExpressionStatement(tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
+            return BinaryOperatorStatement(expr, op,
+                                           (ConstantExpressionStatement(tf.createValueType(
+                                               DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
                                            BRACKETS)
                 .copy();
-        return BinaryOperatorStatement(expr,
-                                       op,
-                                       (ConstantExpressionStatement(tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))))
+        return BinaryOperatorStatement(expr, op,
+                                       (ConstantExpressionStatement(tf.createValueType(
+                                           DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))))
             .copy();
     }
 }
@@ -87,7 +70,9 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr& code) 
         if (code->structDeclaratonInputTuple.containsField(attribute->name, attribute->getDataType())) {
             // creates a new variable declaration for the predicate field.
             VariableDeclaration var_decl_attr = code->structDeclaratonInputTuple.getVariableDeclaration(attribute->name);
-            return ((VarRef(code->varDeclarationInputTuples)[VarRef(*code->varDeclarationRecordIndex)]).accessRef(VarRef(var_decl_attr))).copy();
+            return ((VarRef(code->varDeclarationInputTuples)[VarRef(*code->varDeclarationRecordIndex)])
+                        .accessRef(VarRef(var_decl_attr)))
+                .copy();
         } else {
             NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from StructDeclaration!");
         }
@@ -123,49 +108,53 @@ bool Predicate::equals(const UserAPIExpression& _rhs) const {
     }
 }
 
-PredicateItem::PredicateItem(AttributeFieldPtr attribute) : mutation(PredicateItemMutation::ATTRIBUTE),
-                                                            attribute(attribute) {}
-BinaryOperatorType Predicate::getOperatorType() const {
-    return op;
-}
+PredicateItem::PredicateItem(AttributeFieldPtr attribute) : mutation(PredicateItemMutation::ATTRIBUTE), attribute(attribute) {}
+BinaryOperatorType Predicate::getOperatorType() const { return op; }
 
-const UserAPIExpressionPtr Predicate::getLeft() const {
-    return left;
-}
+const UserAPIExpressionPtr Predicate::getLeft() const { return left; }
 
-const UserAPIExpressionPtr Predicate::getRight() const {
-    return right;
-}
+const UserAPIExpressionPtr Predicate::getRight() const { return right; }
 
-PredicateItem::PredicateItem(ValueTypePtr value) : mutation(PredicateItemMutation::VALUE),
-                                                   value(value) {}
+PredicateItem::PredicateItem(ValueTypePtr value) : mutation(PredicateItemMutation::VALUE), value(value) {}
 
-PredicateItem::PredicateItem(int8_t val) : mutation(PredicateItemMutation::VALUE),
-                                           value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(val))) {}
-PredicateItem::PredicateItem(uint8_t val) : mutation(PredicateItemMutation::VALUE),
-                                            value(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), std::to_string(val))) {}
-PredicateItem::PredicateItem(int16_t val) : mutation(PredicateItemMutation::VALUE),
-                                            value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(val))) {}
-PredicateItem::PredicateItem(uint16_t val) : mutation(PredicateItemMutation::VALUE),
-                                             value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(val))) {}
-PredicateItem::PredicateItem(int32_t val) : mutation(PredicateItemMutation::VALUE),
-                                            value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(val))) {}
-PredicateItem::PredicateItem(uint32_t val) : mutation(PredicateItemMutation::VALUE),
-                                             value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(val))) {}
-PredicateItem::PredicateItem(int64_t val) : mutation(PredicateItemMutation::VALUE),
-                                            value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(val))) {}
-PredicateItem::PredicateItem(uint64_t val) : mutation(PredicateItemMutation::VALUE),
-                                             value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(val))) {}
-PredicateItem::PredicateItem(float val) : mutation(PredicateItemMutation::VALUE),
-                                          value(DataTypeFactory::createBasicValue(DataTypeFactory::createFloat(), std::to_string(val))) {}
-PredicateItem::PredicateItem(double val) : mutation(PredicateItemMutation::VALUE),
-                                           value(DataTypeFactory::createBasicValue(DataTypeFactory::createDouble(), std::to_string(val))) {}
-PredicateItem::PredicateItem(bool val) : mutation(PredicateItemMutation::VALUE),
-                                         value(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(val))) {}
-PredicateItem::PredicateItem(char val) : mutation(PredicateItemMutation::VALUE),
-                                         value(DataTypeFactory::createBasicValue(DataTypeFactory::createChar(), std::to_string(val))) {}
-PredicateItem::PredicateItem(const char* val) : mutation(PredicateItemMutation::VALUE),
-                                                value(DataTypeFactory::createFixedCharValue(val)) {}
+PredicateItem::PredicateItem(int8_t val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(val))) {}
+PredicateItem::PredicateItem(uint8_t val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), std::to_string(val))) {}
+PredicateItem::PredicateItem(int16_t val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(val))) {}
+PredicateItem::PredicateItem(uint16_t val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(val))) {}
+PredicateItem::PredicateItem(int32_t val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(val))) {}
+PredicateItem::PredicateItem(uint32_t val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(val))) {}
+PredicateItem::PredicateItem(int64_t val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(val))) {}
+PredicateItem::PredicateItem(uint64_t val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(val))) {}
+PredicateItem::PredicateItem(float val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createFloat(), std::to_string(val))) {}
+PredicateItem::PredicateItem(double val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createDouble(), std::to_string(val))) {}
+PredicateItem::PredicateItem(bool val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(val))) {}
+PredicateItem::PredicateItem(char val)
+    : mutation(PredicateItemMutation::VALUE),
+      value(DataTypeFactory::createBasicValue(DataTypeFactory::createChar(), std::to_string(val))) {}
+PredicateItem::PredicateItem(const char* val)
+    : mutation(PredicateItemMutation::VALUE), value(DataTypeFactory::createFixedCharValue(val)) {}
 
 const std::string PredicateItem::toString() const {
     switch (mutation) {
@@ -178,9 +167,7 @@ const std::string PredicateItem::toString() const {
     return "";
 }
 
-bool PredicateItem::isStringType() const {
-    return (getDataTypePtr()->isFixedChar());
-}
+bool PredicateItem::isStringType() const { return (getDataTypePtr()->isFixedChar()); }
 
 const DataTypePtr PredicateItem::getDataTypePtr() const {
     if (attribute)
@@ -188,9 +175,7 @@ const DataTypePtr PredicateItem::getDataTypePtr() const {
     return value->getType();
 };
 
-UserAPIExpressionPtr PredicateItem::copy() const {
-    return std::make_shared<PredicateItem>(*this);
-}
+UserAPIExpressionPtr PredicateItem::copy() const { return std::make_shared<PredicateItem>(*this); }
 
 bool PredicateItem::equals(const UserAPIExpression& _rhs) const {
     try {
@@ -206,9 +191,7 @@ bool PredicateItem::equals(const UserAPIExpression& _rhs) const {
     }
 }
 
-const ValueTypePtr& PredicateItem::getValue() const {
-    return value;
-}
+const ValueTypePtr& PredicateItem::getValue() const { return value; }
 
 Field::Field(AttributeFieldPtr field) : PredicateItem(field), _name(field->name) {}
 

@@ -40,10 +40,7 @@ class OPCSinkDescriptor : public SinkDescriptor {
      * @param password: password for server
      * @return descriptor for OPC sink
      */
-    static SinkDescriptorPtr create(std::string url,
-                                    UA_NodeId nodeId,
-                                    std::string user,
-                                    std::string password);
+    static SinkDescriptorPtr create(std::string url, UA_NodeId nodeId, std::string user, std::string password);
 
     /**
      * @brief Get the OPC server url where the data is to be written to

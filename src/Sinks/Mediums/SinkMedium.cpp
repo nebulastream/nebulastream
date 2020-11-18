@@ -23,13 +23,8 @@
 namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId)
-    : sinkFormat(std::move(sinkFormat)),
-      parentPlanId(parentPlanId),
-      sentBuffer(0),
-      sentTuples(0),
-      schemaWritten(false),
-      append(false),
-      writeMutex() {
+    : sinkFormat(std::move(sinkFormat)), parentPlanId(parentPlanId), sentBuffer(0), sentTuples(0), schemaWritten(false),
+      append(false), writeMutex() {
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
@@ -42,21 +37,13 @@ size_t SinkMedium::getNumberOfWrittenOutTuples() {
     return sentTuples;
 }
 
-SinkMedium::~SinkMedium() {
-    NES_DEBUG("Destroy Data Sink  " << this);
-}
+SinkMedium::~SinkMedium() { NES_DEBUG("Destroy Data Sink  " << this); }
 
-SchemaPtr SinkMedium::getSchemaPtr() const {
-    return sinkFormat->getSchemaPtr();
-}
+SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); }
 
-std::string SinkMedium::getSinkFormat() {
-    return sinkFormat->toString();
-}
+std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
-bool SinkMedium::getAppendAsBool() {
-    return append;
-}
+bool SinkMedium::getAppendAsBool() { return append; }
 
 std::string SinkMedium::getAppendAsString() {
     if (append) {

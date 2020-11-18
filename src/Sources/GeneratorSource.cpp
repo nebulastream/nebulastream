@@ -27,7 +27,5 @@ const std::string GeneratorSource::toString() const {
     ss << "), NUM_BUFFERS=" << this->numBuffersToProcess << " frequency=" << this->gatheringInterval << "))";
     return ss.str();
 }
-SourceType GeneratorSource::getType() const {
-    return TEST_SOURCE;
-}
+SourceType GeneratorSource::getType() const { return TEST_SOURCE; }
 }// namespace NES

@@ -32,9 +32,7 @@ void GeneratableScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextP
     getParents()[0]->as<GeneratableOperator>()->consume(codegen, context);
 }
 
-OperatorNodePtr GeneratableScanOperator::copy() {
-    return GeneratableScanOperator::create(schema, id);
-}
+OperatorNodePtr GeneratableScanOperator::copy() { return GeneratableScanOperator::create(schema, id); }
 
 GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema, OperatorId id) {
     return std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema, id));

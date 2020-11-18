@@ -20,19 +20,12 @@
 
 namespace NES::Windowing {
 
-WindowType::WindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(std::move(timeCharacteristic)) {
-}
+WindowType::WindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(std::move(timeCharacteristic)) {}
 
-TimeCharacteristicPtr WindowType::getTimeCharacteristic() const {
-    return this->timeCharacteristic;
-}
+TimeCharacteristicPtr WindowType::getTimeCharacteristic() const { return this->timeCharacteristic; }
 
-bool WindowType::isSlidingWindow() {
-    return false;
-}
+bool WindowType::isSlidingWindow() { return false; }
 
-bool WindowType::isTumblingWindow() {
-    return false;
-}
+bool WindowType::isTumblingWindow() { return false; }
 
 }// namespace NES::Windowing

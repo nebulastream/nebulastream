@@ -20,15 +20,9 @@ namespace NES {
 
 PrintSinkDescriptor::PrintSinkDescriptor() {}
 
-SinkDescriptorPtr PrintSinkDescriptor::create() {
-    return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor());
-}
+SinkDescriptorPtr PrintSinkDescriptor::create() { return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor()); }
 
-std::string PrintSinkDescriptor::toString() {
-    return "PrintSinkDescriptor()";
-}
-bool PrintSinkDescriptor::equal(SinkDescriptorPtr other) {
-    return other->instanceOf<PrintSinkDescriptor>();
-}
+std::string PrintSinkDescriptor::toString() { return "PrintSinkDescriptor()"; }
+bool PrintSinkDescriptor::equal(SinkDescriptorPtr other) { return other->instanceOf<PrintSinkDescriptor>(); }
 
 }// namespace NES

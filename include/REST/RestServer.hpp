@@ -62,9 +62,9 @@ class RestServer {
     * @param handle to coordinator
      *
    * */
-    RestServer(std::string host, uint16_t port, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService, MonitoringServicePtr monitoringService,
-               GlobalQueryPlanPtr globalQueryPlan);
+    RestServer(std::string host, uint16_t port, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
+               StreamCatalogPtr streamCatalog, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
+               QueryServicePtr queryService, MonitoringServicePtr monitoringService, GlobalQueryPlanPtr globalQueryPlan);
 
     ~RestServer();
     /**

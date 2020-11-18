@@ -29,15 +29,13 @@ TupleBuffer::TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr,
     // nop
 }
 
-TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr),
-                                                              size(other.size) {
+TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
     if (controlBlock) {
         controlBlock->retain();
     }
 }
 
-TupleBuffer::TupleBuffer(TupleBuffer&& other) noexcept
-    : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
+TupleBuffer::TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
     other.controlBlock = nullptr;
     other.ptr = nullptr;
     other.size = 0;
@@ -72,13 +70,9 @@ TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) {
     return *this;
 }
 
-TupleBuffer::~TupleBuffer() {
-    release();
-}
+TupleBuffer::~TupleBuffer() { release(); }
 
-bool TupleBuffer::isValid() const {
-    return ptr != nullptr;
-}
+bool TupleBuffer::isValid() const { return ptr != nullptr; }
 
 TupleBuffer& TupleBuffer::retain() {
     controlBlock->retain();
@@ -93,37 +87,21 @@ void TupleBuffer::release() {
     }
 }
 
-size_t TupleBuffer::getBufferSize() const {
-    return size;
-}
+size_t TupleBuffer::getBufferSize() const { return size; }
 
-size_t TupleBuffer::getNumberOfTuples() const {
-    return controlBlock->getNumberOfTuples();
-}
+size_t TupleBuffer::getNumberOfTuples() const { return controlBlock->getNumberOfTuples(); }
 
-void TupleBuffer::setNumberOfTuples(size_t numberOfTuples) {
-    controlBlock->setNumberOfTuples(numberOfTuples);
-}
+void TupleBuffer::setNumberOfTuples(size_t numberOfTuples) { controlBlock->setNumberOfTuples(numberOfTuples); }
 
-void TupleBuffer::revertEndianness(SchemaPtr schema) {
-    detail::revertEndianness(*this, schema);
-}
+void TupleBuffer::revertEndianness(SchemaPtr schema) { detail::revertEndianness(*this, schema); }
 
-int64_t TupleBuffer::getWatermark() {
-    return controlBlock->getWatermark();
-}
+int64_t TupleBuffer::getWatermark() { return controlBlock->getWatermark(); }
 
-uint64_t TupleBuffer::getOriginId() {
-    return controlBlock->getOriginId();
-}
+uint64_t TupleBuffer::getOriginId() { return controlBlock->getOriginId(); }
 
-void TupleBuffer::setOriginId(uint64_t id) {
-    controlBlock->setOriginId(id);
-}
+void TupleBuffer::setOriginId(uint64_t id) { controlBlock->setOriginId(id); }
 
-void TupleBuffer::setWatermark(int64_t value) {
-    controlBlock->setWatermark(value);
-}
+void TupleBuffer::setWatermark(int64_t value) { controlBlock->setWatermark(value); }
 
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
     std::swap(lhs.ptr, rhs.ptr);

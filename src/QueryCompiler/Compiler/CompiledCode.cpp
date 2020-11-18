@@ -15,6 +15,4 @@
 */
 
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
-namespace NES {
-
-}
+namespace NES {}

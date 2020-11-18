@@ -73,17 +73,20 @@ typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class BaseExecutableWindowAction;
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-using BaseExecutableWindowActionPtr = std::shared_ptr<BaseExecutableWindowAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+using BaseExecutableWindowActionPtr =
+    std::shared_ptr<BaseExecutableWindowAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class ExecutableCompleteAggregationTriggerAction;
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-using ExecutableCompleteAggregationTriggerActionPtr = std::shared_ptr<ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+using ExecutableCompleteAggregationTriggerActionPtr =
+    std::shared_ptr<ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class ExecutableSliceAggregationTriggerAction;
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
-using ExecutableSliceAggregationTriggerActionPtr = std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
+using ExecutableSliceAggregationTriggerActionPtr =
+    std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
 class LogicalWindowDefinition;
 typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
@@ -120,9 +123,7 @@ typedef std::shared_ptr<TimeCharacteristic> TimeCharacteristicPtr;
 class DistributionCharacteristic;
 typedef std::shared_ptr<DistributionCharacteristic> DistributionCharacteristicPtr;
 
-inline uint64_t getTsFromClock() {
-    return time(NULL) * 1000;
-}
+inline uint64_t getTsFromClock() { return time(NULL) * 1000; }
 
 class WindowAggregationDescriptor;
 typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;

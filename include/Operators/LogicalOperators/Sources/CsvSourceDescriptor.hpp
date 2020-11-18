@@ -27,26 +27,13 @@ namespace NES {
 class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string filePath,
-                                      std::string delimiter,
-                                      size_t numBuffersToProcess,
-                                      size_t numberOfTuplesToProducePerBuffer,
-                                      size_t frequency,
-                                      bool endlessRepeat,
-                                      bool skipHeader,
-                                      OperatorId operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath, std::string delimiter, size_t numBuffersToProcess,
+                                      size_t numberOfTuplesToProducePerBuffer, size_t frequency, bool endlessRepeat,
+                                      bool skipHeader, OperatorId operatorId);
 
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string streamName,
-                                      std::string filePath,
-                                      std::string delimiter,
-                                      size_t numberOfTuplesToProducePerBuffer,
-                                      size_t numBuffersToProcess,
-                                      size_t frequency,
-                                      bool endlessRepeat,
-                                      bool skipHeader,
-                                      OperatorId operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
+                                      size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                      bool endlessRepeat, bool skipHeader, OperatorId operatorId);
 
     /**
      * @brief get file path for reading the csv file
@@ -89,26 +76,13 @@ class CsvSourceDescriptor : public SourceDescriptor {
     void setEndlessRepeat(bool endlessRepeat);
 
   private:
-    explicit CsvSourceDescriptor(SchemaPtr schema,
-                                 std::string filePath,
-                                 std::string delimiter,
-                                 size_t numberOfTuplesToProducePerBuffer,
-                                 size_t numBuffersToProcess,
-                                 size_t frequency,
-                                 bool endlessRepeat,
-                                 bool skipHeader,
-                                 OperatorId operatorId);
+    explicit CsvSourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
+                                 size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                 bool endlessRepeat, bool skipHeader, OperatorId operatorId);
 
-    explicit CsvSourceDescriptor(SchemaPtr schema,
-                                 std::string streamName,
-                                 std::string filePath,
-                                 std::string delimiter,
-                                 size_t numberOfTuplesToProducePerBuffer,
-                                 size_t numBuffersToProcess,
-                                 size_t frequency,
-                                 bool endlessRepeat,
-                                 bool skipHeader,
-                                 OperatorId operatorId);
+    explicit CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
+                                 size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                 bool endlessRepeat, bool skipHeader, OperatorId operatorId);
 
     std::string filePath;
     std::string delimiter;

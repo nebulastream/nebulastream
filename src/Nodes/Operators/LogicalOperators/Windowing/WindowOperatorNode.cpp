@@ -14,14 +14,12 @@
     limitations under the License.
 */
 
-
 #include <Nodes/Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
-namespace NES{
+namespace NES {
 
-WindowOperatorNode::WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition): windowDefinition(windowDefinition) {}
+WindowOperatorNode::WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition)
+    : windowDefinition(windowDefinition) {}
 
-Windowing::LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const {
-    return  windowDefinition;
-}
+Windowing::LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const { return windowDefinition; }
 
-}
+}// namespace NES

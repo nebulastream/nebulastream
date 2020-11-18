@@ -52,9 +52,7 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType
      */
-    AVGPartialType<InputType> lift(InputType inputValue) override {
-        return AVGPartialType<InputType>(inputValue);
-    }
+    AVGPartialType<InputType> lift(InputType inputValue) override { return AVGPartialType<InputType>(inputValue); }
 
     /*
      * @brief combines two partial aggregates to a new partial aggregate

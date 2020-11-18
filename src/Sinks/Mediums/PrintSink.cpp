@@ -23,20 +23,13 @@
 
 namespace NES {
 PrintSink::PrintSink(SinkFormatPtr format, QuerySubPlanId parentPlanId, std::ostream& pOutputStream)
-    : SinkMedium(format, parentPlanId),
-      outputStream(pOutputStream) {
-}
+    : SinkMedium(format, parentPlanId), outputStream(pOutputStream) {}
 
-PrintSink::~PrintSink() {
-}
+PrintSink::~PrintSink() {}
 
-std::string PrintSink::toString() {
-    return "PRINT_SINK";
-}
+std::string PrintSink::toString() { return "PRINT_SINK"; }
 
-SinkMediumTypes PrintSink::getSinkMediumType() {
-    return PRINT_SINK;
-}
+SinkMediumTypes PrintSink::getSinkMediumType() { return PRINT_SINK; }
 
 bool PrintSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     std::unique_lock lock(writeMutex);

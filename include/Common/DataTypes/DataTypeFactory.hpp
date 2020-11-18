@@ -26,20 +26,7 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
-enum BasicType {
-    INT8,
-    UINT8,
-    INT16,
-    UINT16,
-    INT32,
-    UINT32,
-    INT64,
-    FLOAT32,
-    UINT64,
-    FLOAT64,
-    BOOLEAN,
-    CHAR
-};
+enum BasicType { INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, FLOAT32, UINT64, FLOAT64, BOOLEAN, CHAR };
 
 /**
  * @brief The data type factory offers multiple methods to construct data types

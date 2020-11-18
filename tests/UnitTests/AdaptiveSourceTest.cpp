@@ -18,8 +18,8 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/AdaptiveSource.hpp>
 
-#include <gtest/gtest.h>
 #include <boost/algorithm/string.hpp>
+#include <gtest/gtest.h>
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <sstream>
@@ -34,17 +34,11 @@ class AdaptiveSourceTest : public testing::Test {
         NES_INFO("Setup AdaptiveSourceTest test class.");
     }
 
-    static void TearDownTestCase() {
-        NES_INFO("Tear down AdaptiveSourceTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down AdaptiveSourceTest test class."); }
 
-    void SetUp() override {
-        NES_INFO("Setup AdaptiveSourceTest class.");
-    }
+    void SetUp() override { NES_INFO("Setup AdaptiveSourceTest class."); }
 
-    void TearDown() override {
-        NES_INFO("Tear down AdaptiveSourceTest test case.");
-    }
+    void TearDown() override { NES_INFO("Tear down AdaptiveSourceTest test case."); }
 };
 
 struct __attribute__((packed)) inputRow {
@@ -55,8 +49,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
     MockCSVAdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                           size_t initialGatheringInterval, std::string filePath)
-        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1 ),
-          filePath(filePath) {};
+        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1), filePath(filePath){};
 
     ~MockCSVAdaptiveSource() = default;
 
@@ -65,8 +58,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     const std::string toString() const override {
         std::stringstream ss;
         ss << "ADAPTIVE_CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath
-           << " gatherInterval=" << this->getGatheringInterval() << " numBuff="
-           << this->numBuffersToProcess << ")";
+           << " gatherInterval=" << this->getGatheringInterval() << " numBuff=" << this->numBuffersToProcess << ")";
         return ss.str();
     };
 
@@ -87,8 +79,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
             size_t offset = 0;
             offset += sizeof(UINT32);
             uint32_t val = std::stoul(tokens[0].c_str());
-            memcpy(tupleBuffer.getBufferAs<char>() + offset + i * 4096, &val,
-                   4);
+            memcpy(tupleBuffer.getBufferAs<char>() + offset + i * 4096, &val, 4);
             ++i;
         }
         generatedTuples += generated_tuples_this_pass;
@@ -106,12 +97,9 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     };
 };
 
-const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema,
-                                                BufferManagerPtr bufferManager,
-                                                QueryManagerPtr queryManager,
+const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                                 size_t initialGatheringInterval, std::string filePath) {
-    return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager,
-                                                   initialGatheringInterval, filePath);
+    return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager, initialGatheringInterval, filePath);
 }
 
 /**
@@ -123,19 +111,15 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
 
-    std::string path_to_file =
-        "../tests/test_data/adaptive-test-mock.csv";
+    std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
 
-    SchemaPtr schema =
-        Schema::create()
-            ->addField("temperature", UINT32);
+    SchemaPtr schema = Schema::create()->addField("temperature", UINT32);
 
     size_t num_of_buffers = 1;
     size_t initialGatheringInterval = 4;
 
-    const DataSourcePtr source = createMockCSVAdaptiveSource(schema, nodeEngine->getBufferManager(),
-                                                             nodeEngine->getQueryManager(), initialGatheringInterval,
-                                                             path_to_file);
+    const DataSourcePtr source = createMockCSVAdaptiveSource(
+        schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file);
 
     ASSERT_TRUE(source->start());
 

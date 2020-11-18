@@ -104,7 +104,8 @@ class L0QueryMergerRule {
      * @param targetGQNToHostGQNMap : the map containing list of target and host pairs with eaqual operator sets
      * @return true if the GQN can be merged else false
      */
-    bool checkIfGQNCanMerge(const GlobalQueryNodePtr& targetGQNode, const GlobalQueryNodePtr& hostGQNode, std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap);
+    bool checkIfGQNCanMerge(const GlobalQueryNodePtr& targetGQNode, const GlobalQueryNodePtr& hostGQNode,
+                            std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap);
 
     /**
      * @brief Check if the two set of GQNs are equal

@@ -70,9 +70,8 @@ class TestUtils {
                 NES_DEBUG("checkCompleteOrTimeout: NodeEnginePtr results are correct");
                 return true;
             }
-            NES_DEBUG(
-                "checkCompleteOrTimeout: NodeEnginePtr sleep because val=" << ptr->getQueryStatistics(queryId)[0]->getProcessedTuple()
-                                                                           << " < " << expectedResult);
+            NES_DEBUG("checkCompleteOrTimeout: NodeEnginePtr sleep because val="
+                      << ptr->getQueryStatistics(queryId)[0]->getProcessedTuple() << " < " << expectedResult);
             sleep(1);
         }
         NES_DEBUG("checkCompleteOrTimeout: NodeEnginePtr expected results are not reached after timeout");
@@ -94,8 +93,7 @@ class TestUtils {
 
         NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
-            web::http::client::http_client clientProc(
-                "http://localhost:8081/v1/nes/queryCatalog/status");
+            web::http::client::http_client clientProc("http://localhost:8081/v1/nes/queryCatalog/status");
             clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
                 .then([](const web::http::http_response& response) {
                     cout << "Get query status" << endl;
@@ -119,12 +117,12 @@ class TestUtils {
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
 
-            web::http::client::http_client clientProc(
-                "http://localhost:8081/v1/nes/queryCatalog/getNumberOfProducedBuffers");
-            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId).then([](const web::http::http_response& response) {
-                                                                                    cout << "read number of buffers" << endl;
-                                                                                    return response.extract_json();
-                                                                                })
+            web::http::client::http_client clientProc("http://localhost:8081/v1/nes/queryCatalog/getNumberOfProducedBuffers");
+            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
+                .then([](const web::http::http_response& response) {
+                    cout << "read number of buffers" << endl;
+                    return response.extract_json();
+                })
                 .then([&json_return, &currentResult](const pplx::task<web::json::value>& task) {
                     try {
                         NES_DEBUG("got #buffers=" << json_return);
@@ -140,12 +138,11 @@ class TestUtils {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct");
                 return true;
             }
-            NES_DEBUG(
-                "checkCompleteOrTimeout: sleep because val=" << currentResult
-                                                             << " < " << expectedResult);
+            NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << currentResult << " < " << expectedResult);
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout currentResult=" << currentResult << " expectedResult=" << expectedResult);
+        NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout currentResult="
+                  << currentResult << " expectedResult=" << expectedResult);
         return false;
     }
 
@@ -157,12 +154,12 @@ class TestUtils {
     static bool stopQueryViaRest(QueryId queryId) {
         web::json::value json_return;
 
-        web::http::client::http_client client(
-            "http://127.0.0.1:8081/v1/nes/query/stop-query");
-        client.request(web::http::methods::DEL, _XPLATSTR("/"), queryId).then([](const web::http::http_response& response) {
-                                                                            NES_INFO("get first then");
-                                                                            return response.extract_json();
-                                                                        })
+        web::http::client::http_client client("http://127.0.0.1:8081/v1/nes/query/stop-query");
+        client.request(web::http::methods::DEL, _XPLATSTR("/"), queryId)
+            .then([](const web::http::http_response& response) {
+                NES_INFO("get first then");
+                return response.extract_json();
+            })
             .then([&json_return](const pplx::task<web::json::value>& task) {
                 try {
                     NES_INFO("set return");
@@ -217,12 +214,12 @@ class TestUtils {
     static bool addLogicalStream(string schemaString) {
         web::json::value json_returnSchema;
 
-        web::http::client::http_client clientSchema(
-            "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
-        clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString).then([](const web::http::http_response& response) {
-                                                                                        NES_INFO("get first then");
-                                                                                        return response.extract_json();
-                                                                                    })
+        web::http::client::http_client clientSchema("http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
+        clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
+            .then([](const web::http::http_response& response) {
+                NES_INFO("get first then");
+                return response.extract_json();
+            })
             .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
                 try {
                     NES_INFO("set return");
@@ -278,7 +275,8 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<size_t>>
-    static bool checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
+                                       size_t expectedResult) {
 
         GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
         if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
@@ -301,19 +299,20 @@ class TestUtils {
             }
             size_t processed = statistics[0]->getProcessedBuffers();
             if (cmp(processed, expectedResult)) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct procBuffer=" << statistics[0]->getProcessedBuffers()
-                                                                                    << " procTasks=" << statistics[0]->getProcessedTasks()
-                                                                                    << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+                NES_DEBUG("checkCompleteOrTimeout: results are correct procBuffer="
+                          << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
+                          << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
                 return true;
             }
-            NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer=" << statistics[0]->getProcessedBuffers()
-                                                                                                << " procTasks=" << statistics[0]->getProcessedTasks()
-                                                                                                << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+            NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer="
+                      << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
+                      << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
             sleep(1);
         }
         auto statistics = nesWorker->getQueryStatistics(globalQueryId);
         size_t processed = statistics[0]->getProcessedBuffers();
-        NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected=" << expectedResult << " final result=" << processed);
+        NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected="
+                  << expectedResult << " final result=" << processed);
         return false;
     }
 
@@ -326,7 +325,8 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<size_t>>
-    static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
+                                       size_t expectedResult) {
         GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
         if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
@@ -347,21 +347,22 @@ class TestUtils {
             }
 
             if (cmp(statistics[0]->getProcessedBuffers(), expectedResult)) {
-                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats=" << statistics[0]->getProcessedBuffers()
-                                                                                                 << " procTasks=" << statistics[0]->getProcessedTasks()
-                                                                                                 << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats="
+                          << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
+                          << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
                 return true;
             }
-            NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer=" << statistics[0]->getProcessedBuffers()
-                                                                                                     << " procTasks=" << statistics[0]->getProcessedTasks());
+            NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer="
+                      << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks());
 
             sleep(1);
         }
         //FIXME: handle vector of statistics properly in #977
-        NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result=" << expectedResult
-                                                                                                                              << " processedBuffer=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers()
-                                                                                                                              << " processedTasks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks()
-                                                                                                                              << " procWatermarks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
+        NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result="
+                  << expectedResult
+                  << " processedBuffer=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers()
+                  << " processedTasks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks()
+                  << " procWatermarks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
         return false;
     }
 
@@ -380,7 +381,8 @@ class TestUtils {
                 NES_DEBUG("checkStoppedOrTimeout: status reached stopped");
                 return true;
             }
-            NES_DEBUG("checkStoppedOrTimeout: status not reached as status is=" << queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatusAsString());
+            NES_DEBUG("checkStoppedOrTimeout: status not reached as status is="
+                      << queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatusAsString());
             sleep(1);
         }
         NES_DEBUG("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -388,7 +390,8 @@ class TestUtils {
     }
 
     static TopologyNodePtr registerTestNode(size_t id, std::string address, int cpu, NodeStats nodeProperties,
-                                            PhysicalStreamConfigPtr streamConf, NodeType type, StreamCatalogPtr streamCatalog, TopologyPtr topology) {
+                                            PhysicalStreamConfigPtr streamConf, NodeType type, StreamCatalogPtr streamCatalog,
+                                            TopologyPtr topology) {
         TopologyNodePtr nodePtr;
         if (type == NodeType::Sensor) {
             NES_DEBUG("CoordinatorService::registerNode: register sensor node");
@@ -418,8 +421,10 @@ class TestUtils {
 
             bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
             if (!success) {
-                NES_ERROR("Coordinator: physical stream " << streamConf->getPhysicalStreamName() << " could not be added to catalog");
-                throw Exception("Coordinator: physical stream " + streamConf->getPhysicalStreamName() + " could not be added to catalog");
+                NES_ERROR("Coordinator: physical stream " << streamConf->getPhysicalStreamName()
+                                                          << " could not be added to catalog");
+                throw Exception("Coordinator: physical stream " + streamConf->getPhysicalStreamName()
+                                + " could not be added to catalog");
             }
 
         } else if (type == NodeType::Worker) {

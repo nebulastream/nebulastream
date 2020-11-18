@@ -34,7 +34,8 @@ class GeneratableFilterOperator : public FilterLogicalOperatorNode, public Gener
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableFilterOperator
      */
-    static GeneratableFilterOperatorPtr create(FilterLogicalOperatorNodePtr filterLogicalOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableFilterOperatorPtr create(FilterLogicalOperatorNodePtr filterLogicalOperator,
+                                               OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

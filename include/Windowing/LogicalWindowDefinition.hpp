@@ -32,12 +32,9 @@ class LogicalWindowDefinition {
      * @param window trigger policy
      * @param window action
      */
-    explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation,
-                                     WindowTypePtr windowType,
-                                     DistributionCharacteristicPtr distChar,
-                                     uint64_t numberOfInputEdges,
-                                     WindowTriggerPolicyPtr triggerPolicy,
-                                     WindowActionDescriptorPtr windowAction);
+    explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
+                                     DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
+                                     WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr windowAction);
 
     /**
      * @brief This constructor constructs a key-by window
@@ -49,12 +46,9 @@ class LogicalWindowDefinition {
      * @param window trigger policy
      * @param window action
      */
-    explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
-                                     WindowAggregationPtr windowAggregation,
-                                     WindowTypePtr windowType,
-                                     DistributionCharacteristicPtr distChar,
-                                     uint64_t numberOfInputEdges,
-                                     WindowTriggerPolicyPtr triggerPolicy,
+    explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation,
+                                     WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
+                                     uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
                                      WindowActionDescriptorPtr windowAction);
 
     /**
@@ -66,12 +60,9 @@ class LogicalWindowDefinition {
      * @param window action
      * @return Window Definition
      */
-    static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation,
-                                             WindowTypePtr windowType,
-                                             DistributionCharacteristicPtr distChar,
-                                             uint64_t numberOfInputEdges,
-                                             WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr windowAction);
+    static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
+                                             DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
+                                             WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr windowAction);
 
     /**
      * @brief Create a new window definition for a keyed window
@@ -81,12 +72,9 @@ class LogicalWindowDefinition {
      * @param window action
      * @return Window Definition
      */
-    static LogicalWindowDefinitionPtr create(FieldAccessExpressionNodePtr onKey,
-                                             WindowAggregationPtr windowAggregation,
-                                             WindowTypePtr windowType,
-                                             DistributionCharacteristicPtr distChar,
-                                             uint64_t numberOfInputEdges,
-                                             WindowTriggerPolicyPtr triggerPolicy,
+    static LogicalWindowDefinitionPtr create(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation,
+                                             WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
+                                             uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
                                              WindowActionDescriptorPtr windowAction);
 
     /**
@@ -97,12 +85,9 @@ class LogicalWindowDefinition {
     * @param window action
     * @return Window Definition
     */
-    static LogicalWindowDefinitionPtr create(ExpressionItem onKey,
-                                             WindowAggregationPtr windowAggregation,
-                                             WindowTypePtr windowType,
-                                             DistributionCharacteristicPtr distChar,
-                                             uint64_t numberOfInputEdges,
-                                             WindowTriggerPolicyPtr triggerPolicy,
+    static LogicalWindowDefinitionPtr create(ExpressionItem onKey, WindowAggregationPtr windowAggregation,
+                                             WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
+                                             uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
                                              WindowActionDescriptorPtr windowAction);
 
     /**

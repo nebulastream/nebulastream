@@ -19,19 +19,11 @@
 
 namespace NES {
 
-bool Undefined::isUndefined() {
-    return true;
-}
+bool Undefined::isUndefined() { return true; }
 
-bool Undefined::isEquals(DataTypePtr otherDataType) {
-    return otherDataType->isUndefined();
-}
+bool Undefined::isEquals(DataTypePtr otherDataType) { return otherDataType->isUndefined(); }
 
-DataTypePtr Undefined::join(DataTypePtr) {
-    return DataTypeFactory::createUndefined();
-}
-std::string Undefined::toString() {
-    return "Undefined";
-}
+DataTypePtr Undefined::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
+std::string Undefined::toString() { return "Undefined"; }
 
 }// namespace NES

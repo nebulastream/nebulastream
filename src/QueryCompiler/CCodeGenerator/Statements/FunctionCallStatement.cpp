@@ -19,9 +19,7 @@ namespace NES {
 
 FunctionCallStatement::~FunctionCallStatement() {}
 
-StatementType FunctionCallStatement::getStamentType() const {
-    return FUNC_CALL_STMT;
-}
+StatementType FunctionCallStatement::getStamentType() const { return FUNC_CALL_STMT; }
 
 const CodeExpressionPtr FunctionCallStatement::getCode() const {
 
@@ -38,17 +36,11 @@ const CodeExpressionPtr FunctionCallStatement::getCode() const {
     return code;
 }
 
-const ExpressionStatmentPtr FunctionCallStatement::copy() const {
-    return std::make_shared<FunctionCallStatement>(*this);
-}
+const ExpressionStatmentPtr FunctionCallStatement::copy() const { return std::make_shared<FunctionCallStatement>(*this); }
 
-void FunctionCallStatement::addParameter(const ExpressionStatment& expr) {
-    expressions.push_back(expr.copy());
-}
+void FunctionCallStatement::addParameter(const ExpressionStatment& expr) { expressions.push_back(expr.copy()); }
 
-void FunctionCallStatement::addParameter(ExpressionStatmentPtr expr) {
-    expressions.push_back(expr);
-}
+void FunctionCallStatement::addParameter(ExpressionStatmentPtr expr) { expressions.push_back(expr); }
 
 FunctionCallStatement::FunctionCallStatement(const std::string functionname) : functionName(functionname) {}
 

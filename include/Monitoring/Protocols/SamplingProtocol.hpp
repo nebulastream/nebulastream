@@ -31,9 +31,7 @@ class SamplingProtocol {
   public:
     explicit SamplingProtocol(std::function<MetricGroupPtr()>&& samplingFunc) : samplingFunc(samplingFunc){};
 
-    MetricGroupPtr getSample() {
-        return samplingFunc();
-    };
+    MetricGroupPtr getSample() { return samplingFunc(); };
 
   private:
     std::function<MetricGroupPtr()> samplingFunc;

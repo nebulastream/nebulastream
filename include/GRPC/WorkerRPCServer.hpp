@@ -33,20 +33,15 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
     WorkerRPCServer(NodeEnginePtr nodeEngine);
 
-    Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request,
-                         RegisterQueryReply* reply) override;
+    Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
-    Status UnregisterQuery(ServerContext* context, const UnregisterQueryRequest* request,
-                           UnregisterQueryReply* reply) override;
+    Status UnregisterQuery(ServerContext* context, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) override;
 
-    Status StartQuery(ServerContext* context, const StartQueryRequest* request,
-                      StartQueryReply* reply) override;
+    Status StartQuery(ServerContext* context, const StartQueryRequest* request, StartQueryReply* reply) override;
 
-    Status StopQuery(ServerContext* context, const StopQueryRequest* request,
-                     StopQueryReply* reply) override;
+    Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
 
-    Status RequestMonitoringData(ServerContext* context, const MonitoringRequest* request,
-                                 MonitoringReply* reply) override;
+    Status RequestMonitoringData(ServerContext* context, const MonitoringRequest* request, MonitoringReply* reply) override;
 
   private:
     NodeEnginePtr nodeEngine;

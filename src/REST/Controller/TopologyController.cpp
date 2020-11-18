@@ -26,8 +26,7 @@ using namespace http;
 
 namespace NES {
 
-TopologyController::TopologyController(TopologyPtr topology)
-    : topology(topology) {}
+TopologyController::TopologyController(TopologyPtr topology) : topology(topology) {}
 
 void TopologyController::handleGet(std::vector<utility::string_t> paths, http_request message) {
     NES_DEBUG("TopologyController: GET Topology");

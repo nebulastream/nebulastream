@@ -36,14 +36,8 @@
 namespace NES {
 
 OPCSink::OPCSink(SinkFormatPtr format, std::string url, UA_NodeId nodeId, std::string user, std::string password)
-    : SinkMedium(std::move(format), parentPlanId),
-      url(url),
-      nodeId(nodeId),
-      retval(UA_STATUSCODE_GOOD),
-      client(UA_Client_new()),
-      connected(false),
-      user(user),
-      password(password) {
+    : SinkMedium(std::move(format), parentPlanId), url(url), nodeId(nodeId), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()),
+      connected(false), user(user), password(password) {
     NES_DEBUG("OPCSINK  " << this << ": Init OPC Sink to " << url << " .");
 }
 
@@ -53,8 +47,7 @@ OPCSink::~OPCSink() {
     if (success) {
         NES_DEBUG("OPCSink  " << this << ": Destroy OPC Sink");
     } else {
-        NES_ERROR(
-            "OPCSink  " << this << ": Destroy OPC Sink failed because it could not be disconnected");
+        NES_ERROR("OPCSink  " << this << ": Destroy OPC Sink failed because it could not be disconnected");
         throw Exception("OPC Sink destruction failed");
     }
     NES_DEBUG("OPCSink  " << this << ": Destroy OPC Sink");
@@ -118,13 +111,9 @@ bool OPCSink::writeData(TupleBuffer& inputBuffer, WorkerContext&) {
     return true;
 }
 
-void OPCSink::setup() {
-    NES_DEBUG("OPCSINK::setup");
-}
+void OPCSink::setup() { NES_DEBUG("OPCSINK::setup"); }
 
-void OPCSink::shutdown() {
-    NES_DEBUG("OPCSINK::shutdown");
-}
+void OPCSink::shutdown() { NES_DEBUG("OPCSINK::shutdown"); }
 
 const std::string OPCSink::toString() const {
     char* ident = (char*) UA_malloc(sizeof(char) * nodeId.identifier.string.length + 1);
@@ -187,33 +176,19 @@ bool OPCSink::disconnect() {
     return !connected;
 }
 
-const std::string OPCSink::getUrl() const {
-    return url;
-}
+const std::string OPCSink::getUrl() const { return url; }
 
-UA_NodeId OPCSink::getNodeId() const {
-    return nodeId;
-}
+UA_NodeId OPCSink::getNodeId() const { return nodeId; }
 
-const std::string OPCSink::getUser() const {
-    return user;
-}
+const std::string OPCSink::getUser() const { return user; }
 
-const std::string OPCSink::getPassword() const {
-    return password;
-}
+const std::string OPCSink::getPassword() const { return password; }
 
-SinkMediumTypes OPCSink::getSinkMediumType() {
-    return OPC_SINK;
-}
+SinkMediumTypes OPCSink::getSinkMediumType() { return OPC_SINK; }
 
-std::string OPCSink::toString() {
-    return "OPC_SINK";
-}
+std::string OPCSink::toString() { return "OPC_SINK"; }
 
-UA_StatusCode OPCSink::getRetval() const {
-    return retval;
-}
+UA_StatusCode OPCSink::getRetval() const { return retval; }
 
 }// namespace NES
 #endif

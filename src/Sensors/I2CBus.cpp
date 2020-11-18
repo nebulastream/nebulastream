@@ -22,14 +22,9 @@
 namespace NES {
 namespace Sensors {
 
-I2CBus::I2CBus(const char* filename)
-    : GenericBus(filename, BusType::I2C) {
-    NES_INFO("I2CBus: Creating bus");
-}
+I2CBus::I2CBus(const char* filename) : GenericBus(filename, BusType::I2C) { NES_INFO("I2CBus: Creating bus"); }
 
-I2CBus::~I2CBus() {
-    NES_DEBUG("I2CBus: Destroying bus");
-}
+I2CBus::~I2CBus() { NES_DEBUG("I2CBus: Destroying bus"); }
 
 bool I2CBus::initBus(int address) {
     if ((this->file = open(this->fileName, O_RDWR)) < 0) {

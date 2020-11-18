@@ -28,7 +28,8 @@
 #include <vector>
 namespace NES {
 
-SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr dataType, SerializableDataType* serializedDataType) {
+SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr dataType,
+                                                                   SerializableDataType* serializedDataType) {
     // serialize data type to the serializedDataType
     if (dataType->isUndefined()) {
         serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
@@ -72,7 +73,8 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(DataTypePtr d
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
     }
-    NES_TRACE("DataTypeSerializationUtil:: serialized " << dataType->toString() << " to " << serializedDataType->SerializeAsString());
+    NES_TRACE("DataTypeSerializationUtil:: serialized " << dataType->toString() << " to "
+                                                        << serializedDataType->SerializeAsString());
     return serializedDataType;
 }
 
@@ -110,7 +112,8 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization is not possible");
 }
 
-SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePtr valueType, SerializableDataValue* serializedDataValue) {
+SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePtr valueType,
+                                                                     SerializableDataValue* serializedDataValue) {
     // serialize data value
     if (valueType->isArrayValue()) {
         // serialize all information for array value types
@@ -161,7 +164,8 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataVal
         }
         return DataTypeFactory::createArrayValue(dataTypePtr, values);
     }
-    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: " + serializedDataValue->DebugString());
+    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: "
+                            + serializedDataValue->DebugString());
 }
 
 }// namespace NES

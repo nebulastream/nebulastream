@@ -19,8 +19,7 @@
 #include <chrono>
 namespace NES::Windowing {
 
-ProcessingTimeWatermarkGenerator::ProcessingTimeWatermarkGenerator() {
-}
+ProcessingTimeWatermarkGenerator::ProcessingTimeWatermarkGenerator() {}
 
 uint64_t ProcessingTimeWatermarkGenerator::getWatermark() {
     auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

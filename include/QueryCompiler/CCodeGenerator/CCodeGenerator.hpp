@@ -78,7 +78,9 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) override;
+    bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
+                                       GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                       PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -87,7 +89,9 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) override;
+    bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
+                                      GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                      PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -96,7 +100,9 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) override;
+    bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
+                                        GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                        PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -124,24 +130,21 @@ class CCodeGenerator : public CodeGenerator {
 
     TypeCastExprStatement getTypedBuffer(VariableDeclaration tupleBufferVariable, StructDeclaration structDeclaration);
     BinaryOperatorStatement getBufferSize(VariableDeclaration tupleBufferVariable);
-    BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable,
-                                              VariableDeclaration inputBufferVariable);
-    BinaryOperatorStatement setWatermark(VariableDeclaration tupleBufferVariable,
-                                         VariableDeclaration inputBufferVariable);
-    BinaryOperatorStatement setOriginId(VariableDeclaration tupleBufferVariable,
-                                        VariableDeclaration inputBufferVariable);
+    BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
+    BinaryOperatorStatement setWatermark(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
+    BinaryOperatorStatement setOriginId(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
 
     BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
-    BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
-                                            VariableDeclaration tupleBufferVariable,
+    BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext, VariableDeclaration tupleBufferVariable,
                                             VariableDeclaration workerContextVariable);
-    void generateTupleBufferSpaceCheck(PipelineContextPtr context,
-                                       VariableDeclaration varDeclResultTuple,
+    void generateTupleBufferSpaceCheck(PipelineContextPtr context, VariableDeclaration varDeclResultTuple,
                                        StructDeclaration structDeclarationResultTuple);
 
     StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
 
-    BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType, DataTypePtr inputType, DataTypePtr partialAggregateType, DataTypePtr finalAggregateType);
+    BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType,
+                                                        DataTypePtr inputType, DataTypePtr partialAggregateType,
+                                                        DataTypePtr finalAggregateType);
 
     BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType);
 

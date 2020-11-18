@@ -25,24 +25,15 @@ namespace Network {
 class NodeLocation {
   public:
     explicit NodeLocation(NodeId nodeId, const std::string& hostname, uint32_t port)
-        : nodeId(nodeId), hostname(hostname), port(port) {
-    }
+        : nodeId(nodeId), hostname(hostname), port(port) {}
 
-    std::string createZmqURI() const {
-        return "tcp://" + hostname + ":" + std::to_string(port);
-    }
+    std::string createZmqURI() const { return "tcp://" + hostname + ":" + std::to_string(port); }
 
-    NodeId getNodeId() const {
-        return nodeId;
-    }
+    NodeId getNodeId() const { return nodeId; }
 
-    const std::string& getHostname() const {
-        return hostname;
-    }
+    const std::string& getHostname() const { return hostname; }
 
-    uint32_t getPort() const {
-        return port;
-    }
+    uint32_t getPort() const { return port; }
 
     /**
      * @brief The equals operator for the NodeLocation.

@@ -24,31 +24,20 @@ namespace NES {
 QueryExecutionPlan::QueryExecutionPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
                                        std::vector<DataSinkPtr>&& sinks, std::vector<PipelineStagePtr>&& stages,
                                        QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
-    : queryId(queryId),
-      querySubPlanId(querySubPlanId),
-      sources(std::move(sources)),
-      sinks(std::move(sinks)),
-      stages(std::move(stages)),
-      queryManager(std::move(queryManager)),
-      bufferManager(std::move(bufferManager)),
-      qepStatus(Created) {
-}
+    : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
+      stages(std::move(stages)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
+      qepStatus(Created) {}
 
-QueryId QueryExecutionPlan::getQueryId() {
-    return queryId;
-}
+QueryId QueryExecutionPlan::getQueryId() { return queryId; }
 
-std::vector<PipelineStagePtr>& QueryExecutionPlan::getStages() {
-    return stages;
-}
+std::vector<PipelineStagePtr>& QueryExecutionPlan::getStages() { return stages; }
 
-QuerySubPlanId QueryExecutionPlan::getQuerySubPlanId() const {
-    return querySubPlanId;
-}
+QuerySubPlanId QueryExecutionPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
 QueryExecutionPlan::~QueryExecutionPlan() {
     NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);
-    NES_ASSERT(qepStatus.load() == Stopped || qepStatus.load() == ErrorState, "QueryPlan is created but not executing " << queryId);
+    NES_ASSERT(qepStatus.load() == Stopped || qepStatus.load() == ErrorState,
+               "QueryPlan is created but not executing " << queryId);
     sources.clear();
     stages.clear();
 }
@@ -74,9 +63,7 @@ bool QueryExecutionPlan::stop() {
     return ret;
 }
 
-QueryExecutionPlan::QueryExecutionPlanStatus QueryExecutionPlan::getStatus() {
-    return qepStatus.load();
-}
+QueryExecutionPlan::QueryExecutionPlanStatus QueryExecutionPlan::getStatus() { return qepStatus.load(); }
 
 bool QueryExecutionPlan::setup() {
     NES_DEBUG("QueryExecutionPlan: setup " << queryId << " " << querySubPlanId);
@@ -112,25 +99,17 @@ bool QueryExecutionPlan::start() {
     return true;
 }
 
-QueryManagerPtr QueryExecutionPlan::getQueryManager() {
-    return queryManager;
-}
+QueryManagerPtr QueryExecutionPlan::getQueryManager() { return queryManager; }
 
-BufferManagerPtr QueryExecutionPlan::getBufferManager() {
-    return bufferManager;
-}
+BufferManagerPtr QueryExecutionPlan::getBufferManager() { return bufferManager; }
 
 std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 
 std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
 
-PipelineStagePtr QueryExecutionPlan::getStage(size_t index) const {
-    return stages[index];
-}
+PipelineStagePtr QueryExecutionPlan::getStage(size_t index) const { return stages[index]; }
 
-size_t QueryExecutionPlan::getStageSize() const {
-    return stages.size();
-}
+size_t QueryExecutionPlan::getStageSize() const { return stages.size(); }
 
 void QueryExecutionPlan::print() {
     for (auto source : sources) {

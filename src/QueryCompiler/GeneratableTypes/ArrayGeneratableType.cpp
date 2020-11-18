@@ -28,12 +28,10 @@
 #include <sstream>
 namespace NES {
 
-ArrayGeneratableType::ArrayGeneratableType(ArrayPhysicalTypePtr type,
-                                           GeneratableDataTypePtr component) : type(type), component(component) {}
+ArrayGeneratableType::ArrayGeneratableType(ArrayPhysicalTypePtr type, GeneratableDataTypePtr component)
+    : type(type), component(component) {}
 
-const CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const {
-    return std::make_shared<CodeExpression>("");
-}
+const CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(""); }
 
 const CodeExpressionPtr ArrayGeneratableType::getCode() const {
     std::stringstream str;
@@ -56,11 +54,13 @@ CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifie
 }
 StatementPtr ArrayGeneratableType::getStmtCopyAssignment(const AssignmentStatment& assignmentStatment) {
     auto functionCall = FunctionCallStatement("memcpy");
-    functionCall.addParameter(VarRef(assignmentStatment.lhs_tuple_var)[VarRef(assignmentStatment.lhs_index_var)].accessRef(VarRef(assignmentStatment.lhs_field_var)));
-    functionCall.addParameter(VarRef(assignmentStatment.rhs_tuple_var)[VarRef(assignmentStatment.rhs_index_var)].accessRef(VarRef(assignmentStatment.rhs_field_var)));
+    functionCall.addParameter(VarRef(assignmentStatment.lhs_tuple_var)[VarRef(assignmentStatment.lhs_index_var)].accessRef(
+        VarRef(assignmentStatment.lhs_field_var)));
+    functionCall.addParameter(VarRef(assignmentStatment.rhs_tuple_var)[VarRef(assignmentStatment.rhs_index_var)].accessRef(
+        VarRef(assignmentStatment.rhs_field_var)));
     auto tf = CompilerTypesFactory();
-    functionCall.addParameter(ConstantExpressionStatement(
-        tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(type->getLength())))));
+    functionCall.addParameter(ConstantExpressionStatement(tf.createValueType(
+        DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(type->getLength())))));
     return functionCall.copy();
 }
 

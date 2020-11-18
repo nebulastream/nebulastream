@@ -16,5 +16,4 @@
 
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
-namespace NES {
-}
+namespace NES {}

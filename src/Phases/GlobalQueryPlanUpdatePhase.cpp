@@ -31,7 +31,8 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(GlobalQueryPlan
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry> queryRequests) {
-    NES_INFO("GlobalQueryPlanUpdatePhase: Updating global query plan using a query request batch of size " << queryRequests.size());
+    NES_INFO("GlobalQueryPlanUpdatePhase: Updating global query plan using a query request batch of size "
+             << queryRequests.size());
     try {
         for (auto queryRequest : queryRequests) {
             QueryId queryId = queryRequest.getQueryId();
@@ -42,8 +43,10 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
                 NES_TRACE("GlobalQueryPlanUpdatePhase: Adding query plan for the query: " << queryId);
                 globalQueryPlan->addQueryPlan(queryRequest.getQueryPlan());
             } else {
-                NES_ERROR("GlobalQueryPlanUpdatePhase: Received query request with unhandled status: " << queryRequest.getQueryStatusAsString());
-                throw Exception("GlobalQueryPlanUpdatePhase: Received query request with unhandled status" + queryRequest.getQueryStatusAsString());
+                NES_ERROR("GlobalQueryPlanUpdatePhase: Received query request with unhandled status: "
+                          << queryRequest.getQueryStatusAsString());
+                throw Exception("GlobalQueryPlanUpdatePhase: Received query request with unhandled status"
+                                + queryRequest.getQueryStatusAsString());
             }
             globalQueryPlan->updateGlobalQueryMetaDataMap();
         }

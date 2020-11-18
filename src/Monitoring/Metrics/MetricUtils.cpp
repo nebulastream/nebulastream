@@ -25,21 +25,13 @@
 
 namespace NES {
 
-Gauge<CpuMetrics> MetricUtils::CPUStats() {
-    return Gauge<CpuMetrics>(SystemResourcesReader::ReadCPUStats);
-}
+Gauge<CpuMetrics> MetricUtils::CPUStats() { return Gauge<CpuMetrics>(SystemResourcesReader::ReadCPUStats); }
 
-Gauge<MemoryMetrics> MetricUtils::MemoryStats() {
-    return Gauge<MemoryMetrics>(SystemResourcesReader::ReadMemoryStats);
-}
+Gauge<MemoryMetrics> MetricUtils::MemoryStats() { return Gauge<MemoryMetrics>(SystemResourcesReader::ReadMemoryStats); }
 
-Gauge<DiskMetrics> MetricUtils::DiskStats() {
-    return Gauge<DiskMetrics>(SystemResourcesReader::ReadDiskStats);
-}
+Gauge<DiskMetrics> MetricUtils::DiskStats() { return Gauge<DiskMetrics>(SystemResourcesReader::ReadDiskStats); }
 
-Gauge<NetworkMetrics> MetricUtils::NetworkStats() {
-    return Gauge<NetworkMetrics>(SystemResourcesReader::ReadNetworkStats);
-}
+Gauge<NetworkMetrics> MetricUtils::NetworkStats() { return Gauge<NetworkMetrics>(SystemResourcesReader::ReadNetworkStats); }
 
 Gauge<uint64_t> MetricUtils::CPUIdle(unsigned int cpuNo) {
     auto gaugeIdle = Gauge<uint64_t>([cpuNo]() {

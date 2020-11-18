@@ -26,13 +26,7 @@ namespace NES::Windowing {
  */
 class WindowAggregationDescriptor {
   public:
-    enum Type {
-        Avg,
-        Count,
-        Max,
-        Min,
-        Sum
-    };
+    enum Type { Avg, Count, Max, Min, Sum };
 
     /**
     * Defines the field to which a aggregate output is assigned.

@@ -40,7 +40,8 @@ MonitoringService::~MonitoringService() {
     topology.reset();
 }
 
-std::tuple<SchemaPtr, TupleBuffer> MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan) {
+std::tuple<SchemaPtr, TupleBuffer> MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
+                                                                            MonitoringPlanPtr plan) {
     if (!plan) {
         auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
         plan = MonitoringPlan::create(metrics);
@@ -53,7 +54,8 @@ std::tuple<SchemaPtr, TupleBuffer> MonitoringService::requestMonitoringData(cons
     return std::make_tuple(schema, tupleBuffer);
 }
 
-web::json::value MonitoringService::requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan) {
+web::json::value MonitoringService::requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort,
+                                                                MonitoringPlanPtr plan) {
     auto [schema, tupleBuffer] = requestMonitoringData(ipAddress, grpcPort, plan);
     web::json::value metricsJson{};
     metricsJson["schema"] = web::json::value::string(schema->toString());
@@ -126,11 +128,13 @@ utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t
 web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPrometheusAsJson(MonitoringPlanPtr plan) {
     web::json::value metricsJson{};
     auto root = topology->getRoot();
-    metricsJson[std::to_string(root->getId())] = web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
+    metricsJson[std::to_string(root->getId())] =
+        web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
 
     for (const auto& node : root->getAndFlattenAllChildren()) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
-        metricsJson[std::to_string(tNode->getId())] = web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
+        metricsJson[std::to_string(tNode->getId())] =
+            web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
     }
     return metricsJson;
 }

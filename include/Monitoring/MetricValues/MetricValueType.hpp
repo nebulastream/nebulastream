@@ -22,12 +22,7 @@ namespace NES {
 /**
  * @brief The metric value types of NES
  */
-enum MetricValueType {
-    CpuMetric,
-    DiskMetric,
-    MemoryMetric,
-    NetworkMetric
-};
+enum MetricValueType { CpuMetric, DiskMetric, MemoryMetric, NetworkMetric };
 
 }// namespace NES
 

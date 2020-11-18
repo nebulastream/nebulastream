@@ -47,14 +47,14 @@ bool MapLogicalOperatorNode::inferSchema() {
         // The assigned field is part of the current schema.
         // Thus we check if it has the correct type.
         outputSchema->replaceField(assignedField->getFieldName(), assignedField->getStamp());
-        NES_DEBUG(
-            "MAP Logical Operator: the field " << assignedField->getFieldName() << " is already of the schema, so we updated its type.");
+        NES_DEBUG("MAP Logical Operator: the field " << assignedField->getFieldName()
+                                                     << " is already of the schema, so we updated its type.");
     } else {
         // The assigned field is not part of the current schema.
         // Thus we extend the schema by the new attribute.
         outputSchema->addField(assignedField->getFieldName(), assignedField->getStamp());
-        NES_DEBUG(
-            "MAP Logical Operator: the field " << assignedField->getFieldName() << " is not part of the schema, so we added it.");
+        NES_DEBUG("MAP Logical Operator: the field " << assignedField->getFieldName()
+                                                     << " is not part of the schema, so we added it.");
     }
     return true;
 }
@@ -65,9 +65,7 @@ const std::string MapLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() {
-    return mapExpression;
-}
+FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }
 
 OperatorNodePtr MapLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMapOperator(mapExpression, id);

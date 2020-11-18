@@ -28,17 +28,10 @@
 
 namespace NES {
 
-ZmqSource::ZmqSource(SchemaPtr schema,
-                     BufferManagerPtr bufferManager,
-                     QueryManagerPtr queryManager,
-                     const std::string& host,
+ZmqSource::ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& host,
                      const uint16_t port, OperatorId operatorId)
-    : DataSource(schema, bufferManager, queryManager, operatorId),
-      host(host.substr(0, host.find(":"))),
-      port(port),
-      connected(false),
-      context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_PULL)) {
+    : DataSource(schema, bufferManager, queryManager, operatorId), host(host.substr(0, host.find(":"))), port(port),
+      connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }
 
@@ -156,12 +149,8 @@ bool ZmqSource::disconnect() {
 
 SourceType ZmqSource::getType() const { return ZMQ_SOURCE; }
 
-const std::string& ZmqSource::getHost() const {
-    return host;
-}
+const std::string& ZmqSource::getHost() const { return host; }
 
-uint16_t ZmqSource::getPort() const {
-    return port;
-}
+uint16_t ZmqSource::getPort() const { return port; }
 
 }// namespace NES

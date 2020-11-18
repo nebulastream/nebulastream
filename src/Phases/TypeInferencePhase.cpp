@@ -29,9 +29,7 @@ TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamC
     NES_DEBUG("TypeInferencePhase()");
 }
 
-TypeInferencePhase::~TypeInferencePhase() {
-    NES_DEBUG("~TypeInferencePhase()");
-}
+TypeInferencePhase::~TypeInferencePhase() { NES_DEBUG("~TypeInferencePhase()"); }
 
 TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog) {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(streamCatalog));
@@ -56,10 +54,12 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             try {
                 schema = streamCatalog->getSchemaForLogicalStream(streamName);
             } catch (std::exception& e) {
-                NES_THROW_RUNTIME_ERROR("TypeInferencePhase: The logical stream " + streamName + " could not be found in the StreamCatalog");
+                NES_THROW_RUNTIME_ERROR("TypeInferencePhase: The logical stream " + streamName
+                                        + " could not be found in the StreamCatalog");
             }
             sourceDescriptor->setSchema(schema);
-            NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName << " with schema: " << schema->toString());
+            NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName
+                                                                                 << " with schema: " << schema->toString());
         }
     }
     // now we have to infer the input and output schemas for the whole query.

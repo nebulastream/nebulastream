@@ -17,8 +17,8 @@
 #ifndef NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
 #define NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
 
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <future>
 
 using namespace NES;
@@ -29,10 +29,9 @@ namespace NES::Benchmarking {
 class SimpleBenchmarkSink : public SinkMedium {
   public:
     SimpleBenchmarkSink(SchemaPtr schema, BufferManagerPtr bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0) {};
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
 
-    static std::shared_ptr<SimpleBenchmarkSink> create(SchemaPtr schema,
-                                                       BufferManagerPtr bufferManager) {
+    static std::shared_ptr<SimpleBenchmarkSink> create(SchemaPtr schema, BufferManagerPtr bufferManager) {
         return std::make_shared<SimpleBenchmarkSink>(schema, bufferManager);
     }
 
@@ -48,24 +47,18 @@ class SimpleBenchmarkSink : public SinkMedium {
         return true;
     }
 
-    SinkMediumTypes getSinkMediumType() override {
-        return SinkMediumTypes::PRINT_SINK;
-    }
+    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
     TupleBuffer& get(size_t index) {
         std::unique_lock lock(m);
         return resultBuffers[index];
     }
 
-    const std::string toString() const override {
-        return "";
-    }
+    const std::string toString() const override { return ""; }
 
-    void setup() override {};
+    void setup() override{};
 
-    std::string toString() override {
-        return "Test_Sink";
-    }
+    std::string toString() override { return "Test_Sink"; }
 
     void shutdown() override {
         std::unique_lock lock(m);
@@ -96,8 +89,7 @@ class SimpleBenchmarkSink : public SinkMedium {
 
   public:
     std::promise<bool> completed;
-
 };
-}
+}// namespace NES::Benchmarking
 
-#endif //NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
+#endif//NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_

@@ -94,14 +94,13 @@ StructDeclaration& StructDeclaration::makeStructCompact() {
 }
 
 StructDeclaration::StructDeclaration(const std::string& type_name, const std::string& variable_name)
-    : type_name_(type_name), variable_name_(variable_name), decls_(), packed_struct_(false) {
-}
+    : type_name_(type_name), variable_name_(variable_name), decls_(), packed_struct_(false) {}
 
 VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string& field_name) const {
     DeclarationPtr decl = getField(field_name);
     if (!decl)
-        NES_ERROR("Error during Code Generation: Field '" << field_name << "' does not exist in struct '"
-                                                          << getTypeName() << "'");
+        NES_ERROR("Error during Code Generation: Field '" << field_name << "' does not exist in struct '" << getTypeName()
+                                                          << "'");
     return VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
 }
 

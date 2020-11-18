@@ -71,9 +71,7 @@ class BufferManager {
 
         void markFree();
 
-        friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs) {
-            return lhs.size < rhs.size;
-        }
+        friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs) { return lhs.size < rhs.size; }
     };
 
   public:

@@ -68,7 +68,8 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
-    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging);
+    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots,
+                            bool enableQueryMerging);
 
     /**
      * @brief constructor with default numberOfSlots
@@ -110,13 +111,9 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      * @brief catalog method for debug use only
      * @return streamCatalog
      */
-    StreamCatalogPtr getStreamCatalog() {
-        return streamCatalog;
-    }
+    StreamCatalogPtr getStreamCatalog() { return streamCatalog; }
 
-    TopologyPtr getTopology() {
-        return topology;
-    }
+    TopologyPtr getTopology() { return topology; }
 
     /**
      * @brief Get the instance of query service

@@ -58,9 +58,7 @@ ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
     return GreaterExpressionNode::create(leftExp, rightExp);
 }
 
-ExpressionNodePtr operator!(ExpressionNodePtr exp) {
-    return NegateExpressionNode::create(exp);
-}
+ExpressionNodePtr operator!(ExpressionNodePtr exp) { return NegateExpressionNode::create(exp); }
 
 ExpressionNodePtr operator||(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
     return leftExp.getExpressionNode() || rightExp;
@@ -82,17 +80,13 @@ ExpressionNodePtr operator<=(ExpressionItem leftExp, ExpressionNodePtr rightExp)
     return leftExp.getExpressionNode() <= rightExp;
 }
 
-ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
-    return leftExp.getExpressionNode() < rightExp;
-}
+ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() < rightExp; }
 
 ExpressionNodePtr operator>=(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
     return leftExp.getExpressionNode() >= rightExp;
 }
 
-ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
-    return leftExp.getExpressionNode() > rightExp;
-}
+ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() > rightExp; }
 
 ExpressionNodePtr operator||(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
     return leftExp || rightExp.getExpressionNode();
@@ -114,17 +108,13 @@ ExpressionNodePtr operator<=(ExpressionNodePtr leftExp, ExpressionItem rightExp)
     return leftExp <= rightExp.getExpressionNode();
 }
 
-ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
-    return leftExp < rightExp.getExpressionNode();
-}
+ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp < rightExp.getExpressionNode(); }
 
 ExpressionNodePtr operator>=(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
     return leftExp >= rightExp.getExpressionNode();
 }
 
-ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
-    return leftExp > rightExp.getExpressionNode();
-}
+ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp > rightExp.getExpressionNode(); }
 
 ExpressionNodePtr operator||(ExpressionItem leftExp, ExpressionItem rightExp) {
     return leftExp.getExpressionNode() || rightExp.getExpressionNode();
@@ -158,8 +148,6 @@ ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionItem rightExp) {
     return leftExp.getExpressionNode() > rightExp.getExpressionNode();
 }
 
-ExpressionNodePtr operator!(ExpressionItem leftExp) {
-    return !leftExp.getExpressionNode();
-}
+ExpressionNodePtr operator!(ExpressionItem leftExp) { return !leftExp.getExpressionNode(); }
 
 }// namespace NES

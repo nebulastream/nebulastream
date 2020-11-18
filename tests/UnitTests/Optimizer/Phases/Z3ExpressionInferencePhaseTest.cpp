@@ -41,14 +41,10 @@ class Z3ExpressionInferencePhaseTest : public testing::Test {
     void SetUp() {}
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_INFO("Tear down Z3ExpressionInferencePhaseTest test case.");
-    }
+    void TearDown() { NES_INFO("Tear down Z3ExpressionInferencePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down Z3ExpressionInferencePhaseTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down Z3ExpressionInferencePhaseTest test class."); }
 };
 
 /**
@@ -69,17 +65,13 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     auto z3ExpressionInferencePhase = Z3ExpressionInferencePhase::create();
 
-    auto query1 = Query::from("default_logical")
-                      .map(Attribute("f3") = Attribute("id")++)
-                      .sink(FileSinkDescriptor::create(""));
+    auto query1 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan1 = query1.getQueryPlan();
 
     typeInferencePhase->execute(plan1);
     z3ExpressionInferencePhase->execute(plan1);
 
-    auto query2 = Query::from("default_logical")
-                      .map(Attribute("f3") = Attribute("id")++)
-                      .sink(FileSinkDescriptor::create(""));
+    auto query2 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan2 = query2.getQueryPlan();
 
     typeInferencePhase->execute(plan2);

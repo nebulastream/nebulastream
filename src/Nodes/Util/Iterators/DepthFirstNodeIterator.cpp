@@ -26,9 +26,7 @@ DepthFirstNodeIterator::iterator DepthFirstNodeIterator::begin() { return iterat
 
 DepthFirstNodeIterator::iterator DepthFirstNodeIterator::end() { return iterator(); }
 
-DepthFirstNodeIterator::iterator::iterator(NodePtr current) {
-    workStack.push(current);
-}
+DepthFirstNodeIterator::iterator::iterator(NodePtr current) { workStack.push(current); }
 
 DepthFirstNodeIterator::iterator::iterator() = default;
 

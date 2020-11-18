@@ -40,10 +40,8 @@ class GeneratableWindowAggregation {
      * @param inputStruct input struct
      * @param inputRef input value reference
      */
-    virtual void compileLiftCombine(CompoundStatementPtr currentCode,
-                                    BinaryOperatorStatement partialValueRef,
-                                    StructDeclaration inputStruct,
-                                    BinaryOperatorStatement inputRef) = 0;
+    virtual void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialValueRef,
+                                    StructDeclaration inputStruct, BinaryOperatorStatement inputRef) = 0;
 
   protected:
     explicit GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);

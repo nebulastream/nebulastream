@@ -25,12 +25,9 @@ const CodeExpressionPtr VarRefStatement::getCode() const { return varDeclaration
 const ExpressionStatmentPtr VarRefStatement::copy() const { return std::make_shared<VarRefStatement>(*this); }
 
 VarRefStatement::VarRefStatement(const VariableDeclaration& var_decl)
-    : varDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {
-}
+    : varDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {}
 
-VarRefStatement::VarRefStatement(VariableDeclarationPtr varDeclaration)
-    : varDeclaration(std::move(varDeclaration)) {
-}
+VarRefStatement::VarRefStatement(VariableDeclarationPtr varDeclaration) : varDeclaration(std::move(varDeclaration)) {}
 
 VarRefStatement::~VarRefStatement() {}
 

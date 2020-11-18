@@ -25,14 +25,7 @@
 namespace NES {
 class TupleBuffer;
 
-enum SinkMediumTypes {
-    ZMQ_SINK,
-    PRINT_SINK,
-    KAFKA_SINK,
-    FILE_SINK,
-    NETWORK_SINK,
-    OPC_SINK
-};
+enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK, OPC_SINK };
 /**
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
@@ -74,9 +67,7 @@ class SinkMedium : public Reconfigurable {
      * @brief get the id of the owning plan
      * @return the id
      */
-    QuerySubPlanId getParentPlanId() {
-        return parentPlanId;
-    }
+    QuerySubPlanId getParentPlanId() { return parentPlanId; }
 
     /**
      * @brief debug function for testing to get number of written buffers

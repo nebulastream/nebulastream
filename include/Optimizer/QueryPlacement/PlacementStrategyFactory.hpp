@@ -71,8 +71,10 @@ class PlacementStrategyFactory {
      * @param streamCatalog : stream catalog
      * @return instance of type BaseOptimizer
      */
-    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                                              TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
+    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName,
+                                                              GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                                              TypeInferencePhasePtr typeInferencePhase,
+                                                              StreamCatalogPtr streamCatalog);
 };
 }// namespace NES
 #endif//NES_PLACEMENTSTRATEGYFACTORY_HPP

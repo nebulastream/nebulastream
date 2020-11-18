@@ -51,36 +51,14 @@ const std::string toString(const BinaryOperatorType& type) {
 
 const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type) {
     const char* const names[] = {
-        "==",
-        "!=",
-        "<",
-        "<=",
-        ">",
-        ">=",
-        "+",
-        "-",
-        "*",
-        "/",
-        "%",
-        "&&",
-        "||",
-        "&",
-        "|",
-        "^",
-        "<<",
-        ">>",
-        "=",
-        "[]",
-        "->",
-        ".",
+        "==", "!=", "<", "<=", ">", ">=", "+", "-", "*", "/", "%", "&&", "||", "&", "|", "^", "<<", ">>", "=", "[]", "->", ".",
     };
     return std::make_shared<CodeExpression>(names[type]);
 }
 
 BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatment& lhs, const BinaryOperatorType& op,
                                                  const ExpressionStatment& rhs, BracketMode bracket_mode)
-    : lhs_(lhs.copy()), rhs_(rhs.copy()), op_(op), bracket_mode_(bracket_mode) {
-}
+    : lhs_(lhs.copy()), rhs_(rhs.copy()), op_(op), bracket_mode_(bracket_mode) {}
 
 BinaryOperatorStatement BinaryOperatorStatement::addRight(const BinaryOperatorType& op, const VarRefStatement& rhs,
                                                           BracketMode bracket_mode) {
@@ -111,9 +89,7 @@ const CodeExpressionPtr BinaryOperatorStatement::getCode() const {
     return std::make_shared<CodeExpression>(ret);
 }
 
-const ExpressionStatmentPtr BinaryOperatorStatement::copy() const {
-    return std::make_shared<BinaryOperatorStatement>(*this);
-}
+const ExpressionStatmentPtr BinaryOperatorStatement::copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
 
 BinaryOperatorStatement::~BinaryOperatorStatement() {}
 

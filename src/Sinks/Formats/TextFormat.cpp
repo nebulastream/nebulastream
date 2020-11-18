@@ -69,12 +69,8 @@ std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
     return buffers;
 }
 
-std::string TextFormat::toString() {
-    return "TEXT_FORMAT";
-}
+std::string TextFormat::toString() { return "TEXT_FORMAT"; }
 
-SinkFormatTypes TextFormat::getSinkFormat() {
-    return TEXT_FORMAT;
-}
+SinkFormatTypes TextFormat::getSinkFormat() { return TEXT_FORMAT; }
 
 }// namespace NES

@@ -22,23 +22,14 @@
 
 namespace NES {
 
-SinkFormat::SinkFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : schema(schema), bufferManager(bufferManager) {
-}
+SinkFormat::SinkFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : schema(schema), bufferManager(bufferManager) {}
 
-SchemaPtr SinkFormat::getSchemaPtr() {
-    return schema;
-}
+SchemaPtr SinkFormat::getSchemaPtr() { return schema; }
 
-void SinkFormat::setSchemaPtr(SchemaPtr schema) {
-    this->schema = schema;
-}
+void SinkFormat::setSchemaPtr(SchemaPtr schema) { this->schema = schema; }
 
-BufferManagerPtr SinkFormat::getBufferManager() {
-    return bufferManager;
-}
+BufferManagerPtr SinkFormat::getBufferManager() { return bufferManager; }
 
-void SinkFormat::setBufferManager(BufferManagerPtr bufferManager) {
-    this->bufferManager = bufferManager;
-}
+void SinkFormat::setBufferManager(BufferManagerPtr bufferManager) { this->bufferManager = bufferManager; }
 
 }// namespace NES

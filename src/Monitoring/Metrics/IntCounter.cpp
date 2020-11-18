@@ -19,13 +19,9 @@
 
 namespace NES {
 
-IntCounter::IntCounter(uint64_t initCount) : count(initCount) {
-    NES_DEBUG("Counter: Initializing with count " << initCount);
-}
+IntCounter::IntCounter(uint64_t initCount) : count(initCount) { NES_DEBUG("Counter: Initializing with count " << initCount); }
 
-void IntCounter::inc() {
-    count++;
-}
+void IntCounter::inc() { count++; }
 
 uint64_t IntCounter::inc(uint64_t val) {
     count += val;
@@ -47,7 +43,5 @@ uint64_t IntCounter::dec(uint64_t val) {
     return count;
 }
 
-uint64_t IntCounter::getCount() const {
-    return count;
-}
+uint64_t IntCounter::getCount() const { return count; }
 }// namespace NES

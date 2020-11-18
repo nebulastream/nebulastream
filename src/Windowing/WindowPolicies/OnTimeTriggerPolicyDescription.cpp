@@ -22,17 +22,11 @@ WindowTriggerPolicyPtr OnTimeTriggerPolicyDescription::create(size_t triggerTime
     return std::make_shared<OnTimeTriggerPolicyDescription>(OnTimeTriggerPolicyDescription(std::move(triggerTimeInMs)));
 }
 
-TriggerType OnTimeTriggerPolicyDescription::getPolicyType() {
-    return this->policy;
-}
+TriggerType OnTimeTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
-size_t OnTimeTriggerPolicyDescription::getTriggerTimeInMs() const {
-    return triggerTimeInMs;
-}
+size_t OnTimeTriggerPolicyDescription::getTriggerTimeInMs() const { return triggerTimeInMs; }
 
 OnTimeTriggerPolicyDescription::OnTimeTriggerPolicyDescription(size_t triggerTimeInMs)
-    : BaseWindowTriggerPolicyDescriptor(triggerOnTime),
-      triggerTimeInMs(triggerTimeInMs) {
-}
+    : BaseWindowTriggerPolicyDescriptor(triggerOnTime), triggerTimeInMs(triggerTimeInMs) {}
 
 }// namespace NES::Windowing

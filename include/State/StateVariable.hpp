@@ -72,10 +72,7 @@ class Destroyable {
 };
 }// namespace detail
 
-template<
-    typename Key,
-    typename Value,
-    std::enable_if_t<std::is_integral<Value>::value || std::is_pointer<Value>::value, int> = 0>
+template<typename Key, typename Value, std::enable_if_t<std::is_integral<Value>::value || std::is_pointer<Value>::value, int> = 0>
 class StateVariable : public detail::Destroyable {
   private:
     typedef cuckoohash_map<Key, Value> StateBackend;
@@ -106,25 +103,19 @@ class StateVariable : public detail::Destroyable {
      * check for existence of a key-value pair
      * @return true if the key-value pair exists
      */
-        explicit operator bool() {
-            return contains();
-        }
+        explicit operator bool() { return contains(); }
 
         /**
     * check for existence of a key-value pair
     * @return true if the key-value pair exists
     */
-        [[nodiscard]] bool contains() const {
-            return backend.contains(key);
-        }
+        [[nodiscard]] bool contains() const { return backend.contains(key); }
 
         /**
      * Retrieves the actual value for a key
      * @return the actual value for a key
      */
-        Value value() {
-            return backend.find(key);
-        }
+        Value value() { return backend.find(key); }
 
         /**
      * Retrieves the actual value for a key.
@@ -175,9 +166,7 @@ class StateVariable : public detail::Destroyable {
      * @param newValue
      * @return self
      */
-        void put(Value&& newValue) {
-            emplace(std::move(newValue));
-        }
+        void put(Value&& newValue) { emplace(std::move(newValue)); }
 
         /**
      * Set a new value for the key-value pair using emplace semantics
@@ -186,16 +175,13 @@ class StateVariable : public detail::Destroyable {
      */
         template<typename... Arguments>
         void emplace(Arguments&&... args) {
-            backend
-                .insert_or_assign(key, detail::StateVariableEmplaceHelper<Value>::create(std::forward<Arguments>(args)...));
+            backend.insert_or_assign(key, detail::StateVariableEmplaceHelper<Value>::create(std::forward<Arguments>(args)...));
         }
 
         /**
      * Delete a key-value pair
      */
-        void clear() {
-            backend.erase(key);
-        }
+        void clear() { backend.erase(key); }
     };
 
     /**
@@ -212,51 +198,38 @@ class StateVariable : public detail::Destroyable {
      *
      * @return a const iterator to the selected range
      */
-        KeyValueRangeHandleConstIterator cbegin() {
-            return backend.cbegin();
-        }
+        KeyValueRangeHandleConstIterator cbegin() { return backend.cbegin(); }
 
         /**
      *
      * @return a const iterator to the selected range
      */
-        KeyValueRangeHandleConstIterator cend() {
-            return backend.cend();
-        }
+        KeyValueRangeHandleConstIterator cend() { return backend.cend(); }
 
         /**
      *
      * @return a iterator to the selected range
      */
-        KeyValueRangeHandleIterator begin() {
-            return backend.begin();
-        }
+        KeyValueRangeHandleIterator begin() { return backend.begin(); }
 
         /**
      *
      * @return a iterator to the selected range
      */
-        KeyValueRangeHandleIterator end() {
-            return backend.end();
-        }
+        KeyValueRangeHandleIterator end() { return backend.end(); }
 
       private:
         LockedStateBackend backend;
     };
 
   public:
-    explicit StateVariable(std::string name) : name(std::move(name)), backend() {
-    }
+    explicit StateVariable(std::string name) : name(std::move(name)), backend() {}
 
     explicit StateVariable(const StateVariable<Key, Value>& other) = delete;
 
-    explicit StateVariable(StateVariable<Key, Value>&& other) {
-        *this = std::move(other);
-    }
+    explicit StateVariable(StateVariable<Key, Value>&& other) { *this = std::move(other); }
 
-    virtual ~StateVariable() override {
-        detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend);
-    }
+    virtual ~StateVariable() override { detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend); }
 
     StateVariable& operator=(const StateVariable<Key, Value>& other) = delete;
 
@@ -272,41 +245,30 @@ class StateVariable : public detail::Destroyable {
      * @param key
      * @return an accessor to a key-value pair
      */
-    KeyValueHandle get(Key key) {
-        return KeyValueHandle(backend, key);
-    }
+    KeyValueHandle get(Key key) { return KeyValueHandle(backend, key); }
 
     /**
    * Point lookup of a key-value pair
    * @param key
    * @return an accessor to a key-value pair
    */
-    KeyValueHandle operator[](Key&& key) {
-        return KeyValueHandle(backend, key);
-    }
+    KeyValueHandle operator[](Key&& key) { return KeyValueHandle(backend, key); }
 
     /**
    * Point lookup of a key-value pair
    * @param key
    * @return an accessor to a key-value pair
    */
-    KeyValueHandle operator[](const Key& key) {
+    KeyValueHandle operator[](const Key& key) { return KeyValueHandle(backend, key); }
 
-        return KeyValueHandle(backend, key);
-    }
-
-    KeyValueRangeHandle range(Key, Key) {
-        assert(false && "not implemented yet");
-    }
+    KeyValueRangeHandle range(Key, Key) { assert(false && "not implemented yet"); }
 
     /**
    * Range of all key-value pairs
    * @param key
    * @return an accessor to a key-value pair
    */
-    KeyValueRangeHandle rangeAll() {
-        return KeyValueRangeHandle(backend);
-    }
+    KeyValueRangeHandle rangeAll() { return KeyValueRangeHandle(backend); }
 };
 }// namespace NES
 #endif//STATEVARIABLE_HPP

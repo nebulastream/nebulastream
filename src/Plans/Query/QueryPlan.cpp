@@ -34,9 +34,7 @@ QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
     return std::make_shared<QueryPlan>(QueryPlan(std::move(rootOperator)));
 }
 
-QueryPlanPtr QueryPlan::create() {
-    return std::make_shared<QueryPlan>(QueryPlan());
-}
+QueryPlanPtr QueryPlan::create() { return std::make_shared<QueryPlan>(QueryPlan()); }
 
 QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {}
 
@@ -76,7 +74,8 @@ void QueryPlan::appendOperatorAsNewRoot(OperatorNodePtr operatorNode) {
     NES_DEBUG("QueryPlan: Appending operator " << operatorNode->toString() << " as new root of the plan.");
     for (auto rootOperator : rootOperators) {
         if (!rootOperator->addParent(operatorNode)) {
-            NES_THROW_RUNTIME_ERROR("QueryPlan: Enable to add operator " + operatorNode->toString() + " as parent to " + rootOperator->toString());
+            NES_THROW_RUNTIME_ERROR("QueryPlan: Enable to add operator " + operatorNode->toString() + " as parent to "
+                                    + rootOperator->toString());
         }
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
@@ -177,25 +176,15 @@ OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
     return nullptr;
 }
 
-const QueryId QueryPlan::getQueryId() const {
-    return queryId;
-}
+const QueryId QueryPlan::getQueryId() const { return queryId; }
 
-void QueryPlan::setQueryId(QueryId queryId) {
-    QueryPlan::queryId = queryId;
-}
+void QueryPlan::setQueryId(QueryId queryId) { QueryPlan::queryId = queryId; }
 
-void QueryPlan::addRootOperator(OperatorNodePtr root) {
-    rootOperators.push_back(root);
-}
+void QueryPlan::addRootOperator(OperatorNodePtr root) { rootOperators.push_back(root); }
 
-QuerySubPlanId QueryPlan::getQuerySubPlanId() {
-    return querySubPlanId;
-}
+QuerySubPlanId QueryPlan::getQuerySubPlanId() { return querySubPlanId; }
 
-void QueryPlan::setQuerySubPlanId(uint64_t querySubPlanId) {
-    this->querySubPlanId = querySubPlanId;
-}
+void QueryPlan::setQuerySubPlanId(uint64_t querySubPlanId) { this->querySubPlanId = querySubPlanId; }
 
 void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
     NES_DEBUG("QueryPlan: removing operator " << root->toString() << " as root operator.");
@@ -203,7 +192,8 @@ void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
         return rootOperator->getId() == root->getId();
     });
     if (found != rootOperators.end()) {
-        NES_TRACE("QueryPlan: Found root operator " << root->toString() << " in the root operator list. Removing the operator as the root of the query plan.");
+        NES_TRACE("QueryPlan: Found root operator "
+                  << root->toString() << " in the root operator list. Removing the operator as the root of the query plan.");
         rootOperators.erase(found);
     }
 }

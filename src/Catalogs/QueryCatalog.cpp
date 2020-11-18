@@ -26,13 +26,9 @@
 
 namespace NES {
 
-QueryCatalog::QueryCatalog() : catalogMutex() {
-    NES_DEBUG("QueryCatalog()");
-}
+QueryCatalog::QueryCatalog() : catalogMutex() { NES_DEBUG("QueryCatalog()"); }
 
-QueryCatalog::~QueryCatalog() {
-    NES_DEBUG("~QueryCatalog()");
-}
+QueryCatalog::~QueryCatalog() { NES_DEBUG("~QueryCatalog()"); }
 
 std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(std::string status) {
     std::unique_lock lock(catalogMutex);
@@ -63,11 +59,13 @@ std::map<uint64_t, std::string> QueryCatalog::getAllQueries() {
     return result;
 }
 
-QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
+QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan,
+                                                      const std::string& optimizationStrategyName) {
     std::unique_lock lock(catalogMutex);
     QueryId queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
-    QueryCatalogEntryPtr queryCatalogEntry = std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Registered);
+    QueryCatalogEntryPtr queryCatalogEntry =
+        std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Registered);
     queries[queryId] = queryCatalogEntry;
     return queryCatalogEntry;
 }
@@ -78,8 +76,10 @@ QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(QueryId queryId) {
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
     QueryStatus currentStatus = queryCatalogEntry->getQueryStatus();
     if (currentStatus == QueryStatus::Stopped || currentStatus == QueryStatus::Failed) {
-        NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString() + ". Ignoring stop query request.");
-        throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running}, currentStatus);
+        NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString()
+                  + ". Ignoring stop query request.");
+        throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running},
+                                          currentStatus);
     }
     NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
     markQueryAs(queryId, QueryStatus::MarkedForStop);

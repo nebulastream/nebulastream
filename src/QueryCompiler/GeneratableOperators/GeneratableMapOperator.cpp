@@ -38,8 +38,8 @@ GeneratableMapOperatorPtr GeneratableMapOperator::create(MapLogicalOperatorNodeP
     return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(mapLogicalOperator->getMapExpression(), id));
 }
 
-GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression, OperatorId id) : MapLogicalOperatorNode(mapExpression, id) {
-}
+GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression, OperatorId id)
+    : MapLogicalOperatorNode(mapExpression, id) {}
 
 const std::string GeneratableMapOperator::toString() const {
     std::stringstream ss;

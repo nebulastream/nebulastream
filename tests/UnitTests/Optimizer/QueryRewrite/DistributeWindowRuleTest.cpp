@@ -52,14 +52,10 @@ class DistributeWindowRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_INFO("Setup DistributeWindowRuleTest test case.");
-    }
+    void TearDown() { NES_INFO("Setup DistributeWindowRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down DistributeWindowRuleTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down DistributeWindowRuleTest test class."); }
 };
 
 void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
@@ -67,10 +63,11 @@ void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-        /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-        /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-        /**Logical Stream Name**/ "test_stream");
+    PhysicalStreamConfigPtr streamConf =
+        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+                                     /**Logical Stream Name**/ "test_stream");
 
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
@@ -95,10 +92,9 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .windowByKey(Attribute("id"),
-            TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                          Sum(Attribute("value")))
-        .sink(printSinkDescriptor);
+                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                                   Sum(Attribute("value")))
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     std::cout << " plan before=" << queryPlan->toString() << std::endl;
@@ -118,11 +114,10 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .filter(Attribute("id") < 45)
-        .windowByKey(Attribute("id"),
-            TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                          Sum(Attribute("value")))
-        .sink(printSinkDescriptor);
+                      .filter(Attribute("id") < 45)
+                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                                   Sum(Attribute("value")))
+                      .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;

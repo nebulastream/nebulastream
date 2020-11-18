@@ -113,9 +113,7 @@ class TupleBuffer {
 
     void setNumberOfTuples(size_t numberOfTuples);
 
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) {
-        return os << buff.ptr;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) { return os << buff.ptr; }
 
     /**
     * @brief revert the endianess of the tuple buffer

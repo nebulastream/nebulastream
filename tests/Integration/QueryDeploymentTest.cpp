@@ -47,9 +47,7 @@ class QueryDeploymentTest : public testing::Test {
         restPort = restPort + 2;
     }
 
-    void TearDown() {
-        std::cout << "Tear down QueryDeploymentTest class." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down QueryDeploymentTest class." << std::endl; }
 
     std::string ipAddress = "127.0.0.1";
 };
@@ -65,19 +63,20 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
-    std::string outputFilePath =
-        "testDeployTwoWorkerMergeUsingBottomUp.out";
+    std::string outputFilePath = "testDeployTwoWorkerMergeUsingBottomUp.out";
     remove(outputFilePath.c_str());
 
     //register logical stream
@@ -89,24 +88,21 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 3,
-                                                                   "physical_car", "car");
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                     1, 0, 3,
-                                                                     "physical_truck", "truck");
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query =
+        "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -120,8 +116,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -233,19 +228,20 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
-    std::string outputFilePath =
-        "testDeployTwoWorkerMergeUsingTopDown.out";
+    std::string outputFilePath = "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
 
     //register logical stream
@@ -257,23 +253,20 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                   1, 0, 3,
-                                                                   "physical_car", "car");
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_car", "car");
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
     //register physical stream
-    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "",
-                                                                     1, 0, 3,
-                                                                     "physical_truck", "truck");
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 3, "physical_truck", "truck");
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+    string query =
+        R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -282,15 +275,12 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
-
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -394,7 +384,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(QueryDeploymentTest,  DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
@@ -402,19 +392,20 @@ TEST_F(QueryDeploymentTest,  DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameS
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started SUCCESSFULLY");
 
-    std::string outputFilePath =
-        "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
+    std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
 
     //register logical stream qnv
@@ -435,15 +426,12 @@ TEST_F(QueryDeploymentTest,  DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameS
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName);
 
-
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                  1, 3, 2,
-                                                                  "test_stream", "window", true);
+    PhysicalStreamConfigPtr windowStream =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window", true);
 
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                  1, 3, 2,
-                                                                  "test_stream", "window2", true);
+    PhysicalStreamConfigPtr windowStream2 =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window2", true);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -452,7 +440,8 @@ TEST_F(QueryDeploymentTest,  DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameS
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("window").join(Query::from("window2"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
+    string query =
+        R"(Query::from("window").join(Query::from("window2"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
@@ -468,19 +457,16 @@ TEST_F(QueryDeploymentTest,  DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameS
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1000|2000|1|2|\n"
-        "|1000|2000|4|2|\n"
-        "|1000|2000|12|2|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1000|2000|1|2|\n"
+                             "|1000|2000|4|2|\n"
+                             "|1000|2000|12|2|\n"
+                             "+----------------------------------------------------+";
 
     NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): content=" << content);
     NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): expContent=" << expectedContent);
@@ -508,7 +494,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -516,8 +503,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath =
-        "testDeployOneWorker.out";
+    std::string outputFilePath = "testDeployOneWorker.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -533,24 +519,22 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|id:UINT32|value:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "+----------------------------------------------------+";
 
     NES_INFO("QueryDeploymentTest(testDeployOneWorker): content=" << content);
     NES_INFO("QueryDeploymentTest(testDeployOneWorker): expContent=" << expectedContent);
@@ -577,7 +561,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -585,8 +570,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath =
-        "testDeployOneWorkerUsingTopDownStrategy.out";
+    std::string outputFilePath = "testDeployOneWorkerUsingTopDownStrategy.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -602,24 +586,22 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|id:UINT32|value:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "+----------------------------------------------------+";
 
     NES_INFO("QueryDeploymentTest(testDeployOneWorkerUsingTopDownStrategy): content=" << content);
     NES_INFO("QueryDeploymentTest(testDeployOneWorkerUsingTopDownStrategy): expContent=" << expectedContent);
@@ -643,13 +625,15 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
@@ -657,8 +641,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath =
-        "testDeployTwoWorker.out";
+    std::string outputFilePath = "testDeployTwoWorker.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -675,8 +658,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -733,13 +715,15 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
@@ -747,8 +731,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath =
-        "testDeployTwoWorkerUsingTopDownStrategy.out";
+    std::string outputFilePath = "testDeployTwoWorkerUsingTopDownStrategy.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -766,8 +749,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -826,7 +808,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -850,24 +833,22 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     EXPECT_TRUE(my_file.good());
 
     std::ifstream ifs("test.out");
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|id:UINT32|value:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "+----------------------------------------------------+";
     NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): content=" << content);
     NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -894,7 +875,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -918,24 +900,22 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     EXPECT_TRUE(my_file.good());
 
     std::ifstream ifs("test.out");
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|id:UINT32|value:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "+----------------------------------------------------+";
     NES_INFO("QueryDeploymentTest (testDeployUndeployOneWorkerFileOutput): content=" << content);
     NES_INFO("QueryDeploymentTest (testDeployUndeployOneWorkerFileOutput): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -963,13 +943,15 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
@@ -994,8 +976,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     EXPECT_TRUE(my_file.good());
 
     std::ifstream ifs("test.out");
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -1058,13 +1039,15 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
@@ -1099,8 +1082,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_TRUE(my_file1.good());
 
     std::ifstream ifs1("test1.out");
-    std::string actualContent1((std::istreambuf_iterator<char>(ifs1)),
-                               (std::istreambuf_iterator<char>()));
+    std::string actualContent1((std::istreambuf_iterator<char>(ifs1)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -1139,8 +1121,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_TRUE(my_file2.good());
 
     std::ifstream ifs2("test2.out");
-    std::string actualContent2((std::istreambuf_iterator<char>(ifs2)),
-                               (std::istreambuf_iterator<char>()));
+    std::string actualContent2((std::istreambuf_iterator<char>(ifs2)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): content=" << actualContent2);
     NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): expContent=" << expectedContent);
@@ -1172,19 +1153,22 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorke
     remove("test2.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, std::thread::hardware_concurrency(), true);
+    NesCoordinatorPtr crd =
+        std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, std::thread::hardware_concurrency(), true);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
@@ -1219,8 +1203,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorke
     EXPECT_TRUE(my_file1.good());
 
     std::ifstream ifs1("test1.out");
-    std::string actualContent1((std::istreambuf_iterator<char>(ifs1)),
-                               (std::istreambuf_iterator<char>()));
+    std::string actualContent1((std::istreambuf_iterator<char>(ifs1)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -1259,8 +1242,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorke
     EXPECT_TRUE(my_file2.good());
 
     std::ifstream ifs2("test2.out");
-    std::string actualContent2((std::istreambuf_iterator<char>(ifs2)),
-                               (std::istreambuf_iterator<char>()));
+    std::string actualContent2((std::istreambuf_iterator<char>(ifs2)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): content=" << actualContent2);
     NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): expContent=" << expectedContent);

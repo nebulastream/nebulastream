@@ -40,11 +40,8 @@ class SimpleBenchmarkSource : public DataSource {
   public:
     uint64_t numberOfTuplesPerBuffer;
 
-    SimpleBenchmarkSource(const SchemaPtr& schema,
-                          const BufferManagerPtr& bufferManager,
-                          const QueryManagerPtr& queryManager,
-                          uint64_t ingestionRate,
-                          uint64_t numberOfTuplesPerBuffer)
+    SimpleBenchmarkSource(const SchemaPtr& schema, const BufferManagerPtr& bufferManager, const QueryManagerPtr& queryManager,
+                          uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer)
         : DataSource(schema, bufferManager, queryManager, 1) {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
@@ -69,16 +66,17 @@ class SimpleBenchmarkSource : public DataSource {
 
         if (!this->operatorId) {
             NES_DEBUG("SimpleBenchmarkSource " << this->getOperatorId() << ": SimpleBenchmarkSource of type=" << getType());
-            size_t numberOfTuplesPerPeriod = (ingestionRate*BenchmarkUtils::periodLengthInSeconds);
+            size_t numberOfTuplesPerPeriod = (ingestionRate * BenchmarkUtils::periodLengthInSeconds);
 
-            NES_DEBUG("SimpleBenchmarkSource: " << "ingestionRate * periodLengthInSeconds = "
-                                          << ingestionRate*BenchmarkUtils::periodLengthInSeconds <<
-                                          "\nnumberOfTuplesPerBuffer = " << numberOfTuplesPerBuffer);
+            NES_DEBUG("SimpleBenchmarkSource: "
+                      << "ingestionRate * periodLengthInSeconds = " << ingestionRate * BenchmarkUtils::periodLengthInSeconds
+                      << "\nnumberOfTuplesPerBuffer = " << numberOfTuplesPerBuffer);
 
             auto optBuf = receiveData();
             while (isRunning()) {
                 auto startTimeSendBuffers =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                        .count();
                 size_t cntTuples = 0;
                 while (cntTuples < numberOfTuplesPerPeriod) {
 
@@ -96,32 +94,32 @@ class SimpleBenchmarkSource : public DataSource {
 
                         cntTuples += curNumberOfTuplesPerBuffer;
                     }
-                    NES_DEBUG("SimpleBenchmarkSource: cntTuples=" << cntTuples << " numberOfTuplesPerPeriod="
-                                                            << numberOfTuplesPerPeriod);
+                    NES_DEBUG("SimpleBenchmarkSource: cntTuples=" << cntTuples
+                                                                  << " numberOfTuplesPerPeriod=" << numberOfTuplesPerPeriod);
                 }
                 uint64_t endTimeSendBuffers =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                        .count();
 
-                uint64_t
-                    nextPeriodStartTime = uint64_t(startTimeSendBuffers + (BenchmarkUtils::periodLengthInSeconds*1000));
+                uint64_t nextPeriodStartTime = uint64_t(startTimeSendBuffers + (BenchmarkUtils::periodLengthInSeconds * 1000));
 
-                NES_DEBUG(
-                    "SimpleBenchmarkSource:\n-startTimeSendBuffers=\t" << startTimeSendBuffers << "\n-endTimeSendBuffers=\t"
-                                                                 << endTimeSendBuffers << "\n-nextPeriodStartTime=\t"
-                                                                 << nextPeriodStartTime);
+                NES_DEBUG("SimpleBenchmarkSource:\n-startTimeSendBuffers=\t" << startTimeSendBuffers << "\n-endTimeSendBuffers=\t"
+                                                                             << endTimeSendBuffers << "\n-nextPeriodStartTime=\t"
+                                                                             << nextPeriodStartTime);
 
                 if (nextPeriodStartTime < endTimeSendBuffers) {
-                    NES_ERROR(
-                        "Creating buffer(s) for SimpleBenchmarkSource took longer than periodLength. nextPeriodStartTime="
-                            << nextPeriodStartTime << " endTimeSendBuffers=" << endTimeSendBuffers);
+                    NES_ERROR("Creating buffer(s) for SimpleBenchmarkSource took longer than periodLength. nextPeriodStartTime="
+                              << nextPeriodStartTime << " endTimeSendBuffers=" << endTimeSendBuffers);
                     throw RuntimeException("Creating buffer(s) for SimpleBenchmarkSource took longer than periodLength!!!");
                 }
 
                 uint64_t curTime =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                        .count();
                 while (curTime < nextPeriodStartTime) {
                     curTime =
-                        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                            .count();
                 }
             }
 
@@ -153,41 +151,33 @@ class SimpleBenchmarkSource : public DataSource {
         this->keyPos += curNumberOfTuplesPerBuffer;
         buf.setNumberOfTuples(curNumberOfTuplesPerBuffer);
 
-        NES_DEBUG(
-            "SimpleBenchmarkSource: available buffer after creating one buffer are " << bufferManager->getAvailableBuffers());
+        NES_DEBUG("SimpleBenchmarkSource: available buffer after creating one buffer are "
+                  << bufferManager->getAvailableBuffers());
         return buf;
     }
 
-    const std::string toString() const override {
-        return "SimpleBenchmarkSource";
-    }
+    const std::string toString() const override { return "SimpleBenchmarkSource"; }
 
-    SourceType getType() const override {
-        return TEST_SOURCE;
-    }
+    SourceType getType() const override { return TEST_SOURCE; }
 
     virtual ~SimpleBenchmarkSource() = default;
 
-    static std::shared_ptr<SimpleBenchmarkSource> create(BufferManagerPtr bufferManager,
-                                                         QueryManagerPtr queryManager,
-                                                         SchemaPtr& benchmarkSchema,
-                                                         uint64_t ingestionRate) {
+    static std::shared_ptr<SimpleBenchmarkSource> create(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate) {
 
-        auto maxTuplesPerBuffer = bufferManager->getBufferSize()/benchmarkSchema->getSchemaSizeInBytes();
-        maxTuplesPerBuffer = maxTuplesPerBuffer%1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer%1000)
-                                                            : (maxTuplesPerBuffer - maxTuplesPerBuffer%1000);
+        auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
+        maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
+                                                              : (maxTuplesPerBuffer - maxTuplesPerBuffer % 1000);
 
         NES_INFO("BM_SimpleFilterQuery: maxTuplesPerBuffer=" << maxTuplesPerBuffer);
         // at this point maxTuplesPerBuffer will be rounded to nearest thousands. This makes it easier to work with ingestion rates
-        if (maxTuplesPerBuffer == 0) throw RuntimeException("maxTuplesPerBuffer == 0");
+        if (maxTuplesPerBuffer == 0)
+            throw RuntimeException("maxTuplesPerBuffer == 0");
 
-        return std::make_shared<SimpleBenchmarkSource>(benchmarkSchema,
-                                                       bufferManager,
-                                                       queryManager,
-                                                       ingestionRate,
+        return std::make_shared<SimpleBenchmarkSource>(benchmarkSchema, bufferManager, queryManager, ingestionRate,
                                                        maxTuplesPerBuffer);
     }
 };
-}
+}// namespace NES::Benchmarking
 
-#endif //NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
+#endif//NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_

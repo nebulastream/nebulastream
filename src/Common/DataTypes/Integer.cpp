@@ -21,12 +21,10 @@
 #include <cmath>
 namespace NES {
 
-Integer::Integer(int8_t bits, int64_t lowerBound, int64_t upperBound) : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {
-}
+Integer::Integer(int8_t bits, int64_t lowerBound, int64_t upperBound)
+    : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
 
-bool Integer::isInteger() {
-    return true;
-}
+bool Integer::isInteger() { return true; }
 
 bool Integer::isEquals(DataTypePtr otherDataType) {
     if (otherDataType->isInteger()) {
@@ -55,14 +53,8 @@ DataTypePtr Integer::join(DataTypePtr otherDataType) {
     }
     return DataTypeFactory::createUndefined();
 }
-int64_t Integer::getLowerBound() const {
-    return lowerBound;
-}
-int64_t Integer::getUpperBound() const {
-    return upperBound;
-}
-std::string Integer::toString() {
-    return "INTEGER";
-}
+int64_t Integer::getLowerBound() const { return lowerBound; }
+int64_t Integer::getUpperBound() const { return upperBound; }
+std::string Integer::toString() { return "INTEGER"; }
 
 }// namespace NES

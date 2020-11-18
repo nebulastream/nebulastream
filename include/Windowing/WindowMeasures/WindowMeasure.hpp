@@ -20,8 +20,7 @@ namespace NES::Windowing {
 /**
  * Defines the measure of a window, common measures are time and count.
  */
-class WindowMeasure {
-};
+class WindowMeasure {};
 }// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWMEASURES_WINDOWMEASURE_HPP_

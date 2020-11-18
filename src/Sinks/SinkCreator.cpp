@@ -38,43 +38,51 @@ const DataSinkPtr createTestSink() {
     NES_NOT_IMPLEMENTED();
 }
 
-const DataSinkPtr createTextFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& filePath, bool append) {
+const DataSinkPtr createTextFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                     const std::string& filePath, bool append) {
     //TODO: this is not nice and should be fixed such that we only provide the paramter once
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createCSVFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& filePath, bool append) {
+const DataSinkPtr createCSVFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                    const std::string& filePath, bool append) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& filePath, bool append) {
+const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                          const std::string& filePath, bool append) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createJSONFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& filePath, bool append) {
+const DataSinkPtr createJSONFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                     const std::string& filePath, bool append) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& host, const uint16_t port) {
+const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                    const std::string& host, const uint16_t port) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format, host, port, false, parentPlanId);
 }
 
-const DataSinkPtr createCSVZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& host, const uint16_t port) {
+const DataSinkPtr createCSVZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                   const std::string& host, const uint16_t port) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format, host, port, false, parentPlanId);
 }
 
-const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, const std::string& host, const uint16_t port, bool internal) {
+const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                      const std::string& host, const uint16_t port, bool internal) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format, host, port, internal, parentPlanId);
 }
 
-const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::ostream& out) {
+const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+                                      std::ostream& out) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format, parentPlanId, out);
 }
@@ -85,10 +93,11 @@ const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlan
 }
 
 const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, Network::NodeLocation nodeLocation,
-                                    Network::NesPartition nesPartition, NodeEnginePtr nodeEngine,
-                                    std::chrono::seconds waitTime, uint8_t retryTimes) {
+                                    Network::NesPartition nesPartition, NodeEnginePtr nodeEngine, std::chrono::seconds waitTime,
+                                    uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema, parentPlanId, nodeEngine->getNetworkManager(), nodeLocation,
-                                                  nesPartition, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), waitTime, retryTimes);
+                                                  nesPartition, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                  waitTime, retryTimes);
 }
 
 #ifdef ENABLE_KAFKA_BUILD
@@ -99,7 +108,8 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
 #endif
 
 #ifdef ENABLE_OPC_BUILD
-const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::string url, UA_NodeId nodeId, std::string user, std::string password) {
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::string url,
+                                UA_NodeId nodeId, std::string user, std::string password) {
     NES_DEBUG("plz fix me" << parentPlanId);
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<OPCSink>(format, url, nodeId, user, password);
