@@ -115,6 +115,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
@@ -204,10 +208,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -281,6 +281,12 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
+
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
@@ -371,10 +377,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -462,6 +464,11 @@ TEST_F(QueryDeploymentTest,  testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 5));
 
+    NES_DEBUG("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
@@ -478,10 +485,6 @@ TEST_F(QueryDeploymentTest,  testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): content=" << content);
     NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_DEBUG("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -525,6 +528,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
@@ -548,10 +555,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     NES_INFO("QueryDeploymentTest(testDeployOneWorker): content=" << content);
     NES_INFO("QueryDeploymentTest(testDeployOneWorker): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -594,6 +597,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
@@ -617,10 +624,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest(testDeployOneWorkerUsingTopDownStrategy): content=" << content);
     NES_INFO("QueryDeploymentTest(testDeployOneWorkerUsingTopDownStrategy): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -667,6 +670,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
@@ -703,10 +710,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     NES_INFO("QueryDeploymentTest(testDeployTwoWorker): content=" << content);
     NES_INFO("QueryDeploymentTest(testDeployTwoWorker): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -758,6 +761,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
@@ -794,10 +801,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest(testDeployTwoWorkerUsingTopDownStrategy): content=" << content);
     NES_INFO("QueryDeploymentTest(testDeployTwoWorkerUsingTopDownStrategy): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -839,6 +842,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
 
@@ -864,10 +871,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): content=" << content);
     NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -907,6 +910,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
 
@@ -932,10 +939,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest (testDeployUndeployOneWorkerFileOutput): content=" << content);
     NES_INFO("QueryDeploymentTest (testDeployUndeployOneWorkerFileOutput): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -983,6 +986,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
 
@@ -1022,10 +1029,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): content=" << content);
     NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1084,6 +1087,14 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 2));
 
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId1);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId2);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
+
     ifstream my_file1("test1.out");
     EXPECT_TRUE(my_file1.good());
 
@@ -1136,14 +1147,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 
     EXPECT_EQ(actualContent2, expectedContent);
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId1);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId2);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
-
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -1164,7 +1167,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
     remove("test1.out");
     remove("test2.out");
 
@@ -1204,6 +1207,14 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 2));
 
+    NES_INFO("QueryDeploymentTest: Remove query " << queryId1);
+    queryService->validateAndQueueStopRequest(queryId1);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Remove query " << queryId2);
+    queryService->validateAndQueueStopRequest(queryId2);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
+
     ifstream my_file1("test1.out");
     EXPECT_TRUE(my_file1.good());
 
@@ -1255,14 +1266,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): expContent=" << expectedContent);
 
     EXPECT_EQ(actualContent2, expectedContent);
-
-    NES_INFO("QueryDeploymentTest: Remove query " << queryId1);
-    queryService->validateAndQueueStopRequest(queryId1);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
-
-    NES_INFO("QueryDeploymentTest: Remove query " << queryId2);
-    queryService->validateAndQueueStopRequest(queryId2);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
