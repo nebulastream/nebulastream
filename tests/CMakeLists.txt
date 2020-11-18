@@ -74,9 +74,14 @@ target_link_libraries(node-engine-test nes ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
 ### Code Generation Tests ###
-add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
+add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
+
+### Operator Code Generation Tests ###
+add_executable(operator-code-generation-tests "UnitTests/CodeGenerator/OperatorCodeGenerationTest.cpp")
+target_link_libraries(operator-code-generation-tests nes ${GTEST_LIBRARIES})
+add_test(NAME operator-code-generation-tests COMMAND operator-code-generation-tests)
 
 ### NES Topology Tests ###
 add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
