@@ -384,9 +384,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
             statistics->incProcessedBuffers();
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());
-    }
-    else
-    {
+    } else {
         NES_WARNING("queryToStatisticsMap not set, this should only happen for testing");
     }
 }
