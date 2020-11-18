@@ -51,15 +51,22 @@ YSBSource::YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManage
     : DefaultSource(YsbSchema(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       numberOfTuplesPerBuffer(numberOfTuplesPerBuffer),
       endlessRepeat(endlessRepeat),
-      tmpEventType(0) {}
+      tmpEventType(0), currentMs(0), startMs(0) {
+    auto ts = std::chrono::high_resolution_clock::now();
+    startMs = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch()).count();
+    NES_DEBUG("YSBSource: start ms=" << startMs);
+    //    ts.time_since_epoch().count();
+}
 
 std::optional<TupleBuffer> YSBSource::receiveData() {
     NES_DEBUG("YSBSource:" << this << " requesting buffer");
     auto buf = this->bufferManager->getBufferBlocking();
-
     NES_DEBUG("YSBSource:" << this << " got buffer");
     auto ts = std::chrono::high_resolution_clock::now();
-    currentMs = ts.time_since_epoch().count();
+    currentMs = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch()).count();
+    NES_DEBUG("YSBSource: start current ms=" << currentMs);
+    currentMs -= startMs;
+    NES_DEBUG("YSBSource: start new current ms=" << currentMs);
 
     NES_DEBUG("YSBSource: Filling buffer with " << numberOfTuplesPerBuffer << " tuples.");
     auto records = buf.getBufferAs<YSBSource::YsbRecord>();

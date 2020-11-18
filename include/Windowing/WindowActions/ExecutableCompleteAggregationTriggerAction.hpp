@@ -194,6 +194,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                 //if we would write to a new buffer and we still have tuples to write
                 if (currentNumberOfTuples * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
                     && i + 1 < partialFinalAggregates.size()) {
+                    tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
                     NES_DEBUG("ExecutableSliceAggregationTriggerAction: Dispatch output buffer with "
                               << currentNumberOfTuples << " records, content="
@@ -201,7 +202,6 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                               << std::endl);
                     //forward buffer to next  pipeline stage
-                    tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
 
                     // request new buffer
