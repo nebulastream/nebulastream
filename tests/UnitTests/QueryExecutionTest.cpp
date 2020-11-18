@@ -501,7 +501,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(
         nodeEngine->getBufferManager(),
-        nodeEngine->getQueryManager(), /*bufferCnt*/ 3, /*frequency*/ 1);
+        nodeEngine->getQueryManager(), /*bufferCnt*/ 3, /*frequency*/ 0);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:

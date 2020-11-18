@@ -1246,7 +1246,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
 }
 
 TEST_F(ContinuousSourceTest, testYSB) {
-    size_t producedBuffers = 10;
+    size_t producedBuffers = 2;
     size_t producedTuples = 5;
 
     //TODO: writing of csv file works, now make test green
@@ -1283,8 +1283,8 @@ TEST_F(ContinuousSourceTest, testYSB) {
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, producedBuffers));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
     
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));

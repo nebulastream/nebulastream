@@ -221,7 +221,9 @@ class TestUtils {
                                                                                                 << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout");
+        auto statistics = nesWorker->getQueryStatistics(globalQueryId);
+        size_t processed = statistics[0]->getProcessedBuffers();
+        NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected=" << expectedResult << " final result=" << processed);
         return false;
     }
 
