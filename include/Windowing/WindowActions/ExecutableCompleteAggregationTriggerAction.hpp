@@ -146,17 +146,17 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
 
         //trigger a central window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
         //generates a list of windows that have to be outputted
 
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger test if mappings=" << store->getNumberOfMappings() << " < inputEdges=" << windowDefinition->getNumberOfInputEdges());
         if (store->getNumberOfMappings() < windowDefinition->getNumberOfInputEdges()) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
             watermark = store->getLastWatermark();
         }
         windowDefinition->getWindowType()->triggerWindows(windows, store->getLastWatermark(), watermark);//watermark
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
+        NES_TRACE("ExecutableCompleteAggregationTriggerAction: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
 
         // allocate partial final aggregates for each window
         //because we trigger each second, there could be multiple windows ready
@@ -165,13 +165,13 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
+                NES_TRACE("ExecutableCompleteAggregationTriggerAction: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
                                                                                              << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
+                    NES_TRACE("ExecutableCompleteAggregationTriggerAction CC: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
                     partialFinalAggregates[windowId] = executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
                 } else {
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: condition not true");
+                    NES_TRACE("ExecutableCompleteAggregationTriggerAction CC: condition not true");
                 }
             }
         }

@@ -612,7 +612,6 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
 TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     size_t numBuffers = 3;
     size_t numTuples = 10;
-    size_t expectedLinesOut = 26;
 
     NES_INFO(" start coordinator");
     std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.txt";
@@ -690,8 +689,8 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
 //    NES_INFO("Number of lines " << n);
 //    EXPECT_TRUE(n == expectedLinesOut);
 
-    //int response = remove(outputFilePath.c_str());
-    //EXPECT_TRUE(response == 0);
+    int response = remove(outputFilePath.c_str());
+    EXPECT_TRUE(response == 0);
 
     NES_INFO("Killing worker 1 process->PID: " << workerPid1);
     workerProc1.terminate();
