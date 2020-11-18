@@ -135,7 +135,8 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
         auto partialAggregates = store->getPartialAggregates();
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
 
-        NES_DEBUG("BaseExecutableWindowActionPtr: trigger " << slices.size() << " slices " << " currentNumberOfTuples=" << currentNumberOfTuples << " tupleBuffer.getNumberOfTuples()=" << tupleBuffer.getNumberOfTuples());
+        NES_DEBUG("BaseExecutableWindowActionPtr: trigger " << slices.size() << " slices "
+                                                            << " currentNumberOfTuples=" << currentNumberOfTuples << " tupleBuffer.getNumberOfTuples()=" << tupleBuffer.getNumberOfTuples());
 
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end

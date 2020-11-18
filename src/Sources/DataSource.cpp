@@ -158,7 +158,7 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                 }
             } else {
                 //check each second
-                if (nowInSec != lastTimeStampSec) {                                       //we are in another second
+                if (nowInSec != lastTimeStampSec) {                 //we are in another second
                     if (nowInSec.count() % gatheringInterval == 0) {//produce a regular buffer
                         NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                         recNow = true;
