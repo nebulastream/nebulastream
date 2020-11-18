@@ -20,10 +20,10 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
-namespace NES{
+namespace NES {
 
 WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine)
     : nodeEngine(nodeEngine) {
@@ -117,4 +117,4 @@ Status WorkerRPCServer::RequestMonitoringData(ServerContext*, const MonitoringRe
         return Status::CANCELLED;
     }
 }
-}
+}// namespace NES

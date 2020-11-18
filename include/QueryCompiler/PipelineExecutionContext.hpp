@@ -21,12 +21,10 @@
 #include <functional>
 #include <memory>
 
-
-namespace NES::Join{
+namespace NES::Join {
 class LogicalJoinDefinition;
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
-}
-
+}// namespace NES::Join
 
 namespace NES {
 

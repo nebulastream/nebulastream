@@ -16,8 +16,10 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
+#include <QueryCompiler/PipelineStage.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
@@ -25,8 +27,6 @@
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
 
 namespace NES::Join {
 template<class KeyType>

@@ -23,8 +23,8 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
 namespace NES {

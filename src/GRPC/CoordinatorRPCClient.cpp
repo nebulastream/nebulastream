@@ -14,12 +14,12 @@
     limitations under the License.
 */
 
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeStats.pb.h>
 #include <Util/Logger.hpp>
 #include <boost/filesystem.hpp>
 #include <string>
-#include <Catalogs/PhysicalStreamConfig.hpp>
 
 namespace NES {
 
