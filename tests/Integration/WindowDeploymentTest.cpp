@@ -683,19 +683,14 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
         "+----------------------------------------------------+\n"
         "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
-        "|10000|20000|1|1740|\n"
         "|5000|15000|1|1140|\n"
         "|0|10000|1|614|\n"
-        "|10000|20000|4|0|\n"
         "|5000|15000|4|0|\n"
         "|0|10000|4|12|\n"
-        "|10000|20000|11|0|\n"
         "|5000|15000|11|0|\n"
         "|0|10000|11|60|\n"
-        "|10000|20000|12|0|\n"
         "|5000|15000|12|0|\n"
         "|0|10000|12|14|\n"
-        "|10000|20000|16|0|\n"
         "|5000|15000|16|0|\n"
         "|0|10000|16|24|\n"
         "+----------------------------------------------------+";
@@ -778,10 +773,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindow) {
                         (std::istreambuf_iterator<char>()));
 
     string expectedContent = "+----------------------------------------------------+\n"
-                             "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
+                             "|start:UINT64|end:UINT64|value:UINT64|\n"
                              "+----------------------------------------------------+\n"
-                             "|1000|2000|0|3|\n"
-                             "|2000|3000|0|6|\n"
+                             "|1000|2000|3|\n"
+                             "|2000|3000|6|\n"
                              "+----------------------------------------------------+";
 
     NES_INFO("WindowDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): content=" << content);
@@ -862,11 +857,11 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindow) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
-        "|10000|20000|0|870|\n"
-        "|5000|15000|0|570|\n"
-        "|0|10000|0|362|\n"
+        "|10000|20000|870|\n"
+        "|5000|15000|570|\n"
+        "|0|10000|362|\n"
         "+----------------------------------------------------+";
 
     NES_INFO("WindowDeploymentTest: content=" << content);
@@ -946,24 +941,25 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
 
     string expectedContent = "+----------------------------------------------------+\n"
-                             "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
+                             "|start:UINT64|end:UINT64|value:UINT64|\n"
                              "+----------------------------------------------------+\n"
-                             "|1000|2000|0|6|\n"
-                             "|2000|3000|0|12|\n"
+                             "|1000|2000|6|\n"
+                             "|2000|3000|12|\n"
                              "+----------------------------------------------------+";
 
     NES_INFO("WindowDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): content=" << content);
     NES_INFO("WindowDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1047,11 +1043,10 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
+        "|start:UINT64|end:UINT64|value:UINT64|\n"
         "+----------------------------------------------------+\n"
-        "|10000|20000|0|1740|\n"
-        "|5000|15000|0|1140|\n"
-        "|0|10000|0|724|\n"
+        "|5000|15000|1140|\n"
+        "|0|10000|724|\n"
         "+----------------------------------------------------+";
 
     NES_INFO("WindowDeploymentTest: content=" << content);

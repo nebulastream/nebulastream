@@ -205,8 +205,12 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
     void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, ValueType value) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
-        windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
-        windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+        if (windowDefinition->isKeyed()) {
+            windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
+            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+        } else {
+            windowTupleLayout->getValueField<ValueType>(index, 2)->write(tupleBuffer, value);
+        }
     }
 
   private:
