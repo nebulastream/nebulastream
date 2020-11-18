@@ -43,6 +43,8 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     if (!outputFile.is_open()) {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
+    NES_ASSERT(outputFile.is_open(), "file is not open");
+    NES_ASSERT(outputFile.good(), "file not good");
 }
 
 FileSink::~FileSink() {

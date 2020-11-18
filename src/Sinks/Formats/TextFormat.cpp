@@ -25,6 +25,7 @@
 namespace NES {
 
 TextFormat::TextFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
+    NES_DEBUG("TextFormat::()");
 }
 
 std::optional<TupleBuffer> TextFormat::getSchema() {
@@ -36,7 +37,7 @@ std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
     std::vector<TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("TextFormat::getData: write watermark-only buffer");
+        NES_WARNING("TextFormat::getData: write watermark-on ly buffer");
         buffers.push_back(inputBuffer);
         return buffers;
     }

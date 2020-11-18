@@ -95,7 +95,7 @@ class YSBSource : public DefaultSource {
     // 78 bytes
 
   private:
-    void generate(YSBSource::YsbRecord& rec);
+    void generate(YSBSource::YsbRecord& rec, uint64_t ts);
 
   private:
     size_t numberOfTuplesPerBuffer;
