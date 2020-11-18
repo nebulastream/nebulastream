@@ -48,7 +48,8 @@ class ReconfigurationTask {
      * @param other the task we want to issue (created using the other ctor)
      * @param numThreads number of running threads
      */
-    explicit ReconfigurationTask(const ReconfigurationTask& other, size_t numThreads, bool blocking = false) : ReconfigurationTask(other) {
+    explicit ReconfigurationTask(const ReconfigurationTask& other, size_t numThreads, bool blocking = false)
+        : ReconfigurationTask(other) {
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
         refCnt.store(numThreads + (blocking ? 1 : 0));
         if (blocking) {
@@ -60,44 +61,36 @@ class ReconfigurationTask {
      * @brief copy constructor
      * @param that
      */
-    ReconfigurationTask(const ReconfigurationTask& that) : parentPlanId(that.parentPlanId), type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr) {
+    ReconfigurationTask(const ReconfigurationTask& that)
+        : parentPlanId(that.parentPlanId), type(that.type), instance(that.instance), syncBarrier(nullptr),
+          postSyncBarrier(nullptr) {
         // nop
     }
 
-    ~ReconfigurationTask() {
-        destroy();
-    }
+    ~ReconfigurationTask() { destroy(); }
 
     /**
      * @brief get the reconfiguration type
      * @return the reconfiguration type
      */
-    ReconfigurationType getType() const {
-        return type;
-    }
+    ReconfigurationType getType() const { return type; }
 
     /**
      * @brief get the target plan id
      * @return the plan id
      */
-    QuerySubPlanId getParentPlanId() const {
-        return parentPlanId;
-    }
+    QuerySubPlanId getParentPlanId() const { return parentPlanId; }
 
     /**
      * @brief get the target instance to reconfigura
      * @return the target instance
      */
-    Reconfigurable* getInstance() const {
-        return instance;
-    };
+    Reconfigurable* getInstance() const { return instance; };
 
     /**
      * @brief issue a synchronization barrier for all threads
      */
-    void wait() {
-        syncBarrier->wait();
-    }
+    void wait() { syncBarrier->wait(); }
 
     /**
      * @brief callback executed after the reconfiguration is carried out

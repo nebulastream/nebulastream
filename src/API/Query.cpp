@@ -40,13 +40,12 @@ namespace NES {
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
-Query::Query(const Query& query)
-    : queryPlan(query.queryPlan) {
-}
+Query::Query(const Query& query) : queryPlan(query.queryPlan) {}
 
 Query Query::from(const std::string sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName, UtilityFunctions::getNextOperatorId()));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(
+        LogicalStreamSourceDescriptor::create(sourceStreamName, UtilityFunctions::getNextOperatorId()));
     auto queryPlan = QueryPlan::create(sourceOperator);
     return Query(queryPlan);
 }
@@ -81,9 +80,12 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
         }
     }
 
@@ -98,15 +100,19 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
     auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
-    auto windowDefinition = LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy, triggerAction);
+    auto windowDefinition = LogicalWindowDefinition::create(
+        aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy, triggerAction);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
         }
     }
 
@@ -114,7 +120,8 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
     return *this;
 }
 
-Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation) {
+Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
+                          const Windowing::WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add keyed window operator");
     auto keyExpression = onKey.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
@@ -124,16 +131,20 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
     auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
-    auto windowDefinition = Windowing::LogicalWindowDefinition::create(fieldAccess, aggregation, windowType,
-                                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy, triggerAction);
+    auto windowDefinition = Windowing::LogicalWindowDefinition::create(
+        fieldAccess, aggregation, windowType, Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy,
+        triggerAction);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0))));
         }
     }
 
@@ -162,9 +173,7 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     return *this;
 }
 
-QueryPlanPtr Query::getQueryPlan() {
-    return queryPlan;
-}
+QueryPlanPtr Query::getQueryPlan() { return queryPlan; }
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
 

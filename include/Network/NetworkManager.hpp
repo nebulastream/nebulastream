@@ -48,12 +48,9 @@ class NetworkManager {
      * @param numServerThread
      * @return the shared_ptr object
      */
-    static std::shared_ptr<NetworkManager> create(
-        const std::string& hostname,
-        uint16_t port,
-        Network::ExchangeProtocol&& exchangeProtocol,
-        BufferManagerPtr bufferManager,
-        uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+    static std::shared_ptr<NetworkManager> create(const std::string& hostname, uint16_t port,
+                                                  Network::ExchangeProtocol&& exchangeProtocol, BufferManagerPtr bufferManager,
+                                                  uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
      * @brief This method is called on the receiver side to register a SubpartitionConsumer, i.e. indicate that the
@@ -89,8 +86,8 @@ class NetworkManager {
     OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                   std::chrono::seconds waitTime, uint8_t retryTimes);
 
-    explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol, BufferManagerPtr bufferManager,
-                            uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+    explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol,
+                            BufferManagerPtr bufferManager, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocol exchangeProtocol;

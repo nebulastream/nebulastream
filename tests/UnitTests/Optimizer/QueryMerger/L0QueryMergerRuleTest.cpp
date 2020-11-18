@@ -45,14 +45,10 @@ class L0QueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_INFO("Setup L0QueryMergerRuleTest test case.");
-    }
+    void TearDown() { NES_INFO("Setup L0QueryMergerRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down L0QueryMergerRuleTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down L0QueryMergerRuleTest test class."); }
 };
 
 /**
@@ -61,19 +57,13 @@ class L0QueryMergerRuleTest : public testing::Test {
 TEST_F(L0QueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -203,19 +193,13 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
 TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("truck")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2 = Query::from("truck").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -265,22 +249,16 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
-    Query query1 = Query::from("car")
-                       .merge(&subQuery1)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query1 =
+        Query::from("car").merge(&subQuery1).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .merge(&subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2 =
+        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -341,11 +319,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) 
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .merge(&subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2 =
+        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -406,11 +381,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentC
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 = Query::from("car")
-                       .merge(&subQuery2)
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query2 =
+        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -460,19 +432,13 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 45)
-                       .sink(printSinkDescriptor);
+    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .sink(printSinkDescriptor);
+    Query query2 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -521,19 +487,13 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .sink(printSinkDescriptor);
+    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id1") < 40)
-                       .sink(printSinkDescriptor);
+    Query query2 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id1") < 40).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -583,19 +543,13 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .sink(printSinkDescriptor);
+    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value1") = 40)
-                       .filter(Attribute("id") < 40)
-                       .sink(printSinkDescriptor);
+    Query query2 = Query::from("car").map(Attribute("value1") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -645,19 +599,13 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 = Query::from("car")
-                       .map(Attribute("value") = 40)
-                       .filter(Attribute("id") < 40)
-                       .sink(printSinkDescriptor);
+    Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query query2 = Query::from("car")
-                       .map(Attribute("value") = 50)
-                       .filter(Attribute("id") < 40)
-                       .sink(printSinkDescriptor);
+    Query query2 = Query::from("car").map(Attribute("value") = 50).filter(Attribute("id") < 40).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();

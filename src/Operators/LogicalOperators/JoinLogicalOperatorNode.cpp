@@ -37,9 +37,7 @@ const std::string JoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() {
-    return joinDefinition;
-}
+Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { return joinDefinition; }
 
 bool JoinLogicalOperatorNode::inferSchema() {
     OperatorNode::inferSchema();

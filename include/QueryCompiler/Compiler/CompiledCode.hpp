@@ -36,8 +36,9 @@ class CompiledCode {
         // INFO
         // http://www.trilithium.com/johan/2004/12/problem-with-dlsym/
         // No real solution in 2016.
-        static_assert(sizeof(void*) == sizeof(Function), "Void pointer to function pointer conversion will not work!"
-                                                         " If you encounter this, run!");
+        static_assert(sizeof(void*) == sizeof(Function),
+                      "Void pointer to function pointer conversion will not work!"
+                      " If you encounter this, run!");
 
         union converter {
             void* v_ptr;

@@ -30,7 +30,8 @@ class GeneratableMapOperator : public MapLogicalOperatorNode, public Generatable
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableMapOperator
      */
-    static GeneratableMapOperatorPtr create(MapLogicalOperatorNodePtr mapLogicalOperator, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableMapOperatorPtr create(MapLogicalOperatorNodePtr mapLogicalOperator,
+                                            OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

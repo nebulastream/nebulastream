@@ -41,29 +41,16 @@ typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
  * Stopped: Query was explicitly stopped either by system or by user.
  * Failed: Query failed because of some reason.
  */
-enum QueryStatus { Registered,
-                   Scheduling,
-                   Running,
-                   MarkedForStop,
-                   Stopped,
-                   Failed };
+enum QueryStatus { Registered, Scheduling, Running, MarkedForStop, Stopped, Failed };
 
 static std::map<std::string, QueryStatus> stringToQueryStatusMap{
-    {"REGISTERED", Registered},
-    {"SCHEDULING", Scheduling},
-    {"RUNNING", Running},
-    {"MARKED_FOR_STOP", MarkedForStop},
-    {"STOPPED", Stopped},
-    {"FAILED", Failed},
+    {"REGISTERED", Registered},         {"SCHEDULING", Scheduling}, {"RUNNING", Running},
+    {"MARKED_FOR_STOP", MarkedForStop}, {"STOPPED", Stopped},       {"FAILED", Failed},
 };
 
 static std::map<QueryStatus, std::string> queryStatusToStringMap{
-    {Registered, "REGISTERED"},
-    {Scheduling, "SCHEDULING"},
-    {Running, "RUNNING"},
-    {MarkedForStop, "MARKED_FOR_STOP"},
-    {Stopped, "STOPPED"},
-    {Failed, "FAILED"},
+    {Registered, "REGISTERED"},         {Scheduling, "SCHEDULING"}, {Running, "RUNNING"},
+    {MarkedForStop, "MARKED_FOR_STOP"}, {Stopped, "STOPPED"},       {Failed, "FAILED"},
 };
 
 /**
@@ -76,7 +63,8 @@ static std::map<QueryStatus, std::string> queryStatusToStringMap{
  */
 class QueryCatalogEntry {
   public:
-    QueryCatalogEntry(QueryId queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr, QueryStatus queryStatus);
+    QueryCatalogEntry(QueryId queryId, std::string queryString, std::string queryPlacementStrategy, QueryPlanPtr queryPlanPtr,
+                      QueryStatus queryStatus);
 
     /**
      * @brief method to get the id of the query

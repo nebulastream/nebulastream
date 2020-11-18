@@ -29,13 +29,9 @@
 
 namespace NES {
 
-DataTypePtr DataTypeFactory::createUndefined() {
-    return std::make_shared<Undefined>();
-}
+DataTypePtr DataTypeFactory::createUndefined() { return std::make_shared<Undefined>(); }
 
-DataTypePtr DataTypeFactory::createBoolean() {
-    return std::make_shared<Boolean>();
-}
+DataTypePtr DataTypeFactory::createBoolean() { return std::make_shared<Boolean>(); }
 
 DataTypePtr DataTypeFactory::createFloat(int8_t bits, double lowerBound, double upperBound) {
     return std::make_shared<Float>(bits, lowerBound, upperBound);
@@ -64,49 +60,29 @@ DataTypePtr DataTypeFactory::createInteger(int64_t lowerBound, int64_t upperBoun
     return createInteger(bits, lowerBound, upperBound);
 }
 
-DataTypePtr DataTypeFactory::createInt8() {
-    return createInteger(8, INT8_MIN, INT8_MAX);
-}
+DataTypePtr DataTypeFactory::createInt8() { return createInteger(8, INT8_MIN, INT8_MAX); }
 
-DataTypePtr DataTypeFactory::createUInt8() {
-    return createInteger(8, 0, UINT8_MAX);
-};
+DataTypePtr DataTypeFactory::createUInt8() { return createInteger(8, 0, UINT8_MAX); };
 
-DataTypePtr DataTypeFactory::createInt16() {
-    return createInteger(16, INT16_MIN, INT16_MAX);
-};
+DataTypePtr DataTypeFactory::createInt16() { return createInteger(16, INT16_MIN, INT16_MAX); };
 
-DataTypePtr DataTypeFactory::createUInt16() {
-    return createInteger(16, 0, UINT16_MAX);
-};
+DataTypePtr DataTypeFactory::createUInt16() { return createInteger(16, 0, UINT16_MAX); };
 
-DataTypePtr DataTypeFactory::createInt64() {
-    return createInteger(64, INT64_MIN, INT64_MAX);
-};
+DataTypePtr DataTypeFactory::createInt64() { return createInteger(64, INT64_MIN, INT64_MAX); };
 
-DataTypePtr DataTypeFactory::createUInt64() {
-    return createInteger(64, 0, UINT64_MAX);
-};
+DataTypePtr DataTypeFactory::createUInt64() { return createInteger(64, 0, UINT64_MAX); };
 
-DataTypePtr DataTypeFactory::createInt32() {
-    return createInteger(32, INT32_MIN, INT32_MAX);
-};
+DataTypePtr DataTypeFactory::createInt32() { return createInteger(32, INT32_MIN, INT32_MAX); };
 
-DataTypePtr DataTypeFactory::createUInt32() {
-    return createInteger(32, 0, UINT32_MAX);
-};
+DataTypePtr DataTypeFactory::createUInt32() { return createInteger(32, 0, UINT32_MAX); };
 
 DataTypePtr DataTypeFactory::createArray(uint64_t length, DataTypePtr component) {
     return std::make_shared<Array>(length, component);
 }
 
-DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) {
-    return std::make_shared<FixedChar>(length);
-}
+DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make_shared<FixedChar>(length); }
 
-DataTypePtr DataTypeFactory::createChar() {
-    return std::make_shared<Char>();
-}
+DataTypePtr DataTypeFactory::createChar() { return std::make_shared<Char>(); }
 
 ValueTypePtr DataTypeFactory::createBasicValue(DataTypePtr type, std::string value) {
     return std::make_shared<BasicValue>(type, value);
@@ -122,9 +98,7 @@ ValueTypePtr DataTypeFactory::createArrayValue(DataTypePtr type, std::vector<std
 ValueTypePtr DataTypeFactory::createFixedCharValue(std::vector<std::string> values) {
     return std::make_shared<FixedCharValue>(values);
 }
-ValueTypePtr DataTypeFactory::createFixedCharValue(const char* val) {
-    return std::make_shared<FixedCharValue>(val);
-}
+ValueTypePtr DataTypeFactory::createFixedCharValue(const char* val) { return std::make_shared<FixedCharValue>(val); }
 
 DataTypePtr DataTypeFactory::createType(BasicType type) {
     switch (type) {

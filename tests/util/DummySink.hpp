@@ -21,17 +21,11 @@
 namespace NES {
 class DummySink : public SinkDescriptor {
   public:
-    static SinkDescriptorPtr create() {
-        return std::make_shared<DummySink>();
-    }
+    static SinkDescriptorPtr create() { return std::make_shared<DummySink>(); }
     DummySink() : SinkDescriptor(){};
     ~DummySink() override = default;
-    std::string toString() override {
-        return std::string();
-    }
-    bool equal(SinkDescriptorPtr) override {
-        return false;
-    }
+    std::string toString() override { return std::string(); }
+    bool equal(SinkDescriptorPtr) override { return false; }
 };
-}
+}// namespace NES
 #endif//NES_TESTS_UTIL_DUMMYSINK_HPP_

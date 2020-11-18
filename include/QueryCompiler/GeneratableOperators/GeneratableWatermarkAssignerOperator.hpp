@@ -25,7 +25,9 @@ namespace NES {
 
 class GeneratableWatermarkAssignerOperator : public WatermarkAssignerLogicalOperatorNode, public GeneratableOperator {
   public:
-    static GeneratableWatermarkAssignerOperatorPtr create(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerLogicalOperatorNode, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableWatermarkAssignerOperatorPtr
+    create(WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerLogicalOperatorNode,
+           OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
    * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -48,7 +50,8 @@ class GeneratableWatermarkAssignerOperator : public WatermarkAssignerLogicalOper
     const std::string toString() const override;
 
   private:
-    GeneratableWatermarkAssignerOperator(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id);
+    GeneratableWatermarkAssignerOperator(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
+                                         OperatorId id);
 };
 }// namespace NES
 

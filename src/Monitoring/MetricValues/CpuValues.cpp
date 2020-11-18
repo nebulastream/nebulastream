@@ -44,8 +44,7 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::s
     //get index where the schema for CpuValues is starting
     auto i = schema->getIndex(prefix + "USER");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
-        && UtilityFunctions::endsWith(schema->fields[i]->name, "USER")
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "USER")
         && UtilityFunctions::endsWith(schema->fields[i + 9]->name, "GUESTNICE")) {
         NES_DEBUG("CpuValues: Index found for " + prefix + "USER" + " at " + std::to_string(i));
         auto layout = createRowLayout(schema);
@@ -61,7 +60,8 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::s
         output.GUEST = layout->getValueField<uint64_t>(0, i + 8)->read(buf);
         output.GUESTNICE = layout->getValueField<uint64_t>(0, i + 9)->read(buf);
     } else {
-        NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n" + schema->toString());
+        NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n"
+                                + schema->toString());
     }
     return output;
 }

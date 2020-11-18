@@ -27,9 +27,7 @@ Z3ExpressionInferencePhase::Z3ExpressionInferencePhase() {
     NES_DEBUG("Z3ExpressionInferencePhase()");
 }
 
-Z3ExpressionInferencePhase::~Z3ExpressionInferencePhase() {
-    NES_DEBUG("~Z3ExpressionInferencePhase()");
-}
+Z3ExpressionInferencePhase::~Z3ExpressionInferencePhase() { NES_DEBUG("~Z3ExpressionInferencePhase()"); }
 
 Z3ExpressionInferencePhasePtr Z3ExpressionInferencePhase::create() {
     return std::make_shared<Z3ExpressionInferencePhase>(Z3ExpressionInferencePhase());
@@ -43,8 +41,6 @@ void Z3ExpressionInferencePhase::execute(QueryPlanPtr queryPlan) {
     }
 }
 
-z3::ContextPtr Z3ExpressionInferencePhase::getContext() const {
-    return context;
-}
+z3::ContextPtr Z3ExpressionInferencePhase::getContext() const { return context; }
 
 }// namespace NES::Optimizer

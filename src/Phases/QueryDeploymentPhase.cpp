@@ -30,10 +30,9 @@ QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutio
     NES_DEBUG("QueryDeploymentPhase()");
 }
 
-QueryDeploymentPhase::~QueryDeploymentPhase() {
-    NES_DEBUG("~QueryDeploymentPhase()");
-}
-QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient) {
+QueryDeploymentPhase::~QueryDeploymentPhase() { NES_DEBUG("~QueryDeploymentPhase()"); }
+QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                     WorkerRPCClientPtr workerRpcClient) {
     return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(globalExecutionPlan, workerRpcClient));
 }
 
@@ -106,7 +105,8 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, std::vector<ExecutionNode
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id=" << executionNode->getId() << " and IP=" << ipAddress);
+        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id=" << executionNode->getId()
+                                                                                << " and IP=" << ipAddress);
         bool success = workerRPCClient->startQuery(rpcAddress, queryId);
         if (success) {
             NES_DEBUG("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << " successful");

@@ -49,9 +49,7 @@ class NesThread {
         inline ThreadId();
         inline ~ThreadId();
 
-        inline uint32_t getId() const {
-            return id;
-        }
+        inline uint32_t getId() const { return id; }
 
       private:
         uint32_t id;
@@ -59,9 +57,7 @@ class NesThread {
 
   public:
     /// Call static method Thread::getId() to get the executing thread's ID.
-    inline static uint32_t getId() {
-        return id.getId();
-    }
+    inline static uint32_t getId() { return id.getId(); }
 
   private:
     /// Methods ReserveEntry() and ReleaseEntry() do the real work.
@@ -94,13 +90,9 @@ class NesThread {
     friend class ThreadId;
 };
 
-inline NesThread::ThreadId::ThreadId() : id(InvalidId) {
-    id = NesThread::reserveEntry();
-}
+inline NesThread::ThreadId::ThreadId() : id(InvalidId) { id = NesThread::reserveEntry(); }
 
-inline NesThread::ThreadId::~ThreadId() {
-    NesThread::releaseEntry(id);
-}
+inline NesThread::ThreadId::~ThreadId() { NesThread::releaseEntry(id); }
 
 }// namespace NES
 #endif//NES_INCLUDE_NODEENGINE_NESTHREAD_HPP_

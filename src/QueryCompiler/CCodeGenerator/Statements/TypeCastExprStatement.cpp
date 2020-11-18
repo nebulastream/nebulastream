@@ -31,7 +31,8 @@ const CodeExpressionPtr TypeCastExprStatement::getCode() const {
 
 const ExpressionStatmentPtr TypeCastExprStatement::copy() const { return std::make_shared<TypeCastExprStatement>(*this); }
 
-TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type) : expression(expr.copy()), dataType(type) {}
+TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type)
+    : expression(expr.copy()), dataType(type) {}
 
 TypeCastExprStatement::~TypeCastExprStatement() {}
 

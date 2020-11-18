@@ -32,9 +32,7 @@ QueryRewritePhase::QueryRewritePhase(StreamCatalogPtr streamCatalog) {
     distributeWindowRule = DistributeWindowRule::create();
 }
 
-QueryRewritePhase::~QueryRewritePhase() {
-    NES_DEBUG("~QueryRewritePhase()");
-}
+QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
 
 QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     queryPlan = filterPushDownRule->apply(queryPlan);

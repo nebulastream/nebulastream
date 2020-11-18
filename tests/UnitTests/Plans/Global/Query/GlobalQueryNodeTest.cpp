@@ -33,14 +33,10 @@ class GlobalQueryNodeTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_INFO("Setup GlobalQueryNodeTest test case.");
-    }
+    void TearDown() { NES_INFO("Setup GlobalQueryNodeTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down GlobalQueryNodeTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down GlobalQueryNodeTest test class."); }
 };
 
 /**
@@ -59,7 +55,8 @@ TEST_F(GlobalQueryNodeTest, testCreateEmptyGlobalQueryNode) {
  */
 TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNode) {
 
-    const ExpressionNodePtr& ptr = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const ExpressionNodePtr& ptr =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
     const LogicalOperatorNodePtr& filterOptr = LogicalOperatorFactory::createFilterOperator(ptr);
     uint64_t globalQueryNodeId = 1;
     GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(globalQueryNodeId, 1, filterOptr);
@@ -68,7 +65,8 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNode) {
     NES_DEBUG("GlobalQueryNodeTest: A newly created global query node should have something to update");
     EXPECT_TRUE(globalQueryNode->hasNewUpdate());
 
-    NES_DEBUG("GlobalQueryNodeTest: Find the list of global query node that have a logical operator of type FilterLogicalOperatorNode");
+    NES_DEBUG(
+        "GlobalQueryNodeTest: Find the list of global query node that have a logical operator of type FilterLogicalOperatorNode");
     std::vector<GlobalQueryNodePtr> globalQueryNodes;
     globalQueryNode->getNodesWithTypeHelper<FilterLogicalOperatorNode>(globalQueryNodes);
     EXPECT_TRUE(globalQueryNodes.size() == 1);
@@ -80,7 +78,8 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNode) {
  */
 TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddOperator) {
 
-    const ExpressionNodePtr ptr1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const ExpressionNodePtr ptr1 =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
     const LogicalOperatorNodePtr filterOptr1 = LogicalOperatorFactory::createFilterOperator(ptr1);
     GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, 1, filterOptr1);
     NES_DEBUG("GlobalQueryNodeTest: A newly created  global query node should return false when asked if it is empty");
@@ -91,7 +90,8 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddOperator) {
     NES_DEBUG("GlobalQueryNodeTest: A global query node should no have anything to update once it is marked as updated");
     EXPECT_FALSE(globalQueryNode->hasNewUpdate());
 
-    const ExpressionNodePtr ptr2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const ExpressionNodePtr ptr2 =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
     const LogicalOperatorNodePtr& filterOptr2 = LogicalOperatorFactory::createFilterOperator(ptr2);
     globalQueryNode->addQueryAndOperator(2, filterOptr2);
     NES_DEBUG("GlobalQueryNodeTest: Global query node should have something to update after a new query and operator is added");
@@ -103,7 +103,8 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddOperator) {
  */
 TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndRemoveQuery) {
 
-    const ExpressionNodePtr ptr1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const ExpressionNodePtr ptr1 =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
     const LogicalOperatorNodePtr filterOptr1 = LogicalOperatorFactory::createFilterOperator(ptr1);
     GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, 1, filterOptr1);
     NES_DEBUG("GlobalQueryNodeTest: A newly created  global query node should return false when asked if it is empty");
@@ -126,7 +127,8 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndRemoveQuery) {
  */
 TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddAnewQueryAndRemoveTheAddedQuery) {
 
-    const ExpressionNodePtr ptr1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const ExpressionNodePtr ptr1 =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
     const LogicalOperatorNodePtr filterOptr1 = LogicalOperatorFactory::createFilterOperator(ptr1);
     GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, 1, filterOptr1);
     NES_DEBUG("GlobalQueryNodeTest: A newly created  global query node should return false when asked if it is empty");
@@ -150,7 +152,8 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddAnewQueryAndRe
  */
 TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddAnewQueryAndRemoveAllQueries) {
 
-    const ExpressionNodePtr ptr1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const ExpressionNodePtr ptr1 =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
     const LogicalOperatorNodePtr filterOptr1 = LogicalOperatorFactory::createFilterOperator(ptr1);
     GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, 1, filterOptr1);
     NES_DEBUG("GlobalQueryNodeTest: A newly created  global query node should return false when asked if it is empty");
@@ -176,7 +179,8 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndAddAnewQueryAndRe
  */
 TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndCheckIfSimilarOperatorExists) {
 
-    const ExpressionNodePtr ptr1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const ExpressionNodePtr ptr1 =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
     const LogicalOperatorNodePtr filterOptr1 = LogicalOperatorFactory::createFilterOperator(ptr1);
     GlobalQueryNodePtr globalQueryNode = GlobalQueryNode::create(1, 1, filterOptr1);
     NES_DEBUG("GlobalQueryNodeTest: A newly created  global query node should return false when asked if it is empty");
@@ -187,7 +191,8 @@ TEST_F(GlobalQueryNodeTest, testCreateRegularGlobalQueryNodeAndCheckIfSimilarOpe
     NES_DEBUG("GlobalQueryNodeTest: A global query node should no have anything to update once it is marked as updated");
     EXPECT_FALSE(globalQueryNode->hasNewUpdate());
 
-    const ExpressionNodePtr ptr2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+    const ExpressionNodePtr ptr2 =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
     const LogicalOperatorNodePtr filterOptr2 = LogicalOperatorFactory::createFilterOperator(ptr1);
 
     OperatorNodePtr existingOptr = globalQueryNode->hasOperator(filterOptr2);

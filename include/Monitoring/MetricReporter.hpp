@@ -26,9 +26,7 @@ namespace NES {
  */
 class MetricReporter {
   public:
-    MetricReporter() {
-        NES_NOT_IMPLEMENTED();
-    }
+    MetricReporter() { NES_NOT_IMPLEMENTED(); }
 };
 
 }// namespace NES

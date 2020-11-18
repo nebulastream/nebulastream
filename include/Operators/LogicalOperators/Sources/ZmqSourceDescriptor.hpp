@@ -28,7 +28,8 @@ class ZmqSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string host, uint16_t port, OperatorId operatorId);
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port, OperatorId operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port,
+                                      OperatorId operatorId);
 
     /**
      * @brief Get zmq host name
@@ -51,7 +52,8 @@ class ZmqSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port, OperatorId operatorId);
-    explicit ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port, OperatorId operatorId);
+    explicit ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port,
+                                 OperatorId operatorId);
 
     std::string host;
     uint16_t port;

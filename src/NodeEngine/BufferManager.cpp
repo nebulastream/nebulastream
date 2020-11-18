@@ -27,8 +27,7 @@ BufferManager::BufferManager() : bufferSize(0), numOfBuffers(0), isConfigured(fa
     // nop
 }
 
-BufferManager::BufferManager(size_t bufferSize, size_t numOfBuffers)
-    : bufferSize(0), numOfBuffers(0), isConfigured(false) {
+BufferManager::BufferManager(size_t bufferSize, size_t numOfBuffers) : bufferSize(0), numOfBuffers(0), isConfigured(false) {
     configure(bufferSize, numOfBuffers);
 }
 
@@ -36,8 +35,7 @@ BufferManager::~BufferManager() {
     std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
     auto success = true;
     if (allBuffers.size() != availableBuffers.size()) {
-        NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers "
-                                                   << availableBuffers.size());
+        NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << availableBuffers.size());
         success = false;
     }
     for (auto& buffer : allBuffers) {
@@ -64,8 +62,7 @@ BufferManager::~BufferManager() {
 void BufferManager::configure(size_t bufferSize, size_t numOfBuffers) {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
     if (isConfigured) {
-        NES_THROW_RUNTIME_ERROR(
-            "[BufferManager] Already configured - we cannot change the buffer manager at runtime for now!");
+        NES_THROW_RUNTIME_ERROR("[BufferManager] Already configured - we cannot change the buffer manager at runtime for now!");
     }
     this->bufferSize = bufferSize;
     this->numOfBuffers = numOfBuffers;
@@ -76,10 +73,9 @@ void BufferManager::configure(size_t bufferSize, size_t numOfBuffers) {
         if (ptr == nullptr) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
         }
-        allBuffers.emplace_back(ptr, bufferSize,
-                                [this](detail::MemorySegment* segment) {
-                                    recyclePooledBuffer(segment);
-                                });
+        allBuffers.emplace_back(ptr, bufferSize, [this](detail::MemorySegment* segment) {
+            recyclePooledBuffer(segment);
+        });
         availableBuffers.emplace_back(&allBuffers.back());
     }
     isConfigured = true;
@@ -157,10 +153,9 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
-    auto memSegment = std::make_unique<detail::MemorySegment>(
-        ptr, bufferSize, [this](detail::MemorySegment* segment) {
-            recycleUnpooledBuffer(segment);
-        });
+    auto memSegment = std::make_unique<detail::MemorySegment>(ptr, bufferSize, [this](detail::MemorySegment* segment) {
+        recycleUnpooledBuffer(segment);
+    });
     auto leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
     if (leakedMemSegment->controlBlock->prepare()) {
@@ -219,14 +214,9 @@ size_t BufferManager::getAvailableBuffers() {
     return availableBuffers.size();
 }
 
-void BufferManager::printStatistics() {
-    NES_INFO("BufferManager Statistics:");
-}
+void BufferManager::printStatistics() { NES_INFO("BufferManager Statistics:"); }
 
-BufferManager::UnpooledBufferHolder::UnpooledBufferHolder()
-    : size(0), free(false) {
-    segment.reset();
-}
+BufferManager::UnpooledBufferHolder::UnpooledBufferHolder() : size(0), free(false) { segment.reset(); }
 
 BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(uint32_t bufferSize) : size(bufferSize), free(false) {
     segment.reset();

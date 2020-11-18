@@ -41,52 +41,40 @@ ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp) {
-    return leftExp + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+    return leftExp
+        + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp) {
-    return leftExp - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+    return leftExp
+        - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp, int) {
-    return leftExp + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+    return leftExp
+        + ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int) {
-    return leftExp - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+    return leftExp
+        - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
-ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
-    return leftExp.getExpressionNode() + rightExp;
-}
+ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() + rightExp; }
 
-ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
-    return leftExp.getExpressionNode() - rightExp;
-}
+ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() - rightExp; }
 
-ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
-    return leftExp.getExpressionNode() / rightExp;
-}
+ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() / rightExp; }
 
-ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
-    return leftExp.getExpressionNode() * rightExp;
-}
+ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() * rightExp; }
 
-ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
-    return leftExp + rightExp.getExpressionNode();
-}
+ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp + rightExp.getExpressionNode(); }
 
-ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
-    return leftExp - rightExp.getExpressionNode();
-}
+ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp - rightExp.getExpressionNode(); }
 
-ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
-    return leftExp / rightExp.getExpressionNode();
-}
+ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp / rightExp.getExpressionNode(); }
 
-ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
-    return leftExp * rightExp.getExpressionNode();
-}
+ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp * rightExp.getExpressionNode(); }
 
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp) {
     return leftExp.getExpressionNode() + rightExp.getExpressionNode();
@@ -104,20 +92,12 @@ ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionItem rightExp) {
     return leftExp.getExpressionNode() * rightExp.getExpressionNode();
 }
 
-ExpressionNodePtr operator++(ExpressionItem exp) {
-    return ++exp.getExpressionNode();
-}
+ExpressionNodePtr operator++(ExpressionItem exp) { return ++exp.getExpressionNode(); }
 
-ExpressionNodePtr operator++(ExpressionItem exp, int) {
-    return exp.getExpressionNode()++;
-}
+ExpressionNodePtr operator++(ExpressionItem exp, int) { return exp.getExpressionNode()++; }
 
-ExpressionNodePtr operator--(ExpressionItem exp) {
-    return --exp.getExpressionNode();
-}
+ExpressionNodePtr operator--(ExpressionItem exp) { return --exp.getExpressionNode(); }
 
-ExpressionNodePtr operator--(ExpressionItem exp, int) {
-    return exp.getExpressionNode()--;
-}
+ExpressionNodePtr operator--(ExpressionItem exp, int) { return exp.getExpressionNode()--; }
 
 }// namespace NES

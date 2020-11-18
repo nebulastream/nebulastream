@@ -24,23 +24,22 @@ SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string ho
     return std::make_shared<ZmqSourceDescriptor>(ZmqSourceDescriptor(std::move(schema), std::move(host), port, operatorId));
 }
 
-SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port, OperatorId operatorId) {
-    return std::make_shared<ZmqSourceDescriptor>(ZmqSourceDescriptor(std::move(schema), std::move(streamName), std::move(host), port, operatorId));
+SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port,
+                                                OperatorId operatorId) {
+    return std::make_shared<ZmqSourceDescriptor>(
+        ZmqSourceDescriptor(std::move(schema), std::move(streamName), std::move(host), port, operatorId));
 }
 
 ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port, OperatorId operatorId)
     : SourceDescriptor(std::move(schema), operatorId), host(std::move(host)), port(port) {}
 
-ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port, OperatorId operatorId)
+ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port,
+                                         OperatorId operatorId)
     : SourceDescriptor(std::move(schema), std::move(streamName), operatorId), host(std::move(host)), port(port) {}
 
-const std::string& ZmqSourceDescriptor::getHost() const {
-    return host;
-}
+const std::string& ZmqSourceDescriptor::getHost() const { return host; }
 
-uint16_t ZmqSourceDescriptor::getPort() const {
-    return port;
-}
+uint16_t ZmqSourceDescriptor::getPort() const { return port; }
 bool ZmqSourceDescriptor::equal(SourceDescriptorPtr other) {
 
     if (!other->instanceOf<ZmqSourceDescriptor>())
@@ -49,12 +48,8 @@ bool ZmqSourceDescriptor::equal(SourceDescriptorPtr other) {
     return host == otherZMQSource->getHost() && port == otherZMQSource->getPort() && getSchema()->equals(other->getSchema());
 }
 
-std::string ZmqSourceDescriptor::toString() {
-    return "ZmqSourceDescriptor()";
-}
+std::string ZmqSourceDescriptor::toString() { return "ZmqSourceDescriptor()"; }
 
-void ZmqSourceDescriptor::setPort(uint16_t port) {
-    this->port = port;
-}
+void ZmqSourceDescriptor::setPort(uint16_t port) { this->port = port; }
 
 }// namespace NES

@@ -41,8 +41,7 @@ enum StatementType {
     COMPOUND_STMT
 };
 
-enum BracketMode { NO_BRACKETS,
-                   BRACKETS };
+enum BracketMode { NO_BRACKETS, BRACKETS };
 
 class Statement;
 typedef std::shared_ptr<Statement> StatementPtr;

@@ -21,9 +21,7 @@ namespace NES {
 
 ConsoleDumpHandler::ConsoleDumpHandler() : DumpHandler() {}
 
-DebugDumpHandlerPtr ConsoleDumpHandler::create() {
-    return std::make_shared<ConsoleDumpHandler>();
-}
+DebugDumpHandlerPtr ConsoleDumpHandler::create() { return std::make_shared<ConsoleDumpHandler>(); }
 
 void ConsoleDumpHandler::dumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const {
     out << std::string(indent * depth, ' ') << op->toString() << std::endl;
@@ -61,9 +59,7 @@ void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, size_t depth, siz
     }
 }
 
-void ConsoleDumpHandler::dump(const NodePtr node, std::ostream& out) {
-    dumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
-}
+void ConsoleDumpHandler::dump(const NodePtr node, std::ostream& out) { dumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
 void ConsoleDumpHandler::multilineDump(const NodePtr node, std::ostream& out) {
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);

@@ -21,7 +21,8 @@
 
 namespace NES {
 
-GeneratableArrayValueType::GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string> values, bool isString) : GeneratableValueType(), valueType(valueTypePtr), values(values), isString(isString) {}
+GeneratableArrayValueType::GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string> values, bool isString)
+    : GeneratableValueType(), valueType(valueTypePtr), values(values), isString(isString) {}
 
 CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() {
     std::stringstream str;

@@ -23,8 +23,8 @@ namespace NES {
 
 class YSBSource : public DefaultSource {
   public:
-    explicit YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, size_t numberOfTuplesPerBuffer, size_t frequency, bool endlessRepeat,
-                       OperatorId operatorId);
+    explicit YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
+                       size_t numberOfTuplesPerBuffer, size_t frequency, bool endlessRepeat, OperatorId operatorId);
 
     SourceType getType() const override;
 
@@ -55,7 +55,10 @@ class YSBSource : public DefaultSource {
   public:
     struct __attribute__((packed)) YsbRecord {
         YsbRecord() = default;
-        YsbRecord(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs, uint64_t ip) : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs), ip(ip) {}
+        YsbRecord(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs,
+                  uint64_t ip)
+            : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs),
+              ip(ip) {}
 
         uint64_t userId;
         uint64_t pageId;
@@ -82,13 +85,9 @@ class YSBSource : public DefaultSource {
         }
 
         std::string toString() const {
-            return "YsbRecord(userId=" + std::to_string(userId)
-                + ", pageId=" + std::to_string(pageId)
-                + ", campaignId=" + std::to_string(campaignId)
-                + ", adType=" + std::to_string(adType)
-                + ", eventType=" + std::to_string(eventType)
-                + ", currentMs=" + std::to_string(currentMs)
-                + ", ip=" + std::to_string(ip);
+            return "YsbRecord(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId) + ", campaignId="
+                + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType=" + std::to_string(eventType)
+                + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
         }
     };
     static_assert(sizeof(YsbRecord) == 78, "YSBSource: The record must be 78 bytes.");

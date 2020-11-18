@@ -24,27 +24,38 @@
 #include <utility>
 namespace NES {
 
-ExpressionItem::ExpressionItem(int8_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int8_t value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint8_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint8_t value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(int16_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int16_t value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint16_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint16_t value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(int32_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int32_t value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint32_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt32(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint32_t value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt32(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(int64_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(int64_t value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(uint64_t value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(uint64_t value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(float value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createFloat(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(float value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createFloat(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(double value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createDouble(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(double value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createDouble(), std::to_string(value))) {}
 
-ExpressionItem::ExpressionItem(bool value) : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(value))) {}
+ExpressionItem::ExpressionItem(bool value)
+    : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(value))) {}
 
 ExpressionItem::ExpressionItem(const char* value) : ExpressionItem(DataTypeFactory::createFixedCharValue(value)) {}
 
@@ -72,8 +83,6 @@ ExpressionItem Attribute(std::string fieldName, BasicType type) {
     return ExpressionItem(FieldAccessExpressionNode::create(DataTypeFactory::createType(type), std::move(fieldName)));
 }
 
-ExpressionNodePtr ExpressionItem::getExpressionNode() {
-    return expression;
-}
+ExpressionNodePtr ExpressionItem::getExpressionNode() { return expression; }
 
 }// namespace NES

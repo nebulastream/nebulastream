@@ -31,19 +31,14 @@ class BaseExecutableWindowAction {
 
     virtual std::string toString() = 0;
 
-    void setup(QueryManagerPtr queryManager,
-               BufferManagerPtr bufferManager,
-               PipelineStagePtr nextPipeline,
-               uint64_t originId) {
+    void setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint64_t originId) {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->nextPipeline = nextPipeline;
         this->originId = originId;
     }
 
-    SchemaPtr getWindowSchema() {
-        return windowSchema;
-    }
+    SchemaPtr getWindowSchema() { return windowSchema; }
 
   protected:
     QueryManagerPtr queryManager;

@@ -22,17 +22,11 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-GlobalExecutionPlan::GlobalExecutionPlan() {
-    NES_DEBUG("GlobalExecutionPlan()");
-}
+GlobalExecutionPlan::GlobalExecutionPlan() { NES_DEBUG("GlobalExecutionPlan()"); }
 
-GlobalExecutionPlan::~GlobalExecutionPlan() {
-    NES_DEBUG("~GlobalExecutionPlan()");
-}
+GlobalExecutionPlan::~GlobalExecutionPlan() { NES_DEBUG("~GlobalExecutionPlan()"); }
 
-GlobalExecutionPlanPtr GlobalExecutionPlan::create() {
-    return std::make_shared<GlobalExecutionPlan>(GlobalExecutionPlan());
-}
+GlobalExecutionPlanPtr GlobalExecutionPlan::create() { return std::make_shared<GlobalExecutionPlan>(GlobalExecutionPlan()); }
 
 bool GlobalExecutionPlan::checkIfExecutionNodeExists(uint64_t id) {
     NES_DEBUG("GlobalExecutionPlan: Checking if Execution node with id " << id << " exists");
@@ -116,7 +110,8 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
     for (auto executionNode : executionNodes) {
         uint64_t executionNodeId = executionNode->getId();
         if (!executionNode->removeQuerySubPlans(queryId)) {
-            NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id " << queryId << " from execution node with id " << executionNodeId);
+            NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id "
+                      << queryId << " from execution node with id " << executionNodeId);
             return false;
         }
         if (executionNode->getAllQuerySubPlans().empty()) {
@@ -185,17 +180,20 @@ void GlobalExecutionPlan::mapExecutionNodeToQueryId(ExecutionNodePtr executionNo
     for (auto pair : querySubPlans) {
         QueryId queryId = pair.first;
         if (queryIdIndex.find(queryId) == queryIdIndex.end()) {
-            NES_DEBUG("GlobalExecutionPlan: Query Id " << queryId << " does not exists adding a new entry with execution node " << executionNode->getId());
+            NES_DEBUG("GlobalExecutionPlan: Query Id " << queryId << " does not exists adding a new entry with execution node "
+                                                       << executionNode->getId());
             queryIdIndex[queryId] = {executionNode};
         } else {
             std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
             auto found = std::find(executionNodes.begin(), executionNodes.end(), executionNode);
             if (found == executionNodes.end()) {
-                NES_DEBUG("GlobalExecutionPlan: Adding execution node " << executionNode->getId() << " to the query Id " << queryId);
+                NES_DEBUG("GlobalExecutionPlan: Adding execution node " << executionNode->getId() << " to the query Id "
+                                                                        << queryId);
                 executionNodes.push_back(executionNode);
                 queryIdIndex[queryId] = executionNodes;
             } else {
-                NES_DEBUG("GlobalExecutionPlan: Skipping as execution node " << executionNode->getId() << " already mapped to the query Id " << queryId);
+                NES_DEBUG("GlobalExecutionPlan: Skipping as execution node " << executionNode->getId()
+                                                                             << " already mapped to the query Id " << queryId);
             }
         }
     }

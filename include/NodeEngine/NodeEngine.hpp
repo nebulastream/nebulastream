@@ -53,11 +53,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     static constexpr auto DEFAULT_NUM_BUFFERS = 1024;
 
   public:
-    enum NodeEngineQueryStatus {
-        started,
-        stopped,
-        registered
-    };
+    enum NodeEngineQueryStatus { started, stopped, registered };
 
     /**
      * @brief this creates a new NodeEngine
@@ -67,14 +63,16 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param numBuffers the number of buffers for the buffer manager
      * @return
      */
-    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
+    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
+                                              size_t bufferSize = DEFAULT_BUFFER_SIZE, size_t numBuffers = DEFAULT_NUM_BUFFERS);
 
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&&, QueryManagerPtr&&, std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
-                        Network::PartitionManagerPtr&&, QueryCompilerPtr&&, uint64_t nodeEngineId);
+    explicit NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&&, QueryManagerPtr&&,
+                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&,
+                        QueryCompilerPtr&&, uint64_t nodeEngineId);
 
     ~NodeEngine();
 

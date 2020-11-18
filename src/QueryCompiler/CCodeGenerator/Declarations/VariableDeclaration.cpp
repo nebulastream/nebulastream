@@ -43,9 +43,7 @@ const Code VariableDeclaration::getCode() const {
     return str.str();
 }
 
-const CodeExpressionPtr VariableDeclaration::getIdentifier() const {
-    return CodeExpressionPtr(new CodeExpression(identifier_));
-}
+const CodeExpressionPtr VariableDeclaration::getIdentifier() const { return CodeExpressionPtr(new CodeExpression(identifier_)); }
 
 const GeneratableDataTypePtr VariableDeclaration::getDataType() const { return type_; }
 
@@ -54,12 +52,10 @@ const DeclarationPtr VariableDeclaration::copy() const { return std::make_shared
 VariableDeclaration::~VariableDeclaration() {}
 
 VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value)
-    : type_(type), identifier_(identifier), init_value_(value) {
-}
+    : type_(type), identifier_(identifier), init_value_(value) {}
 
 VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
-    : type_(var_decl.type_), identifier_(var_decl.identifier_), init_value_(var_decl.init_value_) {
-}
+    : type_(var_decl.type_), identifier_(var_decl.identifier_), init_value_(var_decl.init_value_) {}
 
 VariableDeclaration VariableDeclaration::create(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value) {
     if (!type)

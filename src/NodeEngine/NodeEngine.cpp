@@ -37,11 +37,10 @@
 using namespace std;
 namespace NES {
 
-NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() {
-    return nodeStatsProvider;
-}
+NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
-std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, size_t bufferSize, size_t numBuffers) {
+std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
+                                               size_t bufferSize, size_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
@@ -75,10 +74,7 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
             config, std::move(bufferManager), std::move(queryManager),
             [hostname, port](std::shared_ptr<NodeEngine> engine) {
                 return Network::NetworkManager::create(
-                    hostname,
-                    port,
-                    Network::ExchangeProtocol(engine->getPartitionManager(), engine),
-                    engine->getBufferManager());
+                    hostname, port, Network::ExchangeProtocol(engine->getPartitionManager(), engine), engine->getBufferManager());
             },
             std::move(partitionManager), std::move(compiler), nodeEngineId);
     } catch (std::exception& err) {
@@ -90,7 +86,8 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId)
-    : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>(), config(config), nodeEngineId(nodeEngineId) {
+    : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>(), config(config),
+      nodeEngineId(nodeEngineId) {
 
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
@@ -162,16 +159,14 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
         if (winOps.size() == 1) {
-            qepBuilder.setWinDef(winOps[0]->getWindowDefinition())
-                .setSchema(sourceOperators[0]->getInputSchema());
+            qepBuilder.setWinDef(winOps[0]->getWindowDefinition()).setSchema(sourceOperators[0]->getInputSchema());
         } else if (winOps.size() > 1) {
             //currently we only support one window per query
             NES_NOT_IMPLEMENTED();
         }
 
         if (joinOps.size() == 1) {
-            qepBuilder.setJoinDef(joinOps[0]->getJoinDefinition())
-                .setSchema(sourceOperators[0]->getInputSchema());
+            qepBuilder.setJoinDef(joinOps[0]->getJoinDefinition()).setSchema(sourceOperators[0]->getInputSchema());
         } else if (joinOps.size() > 1) {
             //currently we only support one window per query
             NES_NOT_IMPLEMENTED();
@@ -194,7 +189,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId);
+            auto legacySink =
+                ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
         }
@@ -210,7 +206,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionP
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
-    NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId << " querySubPlanId =" << querySubPlanId);
+    NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId
+                                                             << " querySubPlanId =" << querySubPlanId);
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         auto found = queryIdToQuerySubPlanIds.find(queryId);
         if (found == queryIdToQuerySubPlanIds.end()) {
@@ -332,9 +329,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
     return false;
 }
 
-QueryManagerPtr NodeEngine::getQueryManager() {
-    return queryManager;
-}
+QueryManagerPtr NodeEngine::getQueryManager() { return queryManager; }
 
 bool NodeEngine::stop() {
     //TODO: add check if still queries are running
@@ -390,17 +385,11 @@ bool NodeEngine::stop() {
     return !withError;
 }
 
-BufferManagerPtr NodeEngine::getBufferManager() {
-    return bufferManager;
-}
+BufferManagerPtr NodeEngine::getBufferManager() { return bufferManager; }
 
-Network::NetworkManagerPtr NodeEngine::getNetworkManager() {
-    return networkManager;
-}
+Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 
-QueryCompilerPtr NodeEngine::getCompiler() {
-    return queryCompiler;
-}
+QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }
 
 QueryExecutionPlan::QueryExecutionPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);
@@ -425,13 +414,14 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
         // create a string for logging of the identity which corresponds to the
         // queryId::operatorId::partitionId::subpartitionId
         //TODO: dont use strings for lookups
-        NES_DEBUG("NodeEngine::onDataBuffer addWork operator=" << nesPartition.getOperatorId() << " buffer=" << buffer << " numberOfTuples=" << buffer.getNumberOfTuples() << " orid=" << buffer.getOriginId());
+        NES_DEBUG("NodeEngine::onDataBuffer addWork operator=" << nesPartition.getOperatorId() << " buffer=" << buffer
+                                                               << " numberOfTuples=" << buffer.getNumberOfTuples()
+                                                               << " orid=" << buffer.getOriginId());
         queryManager->addWork(nesPartition.getOperatorId(), buffer);
     } else {
         // partition is not registered, discard the buffer
         buffer.release();
-        NES_ERROR("DataBuffer for " + nesPartition.toString()
-                  + " is not registered and was discarded!");
+        NES_ERROR("DataBuffer for " + nesPartition.toString() + " is not registered and was discarded!");
         NES_THROW_RUNTIME_ERROR("NES Network Error: unhandled message");
     }
 }
@@ -476,9 +466,7 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     return queryStatistics;
 }
 
-Network::PartitionManagerPtr NodeEngine::getPartitionManager() {
-    return partitionManager;
-}
+Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
@@ -509,15 +497,13 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getOperatorId());
     } else if (type == "YSBSource") {
         NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
-        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency,
-                                           endlessRepeat, sourceDescriptor->getOperatorId());
+        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency, endlessRepeat,
+                                           sourceDescriptor->getOperatorId());
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
     }
 }
 
-void NodeEngine::setConfig(PhysicalStreamConfigPtr config) {
-    this->config = config;
-}
+void NodeEngine::setConfig(PhysicalStreamConfigPtr config) { this->config = config; }
 
 }// namespace NES

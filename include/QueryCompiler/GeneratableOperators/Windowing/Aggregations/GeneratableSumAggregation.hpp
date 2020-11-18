@@ -36,7 +36,8 @@ class GeneratableSumAggregation : public GeneratableWindowAggregation {
      * @param inputStruct input struct
      * @param inputRef input value reference
      */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement, StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement,
+                            StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
 };
 
 }// namespace NES

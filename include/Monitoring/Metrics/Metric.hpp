@@ -54,8 +54,7 @@ class Metric {
      * @param arbitrary parameter of any type
      */
     template<typename T>
-    Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {
-    }
+    Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {}
 
     /**
      * @brief copy ctor to properly handle the templated values
@@ -67,9 +66,7 @@ class Metric {
     /**
      * @brief assign operator for metrics to avoid unnecessary copies
      */
-    Metric& operator=(const Metric& x) {
-        return *this = Metric(x);
-    }
+    Metric& operator=(const Metric& x) { return *this = Metric(x); }
     Metric& operator=(Metric&& x) noexcept = default;
 
     /**
@@ -88,9 +85,7 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend MetricType getMetricType(const Metric& metric) {
-        return metric.self->getType();
-    }
+    friend MetricType getMetricType(const Metric& metric) { return metric.self->getType(); }
 
     /**
      * @brief This method returns the type of the stored metric. Note that the according function needs to be
@@ -125,13 +120,9 @@ class Metric {
     struct model final : concept_t {
         explicit model(T x) : data(std::move(x)){};
 
-        std::unique_ptr<concept_t> copy() const override {
-            return std::make_unique<model>(*this);
-        }
+        std::unique_ptr<concept_t> copy() const override { return std::make_unique<model>(*this); }
 
-        MetricType getType() const override {
-            return getMetricType(data);
-        }
+        MetricType getType() const override { return getMetricType(data); }
 
         void serializeC(std::shared_ptr<Schema> schema, TupleBuffer& buf, std::string prefix) override {
             serialize(data, schema, buf, prefix);

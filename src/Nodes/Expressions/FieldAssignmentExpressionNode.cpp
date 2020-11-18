@@ -19,10 +19,10 @@
 #include <memory>
 #include <utility>
 namespace NES {
-FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp)
-    : BinaryExpressionNode(std::move(stamp)){};
+FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};
 
-FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other) : BinaryExpressionNode(other){};
+FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other)
+    : BinaryExpressionNode(other){};
 
 FieldAssignmentExpressionNodePtr FieldAssignmentExpressionNode::create(FieldAccessExpressionNodePtr fieldAccess,
                                                                        ExpressionNodePtr expressionNodePtr) {
@@ -41,17 +41,13 @@ bool FieldAssignmentExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string FieldAssignmentExpressionNode::toString() const {
-    return "FieldAssignment()";
-}
+const std::string FieldAssignmentExpressionNode::toString() const { return "FieldAssignment()"; }
 
 FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const {
     return getLeft()->as<FieldAccessExpressionNode>();
 }
 
-ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const {
-    return getRight();
-}
+ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const { return getRight(); }
 void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of assignment expression
     getAssignment()->inferStamp(schema);

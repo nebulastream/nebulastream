@@ -16,17 +16,17 @@
 
 #include <gtest/gtest.h>
 #ifdef ENABLE_KAFKA_BUILD
-#include <string>
-#include <cstring>
-#include <thread>
-#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/QueryManager.hpp>
+#include <cstring>
+#include <string>
+#include <thread>
 
-#include <Util/Logger.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <Sources/KafkaSink.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/Logger.hpp>
+#include <Util/TimeMeasurement.hpp>
 
 constexpr char* KAFKA_BROKER = "localhost:9092";
 
@@ -40,16 +40,16 @@ class KafkaTest : public testing::Test {
         NES::setupLogging("KafkaTest.log", NES::LOG_DEBUG);
 
         schema = Schema::create()
-            ->addField("user_id", 16)
-            ->addField("page_id", 16)
-            ->addField("campaign_id", 16)
-            ->addField("ad_type", 9)
-            ->addField("event_type", 9)
-            ->addField("current_ms", UINT64)
-            ->addField("ip", INT32);
+                     ->addField("user_id", 16)
+                     ->addField("page_id", 16)
+                     ->addField("campaign_id", 16)
+                     ->addField("ad_type", 9)
+                     ->addField("event_type", 9)
+                     ->addField("current_ms", UINT64)
+                     ->addField("ip", INT32);
 
         uint64_t tuple_size = schema->getSchemaSizeInBytes();
-        buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
+        buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
 
         bufferManager = std::make_shared<BufferManager>();
         queryManager = std::make_shared<QueryManager>();
@@ -58,9 +58,7 @@ class KafkaTest : public testing::Test {
 
         NES_DEBUG("Setup KafkaTest");
     }
-    void TearDown() {
-        NES_DEBUG("Tear down KafkaTest");
-    }
+    void TearDown() { NES_DEBUG("Tear down KafkaTest"); }
 
   protected:
     const std::string brokers = std::string(KAFKA_BROKER);
@@ -71,31 +69,31 @@ class KafkaTest : public testing::Test {
     const uint64_t num_tuples_to_process = 100;
     size_t buffer_size;
     SchemaPtr schema;
-
 };
 
 TEST_F(KafkaTest, KafkaSourceInit) {
 
-    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, "group",true, 100);
+    const DataSourcePtr kafkaSource =
+        std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, "group", true, 100);
     SUCCEED();
 }
 
 TEST_F(KafkaTest, KafkaSourceInitWithoutGroupId) {
 
     try {
-        const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, "",true, 100);
+        const DataSourcePtr kafkaSource =
+            std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, "", true, 100);
         FAIL();
     } catch (...) {
         SUCCEED();
     }
-
 }
 
 TEST_F(KafkaTest, KafkaSourceInitWithEmptyTopic) {
 
     try {
-        const DataSourcePtr
-            kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, "", "group", true, 100);
+        const DataSourcePtr kafkaSource =
+            std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, "", "group", true, 100);
         FAIL();
     } catch (...) {
         SUCCEED();
@@ -120,5 +118,5 @@ TEST_F(KafkaTest, KafkaSinkInitWithEmptyTopic) {
     SUCCEED();
 }
 
-}
+}// namespace NES
 #endif

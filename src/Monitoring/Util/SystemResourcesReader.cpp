@@ -44,9 +44,7 @@ CpuMetrics SystemResourcesReader::ReadCPUStats() {
         // line starts with "cpu"
         if (!line.compare(0, 3, "cpu")) {
             std::istringstream ss(line);
-            std::vector<std::string> tokens{
-                std::istream_iterator<std::string>{ss},
-                std::istream_iterator<std::string>{}};
+            std::vector<std::string> tokens{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
 
             // check columns
             if (tokens.size() != 11) {
@@ -95,9 +93,9 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
     }
 
     while (fgets(buf, 200, fp)) {
-        sscanf(buf, "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
-               ifname, &rBytes, &rPackets, &rErrs, &rDrop, &rFifo, &rFrame, &rCompressed, &rMulticast,
-               &tBytes, &tPackets, &tErrs, &tDrop, &tFifo, &tColls, &tCarrier, &tCompressed);
+        sscanf(buf, "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", ifname, &rBytes, &rPackets, &rErrs,
+               &rDrop, &rFifo, &rFrame, &rCompressed, &rMulticast, &tBytes, &tPackets, &tErrs, &tDrop, &tFifo, &tColls, &tCarrier,
+               &tCompressed);
         auto outputValue = NetworkValues();
         // the name of the network interface
         outputValue.interfaceName = ifname;

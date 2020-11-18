@@ -26,24 +26,15 @@
 
 namespace NES {
 
-Schema::Schema() {
-}
+Schema::Schema() {}
 
-SchemaPtr Schema::create() {
-    return std::make_shared<Schema>();
-}
+SchemaPtr Schema::create() { return std::make_shared<Schema>(); }
 
-size_t Schema::getSize() const {
-    return fields.size();
-}
+size_t Schema::getSize() const { return fields.size(); }
 
-Schema::Schema(const SchemaPtr query) {
-    copyFields(query);
-}
+Schema::Schema(const SchemaPtr query) { copyFields(query); }
 
-SchemaPtr Schema::copy() const {
-    return std::make_shared<Schema>(*this);
-}
+SchemaPtr Schema::copy() const { return std::make_shared<Schema>(*this); }
 
 /* Return size of one row of schema in bytes. */
 size_t Schema::getSchemaSizeInBytes() const {
@@ -73,9 +64,7 @@ SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
     return addField(name, DataTypeFactory::createType(type));
 }
 
-SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
-    return addField(AttributeField::create(name, data));
-}
+SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return addField(AttributeField::create(name, data)); }
 
 void Schema::replaceField(const std::string& name, DataTypePtr type) {
     for (auto i = 0; i < fields.size(); i++) {

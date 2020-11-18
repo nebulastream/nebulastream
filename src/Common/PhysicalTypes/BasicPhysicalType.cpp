@@ -26,9 +26,7 @@ PhysicalTypePtr BasicPhysicalType::create(DataTypePtr type, NativeType nativeTyp
     return std::make_shared<BasicPhysicalType>(type, nativeType);
 }
 
-bool BasicPhysicalType::isBasicType() {
-    return true;
-}
+bool BasicPhysicalType::isBasicType() { return true; }
 
 uint64_t BasicPhysicalType::size() const {
     switch (nativeType) {
@@ -80,9 +78,7 @@ std::string BasicPhysicalType::convertRawToString(void* data) {
     return "invalid";
 }
 
-BasicPhysicalType::NativeType BasicPhysicalType::getNativeType() {
-    return nativeType;
-}
+BasicPhysicalType::NativeType BasicPhysicalType::getNativeType() { return nativeType; }
 std::string BasicPhysicalType::toString() {
     switch (nativeType) {
         case INT_8: return "INT8";

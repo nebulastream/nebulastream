@@ -24,13 +24,9 @@
 
 namespace NES {
 
-GlobalQueryPlan::GlobalQueryPlan() : freeGlobalQueryNodeId(0) {
-    root = GlobalQueryNode::createEmpty(getNextFreeId());
-}
+GlobalQueryPlan::GlobalQueryPlan() : freeGlobalQueryNodeId(0) { root = GlobalQueryNode::createEmpty(getNextFreeId()); }
 
-GlobalQueryPlanPtr GlobalQueryPlan::create() {
-    return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan());
-}
+GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan()); }
 
 void GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
     NES_INFO("GlobalQueryPlan: Adding new query plan to the Global query plan");
@@ -42,12 +38,14 @@ void GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
 
     if (queryIdToGlobalQueryNodeMap.find(queryId) != queryIdToGlobalQueryNodeMap.end()) {
         NES_ERROR("GlobalQueryPlan: Found existing entry for the query Id " << queryId);
-        throw Exception("GlobalQueryPlan: Entry for the queryId " + std::to_string(queryId) + " already present. Can't add same query multiple time.");
+        throw Exception("GlobalQueryPlan: Entry for the queryId " + std::to_string(queryId)
+                        + " already present. Can't add same query multiple time.");
     }
 
     NES_INFO("GlobalQueryPlan: adding the query plan for query: " << queryId << " to the global query plan.");
     const auto rootOperators = queryPlan->getRootOperators();
-    NES_DEBUG("GlobalQueryPlan: adding the root nodes of the query plan for query: " << queryId << " as children to the root node of the global query plan.");
+    NES_DEBUG("GlobalQueryPlan: adding the root nodes of the query plan for query: "
+              << queryId << " as children to the root node of the global query plan.");
     for (const auto& rootOperator : rootOperators) {
         addNewGlobalQueryNode(root, queryId, rootOperator);
     }
@@ -73,9 +71,11 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
     queryIdToGlobalQueryNodeMap.erase(queryId);
 }
 
-void GlobalQueryPlan::addNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId, const OperatorNodePtr& operatorNode) {
+void GlobalQueryPlan::addNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId,
+                                            const OperatorNodePtr& operatorNode) {
 
-    NES_DEBUG("GlobalQueryPlan: Creating a new global query node for operator of query " << queryId << " and adding it as child to global query node with id " << parentNode->getId());
+    NES_DEBUG("GlobalQueryPlan: Creating a new global query node for operator of query "
+              << queryId << " and adding it as child to global query node with id " << parentNode->getId());
     GlobalQueryNodePtr newGlobalQueryNode = GlobalQueryNode::create(getNextFreeId(), queryId, operatorNode->copy());
     addGlobalQueryNodeToQuery(queryId, newGlobalQueryNode);
     parentNode->addChild(newGlobalQueryNode);
@@ -103,7 +103,8 @@ bool GlobalQueryPlan::addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNode
         NES_TRACE("GlobalQueryPlan: Unable to find GlobalQueryNodes for query: " << queryId << " . Creating a new entry.");
         queryIdToGlobalQueryNodeMap[queryId] = {globalQueryNode};
     } else {
-        NES_TRACE("GlobalQueryPlan: Found GlobalQueryNodes for query: " << queryId << ". Adding the new global query node to the list.");
+        NES_TRACE("GlobalQueryPlan: Found GlobalQueryNodes for query: " << queryId
+                                                                        << ". Adding the new global query node to the list.");
         std::vector<GlobalQueryNodePtr> globalQueryNodes = getGQNListForQueryId(queryId);
         globalQueryNodes.push_back(globalQueryNode);
         updateGQNListForQueryId(queryId, globalQueryNodes);
@@ -111,9 +112,7 @@ bool GlobalQueryPlan::addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNode
     return true;
 }
 
-uint64_t GlobalQueryPlan::getNextFreeId() {
-    return freeGlobalQueryNodeId++;
-}
+uint64_t GlobalQueryPlan::getNextFreeId() { return freeGlobalQueryNodeId++; }
 
 bool GlobalQueryPlan::updateGQNListForQueryId(QueryId queryId, std::vector<GlobalQueryNodePtr> globalQueryNodes) {
     if (queryIdToGlobalQueryNodeMap.find(queryId) == queryIdToGlobalQueryNodeMap.end()) {
@@ -132,7 +131,8 @@ bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
         return false;
     }
 
-    NES_DEBUG("GlobalQueryPlan: Update and create new Global Query MetaData by grouping together GQNs with sink operators having overlapping leaf GQNs");
+    NES_DEBUG("GlobalQueryPlan: Update and create new Global Query MetaData by grouping together GQNs with sink operators having "
+              "overlapping leaf GQNs");
     //Comparator to compare two Global Query Nodes based on their id and used in the set as comparator
     auto cmp = [](NodePtr a, NodePtr b) {
         return a->as<GlobalQueryNode>()->getId() != b->as<GlobalQueryNode>()->getId();
@@ -174,13 +174,15 @@ bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
         vectorOfGroupedSinkGQNSets.push_back(groupedSinkGQNSet);
     }
 
-    NES_TRACE("GlobalQueryPlan: Iterating over all groups of GQNs and will either add to existing Global Query MetaData or will create a new Global Query Metadata.");
+    NES_TRACE("GlobalQueryPlan: Iterating over all groups of GQNs and will either add to existing Global Query MetaData or will "
+              "create a new Global Query Metadata.");
     for (auto groupedSinkGQNs : vectorOfGroupedSinkGQNSets) {
         std::set<QueryId> queryIds;
         std::set<GlobalQueryNodePtr> targetSinkGQNs;
         std::set<NodePtr> targetLeafNodes;
 
-        NES_TRACE("GlobalQueryPlan: Iterate over grouped GQNs and compute set of leaf GQNs, query Ids, and GQNs with sink operator.");
+        NES_TRACE(
+            "GlobalQueryPlan: Iterate over grouped GQNs and compute set of leaf GQNs, query Ids, and GQNs with sink operator.");
         for (auto sinkGQN : groupedSinkGQNs) {
             targetSinkGQNs.insert(sinkGQN->as<GlobalQueryNode>());
             queryIds.insert(sinkGQN->as<GlobalQueryNode>()->getQueryIds()[0]);
@@ -188,7 +190,8 @@ bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
             targetLeafNodes.insert(leafNodes.begin(), leafNodes.end());
         }
 
-        NES_TRACE("GlobalQueryPlan: Iterate over all exisiting Global Query Metadata and trying to find if one of them has overlapping leaf GQNs with the current group of traget GQNs.");
+        NES_TRACE("GlobalQueryPlan: Iterate over all exisiting Global Query Metadata and trying to find if one of them has "
+                  "overlapping leaf GQNs with the current group of traget GQNs.");
         GlobalQueryMetaDataPtr hostGlobalQueryMetaData;
         for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
             std::set<GlobalQueryNodePtr> hostSinkNodes = globalQueryMetaData->getSinkGlobalQueryNodes();
@@ -198,10 +201,12 @@ bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
                 hostLeafNodes.insert(leafNodes.begin(), leafNodes.end());
             }
             std::set<NodePtr> intersectionSet;
-            std::set_intersection(targetLeafNodes.begin(), targetLeafNodes.end(), hostLeafNodes.begin(), hostLeafNodes.end(), std::inserter(intersectionSet, intersectionSet.begin()), cmp);
+            std::set_intersection(targetLeafNodes.begin(), targetLeafNodes.end(), hostLeafNodes.begin(), hostLeafNodes.end(),
+                                  std::inserter(intersectionSet, intersectionSet.begin()), cmp);
 
             if (!intersectionSet.empty()) {
-                NES_TRACE("GlobalQueryPlan: Found overlap in leaf GQNs. Found an existing Global Query Metadata for inserting the grouped together target GQNs.");
+                NES_TRACE("GlobalQueryPlan: Found overlap in leaf GQNs. Found an existing Global Query Metadata for inserting "
+                          "the grouped together target GQNs.");
                 hostGlobalQueryMetaData = globalQueryMetaData;
                 break;
             }
@@ -269,10 +274,12 @@ bool GlobalQueryPlan::checkMetaDataValidity() {
 
             if (sinkGQNsWithMatchedSourceGQNs.size() == sinkGQNs.size()) {
                 NES_TRACE("GlobalQueryPlan: Found no changes to the MetaData information.");
-                NES_TRACE("GlobalQueryPlan: Found " << sinkGQNsWithMatchedSourceGQNs.size() << " of expected " << sinkGQNs.size() << " sink nodes.");
+                NES_TRACE("GlobalQueryPlan: Found " << sinkGQNsWithMatchedSourceGQNs.size() << " of expected " << sinkGQNs.size()
+                                                    << " sink nodes.");
                 break;
             } else {
-                NES_DEBUG("GlobalQueryPlan: Found MetaData information with non-merged query plans. Clearing MetaData for re-computation.");
+                NES_DEBUG("GlobalQueryPlan: Found MetaData information with non-merged query plans. Clearing MetaData for "
+                          "re-computation.");
                 //Get the query ids from the metadata
                 std::set<QueryId> queryIds = globalQueryMetaData->getQueryIds();
                 for (auto queryId : queryIds) {

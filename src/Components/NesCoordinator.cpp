@@ -48,7 +48,8 @@ using grpc::Status;
 
 namespace NES {
 
-NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging)
+NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots,
+                               bool enableQueryMerging)
     : serverIp(serverIp), restPort(restPort), rpcPort(rpcPort), numberOfSlots(numberOfSlots) {
     NES_DEBUG("NesCoordinator() serverIp=" << serverIp << " restPort=" << restPort << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
@@ -62,13 +63,15 @@ NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<QueryRequestQueue>();
     globalQueryPlan = GlobalQueryPlan::create();
-    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog,
-                                                                                  workerRpcClient, queryRequestQueue, enableQueryMerging);
+    queryRequestProcessorService =
+        std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog, globalQueryPlan,
+                                                       streamCatalog, workerRpcClient, queryRequestQueue, enableQueryMerging);
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 
 // constructor with default numberOfSlots set to the number of processors
-NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort) : NesCoordinator(serverIp, restPort, rpcPort, std::thread::hardware_concurrency(), false) {}
+NesCoordinator::NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort)
+    : NesCoordinator(serverIp, restPort, rpcPort, std::thread::hardware_concurrency(), false) {}
 
 NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator()");
@@ -141,18 +144,19 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    worker = std::make_shared<NesWorker>(serverIp, std::to_string(rpcPort), serverIp,
-                                         rpcPort + 1, rpcPort + 2, numberOfSlots, NodeType::Worker);
+    worker = std::make_shared<NesWorker>(serverIp, std::to_string(rpcPort), serverIp, rpcPort + 1, rpcPort + 2, numberOfSlots,
+                                         NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //create the monitoring service, it can only be used if a NesWorker has started
     NES_DEBUG("NesCoordinator: Initializing monitoring service");
-    monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
+    monitoringService =
+        std::make_shared<MonitoringService>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
-    restServer = std::make_shared<RestServer>(serverIp, restPort, this->weak_from_this(), queryCatalog,
-                                              streamCatalog, topology, globalExecutionPlan, queryService, monitoringService, globalQueryPlan);
+    restServer = std::make_shared<RestServer>(serverIp, restPort, this->weak_from_this(), queryCatalog, streamCatalog, topology,
+                                              globalExecutionPlan, queryService, monitoringService, globalQueryPlan);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking
@@ -244,29 +248,19 @@ void NesCoordinator::buildAndStartGRPCServer(std::promise<bool>& prom) {
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
 }
 
-void NesCoordinator::setServerIp(std::string serverIp) {
-    this->serverIp = serverIp;
-}
+void NesCoordinator::setServerIp(std::string serverIp) { this->serverIp = serverIp; }
 
 std::vector<QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
     NES_INFO("NesCoordinator: Get query statistics for query Id " << queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 
-QueryServicePtr NesCoordinator::getQueryService() {
-    return queryService;
-}
+QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
 
-QueryCatalogPtr NesCoordinator::getQueryCatalog() {
-    return queryCatalog;
-}
+QueryCatalogPtr NesCoordinator::getQueryCatalog() { return queryCatalog; }
 
-MonitoringServicePtr NesCoordinator::getMonitoringService() {
-    return monitoringService;
-}
+MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 
-GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() {
-    return globalQueryPlan;
-}
+GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
 
 }// namespace NES

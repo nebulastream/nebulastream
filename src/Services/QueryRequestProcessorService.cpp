@@ -40,9 +40,12 @@
 
 namespace NES {
 
-QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
-                                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient, QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging)
-    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), enableQueryMerging(enableQueryMerging), globalQueryPlan(globalQueryPlan) {
+QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                                           QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
+                                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
+                                                           QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging)
+    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
+      enableQueryMerging(enableQueryMerging), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -54,9 +57,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryMergerPhase = QueryMergerPhase::create();
 }
 
-QueryRequestProcessorService::~QueryRequestProcessorService() {
-    NES_DEBUG("~QueryRequestProcessorService()");
-}
+QueryRequestProcessorService::~QueryRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
 
 void QueryRequestProcessorService::start() {
 
@@ -74,7 +75,8 @@ void QueryRequestProcessorService::start() {
                         globalQueryPlan->removeQuery(queryId);
                     } else if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
                         auto queryPlan = queryCatalogEntry.getQueryPlan();
-                        NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId << " status=" << queryCatalogEntry.getQueryStatusAsString());
+                        NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query "
+                                 << queryId << " status=" << queryCatalogEntry.getQueryStatusAsString());
                         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
                         NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
@@ -92,8 +94,10 @@ void QueryRequestProcessorService::start() {
                         NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                         globalQueryPlan->addQueryPlan(queryPlan);
                     } else {
-                        NES_ERROR("QueryProcessingService: Request received for query with status " << queryCatalogEntry.getQueryStatus() << " ");
-                        throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling}, queryCatalogEntry.getQueryStatus());
+                        NES_ERROR("QueryProcessingService: Request received for query with status "
+                                  << queryCatalogEntry.getQueryStatus() << " ");
+                        throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling},
+                                                          queryCatalogEntry.getQueryStatus());
                     }
 
                     if (enableQueryMerging) {
@@ -106,7 +110,8 @@ void QueryRequestProcessorService::start() {
                         throw Exception("QueryProcessingService: Failed to update Global Query Metadata.");
                     }
 
-                    std::vector<GlobalQueryMetaDataPtr> listOfGlobalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+                    std::vector<GlobalQueryMetaDataPtr> listOfGlobalQueryMetaData =
+                        globalQueryPlan->getGlobalQueryMetaDataToDeploy();
                     for (auto globalQueryMetaData : listOfGlobalQueryMetaData) {
                         GlobalQueryId globalQueryId = globalQueryMetaData->getGlobalQueryId();
                         NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << globalQueryId);
@@ -123,16 +128,22 @@ void QueryRequestProcessorService::start() {
 
                             auto queryPlan = globalQueryMetaData->getQueryPlan();
 
-                            NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query with global query id : " << globalQueryId);
+                            NES_DEBUG(
+                                "QueryProcessingService: Performing Query Operator placement for query with global query id : "
+                                << globalQueryId);
                             std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
                             bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
                             if (!placementSuccessful) {
-                                throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for query plan with global query id: " + globalQueryId);
+                                throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for "
+                                                              "query plan with global query id: "
+                                                              + globalQueryId);
                             }
 
                             bool successful = queryDeploymentPhase->execute(globalQueryId);
                             if (!successful) {
-                                throw QueryDeploymentException("QueryRequestProcessingService: Failed to deploy query with global query Id " + globalQueryId);
+                                throw QueryDeploymentException(
+                                    "QueryRequestProcessingService: Failed to deploy query with global query Id "
+                                    + globalQueryId);
                             }
                         }
                         //Mark the meta data as deployed

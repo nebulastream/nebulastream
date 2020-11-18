@@ -24,29 +24,26 @@
 
 namespace NES {
 
-ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration, ExpressionStatmentPtr condition,
-                                   ExpressionStatmentPtr advance, const std::vector<StatementPtr>& loop_body)
-    : varDeclaration(varDeclaration), condition(std::move(condition)), advance(std::move(advance)), body(new CompoundStatement()) {
+ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration, ExpressionStatmentPtr condition, ExpressionStatmentPtr advance,
+                                   const std::vector<StatementPtr>& loop_body)
+    : varDeclaration(varDeclaration), condition(std::move(condition)), advance(std::move(advance)),
+      body(new CompoundStatement()) {
     for (const auto& stmt : loop_body) {
         if (stmt)
             body->addStatement(stmt);
     }
 }
 
-const StatementPtr ForLoopStatement::createCopy() const {
-    return std::make_shared<ForLoopStatement>(*this);
-}
+const StatementPtr ForLoopStatement::createCopy() const { return std::make_shared<ForLoopStatement>(*this); }
 
-const CompoundStatementPtr ForLoopStatement::getCompoundStatement() {
-    return body;
-}
+const CompoundStatementPtr ForLoopStatement::getCompoundStatement() { return body; }
 
 StatementType ForLoopStatement::getStamentType() const { return StatementType::FOR_LOOP_STMT; }
 
 const CodeExpressionPtr ForLoopStatement::getCode() const {
     std::stringstream code;
-    code << "for(" << varDeclaration->getCode() << ";" << condition->getCode()->code_ << ";" << advance->getCode()->code_
-         << "){" << std::endl;
+    code << "for(" << varDeclaration->getCode() << ";" << condition->getCode()->code_ << ";" << advance->getCode()->code_ << "){"
+         << std::endl;
     //    for (const auto& stmt : loop_body_) {
     //        code << stmt->getCode()->code_ << ";" << std::endl;
     //    }

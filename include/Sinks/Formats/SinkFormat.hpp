@@ -25,12 +25,7 @@
  */
 namespace NES {
 
-enum SinkFormatTypes {
-    CSV_FORMAT,
-    JSON_FORMAT,
-    NES_FORMAT,
-    TEXT_FORMAT
-};
+enum SinkFormatTypes { CSV_FORMAT, JSON_FORMAT, NES_FORMAT, TEXT_FORMAT };
 
 class SinkFormat {
   public:

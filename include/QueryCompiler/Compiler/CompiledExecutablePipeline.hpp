@@ -42,9 +42,7 @@ class CompiledExecutablePipeline : public ExecutablePipeline {
 
     static ExecutablePipelinePtr create(CompiledCodePtr compiledCode);
 
-    uint32_t execute(TupleBuffer& inBuffer,
-                     QueryExecutionContextPtr context,
-                     WorkerContextRef wctx) override;
+    uint32_t execute(TupleBuffer& inBuffer, QueryExecutionContextPtr context, WorkerContextRef wctx) override;
 
   private:
     CompiledCodePtr compiledCode;

@@ -35,9 +35,7 @@ bool AndExpressionNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
-const std::string AndExpressionNode::toString() const {
-    return "AndNode(" + stamp->toString() + ")";
-}
+const std::string AndExpressionNode::toString() const { return "AndNode(" + stamp->toString() + ")"; }
 
 void AndExpressionNode::inferStamp(SchemaPtr schema) {
     // delegate stamp inference of children
@@ -52,8 +50,6 @@ void AndExpressionNode::inferStamp(SchemaPtr schema) {
                                 + getRight()->getStamp()->toString());
     }
 }
-ExpressionNodePtr AndExpressionNode::copy() {
-    return std::make_shared<AndExpressionNode>(AndExpressionNode(this));
-}
+ExpressionNodePtr AndExpressionNode::copy() { return std::make_shared<AndExpressionNode>(AndExpressionNode(this)); }
 
 }// namespace NES

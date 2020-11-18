@@ -25,11 +25,10 @@ InvalidQueryStatusException::InvalidQueryStatusException(std::vector<QueryStatus
     for (QueryStatus status : expectedStatuses) {
         expectedStatus << queryStatusToStringMap[status] << " ";
     }
-    message = "InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in " + queryStatusToStringMap[actualStatus];
+    message = "InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in "
+        + queryStatusToStringMap[actualStatus];
 }
 
-const char* InvalidQueryStatusException::what() const throw() {
-    return message.c_str();
-}
+const char* InvalidQueryStatusException::what() const throw() { return message.c_str(); }
 
 }// namespace NES

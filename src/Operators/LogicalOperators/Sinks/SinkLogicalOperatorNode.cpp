@@ -24,9 +24,7 @@ namespace NES {
 SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id)
     : sinkDescriptor(sinkDescriptor), LogicalOperatorNode(id) {}
 
-SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() {
-    return sinkDescriptor;
-}
+SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() { return sinkDescriptor; }
 
 void SinkLogicalOperatorNode::setSinkDescriptor(SinkDescriptorPtr sinkDescriptor) {
     this->sinkDescriptor = std::move(sinkDescriptor);

@@ -34,23 +34,21 @@ bool OrExpressionNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
-const std::string OrExpressionNode::toString() const {
-    return "OrNode(" + stamp->toString() + ")";
-}
+const std::string OrExpressionNode::toString() const { return "OrNode(" + stamp->toString() + ")"; }
 
 void OrExpressionNode::inferStamp(SchemaPtr schema) {
     // delegate stamp inference of children
     ExpressionNode::inferStamp(schema);
     // check if children stamp is correct
     if (!getLeft()->isPredicate()) {
-        NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
+        NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: "
+                                + getLeft()->getStamp()->toString());
     }
     if (!getRight()->isPredicate()) {
-        NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
+        NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: "
+                                + getRight()->getStamp()->toString());
     }
 }
-ExpressionNodePtr OrExpressionNode::copy() {
-    return std::make_shared<OrExpressionNode>(OrExpressionNode(this));
-}
+ExpressionNodePtr OrExpressionNode::copy() { return std::make_shared<OrExpressionNode>(OrExpressionNode(this)); }
 
 }// namespace NES

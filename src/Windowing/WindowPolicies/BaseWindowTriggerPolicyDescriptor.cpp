@@ -18,7 +18,6 @@
 
 namespace NES::Windowing {
 
-BaseWindowTriggerPolicyDescriptor::BaseWindowTriggerPolicyDescriptor(TriggerType policy) : policy(policy) {
-}
+BaseWindowTriggerPolicyDescriptor::BaseWindowTriggerPolicyDescriptor(TriggerType policy) : policy(policy) {}
 
 }// namespace NES::Windowing

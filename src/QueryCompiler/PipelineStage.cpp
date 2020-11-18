@@ -29,23 +29,18 @@
 
 namespace NES {
 
-PipelineStage::PipelineStage(
-    uint32_t pipelineStageId,
-    QuerySubPlanId qepId,
-    ExecutablePipelinePtr executablePipeline,
-    QueryExecutionContextPtr pipelineExecutionContext,
-    PipelineStagePtr nextPipelineStage) : pipelineStageId(pipelineStageId),
-                                          qepId(qepId),
-                                          executablePipeline(std::move(executablePipeline)),
-                                          nextStage(std::move(nextPipelineStage)),
-                                          pipelineContext(std::move(pipelineExecutionContext)) {
+PipelineStage::PipelineStage(uint32_t pipelineStageId, QuerySubPlanId qepId, ExecutablePipelinePtr executablePipeline,
+                             QueryExecutionContextPtr pipelineExecutionContext, PipelineStagePtr nextPipelineStage)
+    : pipelineStageId(pipelineStageId), qepId(qepId), executablePipeline(std::move(executablePipeline)),
+      nextStage(std::move(nextPipelineStage)), pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     std::stringstream dbgMsg;
-    dbgMsg << "Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage=" << pipelineStageId;
+    dbgMsg << "Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
+           << " stage=" << pipelineStageId;
     if (hasWindowHandler()) {
         dbgMsg << "  withWindow_";
         auto distType = pipelineContext->getWindowDef()->getDistributionType()->getType();
@@ -73,7 +68,8 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
         }
     }
 
-    if (hasWindowHandler() && pipelineContext->getWindowDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnBuffer) {
+    if (hasWindowHandler()
+        && pipelineContext->getWindowDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnBuffer) {
         NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnBuffer");
         pipelineContext->getWindowHandler()->trigger();
     }
@@ -142,37 +138,23 @@ bool PipelineStage::stop() {
     return true;
 }
 
-PipelineStagePtr PipelineStage::getNextStage() {
-    return nextStage;
-}
+PipelineStagePtr PipelineStage::getNextStage() { return nextStage; }
 
-uint32_t PipelineStage::getPipeStageId() {
-    return pipelineStageId;
-}
+uint32_t PipelineStage::getPipeStageId() { return pipelineStageId; }
 
-QuerySubPlanId PipelineStage::getQepParentId() const {
-    return qepId;
-}
+QuerySubPlanId PipelineStage::getQepParentId() const { return qepId; }
 
-bool PipelineStage::hasWindowHandler() {
-    return pipelineContext->getWindowHandler() != nullptr;
-}
+bool PipelineStage::hasWindowHandler() { return pipelineContext->getWindowHandler() != nullptr; }
 
-bool PipelineStage::hasJoinHandler() {
-    return pipelineContext->getJoinHandler() != nullptr;
-}
+bool PipelineStage::hasJoinHandler() { return pipelineContext->getJoinHandler() != nullptr; }
 
-bool PipelineStage::isReconfiguration() const {
-    return executablePipeline->isReconfiguration();
-}
+bool PipelineStage::isReconfiguration() const { return executablePipeline->isReconfiguration(); }
 
-PipelineStagePtr PipelineStage::create(
-    uint32_t pipelineStageId,
-    const QuerySubPlanId querySubPlanId,
-    const ExecutablePipelinePtr executablePipeline,
-    QueryExecutionContextPtr pipelineContext,
-    const PipelineStagePtr nextPipelineStage) {
-    return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext, nextPipelineStage);
+PipelineStagePtr PipelineStage::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
+                                       const ExecutablePipelinePtr executablePipeline, QueryExecutionContextPtr pipelineContext,
+                                       const PipelineStagePtr nextPipelineStage) {
+    return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext,
+                                           nextPipelineStage);
 }
 
 }// namespace NES

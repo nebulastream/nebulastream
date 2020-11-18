@@ -45,12 +45,8 @@ typedef WorkerContext& WorkerContextRef;
 
 class PipelineStage {
   public:
-    PipelineStage(
-        uint32_t pipelineStageId,
-        QuerySubPlanId qepId,
-        ExecutablePipelinePtr executablePipeline,
-        QueryExecutionContextPtr pipelineContext,
-        PipelineStagePtr nextPipelineStage);
+    PipelineStage(uint32_t pipelineStageId, QuerySubPlanId qepId, ExecutablePipelinePtr executablePipeline,
+                  QueryExecutionContextPtr pipelineContext, PipelineStagePtr nextPipelineStage);
 
     /**
      * @brief Execute a pipeline stage
@@ -100,10 +96,8 @@ class PipelineStage {
     bool isReconfiguration() const;
 
   public:
-    static PipelineStagePtr create(uint32_t pipelineStageId,
-                                   const QuerySubPlanId querySubPlanId,
-                                   const ExecutablePipelinePtr compiledCode,
-                                   QueryExecutionContextPtr pipelineContext,
+    static PipelineStagePtr create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
+                                   const ExecutablePipelinePtr compiledCode, QueryExecutionContextPtr pipelineContext,
                                    const PipelineStagePtr nextPipelineStage);
 
   private:

@@ -42,9 +42,7 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coo
     topologyController = std::make_shared<TopologyController>(topology);
 }
 
-RestEngine::~RestEngine() {
-    NES_DEBUG("~RestEngine()");
-}
+RestEngine::~RestEngine() { NES_DEBUG("~RestEngine()"); }
 
 void RestEngine::initRestOpHandlers() {
     _listener.support(methods::GET, std::bind(&RestEngine::handleGet, this, std::placeholders::_1));
@@ -153,9 +151,7 @@ void RestEngine::handlePatch(http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH, getPath(message)));
 }
 
-std::string RestEngine::endpoint() const {
-    return _listener.uri().to_string();
-}
+std::string RestEngine::endpoint() const { return _listener.uri().to_string(); }
 
 pplx::task<void> RestEngine::accept() {
     initRestOpHandlers();

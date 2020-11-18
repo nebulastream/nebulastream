@@ -15,6 +15,4 @@
 */
 
 #include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
-namespace NES {
-
-}
+namespace NES {}

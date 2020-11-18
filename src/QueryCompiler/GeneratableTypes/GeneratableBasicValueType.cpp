@@ -21,9 +21,8 @@
 
 namespace NES {
 
-GeneratableBasicValueType::GeneratableBasicValueType(BasicValuePtr basicValue) : GeneratableValueType(), value(std::move(basicValue)) {}
+GeneratableBasicValueType::GeneratableBasicValueType(BasicValuePtr basicValue)
+    : GeneratableValueType(), value(std::move(basicValue)) {}
 
-CodeExpressionPtr GeneratableBasicValueType::getCodeExpression() {
-    return std::make_shared<CodeExpression>(value->getValue());
-}
+CodeExpressionPtr GeneratableBasicValueType::getCodeExpression() { return std::make_shared<CodeExpression>(value->getValue()); }
 }// namespace NES

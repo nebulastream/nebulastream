@@ -34,7 +34,5 @@ bool LogicalStreamSourceDescriptor::equal(SourceDescriptorPtr other) {
     return getStreamName() == otherLogicalStreamSource->getStreamName();
 }
 
-std::string LogicalStreamSourceDescriptor::toString() {
-    return "LogicalStreamSourceDescriptor()";
-}
+std::string LogicalStreamSourceDescriptor::toString() { return "LogicalStreamSourceDescriptor()"; }
 }// namespace NES

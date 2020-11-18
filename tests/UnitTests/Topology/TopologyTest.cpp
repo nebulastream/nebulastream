@@ -35,9 +35,7 @@ class TopologyTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        std::cout << "Tear down NesTopologyManager test case." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down NesTopologyManager test case." << std::endl; }
 };
 /* - Nodes ----------------------------------------------------------------- */
 /**
@@ -53,7 +51,9 @@ TEST_F(TopologyTest, createNode) {
     uint64_t resources = 4;
     auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
     EXPECT_NE(physicalNode.get(), nullptr);
-    EXPECT_EQ(physicalNode->toString(), "PhysicalNode[id=" + std::to_string(node1Id) + ", ip=" + node1Address + ", resourceCapacity=" + std::to_string(resources) + ", usedResource=0]");
+    EXPECT_EQ(physicalNode->toString(),
+              "PhysicalNode[id=" + std::to_string(node1Id) + ", ip=" + node1Address
+                  + ", resourceCapacity=" + std::to_string(resources) + ", usedResource=0]");
     EXPECT_NE(physicalNode->getId(), invalidId);
     EXPECT_EQ(physicalNode->getId(), node1Id);
     EXPECT_EQ(physicalNode->getIpAddress(), node1Address);
@@ -460,7 +460,8 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     TopologyNodePtr startNode2 = startNodes[1];
     EXPECT_TRUE(startNode2->getId() == topologyNodes.at(9)->getId());
     EXPECT_TRUE(startNode2->getParents().size() == startNode1->getParents().size());
-    EXPECT_TRUE(startNode2->getParents()[0]->as<TopologyNode>()->getId() == startNode1->getParents()[0]->as<TopologyNode>()->getId());
+    EXPECT_TRUE(startNode2->getParents()[0]->as<TopologyNode>()->getId()
+                == startNode1->getParents()[0]->as<TopologyNode>()->getId());
     TopologyNodePtr s1Parent1 = startNode1->getParents()[0]->as<TopologyNode>();
     EXPECT_TRUE(s1Parent1->getId() == topologyNodes.at(7)->getId());
     TopologyNodePtr s1Parent2 = s1Parent1->getParents()[0]->as<TopologyNode>();

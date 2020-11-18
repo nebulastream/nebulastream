@@ -68,11 +68,7 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
  */
 class QueryManager : public std::enable_shared_from_this<QueryManager>, public Reconfigurable {
   public:
-    enum ExecutionResult : uint8_t {
-        Ok = 0,
-        Error,
-        Finished
-    };
+    enum ExecutionResult : uint8_t { Ok = 0, Error, Finished };
 
     QueryManager() = delete;
     QueryManager(const QueryManager&) = delete;
@@ -195,7 +191,8 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor, bool blocking = false);
+    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor,
+                                bool blocking = false);
 
   private:
     friend class ThreadPool;

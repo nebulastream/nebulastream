@@ -23,9 +23,7 @@ ReportingProtocol::ReportingProtocol(std::function<void(MetricGroup&)>&& reporti
     NES_DEBUG("ReportingProtocol: Init()");
 }
 
-bool ReportingProtocol::canReceive() const {
-    return receiving;
-}
+bool ReportingProtocol::canReceive() const { return receiving; }
 
 void ReportingProtocol::receive(MetricGroup& metricGroup) {
     if (receiving) {

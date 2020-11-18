@@ -29,8 +29,7 @@ namespace NES {
 
 class ArrayDataType;
 
-std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const PhysicalTypePtr physicalType,
-                                                                      uint64_t bufferOffset) {
+std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const PhysicalTypePtr physicalType, uint64_t bufferOffset) {
     if (physicalType->isBasicType()) {
         auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicPhysicalType->getNativeType()) {

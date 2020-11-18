@@ -19,13 +19,13 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
 #include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
+#include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <Topology/NESTopologyPlan.hpp>
@@ -35,8 +35,7 @@ namespace NES {
 
 LowLatencyStrategy::LowLatencyStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
 
-NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
-                                                                NESTopologyPlanPtr nesTopologyPlan,
+NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan,
                                                                 StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
@@ -80,15 +79,14 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr que
     return nesExecutionPlanPtr;
 }
 
-vector<NESTopologyEntryPtr> LowLatencyStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
-                                                                                             NESTopologyEntryPtr>& sourceNodes,
-                                                                                         const NESTopologyEntryPtr rootNode) const {
+vector<NESTopologyEntryPtr>
+LowLatencyStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                             const NESTopologyEntryPtr rootNode) const {
 
     vector<NESTopologyEntryPtr> candidateNodes;
     for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
-        std::vector<NESTopologyEntryPtr>
-            nodesOnPath = pathFinder->findPathWithMinLinkLatency(targetSource, rootNode);
+        std::vector<NESTopologyEntryPtr> nodesOnPath = pathFinder->findPathWithMinLinkLatency(targetSource, rootNode);
         candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
     }
 
@@ -119,16 +117,13 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                 if (!executionPlanPtr->hasVertex(node->getId())) {
                     NES_DEBUG("LowLatency: Create new execution node.");
                     stringstream operatorName;
-                    operatorName << targetOperator->toString() << "(OP-"
-                                 << std::to_string(targetOperator->getId()) << ")";
-                    const ExecutionNodePtr newExecutionNode =
-                        executionPlanPtr->createExecutionNode(operatorName.str(), to_string(node->getId()), node,
-                                                              legacyOperator->copy());
+                    operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
+                    const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(
+                        operatorName.str(), to_string(node->getId()), node, legacyOperator->copy());
                     newExecutionNode->addOperatorId(legacyOperator->getOperatorId());
                 } else {
 
-                    const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                                                                       ->getExecutionNode(node->getId());
+                    const ExecutionNodePtr existingExecutionNode = executionPlanPtr->getExecutionNode(node->getId());
                     size_t operatorId = legacyOperator->getOperatorId();
                     vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
@@ -141,9 +136,8 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
 
                         NES_DEBUG("LowLatency: adding target operator to already existing operator chain.");
                         stringstream operatorName;
-                        operatorName << existingExecutionNode->getOperatorName() << "=>"
-                                     << targetOperator->toString()
-                                     << "(OP-" << std::to_string(targetOperator->getId()) << ")";
+                        operatorName << existingExecutionNode->getOperatorName() << "=>" << targetOperator->toString() << "(OP-"
+                                     << std::to_string(targetOperator->getId()) << ")";
                         existingExecutionNode->addOperator(legacyOperator->copy());
                         existingExecutionNode->setOperatorName(operatorName.str());
                         existingExecutionNode->addOperatorId(legacyOperator->getOperatorId());

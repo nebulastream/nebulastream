@@ -46,9 +46,7 @@ bool SliceCreationOperator::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<SliceCreationOperator>()->getId() == id;
 }
 
-bool SliceCreationOperator::equal(const NodePtr rhs) const {
-    return rhs->instanceOf<SliceCreationOperator>();
-}
+bool SliceCreationOperator::equal(const NodePtr rhs) const { return rhs->instanceOf<SliceCreationOperator>(); }
 
 OperatorNodePtr SliceCreationOperator::copy() {
     auto copy = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition, id);
@@ -59,7 +57,8 @@ OperatorNodePtr SliceCreationOperator::copy() {
 bool SliceCreationOperator::inferSchema() {
     WindowOperatorNode::inferSchema();
     // infer the default input and output schema
-    NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema " << inputSchema->toString());
+    NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema "
+              << inputSchema->toString());
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
@@ -69,17 +68,22 @@ bool SliceCreationOperator::inferSchema() {
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema = Schema::create()
-                           ->addField(createField("start", UINT64))
-                           ->addField(createField("end", UINT64))
-                           ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()))
-                           ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
+        outputSchema =
+            Schema::create()
+                ->addField(createField("start", UINT64))
+                ->addField(createField("end", UINT64))
+                ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
+                                                  windowDefinition->getOnKey()->getStamp()))
+                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+                                                  windowAggregation->on()->getStamp()));
         return true;
     } else {
-        outputSchema = Schema::create()
-                           ->addField(createField("start", UINT64))
-                           ->addField(createField("end", UINT64))
-                           ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(), windowAggregation->on()->getStamp()));
+        outputSchema =
+            Schema::create()
+                ->addField(createField("start", UINT64))
+                ->addField(createField("end", UINT64))
+                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+                                                  windowAggregation->on()->getStamp()));
         return true;
     }
 }

@@ -21,8 +21,7 @@
 
 namespace NES {
 
-MetricCatalog::MetricCatalog(std::map<MetricValueType, Metric> metrics) : metricValueTypeToMetricMap(std::move(metrics)) {
-}
+MetricCatalog::MetricCatalog(std::map<MetricValueType, Metric> metrics) : metricValueTypeToMetricMap(std::move(metrics)) {}
 
 std::shared_ptr<MetricCatalog> MetricCatalog::create(std::map<MetricValueType, Metric> metrics) {
     return std::make_shared<MetricCatalog>(MetricCatalog(std::move(metrics)));

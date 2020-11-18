@@ -117,7 +117,8 @@ bool OPCSource::connect() {
 
             UA_Client_delete(client);
             connected = false;
-            NES_ERROR("OPCSOURCE::connect(): ERROR with Status Code: " << retval << "OPCSOURCE " << this << ": set connected false");
+            NES_ERROR("OPCSOURCE::connect(): ERROR with Status Code: " << retval << "OPCSOURCE " << this
+                                                                       << ": set connected false");
         } else {
 
             connected = true;
@@ -152,21 +153,13 @@ bool OPCSource::disconnect() {
 
 SourceType OPCSource::getType() const { return OPC_SOURCE; }
 
-const std::string OPCSource::getUrl() const {
-    return url;
-}
+const std::string OPCSource::getUrl() const { return url; }
 
-UA_NodeId OPCSource::getNodeId() const {
-    return nodeId;
-}
+UA_NodeId OPCSource::getNodeId() const { return nodeId; }
 
-const std::string OPCSource::getUser() const {
-    return user;
-}
+const std::string OPCSource::getUser() const { return user; }
 
-const std::string OPCSource::getPassword() const {
-    return password;
-}
+const std::string OPCSource::getPassword() const { return password; }
 
 }// namespace NES
 #endif

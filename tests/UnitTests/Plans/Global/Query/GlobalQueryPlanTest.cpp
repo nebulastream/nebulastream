@@ -41,14 +41,10 @@ class GlobalQueryPlanTest : public testing::Test {
     void SetUp() override {}
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
-        NES_INFO("Setup GlobalQueryPlanTest test case.");
-    }
+    void TearDown() override { NES_INFO("Setup GlobalQueryPlanTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down GlobalQueryPlanTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down GlobalQueryPlanTest test class."); }
 };
 
 /**
@@ -94,7 +90,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWi
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: A global query node containing operator of type SinkLogicalOperatorNode should be returned");
-    std::vector<GlobalQueryNodePtr> logicalSinkNodes = globalQueryPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+    std::vector<GlobalQueryNodePtr> logicalSinkNodes =
+        globalQueryPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
     EXPECT_TRUE(logicalSinkNodes.size() == 1);
 }
 
@@ -130,7 +127,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
     globalQueryPlan->addQueryPlan(plan1);
 
     //Assert
-    std::vector<GlobalQueryNodePtr> logicalSinkNodes = globalQueryPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+    std::vector<GlobalQueryNodePtr> logicalSinkNodes =
+        globalQueryPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
     NES_DEBUG("GlobalQueryPlanTest: should return 1 global query node with logical sink operator");
     EXPECT_TRUE(logicalSinkNodes.size() == 1);
 
@@ -163,7 +161,8 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: should 1 global query node with logical sink");
-    std::vector<GlobalQueryNodePtr> logicalSinkNodes = globalQueryPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+    std::vector<GlobalQueryNodePtr> logicalSinkNodes =
+        globalQueryPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
     EXPECT_TRUE(logicalSinkNodes.size() == 1);
 
     NES_DEBUG("GlobalQueryPlanTest: Removing the query plan for the query with id Q1");

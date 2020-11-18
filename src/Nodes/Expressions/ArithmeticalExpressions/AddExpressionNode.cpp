@@ -37,11 +37,7 @@ bool AddExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string AddExpressionNode::toString() const {
-    return "AddNode(" + stamp->toString() + ")";
-}
-ExpressionNodePtr AddExpressionNode::copy() {
-    return std::make_shared<AddExpressionNode>(AddExpressionNode(this));
-}
+const std::string AddExpressionNode::toString() const { return "AddNode(" + stamp->toString() + ")"; }
+ExpressionNodePtr AddExpressionNode::copy() { return std::make_shared<AddExpressionNode>(AddExpressionNode(this)); }
 
 }// namespace NES

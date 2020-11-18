@@ -15,6 +15,7 @@
 */
 
 #include "SerializableOperator.pb.h"
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <NodeEngine/NodeEngine.hpp>
@@ -24,7 +25,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
-#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <ostream>
 
 using namespace std;
@@ -54,14 +54,13 @@ class SinkTest : public testing::Test {
         NES_INFO("Setup SinkTest class.");
     }
 
-    static void TearDownTestCase() {
-        std::cout << "Tear down SinkTest class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down SinkTest class." << std::endl; }
 
     /* Called before a single test. */
     void SetUp() override {
         std::cout << "Setup SinkTest test case." << std::endl;
-        test_schema = Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
+        test_schema =
+            Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
         write_result = false;
         path_to_csv_file = "../tests/test_data/sink.csv";
         path_to_bin_file = "../tests/test_data/sink.bin";
@@ -100,8 +99,7 @@ TEST_F(SinkTest, testCSVFileSink) {
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
     std::ifstream ifs(path_to_csv_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                            (std::istreambuf_iterator<char>()));
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     cout << "File Content=" << fileContent << endl;
     //search for each value
@@ -144,8 +142,7 @@ TEST_F(SinkTest, testTextFileSink) {
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
     std::ifstream ifs(path_to_csv_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                            (std::istreambuf_iterator<char>()));
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     cout << "File Content=" << fileContent << endl;
     EXPECT_EQ(bufferContent, fileContent);
@@ -194,13 +191,13 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
         FAIL();
     }
 
-    cout << "expected=" << endl
-         << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-    cout << "result=" << endl
-         << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
+    cout << "expected=" << endl << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    cout << "result=" << endl << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
 
-    cout << "File path = " << path_to_bin_file << " Content=" << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
-    EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+    cout << "File path = " << path_to_bin_file
+         << " Content=" << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
+    EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema),
+              UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
     buffer.release();
 }
 
@@ -230,8 +227,7 @@ TEST_F(SinkTest, testCSVPrintSink) {
     ifstream testFile(path_to_osfile_file.c_str());
     EXPECT_TRUE(testFile.good());
     std::ifstream ifs(path_to_osfile_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                            (std::istreambuf_iterator<char>()));
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     cout << "File Content=" << fileContent << endl;
     //search for each value
@@ -280,8 +276,7 @@ TEST_F(SinkTest, testTextPrintSink) {
     ifstream testFile(path_to_osfile_file.c_str());
     EXPECT_TRUE(testFile.good());
     std::ifstream ifs(path_to_osfile_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                            (std::istreambuf_iterator<char>()));
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     cout << "File Content=" << fileContent << endl;
     EXPECT_EQ(bufferContent, fileContent.substr(0, fileContent.size() - 1));
@@ -306,7 +301,8 @@ TEST_F(SinkTest, testCSVZMQSink) {
     cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
 
     // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
+    auto zmq_source =
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
@@ -354,7 +350,8 @@ TEST_F(SinkTest, testTextZMQSink) {
     cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
 
     // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
+    auto zmq_source =
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
@@ -390,7 +387,8 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
 
     // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
+    auto zmq_source =
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
@@ -404,9 +402,12 @@ TEST_F(SinkTest, testBinaryZMQSink) {
 
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
-        cout << "rec buffer tups=" << bufData.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema) << endl;
-        cout << "ref buffer tups=" << buffer.getNumberOfTuples() << " content=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-        EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema), UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+        cout << "rec buffer tups=" << bufData.getNumberOfTuples()
+             << " content=" << UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema) << endl;
+        cout << "ref buffer tups=" << buffer.getNumberOfTuples()
+             << " content=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+        EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema),
+                  UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
     });
 
     // Wait until receiving is complete.
@@ -431,7 +432,8 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
     buffer.setNumberOfTuples(4);
 
     // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
+    auto zmq_source =
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
@@ -448,7 +450,6 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
     receiving_thread.join();
     buffer.release();
 }
-
 
 TEST_F(SinkTest, testWatermarkCsvSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
@@ -470,6 +471,5 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
     EXPECT_EQ(buffer.getWatermark(), 1234567);
     buffer.release();
 }
-
 
 }// namespace NES

@@ -59,16 +59,12 @@ class ExecutablePipeline {
      * @return error code: 0 for valid execution, 1 for error
      */
     // TODO use dedicate type for return
-    virtual uint32_t execute(TupleBuffer& input_buffers,
-                             QueryExecutionContextPtr context,
-                             WorkerContextRef wctx) = 0;
+    virtual uint32_t execute(TupleBuffer& input_buffers, QueryExecutionContextPtr context, WorkerContextRef wctx) = 0;
 
     /**
      * @return returns true if the pipeline contains a function pointer for a reconfiguration task
      */
-    bool isReconfiguration() const {
-        return reconfiguration;
-    }
+    bool isReconfiguration() const { return reconfiguration; }
 };
 
 }// namespace NES

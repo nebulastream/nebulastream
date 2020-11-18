@@ -18,8 +18,7 @@
 
 namespace NES::Windowing {
 
-ProcessingTimeWatermarkStrategyDescriptor::ProcessingTimeWatermarkStrategyDescriptor() {
-}
+ProcessingTimeWatermarkStrategyDescriptor::ProcessingTimeWatermarkStrategyDescriptor() {}
 
 WatermarkStrategyDescriptorPtr ProcessingTimeWatermarkStrategyDescriptor::create() {
     return std::make_shared<ProcessingTimeWatermarkStrategyDescriptor>(Windowing::ProcessingTimeWatermarkStrategyDescriptor());

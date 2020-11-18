@@ -34,13 +34,17 @@ void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, Pipel
     codegen->generateCodeForCombiningWindow(getWindowDefinition(), generatableWindowAggregation, context);
 }
 
-GeneratableDistributedlWindowCombinerOperatorPtr GeneratableCombiningWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
-    return std::make_shared<GeneratableCombiningWindowOperator>(GeneratableCombiningWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
+GeneratableDistributedlWindowCombinerOperatorPtr
+GeneratableCombiningWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                           GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
+    return std::make_shared<GeneratableCombiningWindowOperator>(
+        GeneratableCombiningWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
 }
 
-GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
-    : GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {
-}
+GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(
+    Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation,
+    OperatorId id)
+    : GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {}
 
 const std::string GeneratableCombiningWindowOperator::toString() const {
     std::stringstream ss;

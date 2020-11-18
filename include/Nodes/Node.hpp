@@ -151,18 +151,14 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param rhs the node to compare
      * @return bool true if they are the same otherwise false
      */
-    virtual bool equal(const NodePtr rhs) const {
-        return this->isIdentical(rhs);
-    };
+    virtual bool equal(const NodePtr rhs) const { return this->isIdentical(rhs); };
 
     /**
      * @brief check two nodes whether are exactly the same object or not
      * @param rhs the node to check
      * @return bool true if they are the same object otherwise false
      */
-    virtual bool isIdentical(const NodePtr rhs) const {
-        return rhs.get() == this;
-    };
+    virtual bool isIdentical(const NodePtr rhs) const { return rhs.get() == this; };
 
     /**
      * @brief split graph into multiple sub-graphs. The graph starts at current splitNode.
@@ -201,7 +197,8 @@ class Node : public std::enable_shared_from_this<Node> {
         if (instanceOf<NodeType>()) {
             return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
         } else {
-            NES_THROW_RUNTIME_ERROR("Node:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(NodeType).name());
+            NES_THROW_RUNTIME_ERROR("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
+                                    + typeid(NodeType).name());
         }
     }
 
@@ -356,9 +353,7 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * @brief helper function of getAndFlattenAllChildren() function
      */
-    void getAndFlattenAllChildrenHelper(const NodePtr node,
-                                        std::vector<NodePtr>& allChildren,
-                                        const NodePtr excludednode);
+    void getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludednode);
 
     /**
      * @brief helper function of cycle detector

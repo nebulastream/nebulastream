@@ -25,18 +25,15 @@ namespace NES {
 
 NetworkValues NetworkMetrics::getNetworkValue(uint64_t interfaceNo) const {
     if (interfaceNo >= getInterfaceNum()) {
-        NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(interfaceNo) + ">=" + std::to_string(getInterfaceNum()));
+        NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(interfaceNo)
+                                + ">=" + std::to_string(getInterfaceNum()));
     }
     return networkValues.at(interfaceNo);
 }
 
-void NetworkMetrics::addNetworkValues(NetworkValues&& nwValue) {
-    networkValues.emplace_back(nwValue);
-}
+void NetworkMetrics::addNetworkValues(NetworkValues&& nwValue) { networkValues.emplace_back(nwValue); }
 
-uint64_t NetworkMetrics::getInterfaceNum() const {
-    return networkValues.size();
-}
+uint64_t NetworkMetrics::getInterfaceNum() const { return networkValues.size(); }
 
 std::vector<std::string> NetworkMetrics::getInterfaceNames() {
     std::vector<std::string> keys;
@@ -53,7 +50,8 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, co
     auto output = NetworkMetrics();
     auto i = schema->getIndex(prefix + "INTERFACE_NO");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, prefix + "INTERFACE_NO")) {
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
+        && UtilityFunctions::endsWith(schema->fields[i]->name, prefix + "INTERFACE_NO")) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
         auto layout = createRowLayout(schema);
         auto numInt = layout->getValueField<uint16_t>(0, i)->read(buf);
@@ -80,7 +78,9 @@ void serialize(const NetworkMetrics& metrics, SchemaPtr schema, TupleBuffer& buf
     layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getInterfaceNum());
 
     for (int i = 0; i < metrics.getInterfaceNum(); i++) {
-        serialize(metrics.getNetworkValue(i), schema, buf, prefix + "Intfs[" + std::to_string(i + 1) + "]_" + UtilityFunctions::trim(metrics.getNetworkValue(i).interfaceName) + "_");
+        serialize(metrics.getNetworkValue(i), schema, buf,
+                  prefix + "Intfs[" + std::to_string(i + 1) + "]_"
+                      + UtilityFunctions::trim(metrics.getNetworkValue(i).interfaceName) + "_");
     }
 }
 

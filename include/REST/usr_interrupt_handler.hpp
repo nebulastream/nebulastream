@@ -26,9 +26,7 @@ namespace NES {
 
 class InterruptHandler {
   public:
-    static void hookUserInterruptHandler() {
-        signal(SIGTERM, handleUserInterrupt);
-    }
+    static void hookUserInterruptHandler() { signal(SIGTERM, handleUserInterrupt); }
 
     static void handleUserInterrupt(int signal) {
         std::cout << "handleUserInterrupt" << '\n';

@@ -38,23 +38,18 @@ CpuMetrics::~CpuMetrics() {
     cpuValues.clear();
 }
 
-uint16_t CpuMetrics::getNumCores() const {
-    return numCores;
-}
+uint16_t CpuMetrics::getNumCores() const { return numCores; }
 
-CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const {
-    return cpuValues.at(cpuCore);
-}
+CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const { return cpuValues.at(cpuCore); }
 
-CpuValues CpuMetrics::getTotal() const {
-    return total;
-}
+CpuValues CpuMetrics::getTotal() const { return total; }
 
 CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
     //get index where the schema for CpuMetrics is starting
     auto idx = schema->getIndex(prefix + "CORE_NO");
 
-    if (idx < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[idx]->name, "CORE_NO")) {
+    if (idx < schema->getSize() && buf.getNumberOfTuples() == 1
+        && UtilityFunctions::endsWith(schema->fields[idx]->name, "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
         auto layout = createRowLayout(schema);
         auto numCores = layout->getValueField<uint16_t>(0, idx)->read(buf);

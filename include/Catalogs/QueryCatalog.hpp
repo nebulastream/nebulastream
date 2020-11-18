@@ -47,7 +47,8 @@ class QueryCatalog {
      * @param optimizationStrategyName: the optimization strategy (bottomUp or topDown)
      * @return query catalog entry or nullptr
      */
-    QueryCatalogEntryPtr addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName);
+    QueryCatalogEntryPtr addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan,
+                                            const std::string& optimizationStrategyName);
 
     /**
      * @brief register a request for stopping a query and add it to the scheduling queue.

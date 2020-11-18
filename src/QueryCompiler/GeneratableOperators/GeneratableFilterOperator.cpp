@@ -20,7 +20,8 @@
 
 namespace NES {
 
-GeneratableFilterOperatorPtr GeneratableFilterOperator::create(FilterLogicalOperatorNodePtr filterLogicalOperator, OperatorId id) {
+GeneratableFilterOperatorPtr GeneratableFilterOperator::create(FilterLogicalOperatorNodePtr filterLogicalOperator,
+                                                               OperatorId id) {
     return std::make_shared<GeneratableFilterOperator>(GeneratableFilterOperator(filterLogicalOperator->getPredicate(), id));
 }
 

@@ -40,9 +40,7 @@ class ExecutableSumAggregation : public ExecutableWindowAggregation<InputType, I
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType
      */
-    InputType lift(InputType inputValue) override {
-        return inputValue;
-    }
+    InputType lift(InputType inputValue) override { return inputValue; }
 
     /*
      * @brief combines two partial aggregates to a new partial aggregate
@@ -50,18 +48,14 @@ class ExecutableSumAggregation : public ExecutableWindowAggregation<InputType, I
      * @param the new input element
      * @return new partial aggregate as combination of partialValue and inputValue
      */
-    InputType combine(InputType partialValue, InputType inputValue) override {
-        return partialValue + inputValue;
-    }
+    InputType combine(InputType partialValue, InputType inputValue) override { return partialValue + inputValue; }
 
     /*
      * @brief maps partial aggregates to an element of FinalAggregationType
      * @param partial aggregate element
      * @return element mapped to FinalAggregationType
      */
-    InputType lower(InputType partialAggregateValue) override {
-        return partialAggregateValue;
-    }
+    InputType lower(InputType partialAggregateValue) override { return partialAggregateValue; }
 };
 
 }// namespace NES::Windowing

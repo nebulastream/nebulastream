@@ -21,13 +21,9 @@ namespace NES {
 
 FixedChar::FixedChar(uint64_t length) : length(length) {}
 
-uint64_t FixedChar::getLength() const {
-    return length;
-}
+uint64_t FixedChar::getLength() const { return length; }
 
-bool FixedChar::isFixedChar() {
-    return true;
-}
+bool FixedChar::isFixedChar() { return true; }
 bool FixedChar::isEquals(DataTypePtr otherDataType) {
     if (otherDataType->isFixedChar()) {
         auto otherChar = as<FixedChar>(otherDataType);
@@ -36,12 +32,8 @@ bool FixedChar::isEquals(DataTypePtr otherDataType) {
     return false;
 }
 
-DataTypePtr FixedChar::join(DataTypePtr) {
-    return DataTypeFactory::createUndefined();
-}
+DataTypePtr FixedChar::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
 
-std::string FixedChar::toString() {
-    return "Char";
-}
+std::string FixedChar::toString() { return "Char"; }
 
 }// namespace NES

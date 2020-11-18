@@ -34,17 +34,13 @@ template<typename T>
  */
 class Gauge {
   public:
-    explicit Gauge(std::function<T()>&& probingFunc) : probingFunc(probingFunc) {
-        NES_DEBUG("Gauge: Initializing");
-    }
+    explicit Gauge(std::function<T()>&& probingFunc) : probingFunc(probingFunc) { NES_DEBUG("Gauge: Initializing"); }
 
     /**
      * @brief Calculates and returns the measured value.
      * @return the value
      */
-    T measure() {
-        return probingFunc();
-    }
+    T measure() { return probingFunc(); }
 
   private:
     std::function<T()> probingFunc;

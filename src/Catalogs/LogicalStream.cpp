@@ -22,17 +22,10 @@
 
 namespace NES {
 
-LogicalStream::LogicalStream(std::string name, NES::SchemaPtr schemaPtr)
-    : name(name) {
-    schema = schemaPtr->copy();
-}
+LogicalStream::LogicalStream(std::string name, NES::SchemaPtr schemaPtr) : name(name) { schema = schemaPtr->copy(); }
 
-SchemaPtr LogicalStream::getSchema() {
-    return schema;
-}
+SchemaPtr LogicalStream::getSchema() { return schema; }
 
-std::string LogicalStream::getName() {
-    return name;
-}
+std::string LogicalStream::getName() { return name; }
 
 }// namespace NES

@@ -22,19 +22,19 @@
 
 namespace NES {
 
-QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
-                                         StreamCatalogPtr streamCatalog) : globalExecutionPlan(globalExecutionPlan), topology(topology),
-                                                                           typeInferencePhase(typeInferencePhase), streamCatalog(streamCatalog) {
+QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                         TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
+    : globalExecutionPlan(globalExecutionPlan), topology(topology), typeInferencePhase(typeInferencePhase),
+      streamCatalog(streamCatalog) {
     NES_DEBUG("QueryPlacementPhase()");
 }
 
-QueryPlacementPhase::~QueryPlacementPhase() {
-    NES_DEBUG("~QueryPlacementPhase()");
-}
+QueryPlacementPhase::~QueryPlacementPhase() { NES_DEBUG("~QueryPlacementPhase()"); }
 
-QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
-                                                   StreamCatalogPtr streamCatalog) {
-    return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
+QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                                   TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog) {
+    return std::make_shared<QueryPlacementPhase>(
+        QueryPlacementPhase(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
 }
 
 bool QueryPlacementPhase::execute(std::string placementStrategy, QueryPlanPtr queryPlan) {

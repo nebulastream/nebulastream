@@ -40,9 +40,7 @@ class ExecutableMinAggregation : public ExecutableWindowAggregation<InputType, I
      * @param input value of the element
      * @return the element that mapped to PartialAggregateType
      */
-    InputType lift(InputType inputValue) override {
-        return inputValue;
-    }
+    InputType lift(InputType inputValue) override { return inputValue; }
 
     /*
      * @brief combines two partial aggregates to a new partial aggregate
@@ -62,9 +60,7 @@ class ExecutableMinAggregation : public ExecutableWindowAggregation<InputType, I
      * @param partial aggregate element
      * @return element mapped to FinalAggregationType
      */
-    InputType lower(InputType partialAggregateValue) override {
-        return partialAggregateValue;
-    }
+    InputType lower(InputType partialAggregateValue) override { return partialAggregateValue; }
 };
 
 }// namespace NES::Windowing

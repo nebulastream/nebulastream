@@ -18,9 +18,7 @@
 
 namespace NES {
 
-const StatementPtr ExpressionStatment::createCopy() const {
-    return this->copy();
-}
+const StatementPtr ExpressionStatment::createCopy() const { return this->copy(); }
 
 ExpressionStatment::~ExpressionStatment() {}
 

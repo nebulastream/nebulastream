@@ -85,7 +85,8 @@ class Topology {
      * @param destinationNodes: the destination Nodes
      * @return a vector of start nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
      */
-    std::vector<TopologyNodePtr> findPathBetween(std::vector<TopologyNodePtr> sourceNodes, std::vector<TopologyNodePtr> destinationNodes);
+    std::vector<TopologyNodePtr> findPathBetween(std::vector<TopologyNodePtr> sourceNodes,
+                                                 std::vector<TopologyNodePtr> destinationNodes);
 
     //FIXME: as part of the issue #955
     //    std::vector<LinkProperties> getLinkPropertiesBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNde);
@@ -191,7 +192,8 @@ class Topology {
      * @param searchedNodes: the searched node
      * @return the node where the searched node is found
      */
-    TopologyNodePtr find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
+    TopologyNodePtr find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes,
+                         std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
 
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;

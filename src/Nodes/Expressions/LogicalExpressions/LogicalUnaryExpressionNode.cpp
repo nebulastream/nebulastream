@@ -19,7 +19,8 @@
 
 namespace NES {
 
-LogicalUnaryExpressionNode::LogicalUnaryExpressionNode() : UnaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode() {}
+LogicalUnaryExpressionNode::LogicalUnaryExpressionNode()
+    : UnaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode() {}
 
 LogicalUnaryExpressionNode::LogicalUnaryExpressionNode(LogicalUnaryExpressionNode* other) : UnaryExpressionNode(other) {}
 

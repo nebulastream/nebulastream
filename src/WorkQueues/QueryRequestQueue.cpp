@@ -21,13 +21,9 @@
 
 namespace NES {
 
-QueryRequestQueue::QueryRequestQueue() : newRequestAvailable(false), batchSize(1) {
-    NES_DEBUG("QueryRequestQueue()");
-}
+QueryRequestQueue::QueryRequestQueue() : newRequestAvailable(false), batchSize(1) { NES_DEBUG("QueryRequestQueue()"); }
 
-QueryRequestQueue::~QueryRequestQueue() {
-    NES_DEBUG("~QueryRequestQueue()");
-}
+QueryRequestQueue::~QueryRequestQueue() { NES_DEBUG("~QueryRequestQueue()"); }
 
 bool QueryRequestQueue::add(QueryCatalogEntryPtr queryCatalogEntry) {
     std::unique_lock<std::mutex> lock(queryRequest);
@@ -39,7 +35,8 @@ bool QueryRequestQueue::add(QueryCatalogEntryPtr queryCatalogEntry) {
 
     if (itr != schedulingQueue.end()) {
         NES_INFO("QueryRequestQueue: Found query with same id already present in the query request queue for processing.");
-        NES_INFO("QueryRequestQueue: Changing the status of already present entry in the request queue to:" << queryCatalogEntry->getQueryStatus());
+        NES_INFO("QueryRequestQueue: Changing the status of already present entry in the request queue to:"
+                 << queryCatalogEntry->getQueryStatus());
         itr->setQueryStatus(queryCatalogEntry->getQueryStatus());
     } else {
         NES_INFO("QueryRequestQueue: Adding query with id " << queryId << " to the scheduling queue");
@@ -86,12 +83,8 @@ void QueryRequestQueue::insertPoisonPill() {
     availabilityTrigger.notify_one();
 }
 
-bool QueryRequestQueue::isNewRequestAvailable() const {
-    return newRequestAvailable;
-}
+bool QueryRequestQueue::isNewRequestAvailable() const { return newRequestAvailable; }
 
-void QueryRequestQueue::setNewRequestAvailable(bool newRequestAvailable) {
-    this->newRequestAvailable = newRequestAvailable;
-}
+void QueryRequestQueue::setNewRequestAvailable(bool newRequestAvailable) { this->newRequestAvailable = newRequestAvailable; }
 
 }// namespace NES

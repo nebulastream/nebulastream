@@ -36,7 +36,9 @@ std::string PlanJsonGenerator::getOperatorType(OperatorNodePtr operatorNode) {
 
     std::string operatorType;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        if (operatorNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
+        if (operatorNode->as<SourceLogicalOperatorNode>()
+                ->getSourceDescriptor()
+                ->instanceOf<Network::NetworkSourceDescriptor>()) {
             operatorType = "SOURCE_SYS";
         } else {
             operatorType = "SOURCE";
@@ -81,7 +83,8 @@ web::json::value PlanJsonGenerator::getExecutionPlanAsJson(GlobalExecutionPlanPt
 
         currentExecutionNodeJsonValue["executionNodeId"] = web::json::value::number(executionNode->getId());
         currentExecutionNodeJsonValue["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
-        currentExecutionNodeJsonValue["topologyNodeIpAddress"] = web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
+        currentExecutionNodeJsonValue["topologyNodeIpAddress"] =
+            web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
 
         std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
         const std::vector<QueryPlanPtr> querySubPlans;
@@ -157,9 +160,7 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(QueryPlanPtr queryPlan) {
         node["id"] = web::json::value::string(std::to_string(root->getId()));
 
         // use concatenation of <operator type>(OP-<operator id>) to fill name field
-        node["name"] =
-            web::json::value::string(
-                rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")");
+        node["name"] = web::json::value::string(rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")");
 
         node["nodeType"] = web::json::value::string(rootOperatorType);
 
@@ -209,11 +210,8 @@ void PlanJsonGenerator::getChildren(const OperatorNodePtr root, std::vector<web:
         // Create an edge JSON object for current operator
         auto edge = web::json::value::object();
         edge["source"] =
-            web::json::value::string(
-                childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
-        edge["target"] =
-            web::json::value::string(
-                getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
+            web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
+        edge["target"] = web::json::value::string(getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
 
         // store current edge JSON object to `edges` JSON array
         edges.push_back(edge);

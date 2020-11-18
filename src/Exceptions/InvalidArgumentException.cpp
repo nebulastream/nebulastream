@@ -23,7 +23,5 @@ InvalidArgumentException::InvalidArgumentException(std::string name, std::string
     message = "Received invalid value " + value + " for input argument " + name;
 }
 
-const char* InvalidArgumentException::what() const noexcept {
-    return message.c_str();
-}
+const char* InvalidArgumentException::what() const noexcept { return message.c_str(); }
 }// namespace NES

@@ -31,7 +31,8 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
     }
 
     running = true;
-    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << windowHandler->toString() << " with ms=" << triggerTimeInMs);
+    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << windowHandler->toString()
+                                                              << " with ms=" << triggerTimeInMs);
     std::string handlerName = windowHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, windowHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
@@ -62,8 +63,8 @@ bool ExecutableOnTimeTriggerPolicy::stop() {
     return true;
 }
 
-ExecutableOnTimeTriggerPolicy::ExecutableOnTimeTriggerPolicy(size_t triggerTimeInMs) : triggerTimeInMs(triggerTimeInMs), running(false), runningTriggerMutex() {
-}
+ExecutableOnTimeTriggerPolicy::ExecutableOnTimeTriggerPolicy(size_t triggerTimeInMs)
+    : triggerTimeInMs(triggerTimeInMs), running(false), runningTriggerMutex() {}
 
 ExecutableOnTimeTriggerPtr ExecutableOnTimeTriggerPolicy::create(size_t triggerTimeInMs) {
     return std::make_shared<ExecutableOnTimeTriggerPolicy>(triggerTimeInMs);

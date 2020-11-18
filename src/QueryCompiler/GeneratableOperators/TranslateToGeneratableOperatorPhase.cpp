@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
@@ -26,25 +25,25 @@
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 
+#include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableSlicingWindowOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 
-#include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableJoinOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
@@ -58,7 +57,8 @@ TranslateToGeneratableOperatorPhasePtr TranslateToGeneratableOperatorPhase::crea
 
 TranslateToGeneratableOperatorPhase::TranslateToGeneratableOperatorPhase() = default;
 
-OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator(OperatorNodePtr operatorNode, OperatorNodePtr generatableParentOperator) {
+OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator(OperatorNodePtr operatorNode,
+                                                                                 OperatorNodePtr generatableParentOperator) {
 
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.
@@ -83,7 +83,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
-        return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(), generatableParentOperator);
+        return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(),
+                                                                            generatableParentOperator);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
@@ -91,25 +92,30 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-        auto watermarkAssignerOperator = GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
+        auto watermarkAssignerOperator =
+            GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
         generatableParentOperator->addChild(watermarkAssignerOperator);
         return watermarkAssignerOperator;
     } else {
-        NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
+        NES_FATAL_ERROR(
+            "TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
         NES_NOT_IMPLEMENTED();
     }
 
-    NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
+    NES_FATAL_ERROR(
+        "TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED();
 }
 
-OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(WindowOperatorNodePtr windowOperator, OperatorNodePtr generatableParentOperator) {
+OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(WindowOperatorNodePtr windowOperator,
+                                                                             OperatorNodePtr generatableParentOperator) {
     auto windowDefinition = windowOperator->getWindowDefinition();
     auto generatableWindowAggregation = transformWindowAggregation(windowDefinition->getWindowAggregation());
     auto scanOperator = GeneratableScanOperator::create(windowOperator->getOutputSchema());
     generatableParentOperator->addChild(scanOperator);
     if (windowOperator->instanceOf<CentralWindowOperator>()) {
-        auto generatableWindowOperator = GeneratableCompleteWindowOperator::create(windowDefinition, generatableWindowAggregation);
+        auto generatableWindowOperator =
+            GeneratableCompleteWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
         return generatableWindowOperator;
     } else if (windowOperator->instanceOf<SliceCreationOperator>()) {
@@ -117,16 +123,18 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
         scanOperator->addChild(generatableWindowOperator);
         return generatableWindowOperator;
     } else if (windowOperator->instanceOf<WindowComputationOperator>()) {
-        auto generatableWindowOperator = GeneratableCombiningWindowOperator::create(windowDefinition, generatableWindowAggregation);
+        auto generatableWindowOperator =
+            GeneratableCombiningWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
         return generatableWindowOperator;
     }
-    NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << windowOperator->toString());
+    NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: "
+                    << windowOperator->toString());
     NES_NOT_IMPLEMENTED();
 }
 
-
-GeneratableWindowAggregationPtr TranslateToGeneratableOperatorPhase::transformWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
+GeneratableWindowAggregationPtr TranslateToGeneratableOperatorPhase::transformWindowAggregation(
+    Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
     switch (windowAggregationDescriptor->getType()) {
         case Windowing::WindowAggregationDescriptor::Count: {
             return GeneratableCountAggregation::create(windowAggregationDescriptor);
@@ -141,7 +149,9 @@ GeneratableWindowAggregationPtr TranslateToGeneratableOperatorPhase::transformWi
             return GeneratableSumAggregation::create(windowAggregationDescriptor);
         };
         default:
-            NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this window aggregation type: " << windowAggregationDescriptor->getType());
+            NES_FATAL_ERROR(
+                "TranslateToGeneratableOperatorPhase: No transformation implemented for this window aggregation type: "
+                << windowAggregationDescriptor->getType());
             NES_NOT_IMPLEMENTED();
     }
 }

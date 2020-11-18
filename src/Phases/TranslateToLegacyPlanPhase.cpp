@@ -37,9 +37,7 @@
 #include <utility>
 namespace NES {
 
-TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() {
-    return std::make_shared<TranslateToLegacyPlanPhase>();
-}
+TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() { return std::make_shared<TranslateToLegacyPlanPhase>(); }
 
 TranslateToLegacyPlanPhase::TranslateToLegacyPlanPhase() {}
 
@@ -64,12 +62,10 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionN
         auto fieldReadExpression = expression->as<FieldAccessExpressionNode>();
         auto fieldName = fieldReadExpression->getFieldName();
         auto stamp = fieldReadExpression->getStamp();
-        NES_DEBUG(
-            "TranslateToLegacyPhase: Translate FieldAccessExpressionNode: " << expression->toString());
+        NES_DEBUG("TranslateToLegacyPhase: Translate FieldAccessExpressionNode: " << expression->toString());
         return Field(AttributeField::create(fieldName, stamp)).copy();
     }
-    NES_FATAL_ERROR(
-        "TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
+    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }
@@ -100,9 +96,8 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformArithmeticalExpression
         auto legacyRight = transformExpression(divExpressionNode->getRight());
         return Predicate(BinaryOperatorType::DIVISION_OP, legacyLeft, legacyRight).copy();
     }
-    NES_FATAL_ERROR(
-        "TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
-        << expression->toString());
+    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
+                    << expression->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -151,8 +146,7 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformLogicalExpressions(Exp
         return Predicate(BinaryOperatorType::EQUAL_OP, legacyLeft, legacyRight).copy();
     }
     NES_FATAL_ERROR(
-        "TranslateToLegacyPhase: No transformation implemented for this logical expression node: "
-        << expression->toString());
+        "TranslateToLegacyPhase: No transformation implemented for this logical expression node: " << expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }

@@ -67,8 +67,7 @@ class CoordinatorRPCClient {
      * @param logical stream to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterPhysicalStream(std::string logicalStreamName,
-                                  std::string physicalStreamName);
+    bool unregisterPhysicalStream(std::string logicalStreamName, std::string physicalStreamName);
 
     /**
      * @brief method to add a new parent to an existing node
@@ -94,8 +93,8 @@ class CoordinatorRPCClient {
      * @param nodeProperties
      * @return bool indicating success
      */
-    bool registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int16_t numberOfSlots,
-                      NodeType type, NodeStats nodeStats);
+    bool registerNode(std::string ipAddress, int64_t grpcPort, int64_t dataPort, int16_t numberOfSlots, NodeType type,
+                      NodeStats nodeStats);
 
     /**
    * @brief method to unregister a node after the connection is established

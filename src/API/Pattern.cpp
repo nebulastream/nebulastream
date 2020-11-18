@@ -28,13 +28,12 @@ Pattern::Pattern(const Pattern& query) : Query(query.queryPlan) {
     NES_DEBUG("Pattern: copy constructor: handover Pattern to Query");
 }
 
-Pattern::Pattern(QueryPlanPtr queryPlan) : Query(queryPlan) {
-    NES_DEBUG("Pattern: copy constructor: handover Pattern to Query");
-}
+Pattern::Pattern(QueryPlanPtr queryPlan) : Query(queryPlan) { NES_DEBUG("Pattern: copy constructor: handover Pattern to Query"); }
 
 Pattern Pattern::from(const std::string sourceStreamName) {
     NES_DEBUG("Pattern: create query for input stream " << sourceStreamName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName, UtilityFunctions::getNextOperatorId()));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(
+        LogicalStreamSourceDescriptor::create(sourceStreamName, UtilityFunctions::getNextOperatorId()));
     auto queryPlan = QueryPlan::create(sourceOperator);
     return Pattern(queryPlan);
 }
@@ -50,11 +49,7 @@ Pattern& Pattern::sink(const SinkDescriptorPtr sinkDescriptor) {
     return *this;
 }
 
-const std::string& Pattern::getPatternName() const {
-    return patternName;
-}
-void Pattern::setPatternName(const std::string& patternName) {
-    this->patternName = patternName;
-}
+const std::string& Pattern::getPatternName() const { return patternName; }
+void Pattern::setPatternName(const std::string& patternName) { this->patternName = patternName; }
 
 }// namespace NES

@@ -26,29 +26,24 @@
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology)
-    : streamCatalog(streamCatalog),
-      topology(topology),
-      registerDeregisterNode(),
-      addRemoveLogicalStream(),
+    : streamCatalog(streamCatalog), topology(topology), registerDeregisterNode(), addRemoveLogicalStream(),
       addRemovePhysicalStream() {
     NES_DEBUG("CoordinatorEngine()");
 }
-CoordinatorEngine::~CoordinatorEngine() {
-    NES_DEBUG("~CoordinatorEngine()");
-};
+CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
 
-size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, NodeStats nodeStats, NodeType type) {
-    NES_TRACE("CoordinatorEngine: Register Node address=" << address
-                                                          << " numberOfSlots=" << numberOfSlots
-                                                          << " nodeProperties=" << nodeStats.DebugString()
-                                                          << " type=" << type);
+size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots,
+                                       NodeStats nodeStats, NodeType type) {
+    NES_TRACE("CoordinatorEngine: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
+                                                          << " nodeProperties=" << nodeStats.DebugString() << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     NES_DEBUG("CoordinatorEngine::registerNode: topology before insert");
     topology->print();
 
     if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
-        NES_ERROR("CoordinatorEngine::registerNode: node with address " << address << " and grpc port " << grpcPort << " already exists");
+        NES_ERROR("CoordinatorEngine::registerNode: node with address " << address << " and grpc port " << grpcPort
+                                                                        << " already exists");
         return false;
     }
 
@@ -72,7 +67,8 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
             NES_ERROR("CoordinatorEngine::registerNode: error logical stream" << streamConf->getLogicalStreamName()
                                                                               << " does not exist when adding physical stream "
                                                                               << streamConf->getPhysicalStreamName());
-            throw Exception("CoordinatorEngine::registerNode logical stream does not exist " + streamConf->getLogicalStreamName());
+            throw Exception("CoordinatorEngine::registerNode logical stream does not exist "
+                            + streamConf->getLogicalStreamName());
         }
 
         SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf->getLogicalStreamName());
@@ -147,15 +143,18 @@ bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     return successCatalog && successTopology;
 }
 
-bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string sourceType, std::string sourceConf, size_t sourceFrequency,
-                                               size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce, std::string physicalStreamname, std::string logicalStreamname) {
-    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id " << nodeId << " physical stream=" << physicalStreamname
-                                                                                             << " logical stream=" << logicalStreamname);
+bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string sourceType, std::string sourceConf,
+                                               size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer,
+                                               size_t numberOfBuffersToProduce, std::string physicalStreamname,
+                                               std::string logicalStreamname) {
+    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id "
+              << nodeId << " physical stream=" << physicalStreamname << " logical stream=" << logicalStreamname);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceType, sourceConf, sourceFrequency, numberOfTuplesToProducePerBuffer, numberOfBuffersToProduce, physicalStreamname,
-                                                                      logicalStreamname);
-    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= " << streamConf->toString()
-                                                                                                       << " for workerId=" << nodeId);
+    PhysicalStreamConfigPtr streamConf =
+        PhysicalStreamConfig::create(sourceType, sourceConf, sourceFrequency, numberOfTuplesToProducePerBuffer,
+                                     numberOfBuffersToProduce, physicalStreamname, logicalStreamname);
+    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= "
+              << streamConf->toString() << " for workerId=" << nodeId);
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     if (!physicalNode) {
         NES_ERROR("CoordinatorEngine::RegisterPhysicalStream node not found");
@@ -183,8 +182,8 @@ bool CoordinatorEngine::unregisterPhysicalStream(size_t nodeId, std::string phys
 }
 
 bool CoordinatorEngine::registerLogicalStream(std::string logicalStreamName, std::string schemaString) {
-    NES_DEBUG("CoordinatorEngine::registerLogicalStream: register logical stream=" << logicalStreamName << " schema="
-                                                                                   << schemaString);
+    NES_DEBUG("CoordinatorEngine::registerLogicalStream: register logical stream=" << logicalStreamName
+                                                                                   << " schema=" << schemaString);
     std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
 
     SchemaPtr schema = UtilityFunctions::createSchemaFromCode(schemaString);
@@ -276,8 +275,7 @@ bool CoordinatorEngine::removeParent(uint64_t childId, uint64_t parentId) {
 
     bool success = topology->removeNodeAsChild(parentNode, childNode);
     if (!success) {
-        NES_ERROR("CoordinatorEngine::removeParent: edge between  " << childId << " and " << parentId
-                                                                    << " could not be removed");
+        NES_ERROR("CoordinatorEngine::removeParent: edge between  " << childId << " and " << parentId << " could not be removed");
         return false;
     }
     NES_DEBUG("CoordinatorEngine::removeParent: successful");

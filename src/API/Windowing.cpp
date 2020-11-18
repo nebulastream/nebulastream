@@ -25,48 +25,28 @@
 
 namespace NES::API {
 
-Windowing::WindowAggregationPtr Sum(ExpressionItem onField) {
-    return Windowing::SumAggregationDescriptor::on(onField);
-}
+Windowing::WindowAggregationPtr Sum(ExpressionItem onField) { return Windowing::SumAggregationDescriptor::on(onField); }
 
-Windowing::WindowAggregationPtr Min(ExpressionItem onField) {
-    return Windowing::MinAggregationDescriptor::on(onField);
-}
+Windowing::WindowAggregationPtr Min(ExpressionItem onField) { return Windowing::MinAggregationDescriptor::on(onField); }
 
-Windowing::WindowAggregationPtr Max(ExpressionItem onField) {
-    return Windowing::MaxAggregationDescriptor::on(onField);
-}
+Windowing::WindowAggregationPtr Max(ExpressionItem onField) { return Windowing::MaxAggregationDescriptor::on(onField); }
 
-Windowing::WindowAggregationPtr Count() {
-    return Windowing::CountAggregationDescriptor::on();
-}
+Windowing::WindowAggregationPtr Count() { return Windowing::CountAggregationDescriptor::on(); }
 
-Windowing::TimeMeasure Milliseconds(uint64_t milliseconds) {
-    return Windowing::TimeMeasure(milliseconds);
-}
+Windowing::TimeMeasure Milliseconds(uint64_t milliseconds) { return Windowing::TimeMeasure(milliseconds); }
 
-Windowing::TimeMeasure Seconds(uint64_t seconds) {
-    return Milliseconds(seconds * 1000);
-}
+Windowing::TimeMeasure Seconds(uint64_t seconds) { return Milliseconds(seconds * 1000); }
 
-Windowing::TimeMeasure Minutes(uint64_t minutes) {
-    return Seconds(minutes * 60);
-}
+Windowing::TimeMeasure Minutes(uint64_t minutes) { return Seconds(minutes * 60); }
 
-Windowing::TimeMeasure Hours(uint64_t hours) {
-    return Minutes(hours * 60);
-}
+Windowing::TimeMeasure Hours(uint64_t hours) { return Minutes(hours * 60); }
 
-Windowing::TimeMeasure Days(uint64_t days) {
-    return Hours(days);
-}
+Windowing::TimeMeasure Days(uint64_t days) { return Hours(days); }
 
 Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField) {
     return Windowing::TimeCharacteristic::createEventTime(onField);
 }
 
-Windowing::TimeCharacteristicPtr ProcessingTime() {
-    return Windowing::TimeCharacteristic::createProcessingTime();
-}
+Windowing::TimeCharacteristicPtr ProcessingTime() { return Windowing::TimeCharacteristic::createProcessingTime(); }
 
 }// namespace NES::API

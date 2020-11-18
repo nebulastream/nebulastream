@@ -15,21 +15,21 @@
 */
 
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/DumpContext.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Util/DumpContext.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>//
 
-#include <iostream>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sources/DefaultSource.hpp>
+#include <iostream>
 #include <memory>
 
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
@@ -82,9 +82,7 @@ class LogicalOperatorNodeTest : public testing::Test {
         parents.clear();
     }
 
-    void TearDown() {
-        NES_DEBUG("Tear down LogicalOperatorNode Test.");
-    }
+    void TearDown() { NES_DEBUG("Tear down LogicalOperatorNode Test."); }
 
   protected:
     bool removed;
@@ -96,25 +94,22 @@ class LogicalOperatorNodeTest : public testing::Test {
     LogicalOperatorNodePtr sourceOp;
 
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
-    LogicalOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy, filterOp7Copy;
+    LogicalOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy,
+        filterOp7Copy;
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};
 
     static void setupLogging() {
         // create PatternLayout
-        log4cxx::LayoutPtr layoutPtr(
-            new log4cxx::PatternLayout(
-                "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+        log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
         // create FileAppender
         LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
-        log4cxx::FileAppenderPtr file(
-            new log4cxx::FileAppender(layoutPtr, fileName));
+        log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
 
         // create ConsoleAppender
-        log4cxx::ConsoleAppenderPtr console(
-            new log4cxx::ConsoleAppender(layoutPtr));
+        log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
         // set log level
         NESLogger->setLevel(log4cxx::Level::getDebug());
@@ -1433,7 +1428,5 @@ TEST_F(LogicalOperatorNodeTest, dfIterator) {
     ++iterator;
     ASSERT_EQ(*iterator, filterOp5);
 }
-
-
 
 }// namespace NES

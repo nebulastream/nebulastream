@@ -33,9 +33,7 @@ DistributionCharacteristicPtr DistributionCharacteristic::createCombiningWindowT
     return std::make_shared<DistributionCharacteristic>(Type::Combining);
 }
 
-DistributionCharacteristic::Type DistributionCharacteristic::getType() {
-    return type;
-}
+DistributionCharacteristic::Type DistributionCharacteristic::getType() { return type; }
 
 std::string DistributionCharacteristic::toString() {
     if (type == Complete) {

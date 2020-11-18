@@ -40,8 +40,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status RegisterNode(ServerContext* context, const RegisterNodeRequest* request,
-                        RegisterNodeReply* reply) override;
+    Status RegisterNode(ServerContext* context, const RegisterNodeRequest* request, RegisterNodeReply* reply) override;
 
     /**
      * @brief RPC Call to unregister a node
@@ -50,8 +49,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status UnregisterNode(ServerContext* context, const UnregisterNodeRequest* request,
-                          UnregisterNodeReply* reply) override;
+    Status UnregisterNode(ServerContext* context, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) override;
 
     /**
      * @brief RPC Call to register physical stream
@@ -100,8 +98,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status AddParent(ServerContext* context, const AddParentRequest* request,
-                     AddParentReply* reply) override;
+    Status AddParent(ServerContext* context, const AddParentRequest* request, AddParentReply* reply) override;
 
     /**
      * @brief RPC Call to remove parent
@@ -110,8 +107,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status RemoveParent(ServerContext* context, const RemoveParentRequest* request,
-                        RemoveParentReply* reply) override;
+    Status RemoveParent(ServerContext* context, const RemoveParentRequest* request, RemoveParentReply* reply) override;
 
   private:
     CoordinatorEnginePtr coordinatorEngine;

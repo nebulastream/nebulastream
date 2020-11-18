@@ -117,7 +117,8 @@ class CodeGenerator {
      * @param context The context of the current pipeline.
      * @return flag if the generation was successful.
      */
-    virtual bool generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy,
+                                                  PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -125,7 +126,9 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
+                                               GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                               PipelineContextPtr context) = 0;
 
     /**
    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -133,7 +136,9 @@ class CodeGenerator {
    * @param context The context of the current pipeline.
    * @return flag if the generation was successful.
    */
-    virtual bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
+                                              GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                              PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -141,7 +146,9 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window, GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
+                                                GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                                PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a join operator, which depends on a particular join definition

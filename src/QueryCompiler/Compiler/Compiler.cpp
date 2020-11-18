@@ -38,9 +38,7 @@ namespace NES {
 
 const std::string Compiler::IncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
 
-CompilerPtr Compiler::create() {
-    return std::make_shared<Compiler>();
-}
+CompilerPtr Compiler::create() { return std::make_shared<Compiler>(); }
 
 std::string Compiler::getFileName() {
     auto time = std::time(nullptr);
@@ -120,15 +118,12 @@ std::string Compiler::formatAndPrintSource(const std::string& filename) {
     // read source file in
     std::ifstream file(filename);
     file.clear();
-    std::string sourceCode((std::istreambuf_iterator<char>(file)),
-                           std::istreambuf_iterator<char>());
-    NES_DEBUG("Compiler: generate code: \n"
-              << sourceCode);
+    std::string sourceCode((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    NES_DEBUG("Compiler: generate code: \n" << sourceCode);
     return sourceCode;
 }
 
-void Compiler::writeSourceToFile(const std::string& filename,
-                                 const std::string& source) {
+void Compiler::writeSourceToFile(const std::string& filename, const std::string& source) {
     auto path = std::filesystem::current_path().string();
     NES_DEBUG("Compiler: write source to file://" << path << "/" << filename);
     std::ofstream result_file(filename, std::ios::trunc | std::ios::out);

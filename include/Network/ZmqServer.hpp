@@ -45,8 +45,8 @@ class ZmqServer : public boost::noncopyable {
      * @param numNetworkThreads
      * @param exchangeProtocol
      */
-    explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads,
-                       ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager);
+    explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol,
+                       BufferManagerPtr bufferManager);
 
     ~ZmqServer();
 
@@ -59,9 +59,7 @@ class ZmqServer : public boost::noncopyable {
      * Get the global zmq context
      * @return
      */
-    std::shared_ptr<zmq::context_t> getContext() {
-        return zmqContext;
-    }
+    std::shared_ptr<zmq::context_t> getContext() { return zmqContext; }
 
     /**
      * Checks if the server is running

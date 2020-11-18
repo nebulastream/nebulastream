@@ -22,17 +22,11 @@ namespace NES {
 
 Array::Array(uint64_t length, DataTypePtr component) : length(length), component(std::move(component)) {}
 
-DataTypePtr Array::getComponent() {
-    return component;
-}
+DataTypePtr Array::getComponent() { return component; }
 
-uint64_t Array::getLength() const {
-    return length;
-}
+uint64_t Array::getLength() const { return length; }
 
-bool Array::isArray() {
-    return true;
-}
+bool Array::isArray() { return true; }
 bool Array::isEquals(DataTypePtr otherDataType) {
     if (otherDataType->isArray()) {
         auto otherArray = as<Array>(otherDataType);
@@ -41,12 +35,8 @@ bool Array::isEquals(DataTypePtr otherDataType) {
     return false;
 }
 
-DataTypePtr Array::join(DataTypePtr) {
-    return DataTypeFactory::createUndefined();
-}
+DataTypePtr Array::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
 
-std::string Array::toString() {
-    return "Array";
-}
+std::string Array::toString() { return "Array"; }
 
 }// namespace NES

@@ -47,29 +47,18 @@ enum MessageType {
     kEndOfStream
 };
 
-enum ErrorType {
-    kNoError,
-    kPartitionNotRegisteredError,
-    kUnknownError
-};
+enum ErrorType { kNoError, kPartitionNotRegisteredError, kUnknownError };
 
 class MessageHeader {
   public:
     explicit MessageHeader(MessageType msgType, uint32_t msgLength)
-        : magicNumber(NES_NETWORK_MAGIC_NUMBER), msgType(msgType), msgLength(msgLength) {
-    }
+        : magicNumber(NES_NETWORK_MAGIC_NUMBER), msgType(msgType), msgLength(msgLength) {}
 
-    nes_magic_number_t getMagicNumber() const {
-        return magicNumber;
-    }
+    nes_magic_number_t getMagicNumber() const { return magicNumber; }
 
-    MessageType getMsgType() const {
-        return msgType;
-    }
+    MessageType getMsgType() const { return msgType; }
 
-    uint32_t getMsgLength() const {
-        return msgLength;
-    }
+    uint32_t getMsgLength() const { return msgLength; }
 
   private:
     const nes_magic_number_t magicNumber;
@@ -81,9 +70,7 @@ class ExchangeMessage {
   public:
     explicit ExchangeMessage(ChannelId channelId) : channelId(channelId) {}
 
-    const ChannelId& getChannelId() const {
-        return channelId;
-    }
+    const ChannelId& getChannelId() const { return channelId; }
 
   private:
     const ChannelId channelId;
@@ -93,32 +80,27 @@ class ClientAnnounceMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kClientAnnouncement;
 
-    explicit ClientAnnounceMessage(ChannelId channelId) : ExchangeMessage(channelId) {
-    }
+    explicit ClientAnnounceMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
 };
 
 class ServerReadyMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kServerReady;
 
-    explicit ServerReadyMessage(ChannelId channelId, ErrorType withError = kNoError) : ExchangeMessage(channelId), withError(withError) {
-    }
+    explicit ServerReadyMessage(ChannelId channelId, ErrorType withError = kNoError)
+        : ExchangeMessage(channelId), withError(withError) {}
 
     /**
      * @brief check if the message does not contain any error
      * @return true if no error was raised
      */
-    bool isOk() const {
-        return withError == kNoError;
-    }
+    bool isOk() const { return withError == kNoError; }
 
     /**
      * @brief this checks if the message contains a PartitionNotRegisteredError
      * @return true if the message contains a PartitionNotRegisteredError
      */
-    bool isPartitionNotFound() const {
-        return withError == kPartitionNotRegisteredError;
-    }
+    bool isPartitionNotFound() const { return withError == kPartitionNotRegisteredError; }
 
     /**
      * @return the underlying error
@@ -133,8 +115,7 @@ class EndOfStreamMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kEndOfStream;
 
-    explicit EndOfStreamMessage(ChannelId channelId) : ExchangeMessage(channelId) {
-    }
+    explicit EndOfStreamMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
 };
 
 class ErrorMessage : public ExchangeMessage {
@@ -161,32 +142,26 @@ class DataBufferMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kDataBuffer;
 
-    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords, uint64_t originId) : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId) {
-    }
+    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords, uint64_t originId)
+        : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId) {}
 
     /**
      * @brief get the payloadSize of the BufferMessage
      * @return the payloadSize
      */
-    const uint32_t getPayloadSize() const {
-        return payloadSize;
-    }
+    const uint32_t getPayloadSize() const { return payloadSize; }
 
     /**
      * @brief get the number of records within the current BufferMessage
      * @return the number of records
      */
-    const uint32_t getNumOfRecords() const {
-        return numOfRecords;
-    }
+    const uint32_t getNumOfRecords() const { return numOfRecords; }
 
     /**
       * @brief get the origin id within the current BufferMessage
       * @return the origin id
     */
-    const uint64_t getOriginId() const {
-        return originId;
-    }
+    const uint64_t getOriginId() const { return originId; }
 
   private:
     const uint32_t payloadSize;
@@ -196,12 +171,9 @@ class DataBufferMessage {
 
 class NesNetworkError : public std::runtime_error {
   public:
-    explicit NesNetworkError(ErrorMessage& msg) : std::runtime_error(msg.getErrorTypeAsString()), msg(msg) {
-    }
+    explicit NesNetworkError(ErrorMessage& msg) : std::runtime_error(msg.getErrorTypeAsString()), msg(msg) {}
 
-    const ErrorMessage& getErrorMessage() const {
-        return msg;
-    }
+    const ErrorMessage& getErrorMessage() const { return msg; }
 
   private:
     const ErrorMessage msg;

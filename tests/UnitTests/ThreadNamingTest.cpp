@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <cstring>
+#include <gtest/gtest.h>
 #include <unistd.h>
 #ifdef _POSIX_THREADS
 #define HAS_POSIX_THREAD
@@ -34,9 +34,7 @@ class ThreadNamingTest : public testing::Test {
 
         NES_INFO("ThreadNamingTest test class SetUpTestCase.");
     }
-    static void TearDownTestCase() {
-        NES_INFO("ThreadNamingTest test class TearDownTestCase.");
-    }
+    static void TearDownTestCase() { NES_INFO("ThreadNamingTest test class TearDownTestCase."); }
 };
 
 TEST_F(ThreadNamingTest, testThreadNaming) {
@@ -46,4 +44,4 @@ TEST_F(ThreadNamingTest, testThreadNaming) {
     ASSERT_TRUE(std::strcmp(threadName, "NES-0") == 0);
 }
 
-}
+}// namespace NES

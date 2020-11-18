@@ -21,11 +21,9 @@
 
 namespace NES {
 
-Node::Node() : visited(false), recStack(false) {
-}
+Node::Node() : visited(false), recStack(false) {}
 
-Node::~Node() {
-}
+Node::~Node() {}
 
 bool Node::addChildWithEqual(const NodePtr newNode) {
     if (newNode.get() == this) {
@@ -63,7 +61,8 @@ bool Node::addChild(const NodePtr newNode) {
 bool Node::removeChild(const NodePtr node) {
     // check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
-        NES_DEBUG("Node: remove " << (*nodeItr)->toString() << " from " << node->toString() << " this=" << this << " other=" << node.get());
+        NES_DEBUG("Node: remove " << (*nodeItr)->toString() << " from " << node->toString() << " this=" << this
+                                  << " other=" << node.get());
         if ((*nodeItr).get() == node.get()) {
             // remove this from nodeItr's parents
             for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {
@@ -174,9 +173,7 @@ bool Node::removeParent(const NodePtr node) {
     return false;
 }
 
-bool Node::replace(NodePtr newNode) {
-    return replace(newNode, shared_from_this());
-}
+bool Node::replace(NodePtr newNode) { return replace(newNode, shared_from_this()); }
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
     if (shared_from_this() == oldNode) {
@@ -313,9 +310,7 @@ void Node::clear() {
     parents.clear();
 }
 
-const std::vector<NodePtr>& Node::getChildren() const {
-    return children;
-}
+const std::vector<NodePtr>& Node::getChildren() const { return children; }
 
 bool Node::containAsChild(NodePtr node) {
     NES_DEBUG("Node: Checking if the input node is contained in the children list");
@@ -327,9 +322,7 @@ bool Node::containAsParent(NodePtr node) {
     return vectorContainsTheNode(parents, node);
 }
 
-const std::vector<NodePtr>& Node::getParents() const {
-    return parents;
-}
+const std::vector<NodePtr>& Node::getParents() const { return parents; }
 
 std::vector<NodePtr> Node::getAllRootNodes() {
     NES_DEBUG("Node: Get all root nodes for this node");
@@ -504,9 +497,7 @@ std::vector<NodePtr> Node::split(const NodePtr splitNode) {
     return result;
 }
 
-bool Node::isValid() {
-    return !isCyclic();
-}
+bool Node::isValid() { return !isCyclic(); }
 
 std::vector<NodePtr> Node::getAndFlattenAllChildren() {
     std::vector<NodePtr> allChildren{};

@@ -26,11 +26,7 @@ namespace Sensors {
 /**
  * @brief types of sensor buses we suppprt
  */
-enum BusType {
-    I2C,
-    SPI,
-    UART
-};
+enum BusType { I2C, SPI, UART };
 
 /**
  * @brief Utility class for performing I/O on top of known sensor buses.

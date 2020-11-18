@@ -22,10 +22,13 @@
 
 namespace NES::Windowing {
 
-MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(std::move(field)) {}
-MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField) : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field)
+    : WindowAggregationDescriptor(std::move(field)) {}
+MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
+    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
 
-WindowAggregationPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField) {
+WindowAggregationPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
+                                                      FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
@@ -38,18 +41,10 @@ WindowAggregationPtr MinAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(fieldAccess));
 }
 
-WindowAggregationDescriptor::Type MinAggregationDescriptor::getType() {
-    return Min;
-}
-DataTypePtr MinAggregationDescriptor::getInputStamp() {
-    return onField->getStamp();
-}
-DataTypePtr MinAggregationDescriptor::getPartialAggregateStamp() {
-    return onField->getStamp();
-}
-DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp() {
-    return onField->getStamp();
-}
+WindowAggregationDescriptor::Type MinAggregationDescriptor::getType() { return Min; }
+DataTypePtr MinAggregationDescriptor::getInputStamp() { return onField->getStamp(); }
+DataTypePtr MinAggregationDescriptor::getPartialAggregateStamp() { return onField->getStamp(); }
+DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp() { return onField->getStamp(); }
 
 void MinAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.

@@ -18,9 +18,11 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES {
-LogicalBinaryExpressionNode::LogicalBinaryExpressionNode() : BinaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode() {}
+LogicalBinaryExpressionNode::LogicalBinaryExpressionNode()
+    : BinaryExpressionNode(DataTypeFactory::createBoolean()), LogicalExpressionNode() {}
 
-LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other) : BinaryExpressionNode(other), LogicalExpressionNode() {}
+LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other)
+    : BinaryExpressionNode(other), LogicalExpressionNode() {}
 
 bool LogicalBinaryExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<LogicalBinaryExpressionNode>()) {

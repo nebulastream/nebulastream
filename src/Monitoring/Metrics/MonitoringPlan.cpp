@@ -44,8 +44,9 @@ MonitoringPlan::MonitoringPlan(const std::vector<MetricValueType>& metrics)
     addMetrics(metrics);
 }
 
-MonitoringPlan::MonitoringPlan(const SerializableMonitoringPlan& plan) : cpuMetrics(plan.cpumetrics()), networkMetrics(plan.networkmetrics()),
-                                                                         memoryMetrics(plan.memorymetrics()), diskMetrics(plan.diskmetrics()) {
+MonitoringPlan::MonitoringPlan(const SerializableMonitoringPlan& plan)
+    : cpuMetrics(plan.cpumetrics()), networkMetrics(plan.networkmetrics()), memoryMetrics(plan.memorymetrics()),
+      diskMetrics(plan.diskmetrics()) {
     NES_DEBUG("MonitoringPlan: Initializing from shippable protobuf object.");
 }
 
@@ -147,11 +148,13 @@ GroupedValues MonitoringPlan::fromBuffer(std::shared_ptr<Schema> schema, TupleBu
         output.diskMetrics.emplace(std::move(metrics));
     }
     if (memoryMetrics) {
-        auto metrics = std::make_unique<MemoryMetrics>(MemoryMetrics::fromBuffer(schema, buf, MonitoringPlan::MEMORY_METRICS_DESC));
+        auto metrics =
+            std::make_unique<MemoryMetrics>(MemoryMetrics::fromBuffer(schema, buf, MonitoringPlan::MEMORY_METRICS_DESC));
         output.memoryMetrics.emplace(std::move(metrics));
     }
     if (networkMetrics) {
-        auto metrics = std::make_unique<NetworkMetrics>(NetworkMetrics::fromBuffer(schema, buf, MonitoringPlan::NETWORK_METRICS_DESC));
+        auto metrics =
+            std::make_unique<NetworkMetrics>(NetworkMetrics::fromBuffer(schema, buf, MonitoringPlan::NETWORK_METRICS_DESC));
         output.networkMetrics.emplace(std::move(metrics));
     }
 
@@ -188,11 +191,10 @@ SerializableMonitoringPlan MonitoringPlan::serialize() const {
 }
 
 std::string MonitoringPlan::toString() const {
-    return "MonitoringPlan: CPU(" + std::to_string(cpuMetrics) + "), disk(" + std::to_string(diskMetrics) + "), " + "memory(" + std::to_string(memoryMetrics) + "), network(" + std::to_string(networkMetrics) + ")";
+    return "MonitoringPlan: CPU(" + std::to_string(cpuMetrics) + "), disk(" + std::to_string(diskMetrics) + "), " + "memory("
+        + std::to_string(memoryMetrics) + "), network(" + std::to_string(networkMetrics) + ")";
 }
 
-std::ostream& operator<<(std::ostream& strm, const MonitoringPlan& plan) {
-    return strm << plan.toString();
-}
+std::ostream& operator<<(std::ostream& strm, const MonitoringPlan& plan) { return strm << plan.toString(); }
 
 }// namespace NES

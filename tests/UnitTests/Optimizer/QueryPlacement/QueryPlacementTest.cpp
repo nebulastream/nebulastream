@@ -41,9 +41,7 @@ using namespace web;
 class QueryPlacementTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        std::cout << "Setup QueryPlacementTest test class." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
 
     /* Will be called before a test is executed. */
     void SetUp() {
@@ -53,14 +51,10 @@ class QueryPlacementTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        std::cout << "Setup QueryPlacementTest test case." << std::endl;
-    }
+    void TearDown() { std::cout << "Setup QueryPlacementTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        std::cout << "Tear down QueryPlacementTest test class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
 
     void setupTopologyAndStreamCatalog() {
 
@@ -75,18 +69,18 @@ class QueryPlacementTest : public testing::Test {
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
         topology->addNewPhysicalNodeAsChild(rootNode, sourceNode2);
 
-        std::string schema =
-            "Schema::create()->addField(\"id\", BasicType::UINT32)"
-            "->addField(\"value\", BasicType::UINT64);";
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
         const std::string streamName = "car";
 
         streamCatalog = std::make_shared<StreamCatalog>();
         streamCatalog->addLogicalStream(streamName, schema);
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
-                                                                    /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                                                    /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
-                                                                    /**Logical Stream Name**/ "car");
+        PhysicalStreamConfigPtr conf =
+            PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
+                                         /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                         /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
+                                         /**Logical Stream Name**/ "car");
 
         StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode1);
         StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode2);
@@ -106,11 +100,10 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto placementStrategy =
+        PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
-    Query query = Query::from("car")
-                      .filter(Attribute("id") < 45)
-                      .sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -161,11 +154,10 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto placementStrategy =
+        PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
-    Query query = Query::from("car")
-                      .filter(Attribute("id") < 45)
-                      .sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -217,7 +209,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto placementStrategy =
+        PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
 
@@ -256,9 +249,10 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
                 ASSERT_EQ(actualRootOperators.size(), 1);
                 OperatorNodePtr actualRootOperator = actualRootOperators[0];
                 auto expectedRootOperators = queryPlan->getRootOperators();
-                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(), [&](OperatorNodePtr expectedRootOperator) {
-                    return expectedRootOperator->getId() == actualRootOperator->getId();
-                });
+                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(),
+                                          [&](OperatorNodePtr expectedRootOperator) {
+                                              return expectedRootOperator->getId() == actualRootOperator->getId();
+                                          });
                 ASSERT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
                 for (auto children : actualRootOperator->getChildren()) {
@@ -289,7 +283,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto placementStrategy =
+        PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
 
@@ -325,9 +320,10 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
                 ASSERT_EQ(actualRootOperators.size(), 1);
                 OperatorNodePtr actualRootOperator = actualRootOperators[0];
                 auto expectedRootOperators = queryPlan->getRootOperators();
-                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(), [&](OperatorNodePtr expectedRootOperator) {
-                    return expectedRootOperator->getId() == actualRootOperator->getId();
-                });
+                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(),
+                                          [&](OperatorNodePtr expectedRootOperator) {
+                                              return expectedRootOperator->getId() == actualRootOperator->getId();
+                                          });
                 ASSERT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
                 for (auto children : actualRootOperator->getChildren()) {
@@ -358,7 +354,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto placementStrategy =
+        PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
 
@@ -396,9 +393,10 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
             ASSERT_EQ(actualRootOperators.size(), 2);
             for (auto actualRootOperator : actualRootOperators) {
                 auto expectedRootOperators = queryPlan->getRootOperators();
-                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(), [&](OperatorNodePtr expectedRootOperator) {
-                    return expectedRootOperator->getId() == actualRootOperator->getId();
-                });
+                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(),
+                                          [&](OperatorNodePtr expectedRootOperator) {
+                                              return expectedRootOperator->getId() == actualRootOperator->getId();
+                                          });
                 ASSERT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
                 for (auto children : actualRootOperator->getChildren()) {
@@ -429,7 +427,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto placementStrategy =
+        PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
 
@@ -465,9 +464,10 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
                 ASSERT_EQ(actualRootOperators.size(), 1);
                 OperatorNodePtr actualRootOperator = actualRootOperators[0];
                 auto expectedRootOperators = queryPlan->getRootOperators();
-                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(), [&](OperatorNodePtr expectedRootOperator) {
-                    return expectedRootOperator->getId() == actualRootOperator->getId();
-                });
+                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(),
+                                          [&](OperatorNodePtr expectedRootOperator) {
+                                              return expectedRootOperator->getId() == actualRootOperator->getId();
+                                          });
                 ASSERT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
                 for (auto children : actualRootOperator->getChildren()) {

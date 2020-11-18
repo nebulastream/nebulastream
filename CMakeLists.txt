@@ -274,7 +274,7 @@ endif ()
 # Documentation
 add_subdirectory(docs)
 
-add_executable(nesCoordinator nesCoordinatorStarter.cpp)
+add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC ${LIBRARIES} nes)
 target_include_directories(nesCoordinator PUBLIC "include")
 target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
@@ -282,7 +282,7 @@ if (GRPC_LIBRARIES)
     target_link_libraries(nesCoordinator PRIVATE ${GRPC_LIBRARIES})
 endif ()
 
-add_executable(nesWorker nesWorkerStarter.cpp)
+add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC ${LIBRARIES} nes)
 target_include_directories(nesWorker PUBLIC "include")
 target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")

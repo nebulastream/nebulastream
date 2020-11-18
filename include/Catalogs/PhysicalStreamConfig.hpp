@@ -38,9 +38,12 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 struct PhysicalStreamConfig {
 
   public:
-    static PhysicalStreamConfigPtr create(std::string sourceType = "DefaultSource", std::string sourceConfig = "1", uint32_t sourceFrequency = 1,
-                                          uint32_t numberOfTuplesToProducePerBuffer = 1, uint32_t numberOfBuffersToProduce = 1,
-                                          std::string physicalStreamName = "default_physical", std::string logicalStreamName = "default_logical", bool endlessRepeat = false, bool skipHeader = false);
+    static PhysicalStreamConfigPtr create(std::string sourceType = "DefaultSource", std::string sourceConfig = "1",
+                                          uint32_t sourceFrequency = 1, uint32_t numberOfTuplesToProducePerBuffer = 1,
+                                          uint32_t numberOfBuffersToProduce = 1,
+                                          std::string physicalStreamName = "default_physical",
+                                          std::string logicalStreamName = "default_logical", bool endlessRepeat = false,
+                                          bool skipHeader = false);
 
     /**
      * @brief Get the source type
@@ -95,11 +98,9 @@ struct PhysicalStreamConfig {
     bool getSkipHeader() const;
 
   private:
-    explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
-                                  size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
-                                  std::string physicalStreamName,
-                                  std::string logicalStreamName,
-                                  bool endlessRepeat,
+    explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, size_t sourceFrequency,
+                                  size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
+                                  std::string physicalStreamName, std::string logicalStreamName, bool endlessRepeat,
                                   bool skipHeader);
 
     std::string sourceType;

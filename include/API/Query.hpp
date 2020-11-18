@@ -117,8 +117,7 @@ class Query {
      * @param aggregation Window aggregation function.
      * @return query.
      */
-    Query& windowByKey(const ExpressionItem onKey,
-                       const Windowing::WindowTypePtr windowType,
+    Query& windowByKey(const ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
                        const Windowing::WindowAggregationPtr aggregation);
 
     /**
@@ -135,8 +134,7 @@ class Query {
      * @param aggregation Window aggregation function.
      * @return query.
      */
-    Query& window(const Windowing::WindowTypePtr windowType,
-                  const Windowing::WindowAggregationPtr aggregation);
+    Query& window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation);
 
     /**
      * @brief: Map records according to a map expression.

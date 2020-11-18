@@ -34,8 +34,8 @@ namespace NES {
 NesWorker::NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localIp, uint16_t localWorkerRpcPort,
                      uint16_t localWorkerZmqPort, uint16_t numberOfSlots, NodeType type)
     : coordinatorIp(std::move(coordinatorIp)), coordinatorPort(coordinatorPort), localWorkerIp(std::move(localIp)),
-      localWorkerRpcPort(localWorkerRpcPort), localWorkerZmqPort(localWorkerZmqPort), numberOfSlots(numberOfSlots),
-      type(type), conf(PhysicalStreamConfig::create()) {
+      localWorkerRpcPort(localWorkerRpcPort), localWorkerZmqPort(localWorkerZmqPort), numberOfSlots(numberOfSlots), type(type),
+      conf(PhysicalStreamConfig::create()) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
@@ -80,12 +80,10 @@ void NesWorker::buildAndStartGRPCServer(std::promise<bool>& prom) {
 }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
-    NES_DEBUG("NesWorker: start with blocking "
-              << blocking << " coordinatorIp=" << coordinatorIp
-              << " coordinatorPort=" << coordinatorPort << " localWorkerIp="
-              << localWorkerIp << " localWorkerRpcPort=" << localWorkerRpcPort
-              << " localWorkerZmqPort=" << localWorkerZmqPort
-              << " type=" << type);
+    NES_DEBUG("NesWorker: start with blocking " << blocking << " coordinatorIp=" << coordinatorIp
+                                                << " coordinatorPort=" << coordinatorPort << " localWorkerIp=" << localWorkerIp
+                                                << " localWorkerRpcPort=" << localWorkerRpcPort
+                                                << " localWorkerZmqPort=" << localWorkerZmqPort << " type=" << type);
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
     try {
@@ -149,9 +147,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 }
 
-NodeEnginePtr NesWorker::getNodeEngine() {
-    return nodeEngine;
-}
+NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
@@ -193,7 +189,8 @@ bool NesWorker::connect() {
     auto nodeStatsProvider = nodeEngine->getNodeStatsProvider();
     nodeStatsProvider->update();
     auto nodeStats = nodeStatsProvider->getNodeStats();
-    bool successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, type, nodeStats);
+    bool successPRCRegister =
+        coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, type, nodeStats);
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
@@ -268,9 +265,7 @@ bool NesWorker::removeParent(size_t parentId) {
     return success;
 }
 
-std::vector<QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryId queryId) {
-    return nodeEngine->getQueryStatistics(queryId);
-}
+std::vector<QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryId queryId) { return nodeEngine->getQueryStatistics(queryId); }
 
 bool NesWorker::waitForConnect() {
     NES_DEBUG("NesWorker::waitForConnect()");

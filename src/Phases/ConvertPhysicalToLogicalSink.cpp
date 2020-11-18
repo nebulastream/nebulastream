@@ -47,9 +47,7 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
     case KAFKA_SINK: {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating Kafka sink");
         KafkaSinkPtr kafkaSink = std::dynamic_pointer_cast<KafkaSink>(dataSink);
-        return KafkaSinkDescriptor::create(kafkaSink->getTopic(),
-                                           kafkaSink->getBrokers(),
-                                           kafkaSink->getKafkaProducerTimeout());
+        return KafkaSinkDescriptor::create(kafkaSink->getTopic(), kafkaSink->getBrokers(), kafkaSink->getKafkaProducerTimeout());
     }
 #endif
 #ifdef ENABLE_OPC_BUILD
@@ -61,8 +59,8 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
 #endif
         else if (sinkType == "FILE_SINK") {
             FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
-            NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getAppendAsBool()
-                                                                                         << " format " << fileSink->getSinkFormat());
+            NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode "
+                     << fileSink->getAppendAsBool() << " format " << fileSink->getSinkFormat());
             return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getSinkFormat(), fileSink->getAppendAsString());
         }
         else {

@@ -16,6 +16,4 @@
 
 #include <Monitoring/Protocols/SamplingProtocol.hpp>
 
-namespace NES {
-
-}
+namespace NES {}

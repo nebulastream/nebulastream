@@ -20,7 +20,8 @@
 
 namespace NES {
 
-WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
+WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(
+    const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
     : watermarkStrategyDescriptor(watermarkStrategyDescriptor), LogicalOperatorNode(id) {}
 
 const std::string WatermarkAssignerLogicalOperatorNode::toString() const {

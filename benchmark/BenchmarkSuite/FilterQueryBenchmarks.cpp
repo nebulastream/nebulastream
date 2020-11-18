@@ -14,14 +14,14 @@
     limitations under the License.
 */
 
-#include <iostream>
-#include <vector>
-#include <util/BenchmarkUtils.hpp>
-#include <filesystem>
-#include <util/SimpleBenchmarkSource.hpp>
-#include <util/SimpleBenchmarkSink.hpp>
-#include "../../tests/util/TestQuery.hpp"
 #include "../../tests/util/DummySink.hpp"
+#include "../../tests/util/TestQuery.hpp"
+#include <filesystem>
+#include <iostream>
+#include <util/BenchmarkUtils.hpp>
+#include <util/SimpleBenchmarkSink.hpp>
+#include <util/SimpleBenchmarkSource.hpp>
+#include <vector>
 
 using namespace NES;
 using namespace NES::Benchmarking;
@@ -44,22 +44,21 @@ int main() {
     BenchmarkUtils::createRangeVector(allPeriodLengths, 2, 3, 1);
 
     std::string benchmarkFolderName = "FilterQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
-    if (!std::filesystem::create_directory(benchmarkFolderName)) throw RuntimeException("Could not create folder " + benchmarkFolderName);
+    if (!std::filesystem::create_directory(benchmarkFolderName))
+        throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
     BenchmarkUtils::createRangeVector(allSelectivities, 500, 700, 100);
 
-    for (auto selectivity : allSelectivities){
+    for (auto selectivity : allSelectivities) {
         auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
         BM_AddBenchmark("BM_SimpleFilterQuery",
-                        TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).sink(DummySink::create()),
-                        1,
-                        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema, ingestionRate),
-                        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
-                        ",Selectivity",
+                        TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).sink(DummySink::create()), 1,
+                        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                      benchmarkSchema, ingestionRate),
+                        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",Selectivity",
                         "," + std::to_string(selectivity))
-
     }
 
     //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------

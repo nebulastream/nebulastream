@@ -62,12 +62,15 @@ class WindowManager {
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
-                NES_TRACE("WindowManager: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge);
+                NES_TRACE("WindowManager: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
+                          << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge);
             } else if (windowType->isSlidingWindow()) {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
                 NES_TRACE("WindowManager: successful cast to Sliding Window fir sliceStream empty store");
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
-                NES_TRACE("WindowManager: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs=" << store->nextEdge - store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge);
+                NES_TRACE("WindowManager: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
+                          << store->nextEdge - store->nextEdge - window->getSlide().getTime()
+                          << " nextWindowEnd=" << store->nextEdge);
             } else {
                 NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }

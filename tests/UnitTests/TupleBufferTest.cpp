@@ -34,9 +34,7 @@ class TupleBufferTest : public testing::Test {
     BufferManagerPtr bufferManager;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        std::cout << "Setup TupleBufferTest test class." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Setup TupleBufferTest test class." << std::endl; }
 
     /* Will be called before a test is executed. */
     void SetUp() {
@@ -92,10 +90,8 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
 
     std::string result = UtilityFunctions::prettyPrintTupleBuffer(buf, s);
     std::cout << "RES=" << result << std::endl;
-    NES_DEBUG("Reference size=" << reference.size() << " content=" << std::endl
-                                << reference);
-    NES_DEBUG("Result size=" << result.size() << " content=" << std::endl
-                             << result);
+    NES_DEBUG("Reference size=" << reference.size() << " content=" << std::endl << reference);
+    NES_DEBUG("Result size=" << result.size() << " content=" << std::endl << result);
     NES_DEBUG("----");
     EXPECT_EQ(reference.size(), result.size());
     //    EXPECT_EQ(reference, result);//TODO fix bug
@@ -229,4 +225,4 @@ TEST_F(TupleBufferTest, testCopyAndSwap) {
     }
 }
 
-} // namespace NES
+}// namespace NES

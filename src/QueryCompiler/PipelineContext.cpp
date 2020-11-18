@@ -22,45 +22,25 @@
 
 namespace NES {
 
-PipelineContext::PipelineContext() {
-    this->code = std::make_shared<GeneratedCode>();
-}
+PipelineContext::PipelineContext() { this->code = std::make_shared<GeneratedCode>(); }
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
-void PipelineContext::setWindow(Windowing::AbstractWindowHandlerPtr window) {
-    this->windowHandler = std::move(window);
-}
+void PipelineContext::setWindow(Windowing::AbstractWindowHandlerPtr window) { this->windowHandler = std::move(window); }
 
-void PipelineContext::setJoin(Windowing::AbstractWindowHandlerPtr join) {
-    this->joinHandler = std::move(join);
-}
+void PipelineContext::setJoin(Windowing::AbstractWindowHandlerPtr join) { this->joinHandler = std::move(join); }
 
-Windowing::AbstractWindowHandlerPtr PipelineContext::getWindow() {
-    return this->windowHandler;
-}
+Windowing::AbstractWindowHandlerPtr PipelineContext::getWindow() { return this->windowHandler; }
 
-Windowing::AbstractWindowHandlerPtr PipelineContext::getJoin() {
-    return this->joinHandler;
-}
+Windowing::AbstractWindowHandlerPtr PipelineContext::getJoin() { return this->joinHandler; }
 
-bool PipelineContext::hasWindow() const {
-    return this->windowHandler != nullptr;
-}
+bool PipelineContext::hasWindow() const { return this->windowHandler != nullptr; }
 
-bool PipelineContext::hasJoin() const {
-    return this->joinHandler != nullptr;
-}
-bool PipelineContext::hasNextPipeline() const {
-    return this->nextPipelines.size() != 0;
-}
+bool PipelineContext::hasJoin() const { return this->joinHandler != nullptr; }
+bool PipelineContext::hasNextPipeline() const { return this->nextPipelines.size() != 0; }
 
-const std::vector<PipelineContextPtr>& PipelineContext::getNextPipelineContexts() const {
-    return this->nextPipelines;
-}
+const std::vector<PipelineContextPtr>& PipelineContext::getNextPipelineContexts() const { return this->nextPipelines; }
 
-void PipelineContext::addNextPipeline(PipelineContextPtr nextPipeline) {
-    this->nextPipelines.push_back(nextPipeline);
-}
+void PipelineContext::addNextPipeline(PipelineContextPtr nextPipeline) { this->nextPipelines.push_back(nextPipeline); }
 
 SchemaPtr PipelineContext::getInputSchema() const { return inputSchema; }
 

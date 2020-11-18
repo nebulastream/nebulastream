@@ -38,13 +38,9 @@ class StreamCatalogRemoteTest : public testing::Test {
         NES_INFO("Setup StreamCatalogRemoteTest test class.");
     }
 
-    void SetUp() {
-        rpcPort = rpcPort + 30;
-    }
+    void SetUp() { rpcPort = rpcPort + 30; }
 
-    void TearDown() {
-        std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl; }
 };
 TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -53,15 +49,15 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
     //create test schema
-    std::string testSchema =
-        "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-        "\"value\", BasicType::UINT64);";
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -70,8 +66,7 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     bool registered = wrk->registerLogicalStream("testStream1", testSchemaFileName);
     EXPECT_TRUE(registered);
 
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
-        "testStream1");
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("testStream1");
     EXPECT_NE(sPtr, nullptr);
 
     cout << "stopping worker" << endl;
@@ -90,15 +85,15 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
     //create test schema
-    std::string testSchema =
-        "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-        "\"value\", BasicType::UINT64);";
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -107,13 +102,11 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
     bool success = wrk->registerLogicalStream("default_logical", testSchemaFileName);
     EXPECT_TRUE(!success);
 
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
-        "default_logical");
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
     EXPECT_NE(sPtr, nullptr);
 
     //check if schma was not overwritten
-    SchemaPtr sch = crd->getStreamCatalog()->getSchemaForLogicalStream(
-        "default_logical");
+    SchemaPtr sch = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
     EXPECT_NE(sch, nullptr);
 
     map<std::string, SchemaPtr> allLogicalStream = crd->getStreamCatalog()->getAllLogicalStream();
@@ -139,15 +132,15 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
     //create test schema
-    std::string testSchema =
-        "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-        "\"value\", BasicType::UINT64);";
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -156,15 +149,13 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
     bool success = wrk->registerLogicalStream("testStream", testSchemaFileName);
     EXPECT_TRUE(success);
 
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
-        "testStream");
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("testStream");
     EXPECT_NE(sPtr, nullptr);
 
     bool success2 = wrk->unregisterLogicalStream("testStream");
     EXPECT_TRUE(success2);
 
-    SchemaPtr sPtr2 = crd->getStreamCatalog()->getSchemaForLogicalStream(
-        "testStream");
+    SchemaPtr sPtr2 = crd->getStreamCatalog()->getSchemaForLogicalStream("testStream");
     EXPECT_EQ(sPtr2, nullptr);
 
     cout << "stopping worker" << endl;
@@ -183,7 +174,8 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -191,8 +183,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
     bool success = wrk->unregisterLogicalStream("default_logical");
     EXPECT_TRUE(!success);
 
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
-        "default_logical");
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
     EXPECT_NE(sPtr, nullptr);
 
     cout << "stopping worker" << endl;
@@ -211,20 +202,18 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("DefaultSource","",1,
-                                                                0,2,
-                                                                "physical_test","default_logical");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 2, "physical_test", "default_logical");
 
     bool success = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success);
 
-    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString()
-         << endl;
+    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
     std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 2);
@@ -247,15 +236,15 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
     //create test schema
-    std::string testSchema =
-        "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-        "\"value\", BasicType::UINT64);";
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                             "\"value\", BasicType::UINT64);";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -264,15 +253,12 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     bool success = wrk->registerLogicalStream("testStream", testSchemaFileName);
     EXPECT_TRUE(success);
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("DefaultSource","",1,
-                                                                0,2,
-                                                                "physical_test","testStream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 2, "physical_test", "testStream");
 
     bool success2 = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success2);
 
-    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString()
-         << endl;
+    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
     std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("testStream");
 
     EXPECT_EQ(phys.size(), 1);
@@ -294,7 +280,8 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -302,8 +289,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     bool success = wrk->unregisterPhysicalStream("default_logical", "default_physical");
     EXPECT_TRUE(success);
 
-    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString()
-         << endl;
+    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
     std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 0);
@@ -324,7 +310,8 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, std::to_string(port), ipAddress, port + 10, port + 11, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -332,12 +319,10 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     bool success = wrk->unregisterPhysicalStream("default_logical2", "default_physical");
     EXPECT_TRUE(!success);
 
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream(
-        "default_logical");
+    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
     EXPECT_NE(sPtr, nullptr);
 
-    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString()
-         << endl;
+    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
     std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 1);

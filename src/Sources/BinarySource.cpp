@@ -24,9 +24,9 @@
 
 namespace NES {
 
-BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& _file_path, OperatorId operatorId)
-    : DataSource(schema, bufferManager, queryManager, operatorId),
-      input(std::ifstream(_file_path.c_str())),
+BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                           const std::string& _file_path, OperatorId operatorId)
+    : DataSource(schema, bufferManager, queryManager, operatorId), input(std::ifstream(_file_path.c_str())),
       file_path(_file_path) {
     input.seekg(0, input.end);
     file_size = input.tellg();
@@ -47,8 +47,7 @@ std::optional<TupleBuffer> BinarySource::receiveData() {
 
 const std::string BinarySource::toString() const {
     std::stringstream ss;
-    ss << "BINARY_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << file_path
-       << ")";
+    ss << "BINARY_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << file_path << ")";
     return ss.str();
 }
 
@@ -61,8 +60,7 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
     if (input.tellg() == file_size) {
         input.seekg(0, input.beg);
     }
-    size_t size_to_read =
-        buf.getBufferSize() < (uint64_t) file_size ? buf.getBufferSize() : file_size;
+    size_t size_to_read = buf.getBufferSize() < (uint64_t) file_size ? buf.getBufferSize() : file_size;
     input.read(buf.getBufferAs<char>(), size_to_read);
     uint64_t generated_tuples_this_pass = size_to_read / tuple_size;
     buf.setNumberOfTuples(generated_tuples_this_pass);
@@ -70,11 +68,7 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
     generatedTuples += generated_tuples_this_pass;
     generatedBuffers++;
 }
-SourceType BinarySource::getType() const {
-    return BINARY_SOURCE;
-}
+SourceType BinarySource::getType() const { return BINARY_SOURCE; }
 
-const std::string& BinarySource::getFilePath() const {
-    return file_path;
-}
+const std::string& BinarySource::getFilePath() const { return file_path; }
 }// namespace NES

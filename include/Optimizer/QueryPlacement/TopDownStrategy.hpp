@@ -29,8 +29,8 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
 
-    static std::unique_ptr<TopDownStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
-                                                   StreamCatalogPtr streamCatalog);
+    static std::unique_ptr<TopDownStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                                   TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
   private:
     TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
@@ -72,7 +72,8 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param executionNode : the execution node where operator is to be placed
      * @return the query plan to which the input operator is to be appended
      */
-    QueryPlanPtr addOperatorToCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator, ExecutionNodePtr executionNode);
+    QueryPlanPtr addOperatorToCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator,
+                                                 ExecutionNodePtr executionNode);
 };
 
 }// namespace NES

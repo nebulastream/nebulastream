@@ -69,8 +69,7 @@ class StreamCatalog {
    * @caution combination of node and name has to be unique
    * @return bool indicating success of insert stream
    */
-    bool addPhysicalStream(std::string logicalStreamName,
-                           StreamCatalogEntryPtr entry);
+    bool addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr entry);
 
     /**
    * @brief method to remove a physical stream
@@ -121,8 +120,7 @@ class StreamCatalog {
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-    LogicalStreamPtr getStreamForLogicalStreamOrThrowException(
-        std::string logicalStreamName);
+    LogicalStreamPtr getStreamForLogicalStreamOrThrowException(std::string logicalStreamName);
 
     /**
    * @brief test if logical stream with this name exists in the log to schema mapping

@@ -14,6 +14,4 @@
     limitations under the License.
 */
 
-namespace NES::Windowing {
-
-}// namespace NES::Windowing
+namespace NES::Windowing {}// namespace NES::Windowing

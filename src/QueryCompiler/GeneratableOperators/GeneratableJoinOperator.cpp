@@ -43,10 +43,12 @@ void GeneratableJoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNodePtr logicalJoinOperator, OperatorId id) {
-    return std::make_shared<GeneratableJoinOperator>(GeneratableJoinOperator(logicalJoinOperator->getOutputSchema(), logicalJoinOperator->getJoinDefinition(), id));
+    return std::make_shared<GeneratableJoinOperator>(
+        GeneratableJoinOperator(logicalJoinOperator->getOutputSchema(), logicalJoinOperator->getJoinDefinition(), id));
 }
 
-GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr schemaP, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id) : JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
+GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr schemaP, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
+    : JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
     setInputSchema(schemaP);
     setOutputSchema(schemaP);
 }

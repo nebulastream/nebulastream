@@ -47,9 +47,7 @@ namespace NES {
 class TypeInferencePhaseTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        std::cout << "Setup TypeInferencePhaseTest test class." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Setup TypeInferencePhaseTest test class." << std::endl; }
 
     /* Will be called before a  test is executed. */
     void SetUp() {
@@ -58,14 +56,10 @@ class TypeInferencePhaseTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        std::cout << "Tear down TypeInferencePhaseTest test case." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down TypeInferencePhaseTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        std::cout << "Tear down TypeInferencePhaseTest test class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down TypeInferencePhaseTest test class." << std::endl; }
 };
 
 /**
@@ -76,7 +70,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source = LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0, 1));
+    auto source =
+        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0, 1));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f1") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -113,10 +108,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     auto query = Query::from("default_logical")
-                     .windowByKey(
-                         Attribute("id"),
-                         TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
-                         Sum(Attribute("value")))
+                     .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                                  Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
@@ -131,7 +124,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     std::cout << resultPlan->getSinkOperators()[0]->getOutputSchema()->toString() << std::endl;
     // we just access the old references
-    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(),4);
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 4);
 }
 
 /**
@@ -143,7 +136,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source = LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0, 1));
+    auto source =
+        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0, 1));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f3") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -174,13 +168,9 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 
-    SchemaPtr schema = Schema::create()
-                           ->addField("id", BasicType::UINT32)
-                           ->addField("value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
-    auto query = Query::from("default_logical")
-                     .map(Attribute("f3") = Attribute("id")++)
-                     .sink(FileSinkDescriptor::create(""));
+    auto query = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
     auto phase = TypeInferencePhase::create(streamCatalog);

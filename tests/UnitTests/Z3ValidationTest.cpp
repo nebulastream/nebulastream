@@ -29,9 +29,7 @@ class Z3ValidationTest : public testing::Test {
         NES_INFO("Setup Z3ValidationTest test class.");
     }
 
-    void TearDown() {
-        NES_INFO("Tear down Z3ValidationTest test class.");
-    }
+    void TearDown() { NES_INFO("Tear down Z3ValidationTest test class."); }
 
     const size_t buffers_managed = 10;
     const size_t buffer_size = 4 * 1024;

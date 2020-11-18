@@ -76,8 +76,8 @@ class BasePlacementStrategy {
     static constexpr auto NSINK_RETRY_WAIT = std::chrono::seconds(5);
 
   public:
-    explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr, TypeInferencePhasePtr typeInferencePhase,
-                                   StreamCatalogPtr streamCatalog);
+    explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr,
+                                   TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
@@ -136,7 +136,8 @@ class BasePlacementStrategy {
      * @param sourceTopologyNode : the topology node to which sink operator will send the data
      * @return the instance of network sink operator
      */
-    OperatorNodePtr createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
+    OperatorNodePtr createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId,
+                                              const TopologyNodePtr& sourceTopologyNode);
 
     /**
      * @brief create a new network source operator

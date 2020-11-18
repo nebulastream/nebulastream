@@ -36,9 +36,8 @@ class ExchangeProtocol {
      * @param partitionManager
      * @param listener
      */
-    explicit ExchangeProtocol(
-        std::shared_ptr<PartitionManager> partitionManager,
-        std::shared_ptr<ExchangeProtocolListener> listener);
+    explicit ExchangeProtocol(std::shared_ptr<PartitionManager> partitionManager,
+                              std::shared_ptr<ExchangeProtocolListener> listener);
 
     ~ExchangeProtocol();
 

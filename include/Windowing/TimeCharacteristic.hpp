@@ -28,10 +28,7 @@ class TimeCharacteristic {
     /**
      * @brief The type as enum.
      */
-    enum Type {
-        ProcessingTime,
-        EventTime
-    };
+    enum Type { ProcessingTime, EventTime };
     explicit TimeCharacteristic(Type type);
     TimeCharacteristic(Type type, AttributeFieldPtr field);
 

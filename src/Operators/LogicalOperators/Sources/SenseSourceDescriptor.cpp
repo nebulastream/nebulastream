@@ -25,12 +25,12 @@ SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string udfs,
 SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string streamName, std::string udfs, OperatorId operatorId)
     : SourceDescriptor(std::move(schema), std::move(streamName), operatorId), udfs(std::move(udfs)) {}
 
-const std::string& SenseSourceDescriptor::getUdfs() const {
-    return udfs;
-}
+const std::string& SenseSourceDescriptor::getUdfs() const { return udfs; }
 
-SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string udfs, OperatorId operatorId) {
-    return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(std::move(schema), std::move(streamName), std::move(udfs), operatorId));
+SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string udfs,
+                                                  OperatorId operatorId) {
+    return std::make_shared<SenseSourceDescriptor>(
+        SenseSourceDescriptor(std::move(schema), std::move(streamName), std::move(udfs), operatorId));
 }
 
 SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string udfs, OperatorId operatorId) {
@@ -44,8 +44,6 @@ bool SenseSourceDescriptor::equal(SourceDescriptorPtr other) {
     return udfs == otherSource->getUdfs() && getSchema()->equals(otherSource->getSchema());
 }
 
-std::string SenseSourceDescriptor::toString() {
-    return "SenseSourceDescriptor()";
-}
+std::string SenseSourceDescriptor::toString() { return "SenseSourceDescriptor()"; }
 
 }// namespace NES

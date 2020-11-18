@@ -20,9 +20,7 @@ namespace NES {
 
 WorkerContext::WorkerContext(uint32_t workerId) : workerId(workerId) {}
 
-uint32_t WorkerContext::getId() const {
-    return workerId;
-}
+uint32_t WorkerContext::getId() const { return workerId; }
 
 void WorkerContext::storeChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator " << id << " for context " << workerId);

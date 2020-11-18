@@ -22,8 +22,7 @@ namespace NES {
 
 class ForLoopStatement : public Statement {
   public:
-    ForLoopStatement(DeclarationPtr variableDeclarationPtr, ExpressionStatmentPtr condition,
-                     ExpressionStatmentPtr advance,
+    ForLoopStatement(DeclarationPtr variableDeclarationPtr, ExpressionStatmentPtr condition, ExpressionStatmentPtr advance,
                      const std::vector<StatementPtr>& loop_body = std::vector<StatementPtr>());
 
     virtual StatementType getStamentType() const override;

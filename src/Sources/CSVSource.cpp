@@ -33,19 +33,15 @@ namespace NES {
 CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
                      const std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess,
                      size_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId)
-    : DataSource(schema, bufferManager, queryManager, operatorId),
-      filePath(filePath),
-      delimiter(delimiter),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      endlessRepeat(endlessRepeat),
-      currentPosInFile(0),
+    : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat), currentPosInFile(0),
       skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = frequency;
     tupleSize = schema->getSchemaSizeInBytes();
-    NES_DEBUG(
-        "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
-                                << "endlessRepeat=" << endlessRepeat);
+    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
+                                      << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
+                                      << numberOfTuplesToProducePerBuffer << "endlessRepeat=" << endlessRepeat);
 
     char* path = realpath(filePath.c_str(), NULL);
     NES_DEBUG("CSVSource: Opening path " << path);
@@ -64,17 +60,15 @@ std::optional<TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called");
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
-    NES_DEBUG(
-        "CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
+    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
     buf.setWatermark(this->watermark->getWatermark());
     return buf;
 }
 
 const std::string CSVSource::toString() const {
     std::stringstream ss;
-    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath
-       << " freq=" << this->gatheringInterval << " numBuff="
-       << this->numBuffersToProcess << ")";
+    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval
+       << " numBuff=" << this->numBuffersToProcess << ")";
     return ss.str();
 }
 
@@ -147,56 +141,43 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
              */
                 if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
                     uint64_t val = std::stoull(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_64) {
                     int64_t val = std::stoll(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_32) {
                     uint32_t val = std::stoul(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_32) {
                     int32_t val = std::stol(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
                     uint16_t val = std::stol(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_16) {
                     int16_t val = std::stol(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
                     uint8_t val = std::stoi(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_8) {
                     int8_t val = std::stoi(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_8) {
                     int8_t val = std::stoi(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::DOUBLE) {
                     double val = std::stod(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::FLOAT) {
                     float val = std::stof(tokens[j].c_str());
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::BOOLEAN) {
                     bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);
-                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val,
-                           fieldSize);
+                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 }
             } else {
-                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize,
-                       tokens[j].c_str(), fieldSize);
+                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, tokens[j].c_str(), fieldSize);
             }
 
             offset += fieldSize;
@@ -205,9 +186,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     }
     currentPosInFile = input.tellg();
     buf.setNumberOfTuples(tupCnt);
-    NES_DEBUG(
-        "CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile="
-                                                        << currentPosInFile);
+    NES_DEBUG("CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile=" << currentPosInFile);
     NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
     //update statistics
@@ -215,29 +194,15 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     generatedBuffers++;
 }
 
-SourceType CSVSource::getType() const {
-    return CSV_SOURCE;
-}
+SourceType CSVSource::getType() const { return CSV_SOURCE; }
 
-const std::string CSVSource::getFilePath() const {
-    return filePath;
-}
+const std::string CSVSource::getFilePath() const { return filePath; }
 
-const std::string CSVSource::getDelimiter() const {
-    return delimiter;
-}
+const std::string CSVSource::getDelimiter() const { return delimiter; }
 
-const size_t CSVSource::getNumberOfTuplesToProducePerBuffer() const {
-    return numberOfTuplesToProducePerBuffer;
-}
-bool CSVSource::isEndlessRepeat() const {
-    return endlessRepeat;
-}
-void CSVSource::setEndlessRepeat(bool endlessRepeat) {
-    this->endlessRepeat = endlessRepeat;
-}
+const size_t CSVSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+bool CSVSource::isEndlessRepeat() const { return endlessRepeat; }
+void CSVSource::setEndlessRepeat(bool endlessRepeat) { this->endlessRepeat = endlessRepeat; }
 
-bool CSVSource::getSkipHeader() const {
-    return skipHeader;
-}
+bool CSVSource::getSkipHeader() const { return skipHeader; }
 }// namespace NES

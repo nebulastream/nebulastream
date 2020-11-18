@@ -45,14 +45,10 @@ class FilterPushDownRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_INFO("Setup FilterPushDownTest test case.");
-    }
+    void TearDown() { NES_INFO("Setup FilterPushDownTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down FilterPushDownTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down FilterPushDownTest test class."); }
 };
 
 void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
@@ -71,10 +67,8 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .map(Attribute("value") = 40)
-                      .filter(Attribute("id") < 45)
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("default_logical").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -247,10 +241,8 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(Attribute("id") > 45)
-                      .map(Attribute("value") = 40)
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("default_logical").filter(Attribute("id") > 45).map(Attribute("value") = 40).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);

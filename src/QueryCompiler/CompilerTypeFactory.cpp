@@ -60,7 +60,8 @@ GeneratableValueTypePtr CompilerTypesFactory::createValueType(ValueTypePtr value
     if (valueType->isBasicValue()) {
         return std::make_shared<GeneratableBasicValueType>(std::dynamic_pointer_cast<BasicValue>(valueType));
     } else if (valueType->isArrayValue()) {
-        return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<ArrayValue>(valueType)->getValues());
+        return std::make_shared<GeneratableArrayValueType>(valueType,
+                                                           std::dynamic_pointer_cast<ArrayValue>(valueType)->getValues());
     } else if (valueType->isCharValue()) {
         auto charValue = std::dynamic_pointer_cast<FixedCharValue>(valueType);
         return std::make_shared<GeneratableArrayValueType>(valueType, charValue->getValues(), charValue->getIsString());

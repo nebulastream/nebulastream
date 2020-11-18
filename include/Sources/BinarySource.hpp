@@ -32,7 +32,8 @@ class BinarySource : public DataSource {
      * @param schema of the data source
      * @param file path
      */
-    explicit BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& file_path, OperatorId operatorId);
+    explicit BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                          const std::string& file_path, OperatorId operatorId);
 
     /**
      * @brief override the receiveData method for the binary source

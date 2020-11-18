@@ -19,20 +19,13 @@
 
 namespace NES {
 
-ArrayValue::ArrayValue(DataTypePtr type, std::vector<std::string> values) : ValueType(type), values(values) {
-}
+ArrayValue::ArrayValue(DataTypePtr type, std::vector<std::string> values) : ValueType(type), values(values) {}
 
-std::vector<std::string> ArrayValue::getValues() {
-    return values;
-}
+std::vector<std::string> ArrayValue::getValues() { return values; }
 
-bool ArrayValue::isArrayValue() {
-    return true;
-}
+bool ArrayValue::isArrayValue() { return true; }
 
-std::string ArrayValue::toString() {
-    return "ArrayValue";
-}
+std::string ArrayValue::toString() { return "ArrayValue"; }
 
 bool ArrayValue::isEquals(ValueTypePtr valueType) {
     if (!valueType->isArrayValue()) {

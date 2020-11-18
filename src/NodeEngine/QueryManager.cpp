@@ -27,22 +27,28 @@ namespace NES {
 using std::string;
 namespace detail {
 uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, PipelineExecutionContext&, WorkerContextRef workerContext) {
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread " << workerContext.getId());
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread "
+              << workerContext.getId());
     auto* task = buffer.getBufferAs<ReconfigurationTask>();
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to wait on thread " << workerContext.getId());
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to wait on thread "
+              << workerContext.getId());
     task->wait();
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to reconfigure on thread " << workerContext.getId());
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to reconfigure on thread "
+              << workerContext.getId());
     task->getInstance()->reconfigure(*task, workerContext);
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint post callback on thread " << workerContext.getId());
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint post callback on thread "
+              << workerContext.getId());
     task->postReconfiguration();
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint completed on thread " << workerContext.getId());
+    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint completed on thread "
+              << workerContext.getId());
     task->postWait();
     return 0;
 }
 }// namespace detail
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId)
-    : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId) {
+    : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)),
+      nodeEngineId(nodeEngineId) {
     NES_DEBUG("Init QueryManager::QueryManager");
     reconfigurationExecutable = std::make_shared<CompiledExecutablePipeline>(detail::reconfigurationTaskEntryPoint);
 }
@@ -106,8 +112,8 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
             }
             // source does not exist, add source and unordered_set containing the qep
         } else {
-            NES_DEBUG("QueryManager: Source " << source->getOperatorId()
-                                              << " not found. Creating new element with with qep " << qep);
+            NES_DEBUG("QueryManager: Source " << source->getOperatorId() << " not found. Creating new element with with qep "
+                                              << qep);
             std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
             operatorIdToQueryMap[source->getOperatorId()] = qepSet;
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
@@ -143,8 +149,8 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 
     std::stringstream ss2;
     ss2 << " sourceid=" << operatorId << "map at operatorIdToPipelineStage ";
-    for (std::map<size_t, size_t>::const_iterator it = operatorIdToPipelineStage.begin();
-         it != operatorIdToPipelineStage.end(); ++it) {
+    for (std::map<size_t, size_t>::const_iterator it = operatorIdToPipelineStage.begin(); it != operatorIdToPipelineStage.end();
+         ++it) {
         ss2 << " operatorId=" << it->first << " pipeStage=" << it->second;
     }
 
@@ -168,15 +174,17 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         size_t stageId = operatorIdToPipelineStage[operatorId];
         taskQueue.emplace_back(qep->getStage(operatorIdToPipelineStage[operatorId]), buf);
 
-        NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId << " for QEP " << qep
-                                                         << " inputBuffer " << buf << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
+        NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
+                                                         << " for QEP " << qep << " inputBuffer " << buf
+                                                         << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
     }
     cv.notify_all();
 }
 
 bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
-    NES_ASSERT(qep->getStatus() == QueryExecutionPlan::QueryExecutionPlanStatus::Created, "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
+    NES_ASSERT(qep->getStatus() == QueryExecutionPlan::QueryExecutionPlanStatus::Created,
+               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     for (const auto& sink : qep->getSinks()) {
         NES_DEBUG("QueryManager: start sink " << sink);
@@ -282,9 +290,11 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationTask));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
-    auto task = new (buffer.getBuffer()) ReconfigurationTask(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
+    auto task = new (buffer.getBuffer())
+        ReconfigurationTask(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
     auto pipelineContext = std::make_shared<PipelineExecutionContext>(
-        queryExecutionPlanId, bufferManager, [](TupleBuffer&, NES::WorkerContext&) {
+        queryExecutionPlanId, bufferManager,
+        [](TupleBuffer&, NES::WorkerContext&) {
         },
         nullptr, nullptr, nullptr, nullptr, nullptr);
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
@@ -367,7 +377,8 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
     std::unique_lock lock(workMutex);
     // dispatch buffer as task
     taskQueue.emplace_back(std::move(nextPipeline), buffer);
-    NES_DEBUG("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
+    NES_DEBUG("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline "
+                                                             << nextPipeline << " inputBuffer " << buffer);
     cv.notify_all();
 }
 
@@ -449,7 +460,8 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
         case Destroy: {
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
-            NES_ASSERT(status == QueryExecutionPlan::Stopped || status == QueryExecutionPlan::ErrorState, "query plan is not in valid state " << status);
+            NES_ASSERT(status == QueryExecutionPlan::Stopped || status == QueryExecutionPlan::ErrorState,
+                       "query plan is not in valid state " << status);
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
             NES_DEBUG("QueryManager: removed running QEP " << qepId);

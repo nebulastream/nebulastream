@@ -24,48 +24,32 @@
 
 namespace NES {
 
-Task::Task(PipelineStagePtr pipeline, TupleBuffer& buffer)
-    : pipeline(std::move(pipeline)),
-      buf(buffer) {
+Task::Task(PipelineStagePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
     id = UtilityFunctions::generateIdInt();
 }
 
-Task::Task() : pipeline(nullptr), buf() {
-    id = UtilityFunctions::generateIdInt();
-}
+Task::Task() : pipeline(nullptr), buf() { id = UtilityFunctions::generateIdInt(); }
 
-bool Task::operator()(WorkerContextRef workerContext) {
-    return pipeline->execute(buf, workerContext);
-}
+bool Task::operator()(WorkerContextRef workerContext) { return pipeline->execute(buf, workerContext); }
 
-size_t Task::getNumberOfTuples() {
-    return buf.getNumberOfTuples();
-}
+size_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
-bool Task::isWatermarkOnly() {
-    return buf.getNumberOfTuples() == 0;
-}
+bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
 
-PipelineStagePtr Task::getPipelineStage() {
-    return pipeline;
-}
+PipelineStagePtr Task::getPipelineStage() { return pipeline; }
 
-bool Task::operator!() const {
-    return pipeline == nullptr;
-}
+bool Task::operator!() const { return pipeline == nullptr; }
 
-Task::operator bool() const {
-    return pipeline != nullptr;
-}
-uint64_t Task::getId() {
-    return id;
-}
+Task::operator bool() const { return pipeline != nullptr; }
+uint64_t Task::getId() { return id; }
 
 std::string Task::toString() {
     std::stringstream ss;
     ss << "Task: id=" << id;
-    ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId() << " nextPipelineId=" << pipeline->getNextStage();
-    ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples() << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark() << " originID=" << buf.getOriginId();
+    ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId()
+       << " nextPipelineId=" << pipeline->getNextStage();
+    ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples()
+       << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark() << " originID=" << buf.getOriginId();
     return ss.str();
 }
 

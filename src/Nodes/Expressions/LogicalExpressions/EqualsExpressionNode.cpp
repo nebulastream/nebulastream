@@ -36,12 +36,8 @@ bool EqualsExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string EqualsExpressionNode::toString() const {
-    return "EqualsNode(" + stamp->toString() + ")";
-}
+const std::string EqualsExpressionNode::toString() const { return "EqualsNode(" + stamp->toString() + ")"; }
 
-ExpressionNodePtr EqualsExpressionNode::copy() {
-    return std::make_shared<EqualsExpressionNode>(EqualsExpressionNode(this));
-}
+ExpressionNodePtr EqualsExpressionNode::copy() { return std::make_shared<EqualsExpressionNode>(EqualsExpressionNode(this)); }
 
 }// namespace NES

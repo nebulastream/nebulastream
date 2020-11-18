@@ -28,10 +28,9 @@ using namespace std;
 
 namespace NES {
 
-SenseSource::SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udsf, OperatorId operatorId)
-    : DataSource(schema, bufferManager, queryManager, operatorId),
-      udsf(udsf) {
-}
+SenseSource::SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udsf,
+                         OperatorId operatorId)
+    : DataSource(schema, bufferManager, queryManager, operatorId), udsf(udsf) {}
 
 std::optional<TupleBuffer> SenseSource::receiveData() {
     NES_DEBUG("SenseSource::receiveData called");
@@ -44,20 +43,14 @@ std::optional<TupleBuffer> SenseSource::receiveData() {
 
 const std::string SenseSource::toString() const {
     std::stringstream ss;
-    ss << "SenseSource(SCHEMA(" << schema->toString() << "), UDSF=" << udsf
-       << endl;
+    ss << "SenseSource(SCHEMA(" << schema->toString() << "), UDSF=" << udsf << endl;
     return ss.str();
 }
 
-void SenseSource::fillBuffer(TupleBuffer&) {
-}
+void SenseSource::fillBuffer(TupleBuffer&) {}
 
-SourceType SenseSource::getType() const {
-    return SENSE_SOURCE;
-}
+SourceType SenseSource::getType() const { return SENSE_SOURCE; }
 
-const string& SenseSource::getUdsf() const {
-    return udsf;
-}
+const string& SenseSource::getUdsf() const { return udsf; }
 
 }// namespace NES

@@ -19,16 +19,10 @@ namespace NES {
 
 PhysicalType::PhysicalType(DataTypePtr type) : type(type) {}
 
-bool PhysicalType::isArrayType() {
-    return false;
-}
+bool PhysicalType::isArrayType() { return false; }
 
-bool PhysicalType::isBasicType() {
-    return false;
-}
+bool PhysicalType::isBasicType() { return false; }
 
-DataTypePtr PhysicalType::getType() {
-    return type;
-}
+DataTypePtr PhysicalType::getType() { return type; }
 
 }// namespace NES

@@ -33,9 +33,7 @@ namespace NES {
 
 DistributeWindowRule::DistributeWindowRule() {}
 
-DistributeWindowRulePtr DistributeWindowRule::create() {
-    return std::make_shared<DistributeWindowRule>(DistributeWindowRule());
-}
+DistributeWindowRulePtr DistributeWindowRule::create() { return std::make_shared<DistributeWindowRule>(DistributeWindowRule()); }
 
 QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("DistributeWindowRule: Apply DistributeWindowRule.");
@@ -61,7 +59,8 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
 }
 
 void DistributeWindowRule::createCentralWindowOperator(WindowOperatorNodePtr windowOp) {
-    NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp << " << windowOp->toString()");
+    NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp
+                                                                                               << " << windowOp->toString()");
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
@@ -77,7 +76,8 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     // The WindowComputation consumes that schema and outputs data in: {startTs, endTs, keyField, outputAggField}
     // First we prepare the final WindowComputation operator:
 
-    NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window " << logicalWindowOperator << " << logicalWindowOperator->toString()");
+    NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window "
+              << logicalWindowOperator << " << logicalWindowOperator->toString()");
     auto windowDefinition = logicalWindowOperator->getWindowDefinition();
     auto triggerPolicy = windowDefinition->getTriggerPolicy();
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -91,26 +91,21 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef = Windowing::LogicalWindowDefinition::create(keyField,
-                                                               windowComputationAggregation,
-                                                               windowType,
+        windowDef = Windowing::LogicalWindowDefinition::create(keyField, windowComputationAggregation, windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               logicalWindowOperator->getChildren().size(),
-                                                               triggerPolicy,
+                                                               logicalWindowOperator->getChildren().size(), triggerPolicy,
                                                                triggerActionComplete);
 
     } else {
-        windowDef = Windowing::LogicalWindowDefinition::create(windowComputationAggregation,
-                                                               windowType,
-                                                               Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               logicalWindowOperator->getChildren().size(),
-                                                               triggerPolicy,
-                                                               triggerActionComplete);
+        windowDef = Windowing::LogicalWindowDefinition::create(
+            windowComputationAggregation, windowType, Windowing::DistributionCharacteristic::createCombiningWindowType(),
+            logicalWindowOperator->getChildren().size(), triggerPolicy, triggerActionComplete);
     }
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef);
 
     //replace logical window op with window computation operator
-    NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString() << " old node=" << logicalWindowOperator->toString());
+    NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString()
+                                                      << " old node=" << logicalWindowOperator->toString());
     if (!logicalWindowOperator->replace(windowComputationOperator)) {
         NES_FATAL_ERROR("DistributeWindowRule:: replacement of window operator failed.");
     };
@@ -127,18 +122,13 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
         Windowing::LogicalWindowDefinitionPtr windowDef;
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-            windowDef = Windowing::LogicalWindowDefinition::create(keyField,
-                                                                   sliceCreationWindowAggregation,
-                                                                   windowType,
-                                                                   Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
-                                                                   triggerPolicy,
-                                                                   triggerActionSlicing);
+            windowDef = Windowing::LogicalWindowDefinition::create(
+                keyField, sliceCreationWindowAggregation, windowType,
+                Windowing::DistributionCharacteristic::createSlicingWindowType(), 1, triggerPolicy, triggerActionSlicing);
         } else {
-            windowDef = Windowing::LogicalWindowDefinition::create(sliceCreationWindowAggregation,
-                                                                   windowType,
-                                                                   Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
-                                                                   triggerPolicy,
-                                                                   triggerActionSlicing);
+            windowDef = Windowing::LogicalWindowDefinition::create(
+                sliceCreationWindowAggregation, windowType, Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
+                triggerPolicy, triggerActionSlicing);
         }
 
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef);

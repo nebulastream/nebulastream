@@ -26,9 +26,7 @@ namespace NES {
  */
 class MetricQueryService {
   public:
-    MetricQueryService() {
-        NES_NOT_IMPLEMENTED();
-    };
+    MetricQueryService() { NES_NOT_IMPLEMENTED(); };
 };
 
 }// namespace NES

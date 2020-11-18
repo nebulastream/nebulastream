@@ -58,7 +58,8 @@ z3::expr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::co
         } else if (valueType->isFloat()) {
             return context.fpa_val(std::stod(basicValueType->getValue()));
         } else if (valueType->isBoolean()) {
-            bool val = (strcasecmp(basicValueType->getValue().c_str(), "true") == 0 || std::atoi(basicValueType->getValue().c_str()) != 0);
+            bool val = (strcasecmp(basicValueType->getValue().c_str(), "true") == 0
+                        || std::atoi(basicValueType->getValue().c_str()) != 0);
             return context.bool_val(val);
         } else if (valueType->isChar() || valueType->isFixedChar()) {
             return context.string_val(basicValueType->getValue());

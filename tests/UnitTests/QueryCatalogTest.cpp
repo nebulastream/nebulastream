@@ -35,9 +35,7 @@ uint16_t publish_port = 4711;
 class QueryCatalogTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        std::cout << "Setup QueryCatalogTest test class." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Setup QueryCatalogTest test class." << std::endl; }
 
     /* Will be called before a test is executed. */
     void SetUp() {
@@ -47,20 +45,17 @@ class QueryCatalogTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        std::cout << "Tear down QueryCatalogTest test case." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down QueryCatalogTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        std::cout << "Tear down QueryCatalogTest test class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down QueryCatalogTest test class." << std::endl; }
 };
 
 TEST_F(QueryCatalogTest, testAddNewQuery) {
 
     //Prepare
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+    std::string queryString =
+        "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
@@ -79,7 +74,8 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
 TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
 
     //Prepare
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+    std::string queryString =
+        "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
@@ -109,7 +105,8 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
 TEST_F(QueryCatalogTest, testPrintQuery) {
 
     //Prepare
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+    std::string queryString =
+        "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
@@ -135,7 +132,8 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
 
     //Prepare
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+    std::string queryString =
+        "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
@@ -153,7 +151,8 @@ TEST_F(QueryCatalogTest, getAllRunningQueries) {
 
     //Prepare
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+    std::string queryString =
+        "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();

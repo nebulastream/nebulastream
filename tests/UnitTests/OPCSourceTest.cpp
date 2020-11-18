@@ -14,14 +14,13 @@
     limitations under the License.
 */
 
-
 #include <gtest/gtest.h>
 #ifdef ENABLE_OPC_BUILD
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <cstring>
+#include <future>
 #include <iostream>
 #include <string>
-#include <future>
 
 #include <open62541/plugin/pki_default.h>
 #include <open62541/server.h>
@@ -43,17 +42,13 @@ namespace NES {
 class OPCSourceTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES_DEBUG("OPCSOURCETEST::SetUpTestCase()");
-    }
+    static void SetUpTestCase() { NES_DEBUG("OPCSOURCETEST::SetUpTestCase()"); }
 
     void SetUp() {
         NES_DEBUG("OPCSOURCETEST::SetUp() OPCSourceTest cases set up.");
         NES::setupLogging("OPCSourceTest.log", NES::LOG_DEBUG);
 
-        test_schema =
-            Schema::create()
-                ->addField("var", UINT32);
+        test_schema = Schema::create()->addField("var", UINT32);
 
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
         auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
@@ -67,17 +62,12 @@ class OPCSourceTest : public testing::Test {
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() {
-        NES_DEBUG("OPCSOURCETEST::TearDown() Tear down OPCSourceTest");
-    }
+    void TearDown() { NES_DEBUG("OPCSOURCETEST::TearDown() Tear down OPCSourceTest"); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_DEBUG("OPCSOURCETEST::TearDownTestCases() Tear down OPCSourceTest test class.");
-    }
+    static void TearDownTestCase() { NES_DEBUG("OPCSOURCETEST::TearDownTestCases() Tear down OPCSourceTest test class."); }
 
-    static void
-    addVariable(UA_Server* server) {
+    static void addVariable(UA_Server* server) {
         /* Define the attribute of the myInteger variable node */
         UA_VariableAttributes attr = UA_VariableAttributes_default;
         UA_Int32 myInteger = 42;
@@ -92,13 +82,11 @@ class OPCSourceTest : public testing::Test {
         UA_QualifiedName myIntegerName = UA_QUALIFIEDNAME(1, "the answer");
         UA_NodeId parentNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
         UA_NodeId parentReferenceNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES);
-        UA_Server_addVariableNode(server, myIntegerNodeId, parentNodeId,
-                                  parentReferenceNodeId, myIntegerName,
+        UA_Server_addVariableNode(server, myIntegerNodeId, parentNodeId, parentReferenceNodeId, myIntegerName,
                                   UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE), attr, NULL, NULL);
     }
 
-    static void
-    writeVariable(UA_Server* server) {
+    static void writeVariable(UA_Server* server) {
         UA_NodeId myIntegerNodeId = UA_NODEID_STRING(1, "the.answer");
 
         /* Write a different integer value */
@@ -169,7 +157,8 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
 
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1);
 
-    std::string expected = "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
+    std::string expected =
+        "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
 
     EXPECT_EQ(opcSource->toString(), expected);
 
@@ -188,8 +177,7 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
         startServer(p);
     });
     t1.detach();
-    auto test_schema = Schema::create()
-                           ->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", UINT32);
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1);
     p.get_future().get();
     auto tuple_buffer = opcSource->receiveData();
@@ -198,7 +186,8 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
     value = *tuple;
     size_t expected = 43;
-    NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected << ". Received value is: " << value);
+    NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected
+                                                                                         << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
 }
 }// namespace NES

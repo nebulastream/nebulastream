@@ -35,10 +35,7 @@ class BaseExecutableJoinAction {
 
     virtual SchemaPtr getJoinSchema() = 0;
 
-    void setup(QueryManagerPtr queryManager,
-               BufferManagerPtr bufferManager,
-               PipelineStagePtr nextPipeline,
-               uint64_t originId) {
+    void setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint64_t originId) {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->nextPipeline = nextPipeline;

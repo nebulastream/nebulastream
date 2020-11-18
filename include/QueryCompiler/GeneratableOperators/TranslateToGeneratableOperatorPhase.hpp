@@ -76,7 +76,8 @@ class TranslateToGeneratableOperatorPhase {
     * @param windowAggregationDescriptor
     * @return Generatable Operator
     */
-    GeneratableWindowAggregationPtr transformWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
+    GeneratableWindowAggregationPtr
+    transformWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 
     TranslateToGeneratableOperatorPhase();
 };
