@@ -151,7 +151,7 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
             //this check checks if the gathering interval is less than one second or it is a ZMQ_Source, in both cases we do not need to create a watermark-only buffer
             if (gatheringInterval <= 1 || type == ZMQ_SOURCE) {
                 NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type=" << getType());
-                if (gatheringInterval == 0 || lastTimeStampSec != nowInSec) {//&& now.time_since_epoch().count() % gatheringInterval == 0)
+                if (gatheringInterval == 0 || lastTimeStampSec != nowInSec) {
                     NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval=" << gatheringInterval << " tsNow=" << lastTimeStampSec.count() << " now=" << nowInSec.count());
                     recNow = true;
                     lastTimeStampSec = nowInSec;

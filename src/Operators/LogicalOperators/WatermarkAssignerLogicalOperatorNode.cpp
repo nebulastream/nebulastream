@@ -51,6 +51,3 @@ Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::
 }
 
 }// namespace NES
-
-
-
