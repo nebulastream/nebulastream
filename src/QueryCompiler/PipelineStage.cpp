@@ -63,7 +63,6 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
 
     // only get the window manager and state if the pipeline has a window handler.
     uint64_t maxWaterMark = inputBuffer.getWatermark();
-    ;
 
     if (hasWindowHandler() && maxWaterMark != 0) {
         NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());

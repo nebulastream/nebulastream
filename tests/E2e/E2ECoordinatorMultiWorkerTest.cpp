@@ -45,7 +45,7 @@ namespace NES {
 class E2ECoordinatorWorkerTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("E2ECoordinatorWorkerTest.log", NES::LOG_DEBUG);
+        NES::setupLogging("E2ECoordinatorWorkerTest.log", NES::LOG_TRACE);
         NES_INFO("Setup E2e test class.");
     }
 
@@ -608,6 +608,7 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     coordinatorProc.terminate();
 }
 
+#define deb
 TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     size_t numBuffers = 3;
     size_t numTuples = 10;
@@ -618,30 +619,32 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "../nesCoordinator --coordinatorPort=12348";
+#ifdef deb
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
-
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
-
-    string cmdWrk1 = "../nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352 --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
-        + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=2 --endlessRepeat=on";
+#endif
+    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352 --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
+        + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
-    string cmdWrk2 = "../nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354 --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
-        + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=2 --endlessRepeat=on";
+    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354 --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
+        + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples) + " --sourceFrequency=1 --endlessRepeat=on";
 
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
+#ifdef deb
     size_t coordinatorPid = coordinatorProc.id();
+#endif
     size_t workerPid1 = workerProc1.id();
     size_t workerPid2 = workerProc2.id();
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"ysb\\\").windowByKey(Attribute(\\\"campaign_id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Seconds(1)), Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"ysb\\\").windowByKey(Attribute(\\\"campaign_id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Milliseconds(1)), Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
@@ -674,7 +677,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, expectedBuffers));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 6));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -695,8 +698,10 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     workerProc1.terminate();
     NES_INFO("Killing worker 2 process->PID: " << workerPid2);
     workerProc2.terminate();
+#ifdef deb
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
     coordinatorProc.terminate();
+#endif
 }
 
 }// namespace NES

@@ -30,7 +30,7 @@
 
 namespace NES {
 
-void YSBSource::generate(YSBSource::YsbRecord& rec) {
+void YSBSource::generate(YSBSource::YsbRecord& rec, uint64_t ts) {
     memset(&rec, 0, sizeof(YsbRecord));
     rec.userId = 1;
     rec.pageId = 0;
@@ -41,7 +41,7 @@ void YSBSource::generate(YSBSource::YsbRecord& rec) {
     rec.eventType = tmpEventType;
     tmpEventType = (tmpEventType + 1) % 3;
 
-    rec.currentMs = currentMs;
+    rec.currentMs = ts;
 
     rec.ip = 0x01020304;
 }
@@ -62,10 +62,11 @@ std::optional<TupleBuffer> YSBSource::receiveData() {
     NES_DEBUG("YSBSource:" << this << " requesting buffer");
     auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("YSBSource:" << this << " got buffer");
-    auto ts = std::chrono::high_resolution_clock::now();
-    currentMs = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch()).count();
-    NES_DEBUG("YSBSource: start current ms=" << currentMs);
-    currentMs -= startMs;
+//    auto ts = std::chrono::high_resolution_clock::now();
+//    currentMs = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch()).count();
+//    NES_DEBUG("YSBSource: start current ms=" << currentMs);
+//    currentMs -= startMs;
+
     NES_DEBUG("YSBSource: start new current ms=" << currentMs);
 
     NES_DEBUG("YSBSource: Filling buffer with " << numberOfTuplesPerBuffer << " tuples.");
@@ -73,7 +74,7 @@ std::optional<TupleBuffer> YSBSource::receiveData() {
     for (uint64_t recordIndex = 0; recordIndex < numberOfTuplesPerBuffer; recordIndex++) {
         //generate tuple and copy record to buffer
         auto& rec = records[recordIndex];
-        generate(rec);
+        generate(rec, currentMs++);
     }
     buf.setNumberOfTuples(numberOfTuplesPerBuffer);
     NES_DEBUG("YSBSource: Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes());

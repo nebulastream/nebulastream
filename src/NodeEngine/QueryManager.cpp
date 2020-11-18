@@ -367,7 +367,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
     std::unique_lock lock(workMutex);
     // dispatch buffer as task
     taskQueue.emplace_back(std::move(nextPipeline), buffer);
-    NES_TRACE("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
+    NES_DEBUG("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline " << nextPipeline << " inputBuffer " << buffer);
     cv.notify_all();
 }
 
@@ -385,6 +385,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());
     }
+    else
     {
         NES_WARNING("queryToStatisticsMap not set, this should only happen for testing");
     }
