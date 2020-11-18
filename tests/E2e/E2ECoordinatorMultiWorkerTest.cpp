@@ -612,7 +612,6 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
 TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     size_t numBuffers = 3;
     size_t numTuples = 10;
-    size_t expectedBuffers = 2;
     size_t expectedLinesOut = 26;
 
     NES_INFO(" start coordinator");
