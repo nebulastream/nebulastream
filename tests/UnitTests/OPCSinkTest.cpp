@@ -31,6 +31,7 @@
 #include <thread>
 
 #include <NodeEngine/NodeEngine.hpp>
+#include <future>
 
 const std::string& url = "opc.tcp://localhost:4840";
 static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
@@ -115,10 +116,11 @@ class OPCSinkTest : public testing::Test {
         UA_Server_write(server, &wv);
     }
 
-    static void startServer() {
+    static void startServer(std::promise<bool>& p) {
         UA_ServerConfig_setDefault(UA_Server_getConfig(server));
         addVariable(server);
         writeVariable(server);
+        p.set_value(true);
         UA_StatusCode retval = UA_Server_run(server, &running);
         std::cout << " retval is=" << retval << std::endl;
     }
@@ -167,7 +169,10 @@ TEST_F(OPCSinkTest, OPCSourcePrint) {
  */
 TEST_F(OPCSinkTest, OPCSourceValue) {
 
-    std::thread t1(startServer);
+    std::promise<bool> p;
+    std::thread t1([&p]() {
+      startServer(p);
+    });
     t1.detach();
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
