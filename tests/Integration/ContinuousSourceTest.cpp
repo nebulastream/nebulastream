@@ -1284,7 +1284,7 @@ TEST_F(ContinuousSourceTest, testYSB) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, producedBuffers));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, producedBuffers));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
     
     NES_INFO("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
