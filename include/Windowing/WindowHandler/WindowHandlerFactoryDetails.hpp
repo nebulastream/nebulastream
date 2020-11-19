@@ -142,7 +142,7 @@ class WindowHandlerFactoryDetails {
 
     template<class InputType, class PartialAggregateType, class FinalAggregateType>
     static AbstractWindowHandlerPtr createNonKeyedAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
-                                                                 std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
+                                                                    std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) {
         auto policy = windowDefinition->getTriggerPolicy();
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {

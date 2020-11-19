@@ -864,9 +864,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     DataTypePtr dataType;
     if (window->isKeyed()) {
         dataType = window->getOnKey()->getStamp();
-    }
-    else
-    {
+    } else {
         dataType = window->getWindowAggregation()->on()->getStamp();
     }
 
@@ -876,9 +874,9 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         auto keyVariableAttributeDeclaration =
             context->code->structDeclaratonInputTuple.getVariableDeclaration(window->getOnKey()->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
-            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                VarRef(
-                    keyVariableAttributeDeclaration)));
+                                                 .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                                                     VarRef(
+                                                         keyVariableAttributeDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
             keyVariableAttributeStatement));
     } else {
