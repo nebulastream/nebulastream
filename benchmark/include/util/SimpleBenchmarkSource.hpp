@@ -68,6 +68,8 @@ class SimpleBenchmarkSource : public DataSource {
             throw std::logic_error("SimpleBenchmarkSource: BufferManager not set");
         }
 
+        printPIDandParentID;
+
         if (this->operatorId != 0) {
             NES_DEBUG("SimpleBenchmarkSource " << this->getOperatorId() << ": SimpleBenchmarkSource of type=" << getType());
             size_t numberOfTuplesPerPeriod = (ingestionRate * BenchmarkUtils::periodLengthInSeconds);
@@ -91,7 +93,7 @@ class SimpleBenchmarkSource : public DataSource {
                     NES_DEBUG("SimpleBenchmarkSource: curNumberOfTuplesPerBuffer = " << curNumberOfTuplesPerBuffer);
 
                     // we are using always the same buffer, so no receiveData() call for every iteration
-                    //auto optBuf = receiveData();
+                    // auto optBuf = receiveData();
                     if (!!optBuf) {
                         // here we got a valid buffer
                         auto& buf = optBuf.value();
@@ -122,7 +124,6 @@ class SimpleBenchmarkSource : public DataSource {
                     curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 }
             }
-
         } else {
             NES_FATAL_ERROR("No Source for Sink detected!!!");
         }//end of if source not empty
