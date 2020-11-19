@@ -236,7 +236,7 @@ class TestUtils {
 
         NES_DEBUG("addLogicalStream: status =" << json_returnSchema);
 
-        return json_returnSchema.at("success").as_bool();
+        return json_returnSchema.at("Success").as_bool();
     }
 
     /**
