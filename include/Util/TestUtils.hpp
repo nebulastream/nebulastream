@@ -72,7 +72,7 @@ class TestUtils {
             }
             NES_DEBUG(
                 "checkCompleteOrTimeout: NodeEnginePtr sleep because val=" << ptr->getQueryStatistics(queryId)[0]->getProcessedTuple()
-                                                             << " < " << expectedResult);
+                                                                           << " < " << expectedResult);
             sleep(1);
         }
         NES_DEBUG("checkCompleteOrTimeout: NodeEnginePtr expected results are not reached after timeout");

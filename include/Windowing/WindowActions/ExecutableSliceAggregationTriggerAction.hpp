@@ -44,19 +44,17 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
     ExecutableSliceAggregationTriggerAction(LogicalWindowDefinitionPtr windowDefinition,
                                             std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation) : windowDefinition(windowDefinition),
                                                                                                                                                                              executableWindowAggregation(executableWindowAggregation) {
-        if(windowDefinition->isKeyed()){
+        if (windowDefinition->isKeyed()) {
             this->windowSchema = Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField("key", windowDefinition->getOnKey()->getStamp())
-                ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
-        }
-        else
-        {
+                                     ->addField(createField("start", UINT64))
+                                     ->addField(createField("end", UINT64))
+                                     ->addField("key", windowDefinition->getOnKey()->getStamp())
+                                     ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+        } else {
             this->windowSchema = Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+                                     ->addField(createField("start", UINT64))
+                                     ->addField(createField("end", UINT64))
+                                     ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         }
         windowTupleLayout = createRowLayout(this->windowSchema);
     }
