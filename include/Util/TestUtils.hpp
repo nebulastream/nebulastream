@@ -160,17 +160,17 @@ class TestUtils {
         web::http::client::http_client client(
             "http://127.0.0.1:8081/v1/nes/query/stop-query");
         client.request(web::http::methods::DEL, _XPLATSTR("/"), queryId).then([](const web::http::http_response& response) {
-              NES_INFO("get first then");
-              return response.extract_json();
-            })
+                                                                            NES_INFO("get first then");
+                                                                            return response.extract_json();
+                                                                        })
             .then([&json_return](const pplx::task<web::json::value>& task) {
-              try {
-                  NES_INFO("set return");
-                  json_return = task.get();
-              } catch (const web::http::http_exception& e) {
-                  NES_INFO("error while setting return");
-                  NES_INFO("error " << e.what());
-              }
+                try {
+                    NES_INFO("set return");
+                    json_return = task.get();
+                } catch (const web::http::http_exception& e) {
+                    NES_INFO("error while setting return");
+                    NES_INFO("error " << e.what());
+                }
             })
             .wait();
 
@@ -179,7 +179,7 @@ class TestUtils {
         return json_return.at("success").as_bool();
     }
 
-      /**
+    /**
      * @brief This method is used for executing a query
      * @param query string
      * @return if stopped
@@ -187,13 +187,13 @@ class TestUtils {
     static web::json::value startQueryViaRest(string queryString) {
         web::json::value json_return;
 
-          web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
-          clientQ1.request(web::http::methods::POST, "/query/execute-query", queryString)
-              .then([](const web::http::http_response& response) {
+        web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
+        clientQ1.request(web::http::methods::POST, "/query/execute-query", queryString)
+            .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
                 return response.extract_json();
-              })
-              .then([&json_return](const pplx::task<web::json::value>& task) {
+            })
+            .then([&json_return](const pplx::task<web::json::value>& task) {
                 try {
                     NES_INFO("set return");
                     json_return = task.get();
@@ -201,8 +201,8 @@ class TestUtils {
                     NES_INFO("error while setting return");
                     NES_INFO("error " << e.what());
                 }
-              })
-              .wait();
+            })
+            .wait();
 
         NES_DEBUG("startQueryViaRest: status =" << json_return);
 
@@ -220,17 +220,17 @@ class TestUtils {
         web::http::client::http_client clientSchema(
             "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
         clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString).then([](const web::http::http_response& response) {
-              NES_INFO("get first then");
-              return response.extract_json();
-            })
+                                                                                        NES_INFO("get first then");
+                                                                                        return response.extract_json();
+                                                                                    })
             .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-              try {
-                  NES_INFO("set return");
-                  json_returnSchema = task.get();
-              } catch (const web::http::http_exception& e) {
-                  NES_ERROR("error while setting return");
-                  NES_ERROR("error " << e.what());
-              }
+                try {
+                    NES_INFO("set return");
+                    json_returnSchema = task.get();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("error while setting return");
+                    NES_ERROR("error " << e.what());
+                }
             })
             .wait();
 
