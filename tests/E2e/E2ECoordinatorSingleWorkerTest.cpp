@@ -60,7 +60,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     string path = "./nesCoordinator --coordinatorPort=12345";
     bp::child coordinatorProc(path.c_str());
 
-    NES_INFO("started coordinator with pid = " << coordinatorProc.id());cout << "req=" << req.as_integer() << endl;
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
     string path2 = "./nesWorker --coordinatorPort=12345";
