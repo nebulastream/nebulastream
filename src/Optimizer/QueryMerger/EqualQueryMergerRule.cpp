@@ -40,7 +40,7 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
     z3::expr_vector expressions1(*context);
 
     for (auto& root : roots1) {
-        auto family = root->getAndFlattenAllChildren();
+        auto family = root->getAndFlattenAllChildren(true);
         for (auto& member : family) {
             z3::expr x = member->as<LogicalOperatorNode>()->getZ3Expression();
             expressions1.push_back(x);
@@ -50,13 +50,15 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
 
     z3::expr_vector expressions2(*context);
     for (auto& root : roots2) {
-        auto family = root->getAndFlattenAllChildren();
+        auto family = root->getAndFlattenAllChildren(true);
         for (auto& member : family) {
             expressions2.push_back(member->as<LogicalOperatorNode>()->getZ3Expression());
         }
     }
 
     z3::expr mkAnd2 = z3::mk_and(expressions2);
+    NES_INFO(mkAnd1);
+    NES_INFO(mkAnd2);
 
     Z3_ast arrays[] = {mkAnd1, !mkAnd2};
     auto expr = z3::to_expr(*context, Z3_mk_and(*context, 2, arrays));

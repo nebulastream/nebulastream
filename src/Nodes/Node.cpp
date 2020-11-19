@@ -551,19 +551,22 @@ std::vector<NodePtr> Node::split(const NodePtr splitNode) {
 
 bool Node::isValid() { return !isCyclic(); }
 
-std::vector<NodePtr> Node::getAndFlattenAllChildren() {
+std::vector<NodePtr> Node::getAndFlattenAllChildren(bool allowDuplicate) {
     std::vector<NodePtr> allChildren{};
-    getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this());
+    getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this(), allowDuplicate);
     return allChildren;
 }
 
-void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludednode) {
+void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludednode, bool allowDuplicate) {
 
     // todo this implementation may be slow
     for (auto&& currentNode : node->children) {
-        if (!find(allChildren, currentNode) && (currentNode != excludednode)) {
+        if (allowDuplicate) {
             allChildren.push_back(currentNode);
-            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode);
+            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode, allowDuplicate);
+        } else if (!find(allChildren, currentNode) && (currentNode != excludednode)) {
+            allChildren.push_back(currentNode);
+            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode, allowDuplicate);
         }
     }
 }
@@ -581,7 +584,7 @@ std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
 }
 
 bool Node::isCyclic() {
-    auto allChildren = getAndFlattenAllChildren();
+    auto allChildren = getAndFlattenAllChildren(false);
     for (auto&& node : allChildren) {
         node->visited = false;
         node->recStack = false;
