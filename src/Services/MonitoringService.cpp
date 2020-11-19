@@ -87,7 +87,7 @@ web::json::value MonitoringService::requestMonitoringDataForAllNodesAsJson(Monit
     auto root = topology->getRoot();
     metricsJson[std::to_string(root->getId())] = requestMonitoringDataAsJson(root->getId(), plan);
 
-    for (const auto& node : root->getAndFlattenAllChildren()) {
+    for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId(), plan);
     }
@@ -131,7 +131,7 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPromethe
     metricsJson[std::to_string(root->getId())] =
         web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
 
-    for (const auto& node : root->getAndFlattenAllChildren()) {
+    for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         metricsJson[std::to_string(tNode->getId())] =
             web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));

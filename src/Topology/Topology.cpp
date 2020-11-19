@@ -394,9 +394,8 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
     while (!nodesToProcess.empty()) {
         TopologyNodePtr candidateNode = nodesToProcess.front()->as<TopologyNode>();
         nodesToProcess.pop_front();
-        NES_TRACE(
-            "Topology: Check if the children topology node of the node under consideration contains all input topology nodes.");
-        std::vector<NodePtr> children = candidateNode->getAndFlattenAllChildren();
+        NES_TRACE("Topology: Check if the children topology node of the node under consideration contains all input topology nodes.");
+        std::vector<NodePtr> children = candidateNode->getAndFlattenAllChildren(false);
         for (auto& nodeToLook : topologyNodes) {
             auto found = std::find_if(children.begin(), children.end(), [&](NodePtr child) {
                 return nodeToLook->getId() == child->as<TopologyNode>()->getId();
