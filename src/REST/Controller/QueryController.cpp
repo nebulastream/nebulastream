@@ -161,7 +161,6 @@ void QueryController::handleDelete(std::vector<utility::string_t> path, http_req
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     json::value req = json::value::parse(payload);
-                    cout << "req=" << req.as_integer() << endl;
                     QueryId queryId = req.as_integer();
 
                     bool success = queryService->validateAndQueueStopRequest(queryId);
