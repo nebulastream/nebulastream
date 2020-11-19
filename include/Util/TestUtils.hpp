@@ -145,7 +145,7 @@ class TestUtils {
                                                              << " < " << expectedResult);
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout");
+        NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout currentResult=" << currentResult << " expectedResult=" << expectedResult);
         return false;
     }
 
