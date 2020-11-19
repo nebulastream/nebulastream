@@ -29,6 +29,7 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <thread>
+#include <yaml/Yaml.hpp>
 
 namespace po = boost::program_options;
 

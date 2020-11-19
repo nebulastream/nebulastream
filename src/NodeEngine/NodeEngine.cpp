@@ -472,6 +472,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     std::string conf = config->getSourceConfig();
     uint64_t frequency = config->getSourceFrequency();
     uint64_t numBuffers = config->getNumberOfBuffersToProduce();
+    bool endlessRepeat = config->isEndlessRepeat();
     bool skipHeader = config->getSkipHeader();
 
     uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
@@ -482,49 +483,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     } else if (type == "CSVSource") {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, skipHeader, sourceDescriptor->getOperatorId());
-    } else if (type == "SenseSource") {
-        NES_DEBUG("TypeInferencePhase: create Sense source for udsf " << conf);
-        return SenseSourceDescriptor::create(schema, streamName, /**udsf*/ conf);
-    }
-#ifdef ENABLE_OPC_BUILD
-    else if (type == "OPCSource") {
-        std::vector<std::string> results;
-        boost::split(results, conf, [](char c) {
-            char* helper = ";";
-            return c == *helper;
-        });
-        auto url = results[0];
-        UA_NodeId nodeId = UA_NODEID_STRING_ALLOC(stoi(results[1]), results[2].c_str());
-        auto user = results[3];
-        auto pwd = results[4];
-        NES_DEBUG("TypeInferencePhase: create OPC source with server url: " << url << ", namspaceIndex: " << results[1] << ", identifier: " << results[2] << ", user: " << results[3] << ", pwd: " << results[4] << ". ");
-        return OPCSourceDescriptor::create(schema, streamName, url, nodeId, user, pwd);
-    }
-#endif
-    else if (type == "ZMQSource") {
-        std::vector<std::string> results;
-        boost::split(results, conf, [](char c) {
-          char* helper = ";";
-          return c == *helper;
-        });
-        NES_DEBUG("TypeInferencePhase: create zmq source with host: " << results[0] << ", port: " << results[1] << ".");
-        return ZmqSourceDescriptor::create(schema, streamName, /**host*/ results[0], /**port*/ stoi(results[1]));
-    }
-#ifdef ENABLE_KAFKA_BUILD
-    else if (type == "KafkaSource") {
-        std::vector<std::string> results;
-        boost::split(results, conf, [](char c) {
-            char* helper = ";";
-            return c == *helper;
-        });
-        NES_DEBUG("TypeInferencePhase: create kafka source with brokers: " << results[0] << ", topic: " << results[1] << ", groupId: " << results[2] << ", autoCommit: " << results[3] << ", kafkaConnectTimeout: " << results[4] << ".");
-        return KafkaSourceDescriptor::create(schema, streamName, /**brokers*/ results[0], /**topic*/ results[1], /**groupId*/ results[2], /**autoCommit*/ istringstream(results[3]), /**kafkaConnectTimeout*/ stoi(results[4]));
-    }
-#endif
-    else if (type == "BinarySource") {
-        NES_DEBUG("TypeInferencePhase: create binary source with file path " << conf);
-        return BinarySourceDescriptor::create(schema, streamName, /**filePath*/ conf);
+                                           numBuffers, frequency, endlessRepeat, skipHeader, sourceDescriptor->getOperatorId());
     } else if (type == "NetworkSource") {
         std::vector<std::string> results;
         boost::split(results, conf, [](char c) {
@@ -538,7 +497,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getOperatorId());
     } else if (type == "YSBSource") {
         NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
-        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency,
+        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency, endlessRepeat,
                                            sourceDescriptor->getOperatorId());
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");

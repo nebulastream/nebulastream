@@ -216,11 +216,6 @@ if (NES_USE_OPC)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif (NES_USE_OPC)
 
-# Library containing yaml to read yaml files
-find_package(  yaml-cpp REQUIRED )
-include_directories(${YAML_CPP_INCLUDE_DIRS})
-target_link_libraries(${YAML_CPP_LIBRARIES})
-
 # Eigen 3.3 linear algebra library
 if (NES_USE_ADAPTIVE)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
