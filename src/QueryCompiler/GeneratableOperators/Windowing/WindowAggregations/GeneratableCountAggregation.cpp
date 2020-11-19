@@ -33,7 +33,6 @@ void GeneratableCountAggregation::compileLiftCombine(CompoundStatementPtr curren
                                                      BinaryOperatorStatement partialRef,
                                                      StructDeclaration inputStruct,
                                                      BinaryOperatorStatement) {
-    auto varDeclInput = inputStruct.getVariableDeclaration(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
     auto increment = ++partialRef;
     auto updatedPartial = partialRef.assign(increment);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));

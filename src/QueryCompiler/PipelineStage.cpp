@@ -22,6 +22,7 @@
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
