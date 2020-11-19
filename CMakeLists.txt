@@ -42,10 +42,20 @@ if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "-DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
 
+
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -Werror=unused-variable -Werror=unused-parameter -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-unused-variable -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-sign-compare -O3")
+
+# Set NO_LOGGING Flag if -DNO_LOGGING is set as a CMAKE flag
+if (NO_LOGGING)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_LOGGING")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DNO_LOGGING")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNO_LOGGING")
+else(NO_LOGGING)
+    message("---Logging is enabled!")
+endif (NO_LOGGING)
 
 # Compiler should produce specific code for system architecture
 include(CheckCXXCompilerFlag)
