@@ -74,34 +74,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     ss << R"(,"strategyName" : "BottomUp"})";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
-    string body = ss.str();
 
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-                                                                      NES_INFO("get first then with response");
-                                                                      return response.extract_json();
-                                                                  })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-                NES_INFO("ret is=" << json_return);
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("error while setting return");
-                NES_ERROR("error " << e.what());
-            }
-        })
-        .wait();
-
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
@@ -131,27 +112,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
-    string body = ss.str();
 
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-                                                                      NES_INFO("get first then");
-                                                                      return response.extract_json();
-                                                                  })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("error while setting return");
-                NES_ERROR("error " << e.what());
-            }
-        })
-        .wait();
-
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
     NES_INFO("try to acc return");
 
     QueryId queryId = json_return.at("queryId").as_integer();
@@ -159,6 +121,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     ifstream my_file(outputFilePath);
     EXPECT_TRUE(my_file.good());
@@ -219,26 +182,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    string body = ss.str();
-
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-                                                                      NES_INFO("get first then");
-                                                                      return response.extract_json();
-                                                                  })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("error while setting return");
-                NES_ERROR("error " << e.what());
-            }
-        })
-        .wait();
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
@@ -246,6 +190,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     // if filter is applied correctly, no output is generated
     NES_INFO("read file=" << outputFilePath);
@@ -302,27 +247,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
-    string body = ss.str();
 
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-                                                                      NES_INFO("get first then");
-                                                                      return response.extract_json();
-                                                                  })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("error while setting return");
-                NES_ERROR("error " << e.what());
-            }
-        })
-        .wait();
-
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
     NES_INFO("try to acc return");
 
     QueryId queryId = json_return.at("queryId").as_integer();
@@ -330,6 +256,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     ifstream my_file(outputFilePath);
     EXPECT_TRUE(my_file.good());
@@ -395,24 +322,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-                                                                      NES_INFO("get first then");
-                                                                      return response.extract_json();
-                                                                  })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                json_return = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_ERROR("error while setting return");
-                NES_ERROR("error " << e.what());
-            }
-        })
-        .wait();
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
@@ -420,8 +330,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
-
-    //sleep(2);
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     ifstream testFileOutput(testFile);
     EXPECT_TRUE(testFileOutput.good());
@@ -462,31 +371,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    string schemabody = schema.str();
-
-    web::json::value json_returnSchema;
-
-    web::http::client::http_client clientSchema(
-        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
-    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_returnSchema = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
-
-    NES_INFO("try to acc return");
-    bool success = json_returnSchema.at("Success").as_bool();
-    NES_INFO("RegisteredStream: " << success);
-    EXPECT_TRUE(success);
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 = "./nesWorker --coordinatorPort=12267 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
@@ -502,26 +387,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    string body = ss.str();
-
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/pattern/execute-pattern");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
@@ -529,6 +395,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     // if filter is applied correctly, no output is generated
     NES_INFO("read file=" << outputFilePath);
@@ -569,31 +436,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     schema << "{\"streamName\" : \"window\",\"schema\" :\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    string schemabody = schema.str();
-
-    web::json::value json_returnSchema;
-
-    web::http::client::http_client clientSchema(
-        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
-    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_returnSchema = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
-
-    NES_INFO("try to acc return");
-    bool success = json_returnSchema.at("Success").as_bool();
-    NES_INFO("RegisteredStream: " << success);
-    EXPECT_TRUE(success);
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
@@ -609,26 +452,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    string body = ss.str();
-
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
@@ -636,6 +460,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     // if filter is applied correctly, no output is generated
     NES_INFO("read file=" << outputFilePath);
@@ -684,31 +509,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     schema << "{\"streamName\" : \"window\",\"schema\" :\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    string schemabody = schema.str();
-
-    web::json::value json_returnSchema;
-
-    web::http::client::http_client clientSchema(
-        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
-    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_returnSchema = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
-
-    NES_INFO("try to acc return");
-    bool success = json_returnSchema.at("Success").as_bool();
-    NES_INFO("RegisteredStream: " << success);
-    EXPECT_TRUE(success);
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
@@ -724,26 +525,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    string body = ss.str();
-
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
@@ -751,6 +533,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     // if filter is applied correctly, no output is generated
     NES_INFO("read file=" << outputFilePath);

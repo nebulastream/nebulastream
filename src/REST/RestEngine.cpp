@@ -117,6 +117,7 @@ void RestEngine::handlePost(http_request message) {
 }
 
 void RestEngine::handleDelete(http_request message) {
+    NES_DEBUG("RestEngine::handleDelete");
     auto path = getPath(message);
     auto paths = splitPath(path);
 
