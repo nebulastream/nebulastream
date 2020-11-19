@@ -13,8 +13,8 @@
 
 if [ $1 = "crd" ]; then
   echo "Executing coordinator script:"
-  exec /entrypoint.sh ${@:2} > nes-runtime.log 2>&1 &
+  sleep 20 && exec /entrypoint.sh ${@:2} > nes-runtime.log 2>&1 &
 else
   echo "Executing worker script:"
-  sleep 20 && exec /entrypoint.sh ${@:2} > nes-runtime.log 2>&1 &
+  sleep 25 && exec /entrypoint.sh ${@:2} > nes-runtime.log 2>&1 &
 fi
