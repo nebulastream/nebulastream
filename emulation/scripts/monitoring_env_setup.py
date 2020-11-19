@@ -22,7 +22,7 @@ from mininet.link import TCLink
 from mininet.log import info, setLogLevel
 
 #params for the topology
-number_workers = 10
+number_workers = 2
 
 setLogLevel('info')
 
@@ -62,7 +62,8 @@ for i in range(0, number_workers):
                                          "path": nesDir + "emulation/images"},
                            ports=[3000, 3001, 9100],
                            port_bindings={3007: 3000, 3008: 3001, 9101: 9100})
-    cmd = '/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --logLevel=LOG_NONE --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip + ' --sourceType=CSVSource --sourceConfig=/opt/local/nebula-stream/exdra.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra'
+    cmd = '/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --logLevel=LOG_DEBUG --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip + ' --sourceType=YSBSource --numberOfBuffersToProduce=100 --numberOfTuplesToProducePerBuffer=10 --sourceFrequency=1 --physicalStreamName=ysb' + str(i) + ' --logicalStreamName=ysb'
+    print (cmd)
     workers.append((w, cmd))
 
 info('*** Adding switches\n')
@@ -73,7 +74,7 @@ net.addLink(crd, sw1, cls=TCLink)
 for w in workers:
     net.addLink(w[0], sw1, cls=TCLink)
 
-crd.cmd('/entrypoint-prom.sh crd /opt/local/nebula-stream/nesCoordinator --serverIp=0.0.0.0 --logLevel=LOG_NONE')
+crd.cmd('/entrypoint-prom.sh crd /opt/local/nebula-stream/nesCoordinator --serverIp=10.15.16.3 --logLevel=LOG_DEBUG')
 for w in workers:
     w[0].cmd(w[1])
 
