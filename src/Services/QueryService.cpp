@@ -58,7 +58,6 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
 }
 
 bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
-
     NES_INFO("QueryService : stopping query " + queryId);
     if (!queryCatalog->queryExists(queryId)) {
         throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId) + " in query catalog.");

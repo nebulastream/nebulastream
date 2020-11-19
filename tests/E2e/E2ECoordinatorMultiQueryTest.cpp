@@ -67,13 +67,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     string cmdCoord = "./nesCoordinator --coordinatorPort=12346 --numberOfSlots=8";
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+    size_t coordinatorPid = coordinatorProc.id();
     sleep(1);
 
     string cmdWrk = "./nesWorker --coordinatorPort=12346 --numberOfSlots=8";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
-    size_t coordinatorPid = coordinatorProc.id();
     size_t workerPid = workerProc.id();
     sleep(3);
 
@@ -89,49 +89,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
     NES_INFO("string submit for query2=" << ssQuery2.str());
 
-    web::json::value jsonReturnQ1;
-    web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
-    clientQ1.request(web::http::methods::POST, "/query/execute-query", ssQuery1.str())
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                jsonReturnQ1 = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
-        })
-        .wait();
-
-    NES_INFO("return from q1");
+    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str());
     NES_INFO("try to acc return Q1=" << jsonReturnQ1);
     QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
     NES_INFO("Query ID1: " << queryId1);
     EXPECT_NE(queryId1, INVALID_QUERY_ID);
 
-    web::json::value jsonReturnQ2;
-    web::http::client::http_client clientQ2(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
-                                                                       NES_INFO("get first then");
-                                                                       return response.extract_json();
-                                                                   })
-        .then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return");
-                jsonReturnQ2 = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
-        })
-        .wait();
-    NES_INFO("return from q2");
-
+    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str());
     NES_INFO("try to acc return Q2=" << jsonReturnQ2);
 
     QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
@@ -140,6 +104,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
+
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -182,7 +149,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
 /**
  * @brief This test starts two workers and a coordinator and submit too many queries such that we test if the error-prone process
  */
-TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
     NES_INFO(" start coordinator");
     std::string pathQuery1 = "query1.out";
     std::string pathQuery2 = "query2.out";
@@ -224,63 +191,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
     ssQuery3 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
     NES_INFO("string submit for query3=" << ssQuery3.str());
 
-    web::json::value jsonReturnQ1;
-    web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
-    clientQ1.request(web::http::methods::POST, "/query/execute-query", ssQuery1.str())
-        .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
-            return response.extract_json();
-        })
-        .then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return" << task.get().to_string());
-                jsonReturnQ1 = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
-        })
-        .wait();
-
-    NES_INFO("return from q1");
-
-    web::json::value jsonReturnQ2;
-    web::http::client::http_client clientQ2("http://127.0.0.1:8081/v1/nes/query/execute-query");
-    clientQ2.request(web::http::methods::POST, "/", ssQuery2.str()).then([](const web::http::http_response& response) {
-                                                                       NES_INFO("get first then");
-                                                                       return response.extract_json();
-                                                                   })
-        .then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return" << task.get().to_string());
-                jsonReturnQ2 = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
-        })
-        .wait();
-    NES_INFO("return from q2");
-
-    NES_INFO("send query 3:");
-    web::json::value jsonReturnQ3;
-    web::http::client::http_client clientQ3("http://127.0.0.1:8081/v1/nes/query/execute-query");
-    clientQ3.request(web::http::methods::POST, "/", ssQuery3.str()).then([](const web::http::http_response& response) {
-                                                                       NES_INFO("get first then");
-                                                                       return response.extract_json();
-                                                                   })
-        .then([&jsonReturnQ3](const pplx::task<web::json::value>& task) {
-            try {
-                NES_INFO("set return" << task.get().to_string());
-                jsonReturnQ3 = task.get();
-            } catch (const web::http::http_exception& e) {
-                NES_INFO("error while setting return");
-                NES_INFO("error " << e.what());
-            }
-        })
-        .wait();
-
-    NES_INFO("return from q3");
+    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str());
+    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str());
+    web::json::value jsonReturnQ3 = TestUtils::startQueryViaRest(ssQuery3.str());
 
     QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
     QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
@@ -310,6 +223,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
         "|1|1|\n"
         "+----------------------------------------------------+";
 
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId3));
+
     std::ifstream ifsQ1(pathQuery1.c_str());
     EXPECT_TRUE(ifsQ1.good());
     std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
@@ -326,6 +243,14 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ2, expectedContent);
 
+    std::ifstream ifsQ3(pathQuery3.c_str());
+    EXPECT_TRUE(ifsQ3.good());
+    std::string contentQ3((std::istreambuf_iterator<char>(ifsQ3)),
+                          (std::istreambuf_iterator<char>()));
+    NES_INFO("content Q3=" << contentQ3);
+    NES_INFO("expContent=" << expectedContent);
+    EXPECT_EQ(contentQ3, expectedContent);
+
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
@@ -335,7 +260,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithFil
 /**
  * @brief This test starts two workers and a coordinator and submits two pattern-queries
  */
-TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     NES_INFO(" start coordinator");
     std::string pathPattern1 = "patternQnV1.out";
     std::string pathPattern2 = "patternQnV2.out";
@@ -352,31 +277,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    string schemabody = schema.str();
-
-    web::json::value json_returnSchema;
-
-    web::http::client::http_client clientSchema(
-        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
-    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_returnSchema = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
-
-    NES_INFO("try to acc return");
-    bool success = json_returnSchema.at("Success").as_bool();
-    NES_INFO("RegisteredStream: " << success);
-    EXPECT_TRUE(success);
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
@@ -405,45 +306,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
     string bodyPattern2 = ssPattern2.str();
 
     NES_INFO("send query 1:");
-    web::json::value jsonReturnQ1;
-    web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
-    clientQ1.request(web::http::methods::POST, "/pattern/execute-pattern", ssPattern1.str())
-        .then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&jsonReturnQ1](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return" << task.get().to_string());
-              jsonReturnQ1 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_INFO("error while setting return");
-              NES_INFO("error " << e.what());
-          }
-        })
-        .wait();
-
+    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssPattern1.str());
     NES_INFO("return from q1");
 
     NES_INFO("send query 2:");
-    web::json::value jsonReturnQ2;
-    web::http::client::http_client clientQ2("http://127.0.0.1:8081/v1/nes/query/execute-query");
-    clientQ2.request(web::http::methods::POST, "/", ssPattern2.str()).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&jsonReturnQ2](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return" << task.get().to_string());
-              jsonReturnQ2 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_INFO("error while setting return");
-              NES_INFO("error " << e.what());
-          }
-        })
-        .wait();
+    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssPattern2.str());
     NES_INFO("return from q2");
-
 
     QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
     QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
@@ -451,9 +319,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
     EXPECT_NE(queryId1, INVALID_QUERY_ID);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
+
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
 
     string expectedContent1 =
         "+----------------------------------------------------+\n"
@@ -499,7 +369,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithTumblingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = "ValidUserQueryWithTumbWindowFileOutputTestResult2.txt";
@@ -515,31 +385,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithTum
     schema << "{\"streamName\" : \"window\",\"schema\" :\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    string schemabody = schema.str();
-
-    web::json::value json_returnSchema;
-
-    web::http::client::http_client clientSchema(
-        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
-    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_returnSchema = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
-
-    NES_INFO("try to acc return");
-    bool success = json_returnSchema.at("Success").as_bool();
-    NES_INFO("RegisteredStream: " << success);
-    EXPECT_TRUE(success);
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
@@ -555,7 +401,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithTum
     ss << endl;
 
     NES_INFO("query 1 string submit=" << ss.str());
-    string body = ss.str();
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
@@ -565,58 +410,26 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithTum
     ss2 << endl;
 
     NES_INFO("query 2 string submit=" << ss2.str());
-    string body2 = ss2.str();
 
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
     NES_INFO("return from query 1");
 
-    web::json::value json_return_Q2;
-    web::http::client::http_client clientQ2(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    clientQ2.request(web::http::methods::POST, "/", ss2.str()).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_return_Q2](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return_Q2 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_INFO("error while setting return");
-              NES_INFO("error " << e.what());
-          }
-        })
-        .wait();
+    web::json::value json_return_Q2 = TestUtils::startQueryViaRest(ss2.str());
     NES_INFO("return from query 2");
 
-
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
-    NES_INFO("Query ID 1: " << queryId);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    QueryId queryId1 = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID 1: " << queryId1);
+    EXPECT_NE(queryId1, INVALID_QUERY_ID);
     QueryId queryId2 = json_return_Q2.at("queryId").as_integer();
     NES_INFO("Query ID 2: " << queryId2);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
+
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
 
     string expectedContent1 =
         "+----------------------------------------------------+\n"
@@ -667,7 +480,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithTum
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSlidingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = "ValidUserQueryWithSlidWindowFileOutputTestResult2.txt";
@@ -683,31 +496,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSli
     schema << "{\"streamName\" : \"window\",\"schema\" :\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    string schemabody = schema.str();
-
-    web::json::value json_returnSchema;
-
-    web::http::client::http_client clientSchema(
-        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
-    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_returnSchema = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
-
-    NES_INFO("try to acc return");
-    bool success = json_returnSchema.at("Success").as_bool();
-    NES_INFO("RegisteredStream: " << success);
-    EXPECT_TRUE(success);
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
@@ -723,7 +512,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSli
     ss << endl;
 
     NES_INFO("query 1 string submit=" << ss.str());
-    string body = ss.str();
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
@@ -735,56 +523,25 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSli
     NES_INFO("query 2 string submit=" << ss2.str());
     string body2 = ss2.str();
 
-    web::json::value json_return;
-
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
-        })
-        .wait();
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
     NES_INFO("return from query 1");
 
-    web::json::value json_return_Q2;
-    web::http::client::http_client clientQ2(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    clientQ2.request(web::http::methods::POST, "/", ss2.str()).then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
-        })
-        .then([&json_return_Q2](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return_Q2 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_INFO("error while setting return");
-              NES_INFO("error " << e.what());
-          }
-        })
-        .wait();
+    web::json::value json_return_Q2 = TestUtils::startQueryViaRest(ss2.str());
     NES_INFO("return from query 2");
 
-
     NES_INFO("try to acc return");
-    QueryId queryId = json_return.at("queryId").as_integer();
-    NES_INFO("Query ID 1: " << queryId);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    QueryId queryId1 = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID 1: " << queryId1);
+    EXPECT_NE(queryId1, INVALID_QUERY_ID);
     QueryId queryId2 = json_return_Q2.at("queryId").as_integer();
     NES_INFO("Query ID 2: " << queryId2);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
+
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
 
     string expectedContent1 =
         "+----------------------------------------------------+\n"

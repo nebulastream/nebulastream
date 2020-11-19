@@ -154,14 +154,15 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
 
 void QueryController::handleDelete(std::vector<utility::string_t> path, http_request message) {
     if (path[1] == "stop-query") {
-
+        NES_DEBUG("stop-query msg=" << message.to_string());
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                 try {
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     json::value req = json::value::parse(payload);
-                    QueryId queryId = req.at("queryId").as_integer();
+                    cout << "req=" << req.as_integer() << endl;
+                    QueryId queryId = req.as_integer();
 
                     bool success = queryService->validateAndQueueStopRequest(queryId);
                     //Prepare the response
