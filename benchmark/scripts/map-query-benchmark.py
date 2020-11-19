@@ -83,6 +83,8 @@ for workerThreads in allWorkerThreads:
 	rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
 	ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
 	ax.set_xticklabels([f"{millify(x)}" for x in allIngestionRate[workerThreads]])
+	ax.set_xlabel("Ingestionrate")
+	ax.set_ylabel("Throughput [tup/s]")
 	autolabel(rects, ax)
 
 	plt.title(f"WorkerThreads: {workerThreads}")
