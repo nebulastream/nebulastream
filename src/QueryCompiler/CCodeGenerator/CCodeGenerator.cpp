@@ -396,7 +396,13 @@ void CCodeGenerator::generateCodeForWatermarkUpdater(PipelineContextPtr context,
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
     auto updateAllWatermarkTsFunctionCallStatement = VarRef(handler).accessPtr(updateAllWatermarkTsFunctionCall);
-    context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
+
+    auto tf = getTypeFactory();
+
+    auto zeroConstant = Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0))));
+    auto ifStatement = IF(getWatermark(context->code->varDeclarationInputBuffer) != zeroConstant, updateAllWatermarkTsFunctionCallStatement);
+
+    context->code->cleanupStmts.push_back(ifStatement.createCopy());
 }
 
 void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
