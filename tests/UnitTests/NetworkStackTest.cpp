@@ -777,7 +777,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                            ->addField("value", DataTypeFactory::createInt64());
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, bufferSize, buffersManaged);
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink
     auto networkSource1 = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
