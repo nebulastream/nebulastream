@@ -764,8 +764,8 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
                          Attribute("campaign_id", INT64),
                          TumblingWindow::of(
                              EventTime(Attribute("current_ms")), Milliseconds(10)),
-//                         Count())
-                         Sum(Attribute("event_type", INT64)))
+                         Count())
+//                         Sum(Attribute("event_type", INT64)))
                      .sink(DummySink::create());
 
     auto ysbResultSchema = Schema::create()
