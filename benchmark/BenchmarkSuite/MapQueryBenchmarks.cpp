@@ -54,9 +54,9 @@ int main() {
     BM_AddBenchmark(
         "BM_SimpleMapQuery",
         TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
-        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
-                                      ingestionRate),
-        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), "", "");
+        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,ingestionRate),
+        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),"", "");
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
+
     return 0;
 }
