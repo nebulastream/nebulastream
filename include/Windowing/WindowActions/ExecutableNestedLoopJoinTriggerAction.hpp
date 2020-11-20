@@ -51,7 +51,11 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     }
 
     bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
-                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate) {
+                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
+                  size_t currentWatermarkLeft,
+                  size_t currentWatermarkRight,
+                  size_t lastWatermarkLeft,
+                  size_t lastWatermarkRight) {
 #ifdef EXTENDEDDEBUGGING
         //Print the state content for debugging purposes
         NES_TRACE("leftJoinState content=");
@@ -64,8 +68,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 NES_TRACE("key=" << key);
                 NES_TRACE("value=" << agg);
             }
-            NES_TRACE(" last watermark=" << val->getLastWatermark() << " minwatermark=" << val->getMinWatermark()
-                                         << " allMaxTs=" << val->getAllMaxTs());
+            NES_TRACE(" last watermark=" << val->getLastWatermark() << " minwatermark=" << val->getMinWatermark() << " allMaxTs=" << val->getAllMaxTs());
         }
 
         NES_TRACE("rightJoinSate content=");
@@ -78,8 +81,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 NES_TRACE("key=" << key);
                 NES_TRACE("value=" << agg);
             }
-            NES_TRACE(" last watermark=" << val->getLastWatermark() << " minwatermark=" << val->getMinWatermark()
-                                         << " allMaxTs=" << val->getAllMaxTs());
+            NES_TRACE(" last watermark=" << val->getLastWatermark() << " minwatermark=" << val->getMinWatermark() << " allMaxTs=" << val->getAllMaxTs());
         }
 #endif
         auto tupleBuffer = this->bufferManager->getBufferBlocking();
@@ -87,18 +89,15 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         // iterate over all keys in both window states and perform the join
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction doing the nested loop join");
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: leftHashTable" << toString() << " check key=" << leftHashTable.first
-                                                                             << " nextEdge=" << leftHashTable.second->nextEdge);
+            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: leftHashTable" << toString() << " check key=" << leftHashTable.first << " nextEdge=" << leftHashTable.second->nextEdge);
 
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: rightHashTable"
-                          << toString() << " check key=" << rightHashTable.first
-                          << " nextEdge=" << rightHashTable.second->nextEdge);
+                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: rightHashTable" << toString() << " check key=" << rightHashTable.first << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
                     if (leftHashTable.first == rightHashTable.first) {
 
                         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: found join pair for key " << leftHashTable.first);
-                        joinWindows(leftHashTable.first, leftHashTable.second, rightHashTable.second, tupleBuffer);
+                        joinWindows(leftHashTable.first, leftHashTable.second, rightHashTable.second, tupleBuffer, currentWatermarkLeft, currentWatermarkRight, lastWatermarkLeft, lastWatermarkRight);
                     }
                 }
             }
@@ -107,9 +106,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         if (tupleBuffer.getNumberOfTuples() != 0) {
             //write remaining buffer
             NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: Dispatch last buffer output buffer with "
-                      << tupleBuffer.getNumberOfTuples()
-                      << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
-                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
+                      << tupleBuffer.getNumberOfTuples() << " records, content="
+                      << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
+                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
+                      << std::endl);
             //forward buffer to next  pipeline stage
             this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
         }
@@ -117,55 +117,47 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto windowType = joinDefinition->getWindowType();
         auto windowTimeType = windowType->getTimeCharacteristic();
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction doing the nested loop join");
-        for (auto& leftHashTable : leftJoinState->rangeAll()) {
-            auto watermark = windowTimeType->getType() == Windowing::TimeCharacteristic::ProcessingTime
-                ? Windowing::getTsFromClock()
-                : leftHashTable.second->getMinWatermark();
-            leftHashTable.second->setLastWatermark(watermark);
-        }
-        for (auto& rightHashTable : rightJoinSate->rangeAll()) {
-            auto watermark = windowTimeType->getType() == Windowing::TimeCharacteristic::ProcessingTime
-                ? Windowing::getTsFromClock()
-                : rightHashTable.second->getMinWatermark();
-            rightHashTable.second->setLastWatermark(watermark);
-        }
+        assert(0);
+//        for (auto& leftHashTable : leftJoinState->rangeAll()) {
+//            auto watermark = windowTimeType->getType() == Windowing::TimeCharacteristic::ProcessingTime ? Windowing::getTsFromClock() : getMinWatermark();
+//            leftHashTable.second->setLastWatermark(watermark);
+//        }
+//        for (auto& rightHashTable : rightJoinSate->rangeAll()) {
+//            auto watermark = windowTimeType->getType() == Windowing::TimeCharacteristic::ProcessingTime ? Windowing::getTsFromClock() : rightHashTable.second->getMinWatermark();
+//            rightHashTable.second->setLastWatermark(watermark);
+//        }
 
         return true;
     }
 
-    std::string toString() { return "ExecutableNestedLoopJoinTriggerAction"; }
+    std::string toString() {
+        return "ExecutableNestedLoopJoinTriggerAction";
+    }
 
     uint64_t getWatermark(Windowing::WindowSliceStore<KeyType>* store) {
         auto windowType = joinDefinition->getWindowType();
         auto windowTimeType = windowType->getTimeCharacteristic();
-        auto watermark = windowTimeType->getType() == Windowing::TimeCharacteristic::ProcessingTime ? Windowing::getTsFromClock()
-                                                                                                    : store->getMinWatermark();
+        auto watermark = windowTimeType->getType() == Windowing::TimeCharacteristic::ProcessingTime ? Windowing::getTsFromClock() : store->getMinWatermark();
 
         // the window type adds result windows to the windows vectors
         if (store->getLastWatermark() == 0) {
             if (windowType->isTumblingWindow()) {
                 auto* tumbWindow = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: successful cast to TumblingWindow");
-                auto initWatermark =
-                    watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::getWatermark(TumblingWindow): getLastWatermark was 0 set to="
-                          << initWatermark);
+                auto initWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
+                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::getWatermark(TumblingWindow): getLastWatermark was 0 set to=" << initWatermark);
                 store->setLastWatermark(initWatermark);
             } else if (windowType->isSlidingWindow()) {
                 auto* slidWindow = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: successful cast to SlidingWindow");
-                auto initWatermark =
-                    watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark(SlidingWindow): getLastWatermark was 0 set to="
-                          << initWatermark);
+                auto initWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
+                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark(SlidingWindow): getLastWatermark was 0 set to=" << initWatermark);
                 store->setLastWatermark(initWatermark);
             } else {
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: Unknown WindowType; LastWatermark was 0 and "
-                          "remains 0");
+                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: Unknown WindowType; LastWatermark was 0 and remains 0");
             }
         } else {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: last watermark is="
-                      << store->getLastWatermark() << " for watermark=" << watermark);
+            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: last watermark is=" << store->getLastWatermark() << " for watermark=" << watermark);
         }
         return watermark;
     }
@@ -176,19 +168,20 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   * @param store
   * @param tupleBuffer
   */
-    void joinWindows(KeyType key, Windowing::WindowSliceStore<KeyType>* leftStore,
-                     Windowing::WindowSliceStore<KeyType>* rightStore, TupleBuffer& tupleBuffer) {
+    void joinWindows(KeyType key,
+                     Windowing::WindowSliceStore<KeyType>* leftStore,
+                     Windowing::WindowSliceStore<KeyType>* rightStore, TupleBuffer& tupleBuffer,
+                     size_t currentWatermarkLeft,
+                     size_t currentWatermarkRight,
+                     size_t lastWatermarkLeft,
+                     size_t lastWatermarkRight) {
 
         // TODO we should add a allowed lateness to support out of order events
-        auto watermarkLeft = getWatermark(leftStore);
-        auto watermarkRight = getWatermark(rightStore);
+//        auto watermarkLeft = getWatermark(leftStore);
+//        auto watermarkRight = getWatermark(rightStore);
 
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore  watermark is="
-                  << watermarkLeft << " minWatermark=" << leftStore->getMinWatermark()
-                  << " lastwatermark=" << leftStore->getLastWatermark());
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:rightStore  watermark is="
-                  << watermarkRight << " minWatermark=" << rightStore->getMinWatermark()
-                  << " lastwatermark=" << rightStore->getLastWatermark());
+        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore  watermark is=" << currentWatermarkLeft << " lastwatermark=" << lastWatermarkLeft);
+        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:rightStore  watermark is=" << currentWatermarkRight << " lastwatermark=" << lastWatermarkRight);
 
         // create result vector of windows, note that both sides will have the same windows
         auto windows = std::vector<Windowing::WindowState>();
@@ -196,36 +189,28 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         //do the partial aggregation on the left side
         auto slicesLeft = leftStore->getSliceMetadata();
         auto partialAggregatesLeft = leftStore->getPartialAggregates();
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger " << windows.size() << " windows, on "
-                                                                             << slicesLeft.size() << " slices");
+        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger " << windows.size() << " windows, on " << slicesLeft.size() << " slices");
         for (uint64_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger sliceid="
-                      << sliceId << " start=" << slicesLeft[sliceId].getStartTs() << " end=" << slicesLeft[sliceId].getEndTs());
+            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger sliceid=" << sliceId << " start=" << slicesLeft[sliceId].getStartTs() << " end=" << slicesLeft[sliceId].getEndTs());
         }
 
         auto slicesRight = rightStore->getSliceMetadata();
         auto partialAggregatesRight = rightStore->getPartialAggregates();
 
-        joinDefinition->getWindowType()->triggerWindows(windows, leftStore->getLastWatermark(), watermarkLeft);//watermark
+        joinDefinition->getWindowType()->triggerWindows(windows, currentWatermarkLeft, currentWatermarkLeft);//watermark
 
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger Complete or combining window for slices="
-                  << slicesLeft.size() << " windows=" << windows.size());
+        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger Complete or combining window for slices=" << slicesLeft.size() << " windows=" << windows.size());
         // allocate partial final aggregates for each window because we trigger each second, there could be multiple windows ready
         auto partialFinalAggregates = std::vector<KeyType>(windows.size());
         for (uint64_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: window.getStartTs()="
-                          << window.getStartTs() << " slices[sliceId].getStartTs()=" << slicesLeft[sliceId].getStartTs()
-                          << " window.getEndTs()=" << window.getEndTs()
-                          << " slices[sliceId].getEndTs()=" << slicesLeft[sliceId].getEndTs());
-                if (window.getStartTs() <= slicesLeft[sliceId].getStartTs()
-                    && window.getEndTs() >= slicesLeft[sliceId].getEndTs()) {
-                    NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: create partial agg windowId=" << windowId
-                                                                                                    << " sliceId=" << sliceId);
-                    partialFinalAggregates[windowId] =
-                        partialFinalAggregates[windowId] + partialAggregatesLeft[sliceId] + partialAggregatesRight[sliceId];
+                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()=" << slicesLeft[sliceId].getStartTs()
+                                                                                        << " window.getEndTs()=" << window.getEndTs() << " slices[sliceId].getEndTs()=" << slicesLeft[sliceId].getEndTs());
+                if (window.getStartTs() <= slicesLeft[sliceId].getStartTs() && window.getEndTs() >= slicesLeft[sliceId].getEndTs()) {
+                    NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: create partial agg windowId=" << windowId << " sliceId=" << sliceId);
+                    partialFinalAggregates[windowId] = partialFinalAggregates[windowId] + partialAggregatesLeft[sliceId] + partialAggregatesRight[sliceId];
                 } else {
                     NES_TRACE("ExecutableNestedLoopJoinTriggerAction: condition not true");
                 }
@@ -237,11 +222,17 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
                 auto value = partialFinalAggregates[i];
-                NES_TRACE("ExecutableNestedLoopJoinTriggerAction: write key="
-                          << key << " value=" << value << " window.start()=" << window.getStartTs() << " window.getEndTs()="
-                          << window.getEndTs() << " partialFinalAggregates.size=" << partialFinalAggregates.size() << " i=" << i);
+                NES_TRACE("ExecutableNestedLoopJoinTriggerAction: write key=" << key
+                                                                              << " value=" << value << " window.start()="
+                                                                              << window.getStartTs() << " window.getEndTs()="
+                                                                              << window.getEndTs()
+                                                                              << " partialFinalAggregates.size=" << partialFinalAggregates.size() << " i=" << i);
 
-                writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(), key,
+                writeResultRecord<KeyType>(tupleBuffer,
+                                           currentNumberOfTuples,
+                                           window.getStartTs(),
+                                           window.getEndTs(),
+                                           key,
                                            value);
 
                 //detect if buffer is full
@@ -252,9 +243,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                     && i + 1 < partialFinalAggregates.size()) {
                     //write full buffer
                     NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: Dispatch output buffer with "
-                              << currentNumberOfTuples
-                              << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
-                              << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
+                              << currentNumberOfTuples << " records, content="
+                              << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
+                              << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
+                              << std::endl);
                     //forward buffer to next  pipeline stage
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
@@ -283,15 +275,16 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     * @param value value
     */
     template<typename ValueType>
-    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
-                           ValueType value) {
+    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key, ValueType value) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
         windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
         windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
     }
 
-    SchemaPtr getJoinSchema() { return windowSchema; }
+    SchemaPtr getJoinSchema() {
+        return windowSchema;
+    }
 
   private:
     LogicalJoinDefinitionPtr joinDefinition;
