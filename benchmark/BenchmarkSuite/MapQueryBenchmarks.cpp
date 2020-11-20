@@ -58,6 +58,5 @@ int main() {
                                       ingestionRate),
         SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), "", "");
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
-
     return 0;
 }
