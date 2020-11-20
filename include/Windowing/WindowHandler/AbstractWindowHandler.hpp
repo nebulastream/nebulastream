@@ -26,6 +26,7 @@
 #include <thread>
 #include <unistd.h>
 #include <utility>
+#include <algorithm>
 
 namespace NES::Windowing {
 
@@ -58,13 +59,6 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     virtual void trigger() = 0;
 
     /**
-     * @brief updates all maxTs in all stores
-     * @param ts
-     * @param originId
-     */
-    virtual void updateAllMaxTs(uint64_t ts, uint64_t originId) = 0;
-
-    /**
     * @brief Initialises the state of this window depending on the window definition.
     */
     virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
@@ -80,6 +74,73 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
 
     virtual LogicalWindowDefinitionPtr getWindowDefinition() = 0;
 
+    /**
+     * @brief Gets the last processed watermark
+     * @return watermark
+     */
+    [[nodiscard]] uint64_t getLastWatermark() const {
+        return lastWatermark;
+    }
+
+    /**
+     * @brief Sets the last watermark
+     * @param lastWatermark
+     */
+    void setLastWatermark(uint64_t lastWatermark) {
+        this->lastWatermark = lastWatermark;
+    }
+
+    /**
+     * @brief Gets the maximal processed ts per origin id.
+     * @param originId
+     * @return max ts.
+     */
+    uint32_t getMaxTs(uint32_t originId) {
+        return originIdToMaxTsMap[originId];
+    };
+
+    /**
+     * @brief Gets number of mappings.
+     * @return size of origin map.
+     */
+    uint64_t getNumberOfMappings() {
+        return originIdToMaxTsMap.size();
+    };
+
+    std::string getAllMaxTs() {
+        std::stringstream ss;
+        for (auto& a : originIdToMaxTsMap) {
+            ss << " id=" << a.first << " val=" << a.second;
+        }
+        return ss.str();
+    }
+
+    /**
+     * @brief Calculate the min watermark
+     * @return MinAggregationDescriptor watermark
+     */
+    uint64_t getMinWatermark() {
+        if(originIdToMaxTsMap.size() == numberOfInputEdges)
+        {
+            std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
+              return a.second < b.second;
+            });
+            NES_DEBUG("getMinWatermark() return min=" << min->second);
+            return min->second;
+        }
+        else {
+            NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings=" << originIdToMaxTsMap.size() << " expected mappings=" << numberOfInputEdges);
+            return 0;//TODO: we have to figure out how many downstream positions are there
+        }
+    };
+
+    /**
+     * @brief Update the max processed ts, per origin.
+     * @param ts
+     * @param originId
+     */
+    virtual void updateMaxTs(uint64_t ts, uint64_t originId) = 0;
+
   protected:
     std::atomic_bool running{false};
     WindowManagerPtr windowManager;
@@ -88,6 +149,9 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     uint64_t originId;
+    std::map<uint64_t, uint64_t> originIdToMaxTsMap;
+    uint64_t lastWatermark;
+    size_t numberOfInputEdges;
 };
 
 }// namespace NES::Windowing

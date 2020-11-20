@@ -57,7 +57,7 @@ class WindowManager {
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-            store->setLastWatermark(ts - allowedLateness);
+//            store->setLastWatermark(ts - allowedLateness);//TODO dont know if we still need it
             store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());

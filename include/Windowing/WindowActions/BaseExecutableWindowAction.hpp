@@ -27,7 +27,7 @@ class BaseExecutableWindowAction {
      * @brief This function does the action
      * @return bool indicating success
      */
-    virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable) = 0;
+    virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, size_t currentWatermark, size_t lastWatermark) = 0;
 
     virtual std::string toString() = 0;
 

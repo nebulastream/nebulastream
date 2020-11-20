@@ -389,6 +389,37 @@ class TestUtils {
         return false;
     }
 
+    /**
+   * @brief Check if the query result was produced
+   * @param expectedContent
+   * @param outputFilePath
+   * @return true if successful
+   */
+    static bool checkOutputOrTimeout(string expectedContent, string outputFilePath) {
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
+            std::ifstream ifs(outputFilePath);
+            if(ifs.good() && ifs.is_open()) {
+                std::string content((std::istreambuf_iterator<char>(ifs)),
+                                    (std::istreambuf_iterator<char>()));
+
+                NES_INFO("checkOutputOrTimeout: content=" << content);
+                NES_INFO("checkOutputOrTimeout: expContent=" << expectedContent);
+                if(content == expectedContent)
+                {
+                    NES_INFO("checkOutputOrTimeout: content matches successfully");
+                    return true;
+                }
+            }
+            NES_DEBUG("checkOutputOrTimeout: file not ready yet");
+            sleep(1);
+        }
+        NES_DEBUG("checkOutputOrTimeout: expected result not reached within set timeout");
+        return false;
+    }
+
     static TopologyNodePtr registerTestNode(size_t id, std::string address, int cpu, NodeStats nodeProperties,
                                             PhysicalStreamConfigPtr streamConf, NodeType type, StreamCatalogPtr streamCatalog,
                                             TopologyPtr topology) {

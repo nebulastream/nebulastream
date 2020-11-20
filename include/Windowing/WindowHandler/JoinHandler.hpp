@@ -34,9 +34,9 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
   public:
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction)
-        : joinDefinition(joinDefinition), executablePolicyTrigger(executablePolicyTrigger),
-          executableJoinAction(executableJoinAction) {
+                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction) : joinDefinition(joinDefinition),
+                                                                                      executablePolicyTrigger(executablePolicyTrigger),
+                                                                                      executableJoinAction(executableJoinAction) {
         NES_DEBUG("Construct JoinHandler");
     }
 
@@ -73,8 +73,10 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     * @brief triggers all ready windows.
     */
     void trigger() override {
-        NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString() << " origin id=" << originId);
-        executableJoinAction->doAction(leftJoinState, rightJoinState);
+        NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString()
+                                                    << " origin id=" << originId);
+        assert(0);
+        executableJoinAction->doAction(leftJoinState, rightJoinState, getMinWatermark(), getMinWatermark(), lastWatermark, lastWatermark);
     }
 
     /**
@@ -82,28 +84,26 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
      * @param ts
      * @param originId
      */
-    void updateAllMaxTs(uint64_t ts, uint64_t originId) override {
+    void updateMaxTs(uint64_t ts, uint64_t originId) override {
         NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
-        for (auto& it : leftJoinState->rangeAll()) {
-            NES_DEBUG("JoinHandler left: update ts for key=" << it.first << " store=" << it.second
-                                                             << " maxts=" << it.second->getMaxTs(originId)
-                                                             << " nextEdge=" << it.second->nextEdge);
-            it.second->updateMaxTs(ts, originId);
-            NES_DEBUG("JoinHandler left: max is=" << it.second->getMaxTs(originId));
-        }
-        for (auto& it : rightJoinState->rangeAll()) {
-            NES_DEBUG("JoinHandler right: update ts for key=" << it.first << " store=" << it.second
-                                                              << " maxts=" << it.second->getMaxTs(originId)
-                                                              << " nextEdge=" << it.second->nextEdge);
-            it.second->updateMaxTs(ts, originId);
-        }
+        //TODO: here the info is missing if it comes form the left or right side
+        originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
+//
+//        for (auto& it : leftJoinState->rangeAll()) {
+//            NES_DEBUG("JoinHandler left: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
+//            it.second->updateMaxTs(ts, originId);
+//            NES_DEBUG("JoinHandler left: max is=" << it.second->getMaxTs(originId));
+//        }
+//        for (auto& it : rightJoinState->rangeAll()) {
+//            NES_DEBUG("JoinHandler right: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
+//            it.second->updateMaxTs(ts, originId);
+//        }
     }
 
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
-               uint32_t pipelineStageId, uint64_t originId) override {
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) override {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->pipelineStageId = pipelineStageId;
@@ -113,8 +113,7 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable
         this->leftJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("leftSide");
-        this->rightJoinState =
-            &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("rightSide");
+        this->rightJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("rightSide");
         this->nextPipeline = nextPipeline;
 
         executableJoinAction->setup(queryManager, bufferManager, nextPipeline, originId);
@@ -127,15 +126,25 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
      * @brief Returns window manager.
      * @return WindowManager.
      */
-    Windowing::WindowManagerPtr getWindowManager() override { return this->windowManager; }
+    Windowing::WindowManagerPtr getWindowManager() override {
+        return this->windowManager;
+    }
 
-    auto getLeftJoinState() { return leftJoinState; }
+    auto getLeftJoinState() {
+        return leftJoinState;
+    }
 
-    auto getRightJoinState() { return rightJoinState; }
+    auto getRightJoinState() {
+        return rightJoinState;
+    }
 
-    LogicalJoinDefinitionPtr getJoinDefinition() { return joinDefinition; }
+    LogicalJoinDefinitionPtr getJoinDefinition() {
+        return joinDefinition;
+    }
 
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() override { return nullptr; }
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() override {
+        return nullptr;
+    }
 
   private:
     StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState;
