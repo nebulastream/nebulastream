@@ -160,8 +160,6 @@ int main(int argc, char** argv) {
         numberOfSlots = processorCount;
     }
 
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
-
     if (vm.count("help")) {
         NES_INFO("Basic Command Line Parameter ");
         NES_INFO(desc);
@@ -179,8 +177,9 @@ int main(int argc, char** argv) {
 
     //register phy stream if necessary
     if (sourceType != "") {
-        bool skip = skipHeader == "true";
-        cout << "start with dedicated source=" << sourceType;
+        bool endless = endlessRepeat == "on";
+        bool skip = skipHeader;
+        cout << "start with dedicated source=" << sourceType << " endlessRepeat=" << endlessRepeat << " end=" << endless << endl;
         PhysicalStreamConfigPtr conf =
             PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
                                          numberOfBuffersToProduce, physicalStreamName, logicalStreamName, skip);

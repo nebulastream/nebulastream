@@ -148,7 +148,7 @@ set(LIBRARIES ${LIBRARIES} libzmq)
 
 # Z3 Solver
 message(STATUS "Z3")
-find_package(Z3 REQUIRED)
+find_package(Z3 REQUIRED CONFIG)
 if(NOT ${Z3_FOUND})
     message(FATAL_ERROR "Unable to find Z3")
 endif()
