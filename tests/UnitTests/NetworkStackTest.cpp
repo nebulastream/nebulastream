@@ -615,7 +615,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
 TEST_F(NetworkStackTest, testNetworkSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, bufferSize, buffersManaged);
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
