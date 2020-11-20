@@ -67,16 +67,52 @@ static DebugLevel getStringAsDebugLevel(std::string level) {
 static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 
 // LoggerPtr logger(Logger::getLogger("NES"));
-#ifdef NO_LOGGING
-#define NES_TRACE(TEXT) ((void) 0)
-#define NES_DEBUG(TEXT) ((void) 0)
-#define NES_TRACE(TEXT) ((void) 0)
-#define NES_INFO(TEXT) ((void) 0)
-#define NES_WARNING(TEXT) ((void) 0)
-#define NES_ERROR(TEXT) ((void) 0)
-#define NES_FATAL_ERROR(TEXT) ((void) 0)
-#define NES_ASSERT(CONDITION, TEXT) ((void) 0)
-#define NES_VERIFY(...) ((void) 0)
+
+// TRACE < DEBUG < INFO < WARN < ERROR < FATAL
+#define LEVEL_TRACE 6
+#define LEVEL_DEBUG 5
+#define LEVEL_INFO  4
+#define LEVEL_WARN  3
+#define LEVEL_ERROR 2
+#define LEVEL_FATAL 1
+
+#ifdef NES_LOGGING_LEVEL
+#define NES_TRACE(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        if (NES_LOGGING_LEVEL >= LEVEL_TRACE) {                                                                                  \
+            LOG4CXX_TRACE(NESLogger, TEXT);                                                                                      \
+        }                                                                                                                        \
+    } while (0)
+#define NES_DEBUG(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        if (NES_LOGGING_LEVEL >= LEVEL_DEBUG){                                                                                   \
+            LOG4CXX_DEBUG(NESLogger, TEXT);                                                                                      \
+        }                                                                                                                        \
+    } while (0)
+#define NES_INFO(TEXT)                                                                                                           \
+    do {                                                                                                                         \
+        if (NES_LOGGING_LEVEL >= LEVEL_INFO) {                                                                                   \
+            LOG4CXX_INFO(NESLogger, TEXT);                                                                                      \
+       }                                                                                                                         \
+    } while (0)
+#define NES_WARNING(TEXT)                                                                                                        \
+    do {                                                                                                                         \
+        if (NES_LOGGING_LEVEL >= LEVEL_WARN) {                                                                                   \
+            LOG4CXX_WARN(NESLogger, TEXT);                                                                                      \
+       }                                                                                                                         \
+    } while (0)
+#define NES_ERROR(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        if (NES_LOGGING_LEVEL >= LEVEL_ERROR) {                                                                                  \
+            LOG4CXX_ERROR(NESLogger, TEXT);                                                                                      \
+        }                                                                                                                        \
+    } while (0)
+#define NES_FATAL_ERROR(TEXT)                                                                                                    \
+    do {                                                                                                                         \
+        if (NES_LOGGING_LEVEL >= LEVEL_FATAL) {                                                                                  \
+            LOG4CXX_ERROR(NESLogger, TEXT);                                                                                      \
+        }                                                                                                                        \
+    } while (0)
 #else
 #define NES_TRACE(TEXT)                                                                                                          \
     do {                                                                                                                         \
@@ -106,14 +142,9 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
     do {                                                                                                                         \
         LOG4CXX_ERROR(NESLogger, TEXT);                                                                                          \
     } while (0)
-#define NES_ASSERT(CONDITION, TEXT)                                                                                              \
-    do {                                                                                                                         \
-        if (!(CONDITION)) {                                                                                                      \
-            NES::collectAndPrintStacktrace();                                                                                    \
-            NES_FATAL_ERROR(TEXT);                                                                                               \
-            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);                                              \
-        }                                                                                                                        \
-    } while (0)
+
+#endif
+
 #ifdef NES_DEBUG
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
@@ -124,7 +155,15 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         }                                                                                                                        \
     } while (0)
 #endif
-#endif
+
+#define NES_ASSERT(CONDITION, TEXT)                                                                                              \
+    do {                                                                                                                         \
+        if (!(CONDITION)) {                                                                                                      \
+            NES::collectAndPrintStacktrace();                                                                                    \
+            NES_FATAL_ERROR(TEXT);                                                                                               \
+            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);                                              \
+        }                                                                                                                        \
+    } while (0)
 
 #define NES_THROW_RUNTIME_ERROR(TEXT)                                                                                            \
     do {                                                                                                                         \

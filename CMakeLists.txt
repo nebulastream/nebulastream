@@ -48,15 +48,15 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -Werror=unused-variable -Werror=u
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-unused-variable -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-sign-compare -O3")
 
-# Set NO_LOGGING Flag if -DNO_LOGGING is set as a CMAKE flag
-if (NO_LOGGING)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_LOGGING")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DNO_LOGGING")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNO_LOGGING")
-    message("---Logging is disabled!")
-else(NO_LOGGING)
-    message("---Logging is enabled!")
-endif (NO_LOGGING)
+# Set NES_LOGGING_LEVEL Flag
+if (NES_LOGGING_LEVEL)
+    get_nes_log_level_value(NES_LOGGING_VALUE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNES_LOGGING_LEVEL=${NES_LOGGING_VALUE}")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DNES_LOGGING_LEVEL=${NES_LOGGING_VALUE}")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNES_LOGGING_LEVEL=${NES_LOGGING_VALUE}")
+else(NES_LOGGING_LEVEL)
+    message("---Everything will be logged")
+endif (NES_LOGGING_LEVEL)
 
 # Compiler should produce specific code for system architecture
 include(CheckCXXCompilerFlag)
