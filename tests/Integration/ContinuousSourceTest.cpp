@@ -1452,11 +1452,22 @@ TEST_F(ContinuousSourceTest, testYSB) {
 }
 
 TEST_F(ContinuousSourceTest, testFromActualExdraCSVSource) {
+
+    //logical stream
+    std::string logicalStreamName = "exdra";
+    std::string testSchema =
+        "Schema::create()->addField(\"timestamp\", DataTypeFactory::createFixedChar(19))"
+        "->addField(\"Sensor_0\", FLOAT64)"
+        "->addField(\"Sensor_1\", FLOAT64)"
+        "->addField(\"Sensor_2\", FLOAT64)"
+        "->addField(\"Sensor_3\", FLOAT64);";
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     size_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+    crd->getStreamCatalog()->updatedLogicalStream(logicalStreamName, testSchema);
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1",
@@ -1465,25 +1476,18 @@ TEST_F(ContinuousSourceTest, testFromActualExdraCSVSource) {
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    //register logical stream
-    std::string testSchema =
-        "Schema::create()->addField(\"timestamp\", DataTypeFactory::createFixedChar(19))"
-        "->addField(\"Sensor_0\", FLOAT64)"
-        "->addField(\"Sensor_1\", FLOAT64)"
-        "->addField(\"Sensor_2\", FLOAT64)"
-        "->addField(\"Sensor_3\", FLOAT64);";
-
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
     out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
+
+    wrk1->registerLogicalStream(logicalStreamName, testSchemaFileName);
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "../tests/test_data/exdra-actual.csv",
                                                                 /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
                                                                 /**Number of Buffers To Produce**/ 2, /**Physical Stream Name**/ "physical_test",
-                                                                /**Logical Stream Name**/ "testStream", true);
+                                                                /**Logical Stream Name**/ logicalStreamName, true);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testFromActualExdraCSVSource.csv";
@@ -1493,7 +1497,7 @@ TEST_F(ContinuousSourceTest, testFromActualExdraCSVSource) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register query
-    std::string queryString = "Query::from(\"testStream\").sink(FileSinkDescriptor::create(\""
+    std::string queryString = "Query::from(\"" + logicalStreamName + "\").sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\" , \"CSV_FORMAT\", \"DONT_APPEND\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
