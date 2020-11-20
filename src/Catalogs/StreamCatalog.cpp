@@ -40,7 +40,7 @@ void StreamCatalog::addDefaultStreams() {
         NES_ERROR("StreamCatalog::addDefaultStreams: error while add ysb");
         throw Exception("Error while addDefaultStreams StreamCatalog");
     } else {
-        NES_ERROR("StreamCatalog::addDefaultStreams: Ysb added");
+        NES_DEBUG("StreamCatalog::addDefaultStreams: Ysb added");
     }
 
     //TODO I think we should get rid of this soon
@@ -63,7 +63,7 @@ void StreamCatalog::addDefaultStreams() {
 
     bool success2 = addLogicalStream("exdra", schemaExdra);
     if (!success2) {
-        NES_ERROR("StreamCatalog::addDefaultStreams: error while add exdra");
+        NES_ERROR("StreamCatalog::addDefaultStreams: error while adding exdra logical stream");
         throw Exception("Error while addDefaultStreams StreamCatalog");
     }
 }
