@@ -26,15 +26,14 @@ WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMe
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
 }
 
-void SlidingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const {
+void SlidingWindow::triggerWindows(std::vector<WindowState>& windows,
+                                   uint64_t lastWatermark,
+                                   uint64_t currentWatermark) const {
     NES_DEBUG("SlidingWindow::triggerWindows windows before=" << windows.size());
     long lastStart = currentWatermark - ((currentWatermark + slide.getTime()) % slide.getTime());
-    NES_DEBUG("SlidingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime()
-                                                          << " lastWatermark=" << lastWatermark);
-    for (long windowStart = lastStart; windowStart + size.getTime() >= lastWatermark; windowStart -= slide.getTime()) {
-        if (windowStart >= 0
-            && ((windowStart + size.getTime())
-                < currentWatermark)) {//TODO we have to really find out if it is < or <= currentWatermark
+    NES_DEBUG("SlidingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime() << " lastWatermark=" << lastWatermark);
+    for (long windowStart = lastStart; windowStart + size.getTime() >= lastWatermark && windowStart >= 0; windowStart -= slide.getTime()) {
+        if (windowStart >= 0 && ((windowStart + size.getTime()) < currentWatermark)) {//TODO we have to really find out if it is < or <= currentWatermark
             NES_DEBUG("SlidingWindow::triggerWindows add window to be triggered = windowStart=" << windowStart);
             windows.emplace_back(windowStart, windowStart + size.getTime());
         }
@@ -45,10 +44,16 @@ uint64_t SlidingWindow::calculateNextWindowEnd(uint64_t currentTs) const {
     return currentTs + slide.getTime() - (currentTs % slide.getTime());
 }
 
-bool SlidingWindow::isSlidingWindow() { return true; }
+bool SlidingWindow::isSlidingWindow() {
+    return true;
+}
 
-TimeMeasure SlidingWindow::getSize() { return size; }
+TimeMeasure SlidingWindow::getSize() {
+    return size;
+}
 
-TimeMeasure SlidingWindow::getSlide() { return slide; }
+TimeMeasure SlidingWindow::getSlide() {
+    return slide;
+}
 
 }// namespace NES::Windowing

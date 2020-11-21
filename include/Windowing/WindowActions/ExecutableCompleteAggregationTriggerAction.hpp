@@ -166,8 +166,17 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
 //            watermark = store->getLastWatermark();
 //        }
 //
-        windowDefinition->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
-        NES_TRACE("ExecutableCompleteAggregationTriggerAction: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
+        if(currentWatermark > lastWatermark)
+        {
+            NES_DEBUG("aggregateWindows trigger because currentWatermark=" << currentWatermark << " > lastWatermark=" << lastWatermark);
+            windowDefinition->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction: trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
+        }
+        else
+        {
+            NES_DEBUG("aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark << " > lastWatermark=" << lastWatermark);
+        }
+
 
         // allocate partial final aggregates for each window
         //because we trigger each second, there could be multiple windows ready
@@ -225,7 +234,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
             }//end of for
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: joinWindows: no window qualifies");
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction: aggregate: no window qualifies");
         }
 
 //        store->setLastWatermark(watermark);
