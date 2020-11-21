@@ -91,74 +91,77 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                                                                  << " distribution type=" << windowDefinition->getDistributionType()->toString()
                                                                  << " origin id=" << originId);
         auto watermark = getMinWatermark();
-        if (lastWatermark == 0) {
-            if (getWindowDefinition()->getWindowType()->isTumblingWindow()) {
-                TumblingWindow* tumbWindow = dynamic_cast<TumblingWindow*>(getWindowDefinition()->getWindowType().get());
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to TumblingWindow");
-                lastWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
-            } else if (getWindowDefinition()->getWindowType()->isSlidingWindow()) {
-                SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(getWindowDefinition()->getWindowType().get());
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to SlidingWindow");
-                lastWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
-            } else {
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: Unknown WindowType; LastWatermark was 0 and remains 0");
-            }
-        }
+//        if (lastWatermark == 0) {
+//            if (getWindowDefinition()->getWindowType()->isTumblingWindow()) {
+//                TumblingWindow* tumbWindow = dynamic_cast<TumblingWindow*>(getWindowDefinition()->getWindowType().get());
+//                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to TumblingWindow");
+//                lastWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
+//            } else if (getWindowDefinition()->getWindowType()->isSlidingWindow()) {
+//                SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(getWindowDefinition()->getWindowType().get());
+//                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to SlidingWindow");
+//                lastWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
+//            } else {
+//                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: Unknown WindowType; LastWatermark was 0 and remains 0");
+//            }
+//            NES_DEBUG("lastWatermark after initial set=" << lastWatermark);
+//        }
 
-            executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
-            lastWatermark = std::max(watermark, lastWatermark);
-        }
+        NES_DEBUG("AggregationWindowHandler: run doing with watermark=" << watermark << " lastWatermark=" << lastWatermark);
+        executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
+        NES_DEBUG("AggregationWindowHandler: set lastWatermark to=" << std::max(watermark, lastWatermark));
+        lastWatermark = std::max(watermark, lastWatermark);
+    }
 
-        /**
+    /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-        bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) override {
-            this->queryManager = queryManager;
-            this->bufferManager = bufferManager;
-            this->pipelineStageId = pipelineStageId;
-            this->originId = originId;
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) override {
+        this->queryManager = queryManager;
+        this->bufferManager = bufferManager;
+        this->pipelineStageId = pipelineStageId;
+        this->originId = originId;
 
-            // Initialize AggregationWindowHandler Manager
-            this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType());
-            // Initialize StateVariable
-            this->windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
-            this->nextPipeline = nextPipeline;
+        // Initialize AggregationWindowHandler Manager
+        this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType());
+        // Initialize StateVariable
+        this->windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
+        this->nextPipeline = nextPipeline;
 
-            executableWindowAction->setup(queryManager, bufferManager, nextPipeline, originId);
-            NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
-            return true;
-        }
+        executableWindowAction->setup(queryManager, bufferManager, nextPipeline, originId);
+        NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
+        return true;
+    }
 
-        /**
+    /**
    * @brief Update the max processed ts, per origin.
    * @param ts
    * @param originId
    */
-        void updateMaxTs(uint64_t ts, uint64_t originId) override {
-            originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
-        };
+    void updateMaxTs(uint64_t ts, uint64_t originId) override {
+        originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
+    };
 
-        /**
+    /**
      * @brief Returns window manager.
      * @return WindowManager.
      */
-        WindowManagerPtr getWindowManager() override { return this->windowManager; }
+    WindowManagerPtr getWindowManager() override { return this->windowManager; }
 
-        auto getTypedWindowState() {
-            return windowStateVariable;
-        }
+    auto getTypedWindowState() {
+        return windowStateVariable;
+    }
 
-        LogicalWindowDefinitionPtr getWindowDefinition() override {
-            return windowDefinition;
-        }
+    LogicalWindowDefinitionPtr getWindowDefinition() override {
+        return windowDefinition;
+    }
 
-      private:
-        LogicalWindowDefinitionPtr windowDefinition;
-        StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
-        std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
-        BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
-        BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
-    };
+  private:
+    LogicalWindowDefinitionPtr windowDefinition;
+    StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
+    std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
+    BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
+    BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
+};
 
 }// namespace NES::Windowing
 
