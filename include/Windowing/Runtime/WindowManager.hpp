@@ -57,7 +57,7 @@ class WindowManager {
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-//            store->setLastWatermark(ts - allowedLateness);//TODO dont know if we still need it
+            //            store->setLastWatermark(ts - allowedLateness);//TODO dont know if we still need it
             store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
@@ -66,7 +66,7 @@ class WindowManager {
                           << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge);
             } else if (windowType->isSlidingWindow()) {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
-                NES_TRACE("WindowManager: successful cast to Sliding Window fir sliceStream empty store");
+                NES_TRACE("WindowManager: successful cast to Sliding Window for sliceStream empty store");
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
                 NES_TRACE("WindowManager: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
                           << store->nextEdge - store->nextEdge - window->getSlide().getTime()

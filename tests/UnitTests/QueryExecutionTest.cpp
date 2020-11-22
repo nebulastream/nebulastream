@@ -279,6 +279,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     }
     testSink->shutdown();
     plan->stop();
+    nodeEngine->stop();
 }
 
 /**
@@ -329,6 +330,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
 
     // 14 because we start at 5 (inclusive) and create 10 records
     EXPECT_EQ(resultBuffer.getWatermark(), 14-millisecondOfDelay);
+    nodeEngine->stop();
 }
 
 /**
@@ -414,6 +416,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
     }
     nodeEngine->stopQuery(1);
+    nodeEngine->stop();
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
@@ -491,6 +494,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
         "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
+    nodeEngine->stop();
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
@@ -569,6 +573,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
         "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
+    nodeEngine->stop();
 }
 
 /*
@@ -581,7 +586,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(
         nodeEngine->getBufferManager(),
-        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+        nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 0);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -654,6 +659,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
         "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
+    nodeEngine->stop();
 }
 
 // P1 = Source1 -> filter1
@@ -749,6 +755,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     testSink->shutdown();
     testSource1->stop();
     testSource2->stop();
+    nodeEngine->stop();
 }
 
 TEST_F(QueryExecutionTest, ysbQueryTest) {
@@ -816,4 +823,5 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     EXPECT_EQ(noBufs, numBuf);
 
     nodeEngine->stopQuery(1);
+    nodeEngine->stop();
 }
