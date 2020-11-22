@@ -34,7 +34,7 @@ int main() {
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
     BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
-//    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 200 * 1000 * 1000, 550 * 1000 * 1000, 10 * 1000 * 1000);
+    //    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 200 * 1000 * 1000, 550 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
     BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 10, 20, 10);
@@ -57,9 +57,9 @@ int main() {
         auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
         BM_AddBenchmark("BM_SimpleFilterQuery",
                         TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).sink(DummySink::create()),
-                        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema, ingestionRate),
-                        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
-                        ",Selectivity",
+                        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                      benchmarkSchema, ingestionRate),
+                        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",Selectivity",
                         "," + std::to_string(selectivity))
     }
 

@@ -30,8 +30,7 @@ namespace NES::Benchmarking {
 uint64_t BenchmarkUtils::runSingleExperimentSeconds;
 uint64_t BenchmarkUtils::periodLengthInSeconds;
 
-
- void BenchmarkUtils::createUniformData(std::list<uint64_t>& dataList, uint64_t totalNumberOfTuples) {
+void BenchmarkUtils::createUniformData(std::list<uint64_t>& dataList, uint64_t totalNumberOfTuples) {
     // uniform distribution
     int min = 0, max = 999;
 
@@ -112,11 +111,8 @@ std::string BenchmarkUtils::getStatisticsAsCSV(QueryStatistics* statistic, Schem
         + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes());
 }
 
-void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec,
-                         DataSourcePtr benchmarkSource,
-                         DataSinkPtr benchmarkSink,
-                         NodeEnginePtr nodeEngine,
-                         Query query){
+void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, DataSourcePtr benchmarkSource,
+                                  DataSinkPtr benchmarkSink, NodeEnginePtr nodeEngine, Query query) {
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());

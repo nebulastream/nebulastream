@@ -47,7 +47,8 @@ uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, PipelineExecutionCon
 }// namespace detail
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
-    : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId), numThreads(numThreads) {
+    : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)),
+      nodeEngineId(nodeEngineId), numThreads(numThreads) {
     NES_DEBUG("Init QueryManager::QueryManager");
     reconfigurationExecutable = std::make_shared<CompiledExecutablePipeline>(detail::reconfigurationTaskEntryPoint);
 }
