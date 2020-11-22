@@ -19,6 +19,7 @@
 
 #include <Util/Logger.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <algorithm>
 #include <atomic>
 #include <iostream>
 #include <memory>
@@ -26,7 +27,6 @@
 #include <thread>
 #include <unistd.h>
 #include <utility>
-#include <algorithm>
 
 namespace NES::Windowing {
 
@@ -120,15 +120,13 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
      * @return MinAggregationDescriptor watermark
      */
     uint64_t getMinWatermark() {
-        if(originIdToMaxTsMap.size() == numberOfInputEdges)
-        {
+        if (originIdToMaxTsMap.size() == numberOfInputEdges) {
             std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-              return a.second < b.second;
+                return a.second < b.second;
             });
             NES_DEBUG("getMinWatermark() return min=" << min->second);
             return min->second;
-        }
-        else {
+        } else {
             NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings=" << originIdToMaxTsMap.size() << " expected mappings=" << numberOfInputEdges);
             return 0;//TODO: we have to figure out how many downstream positions are there
         }

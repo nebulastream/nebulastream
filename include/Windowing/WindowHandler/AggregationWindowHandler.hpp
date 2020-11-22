@@ -48,10 +48,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
           executableWindowAction(std::move(executableWindowAction)) {
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
+        handlerType = this->windowDefinition->getDistributionType()->toString();
     }
 
     ~AggregationWindowHandler() {
-        NES_DEBUG("AggregationWindowHandler: calling destructor");
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  calling destructor");
         stop();
     }
 
@@ -87,61 +88,41 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @brief triggers all ready windows.
      */
     void trigger() override {
-        NES_DEBUG("AggregationWindowHandler: run window action " << executableWindowAction->toString()
-                                                                 << " distribution type=" << windowDefinition->getDistributionType()->toString()
-                                                                 << " origin id=" << originId);
-        auto watermark = getMinWatermark();
-        if (lastWatermark == 0) {//we need this code otherwise he will for ts 122123123 create all windows from 0 to this value for the size
-            //TODO: this hack is very ugly and should be avoided
-            //TODO: The problem is the following: we have now a watermark and lastwatermark per store not per window
-            // this leads to the problem that the initial last watermark has to be the minimum among oll stores
-            // because this one will start the windows at the correct position
-            // the old code works only if the tuples in the buffer are not more than one window size away from each other
-            // but if this is not the case, the windows will start at the largest time stamp of the stores
-            // iterate over all keys in the window state
-            // NOTE: but this will still fail when the trigger runs and we already polluted half of the states and the other with a lower ts are not yet polluted,
-            //          - can we assume that the tuples are always in increasing ts order in the buffer?
-            // Solution: maybe we should also carry the min watermark with the buffer
-            // Problem: Overall this is not failure safe if we have out of order buffers
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  run window action " << executableWindowAction->toString()
+                                              << " distribution type=" << windowDefinition->getDistributionType()->toString()
+                                              << " origin id=" << originId);
 
+        if (originIdToMaxTsMap.size() != numberOfInputEdges) {
+            NES_DEBUG("AggregationWindowHandler(" << handlerType << "): trigger cannot be applied as we did not get one buffer per edge yet, size=" << originIdToMaxTsMap.size() << " numberOfInputEdges=" << numberOfInputEdges);
+            return;
+        }
+        auto watermark = getMinWatermark();
+
+        //In the following, find out the minimal watermark among the buffers/stores to know where
+        // we have to start the processing from so-called lastWatermark
+        // we cannot use 0 as this will create a lot of unnecessary windows
+        if (lastWatermark == 0) {
             uint64_t runningWatermark = std::numeric_limits<uint64_t>::max();
 
             for (auto& it : windowStateVariable->rangeAll()) {
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
-                    runningWatermark = std::min(runningWatermark, slices[0].getEndTs());
+                    runningWatermark = std::min(runningWatermark, slices[0].getStartTs());
                 }
             }
 
-            if(runningWatermark != std::numeric_limits<uint64_t>::max())
-            {
+            if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
                 lastWatermark = runningWatermark;
-                NES_DEBUG("AggregationWindowHandler: set lastWatermark to min value of stores=" << lastWatermark);
-            }
-            else
-            {
-                NES_DEBUG("AggregationWindowHandler: as there is no buffer yet in any store, we cannot trigger");
+                NES_DEBUG("AggregationWindowHandler(" << handlerType << "): set lastWatermark to min value of stores=" << lastWatermark);
+            } else {
+                NES_DEBUG("AggregationWindowHandler(" << handlerType << "): as there is no buffer yet in any store, we cannot trigger");
                 return;
             }
-            //
-            //            if (getWindowDefinition()->getWindowType()->isTumblingWindow()) {
-            //                TumblingWindow* tumbWindow = dynamic_cast<TumblingWindow*>(getWindowDefinition()->getWindowType().get());
-            //                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to TumblingWindow");
-            //                lastWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
-            //            } else if (getWindowDefinition()->getWindowType()->isSlidingWindow()) {
-            //                SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(getWindowDefinition()->getWindowType().get());
-            //                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to SlidingWindow");
-            //                lastWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
-            //            } else {
-            //                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: Unknown WindowType; LastWatermark was 0 and remains 0");
-            //            }
-            //            NES_DEBUG("lastWatermark after initial set=" << lastWatermark);
-            //            lastWatermark = 1262343610000;
         }
 
-        NES_DEBUG("AggregationWindowHandler: run doing with watermark=" << watermark << " lastWatermark=" << lastWatermark);
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  run doing with watermark=" << watermark << " lastWatermark=" << lastWatermark);
         executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
-        NES_DEBUG("AggregationWindowHandler: set lastWatermark to=" << std::max(watermark, lastWatermark));
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));
         lastWatermark = std::max(watermark, lastWatermark);
     }
 
@@ -194,6 +175,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
+    std::string handlerType;
 };
 
 }// namespace NES::Windowing

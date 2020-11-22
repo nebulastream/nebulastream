@@ -191,7 +191,7 @@ class WindowHandlerFactoryDetails {
     }
 
     template<class KeyType>
-    static AbstractWindowHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
+    static Join::AbstractJoinHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
         auto policy = joinDefinition->getTriggerPolicy();
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {

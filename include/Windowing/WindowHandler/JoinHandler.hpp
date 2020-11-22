@@ -24,13 +24,13 @@
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
-#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
+#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
 template<class KeyType>
-class JoinHandler : public Windowing::AbstractWindowHandler {
+class JoinHandler : public AbstractJoinHandler {
   public:
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
@@ -75,8 +75,60 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
     void trigger() override {
         NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString()
                                                     << " origin id=" << originId);
-        assert(0);
-        executableJoinAction->doAction(leftJoinState, rightJoinState, getMinWatermark(), getMinWatermark(), lastWatermark, lastWatermark);
+
+        if (originIdToMaxTsMapLeft.size() != numberOfInputEdgesLeft && originIdToMaxTsMapRight.size() != numberOfInputEdgesRight) {
+            NES_DEBUG("JoinHandler: trigger cannot be applied as we did not get one buffer per edge yet, originIdToMaxTsMapLeft size=" << originIdToMaxTsMapLeft.size()
+                                                                                                                                       << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft
+                                                                                                                                       << " originIdToMaxTsMapRight size=" << originIdToMaxTsMapRight.size()
+                                                                                                                                       << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
+            return;
+        }
+        auto watermarkLeft = getMinWatermark(leftSide);
+        auto watermarkRight = getMinWatermark(rightSide);
+
+        //In the following, find out the minimal watermark among the buffers/stores to know where
+        // we have to start the processing from so-called lastWatermark
+        // we cannot use 0 as this will create a lot of unnecessary windows
+        if (lastWatermarkLeft == 0) {
+            uint64_t runningWatermark = std::numeric_limits<uint64_t>::max();
+            for (auto& it : leftJoinState->rangeAll()) {
+                auto slices = it.second->getSliceMetadata();
+                if (!slices.empty()) {
+                    runningWatermark = std::min(runningWatermark, slices[0].getStartTs());
+                }
+            }
+
+            if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
+                lastWatermarkLeft = runningWatermark;
+                NES_DEBUG("AggregationWindowHandler: set lastWatermarkLeft to min value of stores=" << lastWatermarkLeft);
+            } else {
+                NES_DEBUG("AggregationWindowHandler: lastWatermarkLeft as there is no buffer yet in any store, we cannot trigger");
+                return;
+            }
+        }
+
+        if (lastWatermarkRight == 0) {
+            uint64_t runningWatermark = std::numeric_limits<uint64_t>::max();
+            for (auto& it : rightJoinState->rangeAll()) {
+                auto slices = it.second->getSliceMetadata();
+                if (!slices.empty()) {
+                    runningWatermark = std::min(runningWatermark, slices[0].getStartTs());
+                }
+            }
+
+            if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
+                lastWatermarkRight = runningWatermark;
+                NES_DEBUG("AggregationWindowHandler: set lastWatermarkRight to min value of stores=" << lastWatermarkRight);
+            } else {
+                NES_DEBUG("AggregationWindowHandler: lastWatermarkRight as there is no buffer yet in any store, we cannot trigger");
+                return;
+            }
+        }
+
+        executableJoinAction->doAction(leftJoinState, rightJoinState, watermarkLeft, watermarkRight, lastWatermarkLeft, lastWatermarkRight);
+
+        lastWatermarkLeft = std::max(watermarkLeft, lastWatermarkLeft);
+        lastWatermarkRight = std::max(watermarkRight, lastWatermarkRight);
     }
 
     /**
@@ -86,18 +138,9 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
      */
     void updateMaxTs(uint64_t ts, uint64_t originId) override {
         NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
-        //TODO: here the info is missing if it comes form the left or right side
-        originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
-//
-//        for (auto& it : leftJoinState->rangeAll()) {
-//            NES_DEBUG("JoinHandler left: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
-//            it.second->updateMaxTs(ts, originId);
-//            NES_DEBUG("JoinHandler left: max is=" << it.second->getMaxTs(originId));
-//        }
-//        for (auto& it : rightJoinState->rangeAll()) {
-//            NES_DEBUG("JoinHandler right: update ts for key=" << it.first << " store=" << it.second << " maxts=" << it.second->getMaxTs(originId) << " nextEdge=" << it.second->nextEdge);
-//            it.second->updateMaxTs(ts, originId);
-//        }
+        //TODO this is not correct as we have to distinguish between left and rigt side
+        originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
+        originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
     }
 
     /**
@@ -140,10 +183,6 @@ class JoinHandler : public Windowing::AbstractWindowHandler {
 
     LogicalJoinDefinitionPtr getJoinDefinition() {
         return joinDefinition;
-    }
-
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() override {
-        return nullptr;
     }
 
   private:

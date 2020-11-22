@@ -20,6 +20,8 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <memory>
+#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
+#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 
 namespace NES::Windowing {
 
@@ -40,6 +42,27 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
             windowHandler->trigger();
+        }
+    });
+    return true;
+}
+
+bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandler) {
+    std::unique_lock lock(runningTriggerMutex);
+    if (running) {
+        NES_WARNING("ExecutableOnTimeTriggerPolicy::start already started");
+        return true;
+    }
+
+    running = true;
+    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << joinHandler->toString() << " with ms=" << triggerTimeInMs);
+    std::string handlerName = joinHandler->toString();
+    thread = std::make_shared<std::thread>([handlerName, joinHandler, this]() {
+        setThreadName("whdlr-%d", handlerName.c_str());
+        while (running) {
+            NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
+            std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
+            joinHandler->trigger();
         }
     });
     return true;
