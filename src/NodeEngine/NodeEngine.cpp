@@ -39,7 +39,8 @@ namespace NES {
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
-std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads, size_t bufferSize, size_t numBuffers) {
+std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
+                                               uint16_t numThreads, size_t bufferSize, size_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
