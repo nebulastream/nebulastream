@@ -18,13 +18,7 @@
 #define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERFACTORY_HPP_
 
 #include <memory>
-
-namespace NES::Join {
-
-class LogicalJoinDefinition;
-typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
-
-}// namespace NES::Join
+#include <Windowing/JoinForwardRefs.hpp>
 
 namespace NES::Windowing {
 
@@ -46,9 +40,9 @@ class WindowHandlerFactory {
     /**
    * @brief Creates a join handler
    * @param joinDefinition window definition
-   * @return AbstractWindowHandlerPtr
+   * @return AbstractJoinHandlerPtr
    */
-    static AbstractWindowHandlerPtr createJoinWindowHandler(Join::LogicalJoinDefinitionPtr joinDefinition);
+    static Join::AbstractJoinHandlerPtr createJoinWindowHandler(Join::LogicalJoinDefinitionPtr joinDefinition);
 };
 }// namespace NES::Windowing
 

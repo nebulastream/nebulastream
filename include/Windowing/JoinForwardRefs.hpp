@@ -25,6 +25,9 @@ typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
 class JoinActionDescriptor;
 typedef std::shared_ptr<JoinActionDescriptor> JoinActionDescriptorPtr;
 
+class AbstractJoinHandler;
+typedef std::shared_ptr<AbstractJoinHandler> AbstractJoinHandlerPtr;
+
 template<class KeyType>
 class ExecutableNestedLoopJoinTriggerAction;
 template<class KeyType>

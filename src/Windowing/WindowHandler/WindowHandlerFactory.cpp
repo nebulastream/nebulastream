@@ -85,7 +85,7 @@ AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(Lo
     }
 }
 
-AbstractWindowHandlerPtr WindowHandlerFactory::createJoinWindowHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
+Join::AbstractJoinHandlerPtr WindowHandlerFactory::createJoinWindowHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
     auto logicalKeyType = joinDefinition->getJoinKey()->getStamp();
     auto physicalKeyType = DefaultPhysicalTypeFactory().getPhysicalType(logicalKeyType);
     if (physicalKeyType->isBasicType()) {

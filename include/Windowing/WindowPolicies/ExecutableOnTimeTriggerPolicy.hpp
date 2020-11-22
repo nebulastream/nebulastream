@@ -16,10 +16,10 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_
-#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <memory>
 #include <mutex>
+#include <thread>
 
 namespace NES::Windowing {
 
@@ -34,6 +34,8 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
      * @return bool indicating success
      */
     bool start(AbstractWindowHandlerPtr windowHandler) override;
+    //TODO maybe we can solve this better by having a common parent class for both handler
+    bool start(Join::AbstractJoinHandlerPtr joinHandler) override;
 
     /**
      * @brief This function stop the trigger policy

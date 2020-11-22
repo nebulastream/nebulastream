@@ -25,6 +25,7 @@
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <utility>
 
 namespace NES {

@@ -54,8 +54,8 @@ class PipelineContext {
     bool hasWindow() const;
 
     bool hasJoin() const;
-    Windowing::AbstractWindowHandlerPtr getJoin();
-    void setJoin(Windowing::AbstractWindowHandlerPtr join);
+    Join::AbstractJoinHandlerPtr getJoin();
+    void setJoin(Join::AbstractJoinHandlerPtr join);
 
     SchemaPtr inputSchema;
     SchemaPtr resultSchema;
@@ -71,7 +71,7 @@ class PipelineContext {
   private:
     std::vector<PipelineContextPtr> nextPipelines;
     Windowing::AbstractWindowHandlerPtr windowHandler;
-    Windowing::AbstractWindowHandlerPtr joinHandler;
+    Join::AbstractJoinHandlerPtr joinHandler;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_

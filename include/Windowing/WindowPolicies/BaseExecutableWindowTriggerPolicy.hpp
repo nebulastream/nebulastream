@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 namespace NES::Windowing {
 
 class BaseExecutableWindowTriggerPolicy {
@@ -26,6 +27,12 @@ class BaseExecutableWindowTriggerPolicy {
      * @return bool indicating success
      */
     virtual bool start(AbstractWindowHandlerPtr windowHandler) = 0;
+
+    /**
+   * @brief This function starts the trigger policy
+   * @return bool indicating success
+   */
+    virtual bool start(Join::AbstractJoinHandlerPtr joinHandler) = 0;
 
     /**
     * @brief This function stop the trigger policy
