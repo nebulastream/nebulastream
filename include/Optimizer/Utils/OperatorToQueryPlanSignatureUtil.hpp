@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZE_UTILS_OPERATORTOZ3EXPRUTIL_HPP
-#define NES_OPTIMIZE_UTILS_OPERATORTOZ3EXPRUTIL_HPP
+#ifndef NES_OPTIMIZE_UTILS_OPERATORTOQUERYPLANSIGNATUREUTIL_HPP
+#define NES_OPTIMIZE_UTILS_OPERATORTOQUERYPLANSIGNATUREUTIL_HPP
 
 #include <memory>
 
@@ -25,23 +25,31 @@ class context;
 }// namespace z3
 
 namespace NES {
-
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class QueryPlanSignature;
+typedef std::shared_ptr<QueryPlanSignature> QueryPlanSignaturePtr;
 
 /**
- * @brief This class is responsible for creating the Z3 expression for input operators
+ * @brief This class is responsible for creating the Query Plan Signature for the input operator.
+ * The query plan is composed of the input operator and all its upstream child operators.
  */
-class OperatorToZ3ExprUtil {
+class OperatorToQueryPlanSignatureUtil {
   public:
     /**
      * @brief Convert input operator into an equivalent logical expression
      * @param operatorNode: the input operator
+     * @param subQuerySignatures: vector containing signatures for each of the operator child (empty for source operator)
      * @param context: the context of Z3
-     * @return the object representing Z3 expression
+     * @return the object representing signature of the query plan created by the operator and its children
      */
-    static z3::expr createForOperator(OperatorNodePtr operatorNode, z3::context& context);
+    static QueryPlanSignaturePtr createForOperator(OperatorNodePtr operatorNode, std::vector<QueryPlanSignaturePtr> subQuerySignatures,
+                                      z3::context& context);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
-#endif//NES_OPTIMIZE_UTILS_OPERATORTOZ3EXPRUTIL_HPP
+#endif//NES_OPTIMIZE_UTILS_OPERATORTOQUERYPLANSIGNATUREUTIL_HPP

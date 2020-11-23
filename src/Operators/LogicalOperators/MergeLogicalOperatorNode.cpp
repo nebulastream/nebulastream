@@ -16,7 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

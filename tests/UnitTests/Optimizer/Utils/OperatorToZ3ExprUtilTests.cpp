@@ -17,7 +17,7 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <API/Expressions/Expressions.hpp>

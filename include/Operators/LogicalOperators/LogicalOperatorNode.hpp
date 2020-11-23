@@ -29,10 +29,10 @@ class context;
 typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
-namespace NES::Optimizer{
+namespace NES::Optimizer {
 class QueryPlanSignature;
 typedef std::shared_ptr<QueryPlanSignature> QueryPlanSignaturePtr;
-}
+}// namespace NES::Optimizer
 
 namespace NES {
 
