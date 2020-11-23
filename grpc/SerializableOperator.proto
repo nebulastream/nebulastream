@@ -170,8 +170,8 @@ message SerializableOperator{
    */
   message WatermarkStrategyDetails {
     message SerializableEventTimeWatermarkStrategyDescriptor {
-        SerializableExpression onField = 1;
-        uint64 delay = 2;
+      SerializableExpression onField = 1;
+      uint64 delay = 2;
     }
 
     message SerializableProcessingTimeWatermarkStrategyDescriptor {
@@ -334,8 +334,10 @@ message SerializableOperator{
     SerializableExpression onKey = 4;
     TriggerPolicy triggerPolicy = 5;
     TriggerAction action = 6;
-
+    uint64 numberOfInputEdgesLeft = 7;
+    uint64 numberOfInputEdgesRight = 8;
   }
+
   google.protobuf.Any details = 1;
   repeated SerializableOperator children = 2;
   SerializableSchema inputSchema = 3;

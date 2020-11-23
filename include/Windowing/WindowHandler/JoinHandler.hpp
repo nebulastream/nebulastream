@@ -38,6 +38,8 @@ class JoinHandler : public AbstractJoinHandler {
                                                                                       executablePolicyTrigger(executablePolicyTrigger),
                                                                                       executableJoinAction(executableJoinAction) {
         NES_DEBUG("Construct JoinHandler");
+        numberOfInputEdgesRight = joinDefinition->getNumberOfInputEdgesRight();
+        numberOfInputEdgesLeft = joinDefinition->getNumberOfInputEdgesLeft();
     }
 
     ~JoinHandler() {
@@ -86,6 +88,7 @@ class JoinHandler : public AbstractJoinHandler {
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
 
+        NES_DEBUG("JoinHandler: run for watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight);
         //In the following, find out the minimal watermark among the buffers/stores to know where
         // we have to start the processing from so-called lastWatermark
         // we cannot use 0 as this will create a lot of unnecessary windows
@@ -100,9 +103,9 @@ class JoinHandler : public AbstractJoinHandler {
 
             if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
                 lastWatermarkLeft = runningWatermark;
-                NES_DEBUG("AggregationWindowHandler: set lastWatermarkLeft to min value of stores=" << lastWatermarkLeft);
+                NES_DEBUG("JoinHandler: set lastWatermarkLeft to min value of stores=" << lastWatermarkLeft);
             } else {
-                NES_DEBUG("AggregationWindowHandler: lastWatermarkLeft as there is no buffer yet in any store, we cannot trigger");
+                NES_DEBUG("JoinHandler: lastWatermarkLeft as there is no buffer yet in any store, we cannot trigger");
                 return;
             }
         }
@@ -118,16 +121,19 @@ class JoinHandler : public AbstractJoinHandler {
 
             if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
                 lastWatermarkRight = runningWatermark;
-                NES_DEBUG("AggregationWindowHandler: set lastWatermarkRight to min value of stores=" << lastWatermarkRight);
+                NES_DEBUG("JoinHandler: set lastWatermarkRight to min value of stores=" << lastWatermarkRight);
             } else {
-                NES_DEBUG("AggregationWindowHandler: lastWatermarkRight as there is no buffer yet in any store, we cannot trigger");
+                NES_DEBUG("JoinHandler: lastWatermarkRight as there is no buffer yet in any store, we cannot trigger");
                 return;
             }
         }
 
+        NES_DEBUG("JoinHandler: run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight << " lastWatermarkLeft=" << lastWatermarkLeft << " lastWatermarkRight=" << lastWatermarkRight);
         executableJoinAction->doAction(leftJoinState, rightJoinState, watermarkLeft, watermarkRight, lastWatermarkLeft, lastWatermarkRight);
 
+        NES_DEBUG("JoinHandler:  set lastWatermarkLeft to=" << std::max(watermarkLeft, lastWatermarkLeft));
         lastWatermarkLeft = std::max(watermarkLeft, lastWatermarkLeft);
+        NES_DEBUG("JoinHandler:  set lastWatermarkRight to=" << std::max(watermarkRight, lastWatermarkRight));
         lastWatermarkRight = std::max(watermarkRight, lastWatermarkRight);
     }
 
@@ -181,7 +187,7 @@ class JoinHandler : public AbstractJoinHandler {
         return rightJoinState;
     }
 
-    LogicalJoinDefinitionPtr getJoinDefinition() {
+    LogicalJoinDefinitionPtr getJoinDefinition() override{
         return joinDefinition;
     }
 

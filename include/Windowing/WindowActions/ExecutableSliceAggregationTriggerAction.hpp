@@ -91,35 +91,6 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
         return "ExecutableSliceAggregationTriggerAction";
     }
 
-    uint64_t updateWaterMark(WindowSliceStore<PartialAggregateType>* store) {
-        auto windowType = windowDefinition->getWindowType();
-        auto windowTimeType = windowType->getTimeCharacteristic();
-        auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMinWatermark();
-
-        // the window type adds result windows to the windows vectors
-        if (store->getLastWatermark() == 0) {
-            if (windowType->isTumblingWindow()) {
-                TumblingWindow* tumbWindow = dynamic_cast<TumblingWindow*>(windowType.get());
-                NES_DEBUG("BaseExecutableWindowActionPtr::aggregateWindows: successful cast to TumblingWindow");
-                auto initWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
-                NES_DEBUG("BaseExecutableWindowActionPtr::aggregateWindows(TumblingWindow): getLastWatermark was 0 set to=" << initWatermark);
-                store->setLastWatermark(initWatermark);
-            } else if (windowType->isSlidingWindow()) {
-                SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(windowType.get());
-                NES_DEBUG("BaseExecutableWindowActionPtr::aggregateWindows: successful cast to SlidingWindow");
-                auto initWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
-                NES_DEBUG("BaseExecutableWindowActionPtr::aggregateWindows(SlidingWindow): getLastWatermark was 0 set to=" << initWatermark);
-                store->setLastWatermark(initWatermark);
-            } else {
-                NES_DEBUG("BaseExecutableWindowActionPtr::aggregateWindows: Unknown WindowType; LastWatermark was 0 and remains 0");
-            }
-        } else {
-            NES_DEBUG("BaseExecutableWindowActionPtr::aggregateWindows: last watermark is=" << store->getLastWatermark());
-        }
-
-        return watermark;
-    }
-
     /**
   * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
   * which are written to the tuple buffer.
@@ -135,12 +106,10 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
         // TODO we should add a allowed lateness to support out of order events
-//        auto watermark = updateWaterMark(store);
 
         NES_DEBUG("BaseExecutableWindowActionPtr::aggregateWindows: current watermark is=" << currentWatermark << " lastWatermark=" << lastWatermark);
 
         // create result vector of windows
-
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
@@ -187,7 +156,6 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
             } else {
                 NES_DEBUG("ExecutableSliceAggregationTriggerAction SL: Dont write result");
             }
-//            store->setLastWatermark(watermark);
         }//end of for
         tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
     }

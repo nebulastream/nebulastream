@@ -107,6 +107,10 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
         return originIdToMaxTsMap.size();
     };
 
+    /**
+     * @brief this function prints the content of the map for debugging purposes
+     * @return
+     */
     std::string getAllMaxTs() {
         std::stringstream ss;
         for (auto& a : originIdToMaxTsMap) {

@@ -24,14 +24,9 @@ namespace NES::Join {
 
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
-                                           Windowing::DistributionCharacteristicPtr distributionType,
-                                           Windowing::WindowTriggerPolicyPtr triggerPolicy,
-                                           BaseJoinActionDescriptorPtr triggerAction);
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType, Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction, size_t numberOfInputEdgesLeft, size_t numberOfInputEdgesRight);
 
-    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
-                          Windowing::DistributionCharacteristicPtr distributionType,
-                          Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction);
+    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType, Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction, size_t numberOfInputEdgesLeft, size_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on left join key
@@ -60,7 +55,8 @@ class LogicalJoinDefinition {
     */
     Windowing::DistributionCharacteristicPtr getDistributionType() const;
 
-    size_t getNumberOfInputEdges();
+    size_t getNumberOfInputEdgesLeft();
+    size_t getNumberOfInputEdgesRight();
 
   private:
     FieldAccessExpressionNodePtr joinKey;
@@ -68,7 +64,8 @@ class LogicalJoinDefinition {
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;
     Windowing::DistributionCharacteristicPtr distributionType;
-    size_t numberOfInputEdges;
+    size_t numberOfInputEdgesLeft;
+    size_t numberOfInputEdgesRight;
 };
 
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;

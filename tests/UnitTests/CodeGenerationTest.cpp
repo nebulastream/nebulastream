@@ -1276,7 +1276,7 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(),
                                                                                                                    "key")->as<FieldAccessExpressionNode>(),
                                                                                  TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),
-                                                                                 distrType, triggerPolicy, triggerAction);
+                                                                                 distrType, triggerPolicy, triggerAction, 1, 1);
 
     context1->isLeftSide = true;
     codeGenerator->generateCodeForJoin(joinDef, context1);
