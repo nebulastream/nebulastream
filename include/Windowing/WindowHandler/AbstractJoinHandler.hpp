@@ -18,8 +18,8 @@
 #define INCLUDE_JOIN_WINDOW_HPP_
 
 #include <Util/Logger.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <algorithm>
 #include <atomic>
 #include <iostream>
@@ -31,11 +31,7 @@
 
 namespace NES::Join {
 
-enum JoinSides {
-    leftSide = 0,
-    rightSide = 1,
-    undefinedSide = 2
-};
+enum JoinSides { leftSide = 0, rightSide = 1, undefinedSide = 2 };
 
 /**
  * @brief The abstract window handler is the base class for all window handlers
@@ -68,7 +64,8 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) = 0;
+    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
+                       uint32_t pipelineStageId, uint64_t originId) = 0;
 
     /**
      * @brief Returns window manager.
@@ -86,13 +83,10 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      * @return watermark
      */
     [[nodiscard]] uint64_t getLastWatermark(JoinSides side) const {
-        if (side == leftSide) {
-            return lastWatermarkLeft;
-        } else if (side == rightSide) {
-            return lastWatermarkRight;
-        } else {
-            NES_ERROR("getLastWatermark: invalid side");
-            return 0;
+        switch (side) {
+            case leftSide: return lastWatermarkLeft;
+            case rightSide: return lastWatermarkRight;
+            default: NES_ERROR("getLastWatermark: invalid side"); return 0;
         }
     }
 
@@ -102,12 +96,10 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      * @param side
      */
     void setLastWatermark(uint64_t lastWatermark, JoinSides side) {
-        if (side == leftSide) {
-            lastWatermarkLeft = lastWatermark;
-        } else if (side == rightSide) {
-            lastWatermarkRight = lastWatermark;
-        } else {
-            NES_ERROR("setLastWatermark: invalid side");
+        switch (side) {
+            case leftSide: lastWatermarkLeft = lastWatermark; break;
+            case rightSide: lastWatermarkRight = lastWatermark; break;
+            default: NES_ERROR("setLastWatermark: invalid side");
         }
     }
 
@@ -118,13 +110,10 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      * @return max ts.
      */
     uint32_t getMaxTs(uint32_t originId, JoinSides side) {
-        if (side == leftSide) {
-            return originIdToMaxTsMapLeft[originId];
-        } else if (side == rightSide) {
-            return originIdToMaxTsMapRight[originId];
-        } else {
-            NES_ERROR("getMaxTs: invalid side");
-            return 0;
+        switch (side) {
+            case leftSide: return originIdToMaxTsMapLeft[originId];
+            case rightSide: return originIdToMaxTsMapRight[originId];
+            default: NES_ERROR("getMaxTs: invalid side"); return 0;
         }
     };
 
@@ -134,13 +123,10 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      * @return size of origin map.
      */
     uint64_t getNumberOfMappings(JoinSides side) {
-        if (side == leftSide) {
-            return originIdToMaxTsMapLeft.size();
-        } else if (side == rightSide) {
-            return originIdToMaxTsMapRight.size();
-        } else {
-            NES_ERROR("getNumberOfMappings: invalid side");
-            return 0;
+        switch (side) {
+            case leftSide: return originIdToMaxTsMapLeft.size();
+            case rightSide: return originIdToMaxTsMapRight.size();
+            default: NES_ERROR("getNumberOfMappings: invalid side"); return 0;
         }
     };
 
@@ -162,30 +148,38 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     }
 
     /**
-     * @brief Calculate the min watermark
+     * @brief Calculate the min watermark for left or right side for among each input edge
      * @return MinAggregationDescriptor watermark
      */
     uint64_t getMinWatermark(JoinSides side) {
         if (side == leftSide) {
             if (originIdToMaxTsMapLeft.size() == numberOfInputEdgesLeft) {
-                std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMapLeft.begin(), originIdToMaxTsMapLeft.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-                  return a.second < b.second;
-                });
+                std::map<uint64_t, uint64_t>::iterator min =
+                    std::min_element(originIdToMaxTsMapLeft.begin(), originIdToMaxTsMapLeft.end(),
+                                     [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
+                                         return a.second < b.second;
+                                     });
                 NES_DEBUG("getMinWatermark() originIdToMaxTsMapLeft return min=" << min->second);
                 return min->second;
             } else {
-                NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings for originIdToMaxTsMapLeft=" << originIdToMaxTsMapLeft.size() << " expected mappings=" << numberOfInputEdgesLeft);
+                NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
+                          "originIdToMaxTsMapLeft="
+                          << originIdToMaxTsMapLeft.size() << " expected mappings=" << numberOfInputEdgesLeft);
                 return 0;//TODO: we have to figure out how many downstream positions are there
             }
         } else if (side == rightSide) {
             if (originIdToMaxTsMapRight.size() == numberOfInputEdgesRight) {
-                std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMapRight.begin(), originIdToMaxTsMapRight.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-                  return a.second < b.second;
-                });
+                std::map<uint64_t, uint64_t>::iterator min =
+                    std::min_element(originIdToMaxTsMapRight.begin(), originIdToMaxTsMapRight.end(),
+                                     [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
+                                         return a.second < b.second;
+                                     });
                 NES_DEBUG("getMinWatermark() originIdToMaxTsMapRight return min=" << min->second);
                 return min->second;
             } else {
-                NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings for originIdToMaxTsMapRight=" << originIdToMaxTsMapRight.size() << " expected mappings=" << numberOfInputEdgesRight);
+                NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
+                          "originIdToMaxTsMapRight="
+                          << originIdToMaxTsMapRight.size() << " expected mappings=" << numberOfInputEdgesRight);
                 return 0;//TODO: we have to figure out how many downstream positions are there
             }
         } else {
@@ -198,8 +192,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      * @param ts
      * @param originId
      */
-    virtual void
-    updateMaxTs(uint64_t ts, uint64_t originId) = 0;
+    virtual void updateMaxTs(uint64_t ts, uint64_t originId) = 0;
 
   protected:
     std::atomic_bool running{false};
@@ -217,5 +210,5 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     size_t numberOfInputEdgesRight;
 };
 
-}// namespace NES::Windowing
+}// namespace NES::Join
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */
