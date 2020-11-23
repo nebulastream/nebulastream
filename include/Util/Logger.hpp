@@ -204,22 +204,22 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
 
     // set log level
 #ifdef NES_LOGGING_LEVEL
-#if NES_LOGGING_LEVEL >= LEVEL_FATAL
+#if NES_LOGGING_LEVEL == LEVEL_FATAL
     NESLogger->setLevel(log4cxx::Level::getFatal());
 #endif
-#if NES_LOGGING_LEVEL >= LEVEL_ERROR
+#if NES_LOGGING_LEVEL == LEVEL_ERROR
     NESLogger->setLevel(log4cxx::Level::getError());
 #endif
-#if NES_LOGGING_LEVEL >= LEVEL_WARN
+#if NES_LOGGING_LEVEL == LEVEL_WARN
     NESLogger->setLevel(log4cxx::Level::getWarn());
 #endif
-#if NES_LOGGING_LEVEL >= LEVEL_INFO
+#if NES_LOGGING_LEVEL == LEVEL_INFO
     NESLogger->setLevel(log4cxx::Level::getInfo());
 #endif
-#if NES_LOGGING_LEVEL >= LEVEL_DEBUG
+#if NES_LOGGING_LEVEL == LEVEL_DEBUG
     NESLogger->setLevel(log4cxx::Level::getDebug());
 #endif
-#if NES_LOGGING_LEVEL >= LEVEL_TRACE
+#if NES_LOGGING_LEVEL == LEVEL_TRACE
     NESLogger->setLevel(log4cxx::Level::getTrace());
 #endif
 #else
