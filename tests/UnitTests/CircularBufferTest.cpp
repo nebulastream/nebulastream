@@ -24,9 +24,7 @@ namespace NES {
 class CircularBufferTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        std::cout << "Setup CircularBufferTest test class." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Setup CircularBufferTest test class." << std::endl; }
 
     /* Will be called before a test is executed. */
     void SetUp() {
@@ -35,14 +33,10 @@ class CircularBufferTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        std::cout << "Tear down CircularBufferTest test case." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down CircularBufferTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        std::cout << "Tear down CircularBufferTest test class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down CircularBufferTest test class." << std::endl; }
 
     uint64_t testCapacity = 3;
     int testValue = 1;
@@ -83,9 +77,9 @@ TEST_F(CircularBufferTest, emplaceFrontOnce) {
 TEST_F(CircularBufferTest, emplaceFrontFull) {
     CircularBuffer<int> circularBuffer(testCapacity);
 
-    circularBuffer.emplace(testValue); // at 2 in the end
-    circularBuffer.emplace(testValue + 1); // at 1
-    circularBuffer.emplace(testValue + 2); // at 0
+    circularBuffer.emplace(testValue);    // at 2 in the end
+    circularBuffer.emplace(testValue + 1);// at 1
+    circularBuffer.emplace(testValue + 2);// at 0
 
     EXPECT_TRUE(circularBuffer.full());
     EXPECT_EQ(circularBuffer.size(), testCapacity);
@@ -98,9 +92,9 @@ TEST_F(CircularBufferTest, emplaceFrontOneOverCapacity) {
     CircularBuffer<int> circularBuffer(testCapacity);
 
     circularBuffer.emplace(testValue);
-    circularBuffer.emplace(testValue + 1); // at 2
-    circularBuffer.emplace(testValue + 2); // at 1
-    circularBuffer.emplace(testValue + 3); // at 0
+    circularBuffer.emplace(testValue + 1);// at 2
+    circularBuffer.emplace(testValue + 2);// at 1
+    circularBuffer.emplace(testValue + 3);// at 0
 
     EXPECT_TRUE(circularBuffer.full());
     EXPECT_EQ(circularBuffer.size(), testCapacity);
