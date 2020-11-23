@@ -237,7 +237,6 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
         NES_ERROR("setupLogging: log level not supported " << getDebugLevelAsString(level));
         throw Exception("Error while setup logging");
     }
-
 #endif
 
 
