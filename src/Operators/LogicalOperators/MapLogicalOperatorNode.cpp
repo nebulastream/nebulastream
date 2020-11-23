@@ -18,7 +18,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
 
 namespace NES {
 

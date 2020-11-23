@@ -17,7 +17,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <z3++.h>

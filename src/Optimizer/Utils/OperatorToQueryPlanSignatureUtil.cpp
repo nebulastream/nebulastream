@@ -24,14 +24,17 @@
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
 #include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <z3++.h>
 
-namespace NES {
+namespace NES::Optimizer {
 
-z3::expr OperatorToZ3ExprUtil::createForOperator(OperatorNodePtr operatorNode, z3::context& context) {
+QueryPlanSignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(OperatorNodePtr operatorNode,
+                                                                          std::vector<QueryPlanSignaturePtr> subQuerySignatures,
+                                                                          z3::context& context) {
     NES_TRACE("Creating Z3 expression for operator " << operatorNode->toString());
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
@@ -55,7 +58,15 @@ z3::expr OperatorToZ3ExprUtil::createForOperator(OperatorNodePtr operatorNode, z
         return to_expr(context, Z3_mk_eq(context, var, val));
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
-        return ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context);
+        std::string fieldName = mapOperator->getMapExpression()->getField()->getFieldName();
+        z3::ExprPtr expr = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context);
+        if (subQuerySignatures.empty() || subQuerySignatures.size() > 1) {
+            NES_THROW_RUNTIME_ERROR("Map operator can't have empty or more than one children : " + operatorNode->toString());
+        }
+        z3::ExprPtr conds = subQuerySignatures[0]->getConds();
+        std::map<std::string, std::vector<z3::ExprPtr>> cols = subQuerySignatures[0]->getCols();
+        cols[fieldName] = {expr};
+        return QueryPlanSignature::create(conds, cols);
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         //TODO: will be done in another issue
         NES_NOT_IMPLEMENTED();
@@ -63,4 +74,4 @@ z3::expr OperatorToZ3ExprUtil::createForOperator(OperatorNodePtr operatorNode, z
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

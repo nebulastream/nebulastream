@@ -15,7 +15,7 @@
 */
 
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
 
 namespace NES {

@@ -16,11 +16,17 @@
 
 #include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
 
-namespace Optimizer {
+namespace NES::Optimizer {
 
-QueryPlanSignaturePtr QueryPlanSignature::create(Z3::ExprPtr conds, Z3::ExprPtr cols) {
+QueryPlanSignaturePtr QueryPlanSignature::create(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols) {
     return std::make_shared<QueryPlanSignature>(QueryPlanSignature(conds, cols));
 }
 
-QueryPlanSignature::QueryPlanSignature(Z3::ExprPtr conds, Z3::ExprPtr cols) : conds(conds), cols(cols) {}
-}// namespace Optimizer
+QueryPlanSignature::QueryPlanSignature(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols)
+    : conds(conds), cols(cols) {}
+
+z3::ExprPtr QueryPlanSignature::getConds() { return conds; }
+
+std::map<std::string, std::vector<z3::ExprPtr>> QueryPlanSignature::getCols() { return cols; }
+
+}// namespace NES::Optimizer

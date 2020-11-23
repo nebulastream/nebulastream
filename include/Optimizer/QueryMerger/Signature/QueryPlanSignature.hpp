@@ -17,14 +17,16 @@
 #ifndef NES_QUERYPLANSIGNATURE_HPP
 #define NES_QUERYPLANSIGNATURE_HPP
 
+#include <map>
 #include <memory>
+#include <vector>
 
-namespace Z3{
+namespace z3 {
 class expr;
 typedef std::shared_ptr<expr> ExprPtr;
-}
+}// namespace z3
 
-namespace Optimizer {
+namespace NES::Optimizer {
 class QueryPlanSignature;
 typedef std::shared_ptr<QueryPlanSignature> QueryPlanSignaturePtr;
 
@@ -54,12 +56,25 @@ class QueryPlanSignature {
      * @param cols : the predicates involving columns to be extracted
      * @return Shared instance of the query plan signature.
      */
-    static QueryPlanSignaturePtr create(Z3::ExprPtr conds, Z3::ExprPtr cols);
+    static QueryPlanSignaturePtr create(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
+
+    /**
+     * @brief Get the conditions
+     * @return Condition predicates in CNF form
+     */
+    z3::ExprPtr getConds();
+
+    /**
+     * @brief Get the column predicates
+     * @return map of column name to list of predicates
+     */
+    std::map<std::string, std::vector<z3::ExprPtr>> getCols();
+
   private:
-    QueryPlanSignature(Z3::ExprPtr conds, Z3::ExprPtr cols);
-    Z3::ExprPtr conds;
-    Z3::ExprPtr cols;
+    QueryPlanSignature(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
+    z3::ExprPtr conds;
+    std::map<std::string, std::vector<z3::ExprPtr>> cols;
 };
-}// namespace Optimizer
+}// namespace NES::Optimizer
 
 #endif//NES_QUERYPLANSIGNATURE_HPP

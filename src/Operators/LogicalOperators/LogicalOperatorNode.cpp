@@ -15,8 +15,8 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
+#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
 
 namespace NES {
 
@@ -28,14 +28,14 @@ void LogicalOperatorNode::inferSignature(z3::ContextPtr context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("Inferring Z3 expressions for " << operatorNode->toString());
 
-    std::vector<Optimizer::QueryPlanSignaturePtr> subQuerySignature;
+    std::vector<Optimizer::QueryPlanSignaturePtr> subQuerySignatures;
 
     for (auto& child : children) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferSignature(context);
-        subQuerySignature.emplace_back(childOperator->getSignature());
+        subQuerySignatures.emplace_back(childOperator->getSignature());
     }
-    subQuerySignature = OperatorToZ3ExprUtil::createForOperator(operatorNode, *context));
+    signature = Optimizer::OperatorToQueryPlanSignatureUtil::createForOperator(operatorNode, subQuerySignatures, *context);
 }
 
 }// namespace NES
