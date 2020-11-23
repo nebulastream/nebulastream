@@ -131,23 +131,6 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     };
 
     /**
-     * @brief This method return the entire content of the origin mappings
-     * @return
-     */
-    std::string getAllMaxTs() {
-        std::stringstream ss;
-        ss << "left=";
-        for (auto& a : originIdToMaxTsMapLeft) {
-            ss << " id=" << a.first << " val=" << a.second;
-        }
-        ss << "right=";
-        for (auto& a : originIdToMaxTsMapRight) {
-            ss << " id=" << a.first << " val=" << a.second;
-        }
-        return ss.str();
-    }
-
-    /**
      * @brief Calculate the min watermark for left or right side for among each input edge
      * @return MinAggregationDescriptor watermark
      */
@@ -183,8 +166,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
                 return 0;//TODO: we have to figure out how many downstream positions are there
             }
         } else {
-            NES_ERROR("getNumberOfMappings: invalid side");
-            return 0;
+            NES_THROW_RUNTIME_ERROR("getNumberOfMappings: invalid side");
         }
     }
     /**

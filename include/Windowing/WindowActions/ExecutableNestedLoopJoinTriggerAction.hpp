@@ -52,38 +52,11 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
     bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
                   StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
-                  size_t currentWatermarkLeft,
-                  size_t currentWatermarkRight,
-                  size_t lastWatermarkLeft,
-                  size_t lastWatermarkRight) {
-#ifdef EXTENDEDDEBUGGING
-        //Print the state content for debugging purposes
-        NES_TRACE("leftJoinState content=");
-        for (auto& [key, val] : leftJoinState->rangeAll()) {
-            NES_TRACE("Key: " << key << " Value: " << val);
-            for (auto& slice : val->getSliceMetadata()) {
-                NES_TRACE("start=" << slice.getStartTs() << " end=" << slice.getEndTs());
-            }
-            for (auto agg : val->getPartialAggregates()) {
-                NES_TRACE("key=" << key);
-                NES_TRACE("value=" << agg);
-            }
-            NES_TRACE(" last watermark=" << val->getLastWatermark() << " minwatermark=" << val->getMinWatermark() << " allMaxTs=" << val->getAllMaxTs());
-        }
-
-        NES_TRACE("rightJoinSate content=");
-        for (auto& [key, val] : rightJoinSate->rangeAll()) {
-            NES_TRACE("Key: " << key << " Value: " << val);
-            for (auto& slice : val->getSliceMetadata()) {
-                NES_TRACE("start=" << slice.getStartTs() << " end=" << slice.getEndTs());
-            }
-            for (auto agg : val->getPartialAggregates()) {
-                NES_TRACE("key=" << key);
-                NES_TRACE("value=" << agg);
-            }
-            NES_TRACE(" last watermark=" << val->getLastWatermark() << " minwatermark=" << val->getMinWatermark() << " allMaxTs=" << val->getAllMaxTs());
-        }
-#endif
+                  uint64_t currentWatermarkLeft,
+                  uint64_t currentWatermarkRight,
+                  uint64_t lastWatermarkLeft,
+                  uint64_t lastWatermarkRight) {
+        
         auto tupleBuffer = this->bufferManager->getBufferBlocking();
         tupleBuffer.setOriginId(this->originId);
         // iterate over all keys in both window states and perform the join
@@ -157,10 +130,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     void joinWindows(KeyType key,
                      Windowing::WindowSliceStore<KeyType>* leftStore,
                      Windowing::WindowSliceStore<KeyType>* rightStore, TupleBuffer& tupleBuffer,
-                     size_t currentWatermarkLeft,
-                     size_t currentWatermarkRight,
-                     size_t lastWatermarkLeft,
-                     size_t lastWatermarkRight) {
+                     uint64_t currentWatermarkLeft,
+                     uint64_t currentWatermarkRight,
+                     uint64_t lastWatermarkLeft,
+                     uint64_t lastWatermarkRight) {
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore  watermark is=" << currentWatermarkLeft << " lastwatermark=" << lastWatermarkLeft);
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:rightStore  watermark is=" << currentWatermarkRight << " lastwatermark=" << lastWatermarkRight);
 

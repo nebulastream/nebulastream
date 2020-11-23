@@ -469,19 +469,12 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-
-    std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
     string expectedContent =
         "start:INTEGER,end:INTEGER,key:INTEGER,value:INTEGER\n"
         "1000,2000,1,2\n"
         "1000,2000,4,2\n"
         "1000,2000,12,2\n";
-
-    NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): content=" << content);
-    NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
