@@ -134,7 +134,7 @@ class TestUtils {
                 })
                 .wait();
 
-            if (currentResult == expectedResult) {
+            if (currentResult >= expectedResult) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct");
                 return true;
             }
