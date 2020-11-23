@@ -52,83 +52,125 @@ TEST_F(CircularBufferTest, initialState) {
     CircularBuffer<int> circularBuffer(testCapacity);
     EXPECT_EQ(circularBuffer.capacity(), testCapacity);
     EXPECT_EQ(circularBuffer.size(), 0);
-    EXPECT_FALSE(circularBuffer.isFull());
-    EXPECT_TRUE(circularBuffer.isEmpty());
+    EXPECT_EQ(circularBuffer.front(), 0);
+    EXPECT_EQ(circularBuffer.back(), 0);
+    EXPECT_FALSE(circularBuffer.full());
+    EXPECT_TRUE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, writeOnce) {
+TEST_F(CircularBufferTest, randomAccessInitial) {
     CircularBuffer<int> circularBuffer(testCapacity);
-    circularBuffer.write(testValue);
+    EXPECT_EQ(circularBuffer.at(0), 0);
+    EXPECT_EQ(circularBuffer[0], circularBuffer.at(0));
+}
+
+TEST_F(CircularBufferTest, pushFrontOnce) {
+    CircularBuffer<int> circularBuffer(testCapacity);
+    circularBuffer.push(testValue);
     EXPECT_EQ(circularBuffer.size(), 1);
-    EXPECT_FALSE(circularBuffer.isFull());
-    EXPECT_FALSE(circularBuffer.isEmpty());
+    EXPECT_FALSE(circularBuffer.full());
+    EXPECT_FALSE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, readOnce) {
+TEST_F(CircularBufferTest, emplaceFrontOnce) {
     CircularBuffer<int> circularBuffer(testCapacity);
-
-    circularBuffer.write(testValue);
-
-    EXPECT_EQ(circularBuffer.read(), testValue);
-    EXPECT_TRUE(circularBuffer.isEmpty());
+    circularBuffer.emplace(testValue);
+    EXPECT_EQ(circularBuffer.size(), 1);
+    EXPECT_FALSE(circularBuffer.full());
+    EXPECT_FALSE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, writeUntilFull) {
+TEST_F(CircularBufferTest, emplaceFrontFull) {
     CircularBuffer<int> circularBuffer(testCapacity);
 
-    while (!circularBuffer.isFull()) {
-        circularBuffer.write(testValue);
+    circularBuffer.emplace(testValue); // at 2 in the end
+    circularBuffer.emplace(testValue + 1); // at 1
+    circularBuffer.emplace(testValue + 2); // at 0
+
+    EXPECT_TRUE(circularBuffer.full());
+    EXPECT_EQ(circularBuffer.size(), testCapacity);
+    EXPECT_EQ(circularBuffer.at(0), testValue + 2);
+    EXPECT_EQ(circularBuffer.at(1), testValue + 1);
+    EXPECT_EQ(circularBuffer.at(2), testValue);
+}
+
+TEST_F(CircularBufferTest, emplaceFrontOneOverCapacity) {
+    CircularBuffer<int> circularBuffer(testCapacity);
+
+    circularBuffer.emplace(testValue);
+    circularBuffer.emplace(testValue + 1); // at 2
+    circularBuffer.emplace(testValue + 2); // at 1
+    circularBuffer.emplace(testValue + 3); // at 0
+
+    EXPECT_TRUE(circularBuffer.full());
+    EXPECT_EQ(circularBuffer.size(), testCapacity);
+    EXPECT_EQ(circularBuffer.at(0), testValue + 3);
+    EXPECT_EQ(circularBuffer.at(1), testValue + 2);
+    EXPECT_EQ(circularBuffer.at(2), testValue + 1);
+}
+
+TEST_F(CircularBufferTest, pushUntilFull) {
+    CircularBuffer<int> circularBuffer(testCapacity);
+
+    while (!circularBuffer.full()) {
+        circularBuffer.push(testValue);
     }
 
     EXPECT_EQ(circularBuffer.size(), testCapacity);
-    EXPECT_TRUE(circularBuffer.isFull());
-    EXPECT_FALSE(circularBuffer.isEmpty());
+    EXPECT_TRUE(circularBuffer.full());
+    EXPECT_FALSE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, writeUntilFullReadUntilEmpty) {
+TEST_F(CircularBufferTest, emplaceUntilFull) {
     CircularBuffer<int> circularBuffer(testCapacity);
 
-    while (!circularBuffer.isFull()) {
-        circularBuffer.write(testValue);
+    while (!circularBuffer.full()) {
+        circularBuffer.emplace(testValue);
     }
 
-    while (!circularBuffer.isEmpty()) {
-        EXPECT_EQ(circularBuffer.read(), testValue);
-    }
-
-    EXPECT_TRUE(circularBuffer.isEmpty());
+    EXPECT_EQ(circularBuffer.size(), testCapacity);
+    EXPECT_TRUE(circularBuffer.full());
+    EXPECT_FALSE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, writeOnceOverCapacity) {
+TEST_F(CircularBufferTest, iterateAutoNotFull) {
     CircularBuffer<int> circularBuffer(testCapacity);
+
+    circularBuffer.push(testValue + 1);
+    circularBuffer.push(testValue);
+
+    EXPECT_FALSE(circularBuffer.full());
 
     int i = 0;
-    while (!circularBuffer.isFull()) {
-        circularBuffer.write(i++);
+    for (auto c : circularBuffer) {
+        EXPECT_EQ(c, testValue + i++);
     }
-    circularBuffer.write(i++);
-
-    // 1 is the second item inserted
-    EXPECT_EQ(circularBuffer.read(), 1);
+    EXPECT_EQ(i, circularBuffer.size());
 }
 
-TEST_F(CircularBufferTest, readOnceWhenEmpty) {
+TEST_F(CircularBufferTest, popAfterPushOnce) {
     CircularBuffer<int> circularBuffer(testCapacity);
-
-    EXPECT_TRUE(circularBuffer.isEmpty());
-
-    // 0 comes from T();
-    EXPECT_EQ(circularBuffer.read(), 0);
+    circularBuffer.push(testValue);
+    circularBuffer.pop();
+    EXPECT_FALSE(circularBuffer.full());
+    EXPECT_TRUE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, resetOnceAfterOneWrite) {
+TEST_F(CircularBufferTest, popAfterTwoPushes) {
     CircularBuffer<int> circularBuffer(testCapacity);
+    circularBuffer.push(testValue + 1);
+    circularBuffer.push(testValue);
+    circularBuffer.pop();
+    EXPECT_FALSE(circularBuffer.full());
+    EXPECT_EQ(circularBuffer.size(), 1);
+    EXPECT_EQ(circularBuffer.capacity(), testCapacity);
+}
 
-    circularBuffer.write(testValue);
-    circularBuffer.reset();
-
-    // 0 comes from T();
-    EXPECT_EQ(circularBuffer.read(), 0);
+TEST_F(CircularBufferTest, popOnEmpty) {
+    CircularBuffer<int> circularBuffer(testCapacity);
+    auto val = circularBuffer.pop();
+    EXPECT_TRUE(circularBuffer.empty());
+    EXPECT_EQ(val, 0);
 }
 
 }// namespace NES

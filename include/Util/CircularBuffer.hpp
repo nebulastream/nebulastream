@@ -18,16 +18,75 @@
 #define NES_CIRCULARBUFFER_H_
 
 #include <memory>
-#include <mutex>
+#include <type_traits>
 namespace NES {
+
+namespace detail {
+
+// true if const iterator, false otherwise
+template<class, bool>
+class CircularBufferIterator;
+
+/**
+ * @brief The CircularBufferIterator class holds all iterator
+ * related typedefs and overloaded operators. The template
+ * takes as argument the const-ness (true/false) to avoid
+ * having many different types of iterators with the same
+ * functionality.
+ *
+ * @tparam cbT type of circular buffer
+ * @tparam isConst is/is-not const
+ */
+template<class cbT, bool isConst>
+class CircularBufferIterator {
+  public:
+    using type = CircularBufferIterator<cbT, isConst>;
+    using value_type = typename cbT::value_type;
+    using difference_type = std::ptrdiff_t;
+    using pointer = typename std::conditional_t<isConst, const value_type, value_type>*;
+    using reference = typename std::conditional_t<isConst, const value_type, value_type>&;
+    using iterator_category = std::random_access_iterator_tag;
+
+    CircularBufferIterator() = default;
+
+    reference operator*() const noexcept { return container->at(idx); }
+    CircularBufferIterator& operator++() noexcept {
+        ++idx;
+        return *this;
+    }
+
+    friend CircularBufferIterator operator-(CircularBufferIterator it, int i) noexcept {
+        it -= i;
+        return it;
+    }
+    friend CircularBufferIterator& operator-=(CircularBufferIterator& it, int i) noexcept {
+        it.idx -= i;
+        return it;
+    }
+    template<bool C>
+    bool operator==(const CircularBufferIterator<cbT, C>& rhs) const noexcept { return idx == rhs.idx; }
+    template<bool C>
+    bool operator!=(const CircularBufferIterator<cbT, C>& rhs) const noexcept { return idx != rhs.idx; }
+
+  private:
+    // reuse typenames
+    friend cbT;
+    using size_type = typename cbT::size_type;
+    CircularBufferIterator(size_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept
+        : idx(idx), container(rv){};
+    size_type idx;
+
+    // non-const/const representation of container
+    std::conditional_t<isConst, const cbT, cbT>* container;
+};// class CircularBufferIterator
+}// namespace detail
 
 /**
  * @brief A templated class for a circular buffer. The implementation
- * is header-only. Currently the structure supports write/read/reset
- * and checks for isFull/isEmpty/capacity/size. The isFull/isEmpty
- * bools are used to not waste a slot in the buffer and guard
- * from reading from an empty buffer as well as writing to a
- * full buffer, signalling wrap-around.
+ * is header-only. Currently the structure supports push/emplace
+ * at front and checks for full/capacity/size. The iterators are
+ * only forward. Addition of elements is at the front. Removal
+ * is at the back.
  *
  * Refs:
  * - https://www.boost.org/doc/libs/1_74_0/doc/html/boost/circular_buffer.html
@@ -36,129 +95,148 @@ namespace NES {
  *
  * @tparam T - type of the value in the buffer slots.
  */
-template<class T>
+template<
+    class T,
+    typename Allocator = std::allocator<T>,
+    std::enable_if_t<std::is_integral<T>::value || std::is_pointer<T>::value, int> = 0>
 class CircularBuffer {
   public:
+    // STL-style typedefs, similar to std::deque
+    using value_type = T;
+    using allocator_type = Allocator;
+    using size_type = std::size_t;
+    using pointer = T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using difference_type = std::ptrdiff_t;
+    using iterator = detail::CircularBufferIterator<CircularBuffer, false>;
+    using const_iterator = detail::CircularBufferIterator<CircularBuffer, true>;
+
     /**
      * @brief The ctor of the circ buffer, takes a size parameter.
      * @param size of the internal buffer
      */
     explicit CircularBuffer(uint64_t size) : maxSize(size),
-                                             buffer(std::make_unique<T[]>(size)),
-                                             mutex(){};
+                                             currentSize(0),
+                                             head(0),
+                                             buffer(std::make_unique<T[]>(size)){};
 
-    /**
-     * @brief Writes an item to a slot in the buffer. Wraps around
-     * using modulo. This can potentially change to mod2. See
-     * ref #2 in class docu.
-     *
-     * We immediately write an item to the current head. If
-     * the buffer is full, we move the tail to mod maxSize.
-     * We move the head to mod maxSize regardless. Full is
-     * assigned the result of current head equals current
-     * tail.
-     *
-     * @param item to write
-     */
-    void write(T item) {
-        std::unique_lock<std::mutex> lock(mutex);
-        buffer[head] = item;
+    // copy and move
+    CircularBuffer(const CircularBuffer& other) = delete;
+    CircularBuffer(CircularBuffer&& other) noexcept = default;
 
-        if (full) {
-            tail = (tail + 1) % maxSize;
+    CircularBuffer& operator=(const CircularBuffer&) = delete;
+    CircularBuffer& operator=(CircularBuffer&&) noexcept = default;
+
+    ~CircularBuffer() = default;
+
+    // front/end, access begin or end ptr
+    reference front() noexcept { return *begin(); }
+    reference back() noexcept { return *(end() - 1); }
+    const_reference front() const noexcept { return *begin(); }
+    const_reference back() const noexcept { return *(end() - 1); }
+
+    // size-capacity
+    [[nodiscard]] size_type size() const noexcept { return currentSize; }
+    [[nodiscard]] size_type capacity() const noexcept { return maxSize; }
+    [[nodiscard]] bool empty() const { return currentSize == 0; }
+    [[nodiscard]] bool full() const { return maxSize == currentSize; }
+
+    // iterators
+    iterator begin() noexcept { return iterator(0, this); }
+    iterator end() noexcept { return iterator(size(), this); }
+    const_iterator cbegin() const noexcept { return const_iterator(0, this); }
+    const_iterator cend() const noexcept { return const_iterator(size(), this); }
+    const_iterator begin() const noexcept { return cbegin(); }
+    const_iterator end() const noexcept { return cend(); }
+
+    // random-access: [] and at
+    reference operator[](size_type idx) { return buffer[(head + idx) % maxSize]; }
+    reference at(size_type idx) { return buffer[(head + idx) % maxSize]; }
+    const_reference operator[](const size_type idx) const { return buffer[(head + idx) % maxSize]; }
+    const_reference at(const size_type idx) const { return buffer[(head + idx) % maxSize]; }
+
+    // modifiers: push and emplace front
+    template<bool b = true, typename = std::enable_if_t<b && std::is_copy_assignable<T>::value>>
+    void push(const T& value) noexcept(std::is_nothrow_copy_assignable<T>::value) {
+        if (full()) {
+            decrementHead();
+        } else {
+            decrementHeadIncSize();
         }
-
-        head = (head + 1) % maxSize;
-        full = head == tail;
+        front_() = value;
     }
 
-    /**
-     * @brief Reads an item from the next slot in the buffer.
-     * If the buffer is empty, it returns a default value.
-     * The full flag is now false and a slot is available
-     * for writing. The tail is wrapped around using
-     * tail+1 mod maxSize.
-     *
-     * @return the next value from the buffer
-     */
-    T read() {
-        std::unique_lock<std::mutex> lock(mutex);
-        if (this->isEmpty()) {
+    template<bool b = true, typename = std::enable_if_t<b && std::is_move_assignable<T>::value>>
+    void push(T&& value) noexcept(std::is_nothrow_move_assignable<T>::value) {
+        if (full()) {
+            decrementHead();
+        } else {
+            decrementHeadIncSize();
+        }
+        front_() = std::move(value);
+    }
+
+    template<typename... Args>
+    void emplace(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value&& std::is_nothrow_move_assignable<T>::value) {
+        if (full()) {
+            decrementHead();
+        } else {
+            decrementHeadIncSize();
+        }
+        front_() = T(std::forward<Args>(args)...);
+    }
+
+    // modifier: pop only in back
+    T pop() {
+        if (empty()) {
             return T();
         }
-
-        auto value = buffer[tail];
-        full = false;
-        tail = (tail + 1) % maxSize;
-
-        return value;
-    }
-
-    /**
-     * @brief Resets the buffer, by moving head to tail.
-     */
-    void reset() {
-        std::unique_lock<std::mutex> lock(mutex);
-        head = tail;
-        full = false;
-    }
-
-    /**
-     * @brief Checks if buffer is empty.
-     * @return true if not full and buffer is same as tail
-     */
-    bool isEmpty() const {
-        return !full && (head == tail);
-    }
-
-    /**
-     * @brief Checks is buffer is full.
-     * @return value of full
-     */
-    bool isFull() const {
-        return full;
-    }
-
-    /**
-     * @brief Return total capacity of buffer.
-     * @return value of maxSize
-     */
-    uint64_t capacity() const {
-        return maxSize;
-    }
-
-    /**
-     * @brief Return size of buffer (no. of items).
-     * @return head - tail and + maxSize if tail > head
-     */
-    uint64_t size() const {
-        uint64_t size = maxSize;
-        if (!full) {
-            size = (head >= tail)
-                ? head - tail
-                : maxSize + head - tail;
-        }
-        return size;
+        auto& elt = back_();
+        decrementSize();
+        return std::move(elt);
     }
 
   private:
     // indicates writes
-    uint64_t head = 0;
-
-    // indicates reads
-    uint64_t tail = 0;
+    uint64_t head;
 
     // maximum size of buffer
-    const uint64_t maxSize;
+    size_type maxSize;
+
+    // current size of buffer
+    size_type currentSize;
 
     // the buffer, of type T[]
     std::unique_ptr<T[]> buffer;
 
-    // state of fullness
-    bool full = false;
+    // front and back, with wrap-around, for assignment
+    reference front_() noexcept { return buffer[head]; }
+    const_reference front_() const noexcept { return buffer[head]; }
+    reference back_() noexcept { return buffer[(head + currentSize - 1) % maxSize]; }
+    const_reference back_() const noexcept { return buffer[(head + currentSize - 1) % maxSize]; }
 
-    std::mutex mutex;
-};
+    void incrementHeadDecrSize() noexcept {
+        head = (head + 1) % maxSize;
+        --currentSize;
+    }
+    void decrementHeadIncSize() noexcept {
+        head = (head + maxSize - 1) % maxSize;
+        ++currentSize;
+    }
+    void incrementSize() noexcept {
+        ++currentSize;
+    }
+    void decrementSize() noexcept {
+        --currentSize;
+    }
+    void incrementHead() noexcept {
+        head = (head + 1) % maxSize;
+    }
+    void decrementHead() noexcept {
+        head = (head + maxSize - 1) % maxSize;
+    }
 
+};// class CircularBuffer
 }// namespace NES
 #endif /* INCLUDE_CIRCULARBUFFER_H_ */
