@@ -749,12 +749,12 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
 
     //TODO: make query work
     auto query = TestQuery::from(ysbSource->getSchema())
-                     //.filter(Attribute("event_type")>1)
-                     //             .windowByKey(
-                     //                 Attribute("campaign_id"),
-                     //                 TumblingWindow::of(
-                     //                     EventTime(Attribute("current_ms")), Seconds(10)),
-                     //                 Count())
+        .filter(Attribute("event_type")>1)
+                     .windowByKey(
+                         Attribute("campaign_id"),
+                         TumblingWindow::of(
+                             EventTime(Attribute("current_ms")), Seconds(10)),
+                         Count())
                      .sink(DummySink::create());
 
     //TODO: change schema to match the appropriate output schema
@@ -767,6 +767,9 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
+    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
+    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
@@ -774,6 +777,8 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
                        .addSource(ysbSource)
+                       .setWinDef(winOps[0]->getWindowDefinition())
+//                       .setSchema(leafOps[0]->getInputSchema())
                        .addSink(testSink)
                        .addOperatorQueryPlan(generatableOperators);
 
