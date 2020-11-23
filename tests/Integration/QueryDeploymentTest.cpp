@@ -454,7 +454,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("window").join(Query::from("window2"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -462,7 +462,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 5));
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 4));
 
     NES_DEBUG("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -473,13 +474,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     std::string content((std::istreambuf_iterator<char>(ifs)),
                         (std::istreambuf_iterator<char>()));
     string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|key:UINT64|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1000|2000|1|2|\n"
-        "|1000|2000|4|2|\n"
-        "|1000|2000|12|2|\n"
-        "+----------------------------------------------------+";
+        "start:INTEGER,end:INTEGER,key:INTEGER,value:INTEGER\n"
+        "1000,2000,1,2\n"
+        "1000,2000,4,2\n"
+        "1000,2000,12,2\n";
 
     NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): content=" << content);
     NES_DEBUG("QueryDeploymentTest(testDeployTwoWorkerJoinUsingTopDownOnSameSchema): expContent=" << expectedContent);

@@ -31,7 +31,7 @@
 
 namespace NES::Join {
 
-enum JoinSides { leftSide = 0, rightSide = 1, undefinedSide = 2 };
+enum JoinSides { leftSide = 0, rightSide = 1};
 
 /**
  * @brief The abstract window handler is the base class for all window handlers
