@@ -40,6 +40,8 @@ class JoinHandler : public AbstractJoinHandler {
         NES_DEBUG("Construct JoinHandler");
         numberOfInputEdgesRight = joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = joinDefinition->getNumberOfInputEdgesLeft();
+        lastWatermarkLeft = 0;
+        lastWatermarkRight = 0;
     }
 
     ~JoinHandler() {
@@ -75,7 +77,7 @@ class JoinHandler : public AbstractJoinHandler {
     * @brief triggers all ready windows.
     */
     void trigger() override {
-        NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString() << " origin id=" << originId);
+        NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString());
 
         if (originIdToMaxTsMapLeft.size() != numberOfInputEdgesLeft
             && originIdToMaxTsMapRight.size() != numberOfInputEdgesRight) {
@@ -101,39 +103,25 @@ class JoinHandler : public AbstractJoinHandler {
         // we have to start the processing from so-called lastWatermark
         // we cannot use 0 as this will create a lot of unnecessary windows
         if (lastWatermarkLeft == 0) {
-            uint64_t runningWatermark = std::numeric_limits<uint64_t>::max();
+            lastWatermarkLeft = std::numeric_limits<uint64_t>::max();
             for (auto& it : leftJoinState->rangeAll()) {
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
-                    runningWatermark = std::min(runningWatermark, slices[0].getStartTs());
+                    lastWatermarkLeft = std::min(lastWatermarkLeft, slices[0].getStartTs());
                 }
             }
-
-            if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
-                lastWatermarkLeft = runningWatermark;
-                NES_DEBUG("JoinHandler: set lastWatermarkLeft to min value of stores=" << lastWatermarkLeft);
-            } else {
-                NES_DEBUG("JoinHandler: lastWatermarkLeft as there is no buffer yet in any store, we cannot trigger");
-                return;
-            }
+            NES_DEBUG("JoinHandler: set lastWatermarkLeft to min value of stores=" << lastWatermarkLeft);
         }
 
         if (lastWatermarkRight == 0) {
-            uint64_t runningWatermark = std::numeric_limits<uint64_t>::max();
+            lastWatermarkRight = std::numeric_limits<uint64_t>::max();
             for (auto& it : rightJoinState->rangeAll()) {
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
-                    runningWatermark = std::min(runningWatermark, slices[0].getStartTs());
+                    lastWatermarkRight = std::min(lastWatermarkRight, slices[0].getStartTs());
                 }
             }
-
-            if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
-                lastWatermarkRight = runningWatermark;
-                NES_DEBUG("JoinHandler: set lastWatermarkRight to min value of stores=" << lastWatermarkRight);
-            } else {
-                NES_DEBUG("JoinHandler: lastWatermarkRight as there is no buffer yet in any store, we cannot trigger");
-                return;
-            }
+            NES_DEBUG("JoinHandler: set lastWatermarkRight to min value of stores=" << lastWatermarkRight);
         }
 
         NES_DEBUG("JoinHandler: run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight

@@ -383,12 +383,11 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-
     string expectedContent =
         "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
         "1000,2000,1,34\n"
-        "2000,3000,1,0\n"
         "1000,2000,2,0\n"
+        "2000,3000,1,0\n"
         "2000,3000,2,56\n";
 
 
