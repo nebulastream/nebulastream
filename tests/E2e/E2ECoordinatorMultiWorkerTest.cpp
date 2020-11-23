@@ -499,7 +499,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-//    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 9));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 8));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     std::ifstream ifs(outputFilePath.c_str());
