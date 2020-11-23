@@ -71,8 +71,8 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
 #define LEVEL_TRACE 6
 #define LEVEL_DEBUG 5
-#define LEVEL_INFO  4
-#define LEVEL_WARN  3
+#define LEVEL_INFO 4
+#define LEVEL_WARN 3
 #define LEVEL_ERROR 2
 #define LEVEL_FATAL 1
 
@@ -83,7 +83,7 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         LOG4CXX_TRACE(NESLogger, TEXT);                                                                                          \
     } while (0)
 #else
-#define NES_TRACE(TEXT) ((void)0)
+#define NES_TRACE(TEXT) ((void) 0)
 #endif
 
 #if NES_LOGGING_LEVEL >= LEVEL_DEBUG
@@ -106,8 +106,8 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 
 #if NES_LOGGING_LEVEL >= LEVEL_WARN
 #define NES_WARNING(TEXT)                                                                                                        \
-do {                                                                                                                             \
-            LOG4CXX_WARN(NESLogger, TEXT);                                                                                       \
+    do {                                                                                                                         \
+        LOG4CXX_WARN(NESLogger, TEXT);                                                                                           \
     } while (0)
 #else
 #define NES_WARNING(TEXT) ((void) 0)
@@ -125,7 +125,7 @@ do {                                                                            
 #if NES_LOGGING_LEVEL >= LEVEL_FATAL
 #define NES_FATAL_ERROR(TEXT)                                                                                                    \
     do {                                                                                                                         \
-            LOG4CXX_ERROR(NESLogger, TEXT);                                                                                      \
+        LOG4CXX_ERROR(NESLogger, TEXT);                                                                                          \
     } while (0)
 #else
 #define NES_FATAL_ERROR(TEXT) ((void) 0)
@@ -238,7 +238,6 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
         throw Exception("Error while setup logging");
     }
 #endif
-
 
     NESLogger->addAppender(file);
     NESLogger->addAppender(console);
