@@ -27,7 +27,7 @@
 #include <Util/Logger.hpp>
 #include <Optimizer/QueryMerger/EqualQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
-#include <Optimizer/Phases/Z3ExpressionInferencePhase.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -92,7 +92,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
-    auto z3InferencePhase = Optimizer::Z3ExpressionInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 

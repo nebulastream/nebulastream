@@ -23,13 +23,16 @@
 #include <Operators/OperatorNode.hpp>
 
 namespace z3 {
-
 class expr;
 typedef std::shared_ptr<expr> ExprPtr;
-
 class context;
 typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
+
+namespace NES::Optimizer{
+class QueryPlanSignature;
+typedef std::shared_ptr<QueryPlanSignature> QueryPlanSignaturePtr;
+}
 
 namespace NES {
 
@@ -43,16 +46,16 @@ class LogicalOperatorNode : public OperatorNode {
      * @param context: the shared pointer to the z3::context
      * @return object of type Z3:expr
      */
-    void inferZ3Expression(z3::ContextPtr context);
+    void inferSignature(z3::ContextPtr context);
 
     /**
      * @brief Get the Z3 expression for the logical operator
      * @return reference to the Z3 expression
      */
-    z3::expr& getZ3Expression();
+    Optimizer::QueryPlanSignaturePtr getSignature();
 
   protected:
-    z3::ExprPtr expr;
+    Optimizer::QueryPlanSignaturePtr signature;
 };
 
 }// namespace NES

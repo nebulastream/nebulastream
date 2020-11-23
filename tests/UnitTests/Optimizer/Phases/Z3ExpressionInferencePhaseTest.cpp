@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/Z3ExpressionInferencePhase.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -65,7 +65,7 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3ExpressionInferencePhase = Z3ExpressionInferencePhase::create(context);
+    auto z3ExpressionInferencePhase = SignatureInferencePhase::create(context);
 
     auto query1 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan1 = query1.getQueryPlan();
@@ -88,7 +88,7 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     auto context = z3ExpressionInferencePhase->getContext();
     z3::solver solver(*context);
 
-    Z3_ast arrays[] = {mapOperators1[0]->getZ3Expression(), !mapOperators2[0]->getZ3Expression()};
+    Z3_ast arrays[] = {mapOperators1[0]->getSignature(), !mapOperators2[0]->getSignature()};
     solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
     z3::check_result result = solver.check();
     ASSERT_EQ(result, z3::unsat);
@@ -99,7 +99,7 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     ASSERT_EQ(srcOperators1.size(), 1);
     ASSERT_EQ(srcOperators2.size(), 1);
 
-    Z3_ast arrays1[] = {srcOperators1[0]->getZ3Expression(), !srcOperators2[0]->getZ3Expression()};
+    Z3_ast arrays1[] = {srcOperators1[0]->getSignature(), !srcOperators2[0]->getSignature()};
     solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays1)));
     result = solver.check();
     ASSERT_EQ(result, z3::unsat);
