@@ -39,7 +39,7 @@ WindowAggregationPtr CountAggregationDescriptor::on() {
 WindowAggregationDescriptor::Type CountAggregationDescriptor::getType() { return Count; }
 
 void CountAggregationDescriptor::inferStamp(SchemaPtr) {
-    // a count aggregation is always on an int 64
+    // a count aggregation is always on an uint 64
     asField->setStamp(DataTypeFactory::createUInt64());
 }
 WindowAggregationPtr CountAggregationDescriptor::copy() {
