@@ -400,19 +400,27 @@ class TestUtils {
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
-            if(ifs.good() && ifs.is_open()) {
-                std::string content((std::istreambuf_iterator<char>(ifs)),
-                                    (std::istreambuf_iterator<char>()));
+            if (ifs.good() && ifs.is_open()) {
+                std::vector<std::string> expectedLines = UtilityFunctions::split(expectedContent, '\n');
+                std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+                int count = std::count(content.begin(), content.end(), '\n');
+                if (expectedLines.size() != count) {
+                    continue;
+                }
 
-                NES_INFO("checkOutputOrTimeout: content=" << content);
-                NES_INFO("checkOutputOrTimeout: expContent=" << expectedContent);
-                if(content == expectedContent)
-                {
-                    NES_INFO("checkOutputOrTimeout: content matches successfully");
+                size_t found = 0;
+                for (size_t i = 0; i < expectedLines.size(); i++) {
+                    if (content.find(expectedLines[i]) != std::string::npos) {
+                        found++;
+                    }
+                }
+                if (found == count) {
+                    NES_DEBUG("all lines found");
                     return true;
+                } else {
+                    NES_DEBUG("only " << found << " lines found");
                 }
             }
-            NES_DEBUG("checkOutputOrTimeout: file not ready yet");
             sleep(1);
         }
         NES_DEBUG("checkOutputOrTimeout: expected result not reached within set timeout");

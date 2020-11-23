@@ -188,8 +188,8 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     std::map<uint64_t, uint64_t> originIdToMaxTsMapRight;
     uint64_t lastWatermarkLeft;
     uint64_t lastWatermarkRight;
-    size_t numberOfInputEdgesLeft;
-    size_t numberOfInputEdgesRight;
+    uint64_t numberOfInputEdgesLeft;
+    uint64_t numberOfInputEdgesRight;
 };
 
 }// namespace NES::Join
