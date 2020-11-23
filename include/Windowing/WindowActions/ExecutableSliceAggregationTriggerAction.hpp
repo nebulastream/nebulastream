@@ -59,7 +59,7 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
         windowTupleLayout = createRowLayout(this->windowSchema);
     }
 
-    bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, size_t currentWatermark, size_t lastWatermark) {
+    bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark, uint64_t lastWatermark) {
         NES_DEBUG("ExecutableSliceAggregationTriggerAction: doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
 
         auto tupleBuffer = this->bufferManager->getBufferBlocking();
@@ -100,8 +100,8 @@ class ExecutableSliceAggregationTriggerAction : public BaseExecutableWindowActio
     void aggregateWindows(KeyType key,
                           WindowSliceStore<PartialAggregateType>* store,
                           TupleBuffer& tupleBuffer,
-                          size_t currentWatermark,
-                          size_t lastWatermark) {
+                          uint64_t currentWatermark,
+                          uint64_t lastWatermark) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.

@@ -383,16 +383,6 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    ifstream outFile(outputFilePath);
-    EXPECT_TRUE(outFile.good());
-
-    std::ifstream f(outputFilePath);
-    std::cout << "filecontent=" << std::endl;
-    std::cout << f.rdbuf() << std::endl;
-
-    std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
@@ -401,9 +391,8 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
         "1000,2000,2,0\n"
         "2000,3000,2,56\n";
 
-    NES_INFO("WindowDeploymentTest: content=" << content);
-    NES_INFO("WindowDeploymentTest: expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
