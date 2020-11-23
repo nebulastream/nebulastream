@@ -22,7 +22,7 @@
 
 namespace NES::Optimizer {
 
-Z3ExpressionInferencePhase::Z3ExpressionInferencePhase(z3::ContextPtr context): context(context) {
+Z3ExpressionInferencePhase::Z3ExpressionInferencePhase(z3::ContextPtr context) : context(context) {
     NES_DEBUG("Z3ExpressionInferencePhase()");
 }
 
