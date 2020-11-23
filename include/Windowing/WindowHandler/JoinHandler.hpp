@@ -34,9 +34,9 @@ class JoinHandler : public AbstractJoinHandler {
   public:
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction) : joinDefinition(joinDefinition),
-                                                                                      executablePolicyTrigger(executablePolicyTrigger),
-                                                                                      executableJoinAction(executableJoinAction) {
+                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction)
+        : joinDefinition(joinDefinition), executablePolicyTrigger(executablePolicyTrigger),
+          executableJoinAction(executableJoinAction) {
         NES_DEBUG("Construct JoinHandler");
         numberOfInputEdgesRight = joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = joinDefinition->getNumberOfInputEdgesLeft();
@@ -75,20 +75,28 @@ class JoinHandler : public AbstractJoinHandler {
     * @brief triggers all ready windows.
     */
     void trigger() override {
-        NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString()
-                                                    << " origin id=" << originId);
+        NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString() << " origin id=" << originId);
 
-        if (originIdToMaxTsMapLeft.size() != numberOfInputEdgesLeft && originIdToMaxTsMapRight.size() != numberOfInputEdgesRight) {
-            NES_DEBUG("JoinHandler: trigger cannot be applied as we did not get one buffer per edge yet, originIdToMaxTsMapLeft size=" << originIdToMaxTsMapLeft.size()
-                                                                                                                                       << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft
-                                                                                                                                       << " originIdToMaxTsMapRight size=" << originIdToMaxTsMapRight.size()
-                                                                                                                                       << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
+        if (originIdToMaxTsMapLeft.size() != numberOfInputEdgesLeft
+            && originIdToMaxTsMapRight.size() != numberOfInputEdgesRight) {
+            NES_DEBUG(
+                "JoinHandler: trigger cannot be applied as we did not get one buffer per edge yet, originIdToMaxTsMapLeft size="
+                << originIdToMaxTsMapLeft.size() << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft
+                << " originIdToMaxTsMapRight size=" << originIdToMaxTsMapRight.size()
+                << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
             return;
+        } else {
+            NES_DEBUG("JoinHandler: trigger applied for size="
+                      << originIdToMaxTsMapLeft.size() << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft
+                      << " originIdToMaxTsMapRight size=" << originIdToMaxTsMapRight.size()
+                      << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
         }
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
 
-        NES_DEBUG("JoinHandler: run for watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight);
+        NES_DEBUG("JoinHandler: run for watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
+                                                        << " lastWatermarkLeft=" << lastWatermarkLeft
+                                                        << " lastWatermarkRight=" << lastWatermarkRight);
         //In the following, find out the minimal watermark among the buffers/stores to know where
         // we have to start the processing from so-called lastWatermark
         // we cannot use 0 as this will create a lot of unnecessary windows
@@ -128,8 +136,11 @@ class JoinHandler : public AbstractJoinHandler {
             }
         }
 
-        NES_DEBUG("JoinHandler: run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight << " lastWatermarkLeft=" << lastWatermarkLeft << " lastWatermarkRight=" << lastWatermarkRight);
-        executableJoinAction->doAction(leftJoinState, rightJoinState, watermarkLeft, watermarkRight, lastWatermarkLeft, lastWatermarkRight);
+        NES_DEBUG("JoinHandler: run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
+                                                               << " lastWatermarkLeft=" << lastWatermarkLeft
+                                                               << " lastWatermarkRight=" << lastWatermarkRight);
+        executableJoinAction->doAction(leftJoinState, rightJoinState, watermarkLeft, watermarkRight, lastWatermarkLeft,
+                                       lastWatermarkRight);
 
         NES_DEBUG("JoinHandler:  set lastWatermarkLeft to=" << std::max(watermarkLeft, lastWatermarkLeft));
         lastWatermarkLeft = std::max(watermarkLeft, lastWatermarkLeft);
@@ -152,7 +163,8 @@ class JoinHandler : public AbstractJoinHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) override {
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
+               uint32_t pipelineStageId, uint64_t originId) override {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->pipelineStageId = pipelineStageId;
@@ -162,7 +174,8 @@ class JoinHandler : public AbstractJoinHandler {
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable
         this->leftJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("leftSide");
-        this->rightJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("rightSide");
+        this->rightJoinState =
+            &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("rightSide");
         this->nextPipeline = nextPipeline;
 
         executableJoinAction->setup(queryManager, bufferManager, nextPipeline, originId);
@@ -175,21 +188,13 @@ class JoinHandler : public AbstractJoinHandler {
      * @brief Returns window manager.
      * @return WindowManager.
      */
-    Windowing::WindowManagerPtr getWindowManager() override {
-        return this->windowManager;
-    }
+    Windowing::WindowManagerPtr getWindowManager() override { return this->windowManager; }
 
-    auto getLeftJoinState() {
-        return leftJoinState;
-    }
+    auto getLeftJoinState() { return leftJoinState; }
 
-    auto getRightJoinState() {
-        return rightJoinState;
-    }
+    auto getRightJoinState() { return rightJoinState; }
 
-    LogicalJoinDefinitionPtr getJoinDefinition() override{
-        return joinDefinition;
-    }
+    LogicalJoinDefinitionPtr getJoinDefinition() override { return joinDefinition; }
 
   private:
     StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState;
