@@ -172,7 +172,7 @@ TEST_F(Z3ValidationTest, simplifyEquation) {
     expr y = c.int_const("y");
 
     //Add equations
-    Z3_ast arr[] = {x==x+2,x>3};
+    Z3_ast arr[] = {x == x + 2, x > 3};
     auto expr = z3::to_expr(c, Z3_mk_and(c, 2, arr)).simplify();
     NES_INFO(expr);
 

@@ -53,14 +53,10 @@ class EqualQueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_INFO("Setup EqualQueryMergerRuleTest test case.");
-    }
+    void TearDown() { NES_INFO("Setup EqualQueryMergerRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("Tear down EqualQueryMergerRuleTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("Tear down EqualQueryMergerRuleTest test class."); }
 };
 
 /**
@@ -82,6 +78,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
+                       .map(Attribute("value") = 50)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
