@@ -42,7 +42,7 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
     for (auto& root : roots1) {
         auto family = root->getAndFlattenAllChildren(true);
         for (auto& member : family) {
-            z3::expr x = member->as<LogicalOperatorNode>()->getZ3Expression();
+            z3::expr x = member->as<LogicalOperatorNode>()->getSignature();
             expressions1.push_back(x);
         }
     }
@@ -52,7 +52,7 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
     for (auto& root : roots2) {
         auto family = root->getAndFlattenAllChildren(true);
         for (auto& member : family) {
-            expressions2.push_back(member->as<LogicalOperatorNode>()->getZ3Expression());
+            expressions2.push_back(member->as<LogicalOperatorNode>()->getSignature());
         }
     }
 
