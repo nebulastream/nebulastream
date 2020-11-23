@@ -269,24 +269,24 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     EXPECT_TRUE(ifs.good());
 
     std::string line;
-    int rowNumber = 0;
     bool resultWrk1 = false;
     bool resultWrk2 = false;
 
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
-        rowNumber++;
-        if ((rowNumber > 3 && rowNumber < 6) || (rowNumber > 8 && rowNumber < 11)) {
-            std::vector<string> content = UtilityFunctions::split(line, ',');
-            if (content.at(1) == "R2000073") {
-                NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): content=" << content.at(2));
-                NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): expContent= 102.629631");
-                EXPECT_EQ(content.at(3), "102.629631");
+        std::vector<string> content = UtilityFunctions::split(line, ',');
+        if (content.at(0) == "R2000073") {
+            NES_INFO("First content=" << content.at(2));
+            NES_INFO("First: expContent= 102.629631");
+            if(content.at(2) == "102.629631")
+            {
                 resultWrk1 = true;
-            } else {
-                NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): content=" << content.at(2));
-                NES_INFO("E2ECoordinatorWorkerTest(testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource): expContent= 108.166664");
-                EXPECT_EQ(content.at(3), "108.166664");
+            }
+        } else {
+            NES_INFO("Second: content=" << content.at(2));
+            NES_INFO("Second: expContent= 108.166664");
+            if(content.at(2) == "108.166664")
+            {
                 resultWrk2 = true;
             }
         }
@@ -499,7 +499,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, numBuffers * 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 9));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     std::ifstream ifs(outputFilePath.c_str());

@@ -1166,7 +1166,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
     remove("test1.out");
     remove("test2.out");
 
