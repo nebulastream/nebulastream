@@ -64,16 +64,19 @@ class CircularBufferIterator {
         return it;
     }
     template<bool C>
-    bool operator==(const CircularBufferIterator<cbT, C>& rhs) const noexcept { return idx == rhs.idx; }
+    bool operator==(const CircularBufferIterator<cbT, C>& rhs) const noexcept {
+        return idx == rhs.idx;
+    }
     template<bool C>
-    bool operator!=(const CircularBufferIterator<cbT, C>& rhs) const noexcept { return idx != rhs.idx; }
+    bool operator!=(const CircularBufferIterator<cbT, C>& rhs) const noexcept {
+        return idx != rhs.idx;
+    }
 
   private:
     // reuse typenames
     friend cbT;
     using size_type = typename cbT::size_type;
-    CircularBufferIterator(size_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept
-        : idx(idx), container(rv){};
+    CircularBufferIterator(size_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept : idx(idx), container(rv){};
     size_type idx;
 
     // non-const/const representation of container
@@ -95,10 +98,8 @@ class CircularBufferIterator {
  *
  * @tparam T - type of the value in the buffer slots.
  */
-template<
-    class T,
-    typename Allocator = std::allocator<T>,
-    std::enable_if_t<std::is_integral<T>::value || std::is_pointer<T>::value, int> = 0>
+template<class T, typename Allocator = std::allocator<T>,
+         std::enable_if_t<std::is_integral<T>::value || std::is_pointer<T>::value, int> = 0>
 class CircularBuffer {
   public:
     // STL-style typedefs, similar to std::deque
@@ -116,10 +117,7 @@ class CircularBuffer {
      * @brief The ctor of the circ buffer, takes a size parameter.
      * @param size of the internal buffer
      */
-    explicit CircularBuffer(uint64_t size) : maxSize(size),
-                                             currentSize(0),
-                                             head(0),
-                                             buffer(std::make_unique<T[]>(size)){};
+    explicit CircularBuffer(uint64_t size) : maxSize(size), currentSize(0), head(0), buffer(std::make_unique<T[]>(size)){};
 
     // copy and move
     CircularBuffer(const CircularBuffer& other) = delete;
@@ -178,7 +176,8 @@ class CircularBuffer {
     }
 
     template<typename... Args>
-    void emplace(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value&& std::is_nothrow_move_assignable<T>::value) {
+    void emplace(Args&&... args) noexcept(
+        std::is_nothrow_constructible<T, Args...>::value&& std::is_nothrow_move_assignable<T>::value) {
         if (full()) {
             decrementHead();
         } else {
@@ -224,18 +223,10 @@ class CircularBuffer {
         head = (head + maxSize - 1) % maxSize;
         ++currentSize;
     }
-    void incrementSize() noexcept {
-        ++currentSize;
-    }
-    void decrementSize() noexcept {
-        --currentSize;
-    }
-    void incrementHead() noexcept {
-        head = (head + 1) % maxSize;
-    }
-    void decrementHead() noexcept {
-        head = (head + maxSize - 1) % maxSize;
-    }
+    void incrementSize() noexcept { ++currentSize; }
+    void decrementSize() noexcept { --currentSize; }
+    void incrementHead() noexcept { head = (head + 1) % maxSize; }
+    void decrementHead() noexcept { head = (head + maxSize - 1) % maxSize; }
 
 };// class CircularBuffer
 }// namespace NES
