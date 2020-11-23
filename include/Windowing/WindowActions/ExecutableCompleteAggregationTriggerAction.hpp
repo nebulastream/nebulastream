@@ -94,37 +94,6 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
     std::string toString() {
         return "ExecutableCompleteAggregationTriggerAction";
     }
-
-    uint64_t updateWaterMark(WindowSliceStore<PartialAggregateType>* store) {
-        //TODO:: check if we can factor this out
-        auto windowType = windowDefinition->getWindowType();
-        auto windowTimeType = windowType->getTimeCharacteristic();
-        auto watermark = windowTimeType->getType() == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMinWatermark();
-
-        // the window type adds result windows to the windows vectors
-        if (store->getLastWatermark() == 0) {
-            if (windowType->isTumblingWindow()) {
-                TumblingWindow* tumbWindow = dynamic_cast<TumblingWindow*>(windowType.get());
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to TumblingWindow");
-                auto initWatermark = watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows(TumblingWindow): getLastWatermark was 0 set to=" << initWatermark);
-                store->setLastWatermark(initWatermark);
-            } else if (windowType->isSlidingWindow()) {
-                SlidingWindow* slidWindow = dynamic_cast<SlidingWindow*>(windowType.get());
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: successful cast to SlidingWindow");
-                auto initWatermark = watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows(SlidingWindow): getLastWatermark was 0 set to=" << initWatermark);
-                store->setLastWatermark(initWatermark);
-            } else {
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: Unknown WindowType; LastWatermark was 0 and remains 0");
-            }
-        } else {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: last watermark is=" << store->getLastWatermark());
-        }
-
-        return watermark;
-    }
-
     /**
   * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
   * which are written to the tuple buffer.
@@ -141,10 +110,6 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
-        // TODO we should add a allowed lateness to support out of order events
-//        auto watermark = updateWaterMark(store);
-//        NES_DEBUG("ExecutableCompleteAggregationTriggerAction::aggregateWindows: current watermark is=" << watermark << " minWatermark=" << store->getMinWatermark());
-
         // create result vector of windows
         auto windows = std::vector<WindowState>();
 
@@ -158,14 +123,7 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             NES_TRACE("ExecutableCompleteAggregationTriggerAction: trigger sliceid=" << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
-        //generates a list of windows that have to be outputted
-//
-//        NES_DEBUG("ExecutableCompleteAggregationTriggerAction: trigger test if mappings=" << store->getNumberOfMappings() << " < inputEdges=" << windowDefinition->getNumberOfInputEdges());
-//        if (store->getNumberOfMappings() < windowDefinition->getNumberOfInputEdges()) {
-//            NES_TRACE("ExecutableCompleteAggregationTriggerAction: trigger cause only " << store->getNumberOfMappings() << " mappings we set watermark to last=" << store->getLastWatermark());
-//            watermark = store->getLastWatermark();
-//        }
-//
+
         if(currentWatermark > lastWatermark)
         {
             NES_DEBUG("aggregateWindows trigger because currentWatermark=" << currentWatermark << " > lastWatermark=" << lastWatermark);
@@ -176,7 +134,6 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         {
             NES_DEBUG("aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark << " > lastWatermark=" << lastWatermark);
         }
-
 
         // allocate partial final aggregates for each window
         //because we trigger each second, there could be multiple windows ready
@@ -236,8 +193,6 @@ class ExecutableCompleteAggregationTriggerAction : public BaseExecutableWindowAc
         } else {
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction: aggregate: no window qualifies");
         }
-
-//        store->setLastWatermark(watermark);
     }
 
     /**

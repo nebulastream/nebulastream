@@ -48,7 +48,9 @@ class E2ECoordinatorMultiQueryTest : public testing::Test {
         NES_INFO("Setup E2e test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
+    static void TearDownTestCase() {
+        NES_INFO("Tear down ActorCoordinatorWorkerTest test class.");
+    }
 };
 
 /**
@@ -78,13 +80,15 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     std::stringstream ssQuery1;
     ssQuery1 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ssQuery1 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ssQuery1 << "));\",\"strategyName\" : \"BottomUp\"}";
     NES_INFO("string submit for query1=" << ssQuery1.str());
 
     std::stringstream ssQuery2;
     ssQuery2 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    ssQuery2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ssQuery2 << "));\",\"strategyName\" : \"BottomUp\"}";
     NES_INFO("string submit for query2=" << ssQuery2.str());
 
     web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str());
@@ -106,31 +110,31 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|id:UINT32|value:UINT64|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "id:INTEGER,value:INTEGER\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n";
 
     std::ifstream ifsQ1(pathQuery1.c_str());
     EXPECT_TRUE(ifsQ1.good());
-    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));
+    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q1=" << contentQ1);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ1, expectedContent);
 
     std::ifstream ifsQ2(pathQuery2.c_str());
     EXPECT_TRUE(ifsQ2.good());
-    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)), (std::istreambuf_iterator<char>()));
+    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q2=" << contentQ2);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ2, expectedContent);
@@ -168,21 +172,25 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     sleep(3);
 
     std::stringstream ssQuery1;
-    ssQuery1 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery1
+        << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    ssQuery1 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ssQuery1 << "));\",\"strategyName\" : \"BottomUp\"}";
     NES_INFO("string submit for query1=" << ssQuery1.str());
 
     std::stringstream ssQuery2;
     ssQuery2 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    ssQuery2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ssQuery2 << "));\",\"strategyName\" : \"BottomUp\"}";
     NES_INFO("string submit for query2=" << ssQuery2.str());
 
     std::stringstream ssQuery3;
     ssQuery3 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
     ssQuery3 << pathQuery3;
-    ssQuery3 << "\\\"));\",\"strategyName\" : \"BottomUp\"}" << std::endl;
+    ssQuery3 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ssQuery3 << "));\",\"strategyName\" : \"BottomUp\"}";
     NES_INFO("string submit for query3=" << ssQuery3.str());
 
     web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str());
@@ -201,20 +209,18 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId3, 1));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|id:UINT32|value:UINT64|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "|1|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "id:INTEGER,value:INTEGER\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n"
+        "1,1\n";
 
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
@@ -222,21 +228,24 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 
     std::ifstream ifsQ1(pathQuery1.c_str());
     EXPECT_TRUE(ifsQ1.good());
-    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));
+    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q1=" << contentQ1);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ1, expectedContent);
 
     std::ifstream ifsQ2(pathQuery2.c_str());
     EXPECT_TRUE(ifsQ2.good());
-    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)), (std::istreambuf_iterator<char>()));
+    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q2=" << contentQ2);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ2, expectedContent);
 
     std::ifstream ifsQ3(pathQuery3.c_str());
     EXPECT_TRUE(ifsQ3.good());
-    std::string contentQ3((std::istreambuf_iterator<char>(ifsQ3)), (std::istreambuf_iterator<char>()));
+    std::string contentQ3((std::istreambuf_iterator<char>(ifsQ3)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q3=" << contentQ3);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(contentQ3, expectedContent);
@@ -264,16 +273,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     size_t coordinatorPid = coordinatorProc.id();
 
     std::stringstream schema;
-    schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
-              "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+    schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
-    string path2 =
-        "./nesWorker --coordinatorPort=12346 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource "
-        "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
+    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     size_t workerPid = workerProc.id();
@@ -283,7 +288,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     ssPattern1 << "{\"pattern\" : ";
     ssPattern1 << "\"Pattern::from(\\\"QnV\\\").filter(Attribute(\\\"velocity\\\") > 100).sink(FileSinkDescriptor::create(\\\"";
     ssPattern1 << pathPattern1;
-    ssPattern1 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ssPattern1 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ssPattern1 << "));\",\"strategyName\" : \"BottomUp\"}";
     ssPattern1 << endl;
 
     NES_INFO("pattern1 string submit=" << ssPattern1.str());
@@ -293,7 +299,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     ssPattern2 << "{\"pattern\" : ";
     ssPattern2 << "\"Pattern::from(\\\"QnV\\\").filter(Attribute(\\\"quantity\\\") > 10).sink(FileSinkDescriptor::create(\\\"";
     ssPattern2 << pathPattern2;
-    ssPattern2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ssPattern2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ssPattern2 << "));\",\"strategyName\" : \"BottomUp\"}";
     ssPattern2 << endl;
 
     NES_INFO("pattern2 string submit=" << ssPattern2.str());
@@ -319,36 +326,34 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
 
-    string expectedContent1 = "+----------------------------------------------------+\n"
-                              "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
-                              "+----------------------------------------------------+\n"
-                              "|R2000073|1543624020000|102.629631|8|1|\n"
-                              "|R2000070|1543625280000|108.166664|5|1|\n"
-                              "+----------------------------------------------------+";
+    string expectedContent1 =
+        "sensor_id:Char,timestamp:INTEGER,velocity:(Float),quantity:INTEGER,PatternId:INTEGER\n"
+        "R2000073,1543624020000,102.629631,8,1\n"
+        "R2000070,1543625280000,108.166664,5,1\n";
 
-    string expectedContent2 = "+----------------------------------------------------+\n"
-                              "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
-                              "+----------------------------------------------------+\n"
-                              "|R2000073|1543622760000|63.277779|11|1|\n"
-                              "|R2000073|1543622940000|66.222221|12|1|\n"
-                              "|R2000073|1543623000000|74.666664|11|1|\n"
-                              "|R2000073|1543623480000|62.444443|13|1|\n"
-                              "|R2000073|1543624200000|64.611115|12|1|\n"
-                              "|R2000073|1543624260000|68.407410|11|1|\n"
-                              "|R2000073|1543625040000|56.666668|11|1|\n"
-                              "|R2000073|1543625400000|62.333332|11|1|\n"
-                              "+----------------------------------------------------+";
+    string expectedContent2 =
+        "sensor_id:Char,timestamp:INTEGER,velocity:(Float),quantity:INTEGER,PatternId:INTEGER\n"
+        "R2000073,1543622760000,63.277779,11,1\n"
+        "R2000073,1543622940000,66.222221,12,1\n"
+        "R2000073,1543623000000,74.666664,11,1\n"
+        "R2000073,1543623480000,62.444443,13,1\n"
+        "R2000073,1543624200000,64.611115,12,1\n"
+        "R2000073,1543624260000,68.407410,11,1\n"
+        "R2000073,1543625040000,56.666668,11,1\n"
+        "R2000073,1543625400000,62.333332,11,1\n";
 
     std::ifstream ifsQ1(pathPattern1.c_str());
     EXPECT_TRUE(ifsQ1.good());
-    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));
+    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q1=" << contentQ1);
     NES_INFO("expContent=" << expectedContent1);
     EXPECT_EQ(contentQ1, expectedContent1);
 
     std::ifstream ifsQ2(pathPattern2.c_str());
     EXPECT_TRUE(ifsQ2.good());
-    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)), (std::istreambuf_iterator<char>()));
+    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q2=" << contentQ2);
     NES_INFO("expContent=" << expectedContent2);
     EXPECT_EQ(contentQ2, expectedContent2);
@@ -372,16 +377,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     sleep(1);
 
     std::stringstream schema;
-    schema << "{\"streamName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+    schema << "{\"streamName\" : \"window\",\"schema\" :\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
-    string path2 =
-        "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
-        "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
+    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     size_t workerPid = workerProc.id();
@@ -389,22 +390,20 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-          "TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), "
-          "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
-    ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ss << "));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
 
     NES_INFO("query 1 string submit=" << ss.str());
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-           "TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20)), "
-           "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20)), Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
-    ss2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
     ss2 << endl;
 
     NES_INFO("query 2 string submit=" << ss2.str());
@@ -429,41 +428,39 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
 
-    string expectedContent1 = "+----------------------------------------------------+\n"
-                              "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
-                              "+----------------------------------------------------+\n"
-                              "|0|10000|1|307|\n"
-                              "|10000|20000|1|870|\n"
-                              "|0|10000|4|6|\n"
-                              "|10000|20000|4|0|\n"
-                              "|0|10000|11|30|\n"
-                              "|10000|20000|11|0|\n"
-                              "|0|10000|12|7|\n"
-                              "|10000|20000|12|0|\n"
-                              "|0|10000|16|12|\n"
-                              "|10000|20000|16|0|\n"
-                              "+----------------------------------------------------+";
+    string expectedContent1 =
+        "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+        "0,10000,1,307\n"
+        "10000,20000,1,870\n"
+        "0,10000,4,6\n"
+        "10000,20000,4,0\n"
+        "0,10000,11,30\n"
+        "10000,20000,11,0\n"
+        "0,10000,12,7\n"
+        "10000,20000,12,0\n"
+        "0,10000,16,12\n"
+        "10000,20000,16,0\n";
 
-    string expectedContent2 = "+----------------------------------------------------+\n"
-                              "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
-                              "+----------------------------------------------------+\n"
-                              "|0|20000|1|1177|\n"
-                              "|0|20000|4|6|\n"
-                              "|0|20000|11|30|\n"
-                              "|0|20000|12|7|\n"
-                              "|0|20000|16|12|\n"
-                              "+----------------------------------------------------+";
+    string expectedContent2 =
+        "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+        "0,20000,1,1177\n"
+        "0,20000,4,6\n"
+        "0,20000,11,30\n"
+        "0,20000,12,7\n"
+        "0,20000,16,12\n";
 
     std::ifstream ifsQ1(outputFilePath.c_str());
     EXPECT_TRUE(ifsQ1.good());
-    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));
+    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q1=" << contentQ1);
     NES_INFO("expContent=" << expectedContent1);
     EXPECT_EQ(contentQ1, expectedContent1);
 
     std::ifstream ifsQ2(outputFilePath2.c_str());
     EXPECT_TRUE(ifsQ2.good());
-    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)), (std::istreambuf_iterator<char>()));
+    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q2=" << contentQ2);
     NES_INFO("expContent=" << expectedContent2);
     EXPECT_EQ(contentQ2, expectedContent2);
@@ -487,16 +484,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     sleep(1);
 
     std::stringstream schema;
-    schema << "{\"streamName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+    schema << "{\"streamName\" : \"window\",\"schema\" :\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
-    string path2 =
-        "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
-        "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
+    string path2 = "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     size_t workerPid = workerProc.id();
@@ -504,22 +497,20 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-          "SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)), "
-          "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)), Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
-    ss << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ss << "));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
 
     NES_INFO("query 1 string submit=" << ss.str());
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-           "SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)), "
-           "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)), Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
-    ss2 << "\\\"));\",\"strategyName\" : \"BottomUp\"}";
+    ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
     ss2 << endl;
 
     NES_INFO("query 2 string submit=" << ss2.str());
@@ -545,46 +536,44 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2));
 
-    string expectedContent1 = "+----------------------------------------------------+\n"
-                              "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
-                              "+----------------------------------------------------+\n"
-                              "|10000|20000|1|870|\n"
-                              "|5000|15000|1|570|\n"
-                              "|0|10000|1|307|\n"
-                              "|10000|20000|4|0|\n"
-                              "|5000|15000|4|0|\n"
-                              "|0|10000|4|6|\n"
-                              "|10000|20000|11|0|\n"
-                              "|5000|15000|11|0|\n"
-                              "|0|10000|11|30|\n"
-                              "|10000|20000|12|0|\n"
-                              "|5000|15000|12|0|\n"
-                              "|0|10000|12|7|\n"
-                              "|10000|20000|16|0|\n"
-                              "|5000|15000|16|0|\n"
-                              "|0|10000|16|12|\n"
-                              "+----------------------------------------------------+";
+    string expectedContent1 =
+        "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+        "10000,20000,1,870\n"
+        "5000,15000,1,570\n"
+        "0,10000,1,307\n"
+        "10000,20000,4,0\n"
+        "5000,15000,4,0\n"
+        "0,10000,4,6\n"
+        "10000,20000,11,0\n"
+        "5000,15000,11,0\n"
+        "0,10000,11,30\n"
+        "10000,20000,12,0\n"
+        "5000,15000,12,0\n"
+        "0,10000,12,7\n"
+        "10000,20000,16,0\n"
+        "5000,15000,16,0\n"
+        "0,10000,16,12\n";
 
-    string expectedContent2 = "+----------------------------------------------------+\n"
-                              "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
-                              "+----------------------------------------------------+\n"
-                              "|0|20000|1|1177|\n"
-                              "|0|20000|4|6|\n"
-                              "|0|20000|11|30|\n"
-                              "|0|20000|12|7|\n"
-                              "|0|20000|16|12|\n"
-                              "+----------------------------------------------------+";
+    string expectedContent2 =
+        "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+        "0,20000,1,1177\n"
+        "0,20000,4,6\n"
+        "0,20000,11,30\n"
+        "0,20000,12,7\n"
+        "0,20000,16,12\n";
 
     std::ifstream ifsQ1(outputFilePath.c_str());
     EXPECT_TRUE(ifsQ1.good());
-    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));
+    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q1=" << contentQ1);
     NES_INFO("expContent=" << expectedContent1);
     EXPECT_EQ(contentQ1, expectedContent1);
 
     std::ifstream ifsQ2(outputFilePath2.c_str());
     EXPECT_TRUE(ifsQ2.good());
-    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)), (std::istreambuf_iterator<char>()));
+    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)),
+                          (std::istreambuf_iterator<char>()));
     NES_INFO("content Q2=" << contentQ2);
     NES_INFO("expContent=" << expectedContent2);
     EXPECT_EQ(contentQ2, expectedContent2);

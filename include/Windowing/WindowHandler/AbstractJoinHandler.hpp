@@ -119,9 +119,9 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      */
     uint32_t getMaxTs(uint32_t originId, JoinSides side) {
         if (side == leftSide) {
-            originIdToMaxTsMapLeft[originId];
+            return originIdToMaxTsMapLeft[originId];
         } else if (side == rightSide) {
-            originIdToMaxTsMapRight[originId];
+            return originIdToMaxTsMapRight[originId];
         } else {
             NES_ERROR("getMaxTs: invalid side");
             return 0;
@@ -135,9 +135,9 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      */
     uint64_t getNumberOfMappings(JoinSides side) {
         if (side == leftSide) {
-            originIdToMaxTsMapLeft.size();
+            return originIdToMaxTsMapLeft.size();
         } else if (side == rightSide) {
-            originIdToMaxTsMapRight.size();
+            return originIdToMaxTsMapRight.size();
         } else {
             NES_ERROR("getNumberOfMappings: invalid side");
             return 0;

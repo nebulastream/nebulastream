@@ -438,6 +438,9 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
     } else {
         NES_NOT_IMPLEMENTED();
     }
+
+    joinDetails.set_numberofinputedgesleft(joinDefinition->getNumberOfInputEdgesLeft());
+    joinDetails.set_numberofinputedgesright(joinDefinition->getNumberOfInputEdgesRight());
     return joinDetails;
 }
 
@@ -622,7 +625,7 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     LogicalOperatorNodePtr ptr;
     auto distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
     auto keyAccessExpression = ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
-    auto joinDefinition = Join::LogicalJoinDefinition::create(keyAccessExpression, window, distChar, trigger, action);
+    auto joinDefinition = Join::LogicalJoinDefinition::create(keyAccessExpression, window, distChar, trigger, action, joinDetails->numberofinputedgesleft(), joinDetails->numberofinputedgesright());
     auto retValue = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<JoinLogicalOperatorNode>();
     return retValue;
 
