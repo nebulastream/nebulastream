@@ -740,7 +740,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
 
 TEST_F(QueryExecutionTest, ysbQueryTest) {
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::create());
-    int numBuf = 2;
+    int numBuf = 1;
     int numTup = 50;
 
     auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, false, 1);
