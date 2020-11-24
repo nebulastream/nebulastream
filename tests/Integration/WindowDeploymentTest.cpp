@@ -47,9 +47,7 @@ class WindowDeploymentTest : public testing::Test {
         restPort = restPort + 2;
     }
 
-    void TearDown() {
-        std::cout << "Tear down WindowDeploymentTest class." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down WindowDeploymentTest class." << std::endl; }
 
     std::string ipAddress = "127.0.0.1";
 };
@@ -65,7 +63,8 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     NES_INFO("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -74,19 +73,18 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/exdra.csv",
-                                                                1, 0, 1,
-                                                                "test_stream", "exdra", true);
+    PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/exdra.csv", 1, 0, 1, "test_stream", "exdra", true);
 
     wrk1->registerPhysicalStream(conf);
 
-    std::string outputFilePath =
-        "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
-                   "Seconds(10)), Sum(Attribute(\"features_properties_capacity\"))).sink(FileSinkDescriptor::create(\""
+    string query =
+        "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
+        "Seconds(10)), Sum(Attribute(\"features_properties_capacity\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -99,7 +97,6 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,features_properties_capacity:INTEGER\n"
                              "1262343610000,1262343620000,1,736\n"
                              "1262343620000,1262343630000,1,0\n"
@@ -235,7 +232,8 @@ TEST_F(WindowDeploymentTest, outputLog) {
     NES_INFO("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -253,18 +251,19 @@ TEST_F(WindowDeploymentTest, outputLog) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                  1, 0, 1,
-                                                                  "test_stream", "window", true);
+    PhysicalStreamConfigPtr conf70 =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", true);
 
     wrk1->registerPhysicalStream(conf70);
 
-    std::string outputFilePath =
-        "outputLog.out";
+    std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), "
+                   "SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), "
+                   "Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -283,33 +282,26 @@ TEST_F(WindowDeploymentTest, outputLog) {
     EXPECT_TRUE(my_file.good());
 
     std::ifstream ifs("outputLog.out");
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|10000|20000|1|870|\n"
-        "|5000|15000|1|570|\n"
-        "|0|10000|1|307|\n"
-        "|10000|20000|4|0|\n"
-        "|5000|15000|4|0|\n"
-        "|0|10000|4|6|\n"
-        "|10000|20000|11|0|\n"
-        "|5000|15000|11|0|\n"
-        "|0|10000|11|30|\n"
-        "|10000|20000|12|0|\n"
-        "|5000|15000|12|0|\n"
-        "|0|10000|12|7|\n"
-        "|10000|20000|16|0|\n"
-        "|5000|15000|16|0|\n"
-        "|0|10000|16|12|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+                             "10000,20000,1,870\n"
+                             "5000,15000,1,570\n"
+                             "0,10000,1,307\n"
+                             "10000,20000,4,0\n"
+                             "5000,15000,4,0\n"
+                             "0,10000,4,6\n"
+                             "10000,20000,11,0\n"
+                             "5000,15000,11,0\n"
+                             "0,10000,11,30\n"
+                             "10000,20000,12,0\n"
+                             "5000,15000,12,0\n"
+                             "0,10000,12,7\n"
+                             "10000,20000,16,0\n"
+                             "5000,15000,16,0\n"
+                             "0,10000,16,12\n";
 
-    NES_INFO("WindowDeploymentTest: content=" << content);
-    NES_INFO("WindowDeploymentTest: expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -332,19 +324,20 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     NES_INFO("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath =
-        "testDeployOneWorkerDistributedWindowQueryEventTime.out";
+    std::string outputFilePath = "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -353,7 +346,8 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     NES_INFO("WindowDeploymentTest: Submit query");
 
     //register logical stream
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
+    std::string testSchema =
+        R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -361,9 +355,8 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                1, 3, 3,
-                                                                "test_stream", "window", true);
+    PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", true);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
 
@@ -383,13 +376,11 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    string expectedContent =
-        "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-        "1000,2000,1,34\n"
-        "1000,2000,2,0\n"
-        "2000,3000,1,0\n"
-        "2000,3000,2,56\n";
-
+    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+                             "1000,2000,1,34\n"
+                             "1000,2000,2,0\n"
+                             "2000,3000,1,0\n"
+                             "2000,3000,2,56\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -418,13 +409,15 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     NES_INFO("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -442,19 +435,20 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                  1, 0, 1,
-                                                                  "test_stream", "window", true);
+    PhysicalStreamConfigPtr conf70 =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", true);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
 
-    std::string outputFilePath =
-        "outputLog.out";
+    std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), "
+                   "SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), "
+                   "Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -472,28 +466,21 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     EXPECT_TRUE(my_file.good());
 
     std::ifstream ifs("outputLog.out");
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|id:UINT64|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|5000|15000|1|1140|\n"
-        "|0|10000|1|614|\n"
-        "|5000|15000|4|0|\n"
-        "|0|10000|4|12|\n"
-        "|5000|15000|11|0|\n"
-        "|0|10000|11|60|\n"
-        "|5000|15000|12|0|\n"
-        "|0|10000|12|14|\n"
-        "|5000|15000|16|0|\n"
-        "|0|10000|16|24|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+                             "5000,15000,1,1140\n"
+                             "0,10000,1,614\n"
+                             "5000,15000,4,0\n"
+                             "0,10000,4,12\n"
+                             "5000,15000,11,0\n"
+                             "0,10000,11,60\n"
+                             "5000,15000,12,0\n"
+                             "0,10000,12,14\n"
+                             "5000,15000,16,0\n"
+                             "0,10000,16,24\n";
 
-    NES_INFO("WindowDeploymentTest: content=" << content);
-    NES_INFO("WindowDeploymentTest: expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -520,7 +507,8 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindow) {
     NES_INFO("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -538,20 +526,18 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindow) {
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                        1, 3, 3,
-                                                                        "test_stream", "windowStream", true);
+    PhysicalStreamConfigPtr windowStream =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "windowStream", true);
 
     wrk1->registerPhysicalStream(windowStream);
 
-    std::string outputFilePath =
-        "testGlobalTumblingWindow.out";
+    std::string outputFilePath = "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"windowStream\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
                    "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\"));";
+        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -565,19 +551,13 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|start:UINT64|end:UINT64|value:UINT64|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1000|2000|3|\n"
-                             "|2000|3000|6|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
+                             "1000,2000,3\n"
+                             "2000,3000,6\n";
 
-    NES_INFO("WindowDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): content=" << content);
-    NES_INFO("WindowDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -600,7 +580,8 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindow) {
     NES_INFO("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -618,18 +599,18 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindow) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                  1, 0, 1,
-                                                                  "test_stream", "window", true);
+    PhysicalStreamConfigPtr conf70 =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", true);
 
     wrk1->registerPhysicalStream(conf70);
 
-    std::string outputFilePath =
-        "outputLog.out";
+    std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"window\").window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)),"
+                   " Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -648,21 +629,14 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindow) {
     EXPECT_TRUE(my_file.good());
 
     std::ifstream ifs("outputLog.out");
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|10000|20000|870|\n"
-        "|5000|15000|570|\n"
-        "|0|10000|362|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
+                             "10000,20000,870\n"
+                             "5000,15000,570\n"
+                             "0,10000,362\n";
 
-    NES_INFO("WindowDeploymentTest: content=" << content);
-    NES_INFO("WindowDeploymentTest: expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -685,13 +659,15 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindow) {
     NES_INFO("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker2 started successfully");
@@ -709,21 +685,19 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindow) {
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                        1, 3, 3,
-                                                                        "test_stream", "windowStream", true);
+    PhysicalStreamConfigPtr windowStream =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "windowStream", true);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
 
-    std::string outputFilePath =
-        "testGlobalTumblingWindow.out";
+    std::string outputFilePath = "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"windowStream\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
                    "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\"));";
+        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -738,19 +712,13 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|start:UINT64|end:UINT64|value:UINT64|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1000|2000|6|\n"
-                             "|2000|3000|12|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
+                             "1000,2000,6\n"
+                             "2000,3000,12\n";
 
-    NES_INFO("WindowDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): content=" << content);
-    NES_INFO("WindowDeploymentTest(testDeployOneWorkerCentralWindowQueryEventTime): expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -777,13 +745,15 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
     NES_INFO("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -801,9 +771,8 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv",
-                                                                  1, 0, 1,
-                                                                  "test_stream", "window", true);
+    PhysicalStreamConfigPtr conf70 =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", true);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
@@ -813,7 +782,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
 
     NES_INFO("WindowDeploymentTest: Submit query");
     //size slide
-    string query = "Query::from(\"window\").window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"window\").window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)),"
+                   " Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -827,13 +798,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|start:UINT64|end:UINT64|value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|5000|15000|1140|\n"
-        "|0|10000|724|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
+                             "5000,15000,1140\n"
+                             "0,10000,724\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

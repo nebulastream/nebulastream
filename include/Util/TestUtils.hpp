@@ -398,13 +398,16 @@ class TestUtils {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            sleep(1);
             NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
             if (ifs.good() && ifs.is_open()) {
+                NES_DEBUG("checkOutputOrTimeout: file " << outputFilePath << " open and good");
                 std::vector<std::string> expectedLines = UtilityFunctions::split(expectedContent, '\n');
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 int count = std::count(content.begin(), content.end(), '\n');
                 if (expectedLines.size() != count) {
+                    NES_DEBUG("checkOutputOrTimeout: number of expected lines " << expectedLines.size() << " not reached yet with " << count << " lines");
                     continue;
                 }
 
@@ -421,7 +424,6 @@ class TestUtils {
                     NES_DEBUG("only " << found << " lines found");
                 }
             }
-            sleep(1);
         }
         NES_DEBUG("checkOutputOrTimeout: expected result not reached within set timeout");
         return false;
