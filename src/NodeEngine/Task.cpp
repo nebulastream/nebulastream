@@ -25,7 +25,7 @@
 namespace NES {
 
 Task::Task(PipelineStagePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
-    id = UtilityFunctions::generateIdInt();
+    id = UtilityFunctions::getNextTaskID();
 }
 
 Task::Task() : pipeline(nullptr), buf() { id = UtilityFunctions::generateIdInt(); }

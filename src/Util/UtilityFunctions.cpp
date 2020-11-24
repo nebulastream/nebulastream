@@ -376,6 +376,11 @@ uint64_t UtilityFunctions::getNextNodeEngineId() {
     return ++id;
 }
 
+uint64_t UtilityFunctions::getNextTaskID() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
 web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     NES_INFO("UtilityFunctions: getting topology as JSON");
 

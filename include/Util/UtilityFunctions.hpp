@@ -182,6 +182,13 @@ class UtilityFunctions {
      * @return node id
      */
     static uint64_t getNextNodeEngineId();
+
+    /**
+     * @brief Returns the next free task id
+     * @return node id
+     */
+     static uint64_t getNextTaskID();
+
 };
 }// namespace NES
 
