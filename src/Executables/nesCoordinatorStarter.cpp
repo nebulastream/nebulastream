@@ -26,10 +26,10 @@
 #include <Components/NesCoordinator.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
+#include <Util/yaml/Yaml.hh>
 #include <boost/program_options.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <iostream>
-#include <yaml/Yaml.hpp>
 #include <memory>
 #include <string>
 

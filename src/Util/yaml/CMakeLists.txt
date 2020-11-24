@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This adds Jimmie Bergmann's Yaml read/write implementation without overwriting it's copyright with ours.
 add_source_nes(
-        UtilityFunctions.cpp
-        SharedLibrary.cpp
-        TimeMeasurement.cpp
-        StacktraceLoader.cpp
-        ThreadNaming.cpp
+        ../../../include/Util/yaml/Yaml.cpp
 )
-add_subdirectory(yaml)

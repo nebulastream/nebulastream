@@ -27,9 +27,9 @@
 #include "boost/program_options.hpp"
 #include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
+#include <Util/yaml/Yaml.hh>
 #include <iostream>
 #include <thread>
-#include <yaml/Yaml.hpp>
 
 namespace po = boost::program_options;
 
