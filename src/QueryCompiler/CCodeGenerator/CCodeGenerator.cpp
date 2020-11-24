@@ -385,21 +385,13 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 }
 
 void CCodeGenerator::generateCodeForWatermarkUpdater(PipelineContextPtr context, VariableDeclaration handler) {
-    // updateAllMaxTs(maxWaterMark, inputBuffer.getOriginId())
-    auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateAllMaxTs");
+    // updateMaxTs(maxWaterMark, inputBuffer.getOriginId())
+    auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
     auto updateAllWatermarkTsFunctionCallStatement = VarRef(handler).accessPtr(updateAllWatermarkTsFunctionCall);
 
-    // if (maxWatermark != 0) {}
-    auto tf = getTypeFactory();
-    auto zeroConstant = Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0))));
-    auto ifStatement = IF(getWatermark(context->code->varDeclarationInputBuffer) != zeroConstant, updateAllWatermarkTsFunctionCallStatement);
-
-    // if (maxWatermark != 0) {
-    //     updateAllMaxTs(maxWaterMark, inputBuffer.getOriginId())
-    //}
-    context->code->cleanupStmts.push_back(ifStatement.createCopy());
+    context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
 }
 
 void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context, VariableDeclaration varDeclResultTuple,
