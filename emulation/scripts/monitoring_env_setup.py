@@ -24,6 +24,7 @@ from mininet.log import info, setLogLevel
 #params for the topology
 number_workers = 2
 enable_influx = False
+nesDir = ""
 
 #_________________________________________________________________________________________________________________
 setLogLevel('info')
@@ -32,7 +33,8 @@ net = Containernet(controller=Controller)
 info('*** Adding controller\n')
 net.addController('c0')
 
-nesDir = "/home/xchatziliadis/git/nebulastream/"
+if not nesDir:
+    raise RuntimeError("Please specify a nes directory like /git/nebulastream/")
 
 if enable_influx:
     influxdb = net.addDocker('influxdb', dimage="influxdb:1.8.3",
@@ -43,11 +45,6 @@ if enable_influx:
                              dcmd='influxd -config /etc/influxdb/influxdb.conf')
 
 info('*** Adding docker containers\n')
-#crd = net.addDocker('crd', ip='10.15.16.3',
-#                    dimage="nebulastream/nes-executable-image:latest",
-#                    ports=[8081, 12346, 4000, 4001, 4002],
-#                    port_bindings={8081: 8081, 12346: 12346, 4000: 4000, 4001: 4001, 4002: 4002},
-#                    dcmd='/opt/local/nebula-stream/nesCoordinator --serverIp=0.0.0.0')
 
 crd = net.addDocker('crd', ip='10.15.16.3',
                        dimage="nes_prometheus",
