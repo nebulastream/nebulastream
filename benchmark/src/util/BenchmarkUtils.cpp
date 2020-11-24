@@ -16,6 +16,7 @@
 
 #include <util/BenchmarkUtils.hpp>
 
+#include "../../../tests/util/DummySink.hpp"
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
@@ -120,8 +121,6 @@ void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, 
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << " plan=" << queryPlan->toString() << std::endl;
-
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generateableOperators = translatePhase->transform(query.getQueryPlan()->getRootOperators()[0]);
 
