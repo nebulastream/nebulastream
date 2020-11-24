@@ -50,7 +50,8 @@ int main(int argc, const char* argv[]) {
     // Initializing defaults
     uint16_t restPort = 8081;
     uint16_t rpcPort = 4000;
-    std::string serverIp = "127.0.0.1";
+    std::string restIp = "127.0.0.1";
+    std::string rpcIp = "127.0.0.1";
     std::string logLevel = "LOG_DEBUG";
 
     // set the default numberOfSlots to the number of processor
@@ -59,9 +60,10 @@ int main(int argc, const char* argv[]) {
     bool enableQueryMerging = false;
 
     po::options_description serverOptions("Nes Coordinator Server Options");
-    serverOptions.add_options()("serverIp", po::value<std::string>(&serverIp)->default_value(serverIp),
-                                "Set NES server ip (default: 127.0.0.1).")("restPort", po::value<uint16_t>(),
-                                                                           "Set NES REST server port (default: 8081).")(
+    serverOptions.add_options()(
+        "restIp", po::value<std::string>(&restIp)->default_value(restIp), "Set NES ip of the REST server (default: 127.0.0.1).")(
+        "restPort", po::value<uint16_t>(), "Set NES REST server port (default: 8081).")(
+        "coordinatorIp", po::value<std::string>(&rpcIp)->default_value(rpcIp), "Set NES rpc/zmq ip (default: 127.0.0.1).")(
         "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort), "Set NES rpc server port (default: 4000).")(
         "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
         "Set the computing capacity (default: number of processor).")(
@@ -88,28 +90,10 @@ int main(int argc, const char* argv[]) {
         return 0;
     }
 
-    bool changed = false;
-    if (vm.count("serverIp")) {
-        changed = true;
-    }
-
-    if (vm.count("rest_port")) {
-        changed = true;
-    }
-
     NES_INFO("creating coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(serverIp, restPort, rpcPort, numberOfSlots, enableQueryMerging);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(restIp, restPort, rpcIp, rpcPort, numberOfSlots, enableQueryMerging);
 
-    if (changed) {
-        NES_INFO("config changed thus rest params");
-    }
-    if (serverIp != "127.0.0.1") {
-        NES_INFO("set server ip to " << serverIp);
-        crd->setServerIp(serverIp);
-    }
-
-    NES_INFO("start coordinator ip=" << serverIp << " with rpc port " << rpcPort << " restPort=" << restPort
-                                     << " numberOfSlots=" << numberOfSlots);
+    NES_INFO("start coordinator with RestIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " with rpc port " << rpcPort << " numberOfSlots=" << numberOfSlots);
     crd->startCoordinator(/**blocking**/ true);//blocking call
     crd->stopCoordinator(true);
     NES_INFO("coordinator started");
