@@ -1,4 +1,4 @@
-FROM my-nes-executable-image:latest
+FROM nebulastream/nes-executable-image:latest
 
 RUN apt-get install iputils-ping -y
 RUN apt-get install prometheus-node-exporter -y
