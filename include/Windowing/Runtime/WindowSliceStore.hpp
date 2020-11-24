@@ -27,10 +27,9 @@ namespace NES::Windowing {
 template<class PartialAggregateType>
 class WindowSliceStore {
   public:
-    WindowSliceStore(PartialAggregateType value) : defaultValue(value),
-                                                   sliceMetaData(std::vector<SliceMetaData>()),
-                                                   partialAggregates(std::vector<PartialAggregateType>()) {
-    }
+    WindowSliceStore(PartialAggregateType value)
+        : defaultValue(value), sliceMetaData(std::vector<SliceMetaData>()),
+          partialAggregates(std::vector<PartialAggregateType>()) {}
 
     /**
     * @brief Get the corresponding slide index for a particular timestamp ts.
@@ -63,43 +62,38 @@ class WindowSliceStore {
     /**
      * @return most current slice'index.
      */
-    inline uint64_t getCurrentSliceIndex() {
-        return sliceMetaData.size() - 1;
-    }
+    inline uint64_t getCurrentSliceIndex() { return sliceMetaData.size() - 1; }
 
     /**
      * @brief Remove slices between index 0 and pos.
      * @param pos the position till we want to remove slices.
      */
     inline void removeSlicesUntil(uint64_t pos) {
-        sliceMetaData.erase(sliceMetaData.begin(), sliceMetaData.size() > pos ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
-        partialAggregates.erase(partialAggregates.begin(), partialAggregates.size() > pos ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
-        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size() << " aggs=" << partialAggregates.size());
+        sliceMetaData.erase(sliceMetaData.begin(),
+                            sliceMetaData.size() > pos ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
+        partialAggregates.erase(partialAggregates.begin(),
+                                partialAggregates.size() > pos ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
+        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
+                                                                                  << " aggs=" << partialAggregates.size());
     }
 
     /**
      * @brief Checks if the slice store is empty.
      * @return true if empty.
      */
-    inline uint64_t empty() {
-        return sliceMetaData.empty();
-    }
+    inline uint64_t empty() { return sliceMetaData.empty(); }
 
     /**
      * @brief Gets the slice meta data.
      * @return vector of slice meta data.
      */
-    inline std::vector<SliceMetaData>& getSliceMetadata() {
-        return sliceMetaData;
-    }
+    inline std::vector<SliceMetaData>& getSliceMetadata() { return sliceMetaData; }
 
     /**
      * @brief Gets partial aggregates.
      * @return vector of partial aggregates.
      */
-    inline std::vector<PartialAggregateType>& getPartialAggregates() {
-        return partialAggregates;
-    }
+    inline std::vector<PartialAggregateType>& getPartialAggregates() { return partialAggregates; }
 
     const PartialAggregateType defaultValue;
     uint64_t nextEdge = 0;

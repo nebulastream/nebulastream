@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_
-#include <Windowing/WindowingForwardRefs.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
 
 class BaseExecutableWindowTriggerPolicy {

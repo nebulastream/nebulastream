@@ -29,9 +29,8 @@ class BaseExecutableJoinAction {
      * @return bool indicating success
      */
     virtual bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
-                          StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate, uint64_t currentWatermarkLeft,
-                          uint64_t currentWatermarkRight,
-                          uint64_t lastWatermarkLeft,
+                          StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
+                          uint64_t currentWatermarkLeft, uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft,
                           uint64_t lastWatermarkRight) = 0;
 
     virtual std::string toString() = 0;

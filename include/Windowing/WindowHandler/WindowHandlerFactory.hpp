@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERFACTORY_HPP_
 #define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWHANDLERFACTORY_HPP_
 
-#include <memory>
 #include <Windowing/JoinForwardRefs.hpp>
+#include <memory>
 
 namespace NES::Windowing {
 

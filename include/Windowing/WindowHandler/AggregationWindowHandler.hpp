@@ -40,12 +40,13 @@ namespace NES::Windowing {
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class AggregationWindowHandler : public AbstractWindowHandler {
   public:
-    explicit AggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
-                                      std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
-                                      BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                                      BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction)
-        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)), executablePolicyTrigger(std::move(executablePolicyTrigger)),
-          executableWindowAction(std::move(executableWindowAction)) {
+    explicit AggregationWindowHandler(
+        LogicalWindowDefinitionPtr windowDefinition,
+        std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
+        BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
+        BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction)
+        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
+          executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)) {
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
         handlerType = this->windowDefinition->getDistributionType()->toString();
@@ -60,17 +61,13 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start() override {
-        return executablePolicyTrigger->start(this->shared_from_this());
-    }
+    bool start() override { return executablePolicyTrigger->start(this->shared_from_this()); }
 
     /**
      * @brief Stops the window thread.
      * @return
      */
-    bool stop() override {
-        return executablePolicyTrigger->stop();
-    }
+    bool stop() override { return executablePolicyTrigger->stop(); }
 
     std::string toString() override {
         std::stringstream ss;
@@ -96,7 +93,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                                               << " origin id=" << originId);
 
         if (originIdToMaxTsMap.size() != numberOfInputEdges) {
-            NES_DEBUG("AggregationWindowHandler(" << handlerType << "): trigger cannot be applied as we did not get one buffer per edge yet, size=" << originIdToMaxTsMap.size() << " numberOfInputEdges=" << numberOfInputEdges);
+            NES_DEBUG("AggregationWindowHandler("
+                      << handlerType << "): trigger cannot be applied as we did not get one buffer per edge yet, size="
+                      << originIdToMaxTsMap.size() << " numberOfInputEdges=" << numberOfInputEdges);
             return;
         }
         auto watermark = getMinWatermark();
@@ -116,23 +115,28 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
             if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
                 lastWatermark = runningWatermark;
-                NES_DEBUG("AggregationWindowHandler(" << handlerType << "): set lastWatermark to min value of stores=" << lastWatermark);
+                NES_DEBUG("AggregationWindowHandler(" << handlerType
+                                                      << "): set lastWatermark to min value of stores=" << lastWatermark);
             } else {
-                NES_DEBUG("AggregationWindowHandler(" << handlerType << "): as there is no buffer yet in any store, we cannot trigger");
+                NES_DEBUG("AggregationWindowHandler(" << handlerType
+                                                      << "): as there is no buffer yet in any store, we cannot trigger");
                 return;
             }
         }
 
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  run doing with watermark=" << watermark << " lastWatermark=" << lastWatermark);
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  run doing with watermark=" << watermark
+                                              << " lastWatermark=" << lastWatermark);
         executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));
+        NES_DEBUG("AggregationWindowHandler(" << handlerType
+                                              << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));
         lastWatermark = std::max(watermark, lastWatermark);
     }
 
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint32_t pipelineStageId, uint64_t originId) override {
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
+               uint32_t pipelineStageId, uint64_t originId) override {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->pipelineStageId = pipelineStageId;
@@ -141,7 +145,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         // Initialize AggregationWindowHandler Manager
         this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType());
         // Initialize StateVariable
-        this->windowStateVariable = &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
+        this->windowStateVariable =
+            &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
         this->nextPipeline = nextPipeline;
 
         executableWindowAction->setup(queryManager, bufferManager, nextPipeline, originId);
@@ -164,13 +169,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     WindowManagerPtr getWindowManager() override { return this->windowManager; }
 
-    auto getTypedWindowState() {
-        return windowStateVariable;
-    }
+    auto getTypedWindowState() { return windowStateVariable; }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() override {
-        return windowDefinition;
-    }
+    LogicalWindowDefinitionPtr getWindowDefinition() override { return windowDefinition; }
 
   private:
     LogicalWindowDefinitionPtr windowDefinition;

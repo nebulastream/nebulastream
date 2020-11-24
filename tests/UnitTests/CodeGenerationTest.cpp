@@ -77,29 +77,25 @@ class CodeGenerationTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
-        std::cout << "Setup CodeGenerationTest test case." << std::endl;
-    }
+    void SetUp() { std::cout << "Setup CodeGenerationTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        std::cout << "Tear down CodeGenerationTest test case." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down CodeGenerationTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        std::cout << "Tear down CodeGenerationTest test class." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Tear down CodeGenerationTest test class." << std::endl; }
 };
 
 class TestPipelineExecutionContext : public PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler)
+    TestPipelineExecutionContext(BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler,
+                                 Join::AbstractJoinHandlerPtr joinHandler)
         : PipelineExecutionContext(
-            0, std::move(bufferManager), [this](TupleBuffer& buffer, WorkerContextRef) {
+            0, std::move(bufferManager),
+            [this](TupleBuffer& buffer, WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            std::move(windowHandler), std::move(joinHandler), nullptr, nullptr, nullptr) {
+            std::move(windowHandler), std::move(joinHandler), nullptr, nullptr, nullptr){
             // nop
         };
 
@@ -107,17 +103,14 @@ class TestPipelineExecutionContext : public PipelineExecutionContext {
 };
 
 const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
-    return std::make_shared<DefaultSource>(
-        Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()), bPtr, dPtr, 1, 1, 1);
+    return std::make_shared<DefaultSource>(Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()), bPtr, dPtr,
+                                           1, 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
   public:
-    SelectionDataGenSource(SchemaPtr schema,
-                           BufferManagerPtr bPtr, QueryManagerPtr dPtr,
-                           const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {
-    }
+    SelectionDataGenSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr, const uint64_t pNum_buffers_to_process)
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
     ~SelectionDataGenSource() = default;
 
@@ -151,14 +144,11 @@ class SelectionDataGenSource : public GeneratorSource {
 };
 
 const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
-    DataSourcePtr source(
-        std::make_shared<SelectionDataGenSource>(
-            Schema::create()
-                ->addField("id", DataTypeFactory::createUInt32())
-                ->addField("value", DataTypeFactory::createUInt32())
-                ->addField("text", DataTypeFactory::createFixedChar(12)),
-            bPtr, dPtr,
-            1));
+    DataSourcePtr source(std::make_shared<SelectionDataGenSource>(Schema::create()
+                                                                      ->addField("id", DataTypeFactory::createUInt32())
+                                                                      ->addField("value", DataTypeFactory::createUInt32())
+                                                                      ->addField("text", DataTypeFactory::createFixedChar(12)),
+                                                                  bPtr, dPtr, 1));
 
     return source;
 }
@@ -167,8 +157,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
     PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {
-    }
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
     ~PredicateTestingDataGeneratorSource() = default;
 
@@ -210,16 +199,14 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
 const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     DataSourcePtr source(
-        std::make_shared<PredicateTestingDataGeneratorSource>(
-            Schema::create()
-                ->addField("id", DataTypeFactory::createUInt32())
-                ->addField("valueSmall", DataTypeFactory::createInt16())
-                ->addField("valueFloat", DataTypeFactory::createFloat())
-                ->addField("valueDouble", DataTypeFactory::createDouble())
-                ->addField("valueChar", DataTypeFactory::createChar())
-                ->addField("text", DataTypeFactory::createFixedChar(12)),
-            bPtr, dPtr,
-            1));
+        std::make_shared<PredicateTestingDataGeneratorSource>(Schema::create()
+                                                                  ->addField("id", DataTypeFactory::createUInt32())
+                                                                  ->addField("valueSmall", DataTypeFactory::createInt16())
+                                                                  ->addField("valueFloat", DataTypeFactory::createFloat())
+                                                                  ->addField("valueDouble", DataTypeFactory::createDouble())
+                                                                  ->addField("valueChar", DataTypeFactory::createChar())
+                                                                  ->addField("text", DataTypeFactory::createFixedChar(12)),
+                                                              bPtr, dPtr, 1));
 
     return source;
 }
@@ -228,8 +215,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
     WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {
-    }
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
     ~WindowTestingDataGeneratorSource() = default;
 
@@ -262,8 +248,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
   public:
     WindowTestingWindowGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                        const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {
-    }
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
     ~WindowTestingWindowGeneratorSource() = default;
 
@@ -297,21 +282,14 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
 };
 
 const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
-    DataSourcePtr source(
-        std::make_shared<WindowTestingDataGeneratorSource>(
-            Schema::create()
-                ->addField("key", DataTypeFactory::createUInt64())
-                ->addField("value", DataTypeFactory::createUInt64()),
-            bPtr, dPtr,
-            10));
+    DataSourcePtr source(std::make_shared<WindowTestingDataGeneratorSource>(
+        Schema::create()->addField("key", DataTypeFactory::createUInt64())->addField("value", DataTypeFactory::createUInt64()),
+        bPtr, dPtr, 10));
     return source;
 }
 
 const DataSourcePtr createWindowTestSliceSource(BufferManagerPtr bPtr, QueryManagerPtr dPtr, SchemaPtr schema) {
-    DataSourcePtr source(
-        std::make_shared<WindowTestingWindowGeneratorSource>(schema,
-                                                             bPtr, dPtr,
-                                                             10));
+    DataSourcePtr source(std::make_shared<WindowTestingWindowGeneratorSource>(schema, bPtr, dPtr, 10));
     return source;
 }
 
@@ -320,42 +298,40 @@ const DataSourcePtr createWindowTestSliceSource(BufferManagerPtr bPtr, QueryMana
  */
 TEST_F(CodeGenerationTest, codeGenerationApiTest) {
     auto tf = CompilerTypesFactory();
-    auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "i", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
-    auto varDeclJ =
-        VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "j", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5"));
+    auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "i",
+                                                DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+    auto varDeclJ = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "j",
+                                                DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5"));
     auto varDeclK = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "k",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "7"));
 
-    auto varDeclL = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "l", DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
+    auto varDeclL = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "l",
+                                                DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
 
     {
         // Generate Arithmetic Operation
-        BinaryOperatorStatement binOp(VarRefStatement(varDeclI), PLUS_OP,
-                                      VarRefStatement(varDeclJ));
+        BinaryOperatorStatement binOp(VarRefStatement(varDeclI), PLUS_OP, VarRefStatement(varDeclJ));
         EXPECT_EQ(binOp.getCode()->code_, "i+j");
-        BinaryOperatorStatement binOp2 = binOp.addRight(MINUS_OP,
-                                                        VarRefStatement(varDeclK));
+        BinaryOperatorStatement binOp2 = binOp.addRight(MINUS_OP, VarRefStatement(varDeclK));
         EXPECT_EQ(binOp2.getCode()->code_, "i+j-k");
     }
     {
         // Generate Array Operation
         std::vector<std::string> vals = {"a", "b", "c"};
-        auto varDeclM = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createFixedChar(12)), "m",
-            DataTypeFactory::createFixedCharValue(vals));
+        auto varDeclM = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)), "m",
+                                                    DataTypeFactory::createFixedCharValue(vals));
         // declaration of m
         EXPECT_EQ(VarRefStatement(varDeclM).getCode()->code_, "m");
 
         // Char Array initialization
-        auto varDeclN = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createFixedChar(12)), "n",
-            DataTypeFactory::createFixedCharValue(vals));
+        auto varDeclN = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)), "n",
+                                                    DataTypeFactory::createFixedCharValue(vals));
         EXPECT_EQ(varDeclN.getCode(), "char n[12] = {'a', 'b', 'c'}");
 
         // Int Array initialization
-        auto varDeclO = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())), "o",
-            DataTypeFactory::createArrayValue(DataTypeFactory::createUInt8(), {"2", "3", "4"}));
+        auto varDeclO =
+            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())), "o",
+                                        DataTypeFactory::createArrayValue(DataTypeFactory::createUInt8(), {"2", "3", "4"}));
         EXPECT_EQ(varDeclO.getCode(), "uint8_t o[4] = {2, 3, 4}");
 
         /**
@@ -376,54 +352,37 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
     }
 
     {
-        auto code = BinaryOperatorStatement(VarRefStatement(varDeclI), PLUS_OP,
-                                            VarRefStatement(varDeclJ))
-                        .addRight(
-                            PLUS_OP, VarRefStatement(varDeclK))
-                        .addRight(MULTIPLY_OP,
-                                  VarRefStatement(varDeclI),
-                                  BRACKETS)
-                        .addRight(
-                            GREATER_THAN_OP, VarRefStatement(varDeclL))
+        auto code = BinaryOperatorStatement(VarRefStatement(varDeclI), PLUS_OP, VarRefStatement(varDeclJ))
+                        .addRight(PLUS_OP, VarRefStatement(varDeclK))
+                        .addRight(MULTIPLY_OP, VarRefStatement(varDeclI), BRACKETS)
+                        .addRight(GREATER_THAN_OP, VarRefStatement(varDeclL))
                         .getCode();
 
         EXPECT_EQ(code->code_, "(i+j+k*i)>l");
 
         // We have two ways to generate code for arithmetical operations, we check here if they result in the same code
-        auto plusOperatorCode = BinaryOperatorStatement(VarRefStatement(varDeclI),
-                                                        PLUS_OP,
-                                                        VarRefStatement(varDeclJ))
-                                    .getCode()
-                                    ->code_;
-        auto plusOperatorCodeOp = (VarRefStatement(varDeclI)
-                                   + VarRefStatement(varDeclJ))
-                                      .getCode()
-                                      ->code_;
+        auto plusOperatorCode =
+            BinaryOperatorStatement(VarRefStatement(varDeclI), PLUS_OP, VarRefStatement(varDeclJ)).getCode()->code_;
+        auto plusOperatorCodeOp = (VarRefStatement(varDeclI) + VarRefStatement(varDeclJ)).getCode()->code_;
         EXPECT_EQ(plusOperatorCode, plusOperatorCodeOp);
 
         // Prefix and postfix increment
-        auto postfixIncrement = UnaryOperatorStatement(VarRefStatement(varDeclI),
-                                                       POSTFIX_INCREMENT_OP);
+        auto postfixIncrement = UnaryOperatorStatement(VarRefStatement(varDeclI), POSTFIX_INCREMENT_OP);
         EXPECT_EQ(postfixIncrement.getCode()->code_, "i++");
         auto prefixIncrement = (++VarRefStatement(varDeclI));
         EXPECT_EQ(prefixIncrement.getCode()->code_, "++i");
 
         // Comparision
-        auto comparision =
-            (VarRefStatement(varDeclI) >= VarRefStatement(varDeclJ))[VarRefStatement(
-                varDeclJ)];
+        auto comparision = (VarRefStatement(varDeclI) >= VarRefStatement(varDeclJ))[VarRefStatement(varDeclJ)];
         EXPECT_EQ(comparision.getCode()->code_, "i>=j[j]");
 
         // Negation
-        auto negate =
-            ((~VarRefStatement(varDeclI)
-              >= VarRefStatement(varDeclJ)
-                  << ConstantExpressionStatement(tf.createValueType(
-                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))))[VarRefStatement(varDeclJ)]);
+        auto negate = ((~VarRefStatement(varDeclI) >= VarRefStatement(varDeclJ)
+                            << ConstantExpressionStatement(tf.createValueType(DataTypeFactory::createBasicValue(
+                                   DataTypeFactory::createInt32(), "0"))))[VarRefStatement(varDeclJ)]);
         EXPECT_EQ(negate.getCode()->code_, "~i>=j<<0[j]");
 
-        auto addition = VarRefStatement(varDeclI).assign(
-            VarRefStatement(varDeclI) + VarRefStatement(varDeclJ));
+        auto addition = VarRefStatement(varDeclI).assign(VarRefStatement(varDeclI) + VarRefStatement(varDeclJ));
         EXPECT_EQ(addition.getCode()->code_, "i=i+j");
 
         auto sizeOfStatement = (sizeOf(VarRefStatement(varDeclI)));
@@ -433,140 +392,84 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(assignStatement.getCode()->code_, "i=i");
 
         // if statements
-        auto ifStatement = IF(
-            VarRef(varDeclI) < VarRef(varDeclJ),
-            assign(VarRef(varDeclI), VarRef(varDeclI) * VarRef(varDeclK)));
+        auto ifStatement = IF(VarRef(varDeclI) < VarRef(varDeclJ), assign(VarRef(varDeclI), VarRef(varDeclI) * VarRef(varDeclK)));
         EXPECT_EQ(ifStatement.getCode()->code_, "if(i<j){\ni=i*k;\n\n}\n");
 
-        auto ifStatementReturn = IFStatement(
-            BinaryOperatorStatement(VarRefStatement(varDeclI), GREATER_THAN_OP,
-                                    VarRefStatement(varDeclJ)),
-            ReturnStatement(VarRefStatement(varDeclI)));
-        EXPECT_EQ(ifStatementReturn.getCode()->code_,
-                  "if(i>j){\nreturn i;;\n\n}\n");
+        auto ifStatementReturn =
+            IFStatement(BinaryOperatorStatement(VarRefStatement(varDeclI), GREATER_THAN_OP, VarRefStatement(varDeclJ)),
+                        ReturnStatement(VarRefStatement(varDeclI)));
+        EXPECT_EQ(ifStatementReturn.getCode()->code_, "if(i>j){\nreturn i;;\n\n}\n");
 
-        auto compareWithOne = IFStatement(VarRefStatement(varDeclJ),
-                                          VarRefStatement(varDeclI));
+        auto compareWithOne = IFStatement(VarRefStatement(varDeclJ), VarRefStatement(varDeclI));
         EXPECT_EQ(compareWithOne.getCode()->code_, "if(j){\ni;\n\n}\n");
     }
 
     {
         auto compareAssign = BinaryOperatorStatement(
-            VarRefStatement(varDeclK),
-            ASSIGNMENT_OP,
-            BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP,
-                                    VarRefStatement(varDeclI)));
+            VarRefStatement(varDeclK), ASSIGNMENT_OP,
+            BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP, VarRefStatement(varDeclI)));
         EXPECT_EQ(compareAssign.getCode()->code_, "k=j>i");
     }
 
     {
         // check declaration types
-        auto variableDeclaration = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
-            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+        auto variableDeclaration =
+            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
+                                        DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   ADDRESS_OF_OP)
-                .getCode()
-                ->code_,
-            "&num_tuples");
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   DEREFERENCE_POINTER_OP)
-                .getCode()
-                ->code_,
-            "*num_tuples");
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   PREFIX_INCREMENT_OP)
-                .getCode()
-                ->code_,
-            "++num_tuples");
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   PREFIX_DECREMENT_OP)
-                .getCode()
-                ->code_,
-            "--num_tuples");
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   POSTFIX_INCREMENT_OP)
-                .getCode()
-                ->code_,
-            "num_tuples++");
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   POSTFIX_DECREMENT_OP)
-                .getCode()
-                ->code_,
-            "num_tuples--");
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   BITWISE_COMPLEMENT_OP)
-                .getCode()
-                ->code_,
-            "~num_tuples");
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   LOGICAL_NOT_OP)
-                .getCode()
-                ->code_,
-            "!num_tuples");
-        EXPECT_EQ(
-            UnaryOperatorStatement(VarRefStatement(variableDeclaration),
-                                   SIZE_OF_TYPE_OP)
-                .getCode()
-                ->code_,
-            "sizeof(num_tuples)");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), ADDRESS_OF_OP).getCode()->code_, "&num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), DEREFERENCE_POINTER_OP).getCode()->code_,
+                  "*num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), PREFIX_INCREMENT_OP).getCode()->code_,
+                  "++num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), PREFIX_DECREMENT_OP).getCode()->code_,
+                  "--num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), POSTFIX_INCREMENT_OP).getCode()->code_,
+                  "num_tuples++");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), POSTFIX_DECREMENT_OP).getCode()->code_,
+                  "num_tuples--");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), BITWISE_COMPLEMENT_OP).getCode()->code_,
+                  "~num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), LOGICAL_NOT_OP).getCode()->code_, "!num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), SIZE_OF_TYPE_OP).getCode()->code_,
+                  "sizeof(num_tuples)");
     }
 
     {
         // check code generation for loops
-        auto varDeclQ = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createInt32()), "q",
-            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
-        auto varDeclNumTuple = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
-            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+        auto varDeclQ = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "q",
+                                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+        auto varDeclNumTuple =
+            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
+                                        DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
-        auto varDeclSum = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createInt32()), "sum",
-            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+        auto varDeclSum = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "sum",
+                                                      DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
         ForLoopStatement loopStmt(
             varDeclQ.copy(),
-            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THAN_OP,
-                                    VarRefStatement(varDeclNumTuple))
-                .copy(),
+            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THAN_OP, VarRefStatement(varDeclNumTuple)).copy(),
             UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy());
 
         loopStmt.addStatement(
-            BinaryOperatorStatement(
-                VarRefStatement(varDeclSum),
-                ASSIGNMENT_OP,
-                BinaryOperatorStatement(VarRefStatement(varDeclSum), PLUS_OP,
-                                        VarRefStatement(varDeclQ)))
+            BinaryOperatorStatement(VarRefStatement(varDeclSum), ASSIGNMENT_OP,
+                                    BinaryOperatorStatement(VarRefStatement(varDeclSum), PLUS_OP, VarRefStatement(varDeclQ)))
                 .copy());
 
-        EXPECT_EQ(loopStmt.getCode()->code_,
-                  "for(int32_t q = 0;q<num_tuples;++q){\nsum=sum+q;\n\n}\n");
+        EXPECT_EQ(loopStmt.getCode()->code_, "for(int32_t q = 0;q<num_tuples;++q){\nsum=sum+q;\n\n}\n");
 
         auto forLoop = ForLoopStatement(
             varDeclQ.copy(),
-            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THAN_OP,
-                                    VarRefStatement(varDeclNumTuple))
-                .copy(),
+            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THAN_OP, VarRefStatement(varDeclNumTuple)).copy(),
             UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy());
 
-        EXPECT_EQ(forLoop.getCode()->code_,
-                  "for(int32_t q = 0;q<num_tuples;++q){\n\n}\n");
+        EXPECT_EQ(forLoop.getCode()->code_, "for(int32_t q = 0;q<num_tuples;++q){\n\n}\n");
 
         auto compareAssignment = BinaryOperatorStatement(
-            VarRefStatement(varDeclK),
-            ASSIGNMENT_OP,
+            VarRefStatement(varDeclK), ASSIGNMENT_OP,
             BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP,
-                                    ConstantExpressionStatement(tf.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5")))));
+                                    ConstantExpressionStatement(tf.createValueType(
+                                        DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5")))));
 
         EXPECT_EQ(compareAssignment.getCode()->code_, "k=j>5");
     }
@@ -575,9 +478,9 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         /* check code generation of pointers */
         auto val = tf.createPointer(tf.createDataType(DataTypeFactory::createInt32()));
         assert(val != nullptr);
-        auto variableDeclarationI = VariableDeclaration::create(
-            tf.createDataType(DataTypeFactory::createInt32()), "i",
-            DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+        auto variableDeclarationI =
+            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "i",
+                                        DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
         auto variableDeclarationP = VariableDeclaration::create(val, "array");
         EXPECT_EQ(variableDeclarationP.getCode(), "int32_t* array");
 
@@ -590,35 +493,27 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
             charPointerDataType, "i", createStringValueType("Hello World"));
         EXPECT_EQ(var_decl_temp.getCode(), "char* i = \"Hello World\"");
    */
-        auto tupleBufferStructDecl = StructDeclaration::create("TupleBuffer",
-                                                               "buffer")
-                                         .addField(
-                                             VariableDeclaration::create(
-                                                 tf.createDataType(DataTypeFactory::createUInt64()), "num_tuples",
-                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0")))
-                                         .addField(
-                                             variableDeclarationP);
+        auto tupleBufferStructDecl =
+            StructDeclaration::create("TupleBuffer", "buffer")
+                .addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createUInt64()), "num_tuples",
+                                                      DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0")))
+                .addField(variableDeclarationP);
 
         // check code generation for different assignment type
-        auto varDeclTupleBuffer = VariableDeclaration::create(
-            tf.createUserDefinedType(tupleBufferStructDecl), "buffer");
+        auto varDeclTupleBuffer = VariableDeclaration::create(tf.createUserDefinedType(tupleBufferStructDecl), "buffer");
         EXPECT_EQ(varDeclTupleBuffer.getCode(), "TupleBuffer");
 
-        auto varDeclTupleBufferPointer = VariableDeclaration::create(
-            tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)),
-            "buffer");
+        auto varDeclTupleBufferPointer =
+            VariableDeclaration::create(tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)), "buffer");
         EXPECT_EQ(varDeclTupleBufferPointer.getCode(), "TupleBuffer* buffer");
 
         auto pointerDataType = tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl));
         EXPECT_EQ(pointerDataType->getCode()->code_, "TupleBuffer*");
 
-        auto typeDefinition = VariableDeclaration::create(
-                                  tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)),
-                                  "buffer")
-                                  .getTypeDefinitionCode();
-        EXPECT_EQ(
-            typeDefinition,
-            "struct TupleBuffer{\nuint64_t num_tuples = 0;\nint32_t* array;\n}buffer");
+        auto typeDefinition =
+            VariableDeclaration::create(tf.createPointer(tf.createUserDefinedType(tupleBufferStructDecl)), "buffer")
+                .getTypeDefinitionCode();
+        EXPECT_EQ(typeDefinition, "struct TupleBuffer{\nuint64_t num_tuples = 0;\nint32_t* array;\n}buffer");
     }
 }
 
@@ -638,34 +533,29 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto getBufferOfTupleBuffer = FunctionCallStatement("getBuffer");
 
     /* struct definition for input tuples */
-    auto structDeclTuple = StructDeclaration::create("Tuple", "").addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "campaign_id"));
+    auto structDeclTuple =
+        StructDeclaration::create("Tuple", "")
+            .addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "campaign_id"));
 
     /* struct definition for result tuples */
 
-    auto structDeclResultTuple = StructDeclaration::create("ResultTuple", "")
-                                     .addField(
-                                         VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum"));
+    auto structDeclResultTuple =
+        StructDeclaration::create("ResultTuple", "")
+            .addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum"));
 
     /* === declarations === */
-    auto varDeclTupleBuffers = VariableDeclaration::create(tf.createReference(tupleBufferType),
-                                                           "input_buffer");
+    auto varDeclTupleBuffers = VariableDeclaration::create(tf.createReference(tupleBufferType), "input_buffer");
     auto varDeclPipelineExecutionContext =
-        VariableDeclaration::create(tf.createReference(pipelineExecutionContextType),
-                                    "pipelineExecutionContext");
-    auto varDeclWorkerContext =
-        VariableDeclaration::create(tf.createReference(workerContextType),
-                                    "workerContext");
+        VariableDeclaration::create(tf.createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+    auto varDeclWorkerContext = VariableDeclaration::create(tf.createReference(workerContextType), "workerContext");
     /* Tuple *tuples; */
-    auto varDeclTuple = VariableDeclaration::create(
-        tf.createPointer(tf.createUserDefinedType(structDeclTuple)), "tuples");
+    auto varDeclTuple = VariableDeclaration::create(tf.createPointer(tf.createUserDefinedType(structDeclTuple)), "tuples");
 
-    auto varDeclResultTuple = VariableDeclaration::create(
-        tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)),
-        "resultTuples");
+    auto varDeclResultTuple =
+        VariableDeclaration::create(tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)), "resultTuples");
 
     /* variable declarations for fields inside structs */
-    auto declFieldCampaignId = structDeclTuple.getVariableDeclaration(
-        "campaign_id");
+    auto declFieldCampaignId = structDeclTuple.getVariableDeclaration("campaign_id");
 
     auto varDeclFieldResultTupleSum = structDeclResultTuple.getVariableDeclaration("sum");
 
@@ -674,43 +564,43 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* variable declarations */
 
     /* uint64_t id = 0; */
-    auto varDeclId = VariableDeclaration::create(
-        tf.createDataType(DataTypeFactory::createUInt64()), "id",
-        DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0"));
+    auto varDeclId = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createUInt64()), "id",
+                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0"));
     /* int32_t ret = 0; */
-    auto varDeclReturn = VariableDeclaration::create(
-        tf.createDataType(DataTypeFactory::createInt32()), "ret",
-        DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+    auto varDeclReturn = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "ret",
+                                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
     /* int32_t sum = 0;*/
-    auto varDeclSum = VariableDeclaration::create(
-        tf.createDataType(DataTypeFactory::createInt64()), "sum",
-        DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"));
+    auto varDeclSum = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum",
+                                                  DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"));
 
     /* init statements before for loop */
 
     /*  tuples = (Tuple *)tuple_buffer.getBuffer();*/
     BinaryOperatorStatement initTuplePtr(
         VarRef(varDeclTuple)
-            .assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer), tf.createPointer(tf.createUserDefinedType(structDeclTuple)))));
+            .assign(TypeCast(VarRefStatement(varDeclTupleBuffers).accessRef(getBufferOfTupleBuffer),
+                             tf.createPointer(tf.createUserDefinedType(structDeclTuple)))));
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
-    BinaryOperatorStatement initResultTupleBufferPtr(VarDeclStatement(resultTupleBufferDeclaration).assign(VarRef(varDeclPipelineExecutionContext).accessRef(allocateTupleBuffer)));
+    BinaryOperatorStatement initResultTupleBufferPtr(
+        VarDeclStatement(resultTupleBufferDeclaration)
+            .assign(VarRef(varDeclPipelineExecutionContext).accessRef(allocateTupleBuffer)));
 
     BinaryOperatorStatement initResultTuplePtr(
-        VarRef(varDeclResultTuple).assign(TypeCast(VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer), tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)))));
+        VarRef(varDeclResultTuple)
+            .assign(TypeCast(VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer),
+                             tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)))));
 
     /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
-    FOR loopStmt(
-        varDeclId.copy(),
-        (VarRef(varDeclId)
-         < (VarRef(varDeclTupleBuffers).accessRef(getNumberOfTupleBuffer)))
-            .copy(),
-        (++VarRef(varDeclId)).copy());
+    FOR loopStmt(varDeclId.copy(), (VarRef(varDeclId) < (VarRef(varDeclTupleBuffers).accessRef(getNumberOfTupleBuffer))).copy(),
+                 (++VarRef(varDeclId)).copy());
 
     /* sum = sum + tuples[id].campaign_id; */
     loopStmt.addStatement(
-        VarRef(varDeclSum).assign(VarRef(varDeclSum) + VarRef(varDeclTuple)[VarRef(varDeclId)].accessRef(VarRef(declFieldCampaignId))).copy());
+        VarRef(varDeclSum)
+            .assign(VarRef(varDeclSum) + VarRef(varDeclTuple)[VarRef(varDeclId)].accessRef(VarRef(declFieldCampaignId)))
+            .copy());
 
     /* function signature:
      * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
@@ -811,8 +701,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
     auto layout = createRowLayout(schema);
-    for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples();
-         ++recordIndex) {
+    for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(1, layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(buffer));
     }
 }
@@ -833,10 +722,9 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* generate code for scanning input buffer */
     codeGenerator->generateCodeForScan(source->getSchema(), context);
 
-    auto pred = std::dynamic_pointer_cast<Predicate>(
-        (PredicateItem(inputSchema->get(0))
-         < PredicateItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "5")))
-            .copy());
+    auto pred = std::dynamic_pointer_cast<Predicate>((PredicateItem(inputSchema->get(0)) < PredicateItem(
+                                                          DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "5")))
+                                                         .copy());
 
     codeGenerator->generateCodeForFilter(pred, context);
 
@@ -856,8 +744,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     stage->execute(inputBuffer, queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-    NES_INFO(
-        "Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
+    NES_INFO("Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
     auto resultData = (SelectionDataGenSource::InputTuple*) resultBuffer.getBuffer();
@@ -904,9 +791,10 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
-    auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
+    auto aggregate =
+        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
@@ -917,16 +805,18 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
+    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
+        windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
-        0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
+        0, nodeEngine->getBufferManager(),
+        [](TupleBuffer& buff, WorkerContext&) {
             buff.isValid();
         },
-        windowHandler,
-        nullptr, windowDefinition, nullptr, input_schema);                                                                                //valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
+        windowHandler, nullptr, windowDefinition, nullptr, input_schema);//valid check due to compiler error for unused var
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext,
+                                                        nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
@@ -937,7 +827,8 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     stage1->execute(inputBuffer, queryContext, wctx);
 
     //check partial aggregates in window state
-    auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()->getTypedWindowState();
+    auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()
+                        ->getTypedWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
@@ -962,10 +853,11 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
+        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
-    auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    auto aggregate =
+        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
@@ -976,15 +868,16 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
+    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
+        windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
-        0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
+        0, nodeEngine->getBufferManager(),
+        [](TupleBuffer& buff, WorkerContext&) {
             buff.isValid();
         },
-        windowHandler,
-        nullptr, windowDefinition, nullptr, input_schema);//valid check due to compiler error for unused var
+        windowHandler, nullptr, windowDefinition, nullptr, input_schema);//valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
@@ -997,7 +890,8 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     stage1->execute(inputBuffer, queryContext, wctx);
 
     //check partial aggregates in window state
-    auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()->getTypedWindowState();
+    auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()
+                        ->getTypedWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
@@ -1010,7 +904,11 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     WorkerContext wctx(NesThread::getId());
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    SchemaPtr schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+    SchemaPtr schema = Schema::create()
+                           ->addField(createField("start", UINT64))
+                           ->addField(createField("end", UINT64))
+                           ->addField(createField("key", UINT64))
+                           ->addField("value", UINT64);
 
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
@@ -1022,10 +920,11 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
+        Attribute("key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
-    auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    auto aggregate =
+        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
@@ -1036,16 +935,18 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     // init window handler
-    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDefinition, ExecutableSumAggregation<uint64_t>::create());
+    auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
+        windowDefinition, ExecutableSumAggregation<uint64_t>::create());
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
-        0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
+        0, nodeEngine->getBufferManager(),
+        [](TupleBuffer& buff, WorkerContext&) {
             buff.isValid();
         },
-        windowHandler,
-        nullptr, windowDefinition, nullptr, schema);                                                                                //valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
+        windowHandler, nullptr, windowDefinition, nullptr, schema);//valid check due to compiler error for unused var
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext,
+                                                        nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     auto layout = createRowLayout(schema);
@@ -1086,7 +987,8 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     stage1->execute(buffer, queryContext, wctx);
 
     //check partial aggregates in window state
-    auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()->getTypedWindowState();
+    auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()
+                        ->getTypedWindowState();
 
     std::vector<uint64_t> results;
     for (auto& [key, val] : stateVar->rangeAll()) {
@@ -1125,7 +1027,11 @@ TEST_F(CodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     WorkerContext wctx(NesThread::getId());
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    SchemaPtr schema = Schema::create()->addField(createField("start", UINT64))->addField(createField("end", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+    SchemaPtr schema = Schema::create()
+                           ->addField(createField("start", UINT64))
+                           ->addField(createField("end", UINT64))
+                           ->addField(createField("key", UINT64))
+                           ->addField("value", UINT64);
 
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
@@ -1137,17 +1043,17 @@ TEST_F(CodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
+        Attribute("key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
-    auto aggregate = TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    auto aggregate =
+        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1);
     std::string codeString = codeGenerator->generateCode(context1->code);
 
     auto found = codeString.find("windowHandler->trigger();");
     cout << "code=" << codeString << std::endl;
-    EXPECT_NE(
-        found, std::string::npos);
+    EXPECT_NE(found, std::string::npos);
 }
 
 /**
@@ -1168,9 +1074,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     //predicate definition
     codeGenerator->generateCodeForFilter(
-        createPredicate(
-            (inputSchema->get(2) > 30.4)
-            && (inputSchema->get(4) == 'F' || (inputSchema->get(5) == "HHHHHHHHHHH"))),
+        createPredicate((inputSchema->get(2) > 30.4) && (inputSchema->get(4) == 'F' || (inputSchema->get(5) == "HHHHHHHHHHH"))),
         context);
 
     /* generate code for writing result tuples to output buffer */
@@ -1273,10 +1177,10 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     WindowTriggerPolicyPtr triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
-    Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(FieldAccessExpressionNode::create(DataTypeFactory::createInt64(),
-                                                                                                                   "key")->as<FieldAccessExpressionNode>(),
-                                                                                 TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),
-                                                                                 distrType, triggerPolicy, triggerAction, 1, 1);
+    Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
+        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), distrType, triggerPolicy, triggerAction,
+        1, 1);
 
     context1->isLeftSide = true;
     codeGenerator->generateCodeForJoin(joinDef, context1);
@@ -1292,12 +1196,13 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
-        0, nodeEngine->getBufferManager(), [](TupleBuffer& buff, WorkerContext&) {
+        0, nodeEngine->getBufferManager(),
+        [](TupleBuffer& buff, WorkerContext&) {
             buff.isValid();
         },
-        nullptr,
-        joinHandler, nullptr, joinDef, input_schema); //valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);// TODO Philipp, plz add pass-through pipeline here
+        nullptr, joinHandler, nullptr, joinDef, input_schema);//valid check due to compiler error for unused var
+    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext,
+                                                        nullptr);// TODO Philipp, plz add pass-through pipeline here
     joinHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */

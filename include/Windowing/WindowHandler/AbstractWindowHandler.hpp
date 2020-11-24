@@ -78,34 +78,26 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
      * @brief Gets the last processed watermark
      * @return watermark
      */
-    [[nodiscard]] uint64_t getLastWatermark() const {
-        return lastWatermark;
-    }
+    [[nodiscard]] uint64_t getLastWatermark() const { return lastWatermark; }
 
     /**
      * @brief Sets the last watermark
      * @param lastWatermark
      */
-    void setLastWatermark(uint64_t lastWatermark) {
-        this->lastWatermark = lastWatermark;
-    }
+    void setLastWatermark(uint64_t lastWatermark) { this->lastWatermark = lastWatermark; }
 
     /**
      * @brief Gets the maximal processed ts per origin id.
      * @param originId
      * @return max ts.
      */
-    uint32_t getMaxTs(uint32_t originId) {
-        return originIdToMaxTsMap[originId];
-    };
+    uint32_t getMaxTs(uint32_t originId) { return originIdToMaxTsMap[originId]; };
 
     /**
      * @brief Gets number of mappings.
      * @return size of origin map.
      */
-    uint64_t getNumberOfMappings() {
-        return originIdToMaxTsMap.size();
-    };
+    uint64_t getNumberOfMappings() { return originIdToMaxTsMap.size(); };
 
     /**
      * @brief this function prints the content of the map for debugging purposes
@@ -125,13 +117,16 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
      */
     uint64_t getMinWatermark() {
         if (originIdToMaxTsMap.size() == numberOfInputEdges) {
-            std::map<uint64_t, uint64_t>::iterator min = std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(), [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-                return a.second < b.second;
-            });
+            std::map<uint64_t, uint64_t>::iterator min =
+                std::min_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(),
+                                 [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
+                                     return a.second < b.second;
+                                 });
             NES_DEBUG("getMinWatermark() return min=" << min->second);
             return min->second;
         } else {
-            NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings=" << originIdToMaxTsMap.size() << " expected mappings=" << numberOfInputEdges);
+            NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings="
+                      << originIdToMaxTsMap.size() << " expected mappings=" << numberOfInputEdges);
             return 0;//TODO: we have to figure out how many downstream positions are there
         }
     };

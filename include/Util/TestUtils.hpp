@@ -407,7 +407,8 @@ class TestUtils {
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 int count = std::count(content.begin(), content.end(), '\n');
                 if (expectedLines.size() != count) {
-                    NES_DEBUG("checkOutputOrTimeout: number of expected lines " << expectedLines.size() << " not reached yet with " << count << " lines");
+                    NES_DEBUG("checkOutputOrTimeout: number of expected lines " << expectedLines.size()
+                                                                                << " not reached yet with " << count << " lines");
                     continue;
                 }
 

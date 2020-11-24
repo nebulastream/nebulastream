@@ -22,10 +22,10 @@
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <utility>
 
 namespace NES {
@@ -63,7 +63,9 @@ bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerCon
     uint64_t maxWaterMark = inputBuffer.getWatermark();
 
     if (hasWindowHandler() && maxWaterMark != 0) {
-        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId() << " for handler=" << pipelineContext->getWindowHandler()->toString());
+        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId()
+                                                               << " for handler="
+                                                               << pipelineContext->getWindowHandler()->toString());
         pipelineContext->getWindowHandler()->updateMaxTs(maxWaterMark, inputBuffer.getOriginId());
         if (pipelineContext->getWindowDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
             NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnWatermarkChange");

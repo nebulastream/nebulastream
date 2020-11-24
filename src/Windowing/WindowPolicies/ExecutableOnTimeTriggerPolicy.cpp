@@ -18,10 +18,10 @@
 #include <Util/ThreadNaming.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
+#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <memory>
-#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 
 namespace NES::Windowing {
 
@@ -55,7 +55,8 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
     }
 
     running = true;
-    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << joinHandler->toString() << " with ms=" << triggerTimeInMs);
+    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << joinHandler->toString()
+                                                              << " with ms=" << triggerTimeInMs);
     std::string handlerName = joinHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, joinHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());

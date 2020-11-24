@@ -17,10 +17,10 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <functional>
 #include <memory>
-#include <Windowing/JoinForwardRefs.hpp>
 namespace NES {
 
 class WorkerContext;
@@ -52,15 +52,11 @@ class PipelineExecutionContext {
      * @param bufferManager a reference to the buffer manager to enable allocation from within the pipeline
      * @param emitFunctionHandler an handler to receive the emitted buffers from the pipeline.
      */
-    explicit PipelineExecutionContext(
-        QuerySubPlanId queryId,
-        BufferManagerPtr bufferManager,
-        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-        Windowing::AbstractWindowHandlerPtr windowHandler,
-        Join::AbstractJoinHandlerPtr joinHandler,
-        Windowing::LogicalWindowDefinitionPtr windowDef,
-        NES::Join::LogicalJoinDefinitionPtr joinDef,
-        SchemaPtr inputSchema);
+    explicit PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
+                                      std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
+                                      Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler,
+                                      Windowing::LogicalWindowDefinitionPtr windowDef,
+                                      NES::Join::LogicalJoinDefinitionPtr joinDef, SchemaPtr inputSchema);
 
     /**
      * @brief Allocates a new tuple buffer.
@@ -83,13 +79,9 @@ class PipelineExecutionContext {
     /**
      * @brief
      */
-    Windowing::AbstractWindowHandlerPtr getWindowHandler() {
-        return windowHandler;
-    }
+    Windowing::AbstractWindowHandlerPtr getWindowHandler() { return windowHandler; }
 
-    Join::AbstractJoinHandlerPtr getJoinHandler() {
-        return joinHandler;
-    }
+    Join::AbstractJoinHandlerPtr getJoinHandler() { return joinHandler; }
 
     /**
      * @brief this method is called from the compiled code to get the join handler
@@ -102,9 +94,11 @@ class PipelineExecutionContext {
         return std::dynamic_pointer_cast<WindowHandlerType<KeyType>>(joinHandler);
     }
 
-    template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+    template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType,
+             class PartialAggregateType, class FinalAggregateType>
     auto getWindowHandler() {
-        return std::dynamic_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowHandler);
+        return std::dynamic_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
+            windowHandler);
     }
 
     /**

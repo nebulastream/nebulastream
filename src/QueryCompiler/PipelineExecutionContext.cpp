@@ -22,38 +22,28 @@
 
 namespace NES {
 
-PipelineExecutionContext::PipelineExecutionContext(
-    QuerySubPlanId queryId,
-    BufferManagerPtr bufferManager,
-    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
-    Windowing::AbstractWindowHandlerPtr windowHandler,
-    Join::AbstractJoinHandlerPtr joinHandler,
-    Windowing::LogicalWindowDefinitionPtr windowDef,
-    Join::LogicalJoinDefinitionPtr joinDef,
-    SchemaPtr inputSchema)
-    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)), windowHandler(windowHandler), joinHandler(joinHandler), windowDef(windowDef), joinDef(joinDef), inputSchema(inputSchema) {
+PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
+                                                   std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
+                                                   Windowing::AbstractWindowHandlerPtr windowHandler,
+                                                   Join::AbstractJoinHandlerPtr joinHandler,
+                                                   Windowing::LogicalWindowDefinitionPtr windowDef,
+                                                   Join::LogicalJoinDefinitionPtr joinDef, SchemaPtr inputSchema)
+    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)),
+      windowHandler(windowHandler), joinHandler(joinHandler), windowDef(windowDef), joinDef(joinDef), inputSchema(inputSchema) {
     // nop
 }
 
-TupleBuffer PipelineExecutionContext::allocateTupleBuffer() {
-    return bufferManager->getBufferBlocking();
-}
+TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return bufferManager->getBufferBlocking(); }
 
 void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer, WorkerContextRef workerContext) {
     // call the function handler
     emitFunctionHandler(outputBuffer, workerContext);
 }
 
-Windowing::LogicalWindowDefinitionPtr PipelineExecutionContext::getWindowDef() {
-    return windowDef;
-}
+Windowing::LogicalWindowDefinitionPtr PipelineExecutionContext::getWindowDef() { return windowDef; }
 
-Join::LogicalJoinDefinitionPtr PipelineExecutionContext::getJoinDef() {
-    return joinDef;
-}
+Join::LogicalJoinDefinitionPtr PipelineExecutionContext::getJoinDef() { return joinDef; }
 
-SchemaPtr PipelineExecutionContext::getInputSchema() {
-    return inputSchema;
-}
+SchemaPtr PipelineExecutionContext::getInputSchema() { return inputSchema; }
 
 }// namespace NES
