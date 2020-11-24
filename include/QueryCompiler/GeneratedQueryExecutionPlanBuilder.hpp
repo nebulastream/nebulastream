@@ -74,19 +74,19 @@ class GeneratedQueryExecutionPlanBuilder {
     /**
      * @return total number of pipeline stages in the qep
      */
-    size_t getNumberOfPipelineStages() const;
+    uint64_t getNumberOfPipelineStages() const;
 
     /**
      * @param index
      * @return the index-th data source
      */
-    DataSourcePtr getSource(size_t index);
+    DataSourcePtr getSource(uint64_t index);
 
     /**
     * @param index
     * @return the index-th data sink
     */
-    DataSinkPtr getSink(size_t index);
+    DataSinkPtr getSink(uint64_t index);
 
     /**
      * @return all sinks in the plan

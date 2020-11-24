@@ -25,7 +25,7 @@ class DefaultSource : public GeneratorSource {
   public:
     DefaultSource() = default;
     DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                  const uint64_t numbersOfBufferToProduce, size_t frequency, OperatorId operatorId);
+                  const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId);
 
     SourceType getType() const override;
 

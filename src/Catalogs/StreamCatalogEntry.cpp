@@ -35,9 +35,9 @@ std::string StreamCatalogEntry::getLogicalName() { return streamConf->getLogical
 
 double StreamCatalogEntry::getSourceFrequency() { return streamConf->getSourceFrequency(); }
 
-size_t StreamCatalogEntry::getNumberOfBuffersToProduce() { return streamConf->getNumberOfBuffersToProduce(); }
+uint64_t StreamCatalogEntry::getNumberOfBuffersToProduce() { return streamConf->getNumberOfBuffersToProduce(); }
 
-size_t StreamCatalogEntry::getNumberOfTuplesToProducePerBuffer() { return streamConf->getNumberOfTuplesToProducePerBuffer(); }
+uint64_t StreamCatalogEntry::getNumberOfTuplesToProducePerBuffer() { return streamConf->getNumberOfTuplesToProducePerBuffer(); }
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
     ss << "physicalName=" << streamConf->getPhysicalStreamName() << " logicalStreamName=" << streamConf->getLogicalStreamName()

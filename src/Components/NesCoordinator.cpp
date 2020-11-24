@@ -124,7 +124,7 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
 }
 
-size_t NesCoordinator::startCoordinator(bool blocking) {
+uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 
     queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {

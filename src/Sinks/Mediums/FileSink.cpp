@@ -75,7 +75,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
         if (schemaBuffer) {
             std::ofstream outputFile;
             if (sinkFormat->getSinkFormat() == NES_FORMAT) {
-                size_t idx = filePath.rfind(".");
+                uint64_t idx = filePath.rfind(".");
                 std::string shrinkedPath = filePath.substr(0, idx + 1);
                 std::string schemaFile = shrinkedPath + "schema";
                 NES_DEBUG("FileSink::writeData: schema is =" << sinkFormat->getSchemaPtr()->toString()

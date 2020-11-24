@@ -110,7 +110,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
     return nullptr;
 }
 
-bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, size_t tupleSize) {
+bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, uint64_t tupleSize) {
     auto bufferSize = inputBuffer.getBufferSize();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto originId = inputBuffer.getOriginId();

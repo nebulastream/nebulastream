@@ -20,30 +20,30 @@
 namespace NES {
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
-                                         size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                          bool endlessRepeat, bool skipHeader, OperatorId operatorId)
     : SourceDescriptor(std::move(schema), operatorId), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numBuffersToProcess(numBuffersToProcess),
       frequency(frequency), endlessRepeat(endlessRepeat), skipHeader(skipHeader) {}
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
-                                         size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                          bool endlessRepeat, bool skipHeader, OperatorId operatorId)
     : SourceDescriptor(std::move(schema), std::move(streamName), operatorId), filePath(std::move(filePath)),
       delimiter(std::move(delimiter)), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       numBuffersToProcess(numBuffersToProcess), frequency(frequency), endlessRepeat(endlessRepeat), skipHeader(skipHeader) {}
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, std::string filePath, std::string delimiter,
-                                                size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess,
-                                                size_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
+                                                uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                                uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(filePath), std::move(delimiter),
                                                                      numberOfTuplesToProducePerBuffer, numBuffersToProcess,
                                                                      frequency, endlessRepeat, skipHeader, operatorId));
 }
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string filePath,
-                                                std::string delimiter, size_t numberOfTuplesToProducePerBuffer,
-                                                size_t numBuffersToProcess, size_t frequency, bool endlessRepeat, bool skipHeader,
+                                                std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
+                                                uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat, bool skipHeader,
                                                 OperatorId operatorId) {
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(
         std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer,
@@ -56,11 +56,11 @@ const std::string& CsvSourceDescriptor::getDelimiter() const { return delimiter;
 
 bool CsvSourceDescriptor::getSkipHeader() const { return skipHeader; }
 
-size_t CsvSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
+uint64_t CsvSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
-size_t CsvSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+uint64_t CsvSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
-size_t CsvSourceDescriptor::getFrequency() const { return frequency; }
+uint64_t CsvSourceDescriptor::getFrequency() const { return frequency; }
 
 bool CsvSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<CsvSourceDescriptor>())

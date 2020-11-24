@@ -273,15 +273,15 @@ std::string Topology::toString() {
     topologyInfo << std::endl;
 
     // store pair of TopologyNodePtr and its depth in when printed
-    std::deque<std::pair<TopologyNodePtr, size_t>> parentToPrint{std::make_pair(rootNode, 0)};
-    std::deque<std::pair<TopologyNodePtr, size_t>> childToPrint;
+    std::deque<std::pair<TopologyNodePtr, uint64_t>> parentToPrint{std::make_pair(rootNode, 0)};
+    std::deque<std::pair<TopologyNodePtr, uint64_t>> childToPrint;
 
     // indent multiplier
     int indent = 2;
 
     // perform dfs traverse
     while (!parentToPrint.empty()) {
-        std::pair<TopologyNodePtr, size_t> nodeToPrint = parentToPrint.front();
+        std::pair<TopologyNodePtr, uint64_t> nodeToPrint = parentToPrint.front();
         parentToPrint.pop_front();
         for (int i = 0; i < indent * nodeToPrint.second; i++) {
             if (i % indent == 0) {

@@ -81,13 +81,13 @@ class StreamCatalogEntry {
      * @brief get number of tuples per buffer
      * @return tuple cnt
      */
-    size_t getNumberOfTuplesToProducePerBuffer();
+    uint64_t getNumberOfTuplesToProducePerBuffer();
 
     /**
      * @brief get number of buffers to produce
      * @return buffer cnt
      */
-    size_t getNumberOfBuffersToProduce();
+    uint64_t getNumberOfBuffersToProduce();
 
     std::string toString();
 

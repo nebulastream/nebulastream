@@ -71,9 +71,9 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid1 = workerProc1.id();
-    size_t workerPid2 = workerProc2.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid1 = workerProc1.id();
+    uint64_t workerPid2 = workerProc2.id();
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -144,7 +144,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
-    size_t coordinatorPid = coordinatorProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -159,7 +159,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
                    "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(path2.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
-    size_t workerPid1 = workerProc1.id();
+    uint64_t workerPid1 = workerProc1.id();
     sleep(1);
 
     string path3 = "./nesWorker --coordinatorPort=12346 --rpcPort=12353 --dataPort=12354 --logicalStreamName=QnV "
@@ -167,7 +167,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
                    "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc2(path3.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
-    size_t workerPid2 = workerProc2.id();
+    uint64_t workerPid2 = workerProc2.id();
     sleep(1);
 
     std::stringstream ss;
@@ -223,7 +223,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
-    size_t coordinatorPid = coordinatorProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -239,7 +239,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
         "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(path2.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
-    size_t workerPid1 = workerProc1.id();
+    uint64_t workerPid1 = workerProc1.id();
     sleep(1);
 
     string path3 =
@@ -248,7 +248,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
         "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc2(path3.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
-    size_t workerPid2 = workerProc2.id();
+    uint64_t workerPid2 = workerProc2.id();
     sleep(1);
 
     std::stringstream ss;
@@ -342,9 +342,9 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithTumblingWindowFi
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid1 = workerProc1.id();
-    size_t workerPid2 = workerProc2.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid1 = workerProc1.id();
+    uint64_t workerPid2 = workerProc2.id();
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -415,9 +415,9 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid1 = workerProc1.id();
-    size_t workerPid2 = workerProc2.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid1 = workerProc1.id();
+    uint64_t workerPid2 = workerProc2.id();
 
     web::json::value json_return;
 
@@ -466,8 +466,8 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
 }
 
 TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
-    size_t numBuffers = 3;
-    size_t numTuples = 10;
+    uint64_t numBuffers = 3;
+    uint64_t numTuples = 10;
 
     NES_INFO(" start coordinator");
     std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.txt";
@@ -492,9 +492,9 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid1 = workerProc1.id();
-    size_t workerPid2 = workerProc2.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid1 = workerProc1.id();
+    uint64_t workerPid2 = workerProc2.id();
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";

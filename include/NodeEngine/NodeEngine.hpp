@@ -67,8 +67,8 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      */
 
     static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
-                                              uint16_t numThreads = DEFAULT_NUM_THREADS, size_t bufferSize = DEFAULT_BUFFER_SIZE,
-                                              size_t numBuffers = DEFAULT_NUM_BUFFERS);
+                                              uint16_t numThreads = DEFAULT_NUM_THREADS, uint64_t bufferSize = DEFAULT_BUFFER_SIZE,
+                                              uint64_t numBuffers = DEFAULT_NUM_BUFFERS);
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool

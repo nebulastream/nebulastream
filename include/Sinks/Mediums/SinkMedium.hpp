@@ -73,13 +73,13 @@ class SinkMedium : public Reconfigurable {
      * @brief debug function for testing to get number of written buffers
      * @return number of sent buffer
      */
-    size_t getNumberOfWrittenOutBuffers();
+    uint64_t getNumberOfWrittenOutBuffers();
 
     /**
      * @brief debug function for testing to get number of written tuples
      * @return number of sent buffer
      */
-    size_t getNumberOfWrittenOutTuples();
+    uint64_t getNumberOfWrittenOutTuples();
 
     /**
      * @brief virtual function to get a string describing the particular sink
@@ -131,8 +131,8 @@ class SinkMedium : public Reconfigurable {
 
     QuerySubPlanId parentPlanId;
 
-    size_t sentBuffer;
-    size_t sentTuples;
+    uint64_t sentBuffer;
+    uint64_t sentTuples;
     std::mutex writeMutex;
 };
 

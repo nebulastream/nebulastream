@@ -96,7 +96,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      * @brief start rpc server: rest server, and one worker <
      * @param bool if the method should block
      */
-    size_t startCoordinator(bool blocking);
+    uint64_t startCoordinator(bool blocking);
 
     /**
      * @brief method to stop coordinator

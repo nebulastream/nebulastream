@@ -27,7 +27,7 @@ BufferManager::BufferManager() : bufferSize(0), numOfBuffers(0), isConfigured(fa
     // nop
 }
 
-BufferManager::BufferManager(size_t bufferSize, size_t numOfBuffers) : bufferSize(0), numOfBuffers(0), isConfigured(false) {
+BufferManager::BufferManager(uint64_t bufferSize, uint64_t numOfBuffers) : bufferSize(0), numOfBuffers(0), isConfigured(false) {
     configure(bufferSize, numOfBuffers);
 }
 
@@ -59,7 +59,7 @@ BufferManager::~BufferManager() {
     unpooledBuffers.clear();
 }
 
-void BufferManager::configure(size_t bufferSize, size_t numOfBuffers) {
+void BufferManager::configure(uint64_t bufferSize, uint64_t numOfBuffers) {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
     if (isConfigured) {
         NES_THROW_RUNTIME_ERROR("[BufferManager] Already configured - we cannot change the buffer manager at runtime for now!");
@@ -68,7 +68,7 @@ void BufferManager::configure(size_t bufferSize, size_t numOfBuffers) {
     this->numOfBuffers = numOfBuffers;
     allBuffers.reserve(numOfBuffers);
     auto realSize = bufferSize + sizeof(detail::BufferControlBlock);
-    for (size_t i = 0; i < numOfBuffers; ++i) {
+    for (uint64_t i = 0; i < numOfBuffers; ++i) {
         auto ptr = static_cast<uint8_t*>(malloc(realSize));
         if (ptr == nullptr) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
@@ -126,7 +126,7 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     }
 }
 
-std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
+std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(uint64_t bufferSize) {
     std::unique_lock<std::mutex> lock(unpooledBuffersMutex);
     UnpooledBufferHolder probe(bufferSize);
     auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
@@ -200,16 +200,16 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment) {
     //    unpooledBuffers.insert(candidate, std::move(probe));
 }
 
-size_t BufferManager::getBufferSize() const { return bufferSize; }
+uint64_t BufferManager::getBufferSize() const { return bufferSize; }
 
-size_t BufferManager::getNumOfPooledBuffers() const { return numOfBuffers; }
+uint64_t BufferManager::getNumOfPooledBuffers() const { return numOfBuffers; }
 
-size_t BufferManager::getNumOfUnpooledBuffers() {
+uint64_t BufferManager::getNumOfUnpooledBuffers() {
     std::unique_lock<std::mutex> lock(unpooledBuffersMutex);
     return unpooledBuffers.size();
 }
 
-size_t BufferManager::getAvailableBuffers() {
+uint64_t BufferManager::getAvailableBuffers() {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
     return availableBuffers.size();
 }

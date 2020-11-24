@@ -30,15 +30,15 @@ Schema::Schema() {}
 
 SchemaPtr Schema::create() { return std::make_shared<Schema>(); }
 
-size_t Schema::getSize() const { return fields.size(); }
+uint64_t Schema::getSize() const { return fields.size(); }
 
 Schema::Schema(const SchemaPtr query) { copyFields(query); }
 
 SchemaPtr Schema::copy() const { return std::make_shared<Schema>(*this); }
 
 /* Return size of one row of schema in bytes. */
-size_t Schema::getSchemaSizeInBytes() const {
-    size_t size = 0;
+uint64_t Schema::getSchemaSizeInBytes() const {
+    uint64_t size = 0;
     // todo if we introduce a physical schema.
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : fields) {

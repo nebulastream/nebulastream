@@ -82,7 +82,7 @@ TEST_F(StateTest, testMultipleAddLookup) {
 
     std::unordered_map<uint32_t, uint32_t> map;
 
-    for (size_t i = 0; i < 8192; i++) {
+    for (uint64_t i = 0; i < 8192; i++) {
 
         uint32_t key = rand();
         uint32_t val = rand();
@@ -112,7 +112,7 @@ TEST_F(StateTest, testMultipleAddLookupMt) {
     for (uint32_t i = 0; i < num_threads; i++) {
         t.emplace_back([&var, &map, &mutex]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-            for (size_t i = 0; i < max_values; i++) {
+            for (uint64_t i = 0; i < max_values; i++) {
 
                 uint32_t key = rand();
                 uint32_t val = rand();
@@ -153,7 +153,7 @@ TEST_F(StateTest, testAddRangeMt) {
     for (uint32_t i = 0; i < num_threads; i++) {
         t.emplace_back([&var, &map, &mutex]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-            for (size_t i = 0; i < max_values; i++) {
+            for (uint64_t i = 0; i < max_values; i++) {
 
                 uint32_t key = rand();
                 uint32_t val = rand();
@@ -196,7 +196,7 @@ TEST_F(StateTest, testStruct) {
     StateManager& stateManager = StateManager::instance();
     StateVariable<uint32_t, window_metadata*>& var = stateManager.registerState<uint32_t, window_metadata*>("window-content-5");
 
-    for (size_t i = 0; i < 8192; i++) {
+    for (uint64_t i = 0; i < 8192; i++) {
 
         uint32_t key = rand();
         uint64_t start = rand();

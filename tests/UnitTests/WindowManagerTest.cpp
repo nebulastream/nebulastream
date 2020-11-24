@@ -65,8 +65,8 @@ class WindowManagerTest : public testing::Test {
 
     void TearDown() { std::cout << "Tear down WindowManager test class." << std::endl; }
 
-    const size_t buffers_managed = 10;
-    const size_t buffer_size = 4 * 1024;
+    const uint64_t buffers_managed = 10;
+    const uint64_t buffer_size = 4 * 1024;
 };
 
 class TestAggregation : public Windowing::WindowAggregationDescriptor {
@@ -208,7 +208,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts);
 
-    size_t tupleCnt = buf.getNumberOfTuples();
+    uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
@@ -287,7 +287,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
 
-    size_t tupleCnt = buf.getNumberOfTuples();
+    uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
@@ -367,7 +367,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
-    size_t tupleCnt = buf.getNumberOfTuples();
+    uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);

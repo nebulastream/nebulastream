@@ -27,7 +27,7 @@ namespace NES {
 
 KafkaSink::KafkaSink() {}
 
-KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic, const size_t kafkaProducerTimeout)
+KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic, const uint64_t kafkaProducerTimeout)
     : DataSink(schema), brokers(brokers), topic(topic),
       kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
 

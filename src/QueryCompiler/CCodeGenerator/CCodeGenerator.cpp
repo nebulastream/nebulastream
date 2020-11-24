@@ -62,7 +62,7 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string str
     NES_DEBUG("Converting Schema: " << schema->toString());
     NES_DEBUG("Define Struct : " << structName);
 
-    for (size_t i = 0; i < schema->getSize(); ++i) {
+    for (uint64_t i = 0; i < schema->getSize(); ++i) {
         structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->name));
         NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name);
     }
@@ -80,7 +80,7 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromWindow(std::string str
                            ->addField(createField("key", UINT64))
                            ->addField("value", UINT64);
 
-    for (size_t i = 0; i < schema->getSize(); ++i) {
+    for (uint64_t i = 0; i < schema->getSize(); ++i) {
         structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->name));
         NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name);
     }
@@ -246,7 +246,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
      */
     std::vector<VariableDeclaration> var_decls;
     std::vector<StatementPtr> write_result_tuples;
-    for (size_t i = 0; i < context->resultSchema->getSize(); ++i) {
+    for (uint64_t i = 0; i < context->resultSchema->getSize(); ++i) {
         auto resultField = context->resultSchema->get(i);
         auto variableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, resultField);
         if (!variableDeclaration) {
@@ -257,7 +257,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
         auto varDeclarationInput = getVariableDeclarationForField(code->structDeclarationResultTuple, resultField);
         if (varDeclarationInput) {
             bool override = false;
-            for (size_t j = 0; j < code->override_fields.size(); j++) {
+            for (uint64_t j = 0; j < code->override_fields.size(); j++) {
                 if (code->override_fields.at(j)->getIdentifierName().compare(varDeclarationInput->getIdentifierName()) == 0) {
                     override = true;
                     break;

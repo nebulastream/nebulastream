@@ -106,12 +106,12 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
         return pair.second;
     });
 
-    for (size_t i = 0; i < listOfPaths.size(); i++) {
+    for (uint64_t i = 0; i < listOfPaths.size(); i++) {
         vector<NESTopologyEntryPtr> path_i = listOfPaths[i];
 
         for (NESTopologyEntryPtr node_i : path_i) {
             bool nodeOccursInAllPaths = false;
-            for (size_t j = i; j < listOfPaths.size(); j++) {
+            for (uint64_t j = i; j < listOfPaths.size(); j++) {
                 if (i == j) {
                     continue;
                 }
@@ -137,12 +137,12 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
 
     NES_INFO("MinimumEnergyConsumption: Sort all paths in increasing order of compute resources");
     //Sort all the paths with increased aggregated compute capacity
-    vector<std::pair<size_t, int>> computeCostList;
+    vector<std::pair<uint64_t, int>> computeCostList;
 
     //Calculate total compute cost for each path
-    for (size_t i = 0; i < listOfPaths.size(); i++) {
+    for (uint64_t i = 0; i < listOfPaths.size(); i++) {
         vector<NESTopologyEntryPtr> path = listOfPaths[i];
-        size_t totalComputeForPath = 0;
+        uint64_t totalComputeForPath = 0;
         for (NESTopologyEntryPtr node : path) {
             totalComputeForPath = totalComputeForPath + node->getCpuCapacity();
         }
@@ -156,7 +156,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
         sortedListOfPaths.push_back(listOfPaths[pair.second]);
     }
 
-    size_t lastPlacedOperatorId;
+    uint64_t lastPlacedOperatorId;
     NES_INFO("MinimumEnergyConsumption: place all non blocking operators starting from source first");
     for (auto path : sortedListOfPaths) {
         LogicalOperatorNodePtr targetOperator = sourceOperator;
@@ -170,9 +170,9 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
                 for (auto commonNode : commonPath) {
                     const ExecutionNodePtr executionNode = executionPlanPtr->getExecutionNode(commonNode->getId());
                     if (executionNode) {
-                        vector<size_t> scheduledOperators = executionNode->getChildOperatorIds();
+                        vector<uint64_t> scheduledOperators = executionNode->getChildOperatorIds();
                         const auto foundItr =
-                            std::find_if(scheduledOperators.begin(), scheduledOperators.end(), [targetOperator](size_t optrId) {
+                            std::find_if(scheduledOperators.begin(), scheduledOperators.end(), [targetOperator](uint64_t optrId) {
                                 return optrId == targetOperator->getId();
                             });
                         if (foundItr != scheduledOperators.end()) {

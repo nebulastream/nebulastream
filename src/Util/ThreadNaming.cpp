@@ -37,7 +37,7 @@ void setThreadName(const char* threadNameFmt, ...) {
     va_list args;
     va_start(args, threadNameFmt);
     vsprintf(buffer, threadNameFmt, args);
-    auto sz = std::min<size_t>(15, std::strlen(buffer));
+    auto sz = std::min<uint64_t>(15, std::strlen(buffer));
     std::strncpy(resized_buffer, buffer, sz);
     std::string thName(resized_buffer);
     //this will add the thread name in the log

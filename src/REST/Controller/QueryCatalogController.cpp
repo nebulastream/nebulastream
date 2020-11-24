@@ -113,7 +113,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                     //Prepare the response
                     json::value result{};
-                    size_t processedBuffers = 0;
+                    uint64_t processedBuffers = 0;
                     if (auto shared_back_reference = coordinator.lock()) {
                         processedBuffers = shared_back_reference->getQueryStatistics(globalQueryId)[0]->getProcessedBuffers();
                     }

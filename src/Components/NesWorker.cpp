@@ -247,7 +247,7 @@ bool NesWorker::registerPhysicalStream(PhysicalStreamConfigPtr conf) {
     return success;
 }
 
-bool NesWorker::addParent(size_t parentId) {
+bool NesWorker::addParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     assert(con);
@@ -256,7 +256,7 @@ bool NesWorker::addParent(size_t parentId) {
     return success;
 }
 
-bool NesWorker::removeParent(size_t parentId) {
+bool NesWorker::removeParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     assert(con);

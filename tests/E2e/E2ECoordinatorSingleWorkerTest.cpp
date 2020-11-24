@@ -63,8 +63,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
 
     string path2 = "./nesWorker --coordinatorPort=12345";
     bp::child workerProc(path2.c_str());
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid = workerProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid = workerProc.id();
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -100,8 +100,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     string path2 = "./nesWorker --coordinatorPort=12346";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid = workerProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid = workerProc.id();
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -166,8 +166,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     string path2 = "./nesWorker --coordinatorPort=12267";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid = workerProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid = workerProc.id();
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -229,8 +229,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                    "--numberOfBuffersToProduce=2 --sourceFrequency=1";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid = workerProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid = workerProc.id();
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -298,8 +298,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid = workerProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(2);
 
     std::stringstream ss;
@@ -391,7 +391,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
-    size_t coordinatorPid = coordinatorProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -406,7 +406,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
         "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t workerPid = workerProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(1);
 
     std::stringstream ss;
@@ -471,7 +471,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
         "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t workerPid = workerProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(1);
 
     std::stringstream ss;
@@ -546,7 +546,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
         "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t workerPid = workerProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(1);
 
     std::stringstream ss;

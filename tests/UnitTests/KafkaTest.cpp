@@ -65,9 +65,9 @@ class KafkaTest : public testing::Test {
     const std::string topic = std::string("nes");
     const std::string groupId = std::string("nes");
 
-    const size_t num_of_buffers = 5;
+    const uint64_t num_of_buffers = 5;
     const uint64_t num_tuples_to_process = 100;
-    size_t buffer_size;
+    uint64_t buffer_size;
     SchemaPtr schema;
 };
 

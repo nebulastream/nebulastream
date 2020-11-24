@@ -26,7 +26,7 @@
 namespace NES {
 
 AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                               size_t initialGatheringInterval, OperatorId operatorId)
+                               uint64_t initialGatheringInterval, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval);
     this->gatheringInterval = initialGatheringInterval;
@@ -63,10 +63,10 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
     }
 
     NES_DEBUG("AdaptiveSource " << this->operatorId << ": Running Data Source of type=" << this->getType());
-    size_t cnt = 0;
+    uint64_t cnt = 0;
 
     while (this->isRunning()) {
-        size_t currentTime = time(NULL);
+        uint64_t currentTime = time(NULL);
         if (gatheringInterval == 0 || (lastGatheringTimeStamp != currentTime && currentTime % this->gatheringInterval == 0)) {
             lastGatheringTimeStamp = currentTime;
             if (cnt < numBuffersToProcess) {

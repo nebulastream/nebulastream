@@ -120,14 +120,14 @@ class NesWorker {
     * @param parentId
     * @return bool indicating success
     */
-    bool addParent(size_t parentId);
+    bool addParent(uint64_t parentId);
 
     /**
     * @brief method remove parent from this node
     * @param parentId
     * @return bool indicating success
     */
-    bool removeParent(size_t parentId);
+    bool removeParent(uint64_t parentId);
 
     /**
     * @brief method to return the query statistics

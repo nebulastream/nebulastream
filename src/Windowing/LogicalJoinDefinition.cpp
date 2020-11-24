@@ -21,16 +21,16 @@ namespace NES::Join {
 LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
                                              Windowing::DistributionCharacteristicPtr distributionType,
                                              Windowing::WindowTriggerPolicyPtr triggerPolicy,
-                                             BaseJoinActionDescriptorPtr triggerAction, size_t numberOfInputEdgesLeft,
-                                             size_t numberOfInputEdgesRight)
+                                             BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
+                                             uint64_t numberOfInputEdgesRight)
     : joinKey(joinKey), windowType(windowType), distributionType(distributionType), triggerPolicy(triggerPolicy),
       triggerAction(triggerAction), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
       numberOfInputEdgesRight(numberOfInputEdgesRight) {}
 LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
                                                        Windowing::DistributionCharacteristicPtr distributionType,
                                                        Windowing::WindowTriggerPolicyPtr triggerPolicy,
-                                                       BaseJoinActionDescriptorPtr triggerAction, size_t numberOfInputEdgesLeft,
-                                                       size_t numberOfInputEdgesRight) {
+                                                       BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
+                                                       uint64_t numberOfInputEdgesRight) {
     return std::make_shared<Join::LogicalJoinDefinition>(joinKey, windowType, distributionType, triggerPolicy, triggerAction,
                                                          numberOfInputEdgesLeft, numberOfInputEdgesRight);
 }
@@ -45,8 +45,8 @@ Join::BaseJoinActionDescriptorPtr LogicalJoinDefinition::getTriggerAction() cons
 
 Windowing::DistributionCharacteristicPtr LogicalJoinDefinition::getDistributionType() const { return distributionType; }
 
-size_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() { return numberOfInputEdgesLeft; }
+uint64_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() { return numberOfInputEdgesLeft; }
 
-size_t LogicalJoinDefinition::getNumberOfInputEdgesRight() { return numberOfInputEdgesRight; }
+uint64_t LogicalJoinDefinition::getNumberOfInputEdgesRight() { return numberOfInputEdgesRight; }
 
 };// namespace NES::Join

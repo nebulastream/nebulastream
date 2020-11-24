@@ -65,14 +65,14 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     string cmdCoord = "./nesCoordinator --coordinatorPort=12346 --numberOfSlots=8";
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    size_t coordinatorPid = coordinatorProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
     sleep(1);
 
     string cmdWrk = "./nesWorker --coordinatorPort=12346 --numberOfSlots=8";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
-    size_t workerPid = workerProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(3);
 
     std::stringstream ssQuery1;
@@ -162,8 +162,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
-    size_t coordinatorPid = coordinatorProc.id();
-    size_t workerPid = workerProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(3);
 
     std::stringstream ssQuery1;
@@ -260,7 +260,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
-    size_t coordinatorPid = coordinatorProc.id();
+    uint64_t coordinatorPid = coordinatorProc.id();
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -275,7 +275,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
         "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t workerPid = workerProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(3);
 
     std::stringstream ssPattern1;
@@ -379,7 +379,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
         "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t workerPid = workerProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(1);
 
     std::stringstream ss;
@@ -490,7 +490,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
         "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
-    size_t workerPid = workerProc.id();
+    uint64_t workerPid = workerProc.id();
     sleep(1);
 
     std::stringstream ss;

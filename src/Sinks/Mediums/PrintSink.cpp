@@ -46,7 +46,7 @@ bool PrintSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
             NES_DEBUG("PrintSink::getData: write schema of size " << schemaBuffer->getNumberOfTuples());
             std::string ret = "";
             char* bufferAsChar = schemaBuffer->getBufferAs<char>();
-            for (size_t i = 0; i < schemaBuffer->getNumberOfTuples(); i++) {
+            for (uint64_t i = 0; i < schemaBuffer->getNumberOfTuples(); i++) {
                 ret = ret + bufferAsChar[i];
             }
             outputStream << ret << std::endl;
@@ -65,7 +65,7 @@ bool PrintSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
         NES_DEBUG("PrintSink::getData: write buffer of size " << buffer.getNumberOfTuples());
         std::string ret = "";
         char* bufferAsChar = buffer.getBufferAs<char>();
-        for (size_t i = 0; i < buffer.getNumberOfTuples(); i++) {
+        for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
             ret = ret + bufferAsChar[i];
         }
         NES_DEBUG("PrintSink::getData: write buffer str= " << ret);

@@ -27,13 +27,13 @@ class LogicalJoinDefinition {
     static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
                                            Windowing::DistributionCharacteristicPtr distributionType,
                                            Windowing::WindowTriggerPolicyPtr triggerPolicy,
-                                           BaseJoinActionDescriptorPtr triggerAction, size_t numberOfInputEdgesLeft,
-                                           size_t numberOfInputEdgesRight);
+                                           BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
+                                           uint64_t numberOfInputEdgesRight);
 
     LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
                           Windowing::DistributionCharacteristicPtr distributionType,
                           Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
-                          size_t numberOfInputEdgesLeft, size_t numberOfInputEdgesRight);
+                          uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on left join key
@@ -62,8 +62,8 @@ class LogicalJoinDefinition {
     */
     Windowing::DistributionCharacteristicPtr getDistributionType() const;
 
-    size_t getNumberOfInputEdgesLeft();
-    size_t getNumberOfInputEdgesRight();
+    uint64_t getNumberOfInputEdgesLeft();
+    uint64_t getNumberOfInputEdgesRight();
 
   private:
     FieldAccessExpressionNodePtr joinKey;
@@ -71,8 +71,8 @@ class LogicalJoinDefinition {
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;
     Windowing::DistributionCharacteristicPtr distributionType;
-    size_t numberOfInputEdgesLeft;
-    size_t numberOfInputEdgesRight;
+    uint64_t numberOfInputEdgesLeft;
+    uint64_t numberOfInputEdgesRight;
 };
 
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;

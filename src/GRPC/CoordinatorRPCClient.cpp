@@ -148,7 +148,7 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
     }
 }
 
-bool CoordinatorRPCClient::addParent(size_t parentId) {
+bool CoordinatorRPCClient::addParent(uint64_t parentId) {
     NES_DEBUG("CoordinatorRPCClient: addParent parentId=" << parentId << " workerId=" << workerId);
 
     AddParentRequest request;
@@ -170,9 +170,9 @@ bool CoordinatorRPCClient::addParent(size_t parentId) {
     }
 }
 
-size_t CoordinatorRPCClient::getId() { return workerId; }
+uint64_t CoordinatorRPCClient::getId() { return workerId; }
 
-bool CoordinatorRPCClient::removeParent(size_t parentId) {
+bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
     NES_DEBUG("CoordinatorRPCClient: removeParent parentId" << parentId << " workerId=" << workerId);
 
     RemoveParentRequest request;

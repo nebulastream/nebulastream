@@ -35,25 +35,25 @@ class TopologyNode : public Node {
 
     /**
      * @brief method to get the id of the node
-     * @return id as a size_t
+     * @return id as a uint64_t
      */
     uint64_t getId();
 
     /**
      * @brief method to get the overall cpu capacity of the node
-     * @return size_t cpu capacity
+     * @return uint64_t cpu capacity
      */
     uint16_t getAvailableResources();
 
     /**
      * @brief method to reduce the cpu capacity of the node
-     * @param size_t of the value that has to be subtracted
+     * @param uint64_t of the value that has to be subtracted
      */
     void reduceResources(uint16_t usedCapacity);
 
     /**
      * @brief method to increase CPU capacity
-     * @param size_t of the vlaue that has to be added
+     * @param uint64_t of the vlaue that has to be added
      */
     void increaseResources(uint16_t freedCapacity);
 

@@ -78,7 +78,7 @@ class StreamCatalog {
    * @param structure describing the entry in the catalog
    * @return bool indicating success of remove stream
    */
-    bool removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::size_t hashId);
+    bool removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId);
 
     /**
    * @brief method to remove a physical stream from its logical streams
@@ -88,7 +88,7 @@ class StreamCatalog {
    * @return bool indicating success of remove stream
    */
 
-    bool removePhysicalStreamByHashId(size_t hashId);
+    bool removePhysicalStreamByHashId(uint64_t hashId);
 
     /**
      * @brief method to remove a physical stream from its logical streams

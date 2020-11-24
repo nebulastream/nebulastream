@@ -113,7 +113,7 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
                                                       << " because there are physical entries for this stream");
             return false;
         }
-        size_t cnt = logicalStreamToSchemaMapping.erase(logicalStreamName);
+        uint64_t cnt = logicalStreamToSchemaMapping.erase(logicalStreamName);
         NES_DEBUG("StreamCatalog: removed " << cnt << " copies of the stream");
         assert(!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName));
         return true;
@@ -173,7 +173,7 @@ bool StreamCatalog::removeAllPhysicalStreams(std::string) {
     NES_NOT_IMPLEMENTED();
 }
 
-bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::size_t hashId) {
+bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName);
 
@@ -210,7 +210,7 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::str
     return false;
 }
 
-bool StreamCatalog::removePhysicalStreamByHashId(size_t hashId) {
+bool StreamCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     for (auto logStream : logicalToPhysicalStreamMapping) {
         NES_DEBUG("StreamCatalog: check log stream " << logStream.first);

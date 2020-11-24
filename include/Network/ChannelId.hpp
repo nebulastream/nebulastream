@@ -31,7 +31,7 @@ class ChannelId {
 
     NesPartition getNesPartition() const { return nesPartition; }
 
-    size_t getThreadId() const { return threadId; }
+    uint64_t getThreadId() const { return threadId; }
 
     std::string toString() const { return nesPartition.toString() + "(threadId=" + std::to_string(threadId) + ")"; }
 

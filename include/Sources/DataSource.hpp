@@ -128,26 +128,26 @@ class DataSource : public Reconfigurable {
      * @brief debug function for testing to set different buffer counts to be processed
      * @param number of buffers to be processed
      */
-    void setNumBuffersToProcess(size_t cnt);
+    void setNumBuffersToProcess(uint64_t cnt);
 
     /**
      * @brief debug function for testing to get number of generated tuples
      * @return number of generated tuples
      */
-    size_t getNumberOfGeneratedTuples();
+    uint64_t getNumberOfGeneratedTuples();
 
     /**
      * @brief debug function for testing to get number of generated buffer
      * @return number of generated buffer
      */
-    size_t getNumberOfGeneratedBuffers();
+    uint64_t getNumberOfGeneratedBuffers();
 
     /**
      * @brief method to set the sampling interval
      * @note the source will sleep for interval seconds and then produce the next buffer
      * @param interal to gather
      */
-    void setGatheringInterval(size_t interval);
+    void setGatheringInterval(uint64_t interval);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -158,21 +158,21 @@ class DataSource : public Reconfigurable {
     /**
      * @brief Get number of buffers to be processed
      */
-    size_t getNumBuffersToProcess() const;
+    uint64_t getNumBuffersToProcess() const;
 
     /**
      * @brief Get frequency of gathering the data
      */
-    size_t getGatheringInterval() const;
+    uint64_t getGatheringInterval() const;
 
     OperatorId getOperatorId();
 
   protected:
     SchemaPtr schema;
-    size_t generatedTuples;
-    size_t generatedBuffers;
-    size_t numBuffersToProcess;
-    std::atomic<size_t> gatheringInterval;
+    uint64_t generatedTuples;
+    uint64_t generatedBuffers;
+    uint64_t numBuffersToProcess;
+    std::atomic<uint64_t> gatheringInterval;
     OperatorId operatorId;
     SourceType type;
     BufferManagerPtr bufferManager;

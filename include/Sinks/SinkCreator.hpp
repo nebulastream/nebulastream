@@ -172,7 +172,7 @@ const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanI
  * @return a data sink pointer
  */
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
-                                            const size_t kafkaProducerTimeout);
+                                            const uint64_t kafkaProducerTimeout);
 #endif
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */

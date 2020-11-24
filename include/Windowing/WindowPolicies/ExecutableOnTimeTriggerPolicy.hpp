@@ -25,9 +25,9 @@ namespace NES::Windowing {
 
 class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
   public:
-    ExecutableOnTimeTriggerPolicy(size_t triggerTimeInMs);
+    ExecutableOnTimeTriggerPolicy(uint64_t triggerTimeInMs);
 
-    static ExecutableOnTimeTriggerPtr create(size_t triggerTimeInMs);
+    static ExecutableOnTimeTriggerPtr create(uint64_t triggerTimeInMs);
 
     /**
      * @brief This function starts the trigger policy
@@ -47,7 +47,7 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
     bool running;
     std::shared_ptr<std::thread> thread;
     std::mutex runningTriggerMutex;
-    size_t triggerTimeInMs;
+    uint64_t triggerTimeInMs;
 };
 
 }// namespace NES::Windowing

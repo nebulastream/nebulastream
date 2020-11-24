@@ -174,7 +174,7 @@ TEST_F(TupleBufferTest, testEndianessTwoItems) {
 
     TestStruct* ts = testBuf.getBufferAs<TestStruct>();
 
-    for (size_t i = 0; i < 5; i++) {
+    for (uint64_t i = 0; i < 5; i++) {
         ts[i].v1 = i;
         ts[i].v2 = i;
         ts[i].v3 = i;

@@ -43,13 +43,13 @@ std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
     }
 
     std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, schema);
-    size_t contentSize = bufferContent.length();
+    uint64_t contentSize = bufferContent.length();
     NES_DEBUG("TextFormat::getData content size=" << contentSize << " content=" << bufferContent);
 
     if (inputBuffer.getBufferSize() < contentSize) {
         NES_DEBUG("TextFormat::getData: content is larger than one buffer");
-        size_t numberOfBuffers = contentSize / inputBuffer.getBufferSize();
-        for (size_t i = 0; i < numberOfBuffers; i++) {
+        uint64_t numberOfBuffers = contentSize / inputBuffer.getBufferSize();
+        for (uint64_t i = 0; i < numberOfBuffers; i++) {
             std::string copyString = bufferContent.substr(0, contentSize);
             bufferContent = bufferContent.substr(contentSize, bufferContent.length() - contentSize);
             NES_DEBUG("TextFormat::getData: copy string=" << copyString << " new content=" << bufferContent);

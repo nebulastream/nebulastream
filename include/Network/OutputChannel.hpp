@@ -71,7 +71,7 @@ class OutputChannel {
      * @param the tupleSize represents the size in bytes of one tuple in the buffer
      * @return true if send was successful, else false
      */
-    bool sendBuffer(TupleBuffer& inputBuffer, size_t tupleSizeInBytes);
+    bool sendBuffer(TupleBuffer& inputBuffer, uint64_t tupleSizeInBytes);
 
     /**
      * @brief Method to handle the error

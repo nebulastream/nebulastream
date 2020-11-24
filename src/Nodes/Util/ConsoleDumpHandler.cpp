@@ -23,7 +23,7 @@ ConsoleDumpHandler::ConsoleDumpHandler() : DumpHandler() {}
 
 DebugDumpHandlerPtr ConsoleDumpHandler::create() { return std::make_shared<ConsoleDumpHandler>(); }
 
-void ConsoleDumpHandler::dumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const {
+void ConsoleDumpHandler::dumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const {
     out << std::string(indent * depth, ' ') << op->toString() << std::endl;
     ++depth;
     auto children = op->getChildren();
@@ -32,7 +32,7 @@ void ConsoleDumpHandler::dumpHelper(const NodePtr op, size_t depth, size_t inden
     }
 }
 
-void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const {
+void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const {
 
     std::vector<std::string> multiLineNodeString = op->toMultilineString();
     for (const std::string line : multiLineNodeString) {

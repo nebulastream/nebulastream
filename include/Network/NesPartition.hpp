@@ -90,7 +90,7 @@ class NesPartition {
 namespace std {
 template<>
 struct hash<NES::Network::NesPartition> {
-    std::size_t operator()(const NES::Network::NesPartition& k) const {
+    std::uint64_t operator()(const NES::Network::NesPartition& k) const {
         using std::hash;
 
         // Hash function for the NesPartition

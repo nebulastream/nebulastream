@@ -1150,7 +1150,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto inputLayout = createRowLayout(inputSchema);
     auto outputLayout = createRowLayout(outputSchema);
-    for (size_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/ 2)->read(inputBuffer);
         auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 3)->read(inputBuffer);
         auto reference = (floatValue * doubleValue) + 2;

@@ -52,7 +52,7 @@ class Task {
      * @brief return the number of tuples in the input buffer (for statistics)
      * @return number of input tuples in buffer
      */
-    size_t getNumberOfTuples();
+    uint64_t getNumberOfTuples();
 
     /**
      * @brief method to return the qep of a task

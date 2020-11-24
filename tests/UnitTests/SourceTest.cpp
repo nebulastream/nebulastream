@@ -86,11 +86,11 @@ typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr, BufferManagerP
                                                        const std::string&);
 
 typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                                        const std::string&, size_t);
+                                                        const std::string&, uint64_t);
 
 typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr, BufferManagerPtr bufferManager,
                                                       QueryManagerPtr queryManager, const std::string&, const std::string&,
-                                                      size_t, size_t);
+                                                      uint64_t, uint64_t);
 
 class SourceTest : public testing::Test {
   public:
@@ -122,7 +122,7 @@ TEST_F(SourceTest, testBinarySource) {
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-    size_t num_of_buffers = 1;
+    uint64_t num_of_buffers = 1;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source =
@@ -130,7 +130,7 @@ TEST_F(SourceTest, testBinarySource) {
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
-        size_t i = 0;
+        uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
@@ -152,8 +152,8 @@ TEST_F(SourceTest, testCSVSourceEndlessSkipHeader) {
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100-head.csv";
 
     const std::string& del = ",";
-    size_t num = 1;
-    size_t frequency = 1;
+    uint64_t num = 1;
+    uint64_t frequency = 1;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -165,7 +165,7 @@ TEST_F(SourceTest, testCSVSourceEndlessSkipHeader) {
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-    size_t num_of_buffers = 10;
+    uint64_t num_of_buffers = 10;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
@@ -173,7 +173,7 @@ TEST_F(SourceTest, testCSVSourceEndlessSkipHeader) {
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
-        size_t i = 0;
+        uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
@@ -195,8 +195,8 @@ TEST_F(SourceTest, testCSVSourceNotEndlessSkipHeader) {
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100-head.csv";
 
     const std::string& del = ",";
-    size_t num = 1;
-    size_t frequency = 1;
+    uint64_t num = 1;
+    uint64_t frequency = 1;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -206,12 +206,12 @@ TEST_F(SourceTest, testCSVSourceNotEndlessSkipHeader) {
                            ->addField("current_ms", UINT64)
                            ->addField("ip", INT32);
 
-    size_t num_of_buffers = 5;
+    uint64_t num_of_buffers = 5;
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, num, frequency, false, true, 1);
 
-    for (size_t i = 0; i < num_of_buffers; i++) {
+    for (uint64_t i = 0; i < num_of_buffers; i++) {
         auto optBuf = source->receiveData();
         std::cout << "receive buffer with " << optBuf->getNumberOfTuples() << " tuples" << std::endl;
     }
@@ -226,8 +226,8 @@ TEST_F(SourceTest, testCSVSourceEndless) {
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
-    size_t num = 1;
-    size_t frequency = 1;
+    uint64_t num = 1;
+    uint64_t frequency = 1;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -239,7 +239,7 @@ TEST_F(SourceTest, testCSVSourceEndless) {
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-    size_t num_of_buffers = 10;
+    uint64_t num_of_buffers = 10;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
@@ -247,7 +247,7 @@ TEST_F(SourceTest, testCSVSourceEndless) {
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
-        size_t i = 0;
+        uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
@@ -269,8 +269,8 @@ TEST_F(SourceTest, testCSVSourceNotEndless) {
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
-    size_t num = 1;
-    size_t frequency = 1;
+    uint64_t num = 1;
+    uint64_t frequency = 1;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -280,12 +280,12 @@ TEST_F(SourceTest, testCSVSourceNotEndless) {
                            ->addField("current_ms", UINT64)
                            ->addField("ip", INT32);
 
-    size_t num_of_buffers = 5;
+    uint64_t num_of_buffers = 5;
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, num, frequency, false, false, 1);
 
-    for (size_t i = 0; i < num_of_buffers; i++) {
+    for (uint64_t i = 0; i < num_of_buffers; i++) {
         auto optBuf = source->receiveData();
         std::cout << "receive buffer with " << optBuf->getNumberOfTuples() << " tuples" << std::endl;
     }
@@ -300,8 +300,8 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
-    size_t num = 1;
-    size_t frequency = 3;
+    uint64_t num = 1;
+    uint64_t frequency = 3;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -313,7 +313,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-    size_t num_of_buffers = 10;
+    uint64_t num_of_buffers = 10;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
@@ -321,7 +321,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
-        size_t i = 0;
+        uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
@@ -344,8 +344,8 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     std::string path_to_file = "../tests/test_data/every-int.csv";
 
     const std::string& del = ",";
-    size_t num = 1;
-    size_t frequency = 1;
+    uint64_t num = 1;
+    uint64_t frequency = 1;
     SchemaPtr schema = Schema::create()
                            ->addField("uint64", UINT64)
                            ->addField("int64", INT64)
@@ -358,7 +358,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-    size_t num_of_buffers = 2;
+    uint64_t num_of_buffers = 2;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
@@ -366,7 +366,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
-        size_t i = 0;
+        uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             everyIntTypeRecord record(*((everyIntTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.uint64_entry: " << record.uint64_entry
@@ -426,13 +426,13 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     std::string path_to_file = "../tests/test_data/every-float.csv";
 
     const std::string& del = ",";
-    size_t num = 1;
-    size_t frequency = 1;
+    uint64_t num = 1;
+    uint64_t frequency = 1;
     SchemaPtr schema = Schema::create()->addField("float64", FLOAT64)->addField("float32", FLOAT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-    size_t num_of_buffers = 2;
+    uint64_t num_of_buffers = 2;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
@@ -440,7 +440,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
-        size_t i = 0;
+        uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             everyFloatTypeRecord record(*((everyFloatTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.float64_entry: " << record.float64_entry
@@ -468,8 +468,8 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     std::string path_to_file = "../tests/test_data/every-boolean.csv";
 
     const std::string& del = ",";
-    size_t num = 1;
-    size_t frequency = 1;
+    uint64_t num = 1;
+    uint64_t frequency = 1;
     SchemaPtr schema = Schema::create()
                            ->addField("false", BOOLEAN)
                            ->addField("true", BOOLEAN)
@@ -478,7 +478,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-    size_t num_of_buffers = 2;
+    uint64_t num_of_buffers = 2;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
@@ -486,7 +486,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
-        size_t i = 0;
+        uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
             everyBooleanTypeRecord record(*((everyBooleanTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.false_entry: " << record.false_entry
@@ -522,7 +522,7 @@ TEST_F(SourceTest, testSenseSource) {
                            ->addField("ip", INT32);
 
     uint64_t num_tuples_to_process = 1000;
-    size_t num_of_buffers = 1000;
+    uint64_t num_of_buffers = 1000;
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
     ASSERT_GT(buffer_size, 0);
@@ -537,8 +537,8 @@ TEST_F(SourceTest, testYSBSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
-    size_t numBuffers = 2;
-    size_t numTuples = 30;
+    uint64_t numBuffers = 2;
+    uint64_t numTuples = 30;
 
     auto source = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers,
                                               numTuples, 1, false, 1);

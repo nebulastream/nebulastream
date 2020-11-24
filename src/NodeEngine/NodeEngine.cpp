@@ -40,7 +40,7 @@ namespace NES {
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
 std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
-                                               uint16_t numThreads, size_t bufferSize, size_t numBuffers) {
+                                               uint16_t numThreads, uint64_t bufferSize, uint64_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
@@ -478,12 +478,12 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     // todo add handling for support of multiple physical streams.
     std::string type = config->getSourceType();
     std::string conf = config->getSourceConfig();
-    size_t frequency = config->getSourceFrequency();
-    size_t numBuffers = config->getNumberOfBuffersToProduce();
+    uint64_t frequency = config->getSourceFrequency();
+    uint64_t numBuffers = config->getNumberOfBuffersToProduce();
     bool endlessRepeat = config->isEndlessRepeat();
     bool skipHeader = config->getSkipHeader();
 
-    size_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
+    uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
 
     if (type == "DefaultSource") {
         NES_DEBUG("TypeInferencePhase: create default source for one buffer");

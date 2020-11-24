@@ -48,7 +48,7 @@ class ReconfigurationTask {
      * @param other the task we want to issue (created using the other ctor)
      * @param numThreads number of running threads
      */
-    explicit ReconfigurationTask(const ReconfigurationTask& other, size_t numThreads, bool blocking = false)
+    explicit ReconfigurationTask(const ReconfigurationTask& other, uint64_t numThreads, bool blocking = false)
         : ReconfigurationTask(other) {
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
         refCnt.store(numThreads + (blocking ? 1 : 0));

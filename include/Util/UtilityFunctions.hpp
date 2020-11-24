@@ -102,7 +102,7 @@ class UtilityFunctions {
    * @brief this function creates a hased ID as int
    * @return the ID as site_t
    */
-    static std::size_t generateIdInt();
+    static std::uint64_t generateIdInt();
 
     /**
    * @brief get the first substring between a unique first delimiter and a non-unique second delimiter

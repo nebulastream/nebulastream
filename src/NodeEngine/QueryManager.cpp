@@ -138,7 +138,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 #ifdef EXTENDEDDEBUGGING
     std::stringstream ss;
     ss << " sourceid=" << operatorId << "map at operatorIdToQueryMap ";
-    for (std::map<size_t, std::unordered_set<QueryExecutionPlanPtr>>::const_iterator it = operatorIdToQueryMap.begin();
+    for (std::map<uint64_t, std::unordered_set<QueryExecutionPlanPtr>>::const_iterator it = operatorIdToQueryMap.begin();
          it != operatorIdToQueryMap.end(); ++it) {
         ss << " operatorId=" << it->first;
         for (auto& a : it->second) {
@@ -148,14 +148,14 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 
     std::stringstream ss2;
     ss2 << " sourceid=" << operatorId << "map at operatorIdToPipelineStage ";
-    for (std::map<size_t, size_t>::const_iterator it = operatorIdToPipelineStage.begin(); it != operatorIdToPipelineStage.end();
+    for (std::map<uint64_t, uint64_t>::const_iterator it = operatorIdToPipelineStage.begin(); it != operatorIdToPipelineStage.end();
          ++it) {
         ss2 << " operatorId=" << it->first << " pipeStage=" << it->second;
     }
 
     std::stringstream ss3;
     ss3 << " sourceid=" << operatorId << "map at queryMapToOperatorId ";
-    for (std::map<size_t, std::vector<size_t>>::const_iterator it = queryMapToOperatorId.begin();
+    for (std::map<uint64_t, std::vector<uint64_t>>::const_iterator it = queryMapToOperatorId.begin();
          it != queryMapToOperatorId.end(); ++it) {
         ss3 << " queryID=" << it->first;
         for (auto& a : it->second) {
@@ -170,7 +170,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     for (const auto& qep : operatorIdToQueryMap[operatorId]) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
-        size_t stageId = operatorIdToPipelineStage[operatorId];
+        uint64_t stageId = operatorIdToPipelineStage[operatorId];
         taskQueue.emplace_back(qep->getStage(operatorIdToPipelineStage[operatorId]), buf);
 
         NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId

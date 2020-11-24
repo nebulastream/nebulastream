@@ -114,15 +114,15 @@ class Schema {
 
     /**
      * @brief Returns the number of fields in the schema.
-     * @return size_t
+     * @return uint64_t
      */
-    size_t getSize() const;
+    uint64_t getSize() const;
 
     /**
      * @brief Returns the number of bytes all fields in this schema occupy.
-     * @return size_t
+     * @return uint64_t
      */
-    size_t getSchemaSizeInBytes() const;
+    uint64_t getSchemaSizeInBytes() const;
 
     /**
      * @brief Checks if two Schemas are equal to each other.

@@ -50,7 +50,7 @@ class MultiWorkerTest : public testing::Test {
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
@@ -73,7 +73,7 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
 TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
@@ -107,7 +107,7 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
 TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
@@ -141,7 +141,7 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
 TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
@@ -180,7 +180,7 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
 TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
@@ -211,7 +211,7 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
 TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
@@ -248,16 +248,16 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, testMultipleWorker) {
-    size_t numWorkers = 3;
+    uint64_t numWorkers = 3;
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
     //start 10 worker
     std::vector<NesWorkerPtr> wPtrs;
-    for (size_t i = 0; i < numWorkers; i++) {
+    for (uint64_t i = 0; i < numWorkers; i++) {
         cout << "start worker" << i << endl;
         wPtrs.push_back(std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + (i + 5) * 10,
                                                     port + (i + 5) * 10 + 1, NodeType::Sensor));
@@ -266,21 +266,21 @@ TEST_F(MultiWorkerTest, testMultipleWorker) {
     }
 
     //connect 10 worker
-    for (size_t i = 0; i < numWorkers; i++) {
+    for (uint64_t i = 0; i < numWorkers; i++) {
         cout << "connect worker" << i << endl;
         bool retConWrk = wPtrs[i]->connect();
         EXPECT_TRUE(retConWrk);
     }
 
     //disconnect 10 worker
-    for (size_t i = 0; i < numWorkers; i++) {
+    for (uint64_t i = 0; i < numWorkers; i++) {
         cout << "disconnect worker" << i << endl;
         bool retConWrk = wPtrs[i]->disconnect();
         EXPECT_TRUE(retConWrk);
     }
 
     //stop 10 worker
-    for (size_t i = 0; i < numWorkers; i++) {
+    for (uint64_t i = 0; i < numWorkers; i++) {
         cout << "stop worker" << i << endl;
         bool retConWrk = wPtrs[i]->stop(false);
         EXPECT_TRUE(retConWrk);

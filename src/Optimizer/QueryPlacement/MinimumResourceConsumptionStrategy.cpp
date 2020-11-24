@@ -111,12 +111,12 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
 
     vector<NESTopologyEntryPtr> commonPath;
 
-    for (size_t i = 0; i < listOfPaths.size(); i++) {
+    for (uint64_t i = 0; i < listOfPaths.size(); i++) {
         vector<NESTopologyEntryPtr> path_i = listOfPaths[i];
 
         for (NESTopologyEntryPtr node_i : path_i) {
             bool nodeOccursInAllPaths = false;
-            for (size_t j = i; j < listOfPaths.size(); j++) {
+            for (uint64_t j = i; j < listOfPaths.size(); j++) {
                 if (i == j) {
                     continue;
                 }

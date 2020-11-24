@@ -75,9 +75,9 @@ class CircularBufferIterator {
   private:
     // reuse typenames
     friend cbT;
-    using size_type = typename cbT::size_type;
-    CircularBufferIterator(size_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept : idx(idx), container(rv){};
-    size_type idx;
+    using uint64_type = typename cbT::uint64_type;
+    CircularBufferIterator(uint64_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept : idx(idx), container(rv){};
+    uint64_type idx;
 
     // non-const/const representation of container
     std::conditional_t<isConst, const cbT, cbT>* container;
@@ -105,7 +105,7 @@ class CircularBuffer {
     // STL-style typedefs, similar to std::deque
     using value_type = T;
     using allocator_type = Allocator;
-    using size_type = std::size_t;
+    using uint64_type = std::uint64_t;
     using pointer = T*;
     using reference = T&;
     using const_reference = const T&;
@@ -135,8 +135,8 @@ class CircularBuffer {
     const_reference back() const noexcept { return *(end() - 1); }
 
     // size-capacity
-    [[nodiscard]] size_type size() const noexcept { return currentSize; }
-    [[nodiscard]] size_type capacity() const noexcept { return maxSize; }
+    [[nodiscard]] uint64_type size() const noexcept { return currentSize; }
+    [[nodiscard]] uint64_type capacity() const noexcept { return maxSize; }
     [[nodiscard]] bool empty() const { return currentSize == 0; }
     [[nodiscard]] bool full() const { return maxSize == currentSize; }
 
@@ -149,10 +149,10 @@ class CircularBuffer {
     const_iterator end() const noexcept { return cend(); }
 
     // random-access: [] and at
-    reference operator[](size_type idx) { return buffer[(head + idx) % maxSize]; }
-    reference at(size_type idx) { return buffer[(head + idx) % maxSize]; }
-    const_reference operator[](const size_type idx) const { return buffer[(head + idx) % maxSize]; }
-    const_reference at(const size_type idx) const { return buffer[(head + idx) % maxSize]; }
+    reference operator[](uint64_type idx) { return buffer[(head + idx) % maxSize]; }
+    reference at(uint64_type idx) { return buffer[(head + idx) % maxSize]; }
+    const_reference operator[](const uint64_type idx) const { return buffer[(head + idx) % maxSize]; }
+    const_reference at(const uint64_type idx) const { return buffer[(head + idx) % maxSize]; }
 
     // modifiers: push and emplace front
     template<bool b = true, typename = std::enable_if_t<b && std::is_copy_assignable<T>::value>>
@@ -201,10 +201,10 @@ class CircularBuffer {
     uint64_t head;
 
     // maximum size of buffer
-    size_type maxSize;
+    uint64_type maxSize;
 
     // current size of buffer
-    size_type currentSize;
+    uint64_type currentSize;
 
     // the buffer, of type T[]
     std::unique_ptr<T[]> buffer;

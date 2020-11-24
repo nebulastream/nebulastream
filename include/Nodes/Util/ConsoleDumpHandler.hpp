@@ -43,8 +43,8 @@ class ConsoleDumpHandler : public DumpHandler {
     void multilineDump(const NodePtr node, std::ostream& out);
 
   private:
-    void dumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const;
-    void multilineDumpHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const;
+    void dumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void multilineDumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };
 
 }// namespace NES

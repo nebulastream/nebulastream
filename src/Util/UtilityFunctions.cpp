@@ -213,7 +213,7 @@ std::string UtilityFunctions::generateIdString() {
     return res;
 }
 
-std::size_t UtilityFunctions::generateIdInt() {
+std::uint64_t UtilityFunctions::generateIdInt() {
     std::string linkID_string = UtilityFunctions::generateIdString();
     NES_DEBUG("UtilityFunctions: generateIdInt: create a new string_id=" << linkID_string);
     std::hash<std::string> hash_fn;
@@ -241,7 +241,7 @@ std::vector<std::string> UtilityFunctions::split(const std::string& s, char deli
 
 std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
     std::stringstream ss;
-    for (size_t i = 0; i < buffer.getNumberOfTuples(); i++) {
+    for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
         ss << buffer.getBufferAs<char>()[i];
     }
     return ss.str();
@@ -306,9 +306,9 @@ std::string UtilityFunctions::printTupleBufferAsCSV(TupleBuffer& tbuffer, Schema
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto buffer = tbuffer.getBufferAs<char>();
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (size_t i = 0; i < numberOfTuples; i++) {
-        size_t offset = 0;
-        for (size_t j = 0; j < schema->getSize(); j++) {
+    for (uint64_t i = 0; i < numberOfTuples; i++) {
+        uint64_t offset = 0;
+        for (uint64_t j = 0; j < schema->getSize(); j++) {
             auto field = schema->get(j);
             auto ptr = field->getDataType();
             auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
@@ -327,7 +327,7 @@ std::string UtilityFunctions::printTupleBufferAsCSV(TupleBuffer& tbuffer, Schema
 
 void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr) {
     // Get the first occurrence
-    size_t pos = data.find(toSearch);
+    uint64_t pos = data.find(toSearch);
     // Repeat till end is reached
     while (pos != std::string::npos) {
         // Replace this occurrence of Sub String

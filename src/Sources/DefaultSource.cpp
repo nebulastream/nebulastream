@@ -28,7 +28,7 @@
 namespace NES {
 
 DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                             const uint64_t numbersOfBufferToProduce, size_t frequency, OperatorId operatorId)
+                             const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce,
                       operatorId) {
     NES_DEBUG("DefaultSource:" << this << " creating");
@@ -41,7 +41,7 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
 
     auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("Source:" << this << " got buffer");
-    size_t tupleCnt = 10;
+    uint64_t tupleCnt = 10;
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
 
     auto fields = schema->fields;

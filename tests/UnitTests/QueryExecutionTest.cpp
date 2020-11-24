@@ -88,7 +88,7 @@ class WindowSource : public NES::DefaultSource {
     int64_t timestamp = 5;
     bool varyWatermark;
     WindowSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                 const uint64_t numbersOfBufferToProduce, size_t frequency, const bool varyWatermark = false)
+                 const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false)
         : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency,
                         1),
           varyWatermark(varyWatermark) {}
@@ -113,7 +113,7 @@ class WindowSource : public NES::DefaultSource {
     };
 
     static DataSourcePtr create(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                const uint64_t numbersOfBufferToProduce, size_t frequency, const bool varyWatermark = false) {
+                                const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false) {
         //        auto windowSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
         auto windowSchema = Schema::create()
                                 ->addField("key", BasicType::INT64)
@@ -156,7 +156,7 @@ class TestSink : public SinkMedium {
      * @return
      */
 
-    TupleBuffer& get(size_t index) {
+    TupleBuffer& get(uint64_t index) {
         std::unique_lock lock(m);
         return resultBuffers[index];
     }
@@ -650,7 +650,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
 // So, merge is a blocking window_scan with two children.
 TEST_F(QueryExecutionTest, mergeQuery) {
     // created buffer per source * number of sources
-    size_t expectedBuf = 20;
+    uint64_t expectedBuf = 20;
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
@@ -796,7 +796,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), numBuf);
 
     EXPECT_TRUE(!testSink->resultBuffers.empty());
-    size_t noBufs = 0;
+    uint64_t noBufs = 0;
     for (auto buf : testSink->resultBuffers) {
         noBufs++;
         auto resultLayout = createRowLayout(ysbResultSchema);

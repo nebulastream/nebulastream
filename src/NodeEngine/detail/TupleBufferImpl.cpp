@@ -186,9 +186,9 @@ bool BufferControlBlock::release() {
     return false;
 }
 
-size_t BufferControlBlock::getNumberOfTuples() const { return numberOfTuples; }
+uint64_t BufferControlBlock::getNumberOfTuples() const { return numberOfTuples; }
 
-void BufferControlBlock::setNumberOfTuples(size_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
+void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
 
 int64_t BufferControlBlock::getWatermark() const { return watermark; }
 
@@ -229,12 +229,12 @@ void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto buffer = tbuffer.getBufferAs<char>();
     auto physicalDataFactory = DefaultPhysicalTypeFactory();
-    for (size_t i = 0; i < numberOfTuples; i++) {
-        size_t offset = 0;
-        for (size_t j = 0; j < schema->getSize(); j++) {
+    for (uint64_t i = 0; i < numberOfTuples; i++) {
+        uint64_t offset = 0;
+        for (uint64_t j = 0; j < schema->getSize(); j++) {
             auto field = schema->get(j);
             auto physicalField = physicalDataFactory.getPhysicalType(field->dataType);
-            size_t fieldSize = physicalField->size();
+            uint64_t fieldSize = physicalField->size();
             //TODO: add enum with switch for performance reasons
             if (physicalField->toString() == "UINT8") {
                 u_int8_t* orgVal = (u_int8_t*) buffer + offset + i * tupleSize;

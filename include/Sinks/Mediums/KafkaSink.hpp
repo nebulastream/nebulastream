@@ -28,12 +28,12 @@
 namespace NES {
 
 class KafkaSink : public SinkMedium {
-    constexpr static size_t INVALID_PARTITION_NUMBER = -1;
+    constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
 
   public:
     KafkaSink();
     KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic,
-              const size_t kafkaProducerTimeout = 10 * 1000);
+              const uint64_t kafkaProducerTimeout = 10 * 1000);
 
     ~KafkaSink() override;
 

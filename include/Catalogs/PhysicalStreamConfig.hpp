@@ -98,8 +98,8 @@ struct PhysicalStreamConfig {
     bool getSkipHeader() const;
 
   private:
-    explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, size_t sourceFrequency,
-                                  size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
+    explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
+                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
                                   std::string physicalStreamName, std::string logicalStreamName, bool endlessRepeat,
                                   bool skipHeader);
 

@@ -34,7 +34,7 @@ class AdaptiveSource : public DataSource {
      * @param queryManager
      */
     AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                   size_t initialGatheringInterval, OperatorId operatorId);
+                   uint64_t initialGatheringInterval, OperatorId operatorId);
 
     /**
      * @brief Get type of source
@@ -65,7 +65,7 @@ class AdaptiveSource : public DataSource {
      */
     virtual void decideNewGatheringInterval() = 0;
 
-    size_t lastGatheringTimeStamp;
+    uint64_t lastGatheringTimeStamp;
 };
 
 typedef std::shared_ptr<AdaptiveSource> AdaptiveSourcePtr;

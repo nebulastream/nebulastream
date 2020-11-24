@@ -69,7 +69,7 @@ class SimpleBenchmarkSource : public DataSource {
 
         if (this->operatorId != 0) {
             NES_DEBUG("SimpleBenchmarkSource " << this->getOperatorId() << ": SimpleBenchmarkSource of type=" << getType());
-            size_t numberOfTuplesPerPeriod = (ingestionRate * BenchmarkUtils::periodLengthInSeconds);
+            uint64_t numberOfTuplesPerPeriod = (ingestionRate * BenchmarkUtils::periodLengthInSeconds);
 
             NES_DEBUG("SimpleBenchmarkSource: "
                       << "ingestionRate * periodLengthInSeconds = " << ingestionRate * BenchmarkUtils::periodLengthInSeconds
@@ -81,7 +81,7 @@ class SimpleBenchmarkSource : public DataSource {
                 auto startTimeSendBuffers =
                     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                size_t cntTuples = 0;
+                uint64_t cntTuples = 0;
                 while (cntTuples < numberOfTuplesPerPeriod) {
 
                     //if ((numberOfTuplesPerPeriod - cntTuples) < numberOfTuplesPerBuffer) curNumberOfTuplesPerBuffer = numberOfTuplesPerPeriod - cntTuples;
@@ -146,7 +146,7 @@ class SimpleBenchmarkSource : public DataSource {
         auto listIt = keyList.begin();
         std::advance(listIt, keyPos);
 
-        for (size_t i = 0; i < curNumberOfTuplesPerBuffer; ++i, ++listIt) {
+        for (uint64_t i = 0; i < curNumberOfTuplesPerBuffer; ++i, ++listIt) {
             rowLayout->getValueField<int16_t>(i, 0)->write(buf, *listIt);
             rowLayout->getValueField<int16_t>(i, 1)->write(buf, 1);
         }
