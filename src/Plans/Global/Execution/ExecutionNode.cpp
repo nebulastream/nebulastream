@@ -174,7 +174,7 @@ const std::vector<std::string> ExecutionNode::toMultilineString() {
             // Split the string representation of the queryPlan into multiple lines
             std::string s = queryPlan->toString();
             std::string delimiter = "\n";
-            size_t pos = 0;
+            uint64_t pos = 0;
             std::string token;
             while ((pos = s.find(delimiter)) != std::string::npos) {
                 token = s.substr(0, pos);

@@ -63,11 +63,11 @@ class ZMQTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down ZMQTest test class."); }
 
-    size_t tupleCnt;
+    uint64_t tupleCnt;
     std::string address;
 
     SchemaPtr test_schema;
-    size_t test_data_size;
+    uint64_t test_data_size;
     std::array<uint32_t, 8> test_data;
 };
 
@@ -90,17 +90,17 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
         auto tuple_buffer = zmq_source->receiveData();
 
         // Test received data.
-        size_t sum = 0;
+        uint64_t sum = 0;
         uint32_t* tuple = (uint32_t*) tuple_buffer->getBuffer();
-        for (size_t i = 0; i != 8; ++i) {
+        for (uint64_t i = 0; i != 8; ++i) {
             sum += *(tuple++);
         }
-        size_t expected = 400;
+        uint64_t expected = 400;
         EXPECT_EQ(sum, expected);
 
         receiving_finished = true;
     });
-    size_t tupCnt = 8;
+    uint64_t tupCnt = 8;
     // Wait until receiving is complete.
 
     // Open Publisher
@@ -160,9 +160,9 @@ TEST_F(ZMQTest, testZmqSinkSendData) {
 
     // Test received data.
     uint32_t *tuple = (uint32_t*) new_data.data();
-    for (size_t i = 0; i != new_data.size() / test_schema->getSchemaSizeInBytes(); ++i) {
+    for (uint64_t i = 0; i != new_data.size() / test_schema->getSchemaSizeInBytes(); ++i) {
   EXPECT_EQ(*(tuple++), i);
-  size_t expected = 100 - i;
+  uint64_t expected = 100 - i;
   EXPECT_EQ(*(tuple++), expected);
 }
 
@@ -211,9 +211,9 @@ TEST_F(ZMQTest, testZmqSinkToSource) {
 
     // Test received data.
     uint32_t *tuple = (uint32_t*) new_data->getBuffer();
-    for (size_t i = 0; i != new_data->getNumberOfTuples(); ++i) {
+    for (uint64_t i = 0; i != new_data->getNumberOfTuples(); ++i) {
       EXPECT_EQ(*(tuple++), i);
-      size_t expected = 100 - i;
+      uint64_t expected = 100 - i;
       EXPECT_EQ(*(tuple++), expected);
     }
    // bufferManager->releaseFixedSizeBuffer(new_data);

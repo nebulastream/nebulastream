@@ -57,7 +57,7 @@ class MergeDeploymentTest : public testing::Test {
 TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
@@ -221,7 +221,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
@@ -385,7 +385,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
@@ -548,7 +548,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
 TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 

@@ -107,11 +107,11 @@ class TupleBuffer {
     */
     void release();
 
-    size_t getBufferSize() const;
+    uint64_t getBufferSize() const;
 
-    size_t getNumberOfTuples() const;
+    uint64_t getNumberOfTuples() const;
 
-    void setNumberOfTuples(size_t numberOfTuples);
+    void setNumberOfTuples(uint64_t numberOfTuples);
 
     friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) { return os << buff.ptr; }
 

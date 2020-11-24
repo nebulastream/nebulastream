@@ -45,7 +45,7 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static const size_t timeout = 30;//TODO:increase it again to 30
+    static const uint64_t timeout = 30;//TODO:increase it again to 30
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
@@ -54,7 +54,7 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    static bool checkCompleteOrTimeout(NodeEnginePtr ptr, QueryId queryId, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(NodeEnginePtr ptr, QueryId queryId, uint64_t expectedResult) {
         if (ptr->getQueryStatistics(queryId).empty()) {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;
@@ -84,10 +84,10 @@ class TestUtils {
      * @param expectedResult: The expected value
      * @return true if matched the expected result within the timeout
      */
-    static bool checkCompleteOrTimeout(QueryId queryId, size_t expectedResult) {
+    static bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        size_t currentResult = 0;
+        uint64_t currentResult = 0;
         web::json::value json_return;
         std::string currentStatus = "";
 
@@ -274,9 +274,9 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    template<typename Predicate = std::equal_to<size_t>>
+    template<typename Predicate = std::equal_to<uint64_t>>
     static bool checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
-                                       size_t expectedResult) {
+                                       uint64_t expectedResult) {
 
         GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
         if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
@@ -297,7 +297,7 @@ class TestUtils {
                 sleep(1);
                 continue;
             }
-            size_t processed = statistics[0]->getProcessedBuffers();
+            uint64_t processed = statistics[0]->getProcessedBuffers();
             if (cmp(processed, expectedResult)) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct procBuffer="
                           << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
@@ -310,7 +310,7 @@ class TestUtils {
             sleep(1);
         }
         auto statistics = nesWorker->getQueryStatistics(globalQueryId);
-        size_t processed = statistics[0]->getProcessedBuffers();
+        uint64_t processed = statistics[0]->getProcessedBuffers();
         NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected="
                   << expectedResult << " final result=" << processed);
         return false;
@@ -324,9 +324,9 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    template<typename Predicate = std::equal_to<size_t>>
+    template<typename Predicate = std::equal_to<uint64_t>>
     static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
-                                       size_t expectedResult) {
+                                       uint64_t expectedResult) {
         GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
         if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
@@ -412,8 +412,8 @@ class TestUtils {
                     continue;
                 }
 
-                size_t found = 0;
-                for (size_t i = 0; i < expectedLines.size(); i++) {
+                uint64_t found = 0;
+                for (uint64_t i = 0; i < expectedLines.size(); i++) {
                     if (content.find(expectedLines[i]) != std::string::npos) {
                         found++;
                     }
@@ -430,7 +430,7 @@ class TestUtils {
         return false;
     }
 
-    static TopologyNodePtr registerTestNode(size_t id, std::string address, int cpu, NodeStats nodeProperties,
+    static TopologyNodePtr registerTestNode(uint64_t id, std::string address, int cpu, NodeStats nodeProperties,
                                             PhysicalStreamConfigPtr streamConf, NodeType type, StreamCatalogPtr streamCatalog,
                                             TopologyPtr topology) {
         TopologyNodePtr nodePtr;

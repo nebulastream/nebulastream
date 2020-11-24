@@ -52,7 +52,7 @@ class ContinuousSourceTest : public testing::Test {
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
@@ -148,7 +148,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
@@ -204,7 +204,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
@@ -259,7 +259,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
@@ -373,7 +373,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
@@ -487,7 +487,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
@@ -550,7 +550,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
@@ -1154,7 +1154,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
@@ -1381,13 +1381,13 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
 }
 
 TEST_F(ContinuousSourceTest, testYSB) {
-    size_t producedBuffers = 2;
-    size_t producedTuples = 5;
+    uint64_t producedBuffers = 2;
+    uint64_t producedTuples = 5;
 
     //TODO: writing of csv file works, now make test green
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 

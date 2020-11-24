@@ -37,7 +37,7 @@ class NesThread {
     /// The number of entries in table. Currently, this is fixed at 64 and never changes or grows.
     /// If the table runs out of entries, then the current implementation will throw a
     /// std::runtime_error.
-    static constexpr size_t MaxNumThreads = 64;
+    static constexpr uint64_t MaxNumThreads = 64;
 
   private:
     /// Encapsulates a thread ID, getting a free ID from the Thread class when the thread starts, and

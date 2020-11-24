@@ -113,7 +113,7 @@ class HandCodedExecutablePipeline : public ExecutablePipeline {
         NES_INFO("Test: Start execution");
 
         uint64_t psum = 0;
-        for (size_t i = 0; i < inBuf.getNumberOfTuples(); ++i) {
+        for (uint64_t i = 0; i < inBuf.getNumberOfTuples(); ++i) {
             psum += tuples[i];
         }
         count += inBuf.getNumberOfTuples();

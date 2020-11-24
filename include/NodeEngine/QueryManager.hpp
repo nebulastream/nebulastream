@@ -180,7 +180,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      */
     QueryStatisticsPtr getQueryStatistics(QuerySubPlanId qepId);
 
-    size_t getNodeId() const;
+    uint64_t getNodeId() const;
 
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
@@ -228,7 +228,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     BufferManagerPtr bufferManager;
     CompiledExecutablePipelinePtr reconfigurationExecutable;
 
-    size_t nodeEngineId;
+    uint64_t nodeEngineId;
 
     uint16_t numThreads;
 };

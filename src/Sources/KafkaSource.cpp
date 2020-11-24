@@ -57,8 +57,8 @@ std::optional<TupleBuffer> KafkaSource::receiveData() {
         } else {
             TupleBuffer buffer = bufferManager->getBufferBlocking();
 
-            const size_t tupleSize = schema->getSchemaSizeInBytes();
-            const size_t tupleCnt = msg.get_payload().get_size() / tupleSize;
+            const uint64_t tupleSize = schema->getSchemaSizeInBytes();
+            const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;
 
             NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << ", msg: " << msg.get_payload());
 
@@ -94,7 +94,7 @@ void KafkaSource::_connect() {
                                      << tpp.get_offset());
                 // TODO: enforce to set offset to -1 or abort ?
                 auto tuple = consumer->query_offsets(tpp);
-                size_t high = std::get<1>(tuple);
+                uint64_t high = std::get<1>(tuple);
                 tpp.set_offset(high - 1);
             }
         }

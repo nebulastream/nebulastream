@@ -74,14 +74,14 @@ class CoordinatorRPCClient {
      * @param newParentId
      * @return bool indicating success
      */
-    bool addParent(size_t parentId);
+    bool addParent(uint64_t parentId);
 
     /**
      * @brief method to remove a parent from a node
      * @param newParentId
      * @return bool indicating success
      */
-    bool removeParent(size_t parentId);
+    bool removeParent(uint64_t parentId);
 
     /**
      * @brief method to register a node after the connection is established
@@ -106,10 +106,10 @@ class CoordinatorRPCClient {
      * @brief method to get own id form server
      * @return own id as listed in the graph
      */
-    size_t getId();
+    uint64_t getId();
 
   private:
-    size_t workerId;
+    uint64_t workerId;
 
     std::string address;
     std::shared_ptr<::grpc::Channel> rpcChannel;

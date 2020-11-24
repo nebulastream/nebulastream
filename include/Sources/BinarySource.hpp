@@ -62,7 +62,7 @@ class BinarySource : public DataSource {
     std::string file_path;
 
     int file_size;
-    size_t tuple_size;
+    uint64_t tuple_size;
 };
 
 typedef std::shared_ptr<BinarySource> BinarySourcePtr;

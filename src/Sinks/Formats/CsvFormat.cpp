@@ -28,8 +28,8 @@ CsvFormat::CsvFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFor
 std::optional<TupleBuffer> CsvFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     std::stringstream ss;
-    size_t numberOfFields = schema->fields.size();
-    for (size_t i = 0; i < numberOfFields; i++) {
+    uint64_t numberOfFields = schema->fields.size();
+    for (uint64_t i = 0; i < numberOfFields; i++) {
         ss << schema->fields[i]->toString();
         if (i < numberOfFields - 1) {
             ss << ",";
@@ -55,11 +55,11 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
         return buffers;
     }
     std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(inputBuffer, schema);
-    size_t contentSize = bufferContent.length();
+    uint64_t contentSize = bufferContent.length();
     if (inputBuffer.getBufferSize() < contentSize) {
         NES_DEBUG("CsvFormat::getData: content is larger than one buffer");
-        size_t numberOfBuffers = std::ceil(double(contentSize) / double(inputBuffer.getBufferSize()));
-        for (size_t i = 0; i < numberOfBuffers - 1; i++) {
+        uint64_t numberOfBuffers = std::ceil(double(contentSize) / double(inputBuffer.getBufferSize()));
+        for (uint64_t i = 0; i < numberOfBuffers - 1; i++) {
             auto buf = this->bufferManager->getBufferBlocking();
             std::string contentWithSingleBufferSize = bufferContent.substr(0, buf.getBufferSize());
             bufferContent = bufferContent.substr(buf.getBufferSize(), bufferContent.length() - buf.getBufferSize());

@@ -72,7 +72,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
     switch (state.range(0)) {
         case 0: {
             for (auto singleState : state) {
-                for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     createRowLayout(benchmarkSchema)->getValueField<int8_t>(i, 0)->write(buffer, 42);
                     createRowLayout(benchmarkSchema)->getValueField<int8_t>(i, 1)->write(buffer, 1);
                 }
@@ -81,7 +81,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
         }
         case 1: {
             for (auto singleState : state) {
-                for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     createRowLayout(benchmarkSchema)->getValueField<int16_t>(i, 0)->write(buffer, 42);
                     createRowLayout(benchmarkSchema)->getValueField<int16_t>(i, 1)->write(buffer, 1);
                 }
@@ -90,7 +90,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
         }
         case 2: {
             for (auto singleState : state) {
-                for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 0)->write(buffer, 42);
                     createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 1)->write(buffer, 1);
                 }
@@ -99,7 +99,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
         }
         default: {
             for (auto singleState : state) {
-                for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     createRowLayout(benchmarkSchema)->getValueField<int64_t>(i, 0)->write(buffer, 42);
                     createRowLayout(benchmarkSchema)->getValueField<int64_t>(i, 1)->write(buffer, 1);
                 }
@@ -134,7 +134,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
         case 0: {
             for (auto singleState : state) {
                 auto rowLayout = createRowLayout(benchmarkSchema);
-                for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     rowLayout->getValueField<int8_t>(i, 0)->write(buffer, 42);
                     rowLayout->getValueField<int8_t>(i, 1)->write(buffer, 1);
                 }
@@ -144,7 +144,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
         case 1: {
             for (auto singleState : state) {
                 auto rowLayout = createRowLayout(benchmarkSchema);
-                for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     rowLayout->getValueField<int16_t>(i, 0)->write(buffer, 42);
                     rowLayout->getValueField<int16_t>(i, 1)->write(buffer, 1);
                 }
@@ -154,7 +154,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
         case 2: {
             for (auto singleState : state) {
                 auto rowLayout = createRowLayout(benchmarkSchema);
-                for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     rowLayout->getValueField<int32_t>(i, 0)->write(buffer, 42);
                     rowLayout->getValueField<int32_t>(i, 1)->write(buffer, 1);
                 }
@@ -164,7 +164,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
         default: {
             for (auto singleState : state) {
                 auto rowLayout = createRowLayout(benchmarkSchema);
-                for (size_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     rowLayout->getValueField<int64_t>(i, 0)->write(buffer, 42);
                     rowLayout->getValueField<int64_t>(i, 1)->write(buffer, 1);
                 }
@@ -200,7 +200,7 @@ static void BM_CustomFilling(benchmark::State& state) {
         case 0: {
             for (auto singleState : state) {
                 auto tupleIt = buffer.getBuffer<TupleI8>();
-                for (size_t i = 0; i < maxTuplesPerBuffer; i++) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
                     tupleIt[i].key = 42;
                     tupleIt[i].value = 1;
                 }
@@ -211,7 +211,7 @@ static void BM_CustomFilling(benchmark::State& state) {
         case 1: {
             for (auto singleState : state) {
                 auto tupleIt = buffer.getBuffer<TupleI16>();
-                for (size_t i = 0; i < maxTuplesPerBuffer; i++) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
                     tupleIt[i].key = 42;
                     tupleIt[i].value = 1;
                 }
@@ -222,7 +222,7 @@ static void BM_CustomFilling(benchmark::State& state) {
         case 2: {
             for (auto singleState : state) {
                 auto tupleIt = buffer.getBuffer<TupleI32>();
-                for (size_t i = 0; i < maxTuplesPerBuffer; i++) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
                     tupleIt[i].key = 42;
                     tupleIt[i].value = 1;
                 }
@@ -233,7 +233,7 @@ static void BM_CustomFilling(benchmark::State& state) {
         default: {
             for (auto singleState : state) {
                 auto tupleIt = buffer.getBuffer<TupleI64>();
-                for (size_t i = 0; i < maxTuplesPerBuffer; i++) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
                     tupleIt[i].key = 42;
                     tupleIt[i].value = 1;
                 }

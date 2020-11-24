@@ -87,11 +87,11 @@ void TupleBuffer::release() {
     }
 }
 
-size_t TupleBuffer::getBufferSize() const { return size; }
+uint64_t TupleBuffer::getBufferSize() const { return size; }
 
-size_t TupleBuffer::getNumberOfTuples() const { return controlBlock->getNumberOfTuples(); }
+uint64_t TupleBuffer::getNumberOfTuples() const { return controlBlock->getNumberOfTuples(); }
 
-void TupleBuffer::setNumberOfTuples(size_t numberOfTuples) { controlBlock->setNumberOfTuples(numberOfTuples); }
+void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) { controlBlock->setNumberOfTuples(numberOfTuples); }
 
 void TupleBuffer::revertEndianness(SchemaPtr schema) { detail::revertEndianness(*this, schema); }
 

@@ -148,7 +148,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     uint64_t originId;
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;
     uint64_t lastWatermark;
-    size_t numberOfInputEdges;
+    uint64_t numberOfInputEdges;
 };
 
 }// namespace NES::Windowing

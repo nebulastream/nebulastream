@@ -48,7 +48,7 @@ struct __attribute__((packed)) inputRow {
 class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
     MockCSVAdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                          size_t initialGatheringInterval, std::string filePath)
+                          uint64_t initialGatheringInterval, std::string filePath)
         : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1), filePath(filePath){};
 
     ~MockCSVAdaptiveSource() = default;
@@ -76,7 +76,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
             std::getline(input, line);
             std::vector<std::string> tokens;
             boost::algorithm::split(tokens, line, boost::is_any_of(","));
-            size_t offset = 0;
+            uint64_t offset = 0;
             offset += sizeof(UINT32);
             uint32_t val = std::stoul(tokens[0].c_str());
             memcpy(tupleBuffer.getBufferAs<char>() + offset + i * 4096, &val, 4);
@@ -98,7 +98,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
 };
 
 const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                                size_t initialGatheringInterval, std::string filePath) {
+                                                uint64_t initialGatheringInterval, std::string filePath) {
     return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager, initialGatheringInterval, filePath);
 }
 
@@ -115,8 +115,8 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
 
     SchemaPtr schema = Schema::create()->addField("temperature", UINT32);
 
-    size_t num_of_buffers = 1;
-    size_t initialGatheringInterval = 4;
+    uint64_t num_of_buffers = 1;
+    uint64_t initialGatheringInterval = 4;
 
     const DataSourcePtr source = createMockCSVAdaptiveSource(
         schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file);

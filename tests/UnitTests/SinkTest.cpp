@@ -35,14 +35,14 @@ using namespace std;
  */
 namespace NES {
 
-const size_t buffersManaged = 1024;
-const size_t bufferSize = 4 * 1024;
+const uint64_t buffersManaged = 1024;
+const uint64_t bufferSize = 4 * 1024;
 
 class SinkTest : public testing::Test {
   public:
-    size_t tupleCnt;
+    uint64_t tupleCnt;
     SchemaPtr test_schema;
-    size_t test_data_size;
+    uint64_t test_data_size;
     std::array<uint32_t, 8> test_data;
     bool write_result;
     std::string path_to_csv_file;
@@ -83,8 +83,8 @@ TEST_F(SinkTest, testCSVFileSink) {
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     WorkerContext wctx(NesThread::getId());
     const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
-    for (size_t i = 0; i < 2; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 0; i < 2; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -128,8 +128,8 @@ TEST_F(SinkTest, testTextFileSink) {
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
     const DataSinkPtr binSink = createTextFileSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
-    for (size_t i = 0; i < 5; ++i) {
-        for (size_t j = 0; j < 5; ++j) {
+    for (uint64_t i = 0; i < 5; ++i) {
+        for (uint64_t j = 0; j < 5; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -155,8 +155,8 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     WorkerContext wctx(NesThread::getId());
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, 0, nodeEngine, path_to_bin_file, true);
-    for (size_t i = 0; i < 2; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 0; i < 2; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -168,7 +168,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     cout << "Buffer Content= " << bufferContent << endl;
 
     //deserialize schema
-    size_t idx = path_to_bin_file.rfind(".");
+    uint64_t idx = path_to_bin_file.rfind(".");
     std::string shrinkedPath = path_to_bin_file.substr(0, idx + 1);
     std::string schemaFile = shrinkedPath + "schema";
     cout << "load=" << schemaFile << endl;
@@ -211,8 +211,8 @@ TEST_F(SinkTest, testCSVPrintSink) {
     WorkerContext wctx(NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto csvSink = createCSVPrintSink(test_schema, 0, nodeEngine, os);
-    for (size_t i = 0; i < 2; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 0; i < 2; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -262,8 +262,8 @@ TEST_F(SinkTest, testTextPrintSink) {
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
     const DataSinkPtr binSink = createTextPrintSink(test_schema, 0, nodeEngine, os);
-    for (size_t i = 0; i < 5; ++i) {
-        for (size_t j = 0; j < 5; ++j) {
+    for (uint64_t i = 0; i < 5; ++i) {
+        for (uint64_t j = 0; j < 5; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
@@ -292,8 +292,8 @@ TEST_F(SinkTest, testCSVZMQSink) {
     WorkerContext wctx(NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink = createCSVZmqSink(test_schema, 0, nodeEngine, "localhost", 666555);
-    for (size_t i = 1; i < 3; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 1; i < 3; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
         }
     }
@@ -341,8 +341,8 @@ TEST_F(SinkTest, testTextZMQSink) {
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink = createTextZmqSink(test_schema, 0, nodeEngine, "localhost", 666555);
-    for (size_t i = 1; i < 3; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 1; i < 3; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
         }
     }
@@ -378,8 +378,8 @@ TEST_F(SinkTest, testBinaryZMQSink) {
     WorkerContext wctx(NesThread::getId());
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", 666555, false);
-    for (size_t i = 1; i < 3; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 1; i < 3; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
         }
     }
@@ -424,8 +424,8 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     buffer.setWatermark(1234567);
     const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", 666555, false);
-    for (size_t i = 1; i < 3; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 1; i < 3; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
         }
     }
@@ -459,8 +459,8 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
     buffer.setWatermark(1234567);
 
     const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
-    for (size_t i = 0; i < 2; ++i) {
-        for (size_t j = 0; j < 2; ++j) {
+    for (uint64_t i = 0; i < 2; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }

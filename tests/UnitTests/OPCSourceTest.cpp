@@ -132,7 +132,7 @@ class OPCSourceTest : public testing::Test {
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
     SchemaPtr test_schema;
-    size_t buffer_size;
+    uint64_t buffer_size;
 
   protected:
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
@@ -182,10 +182,10 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     p.get_future().get();
     auto tuple_buffer = opcSource->receiveData();
     stopServer();
-    size_t value = 0;
+    uint64_t value = 0;
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
     value = *tuple;
-    size_t expected = 43;
+    uint64_t expected = 43;
     NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected
                                                                                          << ". Received value is: " << value);
     EXPECT_EQ(value, expected);

@@ -48,8 +48,8 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                                                   QueryManagerPtr queryManager, size_t numbersOfBufferToProduce,
-                                                                   size_t frequency, OperatorId operatorId);
+                                                                   QueryManagerPtr queryManager, uint64_t numbersOfBufferToProduce,
+                                                                   uint64_t frequency, OperatorId operatorId);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
@@ -91,7 +91,7 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
  */
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                         const std::string& path_to_file, const std::string& delimiter,
-                                        size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                         bool endlessRepeat, bool skipHeader, OperatorId operatorId);
 
 /**
@@ -100,7 +100,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
  * @return a const data source pointer
  */
 const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                    uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                     bool endlessRepeat, OperatorId operatorId);
 
 /**

@@ -41,8 +41,8 @@
 using namespace std;
 
 namespace NES {
-const size_t buffersManaged = 8 * 1024;
-const size_t bufferSize = 4 * 1024;
+const uint64_t buffersManaged = 8 * 1024;
+const uint64_t bufferSize = 4 * 1024;
 
 struct TestStruct {
     int64_t id;
@@ -79,7 +79,7 @@ class TestSink : public SinkMedium {
         NES_DEBUG("TestSink:\n" << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 
         uint64_t sum = 0;
-        for (size_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {
+        for (uint64_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {
             sum += input_buffer.getBuffer<TestStruct>()[i].value;
         }
 
@@ -265,8 +265,8 @@ TEST_F(NetworkStackTest, testSendData) {
 TEST_F(NetworkStackTest, testMassiveSending) {
     std::promise<bool> completedProm;
 
-    size_t totalNumBuffer = 1'000'000;
-    std::atomic<std::size_t> bufferReceived = 0;
+    uint64_t totalNumBuffer = 1'000'000;
+    std::atomic<std::uint64_t> bufferReceived = 0;
     auto nesPartition = NesPartition(1, 22, 333, 444);
 
     try {
@@ -274,16 +274,16 @@ TEST_F(NetworkStackTest, testMassiveSending) {
 
           public:
             std::promise<bool>& completedProm;
-            std::atomic<std::size_t>& bufferReceived;
+            std::atomic<std::uint64_t>& bufferReceived;
 
-            ExchangeListener(std::atomic<std::size_t>& bufferReceived, std::promise<bool>& completedProm)
+            ExchangeListener(std::atomic<std::uint64_t>& bufferReceived, std::promise<bool>& completedProm)
                 : bufferReceived(bufferReceived), completedProm(completedProm) {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
                 ASSERT_EQ((buffer.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
                               && (id.getPartitionId(), 333) && (id.getSubpartitionId(), 444),
                           true);
-                for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                     ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
                 }
                 bufferReceived++;
@@ -314,9 +314,9 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
             completedProm.set_value(false);
         } else {
-            for (size_t i = 0; i < totalNumBuffer; ++i) {
+            for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                 auto buffer = buffMgr->getBufferBlocking();
-                for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                     buffer.getBuffer<uint64_t>()[j] = j;
                 }
                 buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
@@ -410,14 +410,14 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
 }
 
 TEST_F(NetworkStackTest, testMassiveMultiSending) {
-    size_t totalNumBuffer = 1'000;
-    constexpr size_t numSendingThreads = 4;
+    uint64_t totalNumBuffer = 1'000;
+    constexpr uint64_t numSendingThreads = 4;
 
     // create a couple of NesPartitions
     auto sendingThreads = std::vector<std::thread>();
     auto nesPartitions = std::vector<NesPartition>();
     auto completedPromises = std::vector<std::promise<bool>>();
-    std::array<std::atomic<std::size_t>, numSendingThreads> bufferCounter;
+    std::array<std::atomic<std::uint64_t>, numSendingThreads> bufferCounter;
 
     for (int i = 0; i < numSendingThreads; i++) {
         nesPartitions.emplace_back(i, i + 10, i + 20, i + 30);
@@ -427,11 +427,11 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
     try {
         class ExchangeListenerImpl : public ExchangeProtocolListener {
           private:
-            std::array<std::atomic<std::size_t>, numSendingThreads>& bufferCounter;
+            std::array<std::atomic<std::uint64_t>, numSendingThreads>& bufferCounter;
             std::vector<std::promise<bool>>& completedPromises;
 
           public:
-            ExchangeListenerImpl(std::array<std::atomic<std::size_t>, numSendingThreads>& bufferCounter,
+            ExchangeListenerImpl(std::array<std::atomic<std::uint64_t>, numSendingThreads>& bufferCounter,
                                  std::vector<std::promise<bool>>& completedPromises)
                 : bufferCounter(bufferCounter), completedPromises(completedPromises) {}
 
@@ -440,7 +440,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             void onChannelError(Messages::ErrorMessage) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
-                for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                     ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
                 }
                 bufferCounter[id.getQueryId()]++;
@@ -486,9 +486,9 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
                 } else {
                     std::mt19937 rnd;
                     std::uniform_int_distribution gen(5'000, 75'000);
-                    for (size_t i = 0; i < totalNumBuffer; ++i) {
+                    for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                         auto buffer = buffMgr->getBufferBlocking();
-                        for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                        for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                             buffer.getBuffer<uint64_t>()[j] = j;
                         }
                         buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
@@ -511,7 +511,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
     } catch (...) {
         ASSERT_EQ(true, false);
     }
-    for (size_t cnt : bufferCounter) {
+    for (uint64_t cnt : bufferCounter) {
         ASSERT_EQ(cnt, totalNumBuffer);
     }
 }
@@ -520,7 +520,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
     static constexpr auto numSendingThreads = 10;
     std::promise<bool> completed;
     atomic<int> bufferCnt = 0;
-    size_t totalNumBuffer = 100;
+    uint64_t totalNumBuffer = 100;
 
     auto sendingThreads = std::vector<std::thread>();
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -588,9 +588,9 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                 std::mt19937 rnd;
                 std::uniform_int_distribution gen(50'000, 100'000);
                 auto buffMgr = bMgr;
-                for (size_t i = 0; i < totalNumBuffer; ++i) {
+                for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = buffMgr->getBufferBlocking();
-                    for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                    for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                         buffer.getBuffer<uint64_t>()[j] = j;
                     }
                     buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
@@ -648,8 +648,8 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
 }
 
 template<typename MockedNodeEngine, typename... ExtraParameters>
-std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname, uint16_t port, size_t bufferSize,
-                                                     size_t numBuffers, ExtraParameters&&... extraParams) {
+std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize,
+                                                     uint64_t numBuffers, ExtraParameters&&... extraParams) {
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
@@ -673,7 +673,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
     std::promise<bool> completed;
     atomic<int> bufferCnt = 0;
     atomic<int> eosCnt = 0;
-    size_t totalNumBuffer = 100;
+    uint64_t totalNumBuffer = 100;
 
     static constexpr int numSendingThreads = 4;
     auto sendingThreads = std::vector<std::thread>();
@@ -741,9 +741,9 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                 WorkerContext workerContext(NesThread::getId());
                 auto rt = ReconfigurationTask(0, Initialize, &networkSink);
                 networkSink.reconfigure(rt, workerContext);
-                for (size_t i = 0; i < totalNumBuffer; ++i) {
+                for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-                    for (size_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                    for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                         buffer.getBuffer<uint64_t>()[j] = j;
                     }
                     buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));

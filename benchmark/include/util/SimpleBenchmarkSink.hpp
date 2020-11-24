@@ -49,7 +49,7 @@ class SimpleBenchmarkSink : public SinkMedium {
 
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-    TupleBuffer& get(size_t index) {
+    TupleBuffer& get(uint64_t index) {
         std::unique_lock lock(m);
         return resultBuffers[index];
     }

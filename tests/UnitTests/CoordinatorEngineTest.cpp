@@ -60,15 +60,15 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
 
     auto nodeStats = NodeStats();
-    size_t nodeId = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats, NodeType::Sensor);
+    uint64_t nodeId = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats, NodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 
-    size_t nodeId1 = coordinatorEngine->registerNode(ip, publish_port + 2, 5000, 6, nodeStats, NodeType::Sensor);
+    uint64_t nodeId1 = coordinatorEngine->registerNode(ip, publish_port + 2, 5000, 6, nodeStats, NodeType::Sensor);
     EXPECT_NE(nodeId1, 0);
 
     //test register existing node
     auto nodeStats2 = NodeStats();
-    size_t nodeId2 = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats2, NodeType::Sensor);
+    uint64_t nodeId2 = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats2, NodeType::Sensor);
     EXPECT_EQ(nodeId2, 0);
 
     //test unregister not existing node
@@ -116,7 +116,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
                                      /**Logical Stream Name**/ "testStream");
 
     auto nodeStats = NodeStats();
-    size_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NodeType::Sensor);
+    uint64_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 
     //setup test

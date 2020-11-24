@@ -38,7 +38,7 @@ void BenchmarkUtils::createUniformData(std::list<uint64_t>& dataList, uint64_t t
     std::mt19937 generator(random_device());
     std::uniform_int_distribution<> distrib(min, max);
 
-    for (size_t i = 0; i < totalNumberOfTuples; ++i) {
+    for (uint64_t i = 0; i < totalNumberOfTuples; ++i) {
         int tmp;
         do {
             tmp = distrib(generator);
@@ -60,7 +60,7 @@ uint64_t BenchmarkUtils::calcExpectedTuplesSelectivity(std::list<uint64_t> list,
 }
 
 void BenchmarkUtils::recordStatistics(std::vector<QueryStatistics*>& statisticsVec, NodeEnginePtr nodeEngine) {
-    for (size_t i = 0; i < BenchmarkUtils::runSingleExperimentSeconds + 1; ++i) {
+    for (uint64_t i = 0; i < BenchmarkUtils::runSingleExperimentSeconds + 1; ++i) {
         int64_t nextPeriodStartTime = BenchmarkUtils::periodLengthInSeconds * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
@@ -85,7 +85,7 @@ void BenchmarkUtils::recordStatistics(std::vector<QueryStatistics*>& statisticsV
 }
 
 void BenchmarkUtils::computeDifferenceOfStatistics(std::vector<QueryStatistics*>& statisticsVec) {
-    for (size_t i = statisticsVec.size() - 1; i > 1; --i) {
+    for (uint64_t i = statisticsVec.size() - 1; i > 1; --i) {
         statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());
         statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers()
                                               - statisticsVec[i - 1]->getProcessedBuffers());

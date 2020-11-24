@@ -124,8 +124,8 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                 } else {
 
                     const ExecutionNodePtr existingExecutionNode = executionPlanPtr->getExecutionNode(node->getId());
-                    size_t operatorId = legacyOperator->getOperatorId();
-                    vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
+                    uint64_t operatorId = legacyOperator->getOperatorId();
+                    vector<uint64_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
                     if (exists != residentOperatorIds.end()) {
                         //skip adding rest of the operator chains as they already exists.

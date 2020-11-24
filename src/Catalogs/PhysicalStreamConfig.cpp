@@ -28,8 +28,8 @@ PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std
                              numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endlessRepeat, skipHeader));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, size_t sourceFrequency,
-                                           size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
+PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
+                                           uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
                                            std::string physicalStreamName, std::string logicalStreamName, bool endlessRepeat,
                                            bool skipHeader)
     : sourceType(sourceType), sourceConfig(sourceConfig), sourceFrequency(sourceFrequency),

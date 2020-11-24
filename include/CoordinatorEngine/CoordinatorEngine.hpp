@@ -42,7 +42,7 @@ class CoordinatorEngine {
      * @param node type
      * @return id of node
      */
-    size_t registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, NodeStats nodeStats,
+    uint64_t registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, NodeStats nodeStats,
                         NodeType type);
 
     /**
@@ -63,8 +63,8 @@ class CoordinatorEngine {
      * @param logicalstreamname
      * @return bool indicating success
      */
-    bool registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string sourceConf, size_t sourceFrequency,
-                                size_t numberOfTuplesToProducePerBuffer, size_t numberOfBuffersToProduce,
+    bool registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string sourceConf, uint64_t sourceFrequency,
+                                uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
                                 std::string physicalStreamname, std::string logicalStreamname);
 
     /**

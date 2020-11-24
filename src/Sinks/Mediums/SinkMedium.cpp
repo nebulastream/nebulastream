@@ -28,11 +28,11 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId)
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
-size_t SinkMedium::getNumberOfWrittenOutBuffers() {
+uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);
     return sentBuffer;
 }
-size_t SinkMedium::getNumberOfWrittenOutTuples() {
+uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
     std::unique_lock lock(writeMutex);
     return sentTuples;
 }

@@ -32,7 +32,7 @@ Task::Task() : pipeline(nullptr), buf() { id = UtilityFunctions::generateIdInt()
 
 bool Task::operator()(WorkerContextRef workerContext) { return pipeline->execute(buf, workerContext); }
 
-size_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
+uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
 bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
 

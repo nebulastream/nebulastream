@@ -50,7 +50,7 @@ FunctionDeclaration FunctionBuilder::build() {
         function << returnType->getCode()->code_;
     }
     function << " " << name << "(";
-    for (size_t i = 0; i < parameters.size(); ++i) {
+    for (uint64_t i = 0; i < parameters.size(); ++i) {
         function << parameters[i].getCode();
         if (i + 1 < parameters.size())
             function << ", ";
@@ -58,11 +58,11 @@ FunctionDeclaration FunctionBuilder::build() {
     function << "){";
 
     function << std::endl << "/* variable declarations */" << std::endl;
-    for (size_t i = 0; i < variable_declarations.size(); ++i) {
+    for (uint64_t i = 0; i < variable_declarations.size(); ++i) {
         function << variable_declarations[i].getCode() << ";";
     }
     function << std::endl << "/* statements section */" << std::endl;
-    for (size_t i = 0; i < statements.size(); ++i) {
+    for (uint64_t i = 0; i < statements.size(); ++i) {
         function << statements[i]->getCode()->code_ << ";";
     }
     function << "}";

@@ -85,9 +85,9 @@ class QueryExecutionPlan {
     /**
      * @brief Get i-th stage.
      */
-    PipelineStagePtr getStage(size_t index) const;
+    PipelineStagePtr getStage(uint64_t index) const;
 
-    size_t getStageSize() const;
+    uint64_t getStageSize() const;
 
     std::vector<PipelineStagePtr>& getStages();
 

@@ -31,8 +31,8 @@
 namespace NES {
 
 CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
-                     const std::string delimiter, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess,
-                     size_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId)
+                     const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                     uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat), currentPosInFile(0),
       skipHeader(skipHeader) {
@@ -82,7 +82,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     }
     input.seekg(currentPosInFile, input.beg);
 
-    size_t generated_tuples_this_pass;
+    uint64_t generated_tuples_this_pass;
     //fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0) {
         generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
@@ -127,10 +127,10 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
         NES_DEBUG("CSVSource line=" << tupCnt << " val=" << line);
         std::vector<std::string> tokens;
         boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
-        size_t offset = 0;
-        for (size_t j = 0; j < schema->getSize(); j++) {
+        uint64_t offset = 0;
+        for (uint64_t j = 0; j < schema->getSize(); j++) {
             auto field = physicalTypes[j];
-            size_t fieldSize = field->size();
+            uint64_t fieldSize = field->size();
 
             if (field->isBasicType()) {
                 auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
@@ -200,7 +200,7 @@ const std::string CSVSource::getFilePath() const { return filePath; }
 
 const std::string CSVSource::getDelimiter() const { return delimiter; }
 
-const size_t CSVSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+const uint64_t CSVSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 bool CSVSource::isEndlessRepeat() const { return endlessRepeat; }
 void CSVSource::setEndlessRepeat(bool endlessRepeat) { this->endlessRepeat = endlessRepeat; }
 

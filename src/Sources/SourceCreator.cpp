@@ -47,8 +47,8 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                                                   QueryManagerPtr queryManager, size_t numbersOfBufferToProduce,
-                                                                   size_t frequency, OperatorId operatorId) {
+                                                                   QueryManagerPtr queryManager, uint64_t numbersOfBufferToProduce,
+                                                                   uint64_t frequency, OperatorId operatorId) {
     return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId);
 }
 
@@ -76,15 +76,15 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
 
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                         const std::string& pathToFile, const std::string& delimiter,
-                                        size_t numberOfTuplesToProducePerBuffer, size_t numbersOfBufferToProduce,
-                                        size_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
+                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numbersOfBufferToProduce,
+                                        uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
                                        numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat,
                                        skipHeader, operatorId);
 }
 
 const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                    size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+                                    uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                     bool endlessRepeat, OperatorId operatorId) {
     return std::make_shared<YSBSource>(bufferManager, queryManager, numBuffersToProcess, numberOfTuplesToProducePerBuffer,
                                        frequency, endlessRepeat, operatorId);

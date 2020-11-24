@@ -84,12 +84,12 @@ class BufferControlBlock {
     * Note that this is going to be deprecated in future NES versions
     * @return the tuple size stored in the companion buffer
     */
-    size_t getNumberOfTuples() const;
+    uint64_t getNumberOfTuples() const;
 
     /**
      * @brief set the tuple size stored in the companion buffer
      */
-    void setNumberOfTuples(size_t);
+    void setNumberOfTuples(uint64_t);
 
     /**
      * @brief method to get the watermark as a timestamp

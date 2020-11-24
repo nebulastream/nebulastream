@@ -27,31 +27,31 @@ namespace NES {
 class YSBSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+    static SourceDescriptorPtr create(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                       bool endlessRepeat, OperatorId operatorId);
 
-    static SourceDescriptorPtr create(std::string streamName, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess,
-                                      size_t frequency, bool endlessRepeat, OperatorId operatorId);
+    static SourceDescriptorPtr create(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                      uint64_t frequency, bool endlessRepeat, OperatorId operatorId);
 
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;
 
-    size_t getNumBuffersToProcess() const;
-    size_t getNumberOfTuplesToProducePerBuffer() const;
-    size_t getFrequency() const;
+    uint64_t getNumBuffersToProcess() const;
+    uint64_t getNumberOfTuplesToProducePerBuffer() const;
+    uint64_t getFrequency() const;
     bool isEndlessRepeat() const;
 
   private:
-    explicit YSBSourceDescriptor(size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess, size_t frequency,
+    explicit YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                  bool endlessRepeat, OperatorId operatorId);
 
-    explicit YSBSourceDescriptor(std::string streamName, size_t numberOfTuplesToProducePerBuffer, size_t numBuffersToProcess,
-                                 size_t frequency, bool endlessRepeat, OperatorId operatorId);
+    explicit YSBSourceDescriptor(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                 uint64_t frequency, bool endlessRepeat, OperatorId operatorId);
 
   private:
-    size_t numBuffersToProcess;
-    size_t numberOfTuplesToProducePerBuffer;
-    size_t frequency;
+    uint64_t numBuffersToProcess;
+    uint64_t numberOfTuplesToProducePerBuffer;
+    uint64_t frequency;
     bool endlessRepeat;
 };
 

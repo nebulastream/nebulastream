@@ -42,7 +42,7 @@ class TopologyTest : public testing::Test {
  * Create a new node. 
  */
 TEST_F(TopologyTest, createNode) {
-    size_t invalidId = 0;
+    uint64_t invalidId = 0;
 
     int node1Id = 1;
     std::string node1Address = "localhost";

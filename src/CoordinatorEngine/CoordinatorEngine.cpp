@@ -32,7 +32,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
 
-size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots,
+uint64_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots,
                                        NodeStats nodeStats, NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
                                                           << " nodeProperties=" << nodeStats.DebugString() << " type=" << type);
@@ -120,7 +120,7 @@ size_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, in
     return id;
 }
 
-bool CoordinatorEngine::unregisterNode(size_t nodeId) {
+bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     NES_DEBUG("CoordinatorEngine::UnregisterNode: try to disconnect sensor with id " << nodeId);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -143,9 +143,9 @@ bool CoordinatorEngine::unregisterNode(size_t nodeId) {
     return successCatalog && successTopology;
 }
 
-bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string sourceType, std::string sourceConf,
-                                               size_t sourceFrequency, size_t numberOfTuplesToProducePerBuffer,
-                                               size_t numberOfBuffersToProduce, std::string physicalStreamname,
+bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string sourceConf,
+                                               uint64_t sourceFrequency, uint64_t numberOfTuplesToProducePerBuffer,
+                                               uint64_t numberOfBuffersToProduce, std::string physicalStreamname,
                                                std::string logicalStreamname) {
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id "
               << nodeId << " physical stream=" << physicalStreamname << " logical stream=" << logicalStreamname);
@@ -165,7 +165,7 @@ bool CoordinatorEngine::registerPhysicalStream(size_t nodeId, std::string source
     return success;
 }
 
-bool CoordinatorEngine::unregisterPhysicalStream(size_t nodeId, std::string physicalStreamName, std::string logicalStreamName) {
+bool CoordinatorEngine::unregisterPhysicalStream(uint64_t nodeId, std::string physicalStreamName, std::string logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::UnregisterPhysicalStream: try to remove physical stream with name "
               << physicalStreamName << " logical name " << logicalStreamName << " workerId=" << nodeId);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);

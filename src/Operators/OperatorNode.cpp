@@ -54,9 +54,9 @@ bool OperatorNode::inferSchema() {
     return true;
 }
 
-size_t OperatorNode::getId() const { return id; }
+uint64_t OperatorNode::getId() const { return id; }
 
-void OperatorNode::setId(size_t id) { OperatorNode::id = id; }
+void OperatorNode::setId(uint64_t id) { OperatorNode::id = id; }
 
 void OperatorNode::setInputSchema(SchemaPtr inputSchema) { this->inputSchema = std::move(inputSchema); }
 

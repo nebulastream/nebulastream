@@ -30,7 +30,7 @@ template<typename T>
 
 class BlockingQueue {
   private:
-    size_t capacity;
+    uint64_t capacity;
     std::queue<T> bufferQueue;
     std::mutex queueMutex;
     std::condition_variable notFull;
@@ -39,19 +39,19 @@ class BlockingQueue {
   public:
     BlockingQueue() : capacity(0){};
 
-    inline BlockingQueue(size_t capacity) : capacity(capacity) {}
+    inline BlockingQueue(uint64_t capacity) : capacity(capacity) {}
 
-    inline void setCapacity(size_t capacity) {
+    inline void setCapacity(uint64_t capacity) {
         std::unique_lock<std::mutex> lock(queueMutex);
         this->capacity = capacity;
     }
 
-    inline size_t getCapacity() {
+    inline uint64_t getCapacity() {
         std::unique_lock<std::mutex> lock(queueMutex);
         return capacity;
     }
 
-    inline size_t size() {
+    inline uint64_t size() {
         std::unique_lock<std::mutex> lock(queueMutex);
         return bufferQueue.size();
     }
@@ -103,7 +103,7 @@ class BlockingQueue {
         }
     }
 
-    inline const std::optional<T> popTimeout(size_t timeout_ms) {
+    inline const std::optional<T> popTimeout(uint64_t timeout_ms) {
         {
             auto timeout = std::chrono::milliseconds(timeout_ms);
             std::unique_lock<std::mutex> lock(queueMutex);

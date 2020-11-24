@@ -54,8 +54,8 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             // Receive new chunk of data
             zmq::message_t new_data;
             socket.recv(&new_data);// envelope - not needed at the moment
-            size_t tupleCnt = *((size_t*) new_data.data());
-            size_t currentTs = *(((size_t*) new_data.data()) + 1);
+            uint64_t tupleCnt = *((uint64_t*) new_data.data());
+            uint64_t currentTs = *(((uint64_t*) new_data.data()) + 1);
             NES_DEBUG("ZMQSource received #tups " << tupleCnt << " watermark=" << currentTs);
 
             zmq::message_t new_data2;

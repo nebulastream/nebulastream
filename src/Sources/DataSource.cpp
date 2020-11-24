@@ -119,7 +119,7 @@ bool DataSource::stop() {
 
 bool DataSource::isRunning() { return running; }
 
-void DataSource::setGatheringInterval(size_t interval) { this->gatheringInterval = interval; }
+void DataSource::setGatheringInterval(uint64_t interval) { this->gatheringInterval = interval; }
 
 void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
@@ -138,7 +138,7 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
 
     if (this->operatorId != 0) {
         NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType());
-        size_t cnt = 0;
+        uint64_t cnt = 0;
         while (running) {
             bool recNow = false;
             auto tsNow = std::chrono::system_clock::now();
@@ -205,14 +205,14 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
 }
 
 // debugging
-void DataSource::setNumBuffersToProcess(size_t cnt) { numBuffersToProcess = cnt; };
-size_t DataSource::getNumberOfGeneratedTuples() { return generatedTuples; };
-size_t DataSource::getNumberOfGeneratedBuffers() { return generatedBuffers; };
+void DataSource::setNumBuffersToProcess(uint64_t cnt) { numBuffersToProcess = cnt; };
+uint64_t DataSource::getNumberOfGeneratedTuples() { return generatedTuples; };
+uint64_t DataSource::getNumberOfGeneratedBuffers() { return generatedBuffers; };
 
 std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
 
-size_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess; }
+uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
-size_t DataSource::getGatheringInterval() const { return gatheringInterval; }
+uint64_t DataSource::getGatheringInterval() const { return gatheringInterval; }
 
 }// namespace NES

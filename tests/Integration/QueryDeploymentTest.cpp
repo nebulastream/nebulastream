@@ -58,7 +58,7 @@ class QueryDeploymentTest : public testing::Test {
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -223,7 +223,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -384,7 +384,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -451,7 +451,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
 TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -515,7 +515,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
 TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -605,7 +605,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -698,7 +698,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -765,7 +765,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -833,7 +833,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -929,7 +929,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -1050,7 +1050,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorke
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd =
         std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, std::thread::hardware_concurrency(), true);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -1170,7 +1170,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorke
 TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 

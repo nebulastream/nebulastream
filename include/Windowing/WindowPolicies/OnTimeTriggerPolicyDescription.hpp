@@ -22,7 +22,7 @@ namespace NES::Windowing {
 
 class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor {
   public:
-    static WindowTriggerPolicyPtr create(size_t triggerTimeInMs);
+    static WindowTriggerPolicyPtr create(uint64_t triggerTimeInMs);
 
     /**
      * @brief method to get the policy type
@@ -34,11 +34,11 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
     * @brief getter for the time in ms
     * @return time in ms between two triggers
     */
-    size_t getTriggerTimeInMs() const;
+    uint64_t getTriggerTimeInMs() const;
 
   protected:
-    OnTimeTriggerPolicyDescription(size_t triggerTimeInMs);
-    size_t triggerTimeInMs;
+    OnTimeTriggerPolicyDescription(uint64_t triggerTimeInMs);
+    uint64_t triggerTimeInMs;
 };
 
 typedef std::shared_ptr<OnTimeTriggerPolicyDescription> OnTimeTriggerDescriptionPtr;

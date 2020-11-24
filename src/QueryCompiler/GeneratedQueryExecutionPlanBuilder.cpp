@@ -100,11 +100,11 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addOpera
     return *this;
 }
 
-DataSourcePtr GeneratedQueryExecutionPlanBuilder::getSource(size_t index) { return sources[index]; }
+DataSourcePtr GeneratedQueryExecutionPlanBuilder::getSource(uint64_t index) { return sources[index]; }
 
-DataSinkPtr GeneratedQueryExecutionPlanBuilder::getSink(size_t index) { return sinks[index]; }
+DataSinkPtr GeneratedQueryExecutionPlanBuilder::getSink(uint64_t index) { return sinks[index]; }
 
-size_t GeneratedQueryExecutionPlanBuilder::getNumberOfPipelineStages() const { return stages.size(); }
+uint64_t GeneratedQueryExecutionPlanBuilder::getNumberOfPipelineStages() const { return stages.size(); }
 
 GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQuerySubPlanId(QuerySubPlanId querySubPlanId) {
     this->querySubPlanId = querySubPlanId;

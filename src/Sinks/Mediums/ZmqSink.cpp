@@ -69,12 +69,12 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
         if (schemaBuffer) {
             NES_DEBUG("ZmqSink writes schema buffer");
             try {
-                //	size_t usedBufferSize = inputBuffer->num_tuples * inputBuffer->tuple_size_bytes;
+                //	uint64_t usedBufferSize = inputBuffer->num_tuples * inputBuffer->tuple_size_bytes;
                 zmq::message_t msg(schemaBuffer->getBufferSize());
                 // TODO: If possible only copy the content not the empty part
                 std::memcpy(msg.data(), schemaBuffer->getBuffer(), schemaBuffer->getBufferSize());
-                zmq::message_t envelope(sizeof(size_t));
-                size_t schemaSize = schemaBuffer->getNumberOfTuples();
+                zmq::message_t envelope(sizeof(uint64_t));
+                uint64_t schemaSize = schemaBuffer->getNumberOfTuples();
                 memcpy(envelope.data(), &schemaSize, sizeof(schemaSize));
 
                 bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
@@ -103,8 +103,8 @@ bool ZmqSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
         try {
-            size_t tupleCnt = buffer.getNumberOfTuples();
-            size_t currentTs = buffer.getWatermark();
+            uint64_t tupleCnt = buffer.getNumberOfTuples();
+            uint64_t currentTs = buffer.getWatermark();
 
             zmq::message_t envelope(sizeof(tupleCnt) + sizeof(currentTs));
             memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));

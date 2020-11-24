@@ -311,7 +311,7 @@ TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
 TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     NES_INFO("MonitoringStackTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(false);
+    uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0);
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
@@ -351,7 +351,7 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
 TEST_F(MonitoringStackTest, requestMonitoringData) {
     NES_INFO("MonitoringStackTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    size_t port = crd->startCoordinator(false);
+    uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0);
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
