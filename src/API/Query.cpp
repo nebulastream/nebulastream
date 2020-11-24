@@ -76,7 +76,8 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
-    auto joinDefinition = Join::LogicalJoinDefinition::create(fieldAccess, windowType, distrType, triggerPolicy, triggerAction,1 ,1);
+    auto joinDefinition =
+        Join::LogicalJoinDefinition::create(fieldAccess, windowType, distrType, triggerPolicy, triggerAction, 1, 1);
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {

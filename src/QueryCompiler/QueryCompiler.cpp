@@ -30,9 +30,7 @@ QueryCompiler::QueryCompiler() {
     // nop
 }
 
-QueryCompilerPtr QueryCompiler::create() {
-    return std::make_shared<QueryCompiler>();
-}
+QueryCompilerPtr QueryCompiler::create() { return std::make_shared<QueryCompiler>(); }
 
 // TODO compiler folks please check the following statements
 /**
@@ -64,20 +62,17 @@ class PipelineStageHolder {
   public:
     PipelineStageHolder() = default;
 
-    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline, Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler)
-        : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)), windowHandler(std::move(windowHandler)), joinHandler(std::move(joinHandler)) {
+    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline,
+                        Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler)
+        : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)),
+          windowHandler(std::move(windowHandler)), joinHandler(std::move(joinHandler)) {
         // nop
     }
 };
 
-void generateExecutablePipelines(
-    QueryId queryId,
-    QuerySubPlanId querySubPlanId,
-    CodeGeneratorPtr codeGenerator,
-    BufferManagerPtr,
-    QueryManagerPtr,
-    PipelineContextPtr context,
-    std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
+void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId, CodeGeneratorPtr codeGenerator, BufferManagerPtr,
+                                 QueryManagerPtr, PipelineContextPtr context,
+                                 std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
     // BFS visit to figure out producer-consumer relations among pipelines
     std::deque<std::tuple<int32_t, int32_t, PipelineContextPtr>> queue;
     queue.emplace_back(0, -1, std::move(context));
@@ -85,7 +80,8 @@ void generateExecutablePipelines(
         auto [currentPipelineStateId, consumerPipelineStateId, currContext] = queue.front();
         queue.pop_front();
         try {
-            NES_DEBUG("QueryCompiler: Compile query:" << queryId << " querySubPlan:" << querySubPlanId << " pipeline:" << currentPipelineStateId);
+            NES_DEBUG("QueryCompiler: Compile query:" << queryId << " querySubPlan:" << querySubPlanId
+                                                      << " pipeline:" << currentPipelineStateId);
             auto executablePipeline = codeGenerator->compile(currContext->code);
             if (executablePipeline == nullptr) {
                 NES_ERROR("Cannot compile pipeline:" << currContext->code);
@@ -102,7 +98,8 @@ void generateExecutablePipelines(
                 joinHandlerPtr = currContext->getJoin();
             }
 
-            accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandlerPtr, joinHandlerPtr);
+            accumulator[currentPipelineStateId] =
+                PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandlerPtr, joinHandlerPtr);
             if (consumerPipelineStateId >= 0) {
                 accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }
@@ -120,14 +117,13 @@ void generateExecutablePipelines(
     }
 }
 }// namespace detail
-void QueryCompiler::compilePipelineStages(
-    GeneratedQueryExecutionPlanBuilder& builder,
-    CodeGeneratorPtr codeGenerator,
-    PipelineContextPtr context) {
+void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& builder, CodeGeneratorPtr codeGenerator,
+                                          PipelineContextPtr context) {
 
     std::map<uint32_t, detail::PipelineStageHolder, std::greater<>> executableStages;
-    detail::generateExecutablePipelines(builder.getQueryId(), builder.getQuerySubPlanId(),
-                                        std::move(codeGenerator), builder.getBufferManager(), builder.getQueryManager(), std::move(context), executableStages);
+    detail::generateExecutablePipelines(builder.getQueryId(), builder.getQuerySubPlanId(), std::move(codeGenerator),
+                                        builder.getBufferManager(), builder.getQueryManager(), std::move(context),
+                                        executableStages);
 
     if (executableStages.empty()) {
         NES_ERROR("compilePipelineStages failure: no pipelines to generate");
@@ -145,18 +141,13 @@ void QueryCompiler::compilePipelineStages(
                 childPipelines.emplace_back(pipelines[childStageId]);
             }
             executionContext = std::make_shared<PipelineExecutionContext>(
-                builder.getQuerySubPlanId(),
-                builder.getBufferManager(),
+                builder.getQuerySubPlanId(), builder.getBufferManager(),
                 [childPipelines](TupleBuffer& buffer, WorkerContextRef workerContext) {
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
                     }
                 },
-                holder.windowHandler,
-                holder.joinHandler,
-                builder.getWinDef(),
-                builder.getJoinDef(),
-                builder.getSchema());
+                holder.windowHandler, holder.joinHandler, builder.getWinDef(), builder.getJoinDef(), builder.getSchema());
         } else {
             // invoke sink
             auto& sinks = builder.getSinks();
@@ -165,33 +156,22 @@ void QueryCompiler::compilePipelineStages(
                 NES_THROW_RUNTIME_ERROR("No sinks available in query plan");
             }
             executionContext = std::make_shared<PipelineExecutionContext>(
-                builder.getQuerySubPlanId(),
-                builder.getBufferManager(),
+                builder.getQuerySubPlanId(), builder.getBufferManager(),
                 [sinks](TupleBuffer& buffer, WorkerContextRef workerContext) {
                     for (auto& sink : sinks) {
                         sink->writeData(buffer, workerContext);
                     }
                 },
-                holder.windowHandler,
-                holder.joinHandler,
-                builder.getWinDef(),
-                builder.getJoinDef(),
-                builder.getSchema());
+                holder.windowHandler, holder.joinHandler, builder.getWinDef(), builder.getJoinDef(), builder.getSchema());
         }
-        PipelineStagePtr pipelineStage = PipelineStage::create(
-            stageId,
-            builder.getQuerySubPlanId(),
-            holder.executablePipeline,
-            executionContext,
-            pipelines[*holder.consumers.begin()]);
+        PipelineStagePtr pipelineStage = PipelineStage::create(stageId, builder.getQuerySubPlanId(), holder.executablePipeline,
+                                                               executionContext, pipelines[*holder.consumers.begin()]);
 
         builder.addPipelineStage(pipelineStage);
         pipelines[stageId] = pipelineStage;
     }
 }
 
-QueryCompilerPtr createDefaultQueryCompiler() {
-    return QueryCompiler::create();
-}
+QueryCompilerPtr createDefaultQueryCompiler() { return QueryCompiler::create(); }
 
 }// namespace NES
