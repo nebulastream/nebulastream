@@ -172,6 +172,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     dispatcherSocket.recv(&clientAnnouncementEnvelope);
                     outIdentityEnvelope.copy(&identityEnvelope);
                     auto receivedMsg = *clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>();
+                    NES_DEBUG("ZmqServer: ClientAnnouncement received for channel " << receivedMsg.getChannelId());
 
                     // react after announcement is received
                     auto returnMessage = exchangeProtocol.onClientAnnouncement(receivedMsg);
@@ -193,6 +194,9 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
 
+                    NES_DEBUG("ZmqServer: DataBuffer received from origin=" << bufferHeader->getOriginId() << " and NesPartition="
+                                                                            << nesPartition.toString() << " with payload size " << bufferHeader->getPayloadSize());
+
                     // receive buffer content
                     TupleBuffer buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
@@ -212,6 +216,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     zmq::message_t eosEnvelope;
                     dispatcherSocket.recv(&eosEnvelope);
                     auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
+                    NES_DEBUG("ZmqServer: EndOfStream received for channel " << eosMsg.getChannelId());
                     exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }

@@ -68,13 +68,24 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
-    explicit NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots,
-                            bool enableQueryMerging);
+    explicit NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging);
+
+    /**
+     * @brief Constructor where ip = restIp and rpcIp
+     */
+    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging);
 
     /**
      * @brief constructor with default numberOfSlots
      */
-    NesCoordinator(std::string serverIp, uint16_t restPort, uint16_t rpcPort);
+    NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort);
+
+    /**
+     * @brief Constructor where ip = restIp and rpcIp
+     */
+    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort);
+
+
     /**
      * @brief dtor
      * @return
@@ -100,12 +111,6 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     * @return vector of queryStatistics
     */
     std::vector<QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
-
-    /**
-     * @brief method to overwrite server ip
-     * @param serverIp
-     */
-    void setServerIp(std::string serverIp);
 
     /**
      * @brief catalog method for debug use only
@@ -146,8 +151,9 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     void buildAndStartGRPCServer(std::promise<bool>& prom);
 
   private:
-    std::string serverIp;
+    std::string restIp;
     uint16_t restPort;
+    std::string rpcIp;
     uint16_t rpcPort;
     uint16_t numberOfSlots;
     std::unique_ptr<grpc::Server> rpcServer;

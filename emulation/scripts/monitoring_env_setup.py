@@ -23,21 +23,24 @@ from mininet.log import info, setLogLevel
 
 #params for the topology
 number_workers = 2
+enable_influx = False
 
+#_________________________________________________________________________________________________________________
 setLogLevel('info')
 
 net = Containernet(controller=Controller)
 info('*** Adding controller\n')
 net.addController('c0')
 
-nesDir = "/home/xenofon/git/nebulastream/"
+nesDir = "/home/xchatziliadis/git/nebulastream/"
 
-influxdb = net.addDocker('influxdb', dimage="influxdb:1.8.3",
-                         ports=[8086],
-                         port_bindings={8086: 8086},
-                         volumes=[nesDir + "emulation/data/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro",
-                                  nesDir + "emulation/data/influxdb:/var/lib/influxdb"],
-                         dcmd='influxd -config /etc/influxdb/influxdb.conf')
+if enable_influx:
+    influxdb = net.addDocker('influxdb', dimage="influxdb:1.8.3",
+                             ports=[8086],
+                             port_bindings={8086: 8086},
+                             volumes=[nesDir + "emulation/data/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro",
+                                      nesDir + "emulation/data/influxdb:/var/lib/influxdb"],
+                             dcmd='influxd -config /etc/influxdb/influxdb.conf')
 
 info('*** Adding docker containers\n')
 #crd = net.addDocker('crd', ip='10.15.16.3',
@@ -62,7 +65,7 @@ for i in range(0, number_workers):
                                          "path": nesDir + "emulation/images"},
                            ports=[3000, 3001, 9100],
                            port_bindings={3007: 3000, 3008: 3001, 9101: 9100})
-    cmd = '/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --logLevel=LOG_DEBUG --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip + ' --sourceType=YSBSource --numberOfBuffersToProduce=100 --numberOfTuplesToProducePerBuffer=10 --sourceFrequency=1 --physicalStreamName=ysb' + str(i) + ' --logicalStreamName=ysb'
+    cmd = '/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --logLevel=LOG_TRACE --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip + ' --sourceType=YSBSource --numberOfBuffersToProduce=100 --numberOfTuplesToProducePerBuffer=10 --sourceFrequency=1 --physicalStreamName=ysb' + str(i) + ' --logicalStreamName=ysb'
     print (cmd)
     workers.append((w, cmd))
 
@@ -74,7 +77,7 @@ net.addLink(crd, sw1, cls=TCLink)
 for w in workers:
     net.addLink(w[0], sw1, cls=TCLink)
 
-crd.cmd('/entrypoint-prom.sh crd /opt/local/nebula-stream/nesCoordinator --serverIp=10.15.16.3 --logLevel=LOG_DEBUG')
+crd.cmd('/entrypoint-prom.sh crd /opt/local/nebula-stream/nesCoordinator --restIp=0.0.0.0 --coordinatorIp=10.15.16.3 --logLevel=LOG_DEBUG')
 for w in workers:
     w[0].cmd(w[1])
 
