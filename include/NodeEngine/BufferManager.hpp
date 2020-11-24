@@ -77,7 +77,7 @@ class BufferManager {
   public:
     BufferManager();
 
-    BufferManager(uint64_t bufferSize, uint64_t numOfBuffers);
+    BufferManager(size_t bufferSize, size_t numOfBuffers);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
@@ -89,7 +89,7 @@ class BufferManager {
      * @param bufferSize
      * @param numOfBuffers
      */
-    void configure(uint64_t bufferSize, uint64_t numOfBuffers);
+    void configure(size_t bufferSize, size_t numOfBuffers);
 
     /**
      * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
@@ -117,27 +117,27 @@ class BufferManager {
      * @param bufferSize
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getUnpooledBuffer(uint64_t bufferSize);
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize);
 
     /**
      * @return Configured size of the buffers
      */
-    uint64_t getBufferSize() const;
+    size_t getBufferSize() const;
 
     /**
      * @return Number of total buffers in the pool
      */
-    uint64_t getNumOfPooledBuffers() const;
+    size_t getNumOfPooledBuffers() const;
 
     /**
      * @return number of unpooled buffers
      */
-    uint64_t getNumOfUnpooledBuffers();
+    size_t getNumOfUnpooledBuffers();
 
     /**
      * @return Number of available buffers in the pool
      */
-    uint64_t getAvailableBuffers();
+    size_t getAvailableBuffers();
 
     void printStatistics();
 
