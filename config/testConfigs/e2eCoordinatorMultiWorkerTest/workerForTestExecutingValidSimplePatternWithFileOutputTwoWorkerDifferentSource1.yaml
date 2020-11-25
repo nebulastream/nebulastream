@@ -8,10 +8,10 @@ coordinatorIp: 0.0.0.0
 coordinatorPort: 12346
 
 # Set RPC server port of NES Worker
-rpcPort: 8081
+rpcPort: 12351
 
 # Set the data port of the NES Worker
-dataPort: 3001
+dataPort: 12352
 
 # Set worker IP
 localWorkerIp: 127.0.0.1
@@ -22,7 +22,7 @@ localWorkerIp: 127.0.0.1
 sourceType: CSVSource
 
 # Set source configuration. Options depend on source type.
-# DefaultSource: "" (not needed)
+# DefaultSource: (not needed)
 # CSVSource: String with path to CSV file.
 # OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
 #            where the url is a string containing the full OPC server url,
@@ -41,20 +41,20 @@ sourceType: CSVSource
 #            kafkaConnectTimeout is a uint16_t providing the time out for the connection
 # BinarySource: String with path to binary file.
 # SenseSource (ToDo: Make source available): String with udsf inside
-# YSBSource: "" (not needed)
-sourceConfig: /opt/local/nebula-stream/exdra.csv
+# YSBSource: (not needed)
+sourceConfig: ../tests/test_data/QnV_short_R2000073.csv
 
 # Set sampling frequency of source
 sourceFrequency: 1
 
 # Looping endlessly over the file
-endlessRepeat: off
+endlessRepeat: on
 
 # Skip first line of the file
 skipHeader: false
 
 # Set number of buffers to produce
-numberOfBuffersToProduce: 100
+numberOfBuffersToProduce: 1
 
 # Set number of tuples to produce per buffer
 numberOfTuplesToProducePerBuffer: 0
@@ -62,10 +62,10 @@ numberOfTuplesToProducePerBuffer: 0
 
 # ~~ Processing Configurations ~~
 # Set physical stream name
-physicalStreamName: exdra_worker_1
+physicalStreamName: test_stream1
 
 # Set logical stream name where this stream is added to
-logicalStreamName: exdra
+logicalStreamName: QnV
 
 # Set parentId of NES Worker node
 parentId: -1

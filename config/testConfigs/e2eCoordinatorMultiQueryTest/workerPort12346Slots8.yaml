@@ -19,7 +19,7 @@ localWorkerIp: 127.0.0.1
 
 # ~~ Source Handling ~~
 # Set the source type (available options: DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
-sourceType: CSVSource
+sourceType:
 
 # Set source configuration. Options depend on source type.
 # DefaultSource: "" (not needed)
@@ -42,7 +42,7 @@ sourceType: CSVSource
 # BinarySource: String with path to binary file.
 # SenseSource (ToDo: Make source available): String with udsf inside
 # YSBSource: "" (not needed)
-sourceConfig: /opt/local/nebula-stream/exdra.csv
+sourceConfig:
 
 # Set sampling frequency of source
 sourceFrequency: 1
@@ -72,7 +72,7 @@ parentId: -1
 
 # Set number of computing slots in NES Worker
 # 0 is a place holder, default is number of processors installed in host machine
-numberOfSlots: 0
+numberOfSlots: 8
 
 # The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
 logLevel: LOG_DEBUG

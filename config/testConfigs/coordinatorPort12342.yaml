@@ -5,7 +5,7 @@
 serverIp: 0.0.0.0
 
 # Set RPC Server port of NES Coordinator
-coordinatorPort: 12346
+coordinatorPort: 12342
 
 # Set port exposed for REST endpoints
 restPort: 8081

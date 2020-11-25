@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
     auto coordinatorIp = config["coordinatorIp"].As<string>();
     auto coordinatorPort = config["coordinatorPort"].As<string>();
     auto dataPort = config["dataPort"].As<uint16_t>();
-    auto localWorkerIp = config["serverIp"].As<string>();
+    auto localWorkerIp = config["localWorkerIp"].As<string>();
     // Initializing Source Handling variables
     auto sourceType = config["sourceType"].As<string>();
     auto sourceConfig = config["sourceConfig"].As<string>();
