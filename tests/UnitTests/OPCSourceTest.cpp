@@ -124,11 +124,11 @@ class OPCSourceTest : public testing::Test {
         p.set_value(true);
         UA_StatusCode retval = UA_Server_run(server, &running);
         std::cout << " retval is=" << retval << std::endl;
+        UA_Server_delete(server);
     }
 
     static void stopServer() {
         running = false;
-        UA_Server_delete(server);
     }
 
     BufferManagerPtr bufferManager;
