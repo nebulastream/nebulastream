@@ -68,9 +68,8 @@ std::optional<TupleBuffer> OPCSource::receiveData() {
         NES_DEBUG("OPCSOURCE::receiveData()  " << this << ": got buffer ");
 
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
-
             NES_DEBUG("OPCSOURCE::receiveData() Value datatype is: " << val->type->typeName);
-            std::memcpy(buffer.getBuffer(), val->data, buffer.getBufferSize());
+            std::memcpy(buffer.getBuffer(), val->data, val->type->memSize);
             UA_delete(val, val->type);
             return buffer;
         } else {
