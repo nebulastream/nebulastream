@@ -374,12 +374,17 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-TupleBuffer getBufferNoBlocking(BufferManager& bufferManager) {
+std::optional<TupleBuffer> getBufferNoBlocking(BufferManager& bufferManager) {
     std::optional<TupleBuffer> opt;
+    size_t retries = 0;
     while (!(opt = bufferManager.getBufferNoBlocking())) {
         usleep(100 * 1000);
+        if (++retries == 1'000'000'000) {
+            NES_WARNING("Too many retries");
+            return std::nullopt;
+        }
     }
-    return *opt;
+    return opt;
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
@@ -402,7 +407,11 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, bufferManager]() {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-                auto buf = getBufferNoBlocking(*bufferManager);
+                auto bufOpt = getBufferNoBlocking(*bufferManager);
+                if (!bufOpt.has_value()) {
+                    FAIL();
+                }
+                auto buf = *bufOpt;
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
                     buf.getBufferAs<uint32_t>()[k] = k;
                 }
