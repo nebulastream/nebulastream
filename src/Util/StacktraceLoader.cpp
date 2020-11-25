@@ -33,4 +33,9 @@ void collectAndPrintStacktrace() {
     printer.print(stackTrace, os);
     NES_ERROR("Stacktrace:\n " << buffer.str());
 }
+
+void nesErrorHandler() {
+    collectAndPrintStacktrace();
+}
+
 }// namespace NES
