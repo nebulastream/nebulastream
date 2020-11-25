@@ -28,8 +28,8 @@
 #include <thread>
 
 namespace NES {
-const uint64_t buffers_managed = 10;
-const uint64_t buffer_size = 4 * 1024;
+const size_t buffers_managed = 10;
+const size_t buffer_size = 4 * 1024;
 
 class BufferManagerTest : public testing::Test {
   public:
@@ -51,8 +51,8 @@ class BufferManagerTest : public testing::Test {
 
 TEST_F(BufferManagerTest, initializedBufferManager) {
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
-    uint64_t buffers_count = bufferManager->getNumOfPooledBuffers();
-    uint64_t buffers_free = bufferManager->getAvailableBuffers();
+    size_t buffers_count = bufferManager->getNumOfPooledBuffers();
+    size_t buffers_free = bufferManager->getAvailableBuffers();
     ASSERT_EQ(buffers_count, buffers_managed);
     ASSERT_EQ(buffers_free, buffers_managed);
 }
@@ -110,7 +110,7 @@ TEST_F(BufferManagerTest, getBufferAfterRelease) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 
     // get all buffers
-    for (uint64_t i = 0; i < buffers_managed; ++i) {
+    for (size_t i = 0; i < buffers_managed; ++i) {
         buffers.push_back(bufferManager->getBufferBlocking());
     }
     std::promise<bool> promise0, promise1;
