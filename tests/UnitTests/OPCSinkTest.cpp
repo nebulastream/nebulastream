@@ -34,7 +34,7 @@
 #include <future>
 
 const std::string& url = "opc.tcp://localhost:4840";
-static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
+//static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
 static volatile UA_Boolean running = true;
 static UA_Server* server = UA_Server_new();
 
@@ -43,11 +43,13 @@ namespace NES {
 class OPCSinkTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("OPCSINKTEST::SetUpTestCase()"); }
+    static void SetUpTestCase() {
+        NES::setupLogging("OPCSinkTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("OPCSINKTEST::SetUpTestCase()");
+    }
 
     void SetUp() {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
-        NES::setupLogging("OPCSinkTest.log", NES::LOG_DEBUG);
         test_schema = Schema::create()->addField("var", UINT32);
     }
 
