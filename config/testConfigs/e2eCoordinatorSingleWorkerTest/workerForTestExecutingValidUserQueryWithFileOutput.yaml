@@ -19,7 +19,7 @@ localWorkerIp: 127.0.0.1
 
 # ~~ Source Handling ~~
 # Set the source type (available options: DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
-sourceType: CSVSource
+sourceType:
 
 # Set source configuration. Options depend on source type.
 # DefaultSource: "" (not needed)
@@ -42,7 +42,7 @@ sourceType: CSVSource
 # BinarySource: String with path to binary file.
 # SenseSource (ToDo: Make source available): String with udsf inside
 # YSBSource: "" (not needed)
-sourceConfig: /opt/local/nebula-stream/exdra.csv
+sourceConfig:
 
 # Set sampling frequency of source
 sourceFrequency: 1
@@ -54,7 +54,7 @@ endlessRepeat: off
 skipHeader: false
 
 # Set number of buffers to produce
-numberOfBuffersToProduce: 100
+numberOfBuffersToProduce: 1
 
 # Set number of tuples to produce per buffer
 numberOfTuplesToProducePerBuffer: 0
@@ -62,10 +62,10 @@ numberOfTuplesToProducePerBuffer: 0
 
 # ~~ Processing Configurations ~~
 # Set physical stream name
-physicalStreamName: exdra_worker_1
+physicalStreamName: test_stream
 
 # Set logical stream name where this stream is added to
-logicalStreamName: exdra
+logicalStreamName: default_stream
 
 # Set parentId of NES Worker node
 parentId: -1

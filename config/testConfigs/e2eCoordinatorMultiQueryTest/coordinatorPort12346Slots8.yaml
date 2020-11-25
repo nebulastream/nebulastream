@@ -14,7 +14,7 @@ restPort: 8081
 # ~~ Processing Configurations ~~
 # Set the number of computing slots in NES Coordinator
 # 0 is a place holder, default is number of processors installed in host machine
-numberOfSlots: 0
+numberOfSlots: 8
 
 # Enable Query Merging Feature
 enableQueryMerging: false

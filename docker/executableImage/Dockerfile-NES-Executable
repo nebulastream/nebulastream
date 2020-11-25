@@ -10,7 +10,7 @@ ADD ./entrypoint-containernet.sh /entrypoint-containernet.sh
 ADD ./entrypoint-nes-executable.sh /entrypoint.sh
 
 ENV restIp="0.0.0.0"
-ENV restPort="8081"
+ENV restPort=8081
 ENV coordinatorIp="127.0.0.1"
 ENV coordinatorPort="12346"
 ENV enableQueryMerging=false
@@ -20,6 +20,6 @@ ENV numberOfBuffersToProduce=100
 ENV sourceFrequency=1
 ENV physicalStreamName="exdra_worker_1"
 ENV logicalStreamName="exdra"
-ENV skipHeader="false"
+ENV skipHeader=false
 
 ENTRYPOINT ["/entrypoint.sh"]

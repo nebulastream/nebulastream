@@ -64,6 +64,8 @@ int main(int argc, const char* argv[]) {
     bool enableQueryMerging = false;
 
     po::options_description serverOptions("Nes Coordinator Server Options");
+    serverOptions.add_options()(
+        "configCoordinatorPath", po::value<std::string>(&configurationFilePath)->default_value(configurationFilePath), "Path to the NES Coordinator Configurations YAML file.")(
 
     serverOptions.add_options()("restIp", po::value<std::string>(&restIp)->default_value(restIp),
                                 "Set NES ip of the REST server (default: 127.0.0.1).")(
@@ -76,7 +78,7 @@ int main(int argc, const char* argv[]) {
         "enableQueryMerging", po::value<bool>(&enableQueryMerging)->default_value(enableQueryMerging),
         "Enable Query Merging Feature (default: false).")(
         "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
-        "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")("help", "Display help message")(
+        "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
         "configurationFilePath", po::value<std::string>(&configurationFilePath)->default_value(configurationFilePath), "Path to the NES Coordinator Configurations YAML file.")(
         "help", "Display help message");
 
@@ -116,6 +118,9 @@ int main(int argc, const char* argv[]) {
     auto serverIp = config["serverIp"].As<string>();
     auto numberOfSlots = config["numberOfSlots"].As<uint16_t>();
     bool enableQueryMerging = config["enableQueryMerging"].As<bool>();
+    auto logLevel = config["logLevel"].As<string>();
+
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     if (numberOfSlots == 0){
         const auto processorCount = std::thread::hardware_concurrency();
