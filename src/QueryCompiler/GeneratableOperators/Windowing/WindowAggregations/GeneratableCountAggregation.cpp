@@ -32,7 +32,7 @@ GeneratableCountAggregation::create(Windowing::WindowAggregationDescriptorPtr ag
 }
 
 void GeneratableCountAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
-                                                     StructDeclaration inputStruct, BinaryOperatorStatement) {
+                                                     StructDeclaration, BinaryOperatorStatement) {
     auto increment = ++partialRef;
     auto updatedPartial = partialRef.assign(increment);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
