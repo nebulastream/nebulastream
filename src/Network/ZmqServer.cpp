@@ -195,7 +195,8 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
 
                     NES_TRACE("ZmqServer: DataBuffer received from origin=" << bufferHeader->getOriginId() << " and NesPartition="
-                                                                            << nesPartition.toString() << " with payload size " << bufferHeader->getPayloadSize());
+                                                                            << nesPartition.toString() << " with payload size "
+                                                                            << bufferHeader->getPayloadSize());
 
                     // receive buffer content
                     TupleBuffer buffer = bufferManager->getBufferBlocking();
