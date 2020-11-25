@@ -32,10 +32,10 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localIp, uint16_t localWorkerRpcPort,
-                     uint16_t localWorkerZmqPort, uint16_t numberOfSlots, NodeType type)
+                     uint16_t localWorkerZmqPort, uint16_t numberOfSlots, NodeType type, uint16_t numWorkerThreads)
     : coordinatorIp(std::move(coordinatorIp)), coordinatorPort(coordinatorPort), localWorkerIp(std::move(localIp)),
-      localWorkerRpcPort(localWorkerRpcPort), localWorkerZmqPort(localWorkerZmqPort), numberOfSlots(numberOfSlots), type(type),
-      conf(PhysicalStreamConfig::create()) {
+      localWorkerRpcPort(localWorkerRpcPort), localWorkerZmqPort(localWorkerZmqPort), numberOfSlots(numberOfSlots),
+      numWorkerThreads(numWorkerThreads), type(type), conf(PhysicalStreamConfig::create()) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
@@ -87,7 +87,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
     try {
-        nodeEngine = NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf);
+        nodeEngine = NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf, numWorkerThreads);
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
