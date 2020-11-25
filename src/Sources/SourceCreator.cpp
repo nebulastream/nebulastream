@@ -47,8 +47,9 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                                                   QueryManagerPtr queryManager, uint64_t numbersOfBufferToProduce,
-                                                                   uint64_t frequency, OperatorId operatorId) {
+                                                                   QueryManagerPtr queryManager,
+                                                                   uint64_t numbersOfBufferToProduce, uint64_t frequency,
+                                                                   OperatorId operatorId) {
     return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId);
 }
 

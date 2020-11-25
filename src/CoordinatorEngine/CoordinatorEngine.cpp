@@ -33,7 +33,7 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
 
 uint64_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots,
-                                       NodeStats nodeStats, NodeType type) {
+                                         NodeStats nodeStats, NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
                                                           << " nodeProperties=" << nodeStats.DebugString() << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);

@@ -43,7 +43,7 @@ class CoordinatorEngine {
      * @return id of node
      */
     uint64_t registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, NodeStats nodeStats,
-                        NodeType type);
+                          NodeType type);
 
     /**
      * @brief unregister an existing node

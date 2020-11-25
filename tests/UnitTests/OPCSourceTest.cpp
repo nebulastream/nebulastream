@@ -127,9 +127,7 @@ class OPCSourceTest : public testing::Test {
         UA_Server_delete(server);
     }
 
-    static void stopServer() {
-        running = false;
-    }
+    static void stopServer() { running = false; }
 
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;

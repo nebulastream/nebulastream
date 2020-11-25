@@ -23,8 +23,9 @@ CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngin
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     NES_DEBUG("CoordinatorEngine::RegisterNode: request =" << request);
-    uint64_t id = coordinatorEngine->registerNode(request->address(), request->grpcport(), request->dataport(),
-                                                request->numberofslots(), request->nodeproperties(), (NodeType) request->type());
+    uint64_t id =
+        coordinatorEngine->registerNode(request->address(), request->grpcport(), request->dataport(), request->numberofslots(),
+                                        request->nodeproperties(), (NodeType) request->type());
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);
         reply->set_id(id);

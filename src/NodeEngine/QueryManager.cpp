@@ -148,8 +148,8 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 
     std::stringstream ss2;
     ss2 << " sourceid=" << operatorId << "map at operatorIdToPipelineStage ";
-    for (std::map<uint64_t, uint64_t>::const_iterator it = operatorIdToPipelineStage.begin(); it != operatorIdToPipelineStage.end();
-         ++it) {
+    for (std::map<uint64_t, uint64_t>::const_iterator it = operatorIdToPipelineStage.begin();
+         it != operatorIdToPipelineStage.end(); ++it) {
         ss2 << " operatorId=" << it->first << " pipeStage=" << it->second;
     }
 

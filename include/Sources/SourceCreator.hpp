@@ -48,8 +48,9 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                                                   QueryManagerPtr queryManager, uint64_t numbersOfBufferToProduce,
-                                                                   uint64_t frequency, OperatorId operatorId);
+                                                                   QueryManagerPtr queryManager,
+                                                                   uint64_t numbersOfBufferToProduce, uint64_t frequency,
+                                                                   OperatorId operatorId);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
@@ -91,8 +92,8 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
  */
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                         const std::string& path_to_file, const std::string& delimiter,
-                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                        bool endlessRepeat, bool skipHeader, OperatorId operatorId);
+                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                        uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId);
 
 /**
  * @brief function to create a ysb source
