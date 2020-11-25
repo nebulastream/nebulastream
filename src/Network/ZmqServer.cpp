@@ -172,7 +172,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     dispatcherSocket.recv(&clientAnnouncementEnvelope);
                     outIdentityEnvelope.copy(&identityEnvelope);
                     auto receivedMsg = *clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>();
-                    NES_TRACE("ZmqServer: ClientAnnouncement received for channel " << receivedMsg.getChannelId());
+                    NES_DEBUG("ZmqServer: ClientAnnouncement received for channel " << receivedMsg.getChannelId());
 
                     // react after announcement is received
                     auto returnMessage = exchangeProtocol.onClientAnnouncement(receivedMsg);
@@ -216,7 +216,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     zmq::message_t eosEnvelope;
                     dispatcherSocket.recv(&eosEnvelope);
                     auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
-                    NES_TRACE("ZmqServer: EndOfStream received for channel " << eosMsg.getChannelId());
+                    NES_DEBUG("ZmqServer: EndOfStream received for channel " << eosMsg.getChannelId());
                     exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }
