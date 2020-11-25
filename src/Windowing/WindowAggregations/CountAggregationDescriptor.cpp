@@ -45,13 +45,7 @@ void CountAggregationDescriptor::inferStamp(SchemaPtr) {
 WindowAggregationPtr CountAggregationDescriptor::copy() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
-DataTypePtr CountAggregationDescriptor::getInputStamp() {
-    return DataTypeFactory::createUInt64();
-}
-DataTypePtr CountAggregationDescriptor::getPartialAggregateStamp() {
-    return DataTypeFactory::createUInt64();
-}
-DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp() {
-    return DataTypeFactory::createUInt64();
-}
+DataTypePtr CountAggregationDescriptor::getInputStamp() { return DataTypeFactory::createUInt64(); }
+DataTypePtr CountAggregationDescriptor::getPartialAggregateStamp() { return DataTypeFactory::createUInt64(); }
+DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp() { return DataTypeFactory::createUInt64(); }
 }// namespace NES::Windowing

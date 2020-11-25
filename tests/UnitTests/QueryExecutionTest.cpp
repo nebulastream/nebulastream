@@ -743,23 +743,21 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     int numBuf = 1;
     int numTup = 50;
 
-    auto ysbSource = std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, false, 1);
+    auto ysbSource =
+        std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, false, 1);
 
     //TODO: make query work
     auto query = TestQuery::from(ysbSource->getSchema())
-        .filter(Attribute("event_type")>1)
-                     .windowByKey(
-                         Attribute("campaign_id", INT64),
-                         TumblingWindow::of(
-                             EventTime(Attribute("current_ms")), Milliseconds(10)),
-                         Count())
+                     .filter(Attribute("event_type") > 1)
+                     .windowByKey(Attribute("campaign_id", INT64),
+                                  TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(10)), Count())
                      .sink(DummySink::create());
 
     auto ysbResultSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField(createField("key", INT64))
-        ->addField("value", INT64);
+                               ->addField(createField("start", UINT64))
+                               ->addField(createField("end", UINT64))
+                               ->addField(createField("key", INT64))
+                               ->addField("value", INT64);
     auto testSink = TestSink::create(/*expected result buffer*/ numBuf, ysbResultSchema, nodeEngine->getBufferManager());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
@@ -769,8 +767,10 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
-    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps = generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
-    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps = queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
+        generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
+    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
+        queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
