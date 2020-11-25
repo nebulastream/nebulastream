@@ -183,7 +183,7 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1);
     p.get_future().get();
     auto tuple_buffer = opcSource->receiveData();
-    stopServer();
+    EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
     value = *tuple;
@@ -191,6 +191,7 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected
                                                                                          << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
+    stopServer();
 }
 }// namespace NES
 #endif

@@ -27,7 +27,7 @@ BufferManager::BufferManager() : bufferSize(0), numOfBuffers(0), isConfigured(fa
     // nop
 }
 
-BufferManager::BufferManager(size_t bufferSize, size_t numOfBuffers) : bufferSize(0), numOfBuffers(0), isConfigured(false) {
+BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers) : bufferSize(0), numOfBuffers(0), isConfigured(false) {
     configure(bufferSize, numOfBuffers);
 }
 
@@ -59,7 +59,7 @@ BufferManager::~BufferManager() {
     unpooledBuffers.clear();
 }
 
-void BufferManager::configure(size_t bufferSize, size_t numOfBuffers) {
+void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
     if (isConfigured) {
         NES_THROW_RUNTIME_ERROR("[BufferManager] Already configured - we cannot change the buffer manager at runtime for now!");

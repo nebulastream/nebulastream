@@ -74,7 +74,7 @@ std::optional<TupleBuffer> OPCSource::receiveData() {
             UA_delete(val, val->type);
             return buffer;
         } else {
-
+            UA_delete(val, val->type);
             NES_ERROR("OPCSOURCE::receiveData() error: Could not retrieve data. Further inspection needed.");
             return std::nullopt;
         }

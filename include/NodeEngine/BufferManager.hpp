@@ -77,7 +77,7 @@ class BufferManager {
   public:
     BufferManager();
 
-    BufferManager(size_t bufferSize, size_t numOfBuffers);
+    BufferManager(uint32_t bufferSize, uint32_t numOfBuffers);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
@@ -89,7 +89,7 @@ class BufferManager {
      * @param bufferSize
      * @param numOfBuffers
      */
-    void configure(size_t bufferSize, size_t numOfBuffers);
+    void configure(uint32_t bufferSize, uint32_t numOfBuffers);
 
     /**
      * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
