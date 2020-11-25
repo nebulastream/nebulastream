@@ -15,8 +15,27 @@
 */
 
 #include <NodeEngine/internal/backtrace.hpp>
+#include <Util/Logger.hpp>
+#include <Util/StacktraceLoader.hpp>
+#include <csignal>
+
 namespace NES {
 namespace detail {
 static backward::SignalHandling sh;
+
+void nesErrorHandler(int signal) {
+    collectAndPrintStacktrace();
+}
+
+struct ErrorHandlerLoader {
+  public:
+    explicit ErrorHandlerLoader() {
+        std::signal(SIGABRT, nesErrorHandler);
+        std::signal(SIGSEGV, nesErrorHandler);
+        std::signal(SIGBUS, nesErrorHandler);
+    }
+};
+static ErrorHandlerLoader loader;
+
 }
 }// namespace NES
