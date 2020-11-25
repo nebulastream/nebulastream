@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/EqualQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -40,31 +41,26 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
     z3::expr_vector expressions1(*context);
 
     for (auto& root : roots1) {
-        auto family = root->getAndFlattenAllChildren(true);
-        for (auto& member : family) {
-            z3::expr x = member->as<LogicalOperatorNode>()->getSignature();
-            expressions1.push_back(x);
-        }
+        auto querySig = root->as<LogicalOperatorNode>()->getSignature();
+        expressions1.push_back(*querySig->getConds());
     }
     z3::expr mkAnd1 = z3::mk_and(expressions1);
 
     z3::expr_vector expressions2(*context);
     for (auto& root : roots2) {
-        auto family = root->getAndFlattenAllChildren(true);
-        for (auto& member : family) {
-            expressions2.push_back(member->as<LogicalOperatorNode>()->getSignature());
-        }
+        auto querySig = root->as<LogicalOperatorNode>()->getSignature();
+        expressions2.push_back(*querySig->getConds());
     }
 
     z3::expr mkAnd2 = z3::mk_and(expressions2);
     NES_INFO(mkAnd1);
     NES_INFO(mkAnd2);
 
-    Z3_ast arrays[] = {mkAnd1, !mkAnd2};
-    auto expr = z3::to_expr(*context, Z3_mk_and(*context, 2, arrays));
+    //    Z3_ast arrays[] = {mkAnd1, !mkAnd2};
+    auto expr = z3::to_expr(*context, Z3_mk_eq(*context, mkAnd1, mkAnd2));
 
     z3::solver solver(*context);
-    solver.add(expr);
+    solver.add(!expr);
     return solver.check() == z3::unsat;
 }
 

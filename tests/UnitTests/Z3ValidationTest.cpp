@@ -133,10 +133,10 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     expr y = c.int_const("y");
 
     //Add equations
-    s.reset();
     s.add(x > 1);
     s.add(y > 1);
     s.add(x + y < 1);
+    NES_INFO(s);
 
     //Assert
     ASSERT_EQ(s.check(), unsat);
@@ -144,6 +144,7 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     //Same equation written using api
     s.reset();
     auto one = c.int_val(1);
+    auto xPlusOne = to_expr(c, x + 1);
     auto xLessThanOne = to_expr(c, Z3_mk_gt(c, x, one));
     auto yLessThanOne = to_expr(c, Z3_mk_gt(c, y, one));
     Z3_ast args[] = {x, y};
@@ -151,6 +152,7 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     auto xPlusYLessThanOne = to_expr(c, Z3_mk_lt(c, xPlusY, one));
 
     s.add(xLessThanOne);
+    NES_INFO(s);
     s.add(yLessThanOne);
     s.add(xPlusYLessThanOne);
     //Assert
@@ -158,41 +160,49 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
 }
 
 /**
-   @brief Validate for <tt>x > 1 and y > 1 that y + x < 1 </tt>.
+   @brief Validate for <tt>x==y and y==x => y==x and x==y </tt>.
 */
-TEST_F(Z3ValidationTest, simplifyEquation) {
+TEST_F(Z3ValidationTest, equalityChecks) {
 
-    // create a context
+    std::cout << "find_model_example1\n";
     context c;
-    //Create an instance of the solver
-    solver s(c);
-
-    //Define int constants
     expr x = c.int_const("x");
     expr y = c.int_const("y");
+    solver s(c);
 
-    //Add equations
-    Z3_ast arr[] = {x == x + 2, x > 3};
-    auto expr = z3::to_expr(c, Z3_mk_and(c, 2, arr)).simplify();
-    NES_INFO(expr);
+//    s.add(x >= 0);
+    s.add((y < x) == (y > x));
+//    s.add(y >= 0);
+    std::cout << s.check() << "\n";
 
-    //Assert
-    ASSERT_EQ(s.check(), unsat);
-
-    //Same equation written using api
-    s.reset();
-    auto one = c.int_val(1);
-    auto xLessThanOne = to_expr(c, Z3_mk_gt(c, x, one));
-    auto yLessThanOne = to_expr(c, Z3_mk_gt(c, y, one));
-    Z3_ast args[] = {x, y};
-    auto xPlusY = to_expr(c, Z3_mk_add(c, 2, args));
-    auto xPlusYLessThanOne = to_expr(c, Z3_mk_lt(c, xPlusY, one));
-
-    s.add(xLessThanOne);
-    s.add(yLessThanOne);
-    s.add(xPlusYLessThanOne);
-    //Assert
-    ASSERT_EQ(s.check(), unsat);
+    model m = s.get_model();
+    std::cout << m << "\n";
+    // traversing the model
+    for (unsigned i = 0; i < m.size(); i++) {
+        func_decl v = m[i];
+        // this problem contains only constants
+        assert(v.arity() == 0);
+        std::cout << v.name() << " = " << m.get_const_interp(v) << "\n";
+    }
+    // we can evaluate expressions in the model.
+    std::cout << "x + y + 1 = " << m.eval(x+y) << "\n";
+    std::cout << "x + y + 1 = " << m.eval(!((y < x) == (y > x))) << "\n";
+    //    // create a context
+    //    context c;
+    //    //Create an instance of the solver
+    //    solver s(c);
+    //
+    //    //Define int constants
+    //    expr x = c.int_const("x");
+    //    expr y = c.int_const("y");
+    //
+    //    //Add equations
+    //    s.add((y < x) == (x > y));
+    //    NES_INFO(s);
+    //
+    //    //Assert
+    //    ASSERT_EQ(s.check(), sat);
+    //    NES_INFO( s.get_model());
 }
 
 }// namespace NES
