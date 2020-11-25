@@ -50,7 +50,7 @@ int main(int argc, const char* argv[]) {
     // Initializing defaults
     uint16_t restPort = 8081;
     uint16_t rpcPort = 4000;
-    std::string restIp = "0.0.0.0";
+    std::string restIp = "127.0.0.1";
     std::string rpcIp = "127.0.0.1";
     std::string logLevel = "LOG_DEBUG";
 
