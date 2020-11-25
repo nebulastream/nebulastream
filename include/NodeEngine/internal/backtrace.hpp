@@ -3526,7 +3526,7 @@ class cfile_streambuf : public std::streambuf {
     cfile_streambuf(const cfile_streambuf&) = delete;
     cfile_streambuf& operator=(const cfile_streambuf&) = delete;
 #else
-    private:
+  private:
     cfile_streambuf(const cfile_streambuf&);
     cfile_streambuf& operator=(const cfile_streambuf&);
 #endif
@@ -3787,7 +3787,7 @@ class SignalHandling {
             sigfillset(&action.sa_mask);
             sigdelset(&action.sa_mask, posix_signals[i]);
 #if defined(__clang__)
-            #pragma clang diagnostic push
+#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
 #endif
             action.sa_sigaction = &sig_handler;

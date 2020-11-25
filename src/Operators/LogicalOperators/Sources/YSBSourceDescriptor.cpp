@@ -34,13 +34,14 @@ SourceDescriptorPtr YSBSourceDescriptor::create(std::string streamName, uint64_t
                                                                      numBuffersToProcess, frequency, endlessRepeat, operatorId));
 }
 
-YSBSourceDescriptor::YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                         bool endlessRepeat, OperatorId operatorId)
+YSBSourceDescriptor::YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                         uint64_t frequency, bool endlessRepeat, OperatorId operatorId)
     : SourceDescriptor(YSBSource::YsbSchema(), operatorId), numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency), endlessRepeat(endlessRepeat) {}
 
 YSBSourceDescriptor::YSBSourceDescriptor(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                         uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat, OperatorId operatorId)
+                                         uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat,
+                                         OperatorId operatorId)
     : SourceDescriptor(YSBSource::YsbSchema(), std::move(streamName), operatorId), numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency), endlessRepeat(endlessRepeat) {}
 

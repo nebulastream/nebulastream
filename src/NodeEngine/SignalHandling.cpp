@@ -23,13 +23,9 @@ namespace NES {
 namespace detail {
 static backward::SignalHandling sh;
 
-void nesErrorHandler(int signal) {
-    collectAndPrintStacktrace();
-}
+void nesErrorHandler(int signal) { collectAndPrintStacktrace(); }
 
-void nesTerminateHandler() {
-    collectAndPrintStacktrace();
-}
+void nesTerminateHandler() { collectAndPrintStacktrace(); }
 
 struct ErrorHandlerLoader {
   public:
@@ -42,5 +38,5 @@ struct ErrorHandlerLoader {
 };
 static ErrorHandlerLoader loader;
 
-}
+}// namespace detail
 }// namespace NES
