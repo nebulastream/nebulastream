@@ -27,9 +27,14 @@ void nesErrorHandler(int signal) {
     collectAndPrintStacktrace();
 }
 
+void nesTerminateHandler() {
+    collectAndPrintStacktrace();
+}
+
 struct ErrorHandlerLoader {
   public:
     explicit ErrorHandlerLoader() {
+        std::set_terminate(nesTerminateHandler);
         std::signal(SIGABRT, nesErrorHandler);
         std::signal(SIGSEGV, nesErrorHandler);
         std::signal(SIGBUS, nesErrorHandler);
