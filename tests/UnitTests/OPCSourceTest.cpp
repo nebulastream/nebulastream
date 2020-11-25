@@ -42,11 +42,13 @@ namespace NES {
 class OPCSourceTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("OPCSOURCETEST::SetUpTestCase()"); }
+    static void SetUpTestCase() {
+        NES::setupLogging("OPCSourceTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("OPCSOURCETEST::SetUpTestCase()");
+    }
 
     void SetUp() {
         NES_DEBUG("OPCSOURCETEST::SetUp() OPCSourceTest cases set up.");
-        NES::setupLogging("OPCSourceTest.log", NES::LOG_DEBUG);
 
         test_schema = Schema::create()->addField("var", UINT32);
 
