@@ -102,6 +102,7 @@ int main(int argc, char** argv) {
         "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
         "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")("help", "Display help message");
 
+
     /* Parse parameters. */
     po::variables_map vm;
     try {
@@ -137,7 +138,7 @@ int main(int argc, char** argv) {
                                     NodeType::Sensor// TODO what is this?!
         );
 
-    //register phy stream if nessesary
+    //register phy stream if necessary
     if (sourceType != "") {
         bool endless = endlessRepeat == "on";
         bool skip = skipHeader == "true";
