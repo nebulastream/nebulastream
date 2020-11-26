@@ -94,13 +94,14 @@ class YSBSource : public DefaultSource {
     // 78 bytes
 
   private:
-    void generate(YSBSource::YsbRecord& rec, uint64_t ts);
+    void generate(YSBSource::YsbRecord& rec, uint64_t ts, uint64_t eventType);
 
   private:
     uint64_t numberOfTuplesPerBuffer;
     bool endlessRepeat;
     uint64_t tmpEventType;
     uint64_t currentMs;
+    uint64_t currentEventType;
 };
 
 typedef std::shared_ptr<YSBSource> YSBSourcePtr;

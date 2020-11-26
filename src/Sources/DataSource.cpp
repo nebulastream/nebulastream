@@ -45,6 +45,8 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
 }
 OperatorId DataSource::getOperatorId() { return operatorId; }
 
+void DataSource::setOperatorId(OperatorId operatorId) { this->operatorId = operatorId; }
+
 SchemaPtr DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
