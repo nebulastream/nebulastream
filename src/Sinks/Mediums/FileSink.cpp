@@ -21,6 +21,8 @@
 #include <string>
 #include <utility>
 
+using Clock = std::chrono::high_resolution_clock;
+
 namespace NES {
 
 std::string FileSink::toString() { return "FILE_SINK"; }
@@ -107,6 +109,7 @@ bool FileSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
                              buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         } else {
             outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
+            auto time =  std::to_string( std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count());
         }
     }
     outputFile.flush();

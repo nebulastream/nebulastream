@@ -248,6 +248,7 @@ std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
 }
 
 std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema) {
+    return printTupleBufferAsCSV(buffer, schema);
     if (!buffer.isValid()) {
         return "INVALID_BUFFER_PTR";
     }
