@@ -45,6 +45,9 @@ int main() {
     std::vector<uint16_t> allWorkerThreads;
     BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 5, 1);
 
+    std::vector<uint16_t> allDataSources;
+    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
+
     std::string benchmarkFolderName = "MapQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName))
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
@@ -55,7 +58,7 @@ int main() {
         "BM_SimpleMapQuery",
         TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
         SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
-                                      ingestionRate),
+                                      ingestionRate,1),
         SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), "", "");
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
 

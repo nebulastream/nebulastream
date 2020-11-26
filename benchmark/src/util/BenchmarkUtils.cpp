@@ -111,7 +111,11 @@ std::string BenchmarkUtils::getStatisticsAsCSV(QueryStatistics* statistic, Schem
         + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes());
 }
 
-void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, DataSourcePtr benchmarkSource,
+void BenchmarkUtils::printOutConsole(QueryStatistics* statistic, SchemaPtr schema) {
+    std::cout << "numberOfTuples/sec=" << statistic << schema;
+}
+
+void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
                                   DataSinkPtr benchmarkSink, NodeEnginePtr nodeEngine, Query query) {
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
@@ -127,10 +131,13 @@ void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, 
                        .setCompiler(nodeEngine->getCompiler())
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
-                       .addSource(benchmarkSource)
                        .addSink(benchmarkSink)
                        .addOperatorQueryPlan(generateableOperators);
 
+    for(auto src : benchmarkSource)
+    {
+        builder.addSource(src);
+    }
     auto plan = builder.build();
     nodeEngine->registerQueryInNodeEngine(plan);
     NES_INFO("QEP for " << queryPlan->toString() << " was registered in NodeEngine. Starting query now...");
@@ -140,11 +147,16 @@ void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, 
     recordStatistics(statisticsVec, nodeEngine);
 
     NES_WARNING("Stopping query...");
-    benchmarkSource->stop();
+    for(auto src : benchmarkSource)
+    {
+        src->stop();
+    }
+
     benchmarkSink->shutdown();
     nodeEngine->stopQuery(1);
     NES_WARNING("Query was stopped!");
 
     computeDifferenceOfStatistics(statisticsVec);
 }
+
 }// namespace NES::Benchmarking

@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 # Google Benchmark Framework ----------------------------------------------------
+
 if (NES_BUILD_BENCHMARKS)
     message("---Building benchmarks...")
     include(ExternalProject)
@@ -73,6 +73,11 @@ if (NES_BUILD_BENCHMARKS)
     target_sources(filter-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME filter-query-benchmark COMMAND filter-query-benchmark --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
 
+    ### Filter Queries Benchmark ###
+    add_executable(ysb-query "BenchmarkSuite/YSBSelect.cpp")
+    target_link_libraries(ysb-query nes)
+    target_sources(ysb-query PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME ysb-query COMMAND ysb-query --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
 
     ### Map Queries Benchmark ###
     add_executable(map-query-benchmark "BenchmarkSuite/MapQueryBenchmarks.cpp")

@@ -5,6 +5,7 @@
 # Build files
 build
 cmake-build*
+debug*
 
 # Deb file
 docker/executableImage/resources/NebulaStream*.deb

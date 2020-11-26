@@ -41,9 +41,9 @@ class SimpleBenchmarkSource : public DataSource {
     uint64_t numberOfTuplesPerBuffer;
 
     SimpleBenchmarkSource(const SchemaPtr& schema, const BufferManagerPtr& bufferManager, const QueryManagerPtr& queryManager,
-                          uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer)
+                          uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer, uint64_t operatorId)
 
-        : DataSource(schema, bufferManager, queryManager, 1) {
+        : DataSource(schema, bufferManager, queryManager, operatorId) {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
@@ -86,7 +86,6 @@ class SimpleBenchmarkSource : public DataSource {
 
                     //if ((numberOfTuplesPerPeriod - cntTuples) < numberOfTuplesPerBuffer) curNumberOfTuplesPerBuffer = numberOfTuplesPerPeriod - cntTuples;
                     //else curNumberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
-
                     NES_DEBUG("SimpleBenchmarkSource: curNumberOfTuplesPerBuffer = " << curNumberOfTuplesPerBuffer);
 
                     // we are using always the same buffer, so no receiveData() call for every iteration
@@ -166,7 +165,7 @@ class SimpleBenchmarkSource : public DataSource {
     virtual ~SimpleBenchmarkSource() = default;
 
     static std::shared_ptr<SimpleBenchmarkSource> create(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate) {
+                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate, uint64_t operatorId) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
         maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
@@ -178,7 +177,7 @@ class SimpleBenchmarkSource : public DataSource {
             throw RuntimeException("maxTuplesPerBuffer == 0");
 
         return std::make_shared<SimpleBenchmarkSource>(benchmarkSchema, bufferManager, queryManager, ingestionRate,
-                                                       maxTuplesPerBuffer);
+                                                       maxTuplesPerBuffer, operatorId);
     }
 };
 }// namespace NES::Benchmarking
