@@ -63,6 +63,25 @@ QueryPlanSignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(Operat
         Z3_ast array[] = {*operatorCond, *subQueryConds};
         auto conds = std::make_shared<z3::expr>(to_expr(context, Z3_mk_and(context, 2, array)));
 
+        for(auto col: subQueryCols) {
+            auto colExprs = cols[fieldName];
+            DataTypePtr fieldType = mapOperator->getMapExpression()->getField()->getStamp();
+            auto filedExpr = DataTypeToZ3ExprUtil::createForField(fieldName, fieldType, context);
+            z3::expr_vector from(context);
+            from.push_back(*filedExpr);
+
+            std::vector<z3::ExprPtr> updatedColExprs;
+            for (auto& colExpr : colExprs) {
+                z3::expr_vector to(context);
+                to.push_back(*colExpr);
+                auto newColExpr = std::make_shared<z3::expr>(expr->substitute(from, to));
+                updatedColExprs.push_back(newColExpr);
+            }
+
+            cols[fieldName] = updatedColExprs;
+        } else {
+            cols[fieldName] = {expr};
+        }
 
         return QueryPlanSignature::create(conds, subQueryCols);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {

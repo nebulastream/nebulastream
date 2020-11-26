@@ -24,48 +24,53 @@
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/ReturnValue.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
 
-namespace NES {
+namespace NES::Optimizer {
 
-z3::ExprPtr NES::DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::context& context) {
+ReturnValuePtr DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::context& context) {
+    z3::ExprPtr expr;
     if (dataType->isInteger()) {
-        return std::make_shared<z3::expr>(context.int_const(fieldName.c_str()));
+        expr = std::make_shared<z3::expr>(context.int_const(fieldName.c_str()));
     } else if (dataType->isFloat()) {
-        return std::make_shared<z3::expr>(context.fpa_const<64>(fieldName.c_str()));
+        expr = std::make_shared<z3::expr>(context.fpa_const<64>(fieldName.c_str()));
     } else if (dataType->isBoolean()) {
-        return std::make_shared<z3::expr>(context.bool_const(fieldName.c_str()));
+        expr = std::make_shared<z3::expr>(context.bool_const(fieldName.c_str()));
     } else if (dataType->isChar() || dataType->isFixedChar()) {
-        return std::make_shared<z3::expr>(context.constant(fieldName.c_str(), context.string_sort()));
-    } else if (dataType->isArray()) {
-        auto arrayType = DataType::as<Array>(dataType);
-        NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data type of array type.");
+        expr = std::make_shared<z3::expr>(context.constant(fieldName.c_str(), context.string_sort()));
+    } else {
+        NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + dataType->toString());
     }
-    NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + dataType->toString());
+    std::map<std::string, z3::ExprPtr> constMap{{fieldName, expr}};
+    return ReturnValue::create(expr, constMap);
 }
 
-z3::ExprPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::context& context) {
+ReturnValuePtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::context& context) {
     if (valueType->isArrayValue()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of array type.");
     } else {
         auto basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
         auto valueType = basicValueType->getType();
+        z3::ExprPtr expr;
         if (valueType->isUndefined()) {
             NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of undefined type.");
         } else if (valueType->isInteger()) {
-            return std::make_shared<z3::expr>(context.int_val(std::stoi(basicValueType->getValue())));
+            expr = std::make_shared<z3::expr>(context.int_val(std::stoi(basicValueType->getValue())));
         } else if (valueType->isFloat()) {
-            return std::make_shared<z3::expr>(context.fpa_val(std::stod(basicValueType->getValue())));
+            expr = std::make_shared<z3::expr>(context.fpa_val(std::stod(basicValueType->getValue())));
         } else if (valueType->isBoolean()) {
             bool val = (strcasecmp(basicValueType->getValue().c_str(), "true") == 0
                         || std::atoi(basicValueType->getValue().c_str()) != 0);
-            return std::make_shared<z3::expr>(context.bool_val(val));
+            expr = std::make_shared<z3::expr>(context.bool_val(val));
         } else if (valueType->isChar() || valueType->isFixedChar()) {
-            return std::make_shared<z3::expr>(context.string_val(basicValueType->getValue()));
+            expr = std::make_shared<z3::expr>(context.string_val(basicValueType->getValue()));
+        } else {
+            NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueType->toString());
         }
+        return ReturnValue::create(expr, {});
     }
-    NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueType->toString());
 }
-}// namespace NES
+}// namespace NES::Optimizer

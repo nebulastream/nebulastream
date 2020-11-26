@@ -34,6 +34,13 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class ReturnValue;
+typedef std::shared_ptr<ReturnValue> ReturnValuePtr;
+
 /**
  * @brief This class is used for converting a data field or value into Z3 expression.
  */
@@ -46,7 +53,7 @@ class DataTypeToZ3ExprUtil {
      * @param context: the z3 context
      * @return expression for the field
      */
-    static z3::ExprPtr createForField(std::string fieldName, DataTypePtr dataType, z3::context& context);
+    static ReturnValuePtr createForField(std::string fieldName, DataTypePtr dataType, z3::context& context);
 
     /**
      * @brief Create Z3 expression for data value of specific type
@@ -54,8 +61,8 @@ class DataTypeToZ3ExprUtil {
      * @param context: Z3 context
      * @return expression for the data value
      */
-    static z3::ExprPtr createForDataValue(ValueTypePtr valueType, z3::context& context);
+    static ReturnValuePtr createForDataValue(ValueTypePtr valueType, z3::context& context);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_OPTIMIZER_UTILS_DATATYPETOZ3EXPRUTIL_HPP
