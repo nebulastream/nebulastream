@@ -61,7 +61,7 @@ std::optional<TupleBuffer> YSBSource::receiveData() {
     for (uint64_t recordIndex = 0; recordIndex < numberOfTuplesPerBuffer; recordIndex++) {
         //generate tuple and copy record to buffer
         auto& rec = records[recordIndex];
-        generate(rec, currentMs++, (currentEventType++)%3);
+        generate(rec, currentMs++, (currentEventType++) % 3);
     }
     buf.setNumberOfTuples(numberOfTuplesPerBuffer);
     NES_DEBUG("YSBSource: Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes());

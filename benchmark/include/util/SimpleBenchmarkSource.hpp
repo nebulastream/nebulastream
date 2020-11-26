@@ -165,7 +165,8 @@ class SimpleBenchmarkSource : public DataSource {
     virtual ~SimpleBenchmarkSource() = default;
 
     static std::shared_ptr<SimpleBenchmarkSource> create(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate, uint64_t operatorId) {
+                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate,
+                                                         uint64_t operatorId) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
         maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
