@@ -62,18 +62,15 @@ int main(int argc, const char* argv[]) {
     po::options_description serverOptions("Nes Coordinator Server Options");
 
     serverOptions.add_options()("restIp", po::value<std::string>(&restIp)->default_value(restIp),
-                                    "Set NES ip of the REST server (default: 127.0.0.1).")
-                                ("restPort", po::value<uint16_t>(&restPort),
-                                    "Set NES REST server port (default: 8081).")
-                                ("coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort),
-                                    "Set NES rpc server port (default: 4000).")
-                                ("numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
-                                    "Set the computing capacity (default: number of processor).")
-                                ("enableQueryMerging", po::value<bool>(&enableQueryMerging)->default_value(enableQueryMerging),
-                                    "Enable Query Merging Feature (default: false).")
-                                ("logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
-                                    "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")
-                                ("help", "Display help message");
+                                "Set NES ip of the REST server (default: 127.0.0.1).")(
+        "restPort", po::value<uint16_t>(&restPort), "Set NES REST server port (default: 8081).")(
+        "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort), "Set NES rpc server port (default: 4000).")(
+        "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
+        "Set the computing capacity (default: number of processor).")(
+        "enableQueryMerging", po::value<bool>(&enableQueryMerging)->default_value(enableQueryMerging),
+        "Enable Query Merging Feature (default: false).")(
+        "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
+        "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")("help", "Display help message");
 
     /* Parse parameters. */
     po::variables_map vm;
