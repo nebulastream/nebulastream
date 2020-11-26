@@ -66,7 +66,6 @@ int main() {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
     }
 
-
     //-----------------------------------------Start of ----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
     BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 0, 1, 1);
@@ -121,13 +120,11 @@ int main() {
     nodeEngine->startQuery(1);
 #endif
 
-
-
     //    for (auto selectivity : allSelectivities) {
-    BM_AddBenchmark(
-        "BM_YSB_QUERY", TestQuery::from(thisSchema).filter(Attribute("event_type") < 1).sink(DummySink::create()),
-        YSBBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema, ingestionRate, 1),
-        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",X", ",ysb")
+    BM_AddBenchmark("BM_YSB_QUERY", TestQuery::from(thisSchema).filter(Attribute("event_type") < 1).sink(DummySink::create()),
+                    YSBBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
+                                               ingestionRate, 1),
+                    SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",X", ",ysb")
         //    }
 
         //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------

@@ -113,7 +113,7 @@ class BenchmarkUtils {
         try {                                                                                                                    \
             std::ofstream benchmarkFile;                                                                                         \
             benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);                \
-            benchmarkFile << "BM_Name,NES_Version,Ingestionrate,WorkerThreads,SourceCnt,RunSingleExperiment,PeriodLength,"                 \
+            benchmarkFile << "BM_Name,NES_Version,Ingestionrate,WorkerThreads,SourceCnt,RunSingleExperiment,PeriodLength,"       \
                              "ProcessedBuffers,ProcessedTasks,ProcessedTuples,ProcessedBytes"                                    \
                           << (csvHeaderString) << "\n";                                                                          \
             benchmarkFile.close();                                                                                               \
@@ -151,14 +151,13 @@ class BenchmarkUtils {
                                                    std::ios_base::app);                                                          \
                                                                                                                                  \
                                 for (auto statistic : statisticsVec) {                                                           \
-                                    benchmarkFile                                                                                \
-                                        << (benchmarkName) << ",\"" << NES_VERSION << "\""                                       \
-                                        << "," << std::to_string(ingestionRate) << "," << std::to_string(workerThreads) << ","   \
-                                        << std::to_string(sourceCnt) << ","   \
-                                        << std::to_string(BenchmarkUtils::runSingleExperimentSeconds) << ","                     \
-                                        << std::to_string(BenchmarkUtils::periodLengthInSeconds)                                 \
-                                        << BenchmarkUtils::getStatisticsAsCSV(statistic, thisSchema) << (customCSVOutputs)       \
-                                        << "\n";                                                                                 \
+                                    benchmarkFile << (benchmarkName) << ",\"" << NES_VERSION << "\""                             \
+                                                  << "," << std::to_string(ingestionRate) << ","                                 \
+                                                  << std::to_string(workerThreads) << "," << std::to_string(sourceCnt) << ","    \
+                                                  << std::to_string(BenchmarkUtils::runSingleExperimentSeconds) << ","           \
+                                                  << std::to_string(BenchmarkUtils::periodLengthInSeconds)                       \
+                                                  << BenchmarkUtils::getStatisticsAsCSV(statistic, thisSchema)                   \
+                                                  << (customCSVOutputs) << "\n";                                                 \
                                                                                                                                  \
                                     delete statistic;                                                                            \
                                 }                                                                                                \

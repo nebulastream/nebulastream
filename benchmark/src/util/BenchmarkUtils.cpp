@@ -134,8 +134,7 @@ void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, 
                        .addSink(benchmarkSink)
                        .addOperatorQueryPlan(generateableOperators);
 
-    for(auto src : benchmarkSource)
-    {
+    for (auto src : benchmarkSource) {
         builder.addSource(src);
     }
     auto plan = builder.build();
@@ -147,8 +146,7 @@ void BenchmarkUtils::runBenchmark(std::vector<QueryStatistics*>& statisticsVec, 
     recordStatistics(statisticsVec, nodeEngine);
 
     NES_WARNING("Stopping query...");
-    for(auto src : benchmarkSource)
-    {
+    for (auto src : benchmarkSource) {
         src->stop();
     }
 

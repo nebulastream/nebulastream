@@ -167,6 +167,7 @@ class DataSource : public Reconfigurable {
 
     OperatorId getOperatorId();
     void setOperatorId(OperatorId operatorId);
+
   protected:
     SchemaPtr schema;
     uint64_t generatedTuples;
