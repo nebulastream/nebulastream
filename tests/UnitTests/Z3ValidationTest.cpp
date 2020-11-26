@@ -160,49 +160,31 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
 }
 
 /**
-   @brief Validate for <tt>x==y and y==x => y==x and x==y </tt>.
+   @brief Validate for <tt>(x==y and y==x) == (y==x and x==y) </tt>.
 */
 TEST_F(Z3ValidationTest, equalityChecks) {
-
-    std::cout << "find_model_example1\n";
     context c;
     expr x = c.int_const("x");
     expr y = c.int_const("y");
     solver s(c);
 
-//    s.add(x >= 0);
-    s.add((y < x) == (y > x));
-//    s.add(y >= 0);
-    std::cout << s.check() << "\n";
+    //We prove that equation (x==y and y==x) != (y==x and x==y) is unsatisfiable
+    s.add(!((x == y && y == x) == (y == x && x == y)));
+    ASSERT_EQ(s.check(), unsat);
+}
 
-    model m = s.get_model();
-    std::cout << m << "\n";
-    // traversing the model
-    for (unsigned i = 0; i < m.size(); i++) {
-        func_decl v = m[i];
-        // this problem contains only constants
-        assert(v.arity() == 0);
-        std::cout << v.name() << " = " << m.get_const_interp(v) << "\n";
-    }
-    // we can evaluate expressions in the model.
-    std::cout << "x + y + 1 = " << m.eval(x+y) << "\n";
-    std::cout << "x + y + 1 = " << m.eval(!((y < x) == (y > x))) << "\n";
-    //    // create a context
-    //    context c;
-    //    //Create an instance of the solver
-    //    solver s(c);
-    //
-    //    //Define int constants
-    //    expr x = c.int_const("x");
-    //    expr y = c.int_const("y");
-    //
-    //    //Add equations
-    //    s.add((y < x) == (x > y));
-    //    NES_INFO(s);
-    //
-    //    //Assert
-    //    ASSERT_EQ(s.check(), sat);
-    //    NES_INFO( s.get_model());
+/**
+   @brief Validate that <tt>(x>=y) != (y>=x) </tt>.
+*/
+TEST_F(Z3ValidationTest, unequalityChecks) {
+    context c;
+    expr x = c.int_const("x");
+    expr y = c.int_const("y");
+    solver s(c);
+
+    //We prove that equation (x>=y) != (y>=x) is satisfiable
+    s.add(!((x >= y) == (y >= x)));
+    ASSERT_EQ(s.check(), sat);
 }
 
 }// namespace NES

@@ -16,4 +16,5 @@ add_source_nes(
         ExpressionToZ3ExprUtil.cpp
         OperatorToQueryPlanSignatureUtil.cpp
         DataTypeToZ3ExprUtil.cpp
+        ReturnValue.cpp
 )
