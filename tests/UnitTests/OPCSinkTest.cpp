@@ -117,9 +117,7 @@ class OPCSinkTest : public testing::Test {
         UA_Server_delete(server);
     }
 
-    static void stopServer() {
-        running = false;
-    }
+    static void stopServer() { running = false; }
 
     SchemaPtr test_schema;
     uint64_t buffer_size;
