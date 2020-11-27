@@ -487,11 +487,14 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     } else if (type == "NetworkSource") {
         std::vector<std::string> results;
         boost::split(results, conf, [](char c) {
-          char* helper = ";";
-          return c == *helper;
+            char* helper = ";";
+            return c == *helper;
         });
-        Network::NesPartition* nesPar = new Network::NesPartition(stoi(results[0]), stoi(results[1]), stoi(results[2]), stoi(results[3]));
-        NES_DEBUG("TypeInferencePhase: create network source with QueryId: " << stoi(results[0]) << ", OperatorId: " << stoi(results[1]) << ", PartitionId: " << stoi(results[2]) << ", SubpartitionId: " << stoi(results[3]) << ". ");
+        Network::NesPartition* nesPar =
+            new Network::NesPartition(stoi(results[0]), stoi(results[1]), stoi(results[2]), stoi(results[3]));
+        NES_DEBUG("TypeInferencePhase: create network source with QueryId: "
+                  << stoi(results[0]) << ", OperatorId: " << stoi(results[1]) << ", PartitionId: " << stoi(results[2])
+                  << ", SubpartitionId: " << stoi(results[3]) << ". ");
         return Network::NetworkSourceDescriptor::create(schema, *nesPar);
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getOperatorId());

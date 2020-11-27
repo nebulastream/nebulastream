@@ -101,13 +101,14 @@ int main(int argc, const char* argv[]) {
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
     NES_DEBUG("Read config from file: " << configurationFilePath);
 
-    if (configurationFilePath.empty()){
-        NES_INFO("NESCOORDINATORSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES Coordinator Configuration YAML file.");
+    if (configurationFilePath.empty()) {
+        NES_INFO("NESCOORDINATORSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES "
+                 "Coordinator Configuration YAML file.");
         return EXIT_FAILURE;
     }
     Yaml::Node config;
     try {
-        Yaml::Parse(config,configurationFilePath.c_str());
+        Yaml::Parse(config, configurationFilePath.c_str());
     } catch (const std::exception& e) {
         NES_ERROR("NESWORKERSTARTER: Cannot read configuration file with file path: " << configurationFilePath);
     }
@@ -122,12 +123,13 @@ int main(int argc, const char* argv[]) {
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
-    if (numberOfSlots == 0){
+    if (numberOfSlots == 0) {
         const auto processorCount = std::thread::hardware_concurrency();
         numberOfSlots = processorCount;
     }
 
-    NES_DEBUG("start coordinator ip=" << serverIp << " with rpc port " << rpcPort << " restPort=" << restPort << " numberOfSlots=" << numberOfSlots);
+    NES_DEBUG("start coordinator ip=" << serverIp << " with rpc port " << rpcPort << " restPort=" << restPort
+                                      << " numberOfSlots=" << numberOfSlots);
 
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd =
@@ -138,5 +140,4 @@ int main(int argc, const char* argv[]) {
     crd->startCoordinator(/**blocking**/ true);//blocking call
     crd->stopCoordinator(true);
     NES_INFO("coordinator started");
-
 }

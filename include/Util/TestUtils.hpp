@@ -475,9 +475,12 @@ class TestUtils {
 
             DataSourcePtr source;
             string sourceType = streamConf->getSourceType();
-            if (sourceType != "CSVSource" && sourceType != "DefaultSource" && sourceType != "OPCSource" && sourceType != "ZMQSource" && sourceType != "KafkaSource" && sourceType != "BinarySource" && sourceType != "SenseSource" && sourceType != "NetworkSource" && sourceType != "AdaptiveSource") {
+            if (sourceType != "CSVSource" && sourceType != "DefaultSource" && sourceType != "OPCSource"
+                && sourceType != "ZMQSource" && sourceType != "KafkaSource" && sourceType != "BinarySource"
+                && sourceType != "SenseSource" && sourceType != "NetworkSource" && sourceType != "AdaptiveSource") {
                 NES_ERROR("Coordinator: error source type " << sourceType << " is not supported");
-                NES_ERROR("CoordinatorEngine::registerNode: available options: OPCSource, ZMQSource, KafkaSource, TestSource, BinarySource, SenseSource, NetworkSource, AdaptiveSource");
+                NES_ERROR("CoordinatorEngine::registerNode: available options: OPCSource, ZMQSource, KafkaSource, TestSource, "
+                          "BinarySource, SenseSource, NetworkSource, AdaptiveSource");
                 throw Exception("Coordinator: error source type " + sourceType + " is not supported");
             }
 

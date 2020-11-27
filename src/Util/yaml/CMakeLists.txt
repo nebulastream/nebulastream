@@ -14,5 +14,5 @@
 
 # This adds Jimmie Bergmann's Yaml read/write implementation without overwriting it's copyright with ours.
 add_source_nes(
-        ../../../include/Util/yaml/Yaml.cpp
+        Yaml.cpp
 )
