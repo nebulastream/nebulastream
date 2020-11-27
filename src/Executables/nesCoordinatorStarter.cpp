@@ -121,6 +121,8 @@ int main(int argc, const char* argv[]) {
     bool enableQueryMerging = config["enableQueryMerging"].As<bool>();
     auto logLevel = config["logLevel"].As<string>();
 
+    std::cerr << "Read Coordinator Config. restPort: "<< restPort << " , rpcPort: " << rpcPort <<" , logLevel: " << logLevel << std::endl;
+
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     if (numberOfSlots == 0) {
