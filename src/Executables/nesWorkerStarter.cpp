@@ -126,9 +126,9 @@ int main(int argc, char** argv) {
     }
     Yaml::Node config;
     try {
-        Yaml::Parse(config,configurationFilePath.c_str());
+        Yaml::Parse(config, configurationFilePath.c_str());
     } catch (const std::exception& e) {
-        std::cerr <<"NESWORKERSTARTER: Cannot read configuration file with file path: " << configurationFilePath << std::endl;
+        std::cerr << "NESWORKERSTARTER: Cannot read configuration file with file path: " << configurationFilePath << std::endl;
     }
 
     // Initializing IPs and Ports
@@ -141,7 +141,8 @@ int main(int argc, char** argv) {
     auto sourceType = config["sourceType"].As<string>();
     auto sourceConfig = config["sourceConfig"].As<string>();
     auto sourceFrequency = config["sourceFrequency"].As<uint16_t>();
-    auto endlessRepeat = config["endlessRepeat"].As<string>();;
+    auto endlessRepeat = config["endlessRepeat"].As<string>();
+    ;
     auto skipHeader = config["skipHeader"].As<bool>();
     auto numberOfBuffersToProduce = config["numberOfBuffersToProduce"].As<uint32_t>();
     auto numberOfTuplesToProducePerBuffer = config["numberOfTuplesToProducePerBuffer"].As<uint16_t>();
@@ -155,7 +156,7 @@ int main(int argc, char** argv) {
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     // set the default numberOfSlots to the number of processor
-    if (numberOfSlots == 0){
+    if (numberOfSlots == 0) {
         const auto processorCount = std::thread::hardware_concurrency();
         numberOfSlots = processorCount;
     }
@@ -175,7 +176,7 @@ int main(int argc, char** argv) {
                                     NodeType::Sensor,// TODO what is this?!
                                     numWorkerThreads);
 
-    //register phy stream if necessary
+    //register phy stream if nessesary
     if (sourceType != "") {
         bool endless = endlessRepeat == "on";
         bool skip = skipHeader;

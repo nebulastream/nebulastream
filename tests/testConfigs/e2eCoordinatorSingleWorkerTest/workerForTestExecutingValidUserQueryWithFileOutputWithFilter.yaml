@@ -14,7 +14,7 @@ rpcPort: 8081
 dataPort: 3001
 
 # Set worker IP
-localWorkerIp: 127.0.0.1
+localWorkerIp: 0.0.0.0
 
 
 # ~~ Source Handling ~~
