@@ -20,7 +20,6 @@
 #include <API/Schema.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Operators/OperatorId.hpp>
-#include <Windowing/Watermark/Watermark.hpp>
 #include <atomic>
 #include <mutex>
 #include <optional>
@@ -178,7 +177,6 @@ class DataSource : public Reconfigurable {
     SourceType type;
     BufferManagerPtr bufferManager;
     QueryManagerPtr queryManager;
-    Windowing::WatermarkPtr watermark;
 
   private:
     //bool indicating if the source is currently running'

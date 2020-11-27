@@ -65,7 +65,6 @@ std::optional<TupleBuffer> YSBSource::receiveData() {
     }
     buf.setNumberOfTuples(numberOfTuplesPerBuffer);
     NES_DEBUG("YSBSource: Generated buffer with " << buf.getNumberOfTuples() << "/" << schema->getSchemaSizeInBytes());
-    buf.setWatermark(this->watermark->getWatermark());
 
     //update statistics
     generatedTuples += numberOfTuplesPerBuffer;
