@@ -24,7 +24,10 @@ namespace detail {
 static backward::SignalHandling sh;
 
 // -Werror=unused-parameter signal
-void nesErrorHandler(int signal) { (void)signal; collectAndPrintStacktrace(); }
+void nesErrorHandler(int signal) {
+    (void) signal;
+    collectAndPrintStacktrace();
+}
 
 void nesTerminateHandler() { collectAndPrintStacktrace(); }
 
