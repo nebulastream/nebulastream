@@ -41,6 +41,7 @@ bool QueryPlanSignature::isEqual(QueryPlanSignaturePtr other) {
         return false;
     }
 
+    z3::expr_vector allConds(context);
     for (auto ele : cols) {
         if (otherCols.find(ele.first) == otherCols.end()) {
             NES_WARNING("Column " << ele.first << " doesn't exists in column list of other signature");
@@ -50,12 +51,14 @@ bool QueryPlanSignature::isEqual(QueryPlanSignaturePtr other) {
         for (auto& otherColExpr : otherColExprs) {
             z3::expr_vector conds(context);
             for (auto& colExpr : ele.second) {
-                conds.push_back(!to_expr(context, Z3_mk_eq(context, *otherColExpr, *colExpr)));
+                conds.push_back(to_expr(context, Z3_mk_eq(context, *otherColExpr, *colExpr)));
             }
-            solver.add(z3::mk_or(conds));
+            allConds.push_back(z3::mk_or(conds));
         }
     }
-    solver.add(!to_expr(context, Z3_mk_eq(context, *conds, *other->conds)));
+
+    allConds.push_back(to_expr(context, Z3_mk_eq(context, *conds, *other->conds)));
+    solver.add(!z3::mk_and(allConds));
     NES_DEBUG("Solving: "<< solver);
     return solver.check() == z3::unsat;
 }

@@ -169,7 +169,17 @@ TEST_F(Z3ValidationTest, equalityChecks) {
     solver s(c);
 
     //We prove that equation (x==y and y==x) != (y==x and x==y) is unsatisfiable
-    s.add(!((x == y && y == x) == (y == x && x == y)));
+    s.add((x == y && y == x) != (x == y && y == x));
+    ASSERT_EQ(s.check(), unsat);
+
+    s.reset();
+    //We prove that equation (x=40) != (x=50) is unsatisfiable
+    s.add((x==x) != (x==x));
+    ASSERT_EQ(s.check(), unsat);
+
+    s.reset();
+    //We prove that equation (x=40) != (x=50) is unsatisfiable
+    s.add((x==x) != (x==y));
     ASSERT_EQ(s.check(), unsat);
 }
 
@@ -182,12 +192,14 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     expr y = c.int_const("y");
     solver s(c);
 
+    //x>y && x<y && x != y
+
     //We prove that equation (x>=y) != (y>=x) is satisfiable
     s.add(!((x >= y) == (y >= x)));
     ASSERT_EQ(s.check(), sat);
 
-    //Two conditions are equal that is proved by making sure
-    //that not equality of these conditions is unsatisfiable
+    //Two conditions are equal that can be proved by making sure
+    //that inequality among these conditions is unsatisfiable
     //
     //However, to prove that two conditions are not equal
     //we need to prove that equality of these conditions is unsatisfiable
@@ -203,8 +215,14 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     expr value50 = c.int_val("50");
     expr value40 = c.int_val("40");
 
-    s.add(!((stream == streamVal) == (stream == streamVal)) && !(value40 == value50));
+    // (stream == "car") != (stream =="car")
+    //
+    // Q1:from("car").map("speed" = 50).print()
+    // Q2:from("car").map("speed" = 40).print()
 
+//    s.add(value40 != value50);
+    s.add(!(((stream == streamVal) == (stream == streamVal)) && (value40 == value50)));
+    NES_INFO(s);
     NES_INFO("Chk that " << s.check());
     NES_INFO(s.get_model());
 
@@ -214,7 +232,7 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     expr value = c.int_const("value");
 
     s.reset();
-    s.add(((value * 40) < 40 && (value * 80) < 40) != ((value * 40) < 40 && (value * 80) < 40));
+    s.add(((value * 10) < 40) != ((value * 10) < 40 && (value * 10) < 30));
     NES_INFO(s.check());
     NES_INFO(s.get_model());
 }

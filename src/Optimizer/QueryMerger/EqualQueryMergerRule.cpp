@@ -38,34 +38,10 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
     auto roots1 = queryPlan1->getRootOperators();
     auto roots2 = queryPlan2->getRootOperators();
 
-    z3::expr_vector expressions1(*context);
+    auto querySig1 = roots1[0]->as<LogicalOperatorNode>()->getSignature();
+    auto querySig2 = roots2[0]->as<LogicalOperatorNode>()->getSignature();
 
-    for (auto& root : roots1) {
-        auto querySig = root->as<LogicalOperatorNode>()->getSignature();
-        expressions1.push_back(*querySig->getConds());
-    }
-    z3::expr mkAnd1 = z3::mk_and(expressions1);
-
-    z3::expr_vector expressions2(*context);
-    for (auto& root : roots2) {
-        auto querySig = root->as<LogicalOperatorNode>()->getSignature();
-        expressions2.push_back(*querySig->getConds());
-    }
-
-    z3::expr mkAnd2 = z3::mk_and(expressions2);
-    NES_INFO(mkAnd1);
-    NES_INFO(mkAnd2);
-
-    auto expr = z3::to_expr(*context, Z3_mk_eq(*context, mkAnd1, mkAnd2));
-
-    z3::solver solver(*context);
-    solver.add(expr && !expr);
-    if (solver.check() == z3::sat) {
-        NES_INFO("Model " << solver.get_model());
-        return false;
-    } else {
-        return true;
-    }
+    return querySig1->isEqual(querySig2);
 }
 
 }// namespace NES::Optimizer
