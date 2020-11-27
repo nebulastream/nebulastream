@@ -15,20 +15,7 @@
 */
 
 //
-// Created by ankit on 26.11.20.
+// Created by ankit on 27.11.20.
 //
 
-#include <Optimizer/Utils/ReturnValue.hpp>
-
-namespace NES::Optimizer {
-
-ReturnValue::ReturnValue(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap) : expr(expr), constMap(constMap) {}
-
-z3::ExprPtr ReturnValue::getExpr() { return expr; }
-
-std::map<std::string, z3::ExprPtr> ReturnValue::getConstMap() { return constMap; }
-
-ReturnValuePtr ReturnValue::create(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap) {
-    return std::make_shared<ReturnValue>(expr, constMap);
-}
-}// namespace NES::Optimizer
+#include "QueryPlanSignatureUtil.hpp"

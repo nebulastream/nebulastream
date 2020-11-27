@@ -56,11 +56,16 @@ bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan
     NES_INFO(mkAnd1);
     NES_INFO(mkAnd2);
 
-    auto expr = z3::to_expr(*context, Z3_mk_not(*context, Z3_mk_eq(*context, mkAnd1, mkAnd2)));
+    auto expr = z3::to_expr(*context, Z3_mk_eq(*context, mkAnd1, mkAnd2));
 
     z3::solver solver(*context);
-    solver.add(expr);
-    return solver.check() == z3::unsat;
+    solver.add(expr && !expr);
+    if (solver.check() == z3::sat) {
+        NES_INFO("Model " << solver.get_model());
+        return false;
+    } else {
+        return true;
+    }
 }
 
 }// namespace NES::Optimizer

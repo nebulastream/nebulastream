@@ -185,6 +185,38 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     //We prove that equation (x>=y) != (y>=x) is satisfiable
     s.add(!((x >= y) == (y >= x)));
     ASSERT_EQ(s.check(), sat);
+
+    //Two conditions are equal that is proved by making sure
+    //that not equality of these conditions is unsatisfiable
+    //
+    //However, to prove that two conditions are not equal
+    //we need to prove that equality of these conditions is unsatisfiable
+    //
+    //However, what to do when we have partially equal expressions?
+    //This means for certain values they are equal and for certain they are not equal.
+    //Example: x>=y and y>=x .... for x==y they are equal but for x!=y they are not.
+    //This means the equality and inequality both are satisfiable.
+
+    s.reset();
+    expr stream = c.constant("stream", c.string_sort());
+    expr streamVal = c.string_val("car");
+    expr value50 = c.int_val("50");
+    expr value40 = c.int_val("40");
+
+    s.add(!((stream == streamVal) == (stream == streamVal)) && !(value40 == value50));
+
+    NES_INFO("Chk that " << s.check());
+    NES_INFO(s.get_model());
+
+    //(and (< (* (* value 40) 40) 40) (< (* value 40) 40) (= streamName "car"))
+
+
+    expr value = c.int_const("value");
+
+    s.reset();
+    s.add(((value * 40) < 40 && (value * 80) < 40) != ((value * 40) < 40 && (value * 80) < 40));
+    NES_INFO(s.check());
+    NES_INFO(s.get_model());
 }
 
 }// namespace NES

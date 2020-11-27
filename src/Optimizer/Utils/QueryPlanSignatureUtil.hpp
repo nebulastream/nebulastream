@@ -14,35 +14,14 @@
     limitations under the License.
 */
 
-#ifndef NES_RETURNVALUE_HPP
-#define NES_RETURNVALUE_HPP
-
-#include <map>
-#include <memory>
-
-namespace z3 {
-class expr;
-typedef std::shared_ptr<expr> ExprPtr;
-}// namespace z3
+#ifndef NES_QUERYPLANSIGNATUREUTIL_HPP
+#define NES_QUERYPLANSIGNATUREUTIL_HPP
 
 namespace NES::Optimizer {
-class ReturnValue;
-typedef std::shared_ptr<ReturnValue> ReturnValuePtr;
-
-class ReturnValue {
-
+class QueryPlanSignatureUtil {
   public:
-    ReturnValue(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap);
 
-    static ReturnValuePtr create(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap);
-
-    z3::ExprPtr getExpr();
-
-    std::map<std::string, z3::ExprPtr> getConstMap();
-
-  private:
-    z3::ExprPtr expr;
-    std::map<std::string, z3::ExprPtr> constMap;
+    static bool isEqual()
 };
 }// namespace NES::Optimizer
-#endif//NES_RETURNVALUE_HPP
+#endif//NES_QUERYPLANSIGNATUREUTIL_HPP

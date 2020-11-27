@@ -15,6 +15,8 @@
 */
 
 #include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
+#include <Util/Logger.hpp>
+#include <z3++.h>
 
 namespace NES::Optimizer {
 
@@ -28,5 +30,34 @@ QueryPlanSignature::QueryPlanSignature(z3::ExprPtr conds, std::map<std::string, 
 z3::ExprPtr QueryPlanSignature::getConds() { return conds; }
 
 std::map<std::string, std::vector<z3::ExprPtr>> QueryPlanSignature::getCols() { return cols; }
+
+bool QueryPlanSignature::isEqual(QueryPlanSignaturePtr other) {
+
+    z3::context& context = conds->ctx();
+    z3::solver solver(context);
+
+    auto otherCols = other->cols;
+    if (cols.size() != otherCols.size()) {
+        return false;
+    }
+
+    for (auto ele : cols) {
+        if (otherCols.find(ele.first) == otherCols.end()) {
+            NES_WARNING("Column " << ele.first << " doesn't exists in column list of other signature");
+            return false;
+        }
+        auto otherColExprs = otherCols[ele.first];
+        for (auto& otherColExpr : otherColExprs) {
+            z3::expr_vector conds(context);
+            for (auto& colExpr : ele.second) {
+                conds.push_back(!to_expr(context, Z3_mk_eq(context, *otherColExpr, *colExpr)));
+            }
+            solver.add(z3::mk_or(conds));
+        }
+    }
+    solver.add(!to_expr(context, Z3_mk_eq(context, *conds, *other->conds)));
+    NES_DEBUG("Solving: "<< solver);
+    return solver.check() == z3::unsat;
+}
 
 }// namespace NES::Optimizer
