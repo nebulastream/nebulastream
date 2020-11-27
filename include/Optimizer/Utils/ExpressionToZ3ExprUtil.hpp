@@ -24,13 +24,18 @@ class expr;
 typedef std::shared_ptr<expr> ExprPtr;
 
 class context;
+typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
 namespace NES {
-
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+}// namespace NES
 
+namespace NES::Optimizer {
+
+class ReturnValue;
+typedef std::shared_ptr<ReturnValue> ReturnValuePtr;
 /**
  * @brief This class is responsible for taking input as a logical expression and generating an equivalent Z3 expression.
  */
@@ -43,7 +48,7 @@ class ExpressionToZ3ExprUtil {
      * @param context: Z3 context
      * @return returns object representing Z3 expression
      */
-    static z3::ExprPtr createForExpression(ExpressionNodePtr expression, std::map<std::string, std::vector<z3::ExprPtr>> cols, z3::context& context);
+    static ReturnValuePtr createForExpression(ExpressionNodePtr expression, z3::ContextPtr context);
 
   private:
     /**
@@ -52,7 +57,7 @@ class ExpressionToZ3ExprUtil {
      * @param context: the Z3 context
      * @return returns object representing Z3 expression
      */
-    static z3::ExprPtr createForLogicalExpressions(ExpressionNodePtr expression, std::map<std::string, std::vector<z3::ExprPtr>> cols, z3::context& context);
+    static ReturnValuePtr createForLogicalExpressions(ExpressionNodePtr expression, z3::ContextPtr context);
 
     /**
      * @brief Convert input arithmetic expression into an equivalent Z3 expression
@@ -60,8 +65,8 @@ class ExpressionToZ3ExprUtil {
      * @param context: the Z3 context
      * @return returns object representing Z3 expression
      */
-    static z3::ExprPtr createForArithmeticalExpressions(ExpressionNodePtr expression, std::map<std::string, std::vector<z3::ExprPtr>> cols, z3::context& context);
+    static ReturnValuePtr createForArithmeticalExpressions(ExpressionNodePtr expression, z3::ContextPtr context);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_OPTIMIZE_UTILS_EXPRESSIONTOZ3EXPRUTIL_HPP

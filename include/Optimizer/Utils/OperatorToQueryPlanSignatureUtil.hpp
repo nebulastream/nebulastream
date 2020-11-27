@@ -20,8 +20,8 @@
 #include <memory>
 
 namespace z3 {
-class expr;
 class context;
+typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
 namespace NES {
@@ -47,8 +47,8 @@ class OperatorToQueryPlanSignatureUtil {
      * @param context: the context of Z3
      * @return the object representing signature of the query plan created by the operator and its children
      */
-    static QueryPlanSignaturePtr createForOperator(OperatorNodePtr operatorNode, std::vector<QueryPlanSignaturePtr> subQuerySignatures,
-                                      z3::context& context);
+    static QueryPlanSignaturePtr createForOperator(OperatorNodePtr operatorNode,
+                                                   std::vector<QueryPlanSignaturePtr> subQuerySignatures, z3::ContextPtr context);
 };
 }// namespace NES::Optimizer
 

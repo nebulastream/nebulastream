@@ -70,6 +70,13 @@ class QueryPlanSignature {
      */
     std::map<std::string, std::vector<z3::ExprPtr>> getCols();
 
+    /**
+     * @brief Validate if this signature is equal to input signature
+     * @param other : the signature to be compared against
+     * @return true if equal else false
+     */
+    bool isEqual(QueryPlanSignaturePtr other);
+
   private:
     QueryPlanSignature(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
     z3::ExprPtr conds;

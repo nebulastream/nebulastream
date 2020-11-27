@@ -29,6 +29,7 @@
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
 #include <z3++.h>
 
 using namespace NES;
@@ -59,22 +60,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithExactPredicates) {
     ExpressionNodePtr predicate = Attribute("value") == 40;
     predicate->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithEqualPredicates) {
@@ -87,22 +89,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithEqualPredicates) {
     ExpressionNodePtr predicate2 = 40 == Attribute("value");
     predicate2->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleExactPredicates) {
@@ -113,22 +116,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleExactPredicates) {
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
     predicate1->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates1) {
@@ -141,22 +145,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates1) {
     ExpressionNodePtr predicate2 = Attribute("id") >= 40 && Attribute("value") == 40;
     predicate2->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates2) {
@@ -169,22 +174,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates2) {
     ExpressionNodePtr predicate2 = Attribute("id") >= 40 && Attribute("value") == 80;
     predicate2->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
@@ -197,23 +203,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
     ExpressionNodePtr predicate2 = Attribute("id") == 40;
     predicate2->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    z3::expr expr = to_expr(*context, Z3_mk_and(*context, 2, arrays));
-    solver.add(expr);
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::sat);
+    ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
@@ -226,23 +232,22 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
     ExpressionNodePtr predicate2 = Attribute("id") >= 40 or Attribute("value") == 40;
     predicate2->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    z3::expr expr = to_expr(*context, Z3_mk_and(*context, 2, arrays));
-    solver.add(expr);
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testMapWithExactExpression) {
@@ -252,22 +257,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithExactExpression) {
     FieldAssignmentExpressionNodePtr expression = Attribute("value") = 40;
     expression->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpression) {
@@ -279,22 +285,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpression) {
     FieldAssignmentExpressionNodePtr expression2 = Attribute("id") = 40;
     expression2->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::sat);
+    ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpressionOnSameField) {
@@ -306,22 +313,23 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpressionOnSameField) {
     FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = 50;
     expression2->inferStamp(schema);
 
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
+    logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
+    logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::sat);
+    ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testSourceWithExactStreamName) {
@@ -330,23 +338,17 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithExactStreamName) {
     //Define Predicate
     auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car", 1);
 
-    //Create Filters
+    //Create source operator
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    z3::expr expr = to_expr(*context, Z3_mk_and(*context, 2, arrays));
-    solver.add(expr);
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(OperatorToZ3ExprUtilTest, testSourceWithDifferentStreamName) {
@@ -356,21 +358,15 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithDifferentStreamName) {
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car", 1);
     auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck", 2);
 
-    //Create Filters
+    //Create source
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     logicalOperator1->inferSignature(context);
-    z3::expr expr1 = logicalOperator1->getSignature();
-    NES_INFO("Expression 1" << expr1);
+    auto sig1 = logicalOperator1->getSignature();
+
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     logicalOperator2->inferSignature(context);
-    z3::expr expr2 = logicalOperator2->getSignature();
-    NES_INFO("Expression 2" << expr2);
+    auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    z3::solver solver(*context);
-    Z3_ast arrays[] = {expr1, !expr2};
-    z3::expr expr = to_expr(*context, Z3_mk_and(*context, 2, arrays));
-    solver.add(expr);
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::sat);
+    ASSERT_FALSE(sig1->isEqual(sig2));
 }

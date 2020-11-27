@@ -21,9 +21,10 @@
 
 namespace z3 {
 class expr;
-typedef std::shared_ptr<z3::expr> ExprPtr;
+typedef std::shared_ptr<expr> ExprPtr;
 
 class context;
+typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
 namespace NES {
@@ -53,7 +54,7 @@ class DataTypeToZ3ExprUtil {
      * @param context: the z3 context
      * @return expression for the field
      */
-    static ReturnValuePtr createForField(std::string fieldName, DataTypePtr dataType, z3::context& context);
+    static ReturnValuePtr createForField(std::string fieldName, DataTypePtr dataType, z3::ContextPtr context);
 
     /**
      * @brief Create Z3 expression for data value of specific type
@@ -61,7 +62,7 @@ class DataTypeToZ3ExprUtil {
      * @param context: Z3 context
      * @return expression for the data value
      */
-    static ReturnValuePtr createForDataValue(ValueTypePtr valueType, z3::context& context);
+    static ReturnValuePtr createForDataValue(ValueTypePtr valueType, z3::ContextPtr context);
 };
 }// namespace NES::Optimizer
 
