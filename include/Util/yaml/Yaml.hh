@@ -23,7 +23,7 @@
 *
 */
 
-#include "Util/yaml/Yaml.hpp"
+#include "Util/yaml/YamlDef.hh"
 #include <cstdio>
 #include <fstream>
 #include <list>

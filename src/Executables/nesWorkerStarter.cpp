@@ -28,6 +28,7 @@
 #include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hh>
+#include <Util/yaml/YamlDef.hh>
 #include <iostream>
 #include <thread>
 
