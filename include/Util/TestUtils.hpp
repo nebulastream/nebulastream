@@ -408,7 +408,7 @@ class TestUtils {
                 int count = std::count(content.begin(), content.end(), '\n');
                 if (expectedLines.size() != count) {
                     NES_DEBUG("checkOutputOrTimeout: number of expected lines " << expectedLines.size()
-                                                                                << " not reached yet with " << count << " lines");
+                                                                                << " not reached yet with " << count << " lines content=" << content);
                     continue;
                 }
 
@@ -419,14 +419,14 @@ class TestUtils {
                     }
                 }
                 if (found == count) {
-                    NES_DEBUG("all lines found");
+                    NES_DEBUG("all lines found final content=" << content);
                     return true;
                 } else {
-                    NES_DEBUG("only " << found << " lines found");
+                    NES_DEBUG("only " << found << " lines found final content" << content);
                 }
             }
         }
-        NES_DEBUG("checkOutputOrTimeout: expected result not reached within set timeout");
+        NES_DEBUG("checkOutputOrTimeout: expected result not reached within set timeout content");
         return false;
     }
 

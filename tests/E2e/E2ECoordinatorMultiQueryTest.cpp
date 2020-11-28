@@ -430,13 +430,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
                               "0,10000,1,307\n"
                               "10000,20000,1,870\n"
                               "0,10000,4,6\n"
-                              "10000,20000,4,0\n"
                               "0,10000,11,30\n"
-                              "10000,20000,11,0\n"
                               "0,10000,12,7\n"
-                              "10000,20000,12,0\n"
-                              "0,10000,16,12\n"
-                              "10000,20000,16,0\n";
+                              "0,10000,16,12\n";
 
     string expectedContent2 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                               "0,20000,1,1177\n"
@@ -542,17 +538,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                               "10000,20000,1,870\n"
                               "5000,15000,1,570\n"
                               "0,10000,1,307\n"
-                              "10000,20000,4,0\n"
-                              "5000,15000,4,0\n"
                               "0,10000,4,6\n"
-                              "10000,20000,11,0\n"
-                              "5000,15000,11,0\n"
                               "0,10000,11,30\n"
-                              "10000,20000,12,0\n"
-                              "5000,15000,12,0\n"
                               "0,10000,12,7\n"
-                              "10000,20000,16,0\n"
-                              "5000,15000,16,0\n"
                               "0,10000,16,12\n";
 
     string expectedContent2 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
