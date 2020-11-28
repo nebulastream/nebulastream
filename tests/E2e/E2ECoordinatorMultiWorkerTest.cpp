@@ -376,13 +376,9 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithTumblingWindowFi
                              "0,10000,1,102\n"
                              "10000,20000,1,290\n"
                              "0,10000,4,2\n"
-                             "10000,20000,4,0\n"
                              "0,10000,11,10\n"
-                             "10000,20000,11,0\n"
                              "0,10000,12,2\n"
-                             "10000,20000,12,0\n"
-                             "0,10000,16,4\n"
-                             "10000,20000,16,0\n";
+                             "0,10000,16,4\n";
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
