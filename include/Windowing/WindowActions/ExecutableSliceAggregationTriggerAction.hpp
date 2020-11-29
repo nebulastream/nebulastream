@@ -130,13 +130,8 @@ class ExecutableSliceAggregationTriggerAction
                           << slices[sliceId].getStartTs() << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()
                           << " currentWatermark=" << currentWatermark << " sliceID=" << sliceId);
 
-                if(executableWindowAggregation->lower(partialAggregates[sliceId]) != 0)
-                {
-                    writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
-                                                            slices[sliceId].getEndTs(), key, partialAggregates[sliceId]);
-
-                    currentNumberOfTuples++;
-                }
+                writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
+                                                        slices[sliceId].getEndTs(), key, partialAggregates[sliceId]);
 
                 //if we would write to a new buffer and we still have tuples to write
                 if (currentNumberOfTuples * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()

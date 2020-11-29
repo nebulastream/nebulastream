@@ -158,9 +158,9 @@ class ExecutableCompleteAggregationTriggerAction
                               << " partAgg=" << executableWindowAggregation->lower(partialAggregates[sliceId]));
                     partialFinalAggregates[windowId] =
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
-                    if (executableWindowAggregation->lower(partialAggregates[sliceId]) != 0) {
-                        windowSliceCnt[windowId]++;
-                    }
+
+                    //we have to do this in order to prevent that we output a window that has no slice associated
+                    windowSliceCnt[windowId]++;
                 } else {
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: condition not true");
                 }
