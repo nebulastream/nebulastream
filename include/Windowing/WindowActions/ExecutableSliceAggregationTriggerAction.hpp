@@ -109,29 +109,34 @@ class ExecutableSliceAggregationTriggerAction
         // For processing time we use the current wall clock as watermark.
         // TODO we should add a allowed lateness to support out of order events
 
-        NES_DEBUG("BaseExecutableWindowActionPtr::aggregateWindows: current watermark is=" << currentWatermark
-                                                                                           << " lastWatermark=" << lastWatermark);
-
         // create result vector of windows
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
 
-        NES_DEBUG("BaseExecutableWindowActionPtr: trigger "
+        NES_DEBUG("ExecutableSliceAggregationTriggerAction: trigger "
                   << slices.size() << " slices "
+                  << " key=" << key << " current watermark is=" << currentWatermark << " lastWatermark=" << lastWatermark
                   << " currentNumberOfTuples=" << currentNumberOfTuples
                   << " tupleBuffer.getNumberOfTuples()=" << tupleBuffer.getNumberOfTuples());
 
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end
+            NES_DEBUG("ExecutableSliceAggregationTriggerAction: check slice start="
+                      << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs() << " key=" << key
+                      << " currentWatermark=" << currentWatermark);
             if (slices[sliceId].getEndTs() <= currentWatermark) {
                 NES_TRACE("ExecutableSliceAggregationTriggerAction write result slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()
                           << " currentWatermark=" << currentWatermark << " sliceID=" << sliceId);
 
-                writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
-                                                        slices[sliceId].getEndTs(), key, partialAggregates[sliceId]);
+                //we only need to send slides that are not empty
+                if (slices[sliceId].getUseCnt() != 0) {
+                    writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
+                                                            slices[sliceId].getEndTs(), key, partialAggregates[sliceId]);
+                    currentNumberOfTuples++;
+                }
 
                 //if we would write to a new buffer and we still have tuples to write
                 if (currentNumberOfTuples * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
@@ -153,7 +158,8 @@ class ExecutableSliceAggregationTriggerAction
                 }
                 store->removeSlicesUntil(sliceId);
             } else {
-                NES_DEBUG("ExecutableSliceAggregationTriggerAction SL: Dont write result");
+                NES_DEBUG("ExecutableSliceAggregationTriggerAction SL: Dont write result because slices[sliceId].getEndTs()="
+                          << slices[sliceId].getEndTs() << "<= currentWatermark=" << currentWatermark);
             }
         }//end of for
         tupleBuffer.setNumberOfTuples(currentNumberOfTuples);

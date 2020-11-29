@@ -287,7 +287,6 @@ class TestUtils {
         NES_INFO("Found global query id " << globalQueryId << " for user query " << queryId);
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        Predicate cmp;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
             //FIXME: handle vector of statistics properly in #977
@@ -298,7 +297,7 @@ class TestUtils {
                 continue;
             }
             uint64_t processed = statistics[0]->getProcessedBuffers();
-            if (cmp(processed, expectedResult)) {
+            if (processed >= expectedResult) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct procBuffer="
                           << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
                           << " procWatermarks=" << statistics[0]->getProcessedWatermarks());

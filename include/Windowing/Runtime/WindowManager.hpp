@@ -23,6 +23,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/Runtime/SliceMetaData.hpp>
 
 namespace NES::Windowing {
 
@@ -47,10 +48,11 @@ class WindowManager {
      * Creates slices for in the window slice store if needed.
      * @tparam PartialAggregateType
      * @param ts current record timestamp for which a slice should exist
+     * @param key, for debugging purposes we need the key
      * @param store the window slice store
      */
     template<class PartialAggregateType>
-    inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store, int64_t key) {
+    inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store, int64_t key = 0) {
         NES_DEBUG("sliceStream for ts=" << ts << " key=" << key);
         // updates the maximal record ts
         // store->updateMaxTs(ts);
@@ -69,14 +71,32 @@ class WindowManager {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
                 NES_DEBUG("WindowManager: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
-                          << store->nextEdge - store->nextEdge - window->getSlide().getTime()
-                          << " nextWindowEnd=" << store->nextEdge << " key=" << key);
+                          << store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge
+                          << " key=" << key);
             } else {
                 NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }
         }
         NES_DEBUG("WindowManager: sliceStream check store-nextEdge=" << store->nextEdge << " <="
                                                                      << " ts=" << ts << " key=" << key);
+
+//        if (store->nextEdge <= ts) {
+//            auto end = windowType->calculateNextWindowEnd(ts);
+//            uint64_t start = 0;
+//            if (windowType->isTumblingWindow()) {
+//                TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
+//                start = end - window->getSize().getTime();
+//            } else if (windowType->isSlidingWindow()) {
+//                SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
+//                start = end - window->getSlide().getTime();
+//            } else {
+//                NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
+//            }
+//            store->nextEdge = end;
+//            NES_DEBUG("append new slide for start=" << start << " end=" << end << " key=" << key);
+//            store->appendSlice(SliceMetaData(start, end));
+//        }
+
         // append new slices if needed
         while (store->nextEdge <= ts) {
             auto currentSlice = store->getCurrentSliceIndex();

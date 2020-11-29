@@ -137,6 +137,7 @@ class ExecutableCompleteAggregationTriggerAction
             NES_DEBUG("aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
                                                                                   << " > lastWatermark=" << lastWatermark);
         }
+
         auto windowSliceCnt = std::vector<uint64_t>(windows.size(), 0);
 
         // allocate partial final aggregates for each window
@@ -152,10 +153,11 @@ class ExecutableCompleteAggregationTriggerAction
                           << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
                           << " window.getEndTs()=" << window.getEndTs()
                           << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
-                if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()) {
+                if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()
+                    && slices[sliceId].getUseCnt() != 0) {
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction: create partial agg windowId="
                               << windowId << " sliceId=" << sliceId << " key=" << key
-                              << " partAgg=" << executableWindowAggregation->lower(partialAggregates[sliceId]));
+                              << " partAgg=" << executableWindowAggregation->lower(partialAggregates[sliceId]) << " useCNt=" << slices[sliceId].getUseCnt() );
                     partialFinalAggregates[windowId] =
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
 
@@ -172,9 +174,9 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
                 auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: write i=" << i << " key=" << key << " value=" << value
-                                                                                 << " window.start()=" << window.getStartTs()
-                                                                                 << " window.getEndTs()=" << window.getEndTs());
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: write i="
+                          << i << " key=" << key << " value=" << value << " window.start()=" << window.getStartTs()
+                          << " window.getEndTs()=" << window.getEndTs() << " windowSliceCnt[i]=" << windowSliceCnt[i]);
                 if (windowSliceCnt[i] != 0) {
                     writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(), key,
                                                value);
