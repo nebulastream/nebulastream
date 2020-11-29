@@ -40,6 +40,7 @@ class WindowSliceStore {
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
             if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
+                sliceMetaData[i].incUseCnt();
                 NES_DEBUG("getSliceIndexByTs for ts=" << ts << " return index=" << i);
                 return i;
             }

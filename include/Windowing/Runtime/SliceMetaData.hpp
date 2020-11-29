@@ -41,9 +41,13 @@ class SliceMetaData {
      */
     uint64_t getEndTs();
 
+    uint64_t getUseCnt();
+
+    void incUseCnt();
   private:
     uint64_t startTs;
     uint64_t endTs;
+    uint64_t useCnt;
 };
 
 }// namespace NES::Windowing
