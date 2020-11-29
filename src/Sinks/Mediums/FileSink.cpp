@@ -108,8 +108,16 @@ bool FileSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
             outputFile.write((char*) buffer.getBuffer(),
                              buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         } else {
-            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
+
+            std::string a = " hello ";
+            const char *b = (char*) buffer.getBuffer();
+            std::string c = a + b;
+            const char *C = c.c_str();
+
+            outputFile.write(C,buffer.getNumberOfTuples()+7);
             auto time =  std::to_string( std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count());
+            outputFile.write((char*)time.c_str(),time.size());
+
         }
     }
     outputFile.flush();
