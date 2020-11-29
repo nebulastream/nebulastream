@@ -461,7 +461,7 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
+TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutputTwoWorker) {
     uint64_t numBuffers = 3;
     uint64_t numTuples = 10;
 
@@ -512,7 +512,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 5));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 4));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     std::ifstream ifs(outputFilePath.c_str());
