@@ -149,15 +149,17 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: window.getStartTs()="
-                          << window.getStartTs() << " slices[sliceId].getStartTs()=" << slices[sliceId].getStartTs()
-                          << " window.getEndTs()=" << window.getEndTs()
-                          << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs());
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: key="
+                          << key << " window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
+                          << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs()
+                          << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()
+                          << " useCnt=" << slices[sliceId].getUseCnt());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()
                     && slices[sliceId].getUseCnt() != 0) {
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction: create partial agg windowId="
                               << windowId << " sliceId=" << sliceId << " key=" << key
-                              << " partAgg=" << executableWindowAggregation->lower(partialAggregates[sliceId]) << " useCNt=" << slices[sliceId].getUseCnt() );
+                              << " partAgg=" << executableWindowAggregation->lower(partialAggregates[sliceId])
+                              << " useCNt=" << slices[sliceId].getUseCnt());
                     partialFinalAggregates[windowId] =
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
 
