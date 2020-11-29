@@ -44,6 +44,7 @@ class WindowSliceStore {
                 return i;
             }
         }
+        NES_ERROR("getSliceIndexByTs for ts=" << ts << " could not find a slice, this should not happen");
         return -1;
     }
 
