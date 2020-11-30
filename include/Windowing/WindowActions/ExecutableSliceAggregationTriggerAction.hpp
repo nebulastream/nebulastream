@@ -131,11 +131,13 @@ class ExecutableSliceAggregationTriggerAction
             if (slices[sliceId].getEndTs() <= currentWatermark) {
                 NES_TRACE("ExecutableSliceAggregationTriggerAction write result slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()
-                          << " currentWatermark=" << currentWatermark << " sliceID=" << sliceId << " recCnt=" << slices[sliceId].getRecordsPerSlice() );
+                          << " currentWatermark=" << currentWatermark << " sliceID=" << sliceId
+                          << " recCnt=" << slices[sliceId].getRecordsPerSlice());
 
                 //TODO: we only need to send slides that are not empty
                 writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
-                                                        slices[sliceId].getEndTs(), key, partialAggregates[sliceId], slices[sliceId].getRecordsPerSlice());
+                                                        slices[sliceId].getEndTs(), key, partialAggregates[sliceId],
+                                                        slices[sliceId].getRecordsPerSlice());
                 currentNumberOfTuples++;
 
                 //if we would write to a new buffer and we still have tuples to write

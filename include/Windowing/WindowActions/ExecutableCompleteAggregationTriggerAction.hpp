@@ -93,8 +93,8 @@ class ExecutableCompleteAggregationTriggerAction
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction: Dispatch last buffer output buffer with "
                       << tupleBuffer.getNumberOfTuples()
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
-                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << " currentWatermark=" << currentWatermark
-                      << " lastWatermark=" << lastWatermark);
+                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
+                      << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
             //forward buffer to next  pipeline stage
             this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
         }
@@ -149,7 +149,7 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction: key="
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: key="
                           << key << " window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs()
                           << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()
@@ -205,7 +205,7 @@ class ExecutableCompleteAggregationTriggerAction
             }//end of for
             //erase partial aggregate and slices  as it was written
             //TODO: enable later
-//            store->removeSlicesUntil(partialFinalAggregates.size());
+            //            store->removeSlicesUntil(partialFinalAggregates.size());
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
