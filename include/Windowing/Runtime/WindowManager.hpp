@@ -18,12 +18,12 @@
 #define NES_INCLUDE_WINDOWING_WINDOWMANAGER_HPP_
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/Runtime/SliceMetaData.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/Runtime/SliceMetaData.hpp>
 
 namespace NES::Windowing {
 

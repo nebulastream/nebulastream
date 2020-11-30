@@ -160,7 +160,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @param originId
    */
     void updateMaxTs(uint64_t ts, uint64_t originId) override {
-        NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId] << " new val="  << std::max(originIdToMaxTsMap[originId], ts));
+        NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
+                                 << " new val=" << std::max(originIdToMaxTsMap[originId], ts));
         originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
     };
 

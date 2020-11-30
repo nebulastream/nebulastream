@@ -26,20 +26,10 @@ uint64_t SliceMetaData::getStartTs() { return startTs; }
 
 void incrementRecordsPerSlice();
 
-uint64_t SliceMetaData::getRecordsPerSlice()
-{
-    return recordsPerSlice;
-}
+uint64_t SliceMetaData::getRecordsPerSlice() { return recordsPerSlice; }
 
-void SliceMetaData::incrementRecordsPerSlice()
-{
-    recordsPerSlice++;
-}
+void SliceMetaData::incrementRecordsPerSlice() { recordsPerSlice++; }
 
-void SliceMetaData::incrementRecordsPerSliceByValue(uint64_t value)
-{
-    recordsPerSlice += value;
-}
-
+void SliceMetaData::incrementRecordsPerSliceByValue(uint64_t value) { recordsPerSlice += value; }
 
 }// namespace NES::Windowing
