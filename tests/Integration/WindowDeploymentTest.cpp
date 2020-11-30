@@ -52,6 +52,7 @@ class WindowDeploymentTest : public testing::Test {
     std::string ipAddress = "127.0.0.1";
 };
 
+#if 0
 /**
  * @brief test central tumbling window and event time
  */
@@ -277,7 +278,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindow) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
-
+#endif
 /**
  * @brief test distributed tumbling window and event time
  */
@@ -360,6 +361,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
+#if 0
 
 /**
  * @brief test distributed sliding window and event time
@@ -776,5 +778,5 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
-
+#endif
 }// namespace NES
