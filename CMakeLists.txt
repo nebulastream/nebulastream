@@ -292,6 +292,8 @@ target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
     target_link_libraries(nesCoordinator PRIVATE ${GRPC_LIBRARIES})
 endif ()
+set_target_properties(nesCoordinator PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC ${LIBRARIES} nes)
@@ -300,6 +302,8 @@ target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
     target_link_libraries(nesWorker PRIVATE ${GRPC_LIBRARIES})
 endif ()
+set_target_properties(nesWorker PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
 
 # Add tests with command
 enable_testing()

@@ -93,8 +93,8 @@ int main(int argc, const char* argv[]) {
         return EXIT_FAILURE;
     }
     if (vm.count("help")) {
-        std::cerr << "Basic Command Line Parameter ";
-        std::cerr << serverOptions;
+        std::cout << "Basic Command Line Parameter ";
+        std::cout << serverOptions;
         return 0;
     }
 
@@ -126,7 +126,7 @@ int main(int argc, const char* argv[]) {
     bool enableQueryMerging = config["enableQueryMerging"].As<bool>();
     auto logLevel = config["logLevel"].As<string>();
 
-    std::cerr << "Read Coordinator Config. restPort: "<< restPort << " , rpcPort: " << rpcPort <<" , logLevel: " << logLevel << std::endl;
+    std::cout << "Read Coordinator Config. restPort: "<< restPort << " , rpcPort: " << rpcPort <<" , logLevel: " << logLevel << std::endl;
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 

@@ -172,8 +172,8 @@ int main(int argc, char** argv) {
     }
 
     if (vm.count("help")) {
-        NES_INFO("Basic Command Line Parameter ");
-        NES_INFO(desc);
+        std::cout << "Basic Command Line Parameter " << std::endl;
+        std::cout << desc << std::endl;
         return 0;
     }
 
@@ -182,6 +182,7 @@ int main(int argc, char** argv) {
     uint64_t localPort = rpcPort;
     uint64_t zmqDataPort = dataPort;
     cout << "port=" << localPort << "localport=" << std::to_string(localPort) << " pid=" << getpid() << endl;
+    //TODO Hier ist das Problem, finde heraus, was es ist!
     NesWorkerPtr wrk =
         std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, localPort, zmqDataPort, numberOfSlots,
                                     NodeType::Sensor,// TODO what is this?!
