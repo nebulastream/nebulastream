@@ -41,13 +41,16 @@ class SliceMetaData {
      */
     uint64_t getEndTs();
 
-    uint64_t getUseCnt();
+    uint64_t getRecordsPerSlice();
 
-    void incUseCnt();
+    void incrementRecordsPerSlice();
+
+    void incrementRecordsPerSliceByValue(uint64_t value);
+
   private:
     uint64_t startTs;
     uint64_t endTs;
-    uint64_t useCnt;
+    uint64_t recordsPerSlice;
 };
 
 }// namespace NES::Windowing

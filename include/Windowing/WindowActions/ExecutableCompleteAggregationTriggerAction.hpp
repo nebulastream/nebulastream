@@ -153,13 +153,13 @@ class ExecutableCompleteAggregationTriggerAction
                           << key << " window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs()
                           << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()
-                          << " useCnt=" << slices[sliceId].getUseCnt());
+                          << " recCnt=" << slices[sliceId].getRecordsPerSlice());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()
-                    && slices[sliceId].getUseCnt() != 0) {
+                    && slices[sliceId].getRecordsPerSlice() != 0) {
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction: create partial agg windowId="
                               << windowId << " sliceId=" << sliceId << " key=" << key
                               << " partAgg=" << executableWindowAggregation->lower(partialAggregates[sliceId])
-                              << " useCNt=" << slices[sliceId].getUseCnt());
+                              << " recCnt=" << slices[sliceId].getRecordsPerSlice());
                     partialFinalAggregates[windowId] =
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
 

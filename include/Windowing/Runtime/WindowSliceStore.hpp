@@ -40,7 +40,6 @@ class WindowSliceStore {
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
             if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
-                sliceMetaData[i].incUseCnt();
                 NES_DEBUG("getSliceIndexByTs for ts=" << ts << " return index=" << i);
                 return i;
             }
@@ -65,6 +64,7 @@ class WindowSliceStore {
      */
     inline uint64_t getCurrentSliceIndex() { return sliceMetaData.size() - 1; }
 
+    inline void incrementRecordCnt(uint64_t slideIdx) { sliceMetaData[slideIdx].incrementRecordsPerSlice(); }
     /**
      * @brief Remove slices between index 0 and pos.
      * @param pos the position till we want to remove slices.
