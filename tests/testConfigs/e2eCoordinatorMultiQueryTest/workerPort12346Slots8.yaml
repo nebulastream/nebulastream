@@ -76,3 +76,6 @@ numberOfSlots: 8
 
 # The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
 logLevel: LOG_DEBUG
+
+# Set the number of worker threads
+numWorkerThreads: 1

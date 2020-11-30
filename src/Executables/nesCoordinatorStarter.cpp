@@ -116,11 +116,13 @@ int main(int argc, const char* argv[]) {
     // Initializing variables
     auto restPort = config["restPort"].As<uint16_t>();
     auto rpcPort = config["coordinatorPort"].As<uint16_t>();
-    auto serverIp = config["serverIp"].As<string>();
+    auto restIp = config["serverIp"].As<string>();
+    auto rpcIp = config["rpcIp"].As<string>();
     auto numberOfSlots = config["numberOfSlots"].As<uint16_t>();
     bool enableQueryMerging = config["enableQueryMerging"].As<bool>();
     auto logLevel = config["logLevel"].As<string>();
 
+    std::cerr << "Current path location is " << fs::current_path() << '\n';
     std::cerr << "Read Coordinator Config. restPort: "<< restPort << " , rpcPort: " << rpcPort <<" , logLevel: " << logLevel << std::endl;
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
@@ -129,9 +131,6 @@ int main(int argc, const char* argv[]) {
         const auto processorCount = std::thread::hardware_concurrency();
         numberOfSlots = processorCount;
     }
-
-    NES_DEBUG("start coordinator ip=" << serverIp << " with rpc port " << rpcPort << " restPort=" << restPort
-                                      << " numberOfSlots=" << numberOfSlots);
 
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd =

@@ -153,6 +153,7 @@ int main(int argc, char** argv) {
     auto parentId = config["parentId"].As<string>();
     auto logLevel = config["logLevel"].As<string>();
     auto numberOfSlots = config["numberOfSlots"].As<uint16_t>();
+    uint16_t numWorkerThreads = config["numWorkerThreads"].As<uint16_t>();
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
@@ -168,16 +169,17 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    //TODO remote calls to cout
-    size_t localPort = rpcPort;
-    size_t zmqDataPort = dataPort;
+    // TODO remote calls to cout
+
+    uint64_t localPort = rpcPort;
+    uint64_t zmqDataPort = dataPort;
     cout << "port=" << localPort << "localport=" << std::to_string(localPort) << " pid=" << getpid() << endl;
     NesWorkerPtr wrk =
         std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, localPort, zmqDataPort, numberOfSlots,
                                     NodeType::Sensor,// TODO what is this?!
                                     numWorkerThreads);
 
-    //register phy stream if nessesary
+    //register phy stream if necessary
     if (sourceType != "") {
         bool endless = endlessRepeat == "on";
         bool skip = skipHeader;
