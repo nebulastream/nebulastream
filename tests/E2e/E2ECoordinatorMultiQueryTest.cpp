@@ -62,13 +62,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12346 --numberOfSlots=8";
+    string cmdCoord = "./nesCoordinator --coordinatorPort=12347 --numberOfSlots=8";
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();
     sleep(1);
 
-    string cmdWrk = "./nesWorker --coordinatorPort=12346 --numberOfSlots=8";
+    string cmdWrk = "./nesWorker --coordinatorPort=12347 --numberOfSlots=8";
     bp::child workerProc(cmdWrk.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
 
@@ -256,7 +256,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     remove(pathPattern1.c_str());
     remove(pathPattern2.c_str());
 
-    string path = "./nesCoordinator --coordinatorPort=12346";
+    string path = "./nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -271,7 +271,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 =
-        "./nesWorker --coordinatorPort=12346 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource "
+        "./nesWorker --coordinatorPort=12348 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource "
         "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
@@ -468,7 +468,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     remove(outputFilePath.c_str());
     remove(outputFilePath2.c_str());
 
-    string path = "./nesCoordinator --coordinatorPort=12346";
+    string path = "./nesCoordinator --coordinatorPort=12344";
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -482,7 +482,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 =
-        "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
+        "./nesWorker --coordinatorPort=12344 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
         "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
