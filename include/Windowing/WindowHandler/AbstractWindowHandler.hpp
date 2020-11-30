@@ -125,7 +125,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
 
             std::stringstream ss;
             for (auto& entry : originIdToMaxTsMap) {
-                ss << " key=" << entry.first << " val=" << entry.second << std::endl;
+                ss << " id=" << entry.first << " max=" << entry.second;
             }
             NES_DEBUG("map=" << ss.str());
             NES_DEBUG("getMinWatermark() return min=" << min->second);
