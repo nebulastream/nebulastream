@@ -191,6 +191,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
     w->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
@@ -271,6 +272,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
     w->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
@@ -350,6 +352,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
     windowHandler->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
