@@ -80,23 +80,6 @@ class WindowManager {
         NES_DEBUG("WindowManager: sliceStream check store-nextEdge=" << store->nextEdge << " <="
                                                                      << " ts=" << ts << " key=" << key);
 
-//        if (store->nextEdge <= ts) {
-//            auto end = windowType->calculateNextWindowEnd(ts);
-//            uint64_t start = 0;
-//            if (windowType->isTumblingWindow()) {
-//                TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
-//                start = end - window->getSize().getTime();
-//            } else if (windowType->isSlidingWindow()) {
-//                SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
-//                start = end - window->getSlide().getTime();
-//            } else {
-//                NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
-//            }
-//            store->nextEdge = end;
-//            NES_DEBUG("append new slide for start=" << start << " end=" << end << " key=" << key);
-//            store->appendSlice(SliceMetaData(start, end));
-//        }
-
         // append new slices if needed
         while (store->nextEdge <= ts) {
             auto currentSlice = store->getCurrentSliceIndex();

@@ -41,10 +41,21 @@ class SliceMetaData {
      */
     uint64_t getEndTs();
 
+    /**
+     * @brief method to get the number of tuples per slice
+     * @return number of tuples per slice
+     */
     uint64_t getRecordsPerSlice();
 
+    /**
+     * @brief method to increment the number of tuples per slice by one
+     */
     void incrementRecordsPerSlice();
 
+    /**
+     * @brief method to increment the number of tuples per slice by value
+     * @param value
+     */
     void incrementRecordsPerSliceByValue(uint64_t value);
 
   private:
