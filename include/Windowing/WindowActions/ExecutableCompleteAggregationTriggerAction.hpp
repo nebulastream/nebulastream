@@ -149,7 +149,7 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction: key="
+                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction: key="
                           << key << " window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs()
                           << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()

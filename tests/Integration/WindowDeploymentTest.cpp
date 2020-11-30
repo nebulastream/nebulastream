@@ -120,7 +120,6 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
-
 TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -167,7 +166,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
