@@ -120,7 +120,7 @@ int main(int argc, const char* argv[]) {
     // Initializing variables
     auto restPort = config["restPort"].As<uint16_t>();
     auto rpcPort = config["coordinatorPort"].As<uint16_t>();
-    auto restIp = config["serverIp"].As<string>();
+    auto restIp = config["restIp"].As<string>();
     auto rpcIp = config["rpcIp"].As<string>();
     auto numberOfSlots = config["numberOfSlots"].As<uint16_t>();
     bool enableQueryMerging = config["enableQueryMerging"].As<bool>();
