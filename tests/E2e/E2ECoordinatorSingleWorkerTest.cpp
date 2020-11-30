@@ -19,6 +19,8 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
+#include <filesystem>
+
 
 #define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
@@ -41,6 +43,7 @@ using namespace concurrency::streams;
 // Asynchronous streams
 namespace bp = boost::process;
 //#define _XPLATSTR(x) _XPLATSTR(x)
+namespace fs = std::filesystem;
 namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
@@ -68,6 +71,8 @@ class E2ECoordinatorSingleWorkerTest : public testing::Test {
 };
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput) {
+    std::cerr << "Current path location is " << fs::current_path() << '\n';
+
     NES_INFO(" start coordinator");
 
     string coordinatorRPCPort = std::to_string(rpcPort);
