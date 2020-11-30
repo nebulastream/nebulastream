@@ -53,12 +53,14 @@ class ExecutableSliceAggregationTriggerAction
             this->windowSchema = Schema::create()
                                      ->addField(createField("start", UINT64))
                                      ->addField(createField("end", UINT64))
+                                     ->addField(createField("cnt", UINT64))
                                      ->addField("key", windowDefinition->getOnKey()->getStamp())
                                      ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         } else {
             this->windowSchema = Schema::create()
                                      ->addField(createField("start", UINT64))
                                      ->addField(createField("end", UINT64))
+                                     ->addField(createField("cnt", UINT64))
                                      ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         }
         windowTupleLayout = createRowLayout(this->windowSchema);
@@ -129,14 +131,12 @@ class ExecutableSliceAggregationTriggerAction
             if (slices[sliceId].getEndTs() <= currentWatermark) {
                 NES_TRACE("ExecutableSliceAggregationTriggerAction write result slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()
-                          << " currentWatermark=" << currentWatermark << " sliceID=" << sliceId);
+                          << " currentWatermark=" << currentWatermark << " sliceID=" << sliceId << " recCnt=" << slices[sliceId].getRecordsPerSlice() );
 
-                //we only need to send slides that are not empty
-                if (slices[sliceId].getUseCnt() != 0) {
-                    writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
-                                                            slices[sliceId].getEndTs(), key, partialAggregates[sliceId]);
-                    currentNumberOfTuples++;
-                }
+                //TODO: we only need to send slides that are not empty
+                writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
+                                                        slices[sliceId].getEndTs(), key, partialAggregates[sliceId], slices[sliceId].getRecordsPerSlice());
+                currentNumberOfTuples++;
 
                 //if we would write to a new buffer and we still have tuples to write
                 if (currentNumberOfTuples * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
@@ -178,14 +178,15 @@ class ExecutableSliceAggregationTriggerAction
     */
     template<typename ValueType>
     void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
-                           ValueType value) {
+                           ValueType value, uint64_t cnt) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
+        windowTupleLayout->getValueField<uint64_t>(index, 2)->write(tupleBuffer, cnt);
         if (windowDefinition->isKeyed()) {
-            windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
-            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+            windowTupleLayout->getValueField<KeyType>(index, 3)->write(tupleBuffer, key);
+            windowTupleLayout->getValueField<ValueType>(index, 4)->write(tupleBuffer, value);
         } else {
-            windowTupleLayout->getValueField<ValueType>(index, 2)->write(tupleBuffer, value);
+            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
         }
     }
 
