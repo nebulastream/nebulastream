@@ -88,30 +88,34 @@ int main(int argc, const char* argv[]) {
         po::store(po::command_line_parser(argc, argv).options(serverOptions).run(), vm);
         po::notify(vm);
     } catch (const std::exception& e) {
-        std::cerr << "Failure while parsing connection parameters!" << std::endl;
+        std::cerr << "NESCOORDINATORSTARTER: Failure while parsing connection parameters!" << std::endl;
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
     if (vm.count("help")) {
-        NES_INFO("Basic Command Line Parameter ");
-        NES_INFO(serverOptions);
+        std::cerr << "Basic Command Line Parameter ";
+        std::cerr << serverOptions;
         return 0;
     }
 
+    std::cerr << "NESCOORDINATORSTARTER: Read config from file: " << configurationFilePath);
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
     NES_DEBUG("Read config from file: " << configurationFilePath);
 
     if (configurationFilePath.empty()) {
-        NES_INFO("NESCOORDINATORSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES "
-                 "Coordinator Configuration YAML file.");
+        std::cerr << "NESCOORDINATORSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES "
+                 "Coordinator Configuration YAML file.";
         return EXIT_FAILURE;
     }
-    Yaml::Node config;
-    try {
-        Yaml::Parse(config, configurationFilePath.c_str());
-    } catch (const std::exception& e) {
-        NES_ERROR("NESWORKERSTARTER: Cannot read configuration file with file path: " << configurationFilePath);
+
+    struct stat buffer{};
+    if (stat (configurationFilePath.c_str(), &buffer) == 0){
+        std::cerr << "NESCOORDINATORSTARTER: Configuration file not found at: " << configurationFilePath;
+        return EXIT_FAILURE;
     }
+
+    Yaml::Node config;
+    Yaml::Parse(config, configurationFilePath.c_str());
 
     // Initializing variables
     auto restPort = config["restPort"].As<uint16_t>();
