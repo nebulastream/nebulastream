@@ -30,6 +30,7 @@
 #include <Util/yaml/Yaml.hh>
 #include <Util/yaml/YamlDef.hh>
 #include <iostream>
+#include <sys/stat.h>
 #include <thread>
 
 namespace po = boost::program_options;
@@ -125,6 +126,13 @@ int main(int argc, char** argv) {
         NES_INFO("NESWORKERSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES Coordinator Configuration YAML file.");
         return EXIT_FAILURE;
     }
+
+    struct stat buffer{};
+    if (stat (configurationFilePath.c_str(), &buffer) == 0){
+        std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configurationFilePath;
+        return EXIT_FAILURE;
+    }
+
     Yaml::Node config;
     try {
         Yaml::Parse(config, configurationFilePath.c_str());
@@ -153,7 +161,7 @@ int main(int argc, char** argv) {
     auto parentId = config["parentId"].As<string>();
     auto logLevel = config["logLevel"].As<string>();
     auto numberOfSlots = config["numberOfSlots"].As<uint16_t>();
-    uint16_t numWorkerThreads = config["numWorkerThreads"].As<uint16_t>();
+    auto numWorkerThreads = config["numWorkerThreads"].As<uint16_t>();
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
