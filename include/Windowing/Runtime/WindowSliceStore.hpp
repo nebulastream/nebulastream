@@ -64,7 +64,12 @@ class WindowSliceStore {
      */
     inline uint64_t getCurrentSliceIndex() { return sliceMetaData.size() - 1; }
 
+    /**
+     * @brief this method increment the numbner of tuples per slice for the slice at idx
+     * @param slideIdx
+     */
     inline void incrementRecordCnt(uint64_t slideIdx) { sliceMetaData[slideIdx].incrementRecordsPerSlice(); }
+
     /**
      * @brief Remove slices between index 0 and pos.
      * @param pos the position till we want to remove slices.

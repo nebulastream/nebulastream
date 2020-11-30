@@ -138,12 +138,11 @@ class ExecutableCompleteAggregationTriggerAction
                                                                                   << " > lastWatermark=" << lastWatermark);
         }
 
-        auto windowSliceCnt = std::vector<uint64_t>(windows.size(), 0);
+        auto recordsPerWindow = std::vector<uint64_t>(windows.size(), 0);
 
         // allocate partial final aggregates for each window
         //because we trigger each second, there could be multiple windows ready
         auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
-        //        auto partialFinalAggregates = std::vector<PartialAggregateType>();
 
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
@@ -164,7 +163,7 @@ class ExecutableCompleteAggregationTriggerAction
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
 
                     //we have to do this in order to prevent that we output a window that has no slice associated
-                    windowSliceCnt[windowId]++;
+                    recordsPerWindow[windowId]++;
                 } else {
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: condition not true");
                 }
@@ -178,8 +177,8 @@ class ExecutableCompleteAggregationTriggerAction
                 auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
                 NES_DEBUG("ExecutableCompleteAggregationTriggerAction: write i="
                           << i << " key=" << key << " value=" << value << " window.start()=" << window.getStartTs()
-                          << " window.getEndTs()=" << window.getEndTs() << " windowSliceCnt[i]=" << windowSliceCnt[i]);
-                if (windowSliceCnt[i] != 0) {
+                          << " window.getEndTs()=" << window.getEndTs() << " recordsPerWindow[i]=" << recordsPerWindow[i]);
+                if (recordsPerWindow[i] != 0) {
                     writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(), key,
                                                value);
                     currentNumberOfTuples++;
