@@ -128,8 +128,8 @@ int main(int argc, char** argv) {
     }
 
     struct stat buffer{};
-    if (stat (configurationFilePath.c_str(), &buffer) == 0){
-        std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configurationFilePath;
+    if (stat (configurationFilePath.c_str(), &buffer) == -1){
+        std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configurationFilePath << '\n';
         return EXIT_FAILURE;
     }
 

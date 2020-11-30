@@ -109,8 +109,8 @@ int main(int argc, const char* argv[]) {
     }
 
     struct stat buffer{};
-    if (stat (configurationFilePath.c_str(), &buffer) == 0){
-        std::cerr << "NESCOORDINATORSTARTER: Configuration file not found at: " << configurationFilePath;
+    if (stat (configurationFilePath.c_str(), &buffer) == -1){
+        std::cerr << "NESCOORDINATORSTARTER: Configuration file not found at: " << configurationFilePath << '\n';
         return EXIT_FAILURE;
     }
 
@@ -126,7 +126,6 @@ int main(int argc, const char* argv[]) {
     bool enableQueryMerging = config["enableQueryMerging"].As<bool>();
     auto logLevel = config["logLevel"].As<string>();
 
-    std::cerr << "Current path location is " << fs::current_path() << '\n';
     std::cerr << "Read Coordinator Config. restPort: "<< restPort << " , rpcPort: " << rpcPort <<" , logLevel: " << logLevel << std::endl;
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
