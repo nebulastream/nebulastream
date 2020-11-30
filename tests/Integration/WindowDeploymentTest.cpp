@@ -94,9 +94,6 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,features_properties_capacity:INTEGER\n"
                              "1262343610000,1262343620000,1,736\n"
                              "1262343620000,1262343630000,2,1348\n"
@@ -111,6 +108,10 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -120,6 +121,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
+
 TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -168,9 +170,6 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "1000,2000,1,1\n"
                              "2000,3000,1,2\n"
@@ -180,6 +179,10 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
                              "2000,3000,16,2\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -242,10 +245,6 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     NES_DEBUG("wakeup");
 
     ifstream my_file("outputLog.out");
@@ -264,6 +263,10 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindow) {
                              "0,10000,16,12\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -334,15 +337,15 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "1000,2000,1,34\n"
                              "2000,3000,2,56\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -418,10 +421,6 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     ifstream my_file("outputLog.out");
     EXPECT_TRUE(my_file.good());
 
@@ -437,6 +436,10 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
                              "0,10000,16,24\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -502,10 +505,6 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
@@ -514,6 +513,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindow) {
                              "2000,3000,6\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -575,10 +578,6 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     NES_DEBUG("wakeup");
 
     ifstream my_file("outputLog.out");
@@ -593,6 +592,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindow) {
                              "0,10000,362\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -663,10 +666,6 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
@@ -675,6 +674,10 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindow) {
                              "2000,3000,12\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -750,15 +753,15 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
                              "5000,15000,1140\n"
                              "0,10000,724\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
