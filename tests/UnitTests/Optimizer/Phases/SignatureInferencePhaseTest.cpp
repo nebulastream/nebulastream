@@ -31,7 +31,7 @@
 
 namespace NES::Optimizer {
 
-class Z3ExpressionInferencePhaseTest : public testing::Test {
+class SignatureInferencePhaseTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -52,7 +52,7 @@ class Z3ExpressionInferencePhaseTest : public testing::Test {
 /**
  * @brief In this test we execute query merger phase on a single invalid query plan.
  */
-TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
+TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query without assigning it a query id.");
