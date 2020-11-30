@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -65,19 +66,19 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3ExpressionInferencePhase = SignatureInferencePhase::create(context);
+    auto signatureInferencePhase = SignatureInferencePhase::create(context);
 
     auto query1 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan1 = query1.getQueryPlan();
 
     typeInferencePhase->execute(plan1);
-    z3ExpressionInferencePhase->execute(plan1);
+    signatureInferencePhase->execute(plan1);
 
     auto query2 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan2 = query2.getQueryPlan();
 
     typeInferencePhase->execute(plan2);
-    z3ExpressionInferencePhase->execute(plan2);
+    signatureInferencePhase->execute(plan2);
 
     auto mapOperators1 = plan1->getOperatorByType<MapLogicalOperatorNode>();
     auto mapOperators2 = plan2->getOperatorByType<MapLogicalOperatorNode>();
@@ -85,13 +86,7 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     ASSERT_EQ(mapOperators1.size(), 1);
     ASSERT_EQ(mapOperators2.size(), 1);
 
-    auto context = z3ExpressionInferencePhase->getContext();
-    z3::solver solver(*context);
-
-    Z3_ast arrays[] = {mapOperators1[0]->getSignature(), !mapOperators2[0]->getSignature()};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays)));
-    z3::check_result result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(mapOperators1[0]->getSignature()->isEqual(mapOperators2[0]->getSignature()));
 
     auto srcOperators1 = plan1->getOperatorByType<SourceLogicalOperatorNode>();
     auto srcOperators2 = plan2->getOperatorByType<SourceLogicalOperatorNode>();
@@ -99,9 +94,6 @@ TEST_F(Z3ExpressionInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     ASSERT_EQ(srcOperators1.size(), 1);
     ASSERT_EQ(srcOperators2.size(), 1);
 
-    Z3_ast arrays1[] = {srcOperators1[0]->getSignature(), !srcOperators2[0]->getSignature()};
-    solver.add(to_expr(*context, Z3_mk_and(*context, 2, arrays1)));
-    result = solver.check();
-    ASSERT_EQ(result, z3::unsat);
+    ASSERT_TRUE(srcOperators1[0]->getSignature()->isEqual(srcOperators2[0]->getSignature()));
 }
 }// namespace NES::Optimizer

@@ -1014,7 +1014,7 @@ TEST_F(LogicalOperatorNodeTest, getAndFlattenAllSuccessorsNoCycle) {
     expected.push_back(filterOp2);
     expected.push_back(filterOp4);
 
-    children = filterOp6->getAndFlattenAllChildren();
+    children = filterOp6->getAndFlattenAllChildren(true);
     EXPECT_EQ(children.size(), expected.size());
 
     for (u_int64_t i = 0; i < children.size(); i++) {
@@ -1041,7 +1041,7 @@ TEST_F(LogicalOperatorNodeTest, getAndFlattenAllSuccessorsForCycle) {
     expected.push_back(filterOp2);
     expected.push_back(filterOp4);
 
-    children = filterOp6->getAndFlattenAllChildren();
+    children = filterOp6->getAndFlattenAllChildren(false);
     EXPECT_EQ(children.size(), expected.size());
     for (u_int64_t i = 0; i < children.size(); i++) {
         EXPECT_TRUE(children[i]->equal(expected[i]));
