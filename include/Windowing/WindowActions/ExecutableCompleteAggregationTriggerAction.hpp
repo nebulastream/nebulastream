@@ -93,7 +93,8 @@ class ExecutableCompleteAggregationTriggerAction
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction: Dispatch last buffer output buffer with "
                       << tupleBuffer.getNumberOfTuples()
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
-                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
+                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << " currentWatermark=" << currentWatermark
+                      << " lastWatermark=" << lastWatermark);
             //forward buffer to next  pipeline stage
             this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
         }
@@ -163,7 +164,7 @@ class ExecutableCompleteAggregationTriggerAction
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
 
                     //we have to do this in order to prevent that we output a window that has no slice associated
-                    recordsPerWindow[windowId]++;
+                    recordsPerWindow[windowId] += slices[sliceId].getRecordsPerSlice();
                 } else {
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction CC: condition not true");
                 }
@@ -189,7 +190,7 @@ class ExecutableCompleteAggregationTriggerAction
                     && i + 1 < partialFinalAggregates.size()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction: Dispatch output buffer with "
+                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction: Dispatch intermediate output buffer with "
                               << currentNumberOfTuples
                               << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
@@ -203,7 +204,8 @@ class ExecutableCompleteAggregationTriggerAction
                 }
             }//end of for
             //erase partial aggregate and slices  as it was written
-            store->removeSlicesUntil(partialFinalAggregates.size());
+            //TODO: enable later
+//            store->removeSlicesUntil(partialFinalAggregates.size());
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
