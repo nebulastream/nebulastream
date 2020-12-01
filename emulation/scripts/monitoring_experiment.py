@@ -17,7 +17,7 @@ version = "2"
 
 # types are None, "prometheus", "nes"
 types = [None, "prometheus", "nes"]
-monitoring_type = types[2]
+monitoring_type = types[0]
 
 
 def readDockerStats(containerIters, influxTable, topology, system, version, runtime, iteration, description, monitoring):
