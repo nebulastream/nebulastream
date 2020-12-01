@@ -55,6 +55,9 @@ class TimeCharacteristic {
      */
     AttributeFieldPtr getField();
 
+    std::string toString();
+    std::string getTypeAsString();
+
   private:
     Type type;
     AttributeFieldPtr field;

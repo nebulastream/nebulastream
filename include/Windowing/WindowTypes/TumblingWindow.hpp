@@ -66,6 +66,8 @@ class TumblingWindow : public WindowType {
     */
     TimeMeasure getSize();
 
+    std::string toString() override;
+
   private:
     TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;

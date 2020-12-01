@@ -38,12 +38,6 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
     DataTypePtr getFinalAggregateStamp() override;
 
     /**
-     * @brief Returns the type of this aggregation.
-     * @return WindowAggregationDescriptor::Type
-     */
-    Type getType() override;
-
-    /**
      * @brief Infers the stamp of the expression given the current schema.
      * @param SchemaPtr
      */

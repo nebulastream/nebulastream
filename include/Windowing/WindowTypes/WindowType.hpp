@@ -55,7 +55,9 @@ class WindowType {
     */
     virtual bool isSlidingWindow();
 
-  private:
+    virtual std::string toString() = 0;
+
+  protected:
     TimeCharacteristicPtr timeCharacteristic;
 };
 

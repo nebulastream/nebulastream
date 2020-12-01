@@ -15,18 +15,23 @@
 */
 
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-
+#include <sstream>
 namespace NES::Windowing {
 
 WindowTriggerPolicyPtr OnTimeTriggerPolicyDescription::create(uint64_t triggerTimeInMs) {
     return std::make_shared<OnTimeTriggerPolicyDescription>(OnTimeTriggerPolicyDescription(std::move(triggerTimeInMs)));
 }
-
 TriggerType OnTimeTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
 uint64_t OnTimeTriggerPolicyDescription::getTriggerTimeInMs() const { return triggerTimeInMs; }
 
 OnTimeTriggerPolicyDescription::OnTimeTriggerPolicyDescription(uint64_t triggerTimeInMs)
     : BaseWindowTriggerPolicyDescriptor(triggerOnTime), triggerTimeInMs(triggerTimeInMs) {}
+
+std::string OnTimeTriggerPolicyDescription::toString() {
+    std::stringstream ss;
+    ss << getTypeAsString() << "triggerTimeInMs=" << triggerTimeInMs;
+    return ss.str();
+}
 
 }// namespace NES::Windowing

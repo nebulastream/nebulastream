@@ -140,6 +140,8 @@ class LogicalWindowDefinition {
     */
     WindowActionDescriptorPtr getTriggerAction() const;
 
+    std::string toString();
+
   private:
     WindowAggregationPtr windowAggregation;
     WindowTriggerPolicyPtr triggerPolicy;

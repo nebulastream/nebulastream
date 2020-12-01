@@ -22,6 +22,8 @@ WindowTriggerPolicyPtr OnRecordTriggerPolicyDescription::create() {
     return std::make_shared<OnRecordTriggerPolicyDescription>(OnRecordTriggerPolicyDescription());
 }
 
+std::string OnRecordTriggerPolicyDescription::toString() { return getTypeAsString(); }
+
 TriggerType OnRecordTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
 OnRecordTriggerPolicyDescription::OnRecordTriggerPolicyDescription() : BaseWindowTriggerPolicyDescriptor(triggerOnRecord) {}

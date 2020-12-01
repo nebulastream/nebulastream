@@ -30,6 +30,10 @@ class BaseWindowActionDescriptor {
      */
     virtual ActionType getActionType() = 0;
 
+    std::string toString();
+
+    std::string getTypeAsString();
+
   protected:
     BaseWindowActionDescriptor(ActionType action);
     ActionType action;

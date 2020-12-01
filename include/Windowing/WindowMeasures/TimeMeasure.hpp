@@ -33,6 +33,8 @@ class TimeMeasure : public WindowMeasure {
      */
     [[nodiscard]] uint64_t getTime() const;
 
+    std::string toString() override;
+
   private:
     const uint64_t ms;
 };
