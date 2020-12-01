@@ -126,7 +126,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     auto windowManager = new WindowManager(windowDef->getWindowType());
     uint64_t ts = 10;
 
-    windowManager->sliceStream(ts, store);
+    windowManager->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
@@ -186,16 +186,17 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     uint64_t ts = 7;
     w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store);
+    w->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
     w->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
     w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store);
+    w->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
@@ -266,16 +267,17 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     uint64_t ts = 7;
     w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store);
+    w->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
     w->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
     w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store);
+    w->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
@@ -345,16 +347,17 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     uint64_t ts = 7;
     windowHandler->updateMaxTs(ts, 0);
-    windowHandler->getWindowManager()->sliceStream(ts, store);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
     windowHandler->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
     windowHandler->updateMaxTs(ts, 0);
-    windowHandler->getWindowManager()->sliceStream(ts, store);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;

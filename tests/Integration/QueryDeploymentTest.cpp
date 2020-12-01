@@ -1043,7 +1043,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
+TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
     remove("test1.out");
     remove("test2.out");
 
@@ -1089,6 +1089,10 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployUndeployMultipleQueriesOnTwoWorke
     NES_INFO("QueryDeploymentTest: Remove query " << queryId1);
     queryService->validateAndQueueStopRequest(queryId1);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 2));
 
     NES_INFO("QueryDeploymentTest: Remove query " << queryId2);
     queryService->validateAndQueueStopRequest(queryId2);

@@ -122,6 +122,12 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
                                  [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
                                      return a.second < b.second;
                                  });
+
+            std::stringstream ss;
+            for (auto& entry : originIdToMaxTsMap) {
+                ss << " id=" << entry.first << " max=" << entry.second;
+            }
+            NES_DEBUG("map=" << ss.str());
             NES_DEBUG("getMinWatermark() return min=" << min->second);
             return min->second;
         } else {

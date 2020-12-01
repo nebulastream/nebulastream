@@ -627,17 +627,13 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     auto& resultBuffer = testSink->get(0);
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 6);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
     NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                   "+----------------------------------------------------+\n"
-                                  "|10|14|1|0|\n"
-                                  "|8|12|1|0|\n"
-                                  "|6|10|1|0|\n"
                                   "|4|8|1|10|\n"
                                   "|2|6|1|10|\n"
-                                  "|0|4|1|0|\n"
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);

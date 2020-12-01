@@ -19,5 +19,6 @@ ENV numberOfBuffersToProduce=100
 ENV sourceFrequency=1
 ENV physicalStreamName="exdra_worker_1"
 ENV logicalStreamName="exdra"
+ENV skipHeader="false"
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -467,8 +467,10 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         context->pipelineName = "CompleteWindowType";
     }
 
-    VariableDeclaration var_decl_id =
-        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), context->pipelineName);
+    auto debugDecl = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), context->pipelineName);
+    auto debState = VarDeclStatement(debugDecl).assign(
+        Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
+    context->code->variableInitStmts.push_back(std::make_shared<BinaryOperatorStatement>(debState));
 
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
 
@@ -582,6 +584,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
     sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
+    //only in debug mode add the key for debugging
+    sliceStream.addParameter(VarRef(keyVariableDeclaration));
     auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream));
     context->code->currentCodeInsertionPoint->addStatement(call);
 
@@ -610,6 +614,19 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     generatableWindowAggregation->compileLiftCombine(
         context->code->currentCodeInsertionPoint, partialRef, context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+
+    // get the slice metadata aggregates
+    // auto& partialAggregates = windowState->getPartialAggregates();
+    auto getSliceMetadata = FunctionCallStatement("getSliceMetadata");
+    auto getSliceMetadataCall = VarRef(windowStateVariableDeclaration).accessPtr(getSliceMetadata);
+    VariableDeclaration sliceMetadataDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "sliceMetaData");
+    auto sliceAssigment = VarDeclStatement(sliceMetadataDeclaration).assign(getSliceMetadataCall);
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(sliceAssigment));
+
+    auto getSliceCall = FunctionCallStatement("incrementRecordsPerSlice");
+    auto updateSliceStatement = VarRef(sliceMetadataDeclaration)[current_slice_ref].accessRef(getSliceCall);
+    context->code->currentCodeInsertionPoint->addStatement(updateSliceStatement.createCopy());
 
     if (window) {
         NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
@@ -742,6 +759,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
     sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
+    sliceStream.addParameter(VarRef(keyVariableDeclaration));
     auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream));
     context->code->currentCodeInsertionPoint->addStatement(call);
 
@@ -789,11 +807,14 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
                                                     PipelineContextPtr context) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
-
     auto code = context->code;
+
     context->pipelineName = "combiningWindowType";
-    VariableDeclaration var_decl_id =
-        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), context->pipelineName);
+
+    auto debugDecl = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), context->pipelineName);
+    auto debState = VarDeclStatement(debugDecl).assign(
+        Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
+    context->code->variableInitStmts.push_back(std::make_shared<BinaryOperatorStatement>(debState));
 
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
 
@@ -946,11 +967,21 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         context->code->currentCodeInsertionPoint->addStatement(
             std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
     }
+    // get current timestamp
+    // TODO add support for event time
+
+    auto currentCntVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "cnt");
+    auto getCurrentCntStatement =
+        VarDeclStatement(currentCntVariable)
+            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                VarRef(currentCntVariable)));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentCntStatement));
 
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
     sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
+    sliceStream.addParameter(VarRef(keyVariableDeclaration));
     auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream));
     context->code->currentCodeInsertionPoint->addStatement(call);
 
@@ -979,6 +1010,20 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     generatableWindowAggregation->compileLiftCombine(
         context->code->currentCodeInsertionPoint, partialRef, context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+
+    // get the slice metadata aggregates
+    // auto& partialAggregates = windowState->getPartialAggregates();
+    auto getSliceMetadata = FunctionCallStatement("getSliceMetadata");
+    auto getSliceMetadataCall = VarRef(windowStateVariableDeclaration).accessPtr(getSliceMetadata);
+    VariableDeclaration sliceMetadataDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "sliceMetaData");
+    auto sliceAssigment = VarDeclStatement(sliceMetadataDeclaration).assign(getSliceMetadataCall);
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(sliceAssigment));
+
+    auto getSliceCall = FunctionCallStatement("incrementRecordsPerSliceByValue");
+    getSliceCall.addParameter(VarRef(currentCntVariable));
+    auto updateSliceStatement = VarRef(sliceMetadataDeclaration)[current_slice_ref].accessRef(getSliceCall);
+    context->code->currentCodeInsertionPoint->addStatement(updateSliceStatement.createCopy());
 
     if (window) {
         NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "

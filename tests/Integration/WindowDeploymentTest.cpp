@@ -55,7 +55,7 @@ class WindowDeploymentTest : public testing::Test {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTime) {
+TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -85,7 +85,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     string query =
         "Query::from(\"exdra\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
         "Seconds(10)), Sum(Attribute(\"features_properties_capacity\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -94,122 +94,95 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
+    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,features_properties_capacity:INTEGER\n"
+                             "1262343610000,1262343620000,1,736\n"
+                             "1262343620000,1262343630000,2,1348\n"
+                             "1262343630000,1262343640000,3,4575\n"
+                             "1262343640000,1262343650000,4,1358\n"
+                             "1262343650000,1262343660000,5,1288\n"
+                             "1262343660000,1262343670000,6,3458\n"
+                             "1262343670000,1262343680000,7,1128\n"
+                             "1262343680000,1262343690000,8,1079\n"
+                             "1262343690000,1262343700000,9,2071\n"
+                             "1262343700000,1262343710000,10,2632\n";
+
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,features_properties_capacity:INTEGER\n"
-                             "1262343610000,1262343620000,1,736\n"
-                             "1262343620000,1262343630000,1,0\n"
-                             "1262343630000,1262343640000,1,0\n"
-                             "1262343640000,1262343650000,1,0\n"
-                             "1262343650000,1262343660000,1,0\n"
-                             "1262343660000,1262343670000,1,0\n"
-                             "1262343670000,1262343680000,1,0\n"
-                             "1262343680000,1262343690000,1,0\n"
-                             "1262343690000,1262343700000,1,0\n"
-                             "1262343700000,1262343710000,1,0\n"
-                             "1262343610000,1262343620000,2,0\n"
-                             "1262343620000,1262343630000,2,1348\n"
-                             "1262343630000,1262343640000,2,0\n"
-                             "1262343640000,1262343650000,2,0\n"
-                             "1262343650000,1262343660000,2,0\n"
-                             "1262343660000,1262343670000,2,0\n"
-                             "1262343670000,1262343680000,2,0\n"
-                             "1262343680000,1262343690000,2,0\n"
-                             "1262343690000,1262343700000,2,0\n"
-                             "1262343700000,1262343710000,2,0\n"
-                             "1262343610000,1262343620000,3,0\n"
-                             "1262343620000,1262343630000,3,0\n"
-                             "1262343630000,1262343640000,3,4575\n"
-                             "1262343640000,1262343650000,3,0\n"
-                             "1262343650000,1262343660000,3,0\n"
-                             "1262343660000,1262343670000,3,0\n"
-                             "1262343670000,1262343680000,3,0\n"
-                             "1262343680000,1262343690000,3,0\n"
-                             "1262343690000,1262343700000,3,0\n"
-                             "1262343700000,1262343710000,3,0\n"
-                             "1262343610000,1262343620000,4,0\n"
-                             "1262343620000,1262343630000,4,0\n"
-                             "1262343630000,1262343640000,4,0\n"
-                             "1262343640000,1262343650000,4,1358\n"
-                             "1262343650000,1262343660000,4,0\n"
-                             "1262343660000,1262343670000,4,0\n"
-                             "1262343670000,1262343680000,4,0\n"
-                             "1262343680000,1262343690000,4,0\n"
-                             "1262343690000,1262343700000,4,0\n"
-                             "1262343700000,1262343710000,4,0\n"
-                             "1262343610000,1262343620000,5,0\n"
-                             "1262343620000,1262343630000,5,0\n"
-                             "1262343630000,1262343640000,5,0\n"
-                             "1262343640000,1262343650000,5,0\n"
-                             "1262343650000,1262343660000,5,1288\n"
-                             "1262343660000,1262343670000,5,0\n"
-                             "1262343670000,1262343680000,5,0\n"
-                             "1262343680000,1262343690000,5,0\n"
-                             "1262343690000,1262343700000,5,0\n"
-                             "1262343700000,1262343710000,5,0\n"
-                             "1262343610000,1262343620000,6,0\n"
-                             "1262343620000,1262343630000,6,0\n"
-                             "1262343630000,1262343640000,6,0\n"
-                             "1262343640000,1262343650000,6,0\n"
-                             "1262343650000,1262343660000,6,0\n"
-                             "1262343660000,1262343670000,6,3458\n"
-                             "1262343670000,1262343680000,6,0\n"
-                             "1262343680000,1262343690000,6,0\n"
-                             "1262343690000,1262343700000,6,0\n"
-                             "1262343700000,1262343710000,6,0\n"
-                             "1262343610000,1262343620000,7,0\n"
-                             "1262343620000,1262343630000,7,0\n"
-                             "1262343630000,1262343640000,7,0\n"
-                             "1262343640000,1262343650000,7,0\n"
-                             "1262343650000,1262343660000,7,0\n"
-                             "1262343660000,1262343670000,7,0\n"
-                             "1262343670000,1262343680000,7,1128\n"
-                             "1262343680000,1262343690000,7,0\n"
-                             "1262343690000,1262343700000,7,0\n"
-                             "1262343700000,1262343710000,7,0\n"
-                             "1262343610000,1262343620000,8,0\n"
-                             "1262343620000,1262343630000,8,0\n"
-                             "1262343630000,1262343640000,8,0\n"
-                             "1262343640000,1262343650000,8,0\n"
-                             "1262343650000,1262343660000,8,0\n"
-                             "1262343660000,1262343670000,8,0\n"
-                             "1262343670000,1262343680000,8,0\n"
-                             "1262343680000,1262343690000,8,1079\n"
-                             "1262343690000,1262343700000,8,0\n"
-                             "1262343700000,1262343710000,8,0\n"
-                             "1262343610000,1262343620000,9,0\n"
-                             "1262343620000,1262343630000,9,0\n"
-                             "1262343630000,1262343640000,9,0\n"
-                             "1262343640000,1262343650000,9,0\n"
-                             "1262343650000,1262343660000,9,0\n"
-                             "1262343660000,1262343670000,9,0\n"
-                             "1262343670000,1262343680000,9,0\n"
-                             "1262343680000,1262343690000,9,0\n"
-                             "1262343690000,1262343700000,9,2071\n"
-                             "1262343700000,1262343710000,9,0\n"
-                             "1262343610000,1262343620000,10,0\n"
-                             "1262343620000,1262343630000,10,0\n"
-                             "1262343630000,1262343640000,10,0\n"
-                             "1262343640000,1262343650000,10,0\n"
-                             "1262343650000,1262343660000,10,0\n"
-                             "1262343660000,1262343670000,10,0\n"
-                             "1262343670000,1262343680000,10,0\n"
-                             "1262343680000,1262343690000,10,0\n"
-                             "1262343690000,1262343700000,10,0\n"
-                             "1262343700000,1262343710000,10,2632\n"
-                             "1262343610000,1262343620000,11,0\n"
-                             "1262343620000,1262343630000,11,0\n"
-                             "1262343630000,1262343640000,11,0\n"
-                             "1262343640000,1262343650000,11,0\n"
-                             "1262343650000,1262343660000,11,0\n"
-                             "1262343660000,1262343670000,11,0\n"
-                             "1262343670000,1262343680000,11,0\n"
-                             "1262343680000,1262343690000,11,0\n"
-                             "1262343690000,1262343700000,11,0\n"
-                             "1262343700000,1262343710000,11,0\n";
+
+    NES_INFO("WindowDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("WindowDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("WindowDeploymentTest: Test finished");
+}
+
+TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
+    NES_INFO("WindowDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("WindowDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("WindowDeploymentTest: Start worker 1");
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << window;
+    out.close();
+    wrk1->registerLogicalStream("window", testSchemaFileName);
+
+    //register physical stream R2000070
+    PhysicalStreamConfigPtr conf70 =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", true);
+
+    wrk1->registerPhysicalStream(conf70);
+
+    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    remove(outputFilePath.c_str());
+
+    NES_INFO("WindowDeploymentTest: Submit query");
+    string query =
+        "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
+        "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    //todo will be removed once the new window source is in place
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+                             "1000,2000,1,1\n"
+                             "2000,3000,1,2\n"
+                             "1000,2000,4,1\n"
+                             "2000,3000,11,2\n"
+                             "1000,2000,12,1\n"
+                             "2000,3000,16,2\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -224,7 +197,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(WindowDeploymentTest, outputLog) {
+TEST_F(WindowDeploymentTest, testCentralSlidingWindow) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -272,10 +245,6 @@ TEST_F(WindowDeploymentTest, outputLog) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     NES_DEBUG("wakeup");
 
     ifstream my_file("outputLog.out");
@@ -288,20 +257,16 @@ TEST_F(WindowDeploymentTest, outputLog) {
                              "10000,20000,1,870\n"
                              "5000,15000,1,570\n"
                              "0,10000,1,307\n"
-                             "10000,20000,4,0\n"
-                             "5000,15000,4,0\n"
                              "0,10000,4,6\n"
-                             "10000,20000,11,0\n"
-                             "5000,15000,11,0\n"
                              "0,10000,11,30\n"
-                             "10000,20000,12,0\n"
-                             "5000,15000,12,0\n"
                              "0,10000,12,7\n"
-                             "10000,20000,16,0\n"
-                             "5000,15000,16,0\n"
                              "0,10000,16,12\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -312,7 +277,6 @@ TEST_F(WindowDeploymentTest, outputLog) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
-
 /**
  * @brief test distributed tumbling window and event time
  */
@@ -363,7 +327,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"ts\")), "
                    "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"DONT_APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -372,17 +336,15 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "1000,2000,1,34\n"
-                             "1000,2000,2,0\n"
-                             "2000,3000,1,0\n"
                              "2000,3000,2,56\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -458,10 +420,6 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     ifstream my_file("outputLog.out");
     EXPECT_TRUE(my_file.good());
 
@@ -471,16 +429,16 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "5000,15000,1,1140\n"
                              "0,10000,1,614\n"
-                             "5000,15000,4,0\n"
                              "0,10000,4,12\n"
-                             "5000,15000,11,0\n"
                              "0,10000,11,60\n"
-                             "5000,15000,12,0\n"
                              "0,10000,12,14\n"
-                             "5000,15000,16,0\n"
                              "0,10000,16,24\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -546,10 +504,6 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
@@ -558,6 +512,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindow) {
                              "2000,3000,6\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -619,10 +577,6 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     NES_DEBUG("wakeup");
 
     ifstream my_file("outputLog.out");
@@ -637,6 +591,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindow) {
                              "0,10000,362\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -707,10 +665,6 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
@@ -719,6 +673,10 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindow) {
                              "2000,3000,12\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -794,15 +752,15 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
                              "5000,15000,1140\n"
                              "0,10000,724\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("WindowDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -817,5 +775,4 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindow) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
-
 }// namespace NES

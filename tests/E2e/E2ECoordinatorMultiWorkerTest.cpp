@@ -376,13 +376,9 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithTumblingWindowFi
                              "0,10000,1,102\n"
                              "10000,20000,1,290\n"
                              "0,10000,4,2\n"
-                             "10000,20000,4,0\n"
                              "0,10000,11,10\n"
-                             "10000,20000,11,0\n"
                              "0,10000,12,2\n"
-                             "10000,20000,12,0\n"
-                             "0,10000,16,4\n"
-                             "10000,20000,16,0\n";
+                             "0,10000,16,4\n";
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
@@ -465,7 +461,7 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
+TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutputTwoWorker) {
     uint64_t numBuffers = 3;
     uint64_t numTuples = 10;
 
@@ -516,7 +512,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorker) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 8));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 4));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
 
     std::ifstream ifs(outputFilePath.c_str());

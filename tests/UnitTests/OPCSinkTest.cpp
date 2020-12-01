@@ -114,12 +114,10 @@ class OPCSinkTest : public testing::Test {
         p.set_value(true);
         UA_StatusCode retval = UA_Server_run(server, &running);
         std::cout << " retval is=" << retval << std::endl;
-    }
-
-    static void stopServer() {
-        running = false;
         UA_Server_delete(server);
     }
+
+    static void stopServer() { running = false; }
 
     SchemaPtr test_schema;
     uint64_t buffer_size;

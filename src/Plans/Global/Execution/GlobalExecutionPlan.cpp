@@ -92,6 +92,12 @@ bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
     NES_DEBUG("GlobalExecutionPlan: Removing Execution node with id " << id);
     if (checkIfExecutionNodeExists(id)) {
         NES_DEBUG("GlobalExecutionPlan: Removed execution node with id " << id);
+        auto found = std::find_if(rootNodes.begin(), rootNodes.end(), [id](ExecutionNodePtr rootNode) {
+            return rootNode->getId() == id;
+        });
+        if (found != rootNodes.end()) {
+            rootNodes.erase(found);
+        }
         return nodeIdIndex.erase(id) == 1;
     }
     NES_DEBUG("GlobalExecutionPlan: Failed to remove Execution node with id " << id);

@@ -73,7 +73,9 @@ int main(int argc, char** argv) {
     std::string parentId = "-1";
     std::string endlessRepeat = "";
     std::string skipHeader = "false";
-    uint64_t numberOfTuplesToProducePerBuffer = 0;
+
+    size_t numberOfTuplesToProducePerBuffer = 0;
+    uint16_t numWorkerThreads = 1;
 
     desc.add_options()("coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort),
                        "Set NES rpc server port (default: 0).")("rpcPort", po::value<string>(&rpcPort)->default_value(rpcPort),
@@ -84,14 +86,14 @@ int main(int argc, char** argv) {
                                                    "Set the type of the Source either CSVSource or DefaultSource")(
         "sourceConfig", po::value<string>(&sourceConfig)->default_value(sourceConfig),
         "Set the config for the source e.g. the file name")(
-        "sourceFrequency", po::value<uint64_t>(&sourceFrequency)->default_value(sourceFrequency), "Set the sampling frequency")(
+        "sourceFrequency", po::value<size_t>(&sourceFrequency)->default_value(sourceFrequency), "Set the sampling frequency")(
         "endlessRepeat", po::value<string>(&endlessRepeat)->default_value("off"), "Looping endless over the file")(
         "skipHeader", po::value<string>(&skipHeader)->default_value("false"), "Skip first line of the file (default=false)")(
         "physicalStreamName", po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
         "Set the physical name of the stream")(
-        "numberOfBuffersToProduce", po::value<uint64_t>(&numberOfBuffersToProduce)->default_value(numberOfBuffersToProduce),
+        "numberOfBuffersToProduce", po::value<size_t>(&numberOfBuffersToProduce)->default_value(numberOfBuffersToProduce),
         "Set the number of buffers to produce")("numberOfTuplesToProducePerBuffer",
-                                                po::value<uint64_t>(&numberOfTuplesToProducePerBuffer)->default_value(0),
+                                                po::value<size_t>(&numberOfTuplesToProducePerBuffer)->default_value(0),
                                                 "Set the number of buffers to produce")(
         "logicalStreamName", po::value<string>(&logicalStreamName)->default_value(logicalStreamName),
         "Set the logical stream name where this stream is added to")(
@@ -100,7 +102,9 @@ int main(int argc, char** argv) {
         "Set worker ip (default: 127.0.0.1)")("numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
                                               "Set the computing capacity (default: number of processor.")(
         "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
-        "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")("help", "Display help message");
+        "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
+        "numWorkerThreads", po::value<uint16_t>(&numWorkerThreads)->default_value(numWorkerThreads),
+        "Set the number of worker threads.")("help", "Display help message");
 
     /* Parse parameters. */
     po::variables_map vm;
@@ -134,10 +138,10 @@ int main(int argc, char** argv) {
     cout << "port=" << localPort << "localport=" << std::to_string(localPort) << " pid=" << getpid() << endl;
     NesWorkerPtr wrk =
         std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, localPort, zmqDataPort, numberOfSlots,
-                                    NodeType::Sensor// TODO what is this?!
-        );
+                                    NodeType::Sensor,// TODO what is this?!
+                                    numWorkerThreads);
 
-    //register phy stream if nessesary
+    //register phy stream if necessary
     if (sourceType != "") {
         bool endless = endlessRepeat == "on";
         bool skip = skipHeader == "true";

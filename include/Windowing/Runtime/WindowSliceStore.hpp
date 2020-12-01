@@ -33,7 +33,6 @@ class WindowSliceStore {
 
     /**
     * @brief Get the corresponding slide index for a particular timestamp ts.
-    * If no corresponding slice exist we throw a exception.
     * @param ts timestamp of the record.
     * @return the index of a slice. If not found it returns -1.
     */
@@ -45,6 +44,7 @@ class WindowSliceStore {
                 return i;
             }
         }
+        NES_ERROR("getSliceIndexByTs for ts=" << ts << " could not find a slice, this should not happen");
         return -1;
     }
 
@@ -53,7 +53,7 @@ class WindowSliceStore {
      * @param slice
      */
     inline void appendSlice(SliceMetaData slice) {
-        NES_TRACE("appendSlice "
+        NES_DEBUG("appendSlice "
                   << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
@@ -63,6 +63,12 @@ class WindowSliceStore {
      * @return most current slice'index.
      */
     inline uint64_t getCurrentSliceIndex() { return sliceMetaData.size() - 1; }
+
+    /**
+     * @brief this method increment the numbner of tuples per slice for the slice at idx
+     * @param slideIdx
+     */
+    inline void incrementRecordCnt(uint64_t slideIdx) { sliceMetaData[slideIdx].incrementRecordsPerSlice(); }
 
     /**
      * @brief Remove slices between index 0 and pos.

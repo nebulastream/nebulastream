@@ -29,7 +29,6 @@
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkGenerator.hpp>
 #include <zconf.h>
 namespace NES {
 
@@ -40,10 +39,10 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->bufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
-
-    watermark = std::make_shared<Windowing::ProcessingTimeWatermarkGenerator>();
 }
 OperatorId DataSource::getOperatorId() { return operatorId; }
+
+void DataSource::setOperatorId(OperatorId operatorId) { this->operatorId = operatorId; }
 
 SchemaPtr DataSource::getSchema() const { return schema; }
 
@@ -159,13 +158,6 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                     if (nowInSec.count() % gatheringInterval == 0) {//produce a regular buffer
                         NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                         recNow = true;
-                    } else {//produce watermark only buffer
-                        NES_DEBUG("DataSource::runningRoutine sending watermark-only buffer");
-                        auto buffer = bufferManager->getBufferBlocking();
-                        buffer.setWatermark(watermark->getWatermark());
-                        buffer.setNumberOfTuples(0);
-                        buffer.setOriginId(operatorId);
-                        queryManager->addWork(this->operatorId, buffer);
                     }
                     lastTimeStampSec = nowInSec;
                 }
@@ -189,7 +181,6 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
                                             << " iteration=" << cnt << " operatorId=" << this->operatorId
                                             << " orgID=" << this->operatorId);
                     buf.setOriginId(operatorId);
-                    buf.setWatermark(watermark->getWatermark());
                     queryManager->addWork(operatorId, buf);
                     cnt++;
                 }

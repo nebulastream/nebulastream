@@ -22,7 +22,8 @@ then
     sleep 5s
     /opt/local/nebula-stream/nesWorker --coordinatorPort=$coordinatorPort --sourceType=$sourceType --sourceConfig=$sourceConfig \
                                         --numberOfBuffersToProduce=$numberOfBuffersToProduce --sourceFrequency=$sourceFrequency \
-                                        --physicalStreamName=$physicalStreamName --logicalStreamName=$logicalStreamName
+                                        --physicalStreamName=$physicalStreamName --logicalStreamName=$logicalStreamName \
+                                        --skipHeader=$skipHeader
 else
     exec $@
 fi

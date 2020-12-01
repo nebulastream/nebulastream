@@ -907,6 +907,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     SchemaPtr schema = Schema::create()
                            ->addField(createField("start", UINT64))
                            ->addField(createField("end", UINT64))
+                           ->addField(createField("cnt", UINT64))
                            ->addField(createField("key", UINT64))
                            ->addField("value", UINT64);
 
@@ -953,32 +954,37 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     layout->getValueField<uint64_t>(0, 0)->write(buffer, 100);//start 100
     layout->getValueField<uint64_t>(0, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //key 1
-    layout->getValueField<uint64_t>(0, 3)->write(buffer, 10); //value 10
+    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
+    layout->getValueField<uint64_t>(0, 3)->write(buffer, 1);  //key 1
+    layout->getValueField<uint64_t>(0, 4)->write(buffer, 10); //value 10
     buffer.setNumberOfTuples(1);
 
     layout->getValueField<uint64_t>(1, 0)->write(buffer, 100);//start 100
     layout->getValueField<uint64_t>(1, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(1, 2)->write(buffer, 1);  //key 1
-    layout->getValueField<uint64_t>(1, 3)->write(buffer, 8);  //value 10
+    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
+    layout->getValueField<uint64_t>(1, 3)->write(buffer, 1);  //key 1
+    layout->getValueField<uint64_t>(1, 4)->write(buffer, 8);  //value 10
     buffer.setNumberOfTuples(2);
 
     layout->getValueField<uint64_t>(2, 0)->write(buffer, 100);//start 100
     layout->getValueField<uint64_t>(2, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(2, 2)->write(buffer, 1);  //key 1
-    layout->getValueField<uint64_t>(2, 3)->write(buffer, 2);  //value 10
+    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
+    layout->getValueField<uint64_t>(2, 3)->write(buffer, 1);  //key 1
+    layout->getValueField<uint64_t>(2, 4)->write(buffer, 2);  //value 10
     buffer.setNumberOfTuples(3);
 
     layout->getValueField<uint64_t>(3, 0)->write(buffer, 200);//start 100
     layout->getValueField<uint64_t>(3, 1)->write(buffer, 210);//stop 200
-    layout->getValueField<uint64_t>(3, 2)->write(buffer, 3);  //key 1
-    layout->getValueField<uint64_t>(3, 3)->write(buffer, 2);  //value 10
+    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
+    layout->getValueField<uint64_t>(3, 3)->write(buffer, 3);  //key 1
+    layout->getValueField<uint64_t>(3, 4)->write(buffer, 2);  //value 10
     buffer.setNumberOfTuples(4);
 
     layout->getValueField<uint64_t>(4, 0)->write(buffer, 200);//start 100
     layout->getValueField<uint64_t>(4, 1)->write(buffer, 210);//stop 200
-    layout->getValueField<uint64_t>(4, 2)->write(buffer, 5);  //key 1
-    layout->getValueField<uint64_t>(4, 3)->write(buffer, 12); //value 10
+    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
+    layout->getValueField<uint64_t>(4, 3)->write(buffer, 5);  //key 1
+    layout->getValueField<uint64_t>(4, 4)->write(buffer, 12); //value 10
     buffer.setNumberOfTuples(5);
 
     std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema) << std::endl;
@@ -1030,6 +1036,7 @@ TEST_F(CodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     SchemaPtr schema = Schema::create()
                            ->addField(createField("start", UINT64))
                            ->addField(createField("end", UINT64))
+                           ->addField(createField("cnt", UINT64))
                            ->addField(createField("key", UINT64))
                            ->addField("value", UINT64);
 

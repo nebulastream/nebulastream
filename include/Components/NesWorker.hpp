@@ -25,13 +25,16 @@
 namespace NES {
 
 class NesWorker {
+    static constexpr auto DEFAULT_NUM_THREADS = 1;
+
   public:
     /**
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
     NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localWorkerIp, uint16_t localWorkerRpcPort,
-              uint16_t localWorkerZmqPort, uint16_t numberOfSlots, NodeType type);
+              uint16_t localWorkerZmqPort, uint16_t numberOfSlots, NodeType type,
+              uint16_t numWorkerThreads = DEFAULT_NUM_THREADS);
 
     /**
      * @brief constructor with default numberOfSlots
@@ -168,6 +171,7 @@ class NesWorker {
     uint16_t localWorkerRpcPort;
     uint16_t localWorkerZmqPort;
     uint16_t numberOfSlots;
+    uint16_t numWorkerThreads;
 
     NodeType type;
     std::atomic<bool> stopped;

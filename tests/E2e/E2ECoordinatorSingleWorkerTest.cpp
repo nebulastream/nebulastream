@@ -505,13 +505,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
                              "0,10000,1,307\n"
                              "10000,20000,1,870\n"
                              "0,10000,4,6\n"
-                             "10000,20000,4,0\n"
                              "0,10000,11,30\n"
-                             "10000,20000,11,0\n"
                              "0,10000,12,7\n"
-                             "10000,20000,12,0\n"
-                             "0,10000,16,12\n"
-                             "10000,20000,16,0\n";
+                             "0,10000,16,12\n";
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
@@ -703,17 +699,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
                              "10000,20000,1,870\n"
                              "5000,15000,1,570\n"
                              "0,10000,1,307\n"
-                             "10000,20000,4,0\n"
-                             "5000,15000,4,0\n"
                              "0,10000,4,6\n"
-                             "10000,20000,11,0\n"
-                             "5000,15000,11,0\n"
                              "0,10000,11,30\n"
-                             "10000,20000,12,0\n"
-                             "5000,15000,12,0\n"
                              "0,10000,12,7\n"
-                             "10000,20000,16,0\n"
-                             "5000,15000,16,0\n"
                              "0,10000,16,12\n";
 
     NES_INFO("content=" << content);

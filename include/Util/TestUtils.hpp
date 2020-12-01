@@ -287,7 +287,6 @@ class TestUtils {
         NES_INFO("Found global query id " << globalQueryId << " for user query " << queryId);
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        Predicate cmp;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
             //FIXME: handle vector of statistics properly in #977
@@ -298,7 +297,7 @@ class TestUtils {
                 continue;
             }
             uint64_t processed = statistics[0]->getProcessedBuffers();
-            if (cmp(processed, expectedResult)) {
+            if (processed >= expectedResult) {
                 NES_DEBUG("checkCompleteOrTimeout: results are correct procBuffer="
                           << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
                           << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
@@ -407,8 +406,8 @@ class TestUtils {
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 int count = std::count(content.begin(), content.end(), '\n');
                 if (expectedLines.size() != count) {
-                    NES_DEBUG("checkOutputOrTimeout: number of expected lines " << expectedLines.size()
-                                                                                << " not reached yet with " << count << " lines");
+                    NES_DEBUG("checkOutputOrTimeout: number of expected lines "
+                              << expectedLines.size() << " not reached yet with " << count << " lines content=" << content);
                     continue;
                 }
 
@@ -419,14 +418,14 @@ class TestUtils {
                     }
                 }
                 if (found == count) {
-                    NES_DEBUG("all lines found");
+                    NES_DEBUG("all lines found final content=" << content);
                     return true;
                 } else {
-                    NES_DEBUG("only " << found << " lines found");
+                    NES_DEBUG("only " << found << " lines found final content" << content);
                 }
             }
         }
-        NES_DEBUG("checkOutputOrTimeout: expected result not reached within set timeout");
+        NES_DEBUG("checkOutputOrTimeout: expected result not reached within set timeout content");
         return false;
     }
 
