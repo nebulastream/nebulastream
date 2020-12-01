@@ -6,13 +6,13 @@ coordinatorIp: 127.0.0.1
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
 # Needs to be the same as rpcPort in Coordinator
-coordinatorPort: 12348
+coordinatorPort: 12344
 
 # Set RPC server port of NES Worker
-rpcPort: 12351
+rpcPort: 3000
 
 # Set the data port of the NES Worker
-dataPort: 12352
+dataPort: 3001
 
 # Set worker IP
 localWorkerIp: 127.0.0.1
@@ -49,7 +49,7 @@ sourceConfig: tests/test_data/window.csv
 sourceFrequency: 1
 
 # Looping endlessly over the file
-endlessRepeat: off
+endlessRepeat: on
 
 # Skip first line of the file
 skipHeader: false
@@ -63,10 +63,10 @@ numberOfTuplesToProducePerBuffer: 0
 
 # ~~ Processing Configurations ~~
 # Set physical stream name
-physicalStreamName: test_stream_1
+physicalStreamName: default_stream_phy
 
 # Set logical stream name where this stream is added to
-logicalStreamName: window
+logicalStreamName: default_stream_log
 
 # Set parentId of NES Worker node
 parentId: -1
