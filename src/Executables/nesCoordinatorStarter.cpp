@@ -104,12 +104,12 @@ int main(int argc, const char* argv[]) {
 
     if (configurationFilePath.empty()) {
         std::cerr << "NESCOORDINATORSTARTER: No path to the YAML configuration file entered. Please provide the path to a NES "
-                 "Coordinator Configuration YAML file.";
+                     "Coordinator Configuration YAML file.";
         return EXIT_FAILURE;
     }
 
-    struct stat buffer{};
-    if (stat (configurationFilePath.c_str(), &buffer) == -1){
+    struct stat buffer {};
+    if (stat(configurationFilePath.c_str(), &buffer) == -1) {
         std::cerr << "NESCOORDINATORSTARTER: Configuration file not found at: " << configurationFilePath << '\n';
         return EXIT_FAILURE;
     }
@@ -126,8 +126,8 @@ int main(int argc, const char* argv[]) {
     bool enableQueryMerging = config["enableQueryMerging"].As<bool>();
     auto logLevel = config["logLevel"].As<string>();
 
-    std::cout << "Read Coordinator Config. restPort: "<< restPort << " , rpcPort: " << rpcPort <<" , logLevel: " << logLevel <<
-        " restIp: " << restIp << " rpcIp: " << rpcIp << " enableQueryMerging: " << enableQueryMerging << std::endl;
+    std::cout << "Read Coordinator Config. restPort: " << restPort << " , rpcPort: " << rpcPort << " , logLevel: " << logLevel
+              << " restIp: " << restIp << " rpcIp: " << rpcIp << " enableQueryMerging: " << enableQueryMerging << std::endl;
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
