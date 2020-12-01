@@ -5,10 +5,11 @@
 coordinatorIp: 127.0.0.1
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
+# Needs to be the same as rpcPort in Coordinator
 coordinatorPort: 12346
 
 # Set RPC server port of NES Worker
-rpcPort: 8081
+rpcPort: 3000
 
 # Set the data port of the NES Worker
 dataPort: 3001
@@ -18,11 +19,11 @@ localWorkerIp: 127.0.0.1
 
 
 # ~~ Source Handling ~~
-# Set the source type (available options: DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
-sourceType:
+# Set the source type (available options: No_Source, DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
+sourceType: No_Source
 
 # Set source configuration. Options depend on source type.
-# DefaultSource: "" (not needed)
+# DefaultSource: No_Config (not needed)
 # CSVSource: String with path to CSV file.
 # OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
 #            where the url is a string containing the full OPC server url,
@@ -41,11 +42,11 @@ sourceType:
 #            kafkaConnectTimeout is a uint16_t providing the time out for the connection
 # BinarySource: String with path to binary file.
 # SenseSource (ToDo: Make source available): String with udsf inside
-# YSBSource: "" (not needed)
-sourceConfig:
+# YSBSource: No_Config (not needed)
+sourceConfig: No_Config
 
 # Set sampling frequency of source
-sourceFrequency: 1
+sourceFrequency: 0
 
 # Looping endlessly over the file
 endlessRepeat: off
@@ -62,10 +63,10 @@ numberOfTuplesToProducePerBuffer: 0
 
 # ~~ Processing Configurations ~~
 # Set physical stream name
-physicalStreamName: test_stream
+physicalStreamName: default_stream_phy
 
 # Set logical stream name where this stream is added to
-logicalStreamName: default_stream
+logicalStreamName: default_stream_log
 
 # Set parentId of NES Worker node
 parentId: -1

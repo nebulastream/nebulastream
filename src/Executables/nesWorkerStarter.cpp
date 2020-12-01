@@ -141,10 +141,10 @@ int main(int argc, char** argv) {
     }
 
     // Initializing IPs and Ports
-    auto rpcPort = config["rpcPort"].As<uint16_t>();
+    auto localPort = config["rpcPort"].As<uint64_t>();
     auto coordinatorIp = config["coordinatorIp"].As<string>();
     auto coordinatorPort = config["coordinatorPort"].As<string>();
-    auto dataPort = config["dataPort"].As<uint16_t>();
+    auto zmqDataPort = config["dataPort"].As<uint64_t>();
     auto localWorkerIp = config["localWorkerIp"].As<string>();
     // Initializing Source Handling variables
     auto sourceType = config["sourceType"].As<string>();
@@ -179,8 +179,6 @@ int main(int argc, char** argv) {
 
     // TODO remote calls to cout
 
-    uint64_t localPort = rpcPort;
-    uint64_t zmqDataPort = dataPort;
     cout << "port=" << localPort << "localport=" << std::to_string(localPort) << " pid=" << getpid() << endl;
     //TODO Hier ist das Problem, finde heraus, was es ist!
     NesWorkerPtr wrk =
@@ -189,13 +187,12 @@ int main(int argc, char** argv) {
                                     numWorkerThreads);
 
     //register phy stream if necessary
-    if (sourceType != "") {
+    if (sourceType != "No_Source") {
         bool endless = endlessRepeat == "on";
-        bool skip = skipHeader;
         cout << "start with dedicated source=" << sourceType << " endlessRepeat=" << endlessRepeat << " end=" << endless << endl;
         PhysicalStreamConfigPtr conf =
             PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                                         numberOfBuffersToProduce, physicalStreamName, logicalStreamName, skip);
+                                         numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endless, skipHeader);
 
         wrk->setWithRegister(conf);
     } else if (parentId != "-1") {

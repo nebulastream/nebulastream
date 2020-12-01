@@ -5,10 +5,11 @@
 coordinatorIp: 127.0.0.1
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
+# Needs to be the same as rpcPort in Coordinator
 coordinatorPort: 12267
 
 # Set RPC server port of NES Worker
-rpcPort: 8081
+rpcPort: 3000
 
 # Set the data port of the NES Worker
 dataPort: 3001
@@ -18,11 +19,11 @@ localWorkerIp: 127.0.0.1
 
 
 # ~~ Source Handling ~~
-# Set the source type (available options: DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
+# Set the source type (available options: No_Source, DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
 sourceType: CSVSource
 
 # Set source configuration. Options depend on source type.
-# DefaultSource: "" (not needed)
+# DefaultSource: No_Config (not needed)
 # CSVSource: String with path to CSV file.
 # OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
 #            where the url is a string containing the full OPC server url,
@@ -41,8 +42,8 @@ sourceType: CSVSource
 #            kafkaConnectTimeout is a uint16_t providing the time out for the connection
 # BinarySource: String with path to binary file.
 # SenseSource (ToDo: Make source available): String with udsf inside
-# YSBSource: "" (not needed)
-sourceConfig: ../tests/test_data/QnV_short.csv
+# YSBSource: No_Config (not needed)
+sourceConfig: tests/test_data/QnV_short.csv
 
 # Set sampling frequency of source
 sourceFrequency: 1
