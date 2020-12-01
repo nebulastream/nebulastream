@@ -49,6 +49,12 @@ class LogicalOperatorNode : public OperatorNode {
     void inferSignature(z3::ContextPtr context);
 
     /**
+     * @brief Set the signature for the logical operator
+     * @param signature : the signature
+     */
+    void setSignature(Optimizer::QueryPlanSignaturePtr signature);
+
+    /**
      * @brief Get the Z3 expression for the logical operator
      * @return reference to the Z3 expression
      */
