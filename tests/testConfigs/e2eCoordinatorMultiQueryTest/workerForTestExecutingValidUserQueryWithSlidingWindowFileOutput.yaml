@@ -63,10 +63,10 @@ numberOfTuplesToProducePerBuffer: 0
 
 # ~~ Processing Configurations ~~
 # Set physical stream name
-physicalStreamName: default_stream_phy
+physicalStreamName: test_stream
 
 # Set logical stream name where this stream is added to
-logicalStreamName: default_stream_log
+logicalStreamName: window
 
 # Set parentId of NES Worker node
 parentId: -1
