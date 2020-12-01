@@ -127,8 +127,8 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    struct stat buffer{};
-    if (stat (configurationFilePath.c_str(), &buffer) == -1){
+    struct stat buffer {};
+    if (stat(configurationFilePath.c_str(), &buffer) == -1) {
         std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configurationFilePath << '\n';
         return EXIT_FAILURE;
     }
