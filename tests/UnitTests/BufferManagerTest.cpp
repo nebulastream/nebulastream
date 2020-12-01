@@ -28,25 +28,15 @@
 #include <thread>
 
 namespace NES {
-const size_t buffers_managed = 10;
+const size_t buffers_managed = 1024;
 const size_t buffer_size = 4 * 1024;
 
 class BufferManagerTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup BufferManagerTest test class." << std::endl; }
-
-    /* Will be called before a  test is executed. */
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
-        std::cout << "Setup BufferManagerTest test case." << std::endl;
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Tear down BufferManagerTest test case." << std::endl; }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down BufferManagerTest test class." << std::endl; }
 };
 
 TEST_F(BufferManagerTest, initializedBufferManager) {
