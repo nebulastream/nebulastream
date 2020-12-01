@@ -101,6 +101,8 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
             windowComputationAggregation, windowType, Windowing::DistributionCharacteristic::createCombiningWindowType(),
             logicalWindowOperator->getChildren().size(), triggerPolicy, triggerActionComplete);
     }
+    NES_DEBUG("DistributeWindowRule::apply: created logical window definition for computation operator" << windowDef->toString());
+
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef);
 
     //replace logical window op with window computation operator
@@ -130,7 +132,7 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                 sliceCreationWindowAggregation, windowType, Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
                 triggerPolicy, triggerActionSlicing);
         }
-
+        NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice operator" << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef);
         child->insertBetweenThisAndParentNodes(sliceOp);
     }

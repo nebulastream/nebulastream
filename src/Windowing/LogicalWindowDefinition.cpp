@@ -17,10 +17,14 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
+
 namespace NES::Windowing {
 
 LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
@@ -97,4 +101,20 @@ void LogicalWindowDefinition::setTriggerPolicy(WindowTriggerPolicyPtr triggerPol
 
 WindowActionDescriptorPtr LogicalWindowDefinition::getTriggerAction() const { return triggerAction; }
 
+std::string LogicalWindowDefinition::toString() {
+    std::stringstream ss;
+    ss << "windowType=" << windowType->toString();
+    ss << " aggregation=" << windowAggregation->toString();
+    ss << " triggerPolicy=" << triggerPolicy->toString();
+    ss << " triggerAction=" << triggerAction->toString();
+    ss << " onKey=" << onKey->toString();
+    ss << " distributionType=" << distributionType->toString();
+    ss << " numberOfInputEdges=" << numberOfInputEdges;
+    ss << std::endl;
+    return ss.str();
+}
+
+//FieldAccessExpressionNodePtr onKey;
+//DistributionCharacteristicPtr distributionType;
+//uint64_t numberOfInputEdges;
 }// namespace NES::Windowing

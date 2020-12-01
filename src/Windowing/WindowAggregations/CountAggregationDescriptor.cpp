@@ -22,9 +22,13 @@
 namespace NES::Windowing {
 
 CountAggregationDescriptor::CountAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {}
+    : WindowAggregationDescriptor(std::move(field)) {
+    this->aggregationType = Count;
+}
 CountAggregationDescriptor::CountAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    this->aggregationType = Count;
+}
 
 WindowAggregationPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                         FieldAccessExpressionNodePtr asField) {
@@ -36,8 +40,6 @@ WindowAggregationPtr CountAggregationDescriptor::on() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
-WindowAggregationDescriptor::Type CountAggregationDescriptor::getType() { return Count; }
-
 void CountAggregationDescriptor::inferStamp(SchemaPtr) {
     // a count aggregation is always on an uint 64
     asField->setStamp(DataTypeFactory::createUInt64());
@@ -48,4 +50,5 @@ WindowAggregationPtr CountAggregationDescriptor::copy() {
 DataTypePtr CountAggregationDescriptor::getInputStamp() { return DataTypeFactory::createUInt64(); }
 DataTypePtr CountAggregationDescriptor::getPartialAggregateStamp() { return DataTypeFactory::createUInt64(); }
 DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp() { return DataTypeFactory::createUInt64(); }
+
 }// namespace NES::Windowing

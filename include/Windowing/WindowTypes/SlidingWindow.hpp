@@ -59,6 +59,8 @@ class SlidingWindow : public WindowType {
     */
     TimeMeasure getSlide();
 
+    virtual std::string toString() override;
+
   private:
     SlidingWindow(TimeCharacteristicPtr timeType, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;

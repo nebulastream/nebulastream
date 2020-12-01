@@ -51,7 +51,7 @@ class WindowAggregationDescriptor {
      * @brief Returns the type of this aggregation.
      * @return WindowAggregationDescriptor::Type
      */
-    virtual Type getType() = 0;
+    Type getType();
 
     /**
      * @brief Infers the stamp of the expression given the current schema.
@@ -79,12 +79,16 @@ class WindowAggregationDescriptor {
      */
     virtual DataTypePtr getFinalAggregateStamp() = 0;
 
+    std::string toString();
+    std::string getTypeAsString();
+
   protected:
     explicit WindowAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     WindowAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
     WindowAggregationDescriptor() = default;
     ExpressionNodePtr onField;
     ExpressionNodePtr asField;
+    Type aggregationType;
 };
 }// namespace NES::Windowing
 

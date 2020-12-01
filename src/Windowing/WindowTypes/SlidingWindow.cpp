@@ -16,7 +16,9 @@
 
 #include <Util/Logger.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
+
 namespace NES::Windowing {
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
@@ -51,5 +53,14 @@ bool SlidingWindow::isSlidingWindow() { return true; }
 TimeMeasure SlidingWindow::getSize() { return size; }
 
 TimeMeasure SlidingWindow::getSlide() { return slide; }
+
+std::string SlidingWindow::toString() {
+    std::stringstream ss;
+    ss << "SlidingWindow: size=" << size.getTime();
+    ss << " slide=" << slide.getTime();
+    ss << " timeCharacteristic=" << timeCharacteristic->toString();
+    ss << std::endl;
+    return ss.str();
+}
 
 }// namespace NES::Windowing

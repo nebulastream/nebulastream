@@ -36,6 +36,8 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
     */
     uint64_t getTriggerTimeInMs() const;
 
+    std::string toString() override;
+
   protected:
     OnTimeTriggerPolicyDescription(uint64_t triggerTimeInMs);
     uint64_t triggerTimeInMs;

@@ -30,6 +30,10 @@ class BaseWindowTriggerPolicyDescriptor {
      */
     virtual TriggerType getPolicyType() = 0;
 
+    virtual std::string toString() = 0;
+
+    std::string getTypeAsString();
+
   protected:
     BaseWindowTriggerPolicyDescriptor(TriggerType policy);
     TriggerType policy;

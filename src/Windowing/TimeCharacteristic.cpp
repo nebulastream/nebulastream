@@ -43,4 +43,23 @@ AttributeFieldPtr TimeCharacteristic::getField() { return field; }
 
 TimeCharacteristic::Type TimeCharacteristic::getType() { return type; }
 
+std::string TimeCharacteristic::toString() {
+    std::stringstream ss;
+    ss << "TimeCharacteristic: ";
+    ss << " type=" << getTypeAsString();
+    ss << " field=" << field->toString();
+    ss << std::endl;
+    return ss.str();
+}
+
+std::string TimeCharacteristic::getTypeAsString() {
+    if (type == ProcessingTime) {
+        return "ProcessingTime";
+    } else if (type == EventTime) {
+        return "EventTime";
+    } else {
+        return "Unkown TimeCharacteristic type";
+    }
+}
+
 }// namespace NES::Windowing
