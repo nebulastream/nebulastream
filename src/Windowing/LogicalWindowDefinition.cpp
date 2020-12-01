@@ -103,18 +103,16 @@ WindowActionDescriptorPtr LogicalWindowDefinition::getTriggerAction() const { re
 
 std::string LogicalWindowDefinition::toString() {
     std::stringstream ss;
+    ss << std::endl;
     ss << "windowType=" << windowType->toString();
     ss << " aggregation=" << windowAggregation->toString();
-    ss << " triggerPolicy=" << triggerPolicy->toString();
-    ss << " triggerAction=" << triggerAction->toString();
-    ss << " onKey=" << onKey->toString();
-    ss << " distributionType=" << distributionType->toString();
+    ss << " triggerPolicy=" << triggerPolicy->toString() << std::endl;
+    ss << " triggerAction=" << triggerAction->toString() << std::endl;
+    ss << " onKey=" << onKey->toString() << std::endl;
+    ss << " distributionType=" << distributionType->toString()<< std::endl;
     ss << " numberOfInputEdges=" << numberOfInputEdges;
     ss << std::endl;
     return ss.str();
 }
 
-//FieldAccessExpressionNodePtr onKey;
-//DistributionCharacteristicPtr distributionType;
-//uint64_t numberOfInputEdges;
 }// namespace NES::Windowing
