@@ -41,11 +41,7 @@ PipelineStage::PipelineStage(uint32_t pipelineStageId, QuerySubPlanId qepId, Exe
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineStageId);
-
     uint32_t ret = !executablePipeline->execute(inputBuffer, pipelineContext, workerContext);
-
-    // only get the window manager and state if the pipeline has a window handler.
-//    uint64_t maxWaterMark = inputBuffer.getWatermark();
     return ret;
 }
 

@@ -628,6 +628,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     auto updateSliceStatement = VarRef(sliceMetadataDeclaration)[current_slice_ref].accessRef(getSliceCall);
     context->code->currentCodeInsertionPoint->addStatement(updateSliceStatement.createCopy());
 
+    // windowHandler->trigger();
     switch (window->getTriggerPolicy()->getPolicyType()) {
         case Windowing::triggerOnRecord: {
             auto trigger = FunctionCallStatement("trigger");
@@ -664,8 +665,8 @@ bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefini
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) {
     //    std::cout << joinDef << context << std::endl;
     auto tf = getTypeFactory();
-    NES_DEBUG("CCodeGenerator: Generate code for join" << joinDef);
     NES_ASSERT(joinDef, "invalid join definition");
+    NES_DEBUG("CCodeGenerator: Generate code for join" << joinDef);
     auto code = context->code;
 
     //-------------------------
@@ -800,6 +801,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         context->code->currentCodeInsertionPoint, partialRef, context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
 
+    // joinHandler->trigger();
     switch (joinDef->getTriggerPolicy()->getPolicyType()) {
         case Windowing::triggerOnBuffer: {
             auto trigger = FunctionCallStatement("trigger");
@@ -1043,6 +1045,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto updateSliceStatement = VarRef(sliceMetadataDeclaration)[current_slice_ref].accessRef(getSliceCall);
     context->code->currentCodeInsertionPoint->addStatement(updateSliceStatement.createCopy());
 
+    // windowHandler->trigger();
     switch (window->getTriggerPolicy()->getPolicyType()) {
         case Windowing::triggerOnRecord: {
             auto trigger = FunctionCallStatement("trigger");
