@@ -28,6 +28,13 @@
 #include <thread>
 #include <unistd.h>
 #include <utility>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+
+
 
 namespace NES::Join {
 
@@ -38,6 +45,11 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
  */
 class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHandler> {
   public:
+
+    explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
+        // nop
+    }
+
     template<class Type>
     auto as() {
         return std::dynamic_pointer_cast<Type>(shared_from_this());
@@ -75,7 +87,9 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
 
     virtual std::string toString() = 0;
 
-    virtual LogicalJoinDefinitionPtr getJoinDefinition() = 0;
+    LogicalJoinDefinitionPtr getJoinDefinition() {
+        return joinDefinition;
+    }
 
     /**
      * @brief Gets the last processed watermark
@@ -169,14 +183,33 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
             NES_THROW_RUNTIME_ERROR("getNumberOfMappings: invalid side");
         }
     }
+
     /**
-     * @brief Update the max processed ts, per origin.
+     * @brief updates all maxTs in all stores
      * @param ts
      * @param originId
      */
-    virtual void updateMaxTs(uint64_t ts, uint64_t originId) = 0;
+    virtual void updateMaxTs(uint64_t ts, uint64_t originId) {
+        NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
+        //TODO this is not correct as we have to distinguish between left and rigt side
+        if (joinDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+            auto beforeMinLeft = getMinWatermark(leftSide);
+            auto beforeMinRight = getMinWatermark(rightSide);
+            originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
+            originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
+            auto afterMinLeft = getMinWatermark(leftSide);
+            auto afterMinRight = getMinWatermark(rightSide);
+            if (beforeMinLeft < afterMinLeft || beforeMinRight < afterMinRight) {
+                trigger();
+            }
+        } else {
+            originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
+            originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
+        }
+    }
 
   protected:
+    LogicalJoinDefinitionPtr joinDefinition;
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
     PipelineStagePtr nextPipeline;

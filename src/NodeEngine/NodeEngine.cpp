@@ -158,20 +158,6 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
-        if (winOps.size() == 1) {
-            qepBuilder.setWinDef(winOps[0]->getWindowDefinition()).setSchema(sourceOperators[0]->getInputSchema());
-        } else if (winOps.size() > 1) {
-            //currently we only support one window per query
-            NES_NOT_IMPLEMENTED();
-        }
-
-        if (joinOps.size() == 1) {
-            qepBuilder.setJoinDef(joinOps[0]->getJoinDefinition()).setSchema(sourceOperators[0]->getInputSchema());
-        } else if (joinOps.size() > 1) {
-            //currently we only support one window per query
-            NES_NOT_IMPLEMENTED();
-        }
-
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {
             auto sourceDescriptor = sources->getSourceDescriptor();

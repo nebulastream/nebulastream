@@ -226,7 +226,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
         [sink](TupleBuffer& buffer, WorkerContext& wctx) {
             sink->writeData(buffer, wctx);
         },
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+        nullptr, nullptr);
     auto executable = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline = PipelineStage::create(0, queryId, executable, context, nullptr);
     builder.addPipelineStage(pipeline);
@@ -312,7 +312,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
         [sink1](TupleBuffer& buffer, WorkerContext& w) {
             sink1->writeData(buffer, w);
         },
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+        nullptr, nullptr);
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
@@ -334,7 +334,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
         [sink2](TupleBuffer& buffer, WorkerContext& w) {
             sink2->writeData(buffer, w);
         },
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+        nullptr, nullptr);
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
@@ -387,7 +387,7 @@ TEST_F(EngineTest, testParallelSameSource) {
         [sink1](TupleBuffer& buffer, WorkerContext& w) {
             sink1->writeData(buffer, w);
         },
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+        nullptr, nullptr);
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
@@ -409,7 +409,7 @@ TEST_F(EngineTest, testParallelSameSource) {
         [sink2](TupleBuffer& buffer, WorkerContext& w) {
             sink2->writeData(buffer, w);
         },
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+        nullptr, nullptr);
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
@@ -455,7 +455,7 @@ TEST_F(EngineTest, testParallelSameSink) {
         [sink1](TupleBuffer& buffer, WorkerContext& w) {
             sink1->writeData(buffer, w);
         },
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+        nullptr, nullptr);
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
@@ -476,7 +476,7 @@ TEST_F(EngineTest, testParallelSameSink) {
         [sink1](TupleBuffer& buffer, WorkerContext& w) {
             sink1->writeData(buffer, w);
         },
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+        nullptr, nullptr);
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
@@ -520,7 +520,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
         [sink1](TupleBuffer& buffer, WorkerContext& w) {
             sink1->writeData(buffer, w);
         },
-        nullptr, nullptr, nullptr, nullptr, sch1);
+        nullptr, nullptr);
     auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
@@ -540,7 +540,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
         [sink1](TupleBuffer& buffer, WorkerContext& w) {
             sink1->writeData(buffer, w);
         },
-        nullptr, nullptr, nullptr, nullptr, sch2);
+        nullptr, nullptr);
     auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);

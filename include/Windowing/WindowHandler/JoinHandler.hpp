@@ -35,11 +35,12 @@ class JoinHandler : public AbstractJoinHandler {
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                          BaseExecutableJoinActionPtr<KeyType> executableJoinAction)
-        : joinDefinition(joinDefinition), executablePolicyTrigger(executablePolicyTrigger),
+        : AbstractJoinHandler(std::move(joinDefinition)), executablePolicyTrigger(executablePolicyTrigger),
           executableJoinAction(executableJoinAction) {
         NES_DEBUG("Construct JoinHandler");
-        numberOfInputEdgesRight = joinDefinition->getNumberOfInputEdgesRight();
-        numberOfInputEdgesLeft = joinDefinition->getNumberOfInputEdgesLeft();
+        NES_ASSERT(this->joinDefinition, "wrong join def def");
+        numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
+        numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
         lastWatermarkLeft = 0;
         lastWatermarkRight = 0;
     }
@@ -137,18 +138,6 @@ class JoinHandler : public AbstractJoinHandler {
     }
 
     /**
-     * @brief updates all maxTs in all stores
-     * @param ts
-     * @param originId
-     */
-    void updateMaxTs(uint64_t ts, uint64_t originId) override {
-        NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
-        //TODO this is not correct as we have to distinguish between left and rigt side
-        originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
-        originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
-    }
-
-    /**
     * @brief Initialises the state of this window depending on the window definition.
     */
     bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
@@ -182,7 +171,7 @@ class JoinHandler : public AbstractJoinHandler {
 
     auto getRightJoinState() { return rightJoinState; }
 
-    LogicalJoinDefinitionPtr getJoinDefinition() override { return joinDefinition; }
+    LogicalJoinDefinitionPtr getJoinDefinition() { return joinDefinition; }
 
   private:
     StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState;
@@ -192,7 +181,6 @@ class JoinHandler : public AbstractJoinHandler {
     //    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>* leftJoinState;
     //    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>* rightJoinState;
 
-    LogicalJoinDefinitionPtr joinDefinition;
     Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     Join::BaseExecutableJoinActionPtr<KeyType> executableJoinAction;
 };

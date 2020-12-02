@@ -368,8 +368,6 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
                        .setQuerySubPlanId(1)
                        .addSource(windowSource)
                        .addSink(testSink)
-                       .setWinDef(winOps[0]->getWindowDefinition())
-                       .setSchema(leafOps[0]->getInputSchema())
                        .addOperatorQueryPlan(generatableOperators);
 
     auto plan = builder.build();
@@ -450,8 +448,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
                        .setQuerySubPlanId(1)
                        .addSource(windowSource)
                        .addSink(testSink)
-                       .setWinDef(winOps[0]->getWindowDefinition())
-                       .setSchema(leafOps[0]->getInputSchema())
                        .addOperatorQueryPlan(generatableOperators);
 
     auto plan = builder.build();
@@ -528,8 +524,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
                        .setQuerySubPlanId(1)
                        .addSource(windowSource)
                        .addSink(testSink)
-                       .setWinDef(winOps[0]->getWindowDefinition())
-                       .setSchema(leafOps[0]->getInputSchema())
                        .addOperatorQueryPlan(generatableOperators);
 
     auto plan = builder.build();
@@ -610,8 +604,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
                        .setQuerySubPlanId(1)
                        .addSource(windowSource)
                        .addSink(testSink)
-                       .setWinDef(winOps[0]->getWindowDefinition())
-                       .setSchema(leafOps[0]->getInputSchema())
                        .addOperatorQueryPlan(generatableOperators);
 
     auto plan = builder.build();
@@ -775,8 +767,6 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
                        .addSource(ysbSource)
-                       .setWinDef(winOps[0]->getWindowDefinition())
-                       .setSchema(leafOps[0]->getInputSchema())
                        .addSink(testSink)
                        .addOperatorQueryPlan(generatableOperators);
 

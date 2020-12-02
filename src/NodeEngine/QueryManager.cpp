@@ -295,7 +295,7 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
         queryExecutionPlanId, bufferManager,
         [](TupleBuffer&, NES::WorkerContext&) {
         },
-        nullptr, nullptr, nullptr, nullptr, nullptr);
+        nullptr, nullptr);
     auto pipeline = PipelineStage::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     {
         std::unique_lock lock(workMutex);
