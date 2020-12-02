@@ -61,9 +61,10 @@ int main(int argc, const char* argv[]) {
 
     po::options_description serverOptions("Nes Coordinator Server Options");
 
-    serverOptions.add_options()(
-        "restIp", po::value<std::string>(&restIp)->default_value(restIp), "Set NES ip of the REST server (default: 127.0.0.1).")(
-        "coordinatorIp", po::value<std::string>(&coordinatorIp)->default_value(coordinatorIp), "Set NES ip for internal communication regarding zmq and rpc (default: 127.0.0.1).")(
+    serverOptions.add_options()("restIp", po::value<std::string>(&restIp)->default_value(restIp),
+                                "Set NES ip of the REST server (default: 127.0.0.1).")(
+        "coordinatorIp", po::value<std::string>(&coordinatorIp)->default_value(coordinatorIp),
+        "Set NES ip for internal communication regarding zmq and rpc (default: 127.0.0.1).")(
         "restPort", po::value<uint16_t>(&restPort), "Set NES REST server port (default: 8081).")(
         "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort), "Set NES rpc server port (default: 4000).")(
         "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
@@ -92,11 +93,11 @@ int main(int argc, const char* argv[]) {
     }
 
     NES_INFO("creating coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(restIp, restPort, coordinatorIp, rpcPort, numberOfSlots, enableQueryMerging);
+    NesCoordinatorPtr crd =
+        std::make_shared<NesCoordinator>(restIp, restPort, coordinatorIp, rpcPort, numberOfSlots, enableQueryMerging);
 
     NES_INFO("start coordinator with RestIp=" << restIp << " restPort=" << restPort << " coordinatorIp=" << coordinatorIp
-                                              << " with rpc port "
-                                              << rpcPort << " numberOfSlots=" << numberOfSlots);
+                                              << " with rpc port " << rpcPort << " numberOfSlots=" << numberOfSlots);
     crd->startCoordinator(/**blocking**/ true);//blocking call
     crd->stopCoordinator(true);
     NES_INFO("coordinator started");
