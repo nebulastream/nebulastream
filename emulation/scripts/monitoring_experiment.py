@@ -62,7 +62,7 @@ def make_request(request_type):
     if request_type == "ysb":
         nes_url = 'http://localhost:8081/v1/nes/query/execute-query'
         data = '''{
-        \"userQuery\" : \"Query::from(\\\"ysb\\\").windowByKey(Attribute(\\\"campaign_id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Milliseconds(1)), Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"ysbOut.csv\\\",\\\"CSV_FORMAT\\\",\\\"APPEND\\\"));\",
+        \"userQuery\" : \"Query::from(\\\"ysb\\\").filter(Attribute(\\\"event_type\\\") < 3).windowByKey(Attribute(\\\"campaign_id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Milliseconds(1)), Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"ysbOut.csv\\\",\\\"CSV_FORMAT\\\",\\\"APPEND\\\"));\",
         \"strategyName\" : \"BottomUp\"
         }'''
         return requests.post(nes_url, data=data)

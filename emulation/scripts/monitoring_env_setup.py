@@ -27,8 +27,8 @@ num_tuples = 10
 num_buffers = 20
 
 enable_influx = True
-nesDir = "/home/xenofon/git/nebulastream/"
-influx_storage = "/home/xenofon/experiments/influx/"
+nesDir = ""
+influx_storage = ""
 
 #_________________________________________________________________________________________________________________
 setLogLevel('info')
@@ -41,12 +41,16 @@ if not nesDir:
     raise RuntimeError("Please specify a nes directory like /git/nebulastream/")
 
 if enable_influx:
+    if not influx_storage:
+        raise RuntimeError("Please specify a volume directory for influx like /experiments/influx/")
+
     influxdb = net.addDocker('influxdb', dimage="influxdb:1.8.3",
                              ports=[8086],
                              port_bindings={8086: 8086},
                              volumes=[nesDir + "emulation/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro",
                                       influx_storage + ":/var/lib/influxdb"],
                              dcmd='influxd -config /etc/influxdb/influxdb.conf')
+
 
 info('*** Adding docker containers\n')
 
@@ -66,7 +70,7 @@ for i in range(0, number_workers):
                                          "path": nesDir + "emulation/images"},
                            ports=[3000, 3001, 9100],
                            port_bindings={3007: 3000, 3008: 3001, 9101: 9100})
-    cmd = '/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --logLevel=LOG_NONE --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip \
+    cmd = '/entrypoint-prom.sh wrk /opt/local/nebula-stream/nesWorker --logLevel=LOG_DEBUG --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip \
           + ' --sourceType=YSBSource --numberOfBuffersToProduce=' + str(num_buffers) + ' --numberOfTuplesToProducePerBuffer=' + str(num_tuples) + ' --sourceFrequency=1 --physicalStreamName=ysb' \
           + str(i) + ' --logicalStreamName=ysb'
     print(cmd)
@@ -80,7 +84,7 @@ net.addLink(crd, sw1, cls=TCLink)
 for w in workers:
     net.addLink(w[0], sw1, cls=TCLink)
 
-crd.cmd('/entrypoint-prom.sh crd /opt/local/nebula-stream/nesCoordinator --restIp=0.0.0.0 --coordinatorIp=10.15.16.3 --logLevel=LOG_NONE')
+crd.cmd('/entrypoint-prom.sh crd /opt/local/nebula-stream/nesCoordinator --restIp=0.0.0.0 --coordinatorIp=10.15.16.3 --logLevel=LOG_DEBUG')
 for w in workers:
     w[0].cmd(w[1])
 
