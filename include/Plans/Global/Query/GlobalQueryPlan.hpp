@@ -59,8 +59,9 @@ class GlobalQueryPlan {
     /**
      * @brief Add query plan to the global query plan
      * @param queryPlan : new query plan to be added.
+     * @return: true if successful else false
      */
-    void addQueryPlan(QueryPlanPtr queryPlan);
+    bool addQueryPlan(QueryPlanPtr queryPlan);
 
     /**
      * @brief remove the operators belonging to the query with input query Id from the global query plan
@@ -69,19 +70,9 @@ class GlobalQueryPlan {
     void removeQuery(QueryId queryId);
 
     /**
-     * @brief This is to bulk update the list of global query nodes for the given query id
-     * @param queryId : the query id
-     * @param globalQueryNodes : the new list of GQNs
-     * @return true if successful else false
+     * @brief This method will remove all deployed empty metadata information
      */
-    bool updateGQNListForQueryId(QueryId queryId, std::vector<GlobalQueryNodePtr> globalQueryNodes);
-
-    /**
-     * @brief Get all global query nodes containing given queryId
-     * @param queryId: queryId for which to get global query nodes
-     * @return vector containing all GlobalQueryNodes or empty list
-     */
-    std::vector<GlobalQueryNodePtr> getGQNListForQueryId(QueryId queryId);
+    void removeEmptyMetaData();
 
     /**
      * @brief Get all newly added Global Query Nodes with NodeType operators
@@ -127,6 +118,12 @@ class GlobalQueryPlan {
     std::vector<GlobalQueryMetaDataPtr> getGlobalQueryMetaDataToDeploy();
 
     /**
+     * @brief Get all global query metadata information
+     * @return vector of global query meta data
+     */
+    std::vector<GlobalQueryMetaDataPtr> getAllGlobalQueryMetaData();
+
+    /**
      * @brief Get the global query id for the query
      * @param queryId: the original query id
      * @return the corresponding global query id
@@ -143,30 +140,21 @@ class GlobalQueryPlan {
     uint64_t getNextFreeId();
 
     /**
-     * @brief Add a new logical operator of a query as child to a given GlobalQueryNode.
-     * @param parentNode: the global query node to which a new global query node is to be added as child.
-     * @param queryId: the query id to which the logical operator belongs
-     * @param operatorNode: the logical operator
-     */
-    void addNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId, const OperatorNodePtr& operatorNode);
-
-    /**
-     * @brief Add global query node entry to the input query Id
-     * @param queryId : query id to which global query node belongs to
-     * @param globalQueryNode : global query node entry
-     * @return true if successful
-     */
-    bool addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNodePtr globalQueryNode);
-
-    /**
      * @brief Check if constructed metadata is still valid or not.
      * @return true if successful
      */
     bool checkMetaDataValidity();
 
+    /**
+     * @brief Update the global query meta data information
+     * @param globalQueryMetaData: the global query metadata to be updated
+     * @return true if successful
+     */
+    bool updateGlobalQueryMetadata(GlobalQueryMetaDataPtr globalQueryMetaData);
+
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
-    std::map<QueryId, std::vector<GlobalQueryNodePtr>> queryIdToGlobalQueryNodeMap;
+//    std::map<QueryId, std::vector<GlobalQueryNodePtr>> queryIdToGlobalQueryNodeMap;
     std::map<GlobalQueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
     std::map<QueryId, GlobalQueryId> queryIdToGlobalQueryIdMap;
 };

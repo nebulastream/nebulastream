@@ -154,6 +154,13 @@ class GlobalQueryMetaData {
      */
     void setAsOld();
 
+    /**
+     * @brief Method to merge together global query metadata
+     * @param targetGQM : the target global query metadata
+     * @return true if successful else false
+     */
+    bool mergeGlobalQueryMetaData(GlobalQueryMetaDataPtr targetGQM);
+
   private:
     explicit GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
