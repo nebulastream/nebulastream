@@ -34,9 +34,7 @@ const size_t buffer_size = 32 * 1024;
 class BufferManagerTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
-    }
+    static void SetUpTestCase() { NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG); }
 };
 
 TEST_F(BufferManagerTest, initializedBufferManager) {

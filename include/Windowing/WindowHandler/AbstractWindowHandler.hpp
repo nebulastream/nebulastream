@@ -18,6 +18,9 @@
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
 #include <Util/Logger.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <algorithm>
 #include <atomic>
@@ -27,10 +30,6 @@
 #include <thread>
 #include <unistd.h>
 #include <utility>
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
-#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-
 
 namespace NES::Windowing {
 
@@ -39,7 +38,6 @@ namespace NES::Windowing {
  */
 class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindowHandler> {
   public:
-
     explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition) : windowDefinition(windowDefinition) {
         // nop
     }
@@ -81,9 +79,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
 
     virtual std::string toString() = 0;
 
-    LogicalWindowDefinitionPtr getWindowDefinition() {
-        return windowDefinition;
-    }
+    LogicalWindowDefinitionPtr getWindowDefinition() { return windowDefinition; }
 
     /**
      * @brief Gets the last processed watermark
@@ -153,7 +149,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
      * @param ts
      * @param originId
      */
-  virtual void updateMaxTs(uint64_t ts, uint64_t originId) {
+    virtual void updateMaxTs(uint64_t ts, uint64_t originId) {
         NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
                                  << " new val=" << std::max(originIdToMaxTsMap[originId], ts));
         if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
