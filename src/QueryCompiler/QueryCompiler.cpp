@@ -41,34 +41,6 @@ QueryCompilerPtr QueryCompiler::create() { return std::make_shared<QueryCompiler
  * 4. it scans the map to build pipeline stages. This way, we know the consumer set for each pipeline stage (or its sinks) and we can generate buffer emitters
  */
 
-
-//    if (hasWindowHandler() && maxWaterMark != 0) {
-//        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
-//        if (pipelineContext->getWindowDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
-//            NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnWatermarkChange");
-//            pipelineContext->getWindowHandler()->trigger();
-//        }
-//    }
-//
-//    if (hasWindowHandler()
-//        && pipelineContext->getWindowDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnBuffer) {
-//        NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnBuffer");
-//        pipelineContext->getWindowHandler()->trigger();
-//    }
-//
-//    if (hasJoinHandler() && maxWaterMark != 0) {
-//        NES_DEBUG("PipelineStage::execute: new max watermark=" << maxWaterMark << " originId=" << inputBuffer.getOriginId());
-//        if (pipelineContext->getJoinDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
-//            NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnWatermarkChange");
-//            pipelineContext->getJoinHandler()->trigger();
-//        }
-//    }
-//
-//    if (hasJoinHandler() && pipelineContext->getJoinDef()->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnBuffer) {
-//        NES_DEBUG("PipelineStage::execute: trigger window based on triggerOnBuffer");
-//        pipelineContext->getJoinHandler()->trigger();
-//    }
-
 void QueryCompiler::compile(GeneratedQueryExecutionPlanBuilder& qepBuilder, OperatorNodePtr queryPlan) {
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
