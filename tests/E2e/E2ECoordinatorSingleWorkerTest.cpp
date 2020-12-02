@@ -287,12 +287,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::string testFile = "exdra.csv";
     remove(testFile.c_str());
 
-    string path = "./nesCoordinator --coordinatorPort=12346";
+    string path = "./nesCoordinator --coordinatorPort=12333";
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-    string path2 = "./nesWorker --coordinatorPort=12346 --sourceType=CSVSource --sourceConfig=tests/test_data/exdra.csv "
+    string path2 = "./nesWorker --coordinatorPort=12333 --sourceType=CSVSource --sourceConfig=tests/test_data/exdra.csv "
                    "--numberOfBuffersToProduce=1 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra "
                    "--endlessRepeat=on";
 
@@ -387,7 +387,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     std::string outputFilePath = "testExecutingSimplePattern.out";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --coordinatorPort=12267";
+    string path = "./nesCoordinator --coordinatorPort=12212";
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -402,7 +402,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 =
-        "./nesWorker --coordinatorPort=12267 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource "
+        "./nesWorker --coordinatorPort=12212 --logicalStreamName=QnV --physicalStreamName=test_stream --sourceType=CSVSource "
         "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
@@ -453,7 +453,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     std::string outputFilePath = "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --coordinatorPort=12346";
+    string path = "./nesCoordinator --coordinatorPort=12355";
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -467,7 +467,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 =
-        "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
+        "./nesWorker --coordinatorPort=12355 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
         "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
@@ -524,7 +524,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     std::string outputFilePath = "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --coordinatorPort=12346";
+    string path = "./nesCoordinator --coordinatorPort=12366";
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -538,7 +538,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
     string path2 =
-        "./nesWorker --coordinatorPort=12346 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
+        "./nesWorker --coordinatorPort=12366 --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
         "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
