@@ -14,24 +14,17 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WATERMARK_PROCESSINGTIMEWATERMARK_HPP_
-#define NES_INCLUDE_WATERMARK_PROCESSINGTIMEWATERMARK_HPP_
-#include <Windowing/Watermark/Watermark.hpp>
-#include <cstdint>
-#include <memory>
-
+#include <Util/Logger.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkGenerator.hpp>
+#include <chrono>
 namespace NES::Windowing {
 
-class ProcessingTimeWatermarkGenerator : public Watermark {
-  public:
-    explicit ProcessingTimeWatermarkGenerator();
+IngestionTimeWatermarkGenerator::IngestionTimeWatermarkGenerator() {}
 
-    /**
-    * @brief this function returns the watermark value as a processing time value
-    * @return watermark value
-    */
-    uint64_t getWatermark();
-};
+uint64_t IngestionTimeWatermarkGenerator::getWatermark() {
+    auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    NES_DEBUG("IngestionTimeWatermarkGenerator::getWatermark generate ts=" << ts);
+    return ts;
+}
 
 }// namespace NES::Windowing
-#endif//NES_INCLUDE_WATERMARK_PROCESSINGTIMEWATERMARK_HPP_

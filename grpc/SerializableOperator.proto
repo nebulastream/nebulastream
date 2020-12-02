@@ -174,7 +174,7 @@ message SerializableOperator{
       uint64 delay = 2;
     }
 
-    message SerializableProcessingTimeWatermarkStrategyDescriptor {
+    message SerializableIngestionTimeWatermarkStrategyDescriptor {
     }
     google.protobuf.Any strategy = 1;
   }
@@ -220,7 +220,7 @@ message SerializableOperator{
     message TimeCharacteristic {
       enum Type{
         EventTime = 0;
-        ProcessingTime = 1;
+        IngestionTime = 1;
       }
       Type type = 1;
       string field = 2;
@@ -295,7 +295,7 @@ message SerializableOperator{
     message TimeCharacteristic {
       enum Type{
         EventTime = 0;
-        ProcessingTime = 1;
+        IngestionTime = 1;
       }
       Type type = 1;
       string field = 2;

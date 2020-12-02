@@ -35,8 +35,8 @@ TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldVa
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField);
 }
 
-TimeCharacteristicPtr TimeCharacteristic::createProcessingTime() {
-    return std::make_shared<TimeCharacteristic>(Type::ProcessingTime);
+TimeCharacteristicPtr TimeCharacteristic::createIngestionTime() {
+    return std::make_shared<TimeCharacteristic>(Type::IngestionTime);
 }
 
 AttributeFieldPtr TimeCharacteristic::getField() { return field; }
@@ -56,12 +56,12 @@ std::string TimeCharacteristic::toString() {
 }
 
 std::string TimeCharacteristic::getTypeAsString() {
-    if (type == ProcessingTime) {
-        return "ProcessingTime";
+    if (type == IngestionTime) {
+        return "IngestionTime";
     } else if (type == EventTime) {
         return "EventTime";
     } else {
-        return "Unkown TimeCharacteristic type";
+        return "Unknown TimeCharacteristic type";
     }
 }
 

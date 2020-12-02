@@ -14,26 +14,25 @@
     limitations under the License.
 */
 
-#ifndef NES_PROCESSINGTIMEWATERMARKDESCRIPTOR_HPP
-#define NES_PROCESSINGTIMEWATERMARKDESCRIPTOR_HPP
+#ifndef NES_INGESTIONTIMEWATERMARKSTRATEGY_HPP
+#define NES_INGESTIONTIMEWATERMARKSTRATEGY_HPP
 
-#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/WatermarkStrategy.hpp>
 
 namespace NES::Windowing {
 
-class ProcessingTimeWatermarkStrategyDescriptor;
-typedef std::shared_ptr<ProcessingTimeWatermarkStrategyDescriptor> ProcessingTimeWatermarkStrategyDescriptorPtr;
+class IngestionTimeWatermarkStrategy;
+typedef std::shared_ptr<IngestionTimeWatermarkStrategy> IngestionTimeWatermarkStrategyPtr;
 
-class ProcessingTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
+class IngestionTimeWatermarkStrategy : public WatermarkStrategy {
   public:
-    static WatermarkStrategyDescriptorPtr create();
+    IngestionTimeWatermarkStrategy();
 
-    bool equal(WatermarkStrategyDescriptorPtr other) override;
+    static IngestionTimeWatermarkStrategyPtr create();
 
-  private:
-    explicit ProcessingTimeWatermarkStrategyDescriptor();
+    Type getType() override;
 };
 
 }// namespace NES::Windowing
 
-#endif//NES_PROCESSINGTIMEWATERMARKDESCRIPTOR_HPP
+#endif//NES_INGESTIONTIMEWATERMARKSTRATEGY_HPP

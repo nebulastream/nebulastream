@@ -28,15 +28,15 @@ class TimeCharacteristic {
     /**
      * @brief The type as enum.
      */
-    enum Type { ProcessingTime, EventTime };
+    enum Type { IngestionTime, EventTime };
     explicit TimeCharacteristic(Type type);
     TimeCharacteristic(Type type, AttributeFieldPtr field);
 
     /**
-     * @brief Factory to create a time characteristic for processing time window
+     * @brief Factory to create a time characteristic for ingestion time window
      * @return TimeCharacteristicPtr
      */
-    static TimeCharacteristicPtr createProcessingTime();
+    static TimeCharacteristicPtr createIngestionTime();
 
     /**
      * @brief Factory to create a event time window with an time extractor on a specific field.

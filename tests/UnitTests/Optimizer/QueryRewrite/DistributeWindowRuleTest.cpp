@@ -92,7 +92,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
                                    Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -115,7 +115,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
                       .filter(Attribute("id") < 45)
-                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
                                    Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();

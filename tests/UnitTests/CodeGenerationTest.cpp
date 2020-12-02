@@ -791,7 +791,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
@@ -852,7 +852,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
     auto aggregate =
@@ -920,7 +920,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),
+        Attribute("key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
     auto aggregate =
@@ -1049,7 +1049,7 @@ TEST_F(CodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)),
+        Attribute("key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
 
     auto aggregate =
@@ -1185,7 +1185,7 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
-        TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Milliseconds(10)), distrType, triggerPolicy, triggerAction,
+        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)), distrType, triggerPolicy, triggerAction,
         1, 1);
 
     context1->isLeftSide = true;

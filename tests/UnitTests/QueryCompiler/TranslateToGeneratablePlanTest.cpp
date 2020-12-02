@@ -164,7 +164,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(LogicalWindowDefinition::create(
-        Attribute("id"), Sum(Attribute("value")), TumblingWindow::of(ProcessingTime(), Seconds(10)),
+        Attribute("id"), Sum(Attribute("value")), TumblingWindow::of(IngestionTime(), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction));
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);

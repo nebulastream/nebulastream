@@ -361,7 +361,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         setWatermarkFunctionCall.addParameter(VarRef(maxWatermarkVariableDeclaration));
         auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
         context->code->cleanupStmts.push_back(setWatermarkStatement.createCopy());
-    } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::ProcessingTimeWatermark) {
+    } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::IngestionTimeWatermark) {
         // get the watermark from attribute field
         // auto watermark_ts = NES::Windowing::getTsFromClock()
         auto tf = getTypeFactory();
@@ -564,7 +564,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     // get current timestamp
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
+    if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
@@ -743,7 +743,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // get current timestamp
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (joinDef->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
+    if (joinDef->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         //      auto current_ts = NES::Windowing::getTsFromClock();
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
@@ -969,7 +969,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     // get current timestamp
     // TODO add support for event time
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "start");
-    if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
+    if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTsStatement =
             VarDeclStatement(currentTimeVariableDeclaration)
                 .assign(

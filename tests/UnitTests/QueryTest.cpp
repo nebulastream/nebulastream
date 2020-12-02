@@ -111,7 +111,7 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
                                    Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
@@ -148,7 +148,7 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     Query query =
         Query::from("default_logical")
-            .windowByKey(Attribute("id"), SlidingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10), Seconds(2)),
+            .windowByKey(Attribute("id"), SlidingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10), Seconds(2)),
                          Sum(Attribute("value")))
             .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
@@ -215,7 +215,7 @@ TEST_F(QueryTest, testQueryJoin) {
 
     auto query =
         Query::from("default_logical")
-            .join(&subQuery, Attribute("id"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)))
+            .join(&subQuery, Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
             .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();

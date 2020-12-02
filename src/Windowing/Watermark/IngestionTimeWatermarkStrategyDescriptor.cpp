@@ -14,14 +14,17 @@
     limitations under the License.
 */
 
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategy.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing {
 
-ProcessingTimeWatermarkStrategy::ProcessingTimeWatermarkStrategy() {}
-ProcessingTimeWatermarkStrategyPtr ProcessingTimeWatermarkStrategy::create() {
-    return std::make_shared<ProcessingTimeWatermarkStrategy>();
+IngestionTimeWatermarkStrategyDescriptor::IngestionTimeWatermarkStrategyDescriptor() {}
+
+WatermarkStrategyDescriptorPtr IngestionTimeWatermarkStrategyDescriptor::create() {
+    return std::make_shared<IngestionTimeWatermarkStrategyDescriptor>(Windowing::IngestionTimeWatermarkStrategyDescriptor());
 }
-WatermarkStrategy::Type ProcessingTimeWatermarkStrategy::getType() { return WatermarkStrategy::ProcessingTimeWatermark; }
-}//namespace NES::Windowing
+bool IngestionTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other) {
+    return other->instanceOf<IngestionTimeWatermarkStrategyDescriptor>();
+}
+
+}// namespace NES::Windowing

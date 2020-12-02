@@ -14,28 +14,26 @@
     limitations under the License.
 */
 
-#ifndef NES_WATERMARKSTRATEGY_HPP
-#define NES_WATERMARKSTRATEGY_HPP
+#ifndef NES_INGESTIONTIMEWATERMARKDESCRIPTOR_HPP
+#define NES_INGESTIONTIMEWATERMARKDESCRIPTOR_HPP
 
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing {
 
-class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy> {
+class IngestionTimeWatermarkStrategyDescriptor;
+typedef std::shared_ptr<IngestionTimeWatermarkStrategyDescriptor> IngestionTimeWatermarkStrategyDescriptorPtr;
+
+class IngestionTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
   public:
-    WatermarkStrategy();
+    static WatermarkStrategyDescriptorPtr create();
 
-    enum Type {
-        EventTimeWatermark,
-        IngestionTimeWatermark,
-    };
+    bool equal(WatermarkStrategyDescriptorPtr other) override;
 
-    virtual Type getType() = 0;
-
-    template<class Type>
-    auto as() {
-        return std::dynamic_pointer_cast<Type>(shared_from_this());
-    }
+  private:
+    explicit IngestionTimeWatermarkStrategyDescriptor();
 };
+
 }// namespace NES::Windowing
-#endif//NES_WATERMARKSTRATEGY_HPP
+
+#endif//NES_INGESTIONTIMEWATERMARKDESCRIPTOR_HPP

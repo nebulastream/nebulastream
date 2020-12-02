@@ -27,7 +27,7 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
 
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -81,9 +81,9 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+                LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
@@ -108,9 +108,9 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+                LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
@@ -140,9 +140,9 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::ProcessingTime) {
+        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(ProcessingTimeWatermarkStrategyDescriptor::create()));
+                LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(

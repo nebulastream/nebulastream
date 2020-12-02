@@ -60,7 +60,7 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
@@ -267,8 +267,8 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime);
         timeCharacteristicDetails.set_field(timeCharacteristic->getField()->name);
-    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
-        timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime);
+    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_IngestionTime);
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
@@ -382,8 +382,8 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_JoinDetails_TimeCharacteristic_Type_EventTime);
         timeCharacteristicDetails.set_field(timeCharacteristic->getField()->name);
-    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::ProcessingTime) {
-        timeCharacteristicDetails.set_type(SerializableOperator_JoinDetails_TimeCharacteristic_Type_ProcessingTime);
+    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        timeCharacteristicDetails.set_type(SerializableOperator_JoinDetails_TimeCharacteristic_Type_IngestionTime);
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
@@ -521,8 +521,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
                                                    Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacterisitc.type()
-                   == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(),
+                   == SerializableOperator_WindowDetails_TimeCharacteristic_Type_IngestionTime) {
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
                                                    Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
@@ -540,8 +540,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else if (serializedTimeCharacterisitc.type()
-                   == SerializableOperator_WindowDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(),
+                   == SerializableOperator_WindowDetails_TimeCharacteristic_Type_IngestionTime) {
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
@@ -654,8 +654,8 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
                                                    Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacterisitc.type()
-                   == SerializableOperator_JoinDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(),
+                   == SerializableOperator_JoinDetails_TimeCharacteristic_Type_IngestionTime) {
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
                                                    Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
@@ -673,8 +673,8 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else if (serializedTimeCharacterisitc.type()
-                   == SerializableOperator_JoinDetails_TimeCharacteristic_Type_ProcessingTime) {
-            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createProcessingTime(),
+                   == SerializableOperator_JoinDetails_TimeCharacteristic_Type_IngestionTime) {
+            window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
@@ -1139,10 +1139,10 @@ SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serial
                                                          serializedWatermarkStrategyDescriptor.mutable_onfield());
         serializedWatermarkStrategyDescriptor.set_delay(eventTimeWatermarkStrategyDescriptor->getDelay().getTime());
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
-    } else if (auto processingTimeWatermarkStrategyDescriptor =
-                   std::dynamic_pointer_cast<Windowing::ProcessingTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
+    } else if (auto ingestionTimeWatermarkStrategyDescriptor =
+                   std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
         auto serializedWatermarkStrategyDescriptor =
-            SerializableOperator_WatermarkStrategyDetails_SerializableProcessingTimeWatermarkStrategyDescriptor();
+            SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor();
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Watermark Strategy Descriptor Type");
@@ -1170,8 +1170,8 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
             Attribute(onField->getFieldName()), Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.delay()));
         return eventTimeWatermarkStrategyDescriptor;
     } else if (deserializedWatermarkStrategyDescriptor
-                   .Is<SerializableOperator_WatermarkStrategyDetails_SerializableProcessingTimeWatermarkStrategyDescriptor>()) {
-        return Windowing::ProcessingTimeWatermarkStrategyDescriptor::create();
+                   .Is<SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor>()) {
+        return Windowing::IngestionTimeWatermarkStrategyDescriptor::create();
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Serialized Watermark Strategy Descriptor Type");
         throw std::invalid_argument("Unknown Serialized Watermark Strategy Descriptor Type");

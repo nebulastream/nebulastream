@@ -51,7 +51,7 @@
 #include <Sources/YSBSource.hpp>
 
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
 
