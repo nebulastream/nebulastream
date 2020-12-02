@@ -19,6 +19,7 @@
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {
@@ -30,93 +31,31 @@ L0QueryMergerRulePtr L0QueryMergerRule::create() { return std::make_shared<L0Que
 bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
     NES_INFO("L0QueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
-    std::vector<GlobalQueryNodePtr> globalQueryNodesWithSinkOperators =
-        globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-    if (globalQueryNodesWithSinkOperators.size() == 1) {
-        NES_DEBUG("L0QueryMergerRule: Found only a single query in the global query plan. Skipping the L0 Query Merging.");
+
+    std::vector<GlobalQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllGlobalQueryMetaData();
+    if (allGQMs.size() == 1) {
+        NES_DEBUG(
+            "L0QueryMergerRule: Found only a single query metadata in the global query plan. Skipping the L0 Query Merging.");
         return true;
     }
 
+    std::vector<GlobalQueryMetaDataPtr> allGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+
     NES_DEBUG("L0QueryMergerRule: Iterating over all sink GQNs in the Global Query Plan");
-    for (int i = 0; i < globalQueryNodesWithSinkOperators.size(); i++) {
-        NES_DEBUG("L0QueryMergerRule: Get the sink GQN and find another sink GQN with same upstream operator chain");
-        GlobalQueryNodePtr targetGlobalQueryNodesWithSinkOperator = globalQueryNodesWithSinkOperators[i];
-        auto queryIds = targetGlobalQueryNodesWithSinkOperator->getQueryIds();
-        if (queryIds.size() > 1) {
-            NES_ERROR("L0QueryMergerRule: can't have sink GQN with more than one query");
-            throw Exception("L0QueryMergerRule: can't have sink GQN with more than one query");
-        }
+    for (auto& targetGQM : allGQMToDeploy) {
 
-        NES_DEBUG("L0QueryMergerRule: Get the target query id to find an equivalent operator chains");
-        QueryId targetQueryId = queryIds.at(0);
-
-        for (int j = i + 1; j < globalQueryNodesWithSinkOperators.size(); j++) {
-            NES_DEBUG("L0QueryMergerRule: Get a host sink GQN for comparison");
-            GlobalQueryNodePtr hostGlobalQueryNodesWithSinkOperator = globalQueryNodesWithSinkOperators[j];
-
-            //Get the source GQNs for both target and host sink GQNs
-            std::vector<NodePtr> targetGQNsWithSourceOperator = targetGlobalQueryNodesWithSinkOperator->getAllLeafNodes();
-            std::vector<NodePtr> hostGQNsWithSourceOperator = hostGlobalQueryNodesWithSinkOperator->getAllLeafNodes();
-
-            //Check if both host and target GQNs have same source GQN nodes
-            if (areGQNodesEqual(targetGQNsWithSourceOperator, hostGQNsWithSourceOperator)) {
-                NES_DEBUG("L0QueryMergerRule: Skipping execution as both target and host sink GQNs belong to same query plan.");
+        for (auto& hostGQM : allGQMs) {
+            if (targetGQM->getGlobalQueryId() == hostGQM->getGlobalQueryId()){
                 continue;
             }
 
-            NES_DEBUG("L0QueryMergerRule: Start with the first target Source GQN and find match for all downstream GQNs.");
-            auto& targetSourceGQN = targetGQNsWithSourceOperator[0];
+            auto hostQueryPlan = hostGQM->getQueryPlan();
+            auto targetQueryPlan = targetGQM->getQueryPlan();
 
-            std::map<GlobalQueryNodePtr, GlobalQueryNodePtr> targetGQNToHostGQNMap;
-            bool allTargetGQNFoundMatch = false;
-            for (auto& hostGQNWithSourceOperator : hostGQNsWithSourceOperator) {
-                NES_TRACE("L0QueryMergerRule: Clear list of previously processed nodes");
-                processedNodes.clear();
-                if (checkIfGQNCanMerge(targetSourceGQN->as<GlobalQueryNode>(), hostGQNWithSourceOperator->as<GlobalQueryNode>(),
-                                       targetGQNToHostGQNMap)) {
-                    NES_DEBUG(
-                        "L0QueryMergerRule: Start with the first target Source GQN and find match for all downstream GQNs.");
-                    allTargetGQNFoundMatch = true;
-                    break;
-                }
+            if(checkIfGQNCanMerge()){
+
+                break;
             }
-
-            if (!allTargetGQNFoundMatch) {
-                NES_WARNING(
-                    "L0QueryMergerRule: Unable to find a completely matching operator chain. Trying next available host GQN.");
-                continue;
-            }
-
-            NES_DEBUG("L0QueryMergerRule: Found a matching operator chain for performing L0 Merge.");
-
-            NES_TRACE("L0QueryMergerRule: Get all existing GQN for the target Query " << targetQueryId);
-            auto gqnListForTargetQuery = globalQueryPlan->getGQNListForQueryId(targetQueryId);
-
-            NES_TRACE("L0QueryMergerRule: Iterate over the pair of matched target and host GQN and perform GQN merge.");
-            for (auto& [targetGQN, hostGQN] : targetGQNToHostGQNMap) {
-                uint64_t targetGQNId = targetGQN->getId();
-                auto found = std::find_if(gqnListForTargetQuery.begin(), gqnListForTargetQuery.end(),
-                                          [&](const GlobalQueryNodePtr& currentGQN) {
-                                              return targetGQNId == currentGQN->getId();
-                                          });
-
-                if (found == gqnListForTargetQuery.end()) {
-                    NES_ERROR("L0QueryMergerRule: can't find the target GQN node");
-                    throw Exception("L0QueryMergerRule: can't find the target GQN node");
-                }
-
-                NES_TRACE("L0QueryMergerRule: Iterate over the pair of matched target and host GQN and perform GQN merge.");
-                for (auto& [queryId, operatorNode] : targetGQN->getMapOfQueryIdToOperator()) {
-                    hostGQN->addQueryAndOperator(queryId, operatorNode);
-                }
-
-                NES_TRACE("L0QueryMergerRule: Update the Global query plan to replace target GQN with host GQN.");
-                targetGQN->replace(hostGQN);
-                gqnListForTargetQuery.erase(found);
-                gqnListForTargetQuery.push_back(hostGQN);
-            }
-            NES_DEBUG("L0QueryMergerRule: Update GQN list for the query " << targetQueryId);
-            globalQueryPlan->updateGQNListForQueryId(targetQueryId, gqnListForTargetQuery);
         }
     }
     return true;

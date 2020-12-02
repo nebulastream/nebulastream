@@ -28,27 +28,67 @@ GlobalQueryPlan::GlobalQueryPlan() : freeGlobalQueryNodeId(0) { root = GlobalQue
 
 GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan()); }
 
-void GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
-    NES_INFO("GlobalQueryPlan: Adding new query plan to the Global query plan");
+bool GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
+    NES_INFO("GlobalQueryPlan: adding the query plan for query: " << queryId << " to the global query plan.");
     if (queryId == INVALID_QUERY_ID) {
         NES_ERROR("GlobalQueryPlan: Found query plan without query id");
         throw Exception("GlobalQueryPlan: Found query plan without query id");
     }
 
-    if (queryIdToGlobalQueryNodeMap.find(queryId) != queryIdToGlobalQueryNodeMap.end()) {
+    if (queryIdToGlobalQueryIdMap.find(queryId) != queryIdToGlobalQueryIdMap.end()) {
         NES_ERROR("GlobalQueryPlan: Found existing entry for the query Id " << queryId);
         throw Exception("GlobalQueryPlan: Entry for the queryId " + std::to_string(queryId)
                         + " already present. Can't add same query multiple time.");
     }
 
-    NES_INFO("GlobalQueryPlan: adding the query plan for query: " << queryId << " to the global query plan.");
     const auto rootOperators = queryPlan->getRootOperators();
-    NES_DEBUG("GlobalQueryPlan: adding the root nodes of the query plan for query: "
+    NES_TRACE("GlobalQueryPlan: adding the root nodes of the query plan for query: "
               << queryId << " as children to the root node of the global query plan.");
+
+    std::map<uint64_t, GlobalQueryNodePtr> operatorToGQNMap;
+    std::set<GlobalQueryNodePtr> queryRootGQNs;
     for (const auto& rootOperator : rootOperators) {
-        addNewGlobalQueryNode(root, queryId, rootOperator);
+        auto queryRootGQNode = GlobalQueryNode::create(getNextFreeId(), queryId, rootOperator->copy());
+        queryRootGQNs.insert(queryRootGQNode);
+        root->addChild(queryRootGQNode);
+
+        std::vector<NodePtr> children = rootOperator->getChildren();
+        std::deque<NodePtr> nodesToProcess{children.begin(), children.end()};
+
+        while (!nodesToProcess.empty()) {
+
+            auto operatorToProcess = nodesToProcess.front()->as<OperatorNode>();
+            nodesToProcess.pop_front();
+            uint64_t operatorId = operatorToProcess->getId();
+            if (operatorToGQNMap[operatorId]) {
+                continue;
+            } else {
+                auto gqNode = GlobalQueryNode::create(getNextFreeId(), queryId, operatorToProcess->copy());
+                operatorToGQNMap[operatorToProcess->getId()] = gqNode;
+            }
+
+            //Add the link to parent GQN nodes
+            for (auto parent : operatorToProcess->getParents()) {
+
+                auto parentOperator = parent->as<OperatorNode>();
+                auto parentOperatorId = parentOperator->getId();
+                if (operatorToGQNMap[parentOperatorId]) {
+                    operatorToGQNMap[operatorId]->addParent(operatorToGQNMap[parentOperatorId]);
+                } else {
+                    NES_ERROR("GlobalQueryPlan: unable to find the parent global query node. This should not have occurred!");
+                    return false;
+                }
+            }
+
+            for (auto child : operatorToProcess->getChildren()) {
+                nodesToProcess.emplace_back(child);
+            }
+        }
     }
+
+    auto globalQueryMetadata = GlobalQueryMetaData::create({queryId}, queryRootGQNs);
+    return updateGlobalQueryMetadata(globalQueryMetadata);
 }
 
 void GlobalQueryPlan::removeQuery(QueryId queryId) {
@@ -57,72 +97,45 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
     GlobalQueryMetaDataPtr globalQueryMetaData = globalQueryIdToMetaDataMap[globalQueryId];
     globalQueryMetaData->removeQueryId(queryId);
     queryIdToGlobalQueryIdMap.erase(queryId);
-
-    NES_INFO("GlobalQueryPlan: Remove the query plan for query " << queryId);
-    const std::vector<GlobalQueryNodePtr>& globalQueryNodes = getGQNListForQueryId(queryId);
-    for (GlobalQueryNodePtr globalQueryNode : globalQueryNodes) {
-        globalQueryNode->removeQuery(queryId);
-        //If global query node is empty then remove its parent child nodes as well
-        if (globalQueryNode->isEmpty()) {
-            globalQueryNode->removeChildren();
-            globalQueryNode->removeAllParent();
-        }
-    }
-    queryIdToGlobalQueryNodeMap.erase(queryId);
 }
 
-void GlobalQueryPlan::addNewGlobalQueryNode(const GlobalQueryNodePtr& parentNode, const QueryId queryId,
-                                            const OperatorNodePtr& operatorNode) {
+//std::vector<GlobalQueryNodePtr> GlobalQueryPlan::getGQNListForQueryId(QueryId queryId) {
+//    NES_DEBUG("GlobalQueryPlan: get vector of GlobalQueryNodes for query: " << queryId);
+//    if (queryIdToGlobalQueryNodeMap.find(queryId) == queryIdToGlobalQueryNodeMap.end()) {
+//        NES_TRACE("GlobalQueryPlan: Unable to find GlobalQueryNodes for query: " << queryId);
+//        return std::vector<GlobalQueryNodePtr>();
+//    } else {
+//        NES_TRACE("GlobalQueryPlan: Found GlobalQueryNodes for query: " << queryId);
+//        return queryIdToGlobalQueryNodeMap[queryId];
+//    }
+//}
 
-    NES_DEBUG("GlobalQueryPlan: Creating a new global query node for operator of query "
-              << queryId << " and adding it as child to global query node with id " << parentNode->getId());
-    GlobalQueryNodePtr newGlobalQueryNode = GlobalQueryNode::create(getNextFreeId(), queryId, operatorNode->copy());
-    addGlobalQueryNodeToQuery(queryId, newGlobalQueryNode);
-    parentNode->addChild(newGlobalQueryNode);
-    NES_DEBUG("GlobalQueryPlan: Creating new global query node for the children of query operator of query " << queryId);
-    std::vector<NodePtr> children = operatorNode->getChildren();
-    for (const auto& child : children) {
-        addNewGlobalQueryNode(newGlobalQueryNode, queryId, child->as<OperatorNode>());
-    }
-}
-
-std::vector<GlobalQueryNodePtr> GlobalQueryPlan::getGQNListForQueryId(QueryId queryId) {
-    NES_DEBUG("GlobalQueryPlan: get vector of GlobalQueryNodes for query: " << queryId);
-    if (queryIdToGlobalQueryNodeMap.find(queryId) == queryIdToGlobalQueryNodeMap.end()) {
-        NES_TRACE("GlobalQueryPlan: Unable to find GlobalQueryNodes for query: " << queryId);
-        return std::vector<GlobalQueryNodePtr>();
-    } else {
-        NES_TRACE("GlobalQueryPlan: Found GlobalQueryNodes for query: " << queryId);
-        return queryIdToGlobalQueryNodeMap[queryId];
-    }
-}
-
-bool GlobalQueryPlan::addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNodePtr globalQueryNode) {
-    NES_DEBUG("GlobalQueryPlan: get vector of GlobalQueryNodes for query: " << queryId);
-    if (queryIdToGlobalQueryNodeMap.find(queryId) == queryIdToGlobalQueryNodeMap.end()) {
-        NES_TRACE("GlobalQueryPlan: Unable to find GlobalQueryNodes for query: " << queryId << " . Creating a new entry.");
-        queryIdToGlobalQueryNodeMap[queryId] = {globalQueryNode};
-    } else {
-        NES_TRACE("GlobalQueryPlan: Found GlobalQueryNodes for query: " << queryId
-                                                                        << ". Adding the new global query node to the list.");
-        std::vector<GlobalQueryNodePtr> globalQueryNodes = getGQNListForQueryId(queryId);
-        globalQueryNodes.push_back(globalQueryNode);
-        updateGQNListForQueryId(queryId, globalQueryNodes);
-    }
-    return true;
-}
+//bool GlobalQueryPlan::addGlobalQueryNodeToQuery(QueryId queryId, GlobalQueryNodePtr globalQueryNode) {
+//    NES_DEBUG("GlobalQueryPlan: get vector of GlobalQueryNodes for query: " << queryId);
+//    if (queryIdToGlobalQueryNodeMap.find(queryId) == queryIdToGlobalQueryNodeMap.end()) {
+//        NES_TRACE("GlobalQueryPlan: Unable to find GlobalQueryNodes for query: " << queryId << " . Creating a new entry.");
+//        queryIdToGlobalQueryNodeMap[queryId] = {globalQueryNode};
+//    } else {
+//        NES_TRACE("GlobalQueryPlan: Found GlobalQueryNodes for query: " << queryId
+//                                                                        << ". Adding the new global query node to the list.");
+//        std::vector<GlobalQueryNodePtr> globalQueryNodes = getGQNListForQueryId(queryId);
+//        globalQueryNodes.push_back(globalQueryNode);
+//        updateGQNListForQueryId(queryId, globalQueryNodes);
+//    }
+//    return true;
+//}
 
 uint64_t GlobalQueryPlan::getNextFreeId() { return freeGlobalQueryNodeId++; }
 
-bool GlobalQueryPlan::updateGQNListForQueryId(QueryId queryId, std::vector<GlobalQueryNodePtr> globalQueryNodes) {
-    if (queryIdToGlobalQueryNodeMap.find(queryId) == queryIdToGlobalQueryNodeMap.end()) {
-        NES_WARNING("GlobalQueryPlan: unable to find query with id " << queryId << " in the global query plan.");
-        return false;
-    }
-    NES_DEBUG("GlobalQueryPlan: Successfully updated the GQN List for query with id " << queryId);
-    queryIdToGlobalQueryNodeMap[queryId] = globalQueryNodes;
-    return true;
-}
+//bool GlobalQueryPlan::updateGQNListForQueryId(QueryId queryId, std::vector<GlobalQueryNodePtr> globalQueryNodes) {
+//    if (queryIdToGlobalQueryNodeMap.find(queryId) == queryIdToGlobalQueryNodeMap.end()) {
+//        NES_WARNING("GlobalQueryPlan: unable to find query with id " << queryId << " in the global query plan.");
+//        return false;
+//    }
+//    NES_DEBUG("GlobalQueryPlan: Successfully updated the GQN List for query with id " << queryId);
+//    queryIdToGlobalQueryNodeMap[queryId] = globalQueryNodes;
+//    return true;
+//}
 
 bool GlobalQueryPlan::updateGlobalQueryMetaDataMap() {
 
@@ -301,11 +314,6 @@ std::vector<GlobalQueryMetaDataPtr> GlobalQueryPlan::getGlobalQueryMetaDataToDep
             NES_TRACE("GlobalQueryPlan: Skipping! found already deployed query meta data.");
             continue;
         }
-
-        if (globalQueryMetaData->isEmpty()) {
-            NES_DEBUG("GlobalQueryPlan: Removing! found an empty query meta data.");
-            globalQueryIdToMetaDataMap.erase(globalQueryMetaData->getGlobalQueryId());
-        }
         globalQueryMetaDataToDeploy.push_back(globalQueryMetaData);
     }
     NES_DEBUG("GlobalQueryPlan: Found " << globalQueryMetaDataToDeploy.size() << "  Global MetaData to be deployed.");
@@ -319,5 +327,38 @@ GlobalQueryId GlobalQueryPlan::getGlobalQueryIdForQuery(QueryId queryId) {
     }
     NES_WARNING("GlobalQueryPlan: Unable to find Global Query Id for the query " << queryId);
     return INVALID_GLOBAL_QUERY_ID;
+}
+
+bool GlobalQueryPlan::updateGlobalQueryMetadata(GlobalQueryMetaDataPtr globalQueryMetaData) {
+    NES_INFO("GlobalQueryPlan: updating the global query metadata information");
+    auto globalQueryId = globalQueryMetaData->getGlobalQueryId();
+    globalQueryIdToMetaDataMap[globalQueryId] = globalQueryMetaData;
+
+    NES_TRACE("GlobalQueryPlan: Updating the Query Id to Global Query Id map");
+    for (auto queryId : globalQueryMetaData->getQueryIds()) {
+        queryIdToGlobalQueryIdMap[queryId] = globalQueryId;
+    }
+    return true;
+}
+
+void GlobalQueryPlan::removeEmptyMetaData() {
+    NES_INFO("GlobalQueryPlan: remove empty metadata information.");
+    for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
+        if (globalQueryMetaData->isDeployed() && globalQueryMetaData->isEmpty()) {
+            NES_TRACE("GlobalQueryPlan: Removing! found an empty query meta data.");
+            globalQueryIdToMetaDataMap.erase(globalQueryMetaData->getGlobalQueryId());
+        }
+    }
+}
+
+std::vector<GlobalQueryMetaDataPtr> GlobalQueryPlan::getAllGlobalQueryMetaData() {
+    NES_INFO("GlobalQueryPlan: Get all metadata information");
+    std::vector<GlobalQueryMetaDataPtr> globalQueryMetaDataToDeploy;
+    NES_TRACE("GlobalQueryPlan: Iterate over the Map with global query metadata.");
+    for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
+        globalQueryMetaDataToDeploy.push_back(globalQueryMetaData);
+    }
+    NES_TRACE("GlobalQueryPlan: Found " << globalQueryMetaDataToDeploy.size() << "  Global MetaData.");
+    return globalQueryMetaDataToDeploy;
 }
 }// namespace NES

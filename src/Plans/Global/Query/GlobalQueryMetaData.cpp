@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
 #include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -58,6 +60,8 @@ bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
     while (itr != sinkGlobalQueryNodes.end()) {
         if ((*itr)->hasQuery(queryId)) {
             itr = sinkGlobalQueryNodes.erase(itr);
+            (*itr)->removeAllParent();
+            (*itr)->removeChildren();
             continue;
         }
         ++itr;
@@ -175,6 +179,35 @@ void GlobalQueryMetaData::clear() {
     queryIds.clear();
     sinkGlobalQueryNodes.clear();
     markAsNotDeployed();
+}
+
+bool GlobalQueryMetaData::mergeGlobalQueryMetaData(GlobalQueryMetaDataPtr targetGQM) {
+
+    std::set<GlobalQueryNodePtr> targetSinkGQNs = targetGQM->getSinkGlobalQueryNodes();
+
+    for (auto& targetSinkGQN : targetSinkGQNs) {
+        auto targetSignature = targetSinkGQN->getOperators()[0]->as<LogicalOperatorNode>()->getSignature();
+        bool foundHost = false;
+        for (auto& hostSinkGQN : sinkGlobalQueryNodes) {
+            auto hostSignature = targetSinkGQN->getOperators()[0]->as<LogicalOperatorNode>()->getSignature();
+            if (hostSignature->isEqual(targetSignature)) {
+                targetSinkGQN->removeChildren();
+                for (auto& child : hostSinkGQN->getChildren()) {
+                    targetSinkGQN->addChild(child);
+                }
+                foundHost = true;
+                break;
+            }
+        }
+        if (!foundHost) {
+            return false;
+        }
+    }
+
+    std::set<QueryId> targetQueryIds = targetGQM->getQueryIds();
+    queryIds.insert(targetQueryIds.begin(), targetQueryIds.end());
+    targetGQM->clear();
+    return true;
 }
 
 }// namespace NES
