@@ -108,11 +108,10 @@ std::string LogicalWindowDefinition::toString() {
     ss << " aggregation=" << windowAggregation->toString();
     ss << " triggerPolicy=" << triggerPolicy->toString() << std::endl;
     ss << " triggerAction=" << triggerAction->toString() << std::endl;
-    if(isKeyed())
-    {
+    if (isKeyed()) {
         ss << " onKey=" << onKey->toString() << std::endl;
     }
-    ss << " distributionType=" << distributionType->toString()<< std::endl;
+    ss << " distributionType=" << distributionType->toString() << std::endl;
     ss << " numberOfInputEdges=" << numberOfInputEdges;
     ss << std::endl;
     return ss.str();
