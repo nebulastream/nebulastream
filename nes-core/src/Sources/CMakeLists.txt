@@ -44,3 +44,8 @@ if(NES_USE_MQTT)
             MQTTSource.cpp
     )
 endif()
+if(NES_USE_ADAPTIVE)
+    add_source_nes(
+            AdaptiveKFSource.cpp
+    )
+endif()

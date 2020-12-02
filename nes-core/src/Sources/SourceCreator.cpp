@@ -17,6 +17,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Sources/AdaptiveKFSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -257,6 +258,13 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     waitTime,
                                                     retryTimes,
                                                     successors);
+}
+
+const DataSourcePtr createAdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                           uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                           uint64_t frequency, bool endlessRepeat, OperatorId operatorId) {
+    return std::make_shared<AdaptiveKFSource>(schema, bufferManager, queryManager, numBuffersToProcess,
+                                              numberOfTuplesToProducePerBuffer, frequency, endlessRepeat, operatorId);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

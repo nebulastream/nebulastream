@@ -26,6 +26,7 @@
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/AdaptiveKFSourceDescriptor.hpp>
 
 #include <Network/NetworkManager.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -219,6 +220,13 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   numSourceLocalBuffers,
                                   lambdaSourceDescriptor->getGatheringMode(),
                                   successors);
+    } else if (sourceDescriptor->instanceOf<AdaptiveKFSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating adaptive KF source");
+        const AdaptiveKFSourceDescriptorPtr adptvKFSourceDescriptor = sourceDescriptor->as<AdaptiveKFSourceDescriptor>();
+        return createAdaptiveKFSource(adptvKFSourceDescriptor->getSchema(), bufferManager, queryManager,
+                                      adptvKFSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
+                                      adptvKFSourceDescriptor->getNumBuffersToProcess(), adptvKFSourceDescriptor->getFrequency(),
+                                      adptvKFSourceDescriptor->isEndlessRepeat(), sourceDescriptor->getOperatorId());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
