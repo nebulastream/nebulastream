@@ -151,24 +151,6 @@ class GeneratedQueryExecutionPlanBuilder {
      */
     QuerySubPlanId getQuerySubPlanId() const;
 
-    /**
-     * @brief Getter/setter the window definition
-     */
-    GeneratedQueryExecutionPlanBuilder& setWinDef(const Windowing::LogicalWindowDefinitionPtr& winDef);
-    Windowing::LogicalWindowDefinitionPtr getWinDef();
-
-    /**
-    * @brief Getter/setter the join definition
-    */
-    GeneratedQueryExecutionPlanBuilder& setJoinDef(const Join::LogicalJoinDefinitionPtr joinDef);
-    Join::LogicalJoinDefinitionPtr getJoinDef();
-
-    /**
-     * @brief Getter/setter the input schema
-     */
-    GeneratedQueryExecutionPlanBuilder& setSchema(const SchemaPtr& schema);
-    SchemaPtr getSchema();
-
   private:
     GeneratedQueryExecutionPlanBuilder();
 
@@ -181,12 +163,6 @@ class GeneratedQueryExecutionPlanBuilder {
     std::vector<DataSinkPtr> sinks;
     std::vector<PipelineStagePtr> stages;
     std::vector<OperatorNodePtr> leaves;
-    Windowing::LogicalWindowDefinitionPtr winDef;
-    Join::LogicalJoinDefinitionPtr joinDef;
-
-  public:
-  private:
-    SchemaPtr schema;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_

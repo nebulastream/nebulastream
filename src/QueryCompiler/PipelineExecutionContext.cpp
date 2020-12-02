@@ -25,11 +25,9 @@ namespace NES {
 PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    Windowing::AbstractWindowHandlerPtr windowHandler,
-                                                   Join::AbstractJoinHandlerPtr joinHandler,
-                                                   Windowing::LogicalWindowDefinitionPtr windowDef,
-                                                   Join::LogicalJoinDefinitionPtr joinDef, SchemaPtr inputSchema)
+                                                   Join::AbstractJoinHandlerPtr joinHandler)
     : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)),
-      windowHandler(windowHandler), joinHandler(joinHandler), windowDef(windowDef), joinDef(joinDef), inputSchema(inputSchema) {
+      windowHandler(windowHandler), joinHandler(joinHandler) {
     // nop
 }
 
@@ -39,11 +37,5 @@ void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer, WorkerConte
     // call the function handler
     emitFunctionHandler(outputBuffer, workerContext);
 }
-
-Windowing::LogicalWindowDefinitionPtr PipelineExecutionContext::getWindowDef() { return windowDef; }
-
-Join::LogicalJoinDefinitionPtr PipelineExecutionContext::getJoinDef() { return joinDef; }
-
-SchemaPtr PipelineExecutionContext::getInputSchema() { return inputSchema; }
 
 }// namespace NES

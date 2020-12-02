@@ -628,15 +628,21 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     auto updateSliceStatement = VarRef(sliceMetadataDeclaration)[current_slice_ref].accessRef(getSliceCall);
     context->code->currentCodeInsertionPoint->addStatement(updateSliceStatement.createCopy());
 
-    if (window) {
-        NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
-                                                               << " with code=" << context->code);
-
-        if (window->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnRecord) {
-            NES_DEBUG("CCodeGenerator: add trigger triggerOnRecord");
+    switch (window->getTriggerPolicy()->getPolicyType()) {
+        case Windowing::triggerOnRecord: {
             auto trigger = FunctionCallStatement("trigger");
             auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
             context->code->currentCodeInsertionPoint->addStatement(call);
+            break;
+        }
+        case Windowing::triggerOnBuffer: {
+            auto trigger = FunctionCallStatement("trigger");
+            auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
+            context->code->cleanupStmts.push_back(call);
+            break;
+        }
+        default: {
+            break;
         }
     }
 
@@ -659,7 +665,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     //    std::cout << joinDef << context << std::endl;
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for join" << joinDef);
-
+    NES_ASSERT(joinDef, "invalid join definition");
     auto code = context->code;
 
     //-------------------------
@@ -793,6 +799,18 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     agg->compileLiftCombine(
         context->code->currentCodeInsertionPoint, partialRef, context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+
+    switch (joinDef->getTriggerPolicy()->getPolicyType()) {
+        case Windowing::triggerOnBuffer: {
+            auto trigger = FunctionCallStatement("trigger");
+            auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowJoinVariableDeclration).accessPtr(trigger));
+            context->code->cleanupStmts.push_back(call);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
 
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
@@ -1025,15 +1043,21 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto updateSliceStatement = VarRef(sliceMetadataDeclaration)[current_slice_ref].accessRef(getSliceCall);
     context->code->currentCodeInsertionPoint->addStatement(updateSliceStatement.createCopy());
 
-    if (window) {
-        NES_DEBUG("CCodeGenerator: Generate code for pipetype" << context->pipelineName << ": "
-                                                               << " with code=" << context->code);
-
-        if (window->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnRecord) {
-            NES_DEBUG("CCodeGenerator: add trigger triggerOnRecord");
+    switch (window->getTriggerPolicy()->getPolicyType()) {
+        case Windowing::triggerOnRecord: {
             auto trigger = FunctionCallStatement("trigger");
             auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
             context->code->currentCodeInsertionPoint->addStatement(call);
+            break;
+        }
+        case Windowing::triggerOnBuffer: {
+            auto trigger = FunctionCallStatement("trigger");
+            auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
+            context->code->cleanupStmts.push_back(call);
+            break;
+        }
+        default: {
+            break;
         }
     }
 

@@ -45,8 +45,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
         BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction)
-        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
+        : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)) {
+        NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
         handlerType = this->windowDefinition->getDistributionType()->toString();
@@ -155,17 +156,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     /**
-   * @brief Update the max processed ts, per origin.
-   * @param ts
-   * @param originId
-   */
-    void updateMaxTs(uint64_t ts, uint64_t originId) override {
-        NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
-                                 << " new val=" << std::max(originIdToMaxTsMap[originId], ts));
-        originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
-    };
-
-    /**
      * @brief Returns window manager.
      * @return WindowManager.
      */
@@ -173,10 +163,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     auto getTypedWindowState() { return windowStateVariable; }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() override { return windowDefinition; }
-
   private:
-    LogicalWindowDefinitionPtr windowDefinition;
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;

@@ -112,22 +112,5 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQuery
 }
 
 QuerySubPlanId GeneratedQueryExecutionPlanBuilder::getQuerySubPlanId() const { return querySubPlanId; }
-GeneratedQueryExecutionPlanBuilder&
-GeneratedQueryExecutionPlanBuilder::setWinDef(const Windowing::LogicalWindowDefinitionPtr& winDef) {
-    this->winDef = winDef;
-    return *this;
-}
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setJoinDef(const Join::LogicalJoinDefinitionPtr joinDef) {
-    this->joinDef = joinDef;
-    return *this;
-}
-Join::LogicalJoinDefinitionPtr GeneratedQueryExecutionPlanBuilder::getJoinDef() { return joinDef; }
-
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setSchema(const SchemaPtr& schema) {
-    this->schema = schema;
-    return *this;
-}
-Windowing::LogicalWindowDefinitionPtr GeneratedQueryExecutionPlanBuilder::getWinDef() { return winDef; }
-SchemaPtr GeneratedQueryExecutionPlanBuilder::getSchema() { return schema; }
 }// namespace NES

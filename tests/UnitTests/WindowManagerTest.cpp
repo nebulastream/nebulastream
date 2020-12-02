@@ -169,7 +169,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
                 0, nullptr,
                 [](TupleBuffer&, WorkerContextRef) {
                 },
-                nullptr, nullptr, nullptr, nullptr, nullptr) {
+                nullptr, nullptr) {
             // nop
         }
     };
@@ -251,7 +251,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
                 0, nullptr,
                 [](TupleBuffer&, WorkerContext&) {
                 },
-                nullptr, nullptr, nullptr, nullptr, nullptr) {
+                nullptr, nullptr) {
             // nop
         }
     };
@@ -329,7 +329,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
                 0, nullptr,
                 [](TupleBuffer&, WorkerContextRef) {
                 },
-                nullptr, nullptr, nullptr, nullptr, nullptr) {
+                nullptr, nullptr) {
             // nop
         }
     };

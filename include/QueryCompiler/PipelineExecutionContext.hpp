@@ -54,9 +54,7 @@ class PipelineExecutionContext {
      */
     explicit PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-                                      Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler,
-                                      Windowing::LogicalWindowDefinitionPtr windowDef,
-                                      NES::Join::LogicalJoinDefinitionPtr joinDef, SchemaPtr inputSchema);
+                                      Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler);
 
     /**
      * @brief Allocates a new tuple buffer.
@@ -69,12 +67,6 @@ class PipelineExecutionContext {
      * @param outputBuffer the output tuple buffer that is passed to the runtime
      */
     void emitBuffer(TupleBuffer& outputBuffer, WorkerContext&);
-
-    /**
-     * @brief getter/setter window definition
-     * @return
-     */
-    Windowing::LogicalWindowDefinitionPtr getWindowDef();
 
     /**
      * @brief
@@ -101,17 +93,6 @@ class PipelineExecutionContext {
             windowHandler);
     }
 
-    /**
-     * @brief getter input schema
-     * @return
-     */
-    SchemaPtr getInputSchema();
-
-    /**
-     * @brief getter join definition
-     */
-    Join::LogicalJoinDefinitionPtr getJoinDef();
-
   private:
     /**
      * @brief Id of the local qep that owns the pipeline
@@ -128,12 +109,9 @@ class PipelineExecutionContext {
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
 
     Windowing::AbstractWindowHandlerPtr windowHandler;
+
     Join::AbstractJoinHandlerPtr joinHandler;
 
-    Windowing::LogicalWindowDefinitionPtr windowDef;
-    Join::LogicalJoinDefinitionPtr joinDef;
-
-    SchemaPtr inputSchema;
 };
 
 }// namespace NES
