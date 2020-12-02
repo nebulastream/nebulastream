@@ -54,7 +54,8 @@ class PipelineExecutionContext {
      */
     explicit PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-                                      Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler);
+                                      Windowing::AbstractWindowHandlerPtr windowHandler,
+                                      Join::AbstractJoinHandlerPtr joinHandler);
 
     /**
      * @brief Allocates a new tuple buffer.
@@ -111,7 +112,6 @@ class PipelineExecutionContext {
     Windowing::AbstractWindowHandlerPtr windowHandler;
 
     Join::AbstractJoinHandlerPtr joinHandler;
-
 };
 
 }// namespace NES

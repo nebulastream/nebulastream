@@ -19,6 +19,11 @@
 
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <algorithm>
 #include <atomic>
@@ -28,13 +33,6 @@
 #include <thread>
 #include <unistd.h>
 #include <utility>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
-#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-
-
 
 namespace NES::Join {
 
@@ -45,7 +43,6 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
  */
 class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHandler> {
   public:
-
     explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
         // nop
     }
@@ -87,9 +84,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
 
     virtual std::string toString() = 0;
 
-    LogicalJoinDefinitionPtr getJoinDefinition() {
-        return joinDefinition;
-    }
+    LogicalJoinDefinitionPtr getJoinDefinition() { return joinDefinition; }
 
     /**
      * @brief Gets the last processed watermark
