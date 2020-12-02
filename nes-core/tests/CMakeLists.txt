@@ -496,6 +496,11 @@ add_executable(timer-test "UnitTests/Util/TimerTest.cpp")
 target_link_libraries(timer-test nes ${GTEST_LIBRARIES})
 add_test(NAME timer-test COMMAND timer-test)
 
+### Adaptive Source Tests ###
+add_executable(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp")
+target_link_libraries(adaptive-sensor-tests nes ${GTEST_LIBRARIES})
+add_test(NAME adaptive-sensor-tests COMMAND adaptive-sensor-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
