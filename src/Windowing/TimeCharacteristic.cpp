@@ -47,7 +47,10 @@ std::string TimeCharacteristic::toString() {
     std::stringstream ss;
     ss << "TimeCharacteristic: ";
     ss << " type=" << getTypeAsString();
-    ss << " field=" << field->toString();
+    if (field) {
+        ss << " field=" << field->toString();
+    }
+
     ss << std::endl;
     return ss.str();
 }
