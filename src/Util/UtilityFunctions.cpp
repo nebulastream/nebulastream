@@ -80,7 +80,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
         code << "#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
-        code << "#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
+        code << "#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
         code << "using namespace NES::API;" << std::endl;
         code << "namespace NES{" << std::endl;

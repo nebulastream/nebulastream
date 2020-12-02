@@ -94,7 +94,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     uint64_t getWatermark(Windowing::WindowSliceStore<KeyType>* store) {
         auto windowType = joinDefinition->getWindowType();
         auto windowTimeType = windowType->getTimeCharacteristic();
-        auto watermark = windowTimeType->getType() == Windowing::TimeCharacteristic::ProcessingTime ? Windowing::getTsFromClock()
+        auto watermark = windowTimeType->getType() == Windowing::TimeCharacteristic::IngestionTime ? Windowing::getTsFromClock()
                                                                                                     : store->getMinWatermark();
 
         // the window type adds result windows to the windows vectors

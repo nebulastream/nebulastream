@@ -62,10 +62,10 @@ Windowing::WindowAggregationPtr Count();
 Windowing::TimeCharacteristicPtr EventTime(ExpressionItem ExpressionItem);
 
 /**
- * @brief Defines a processing time as a time characteristic for a window.
+ * @brief Defines a ingestion time as a time characteristic for a window.
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr ProcessingTime();
+Windowing::TimeCharacteristicPtr IngestionTime();
 
 /**
  * @brief A time measure in Milliseconds.

@@ -108,7 +108,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     auto query = Query::from("default_logical")
-                     .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createProcessingTime(), Seconds(10)),
+                     .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
                                   Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(""));
 

@@ -20,8 +20,8 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategy.hpp>
-#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
 namespace NES {
 
@@ -53,10 +53,9 @@ void GeneratableWatermarkAssignerOperator::consume(CodeGeneratorPtr codegen, Pip
         auto watermarkStrategy = Windowing::EventTimeWatermarkStrategy::create(
             fieldAccess, eventTimeWatermarkStrategyDescriptor->getDelay().getTime());
         codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
-    } else if (auto processingTimeWatermarkStrategyDescriptor =
-                   std::dynamic_pointer_cast<Windowing::ProcessingTimeWatermarkStrategyDescriptor>(
+    } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
                        getWatermarkStrategyDescriptor())) {
-        auto watermarkStrategy = Windowing::ProcessingTimeWatermarkStrategy::create();
+        auto watermarkStrategy = Windowing::IngestionTimeWatermarkStrategy::create();
         codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
     } else {
         NES_ERROR("GeneratableWatermarkAssignerOperator: cannot create watermark strategy from descriptor");

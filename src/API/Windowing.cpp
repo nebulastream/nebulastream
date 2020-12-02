@@ -47,6 +47,6 @@ Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField) {
     return Windowing::TimeCharacteristic::createEventTime(onField);
 }
 
-Windowing::TimeCharacteristicPtr ProcessingTime() { return Windowing::TimeCharacteristic::createProcessingTime(); }
+Windowing::TimeCharacteristicPtr IngestionTime() { return Windowing::TimeCharacteristic::createIngestionTime(); }
 
 }// namespace NES::API
