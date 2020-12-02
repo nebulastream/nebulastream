@@ -29,7 +29,7 @@
 
 namespace NES {
 const size_t buffers_managed = 1024;
-const size_t buffer_size = 4 * 1024;
+const size_t buffer_size = 32 * 1024;
 
 class BufferManagerTest : public testing::Test {
   public:
@@ -365,16 +365,19 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
 }
 
 std::optional<TupleBuffer> getBufferNoBlocking(BufferManager& bufferManager) {
-    std::optional<TupleBuffer> opt;
     size_t retries = 0;
-    while (!(opt = bufferManager.getBufferNoBlocking())) {
+    while (true) {
+        auto optBuffer = bufferManager.getBufferNoBlocking();
+        if (optBuffer.has_value()) {
+            return optBuffer;
+        }
         usleep(100 * 1000);
         if (++retries == 1'000'000'000) {
             NES_WARNING("Too many retries");
             return std::nullopt;
         }
     }
-    return opt;
+    return std::nullopt;
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
@@ -398,14 +401,13 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
                 auto bufOpt = getBufferNoBlocking(*bufferManager);
-                if (!bufOpt.has_value()) {
-                    FAIL();
-                }
+                ASSERT_TRUE(bufOpt.has_value());
                 auto buf = *bufOpt;
-                for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
-                    buf.getBufferAs<uint32_t>()[k] = k;
+                auto* data = buf.getBufferAs<uint32_t>();
+                for (size_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+                    data[k] = k;
                 }
-                buf.getBuffer<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] = 0;
+                data[buffer_size / sizeof(uint32_t) - 1] = 0;
                 lock.lock();
                 workQueue.push_back(buf);
                 cvar.notify_all();
@@ -424,10 +426,11 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
                 auto buf = workQueue.front();
                 workQueue.pop_front();
                 lock.unlock();
-                for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
-                    ASSERT_EQ(buf.getBufferAs<uint32_t>()[k], k);
+                auto* data = buf.getBufferAs<uint32_t>();
+                for (size_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+                    ASSERT_EQ(data[k], k);
                 }
-                if (buf.getBufferAs<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] == max_buffer) {
+                if (data[buffer_size / sizeof(uint32_t) - 1] == max_buffer) {
                     break;
                 }
             }
@@ -439,7 +442,11 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
     for (int j = 0; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
         auto buf = bufferManager->getBufferBlocking();
-        buf.getBufferAs<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
+        auto* data = buf.getBufferAs<uint32_t>();
+        for (size_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+            data[k] = k;
+        }
+        data[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
         workQueue.push_back(buf);
         cvar.notify_all();
     }
