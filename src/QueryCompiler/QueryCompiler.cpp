@@ -53,7 +53,7 @@ namespace detail {
 class PipelineStageHolder {
   public:
     uint32_t currentStageId;
-    ExecutablePipelinePtr executablePipeline;
+    ExecutablePipelineStagePtr executablePipelineStage;
     Windowing::AbstractWindowHandlerPtr windowHandler;
     Join::AbstractJoinHandlerPtr joinHandler;
     std::set<uint32_t> producers;
@@ -62,9 +62,9 @@ class PipelineStageHolder {
   public:
     PipelineStageHolder() = default;
 
-    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelinePtr executablePipeline,
+    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelineStagePtr executablePipelineStage,
                         Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler)
-        : currentStageId(currentStageId), executablePipeline(std::move(executablePipeline)),
+        : currentStageId(currentStageId), executablePipelineStage(std::move(executablePipelineStage)),
           windowHandler(std::move(windowHandler)), joinHandler(std::move(joinHandler)) {
         // nop
     }
@@ -82,8 +82,10 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
         try {
             NES_DEBUG("QueryCompiler: Compile query:" << queryId << " querySubPlan:" << querySubPlanId
                                                       << " pipeline:" << currentPipelineStateId);
-            auto executablePipeline = codeGenerator->compile(currContext->code);
-            if (executablePipeline == nullptr) {
+            // TODO we should set the proper pipeline name and ID during pipeline creation
+            currContext->pipelineName = std::to_string(currentPipelineStateId);
+            auto executablePipelineStage = codeGenerator->compile(currContext);
+            if (executablePipelineStage == nullptr) {
                 NES_ERROR("Cannot compile pipeline:" << currContext->code);
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
@@ -99,7 +101,7 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
             }
 
             accumulator[currentPipelineStateId] =
-                PipelineStageHolder(currentPipelineStateId, executablePipeline, windowHandlerPtr, joinHandlerPtr);
+                PipelineStageHolder(currentPipelineStateId, executablePipelineStage, windowHandlerPtr, joinHandlerPtr);
             if (consumerPipelineStateId >= 0) {
                 accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }
@@ -164,7 +166,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 },
                 holder.windowHandler, holder.joinHandler);
         }
-        PipelineStagePtr pipelineStage = PipelineStage::create(stageId, builder.getQuerySubPlanId(), holder.executablePipeline,
+        PipelineStagePtr pipelineStage = PipelineStage::create(stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage,
                                                                executionContext, pipelines[*holder.consumers.begin()]);
 
         builder.addPipelineStage(pipelineStage);

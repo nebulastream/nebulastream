@@ -18,13 +18,17 @@
 #include <sstream>
 namespace NES {
 
-ReturnStatement::ReturnStatement(VarRefStatement var_ref) : var_ref_(var_ref) {}
+ReturnStatement::ReturnStatement(StatementPtr statement) : statement(statement) {}
+
+StatementPtr ReturnStatement::create(StatementPtr statement) {
+    return std::make_shared<ReturnStatement>(statement);
+}
 
 StatementType ReturnStatement::getStamentType() const { return RETURN_STMT; }
 
 const CodeExpressionPtr ReturnStatement::getCode() const {
     std::stringstream stmt;
-    stmt << "return " << var_ref_.getCode()->code_ << ";";
+    stmt << "return " << statement->getCode()->code_ << ";";
     return std::make_shared<CodeExpression>(stmt.str());
 }
 

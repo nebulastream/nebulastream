@@ -16,6 +16,7 @@
 
 #pragma once
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 
 namespace NES {
 

@@ -14,19 +14,21 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CLASSDECLARATION_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CLASSDECLARATION_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_NAMESPACEDECLARATION_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_NAMESPACEDECLARATION_HPP_
 
-#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-#include <vector>
+#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
+
 namespace NES {
 
-class ClassDeclaration : public Declaration {
+class NamespaceDeclaration : public Declaration {
+  private:
+    Code namespaceCode;
 
   public:
-    ClassDeclaration(ClassDefinitionPtr classDefinition);
-    static ClassDeclarationPtr create(ClassDefinitionPtr classDefinition);
+    NamespaceDeclaration(Code code);
+    static NamespaceDeclarationPtr create(Code code);
 
     virtual const GeneratableDataTypePtr getType() const override;
     virtual const std::string getIdentifierName() const override;
@@ -35,12 +37,7 @@ class ClassDeclaration : public Declaration {
 
     const Code getCode() const override;
     const DeclarationPtr copy() const override;
-
-  private:
-    std::string generateFunctions(std::vector<FunctionDefinitionPtr>& functions) const;
-    std::string generateBaseClassNames() const;
-    ClassDefinitionPtr classDefinition;
 };
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CLASSDECLARATION_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_NAMESPACEDECLARATION_HPP_

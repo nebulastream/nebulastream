@@ -16,6 +16,7 @@
 
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
+#include <QueryCompiler/ExecutablePipelineStage.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
@@ -26,31 +27,36 @@
 namespace NES {
 using std::string;
 namespace detail {
-uint32_t reconfigurationTaskEntryPoint(TupleBuffer& buffer, PipelineExecutionContext&, WorkerContextRef workerContext) {
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread "
+
+class ReconfigurationTaskEntryPointPipelineStage: public ExecutablePipelineStage{
+  public:
+    uint32_t execute(TupleBuffer& buffer, PipelineExecutionContext&, WorkerContextRef workerContext) {
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread "
               << workerContext.getId());
-    auto* task = buffer.getBufferAs<ReconfigurationTask>();
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to wait on thread "
+        auto* task = buffer.getBufferAs<ReconfigurationTask>();
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to wait on thread "
               << workerContext.getId());
-    task->wait();
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to reconfigure on thread "
+        task->wait();
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to reconfigure on thread "
               << workerContext.getId());
-    task->getInstance()->reconfigure(*task, workerContext);
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint post callback on thread "
+        task->getInstance()->reconfigure(*task, workerContext);
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint post callback on thread "
               << workerContext.getId());
-    task->postReconfiguration();
-    NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint completed on thread "
+        task->postReconfiguration();
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint completed on thread "
               << workerContext.getId());
-    task->postWait();
-    return 0;
-}
+        task->postWait();
+        return 0;
+    }
+};
+
 }// namespace detail
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
     : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)),
       nodeEngineId(nodeEngineId), numThreads(numThreads) {
     NES_DEBUG("Init QueryManager::QueryManager");
-    reconfigurationExecutable = std::make_shared<CompiledExecutablePipeline>(detail::reconfigurationTaskEntryPoint);
+    reconfigurationExecutable = std::make_shared<detail::ReconfigurationTaskEntryPointPipelineStage>();
 }
 
 QueryManager::~QueryManager() {

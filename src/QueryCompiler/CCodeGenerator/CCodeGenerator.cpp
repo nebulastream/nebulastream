@@ -19,11 +19,13 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/NamespaceDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/Runtime/SharedPointerGen.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ContinueStatement.hpp>
@@ -34,9 +36,11 @@
 #include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <QueryCompiler/ExecutablePipelineStage.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
@@ -53,7 +57,6 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-
 namespace NES {
 
 CCodeGenerator::CCodeGenerator() : CodeGenerator(), compiler(Compiler::create()) {}
@@ -171,7 +174,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
 
-    code->returnStmt = ReturnStatement(VarRefStatement(*code->varDeclarationReturnValue)).createCopy();
+    code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
     return true;
 }
 
@@ -1147,7 +1150,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     return true;
 }
 
-std::string CCodeGenerator::generateCode(GeneratedCodePtr code) {
+std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
+    auto code = context->code;
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();
     auto functionBuilder = FunctionDefinition::create("compiled_query")
@@ -1182,18 +1186,48 @@ std::string CCodeGenerator::generateCode(GeneratedCodePtr code) {
         fileBuilder.addDeclaration(typeDeclaration.copy());
     }
 
-    auto executablePipeline = ClassDefinition::create("ExecutablePipeline");
+
+    auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage" + context->pipelineName);
+    executablePipeline->addBaseClass("ExecutablePipelineStage");
     executablePipeline->addMethod(ClassDefinition::Public, functionBuilder);
-    fileBuilder.addDeclaration(executablePipeline->getDeclaration());
-    CodeFile file = fileBuilder.addDeclaration(functionBuilder->getDeclaration()).build();
+
+    auto getIDFunction = FunctionDefinition::create("getID");
+    auto constant = Constant(CompilerTypesFactory()
+.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(42))));
+    auto idReturn = ReturnStatement::create(constant.createCopy());
+    getIDFunction->addStatement(idReturn);
+    getIDFunction->returns(CompilerTypesFactory().createDataType(DataTypeFactory::createUInt64()));
+    executablePipeline->addMethod(ClassDefinition::Public, getIDFunction);
+    auto executablePipelineDeclaration = executablePipeline->getDeclaration();
+    auto pipelineNamespace = NamespaceDefinition::create("NES");
+    pipelineNamespace->addDeclaration(executablePipelineDeclaration);
+
+
+
+    auto createFunction = FunctionDefinition::create("create");
+    auto returnStatement = ReturnStatement::create(SharedPointerGen::makeShared(executablePipelineDeclaration->getType()));
+    createFunction->addStatement(returnStatement);
+   ;
+    createFunction->returns(SharedPointerGen::createSharedPtrType( CompilerTypesFactory().createAnonymusDataType("ExecutablePipelineStage")));
+    pipelineNamespace->addDeclaration(createFunction->getDeclaration());
+    CodeFile file  =  fileBuilder
+        .addDeclaration(pipelineNamespace->getDeclaration()).build();
+
     return file.code;
 }
 
-ExecutablePipelinePtr CCodeGenerator::compile(GeneratedCodePtr code) {
 
+
+ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
     std::string src = generateCode(code);
-    CompiledCodePtr compiledCode = compiler->compile(src, true /*debugging flag replace later*/);
-    return CompiledExecutablePipeline::create(compiledCode);
+    auto compiledCode = compiler->compile(src, true /*debugging flag replace later*/);
+    typedef std::shared_ptr<ExecutablePipelineStage> (*CreateFunctionPtr)();
+    auto createFunction = compiledCode->getFunctionPointer<CreateFunctionPtr>("_ZN3NES6createEv");
+    auto executablePipeline = (*createFunction)();
+    std::cout << executablePipeline->getID() << std::endl;
+    std::cout << std::dynamic_pointer_cast<ExecutablePipelineStage>(executablePipeline) << std::endl;
+
+    return std::dynamic_pointer_cast<ExecutablePipelineStage>(executablePipeline);
 }
 
 BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(VariableDeclaration pipelineContext) {

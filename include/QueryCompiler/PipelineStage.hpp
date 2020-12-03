@@ -41,11 +41,14 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class PipelineExecutionContext;
 typedef std::shared_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
 
+class ExecutablePipelineStage;
+typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
+
 typedef WorkerContext& WorkerContextRef;
 
 class PipelineStage {
   public:
-    PipelineStage(uint32_t pipelineStageId, QuerySubPlanId qepId, ExecutablePipelinePtr executablePipeline,
+    PipelineStage(uint32_t pipelineStageId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
                   QueryExecutionContextPtr pipelineContext, PipelineStagePtr nextPipelineStage);
 
     /**
@@ -97,15 +100,16 @@ class PipelineStage {
 
   public:
     static PipelineStagePtr create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
-                                   const ExecutablePipelinePtr compiledCode, QueryExecutionContextPtr pipelineContext,
+                                   ExecutablePipelineStagePtr executablePipelineStage, QueryExecutionContextPtr pipelineContext,
                                    const PipelineStagePtr nextPipelineStage);
 
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;
-    ExecutablePipelinePtr executablePipeline;
+    ExecutablePipelineStagePtr executablePipelineStage;
     PipelineStagePtr nextStage;
     QueryExecutionContextPtr pipelineContext;
+    bool reconfiguration;
 
   public:
     bool hasWindowHandler();

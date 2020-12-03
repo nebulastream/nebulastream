@@ -17,35 +17,34 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_CLASSDEFINITION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_CLASSDEFINITION_HPP_
 
+#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <string>
 #include <vector>
-#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 
 namespace NES {
 
 /**
  * @brief Defines a class
  */
-class ClassDefinition {
+class ClassDefinition : public std::enable_shared_from_this<ClassDefinition> {
   public:
     enum Visibility {
         Public,
         Private
     };
     static ClassDefinitionPtr create(std::string name);
-    explicit ClassDefinition(std::string  name);
+    explicit ClassDefinition(std::string name);
     void addBaseClass(std::string baseClassName);
     void addMethod(Visibility visibility, FunctionDefinitionPtr function);
     DeclarationPtr getDeclaration();
+
   private:
+    friend class ClassDeclaration;
     std::string name;
     std::vector<std::string> baseClasses;
     std::vector<FunctionDefinitionPtr> publicFunctions;
     std::vector<FunctionDefinitionPtr> privateFunctions;
-    std::string generateFunctions(std::vector<FunctionDefinitionPtr>& functions);
-    std::string generateBaseClassNames();
-
 };
 
 }// namespace NES
-#endif // NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_CLASSDEFINITION_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_CLASSDEFINITION_HPP_

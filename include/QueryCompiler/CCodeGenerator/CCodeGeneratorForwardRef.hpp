@@ -30,6 +30,8 @@ typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 class FunctionDefinition;
 typedef std::shared_ptr<FunctionDefinition> FunctionDefinitionPtr;
 
+class NamespaceDefinition;
+typedef std::shared_ptr<NamespaceDefinition> NamespaceDefinitionPtr;
 
 class ClassDefinition;
 typedef std::shared_ptr<ClassDefinition> ClassDefinitionPtr;
@@ -42,6 +44,16 @@ typedef std::shared_ptr<FunctionDeclaration> FunctionDeclarationPtr;
 
 class ClassDeclaration;
 typedef std::shared_ptr<ClassDeclaration> ClassDeclarationPtr;
+
+class NamespaceDeclaration;
+typedef std::shared_ptr<NamespaceDeclaration> NamespaceDeclarationPtr;
+
+class Statement;
+typedef std::shared_ptr<Statement> StatementPtr;
+
+class FunctionCallStatement;
+typedef std::shared_ptr<FunctionCallStatement> FunctionCallStatementPtr;
+
 }
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATORFORWARDREF_HPP_

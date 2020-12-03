@@ -73,6 +73,9 @@ typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 class GeneratableWindowAggregation;
 typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
 
+class ExecutablePipelineStage;
+typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
+
 /**
  * @brief The code generator encapsulates the code generation for different operators.
  */
@@ -167,9 +170,9 @@ class CodeGenerator {
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
 
-    virtual ExecutablePipelinePtr compile(GeneratedCodePtr code) = 0;
+    virtual ExecutablePipelineStagePtr compile(PipelineContextPtr pipelineContext) = 0;
 
-    virtual std::string generateCode(GeneratedCodePtr code) = 0;
+    virtual std::string generateCode(PipelineContextPtr pipelineContext) = 0;
 
     virtual ~CodeGenerator();
 
