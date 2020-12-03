@@ -18,14 +18,12 @@
 
 namespace NES {
 
-AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                                       QueryManagerPtr queryManager, const uint64_t numberOfTuplesToProducePerBuffer,
-                                                       uint64_t numBuffersToProcess, uint64_t initialFrequency,
-                                                       bool endlessRepeat, OperatorId operatorId)
-    : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency, operatorId),
-      numBuffersToProcess(numBuffersToProcess), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      endlessRepeat(endlessRepeat), frequency(initialFrequency){}
-
+AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                   const uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                   uint64_t initialFrequency, bool endlessRepeat, OperatorId operatorId)
+    : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency, operatorId), numBuffersToProcess(numBuffersToProcess),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat),
+      frequency(initialFrequency), freqLastReceived(initialFrequency), freqRange(2) {}
 
 const std::string AdaptiveKFSource::toString() const { return std::string(); }
 
@@ -34,7 +32,14 @@ void AdaptiveKFSource::sampleSourceAndFillBuffer(TupleBuffer& buffer) {
     return;
 }
 
-void AdaptiveKFSource::decideNewGatheringInterval(){}
+void AdaptiveKFSource::decideNewGatheringInterval() {
+    if (desiredFreqInRange()) {
+        frequency = freqDesired;
+    }
+}
+
+bool AdaptiveKFSource::desiredFreqInRange() {
+    return freqDesired >= (freqLastReceived - (freqRange / 2)) && freqDesired <= (freqLastReceived + (freqRange / 2));
+}
 
 }// namespace NES
-
