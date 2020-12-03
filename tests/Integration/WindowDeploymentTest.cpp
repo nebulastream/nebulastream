@@ -904,7 +904,6 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-
 /**
  * @brief test central tumbling window and event time
  */
@@ -967,7 +966,6 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("WindowDeploymentTest: Test finished");
 }
-
 
 /**
  * @brief test central tumbling window and event time
