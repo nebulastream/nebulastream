@@ -24,8 +24,8 @@ namespace NES {
 class AdaptiveKFSource : public AdaptiveSource {
   public:
     explicit AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                        const uint64_t numBuffersToProcess, uint64_t numberOfTuplesToProducePerBuffer,
-                                        uint64_t frequency, bool endlessRepeat, OperatorId operatorId);
+                              const uint64_t numBuffersToProcess, uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency,
+                              bool endlessRepeat, OperatorId operatorId);
 
     const std::string toString() const override;
 
@@ -33,13 +33,26 @@ class AdaptiveKFSource : public AdaptiveSource {
     void sampleSourceAndFillBuffer(TupleBuffer& buffer) override;
     void decideNewGatheringInterval() override;
 
+    // paper equation as method
+    bool desiredFreqInRange();// eq. 7
+
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
-    uint64_t frequency;
+
+    /**
+     * @brief used to give lower/upper bounds on freq.
+     * Paper is not clear on the magnitude (size) of
+     * the range, this can be determined in tests later.
+     */
+    uint64_t freqRange = 2;   // freq +- 2
+    uint64_t frequency;       // currently in use
+    uint64_t freqLastReceived;// from coordinator
+    uint64_t freqDesired;     // from KF prediction
+
     bool endlessRepeat;
 };
 
 typedef std::shared_ptr<AdaptiveKFSource> AdaptiveKFSourcePtr;
 
 }// namespace NES
-#endif/* INCLUDE_ADAPTIVEKFESTIMATIONSOURCE_HPP_ */
+#endif /* INCLUDE_ADAPTIVEKFESTIMATIONSOURCE_HPP_ */
