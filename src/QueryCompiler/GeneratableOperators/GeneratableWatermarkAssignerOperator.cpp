@@ -53,8 +53,7 @@ void GeneratableWatermarkAssignerOperator::consume(CodeGeneratorPtr codegen, Pip
         auto watermarkStrategy = Windowing::EventTimeWatermarkStrategy::create(
             fieldAccess, eventTimeWatermarkStrategyDescriptor->getDelay().getTime());
         codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
-    } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
-                       getWatermarkStrategyDescriptor())) {
+    } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(getWatermarkStrategyDescriptor())) {
         auto watermarkStrategy = Windowing::IngestionTimeWatermarkStrategy::create();
         codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
     } else {
