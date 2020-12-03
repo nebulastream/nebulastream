@@ -23,7 +23,7 @@ EventTimeWatermarkStrategy::EventTimeWatermarkStrategy(FieldAccessExpressionNode
     : onField(onField), delay(delay) {}
 
 FieldAccessExpressionNodePtr NES::Windowing::EventTimeWatermarkStrategy::getField() { return onField; }
-uint64_t EventTimeWatermarkStrategy::getDelay() { return delay; }
+uint64_t EventTimeWatermarkStrategy::getAllowedLateness() { return delay; }
 
 WatermarkStrategy::Type EventTimeWatermarkStrategy::getType() { return WatermarkStrategy::EventTimeWatermark; }
 EventTimeWatermarkStrategyPtr EventTimeWatermarkStrategy::create(FieldAccessExpressionNodePtr onField, uint64_t delay) {

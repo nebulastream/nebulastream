@@ -59,6 +59,7 @@
 #include <iostream>
 #include <utility>
 
+#include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
@@ -769,6 +770,44 @@ TEST_F(CodeGenerationTest, codeGenerationScanOperator) {
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
+}
+
+
+/**
+ * @brief This test generates a window assigner
+ */
+TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
+    /* prepare objects for test */
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    WorkerContext wctx(NesThread::getId());
+    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    auto input_schema = source->getSchema();
+
+    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+
+    auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto windowDefinition = LogicalWindowDefinition::create(
+        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
+    auto aggregate =
+        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+
+    auto strategy = EventTimeWatermarkStrategy::create(windowDefinition->getOnKey(), 12);
+    codeGenerator->generateCodeForWatermarkAssigner(strategy, context1);
+
+    /* compile code to pipeline stage */
+    auto stage1 = codeGenerator->compile(context1->code);
+
+    auto context2 = PipelineContext::create();
+    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    auto stage2 = codeGenerator->compile(context2->code);
 }
 
 /**
