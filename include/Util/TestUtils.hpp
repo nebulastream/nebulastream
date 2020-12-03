@@ -429,6 +429,27 @@ class TestUtils {
         return false;
     }
 
+    /**
+   * @brief Check if a outputfile is created
+   * @param expectedContent
+   * @param outputFilePath
+   * @return true if successful
+   */
+    static bool checkFileCreationOrTimeout(string outputFilePath) {
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            sleep(1);
+            NES_DEBUG("checkFileCreationOrTimeout: for file " << outputFilePath);
+            std::ifstream ifs(outputFilePath);
+            if (ifs.good() && ifs.is_open()) {
+                return true;
+            }
+        }
+        NES_DEBUG("checkFileCreationOrTimeout: expected result not reached within set timeout");
+        return false;
+    }
+
     static TopologyNodePtr registerTestNode(uint64_t id, std::string address, int cpu, NodeStats nodeProperties,
                                             PhysicalStreamConfigPtr streamConf, NodeType type, StreamCatalogPtr streamCatalog,
                                             TopologyPtr topology) {
