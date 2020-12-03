@@ -56,6 +56,10 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
+class ExecutablePipelineStage;
+typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
+
+
 /**
  * @brief the query manager is the central class to process queries.
  * It is source-driven. Each incoming buffer will add a task to the queue.
@@ -226,7 +230,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     std::condition_variable cv;
 
     BufferManagerPtr bufferManager;
-    CompiledExecutablePipelinePtr reconfigurationExecutable;
+    ExecutablePipelineStagePtr reconfigurationExecutable;
 
     uint64_t nodeEngineId;
 

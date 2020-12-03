@@ -18,4 +18,5 @@ add_source_nes(
         VariableDeclaration.cpp
         FunctionDeclaration.cpp
         ClassDeclaration.cpp
+        NamespaceDeclaration.cpp
 )

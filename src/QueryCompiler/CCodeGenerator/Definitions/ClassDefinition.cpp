@@ -17,10 +17,7 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/ClassDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <utility>
+
 namespace NES {
 
 ClassDefinition::ClassDefinition(std::string name) : name(std::move(name)) {}
@@ -39,45 +36,9 @@ void ClassDefinition::addMethod(Visibility visibility,
 }
 
 DeclarationPtr ClassDefinition::getDeclaration() {
-    std::stringstream classCode;
-    classCode << "class " << name;
-    classCode << generateBaseClassNames();
-    classCode << "{";
-    if (!publicFunctions.empty()) {
-        classCode << "public:";
-        classCode << generateFunctions(publicFunctions);
-   }
-
-    if (!privateFunctions.empty()) {
-        classCode << "private:";
-        classCode << generateFunctions(privateFunctions);
-    }
-
-    classCode << "}";
-
-    return ClassDeclaration::create(classCode.str());
+    return ClassDeclaration::create(shared_from_this());
 }
 
-std::string ClassDefinition::generateFunctions(std::vector<FunctionDefinitionPtr>& functions) {
-    std::stringstream classCode;
-    for (const auto& function : functions) {
-        auto functionDeclaration = function->getDeclaration();
-        classCode << functionDeclaration->getCode();
-    }
-    return classCode.str();
-}
-
-std::string ClassDefinition::generateBaseClassNames() {
-    std::stringstream classCode;
-    if (!baseClasses.empty()) {
-        classCode << ":";
-        for (int i = 0; i < baseClasses.size() - 1; i++) {
-            classCode << " public " << baseClasses[i] << ",";
-        }
-        classCode << " public " << baseClasses[baseClasses.size() - 1];
-    }
-    return classCode.str();
-}
 
 void ClassDefinition::addBaseClass(std::string baseClassName) {
     baseClasses.emplace_back(baseClassName);

@@ -15,22 +15,71 @@
 */
 
 #include <QueryCompiler/CCodeGenerator/Declarations/ClassDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
-
+#include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <utility>
 namespace NES {
 
-ClassDeclaration::ClassDeclaration(Code code) : functionCode(code) {}
+ClassDeclaration::ClassDeclaration(ClassDefinitionPtr classDefinition) : classDefinition(classDefinition) {}
 
-ClassDeclarationPtr ClassDeclaration::create(Code code) {
-    return std::make_shared<ClassDeclaration>(code);
+ClassDeclarationPtr ClassDeclaration::create(ClassDefinitionPtr classDefinition) {
+    return std::make_shared<ClassDeclaration>(classDefinition);
 }
 
-const GeneratableDataTypePtr ClassDeclaration::getType() const { return GeneratableDataTypePtr(); }
+const GeneratableDataTypePtr ClassDeclaration::getType() const { return CompilerTypesFactory().createAnonymusDataType(classDefinition->name); }
 const std::string ClassDeclaration::getIdentifierName() const { return ""; }
 
 const Code ClassDeclaration::getTypeDefinitionCode() const { return Code(); }
 
-const Code ClassDeclaration::getCode() const { return functionCode; }
+const Code ClassDeclaration::getCode() const {
+    std::stringstream classCode;
+    classCode << "class " << classDefinition->name;
+    classCode << generateBaseClassNames();
+    classCode << "{";
+    if (!classDefinition->publicFunctions.empty()) {
+        classCode << "public:";
+        classCode << generateFunctions(classDefinition->publicFunctions);
+    }
+
+    if (!classDefinition->privateFunctions.empty()) {
+        classCode << "private:";
+        classCode << generateFunctions(classDefinition->privateFunctions);
+    }
+
+    classCode << "};";
+    return classCode.str();
+}
+
+
+std::string ClassDeclaration::generateFunctions(std::vector<FunctionDefinitionPtr>& functions) const {
+    std::stringstream classCode;
+    for (const auto& function : functions) {
+        auto functionDeclaration = function->getDeclaration();
+        classCode << functionDeclaration->getCode();
+    }
+    return classCode.str();
+}
+
+std::string ClassDeclaration::generateBaseClassNames() const {
+    std::stringstream classCode;
+    auto baseClasses = classDefinition->baseClasses;
+    if (!baseClasses.empty()) {
+        classCode << ":";
+        for (int i = 0; i < baseClasses.size() - 1; i++) {
+            classCode << " public " << baseClasses[i] << ",";
+        }
+        classCode << " public " << baseClasses[baseClasses.size() - 1];
+    }
+    return classCode.str();
+}
+
 const DeclarationPtr ClassDeclaration::copy() const { return std::make_shared<ClassDeclaration>(*this); }
 
 }// namespace NES

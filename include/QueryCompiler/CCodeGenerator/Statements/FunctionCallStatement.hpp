@@ -27,6 +27,7 @@ class FunctionCallStatement : public ExpressionStatment {
     virtual StatementType getStamentType() const;
 
     virtual const CodeExpressionPtr getCode() const;
+    static FunctionCallStatementPtr create(const std::string functionname);
 
     virtual const ExpressionStatmentPtr copy() const;
 

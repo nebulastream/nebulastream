@@ -17,6 +17,7 @@
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <QueryCompiler/ExecutablePipeline.hpp>
+#include <QueryCompiler/ExecutablePipelineStage.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
@@ -30,18 +31,21 @@
 
 namespace NES {
 
-PipelineStage::PipelineStage(uint32_t pipelineStageId, QuerySubPlanId qepId, ExecutablePipelinePtr executablePipeline,
-                             QueryExecutionContextPtr pipelineExecutionContext, PipelineStagePtr nextPipelineStage)
-    : pipelineStageId(pipelineStageId), qepId(qepId), executablePipeline(std::move(executablePipeline)),
+PipelineStage::PipelineStage(uint32_t pipelineStageId,
+                             QuerySubPlanId qepId,
+                             ExecutablePipelineStagePtr executablePipelineStage,
+                             QueryExecutionContextPtr pipelineExecutionContext,
+                             PipelineStagePtr nextPipelineStage)
+    : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
       nextStage(std::move(nextPipelineStage)), pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
-    NES_ASSERT(this->executablePipeline && this->pipelineContext, "Wrong pipeline stage argument");
+    NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineStageId);
-    uint32_t ret = !executablePipeline->execute(inputBuffer, pipelineContext, workerContext);
+    uint32_t ret = !executablePipelineStage->execute(inputBuffer, pipelineContext, workerContext);
     return ret;
 }
 
@@ -102,12 +106,12 @@ bool PipelineStage::hasWindowHandler() { return pipelineContext->getWindowHandle
 
 bool PipelineStage::hasJoinHandler() { return pipelineContext->getJoinHandler() != nullptr; }
 
-bool PipelineStage::isReconfiguration() const { return executablePipeline->isReconfiguration(); }
+bool PipelineStage::isReconfiguration() const { return reconfiguration; }
 
 PipelineStagePtr PipelineStage::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
-                                       const ExecutablePipelinePtr executablePipeline, QueryExecutionContextPtr pipelineContext,
+                                       ExecutablePipelineStagePtr executablePipelineStage, QueryExecutionContextPtr pipelineContext,
                                        const PipelineStagePtr nextPipelineStage) {
-    return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipeline, pipelineContext,
+    return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
                                            nextPipelineStage);
 }
 
