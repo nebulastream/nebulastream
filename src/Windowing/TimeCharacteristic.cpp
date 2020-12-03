@@ -56,12 +56,10 @@ std::string TimeCharacteristic::toString() {
 }
 
 std::string TimeCharacteristic::getTypeAsString() {
-    if (type == IngestionTime) {
-        return "IngestionTime";
-    } else if (type == EventTime) {
-        return "EventTime";
-    } else {
-        return "Unknown TimeCharacteristic type";
+    switch (type) {
+        case IngestionTime :return "IngestionTime";
+        case EventTime :return "EventTime";
+        default: return "Unknown TimeCharacteristic type";
     }
 }
 
