@@ -37,7 +37,7 @@ fileDataFrame = pd.read_csv(resultCsvFile)
 
 # Create new folder for all plots
 fileName = os.path.splitext(os.path.basename(resultCsvFile))[0]
-createFolder(fileName)
+createFolder(os.path.join(folder, fileName))
 
 # Delete all rows that contain header
 headerAsList = list(fileDataFrame)
@@ -91,13 +91,13 @@ for workerThreads in allWorkerThreads:
 			allIngestionRate[workerThreads].append(dataPoint.ingestionRate)
 			allyErr[workerThreads].append(dataPoint.yErr)
 			allyValues[workerThreads].append(dataPoint.yValue)
-			allTupleSizes[workerThreads].append(dataPoint.bufferSize)
+			allBufferSizes[workerThreads].append(dataPoint.bufferSize)
 
 for workerThreads in allWorkerThreads:
 	fig, ax = plt.subplots(figsize=(24, 8))
 	rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
 	ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
-	ax.set_xticklabels([f"{millify(x) / y}" for x,y in zip(allIngestionRate[workerThreads], allBufferSizes[workerThreads)])
+	ax.set_xticklabels([f"{millify(x)} / {y}" for x,y in zip(allIngestionRate[workerThreads], allBufferSizes[workerThreads])])
 	ax.set_xlabel("Ingestionrate / BufferSize [B]")
 	ax.set_ylabel("Throughput [tup/s]")
 	autolabel(rects, ax)
