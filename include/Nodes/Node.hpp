@@ -271,6 +271,13 @@ class Node : public std::enable_shared_from_this<Node> {
     bool insertBetweenThisAndParentNodes(const NodePtr newNode);
 
     /**
+    * @brief Add input node as child to the current node and move the parents of current node as parent to the input node.
+    * If the node is already exists as parent then skip the operation
+    * @return true if operation succeeded else false
+    */
+    bool insertBetweenThisAndChildNodes(const NodePtr newNode);
+
+    /**
      * @brief To string method for the current node.
      * @return string
      */
