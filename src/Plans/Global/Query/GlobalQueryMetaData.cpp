@@ -25,23 +25,29 @@
 
 namespace NES {
 
-GlobalQueryMetaData::GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes)
-    : globalQueryId(PlanIdGenerator::getNextGlobalQueryId()), queryIds(std::move(queryIds)),
-      sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)), deployed(false), newMetaData(true) {}
-
-GlobalQueryMetaDataPtr GlobalQueryMetaData::create(std::set<QueryId> queryIds,
-                                                   std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
-    return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(std::move(queryIds), std::move(sinkGlobalQueryNodes)));
+GlobalQueryMetaData::GlobalQueryMetaData(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes)
+    : globalQueryId(PlanIdGenerator::getNextGlobalQueryId()), sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)),
+      deployed(false), newMetaData(true) {
+    NES_DEBUG("GlobalQueryMetaData()");
+    queryIdToSinkGQNMap[queryId] = sinkGlobalQueryNodes;
 }
 
-void GlobalQueryMetaData::addNewSinkGlobalQueryNodes(const std::set<GlobalQueryNodePtr>& globalQueryNodes) {
+GlobalQueryMetaDataPtr GlobalQueryMetaData::create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
+    return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(queryId, std::move(sinkGlobalQueryNodes)));
+}
 
-    NES_DEBUG("GlobalQueryMetaData: Add" << globalQueryNodes.size() << "new Global Query Nodes with sink operators");
-    for (auto& sinkGQN : globalQueryNodes) {
-        //As GQNs with sink operators do not contain more than 1 query get the query id at 0th index.
-        queryIds.insert(sinkGQN->getQueryIds()[0]);
-        this->sinkGlobalQueryNodes.insert(sinkGQN);
+bool GlobalQueryMetaData::addNewSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes) {
+
+    NES_DEBUG("GlobalQueryMetaData: Add " << globalQueryNodes.size() << "new Global Query Nodes with sink operators for query "
+                                          << queryId);
+    if (queryIdToSinkGQNMap.find(queryId) != queryIdToSinkGQNMap.end()) {
+        NES_ERROR("GlobalQueryMetaData: query id " << queryId << " already present in metadata information.");
+        return false;
     }
+
+    NES_TRACE("GlobalQueryMetaData: Inserting new entries into metadata");
+    queryIdToSinkGQNMap[queryId] = globalQueryNodes;
+    sinkGlobalQueryNodes.insert(globalQueryNodes.begin(), globalQueryNodes.end());
     //Mark the meta data as updated but not deployed
     markAsNotDeployed();
 }
@@ -49,24 +55,29 @@ void GlobalQueryMetaData::addNewSinkGlobalQueryNodes(const std::set<GlobalQueryN
 bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
     NES_DEBUG("GlobalQueryMetaData: Remove the Query Id " << queryId
                                                           << " and associated Global Query Nodes with sink operators.");
-    auto found = std::find(queryIds.begin(), queryIds.end(), queryId);
-    if (found == queryIds.end()) {
-        NES_WARNING("GlobalQueryMetaData: Unable to find query Id " << queryId << " in Global Query Metadata " << globalQueryId);
+    if (queryIdToSinkGQNMap.find(queryId) == queryIdToSinkGQNMap.end()) {
+        NES_ERROR("GlobalQueryMetaData: query id " << queryId << " is not present in metadata information.");
         return false;
     }
 
     NES_TRACE("GlobalQueryMetaData: Remove the Global Query Nodes with sink operators for query " << queryId);
+    std::set<GlobalQueryNodePtr> querySinkGQNs = queryIdToSinkGQNMap[queryId];
     auto itr = sinkGlobalQueryNodes.begin();
-    while (itr != sinkGlobalQueryNodes.end()) {
-        if ((*itr)->hasQuery(queryId)) {
-            itr = sinkGlobalQueryNodes.erase(itr);
-            (*itr)->removeAllParent();
-            (*itr)->removeChildren();
-            continue;
+    for (auto& querySinkGQN : querySinkGQNs) {
+        auto found =
+            std::find_if(sinkGlobalQueryNodes.begin(), sinkGlobalQueryNodes.end(), [querySinkGQN](GlobalQueryNodePtr sinkGQN) {
+                return querySinkGQN->getId() == sinkGQN->getId();
+            });
+
+        if (found != sinkGlobalQueryNodes.end()) {
+            sinkGlobalQueryNodes.erase(found);
+            (*found)->removeAllParent();
+            removeExclusiveChildren(*found);
+        } else {
+            NES_ERROR("Unable to find query's sink global query node in the set of Sink global query nodes in the metadata");
+            return false;
         }
-        ++itr;
     }
-    queryIds.erase(found);
     //Mark the meta data as updated but not deployed
     markAsNotDeployed();
     return true;
@@ -146,8 +157,8 @@ void GlobalQueryMetaData::markAsDeployed() {
 }
 
 bool GlobalQueryMetaData::isEmpty() {
-    NES_TRACE("GlobalQueryMetaData: Check if Global Query Metadata is empty. Found : " << queryIds.empty());
-    return queryIds.empty();
+    NES_TRACE("GlobalQueryMetaData: Check if Global Query Metadata is empty. Found : " << queryIdToSinkGQNMap.empty());
+    return queryIdToSinkGQNMap.empty();
 }
 
 bool GlobalQueryMetaData::isDeployed() const {
@@ -170,44 +181,26 @@ std::set<GlobalQueryNodePtr> GlobalQueryMetaData::getSinkGlobalQueryNodes() {
     return sinkGlobalQueryNodes;
 }
 
-std::set<QueryId> GlobalQueryMetaData::getQueryIds() { return queryIds; }
+std::map<QueryId, std::set<GlobalQueryNodePtr>> GlobalQueryMetaData::getQueryIdToSinkGQNMap() { return queryIdToSinkGQNMap; }
 
 GlobalQueryId GlobalQueryMetaData::getGlobalQueryId() const { return globalQueryId; }
 
 void GlobalQueryMetaData::clear() {
     NES_DEBUG("GlobalQueryMetaData: clearing all metadata information.");
-    queryIds.clear();
+    queryIdToSinkGQNMap.clear();
     sinkGlobalQueryNodes.clear();
     markAsNotDeployed();
 }
 
-bool GlobalQueryMetaData::mergeGlobalQueryMetaData(GlobalQueryMetaDataPtr targetGQM) {
+void GlobalQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode) {
 
-    std::set<GlobalQueryNodePtr> targetSinkGQNs = targetGQM->getSinkGlobalQueryNodes();
-
-    for (auto& targetSinkGQN : targetSinkGQNs) {
-        auto targetSignature = targetSinkGQN->getOperators()[0]->as<LogicalOperatorNode>()->getSignature();
-        bool foundHost = false;
-        for (auto& hostSinkGQN : sinkGlobalQueryNodes) {
-            auto hostSignature = targetSinkGQN->getOperators()[0]->as<LogicalOperatorNode>()->getSignature();
-            if (hostSignature->isEqual(targetSignature)) {
-                targetSinkGQN->removeChildren();
-                for (auto& child : hostSinkGQN->getChildren()) {
-                    targetSinkGQN->addChild(child);
-                }
-                foundHost = true;
-                break;
-            }
-        }
-        if (!foundHost) {
-            return false;
+    for(auto& child : globalQueryNode->getChildren()){
+        if(child->getParents().empty() || child->getParents().size() == 1){
+            child->removeAllParent();
+            removeExclusiveChildren(child->as<GlobalQueryNode>());
         }
     }
-
-    std::set<QueryId> targetQueryIds = targetGQM->getQueryIds();
-    queryIds.insert(targetQueryIds.begin(), targetQueryIds.end());
-    targetGQM->clear();
-    return true;
+    globalQueryNode->removeChildren();
 }
 
 }// namespace NES

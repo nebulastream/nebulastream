@@ -26,6 +26,9 @@ namespace NES {
 class Node;
 typedef std::shared_ptr<Node> NodePtr;
 
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
@@ -93,6 +96,17 @@ class L0QueryMergerRule {
 
   private:
     explicit L0QueryMergerRule();
+
+    /**
+     * @brief identify if the query plans are equal or not
+     * @param targetQueryPlan : target query plan
+     * @param hostQueryPlan : host query plan
+     * @return true if the query plans are equal
+     */
+    bool areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan);
+
+    bool areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
+                          std::map<uint64_t, uint64_t>& targetHostOperatorMap);
 
     /**
      * @brief Check if the target GQN can be merged into host GQN

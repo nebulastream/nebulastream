@@ -51,6 +51,7 @@ bool GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
     for (const auto& rootOperator : rootOperators) {
         auto queryRootGQNode = GlobalQueryNode::create(getNextFreeId(), queryId, rootOperator->copy());
         queryRootGQNs.insert(queryRootGQNode);
+        operatorToGQNMap[rootOperator->getId()] = queryRootGQNode;
         root->addChild(queryRootGQNode);
 
         std::vector<NodePtr> children = rootOperator->getChildren();
@@ -294,7 +295,7 @@ bool GlobalQueryPlan::checkMetaDataValidity() {
                 NES_DEBUG("GlobalQueryPlan: Found MetaData information with non-merged query plans. Clearing MetaData for "
                           "re-computation.");
                 //Get the query ids from the metadata
-                std::set<QueryId> queryIds = globalQueryMetaData->getQueryIds();
+                std::set<QueryId> queryIds = globalQueryMetaData->getQueryIdToSinkGQNMap();
                 for (auto queryId : queryIds) {
                     queryIdToGlobalQueryIdMap.erase(queryId);
                 }
@@ -335,7 +336,7 @@ bool GlobalQueryPlan::updateGlobalQueryMetadata(GlobalQueryMetaDataPtr globalQue
     globalQueryIdToMetaDataMap[globalQueryId] = globalQueryMetaData;
 
     NES_TRACE("GlobalQueryPlan: Updating the Query Id to Global Query Id map");
-    for (auto queryId : globalQueryMetaData->getQueryIds()) {
+    for (auto queryId : globalQueryMetaData->getQueryIdToSinkGQNMap()) {
         queryIdToGlobalQueryIdMap[queryId] = globalQueryId;
     }
     return true;

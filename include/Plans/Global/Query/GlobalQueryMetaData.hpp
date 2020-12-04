@@ -75,13 +75,13 @@ typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
 class GlobalQueryMetaData {
 
   public:
-    static GlobalQueryMetaDataPtr create(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    static GlobalQueryMetaDataPtr create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     /**
      * @brief Add a new Set of Global Query Node with sink operators
      * @param globalQueryNodes :  the Global Query Node with sink operators
      */
-    void addNewSinkGlobalQueryNodes(const std::set<GlobalQueryNodePtr>& globalQueryNodes);
+    bool addNewSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes);
 
     /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators
@@ -89,6 +89,11 @@ class GlobalQueryMetaData {
      * @return true if successful
      */
     bool removeQueryId(QueryId queryId);
+
+    /**
+     * @brief This method will recursively remove the child and its children GQN that have no or only 1 parent
+     */
+    void removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode);
 
     /**
      * @brief Clear all MetaData information
@@ -138,9 +143,9 @@ class GlobalQueryMetaData {
 
     /**
      * @brief Get the collection of registered query ids
-     * @return set of registered query ids
+     * @return map of registered query ids and their sink global query nodes
      */
-    std::set<QueryId> getQueryIds();
+    std::map<QueryId, std::set<GlobalQueryNodePtr>> getQueryIdToSinkGQNMap();
 
     /**
      * @brief Get the global query id
@@ -154,18 +159,11 @@ class GlobalQueryMetaData {
      */
     void setAsOld();
 
-    /**
-     * @brief Method to merge together global query metadata
-     * @param targetGQM : the target global query metadata
-     * @return true if successful else false
-     */
-    bool mergeGlobalQueryMetaData(GlobalQueryMetaDataPtr targetGQM);
-
   private:
-    explicit GlobalQueryMetaData(std::set<QueryId> queryIds, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    explicit GlobalQueryMetaData(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     GlobalQueryId globalQueryId;
-    std::set<QueryId> queryIds;
+    std::map<QueryId, std::set<GlobalQueryNodePtr>> queryIdToSinkGQNMap;
     std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes;
     bool deployed;
     bool newMetaData;

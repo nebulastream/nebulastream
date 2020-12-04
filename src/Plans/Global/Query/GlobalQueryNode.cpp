@@ -22,18 +22,13 @@ namespace NES {
 
 GlobalQueryNode::GlobalQueryNode(uint64_t id) : id(id), scheduled(false), querySetUpdated(false), operatorSetUpdated(false) {}
 
-GlobalQueryNode::GlobalQueryNode(uint64_t id, QueryId queryId, OperatorNodePtr operatorNode)
-    : id(id), scheduled(false), querySetUpdated(true), operatorSetUpdated(true) {
-    queryIds.push_back(queryId);
-    logicalOperators.push_back(operatorNode);
-    queryToOperatorMap[queryId] = operatorNode;
-    operatorToQueryMap[operatorNode] = {queryId};
-}
+GlobalQueryNode::GlobalQueryNode(uint64_t id, OperatorNodePtr operatorNode)
+    : id(id), operatorNode(operatorNode), scheduled(false), querySetUpdated(true), operatorSetUpdated(true) {}
 
 GlobalQueryNodePtr GlobalQueryNode::createEmpty(uint64_t id) { return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id)); }
 
-GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, QueryId queryId, OperatorNodePtr operatorNode) {
-    return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id, queryId, operatorNode));
+GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, OperatorNodePtr operatorNode) {
+    return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id, operatorNode));
 }
 
 uint64_t GlobalQueryNode::getId() { return id; }
