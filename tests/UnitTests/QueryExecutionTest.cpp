@@ -85,42 +85,65 @@ class QueryExecutionTest : public testing::Test {
  */
 class WindowSource : public NES::DefaultSource {
   public:
-    int64_t timestamp = 5;
+    uint64_t runCnt = 0;
+    int64_t timestamp;
     bool varyWatermark;
+    bool decreaseTime;
     WindowSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                 const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false)
+                 const uint64_t numbersOfBufferToProduce, uint64_t frequency, bool varyWatermark, bool decreaseTime,
+                 int64_t timestamp)
         : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency,
                         1),
-          varyWatermark(varyWatermark) {}
+          varyWatermark(varyWatermark), decreaseTime(decreaseTime), timestamp(timestamp) {}
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
         auto rowLayout = createRowLayout(schema);
+
         for (int i = 0; i < 10; i++) {
             rowLayout->getValueField<int64_t>(i, 0)->write(buffer, 1);
             rowLayout->getValueField<int64_t>(i, 1)->write(buffer, 1);
             if (varyWatermark) {
-                rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp++);
+                if (!decreaseTime) {
+                    rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp++);
+                } else {
+                    if (runCnt == 0) {
+                        if(i < 9)
+                        {
+                            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp++);
+                        }
+                        else
+                        {
+                            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp+20);
+                        }
+                    }
+                    else
+                    {
+                        timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
+                        rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp);
+                    }
+                }
             } else {
                 rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp);
             }
         }
         buffer.setNumberOfTuples(10);
         timestamp = timestamp + 10;
+        runCnt++;
 
         NES_DEBUG("QueryExecutionTest: source buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema));
         return buffer;
     };
 
     static DataSourcePtr create(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false) {
-        //        auto windowSchema = Schema::create()->addField(createField("start", UINT64))->addField(createField("stop", UINT64))->addField(createField("key", UINT64))->addField("value", UINT64);
+                                const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false,
+                                bool decreaseTime = false, int64_t timestamp = 5) {
         auto windowSchema = Schema::create()
                                 ->addField("key", BasicType::INT64)
                                 ->addField("value", BasicType::INT64)
                                 ->addField("ts", BasicType::UINT64);
         return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
-                                              varyWatermark);
+                                              varyWatermark, decreaseTime, timestamp);
     }
 };
 
@@ -394,6 +417,90 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 2)->read(resultBuffer), 1);
         // value
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
+    }
+    nodeEngine->stopQuery(1);
+    nodeEngine->stop();
+}
+
+/**
+ * @brief This tests creates a windowed query.
+ * WindowSource -> windowOperator -> windowScan -> TestSink
+ * The source generates 2. buffers.
+ */
+TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
+    // Create Operator Tree
+    // 1. add window source and create two buffers each second one.
+    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
+                                             /*frequency*/ 1, true, true, 30);
+
+    auto query = TestQuery::from(windowSource->getSchema());
+    // 2. dd window operator:
+    // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
+    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
+
+    query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
+
+    // 3. add sink. We expect that this sink will receive one buffer
+    //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
+    auto windowResultSchema = Schema::create()
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField(createField("key", INT64))
+                                  ->addField("value", INT64);
+
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    query.sink(DummySink::create());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    std::cout << " plan=" << queryPlan->toString() << std::endl;
+
+    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+
+    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
+        generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
+    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
+        queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+
+    auto builder = GeneratedQueryExecutionPlanBuilder::create()
+                       .setQueryManager(nodeEngine->getQueryManager())
+                       .setBufferManager(nodeEngine->getBufferManager())
+                       .setCompiler(nodeEngine->getCompiler())
+                       .setQueryId(1)
+                       .setQuerySubPlanId(1)
+                       .addSource(windowSource)
+                       .addSink(testSink)
+                       .addOperatorQueryPlan(generatableOperators);
+
+    auto plan = builder.build();
+    nodeEngine->registerQueryInNodeEngine(plan);
+    nodeEngine->startQuery(1);
+
+    // wait till all buffers have been produced
+    testSink->completed.get_future().get();
+
+    // get result buffer, which should contain two results.
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    auto& resultBuffer = testSink->get(0);
+    NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    //TODO 1 Tuple im result buffer in 312 2 results?
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
+    auto resultLayout = createRowLayout(windowResultSchema);
+    for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
+        // start
+        EXPECT_EQ(resultLayout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), 30);
+        // end
+        EXPECT_EQ(resultLayout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 1)->read(resultBuffer), 40);
+        // key
+        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 2)->read(resultBuffer), 1);
+        // value
+        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 9);
     }
     nodeEngine->stopQuery(1);
     nodeEngine->stop();
