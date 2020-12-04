@@ -345,7 +345,7 @@ bool GlobalQueryPlan::updateGlobalQueryMetadata(GlobalQueryMetaDataPtr globalQue
 void GlobalQueryPlan::removeEmptyMetaData() {
     NES_INFO("GlobalQueryPlan: remove empty metadata information.");
     for (auto [globalQueryId, globalQueryMetaData] : globalQueryIdToMetaDataMap) {
-        if (globalQueryMetaData->isDeployed() && globalQueryMetaData->isEmpty()) {
+        if ((globalQueryMetaData->isDeployed() || globalQueryMetaData->isNew()) && globalQueryMetaData->isEmpty()) {
             NES_TRACE("GlobalQueryPlan: Removing! found an empty query meta data.");
             globalQueryIdToMetaDataMap.erase(globalQueryMetaData->getGlobalQueryId());
         }

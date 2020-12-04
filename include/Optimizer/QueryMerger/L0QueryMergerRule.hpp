@@ -101,9 +101,11 @@ class L0QueryMergerRule {
      * @brief identify if the query plans are equal or not
      * @param targetQueryPlan : target query plan
      * @param hostQueryPlan : host query plan
+     * @param targetHostOperatorMap: map passed as reference to record the matching pair of target and host operators
      * @return true if the query plans are equal
      */
-    bool areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan);
+    bool areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
+                            std::map<uint64_t, uint64_t>& targetHostOperatorMap);
 
     bool areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
                           std::map<uint64_t, uint64_t>& targetHostOperatorMap);

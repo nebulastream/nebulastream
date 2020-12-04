@@ -85,15 +85,17 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueries) {
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+    auto gqmToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(gqmToDeploy.size() == 2);
 
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -111,6 +113,9 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueries) {
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
+
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_EQ(sink1GQNChild, sink2GQNChild);
@@ -162,12 +167,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     ASSERT_EQ(sinkGQNs.size(), 2);
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator11->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator11->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator12->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator12->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -188,6 +193,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         bool found = false;
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
@@ -224,12 +231,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -247,6 +254,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_NE(sink1GQNChild, sink2GQNChild);
@@ -283,12 +292,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -306,6 +315,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_EQ(sink1GQNChild, sink2GQNChild);
@@ -345,12 +356,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) 
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -368,6 +379,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) 
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_EQ(sink1GQNChild, sink2GQNChild);
@@ -407,12 +420,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentC
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -430,6 +443,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentC
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_NE(sink1GQNChild, sink2GQNChild);
@@ -463,12 +478,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -486,6 +501,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_NE(sink1GQNChild, sink2GQNChild);
@@ -518,12 +535,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -541,6 +558,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_NE(sink1GQNChild, sink2GQNChild);
@@ -574,12 +593,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -597,6 +616,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_NE(sink1GQNChild, sink2GQNChild);
@@ -630,12 +651,12 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()[0]->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
@@ -653,6 +674,8 @@ TEST_F(L0QueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
     l0QueryMergerRule->apply(globalQueryPlan);
 
     //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
             ASSERT_NE(sink1GQNChild, sink2GQNChild);

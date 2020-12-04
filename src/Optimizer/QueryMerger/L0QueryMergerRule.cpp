@@ -35,17 +35,18 @@ bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
     std::vector<GlobalQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllGlobalQueryMetaData();
     if (allGQMs.size() == 1) {
-        NES_DEBUG(
-            "L0QueryMergerRule: Found only a single query metadata in the global query plan. Skipping the L0 Query Merging.");
+        NES_WARNING("L0QueryMergerRule: Found only a single query metadata in the global query plan."
+                    " Skipping the L0 Query Merging.");
         return true;
     }
 
-    std::vector<GlobalQueryMetaDataPtr> allGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    NES_DEBUG("L0QueryMergerRule: Iterating over all GQMs in the Global Query Plan");
+    for (uint16_t i = 0; i < allGQMs.size() - 1; i++) {
+        for (uint16_t j = i + 1; j < allGQMs.size(); j++) {
 
-    NES_DEBUG("L0QueryMergerRule: Iterating over all sink GQNs in the Global Query Plan");
-    for (auto& targetGQM : allGQMToDeploy) {
+            auto hostGQM = allGQMs[i];
+            auto targetGQM = allGQMs[j];
 
-        for (auto& hostGQM : allGQMs) {
             if (targetGQM->getGlobalQueryId() == hostGQM->getGlobalQueryId()) {
                 continue;
             }
@@ -54,16 +55,37 @@ bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
             auto hostQueryPlan = hostGQM->getQueryPlan();
             auto targetQueryPlan = targetGQM->getQueryPlan();
 
-            if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan)) {
+            std::map<uint64_t, uint64_t> targetHostOperatorMap;
+            if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetHostOperatorMap)) {
+
+                std::set<GlobalQueryNodePtr> hostSinkGQNs = hostGQM->getSinkGlobalQueryNodes();
+                for (auto targetSinkGQN : targetGQM->getSinkGlobalQueryNodes()) {
+                    uint64_t hostSinkOperatorId = targetHostOperatorMap[targetSinkGQN->getOperator()->getId()];
+
+                    auto found = std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(),
+                                              [hostSinkOperatorId](GlobalQueryNodePtr hostSinkGQN) {
+                                                  return hostSinkGQN->getOperator()->getId() == hostSinkOperatorId;
+                                              });
+
+                    if (found == hostSinkGQNs.end()) {
+                        NES_THROW_RUNTIME_ERROR("Unexpected behaviour");
+                    }
+                    targetSinkGQN->removeChildren();
+                    for (auto hostChild : (*found)->getChildren()) {
+                        hostChild->addParent(targetSinkGQN);
+                    }
+                }
                 hostGQM->addGlobalQueryMetaData(targetGQM);
-//                hostGQM->merge(targetGQM);
+                targetGQM->clear();
             }
         }
     }
+    globalQueryPlan->removeEmptyMetaData();
     return true;
 }
 
-bool L0QueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan) {
+bool L0QueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
+                                           std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     std::vector<OperatorNodePtr> targetSourceOperators = targetQueryPlan->getLeafOperators();
     std::vector<OperatorNodePtr> hostSourceOperators = hostQueryPlan->getLeafOperators();
@@ -75,7 +97,7 @@ bool L0QueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPl
     //Fetch the first source operator
     auto& targetSourceOperator = targetSourceOperators[0];
     for (auto& hostSourceOperator : hostSourceOperators) {
-        std::map<uint64_t, uint64_t> targetHostOperatorMap;
+        targetHostOperatorMap.clear();
         if (areOperatorEqual(targetSourceOperator, hostSourceOperator, targetHostOperatorMap)) {
             return true;
         }
@@ -92,6 +114,11 @@ bool L0QueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, Operato
         } else {
             return false;
         }
+    }
+
+    if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
+        targetHostOperatorMap[targetOperator->getId()] = hostOperator->getId();
+        return true;
     }
 
     if (targetOperator->equal(hostOperator)) {
@@ -124,6 +151,7 @@ bool L0QueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, Operato
                 return false;
             }
         }
+        return true;
     }
     return false;
 }
