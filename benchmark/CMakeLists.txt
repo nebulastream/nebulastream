@@ -85,7 +85,17 @@ if (NES_BUILD_BENCHMARKS)
     target_sources(map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME map-query-benchmark COMMAND map-query-benchmark --benchmark_out=map-query-benchmark.log --benchmark_out_format=json)
 
+    ### BufferSize Query Benchmark ###
+    add_executable(buffer-size-query-benchmark "BenchmarkSuite/QueryBufferSizesBenchmark.cpp")
+    target_link_libraries(buffer-size-query-benchmark nes)
+    target_sources(buffer-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME buffer-size-query-benchmark COMMAND buffer-size-query-benchmark --benchmark_out=buffer-size-query-benchmark.log --benchmark_out_format=json)
 
+    ### TupleSize Query Benchmark ###
+    add_executable(tuple-size-query-benchmark "BenchmarkSuite/QueryTupleSizesBenchmark.cpp")
+    target_link_libraries(tuple-size-query-benchmark nes)
+    target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
 
     add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
 

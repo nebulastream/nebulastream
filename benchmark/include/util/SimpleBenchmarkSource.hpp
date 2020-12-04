@@ -17,11 +17,14 @@
 #ifndef NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
 #define NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
 
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <cstdint>
 #include <list>
 #include <memory>
 #if __linux
+#include <NodeEngine/TupleBuffer.hpp>
 #include <sys/syscall.h>
 #endif
 
@@ -134,25 +137,55 @@ class SimpleBenchmarkSource : public DataSource {
         }//end of if source not empty
     }
 
-    std::optional<NodeEngine::TupleBuffer> receiveData() override {
-        NES_DEBUG("SimpleBenchmarkSource: available buffer are " << bufferManager->getAvailableBuffers());
+    std::optional<NES::TupleBuffer> receiveData() override {
 
-        std::optional<NodeEngine::TupleBuffer> optionalBuf;
-        do {
-            optionalBuf = bufferManager->getBufferNoBlocking();
-        } while (!optionalBuf.has_value());
+        // 10 tuples of size one
+        NES_DEBUG("Source:" << this << " requesting buffer");
 
-        NES_DEBUG("SimpleBenchmarkSource: got buffer!");
-
-        auto buf = optionalBuf.value();
-
+        auto buf = this->bufferManager->getBufferBlocking();
         auto listIt = keyList.begin();
         std::advance(listIt, keyPos);
 
-        for (uint64_t i = 0; i < curNumberOfTuplesPerBuffer; ++i, ++listIt) {
-            rowLayout->getValueField<int16_t>(i, 0)->write(buf, *listIt);
-            rowLayout->getValueField<int16_t>(i, 1)->write(buf, 1);
+        auto fields = schema->fields;
+        for (uint64_t recordIndex = 0; recordIndex < curNumberOfTuplesPerBuffer; recordIndex++) {
+            for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+                auto value = *listIt;
+                auto dataType = fields[fieldIndex]->getDataType();
+                auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+                if (physicalType->isBasicType()) {
+                    auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                    if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                        rowLayout->getValueField<char>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                        rowLayout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                        rowLayout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                        rowLayout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                        rowLayout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                        rowLayout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                        rowLayout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                        rowLayout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                        rowLayout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                        rowLayout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                        rowLayout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
+                    } else {
+                        NES_DEBUG("This data source only generates data for numeric fields");
+                    }
+                } else {
+                    NES_DEBUG("This data source only generates data for numeric fields");
+                }
+            }
         }
+
+
 
         this->keyPos += curNumberOfTuplesPerBuffer;
         buf.setNumberOfTuples(curNumberOfTuplesPerBuffer);
