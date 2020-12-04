@@ -34,7 +34,7 @@ int main() {
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
     BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
-    //    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 200 * 1000 * 1000, 550 * 1000 * 1000, 10 * 1000 * 1000);
+    //BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
     BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 60, 70, 10);
@@ -43,16 +43,16 @@ int main() {
     BenchmarkUtils::createRangeVector<uint64_t>(allPeriodLengths, 1, 2, 1);
 
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 5, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 2, 1);
 
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     std::vector<uint64_t> allBufferSizes;
-    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 7*1024, 50*1024, 1024);
+    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4*1024, 12*1024, 4*1024);
 
 
-    std::string benchmarkFolderName = "MapQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
+    std::string benchmarkFolderName = "QueriesBufferSize_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName)) {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
     }
@@ -70,10 +70,6 @@ int main() {
         "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
 
-
-    benchmarkFolderName = "FilterQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
-    if (!std::filesystem::create_directory(benchmarkFolderName))
-        throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;

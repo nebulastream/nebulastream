@@ -20,11 +20,14 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <cstdint>
 #include <list>
 #include <memory>
+
 #if __linux
-#include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <sys/syscall.h>
 #endif
 
@@ -137,7 +140,7 @@ class SimpleBenchmarkSource : public DataSource {
         }//end of if source not empty
     }
 
-    std::optional<NES::TupleBuffer> receiveData() override {
+    std::optional<NodeEngine::TupleBuffer> receiveData() override {
 
         // 10 tuples of size one
         NES_DEBUG("Source:" << this << " requesting buffer");
@@ -201,13 +204,16 @@ class SimpleBenchmarkSource : public DataSource {
 
     virtual ~SimpleBenchmarkSource() = default;
 
-    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
-                                                         NodeEngine::QueryManagerPtr queryManager, SchemaPtr& benchmarkSchema,
-                                                         uint64_t ingestionRate, uint64_t operatorId) {
+    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate,
+                                                         uint64_t operatorId, bool roundingNearestThousand = false) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
-        maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
-                                                              : (maxTuplesPerBuffer - maxTuplesPerBuffer % 1000);
+        if (roundingNearestThousand) {
+            NES_INFO("BM_SimpleFilterQuery: maxTuplesPerBuffer will be rounded to nearest thousands");
+            maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
+                                                                  : (maxTuplesPerBuffer - maxTuplesPerBuffer % 1000);
+        }
 
         NES_INFO("BM_SimpleFilterQuery: maxTuplesPerBuffer=" << maxTuplesPerBuffer);
         // at this point maxTuplesPerBuffer will be rounded to nearest thousands. This makes it easier to work with ingestion rates
