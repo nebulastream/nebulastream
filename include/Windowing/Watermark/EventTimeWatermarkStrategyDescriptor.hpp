@@ -28,11 +28,11 @@ typedef std::shared_ptr<EventTimeWatermarkStrategyDescriptor> EventTimeWatermark
 
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
   public:
-    static WatermarkStrategyDescriptorPtr create(ExpressionItem onField, TimeMeasure delay);
+    static WatermarkStrategyDescriptorPtr create(ExpressionItem onField, TimeMeasure allowedLateness);
 
     ExpressionItem getOnField();
 
-    TimeMeasure getDelay();
+    TimeMeasure getAllowedLateness();
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
 
@@ -40,10 +40,9 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
     // Field where the watermark should be retrieved
     ExpressionItem onField;
 
-    // watermark delay
-    TimeMeasure delay;
+    TimeMeasure allowedLateness;
 
-    explicit EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure delay);
+    explicit EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure allowedLateness);
 };
 
 }// namespace NES::Windowing

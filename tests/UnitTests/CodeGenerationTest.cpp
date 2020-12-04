@@ -772,7 +772,6 @@ TEST_F(CodeGenerationTest, codeGenerationScanOperator) {
     auto stage1 = codeGenerator->compile(context1->code);
 }
 
-
 /**
  * @brief This test generates a window assigner
  */

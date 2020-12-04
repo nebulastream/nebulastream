@@ -21,6 +21,9 @@
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 namespace NES {
 
+/**
+ * @brief this statements allows us to generate code for the "continue" instruction
+ */
 class ContinueStatement : public Statement {
   public:
     ContinueStatement();
@@ -36,7 +39,7 @@ class ContinueStatement : public Statement {
   private:
 };
 
-typedef ContinueStatement Cont;
+typedef ContinueStatement Continue;
 
 }// namespace NES
 

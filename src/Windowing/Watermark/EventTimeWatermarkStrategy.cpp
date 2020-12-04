@@ -19,15 +19,16 @@
 
 namespace NES::Windowing {
 
-EventTimeWatermarkStrategy::EventTimeWatermarkStrategy(FieldAccessExpressionNodePtr onField, uint64_t delay)
-    : onField(onField), delay(delay) {}
+EventTimeWatermarkStrategy::EventTimeWatermarkStrategy(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness)
+    : onField(onField), allowedLateness(allowedLateness) {}
 
 FieldAccessExpressionNodePtr NES::Windowing::EventTimeWatermarkStrategy::getField() { return onField; }
-uint64_t EventTimeWatermarkStrategy::getAllowedLateness() { return delay; }
+uint64_t EventTimeWatermarkStrategy::getAllowedLateness() { return allowedLateness; }
 
 WatermarkStrategy::Type EventTimeWatermarkStrategy::getType() { return WatermarkStrategy::EventTimeWatermark; }
-EventTimeWatermarkStrategyPtr EventTimeWatermarkStrategy::create(FieldAccessExpressionNodePtr onField, uint64_t delay) {
-    return std::make_shared<Windowing::EventTimeWatermarkStrategy>(onField, delay);
+
+EventTimeWatermarkStrategyPtr EventTimeWatermarkStrategy::create(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness) {
+    return std::make_shared<Windowing::EventTimeWatermarkStrategy>(onField, allowedLateness);
 }
 
 }// namespace NES::Windowing
