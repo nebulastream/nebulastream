@@ -34,7 +34,7 @@ uint64_t GlobalQueryNode::getId() { return id; }
 
 OperatorNodePtr GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
     NES_DEBUG("GlobalQueryNode: Check if a similar logical operator present in the global query node " << id);
-    if (this->operatorNode->equal(operatorNode)) {
+    if (this->operatorNode && this->operatorNode->equal(operatorNode)) {
         return operatorNode;
     }
     return nullptr;
