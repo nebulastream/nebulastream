@@ -508,6 +508,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
 
     // get allowed lateness
+//    auto allowedLateness = windowManager->getAllowedLateness();
     auto latenessHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "allowedLateness");
     auto getAllowedLatenessStateVariable = FunctionCallStatement("getAllowedLateness");
     auto allowedLatenessHandlerVariableStatement = VarRef(windowManagerVarDeclaration).accessPtr(getAllowedLatenessStateVariable);
@@ -599,7 +600,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     //        if (ts < (minWatermark - allowedLatness)
     //{continue;}
     auto ifStatementAllowedLateness = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration) -
-        VarRef(latenessHandlerVariableDeclaration), Cont());
+        VarRef(latenessHandlerVariableDeclaration), Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
     // update slices
@@ -895,6 +896,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     // generate result tuple struct
 
     // get allowed lateness
+//    auto allowedLateness = windowManager->getAllowedLateness();
     auto latenessHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "allowedLateness");
     auto getAllowedLatenessStateVariable = FunctionCallStatement("getAllowedLateness");
     auto allowedLatenessHandlerVariableStatement = VarRef(windowManagerVarDeclaration).accessPtr(getAllowedLatenessStateVariable);
@@ -934,7 +936,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     //        if (ts < (minWatermark - allowedLatness)
     //{continue;}
     auto ifStatementAllowedLateness = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration) -
-        VarRef(latenessHandlerVariableDeclaration), Cont());
+        VarRef(latenessHandlerVariableDeclaration), Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
 

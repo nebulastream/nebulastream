@@ -108,17 +108,45 @@ class WindowSource : public NES::DefaultSource {
                     rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp++);
                 } else {
                     if (runCnt == 0) {
-                        if(i < 9)
-                        {
+                        /**
+                         *in this run, we create normal tuples and one tuples that triggers a very large watermark
+                         * first buffer
+                         * |key:INT64|value:INT64|ts:UINT64|
+                            +----------------------------------------------------+
+                            |1|1|30|
+                            |1|1|31|
+                            |1|1|32|
+                            |1|1|33|
+                            |1|1|34|
+                            |1|1|35|
+                            |1|1|36|
+                            |1|1|37|
+                            |1|1|38|
+                            |1|1|59|
+                            +----------------------------------------------------+
+                         */
+                        if (i < 9) {
                             rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp++);
+                        } else {
+                            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp + 20);
                         }
-                        else
-                        {
-                            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp+20);
-                        }
-                    }
-                    else
-                    {
+                    } else {
+                        /**
+                         * in this run we add ts below the current watermark to see if they are part of the result
+                         * |key:INT64|value:INT64|ts:UINT64|
+                            +----------------------------------------------------+
+                            |1|1|48|
+                            |1|1|47|
+                            |1|1|46|
+                            |1|1|45|
+                            |1|1|44|
+                            |1|1|43|
+                            |1|1|42|
+                            |1|1|41|
+                            |1|1|40|
+                            |1|1|39|
+                            +----------------------------------------------------+
+                         */
                         timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
                         rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp);
                     }
@@ -292,7 +320,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
  * WindowSource -> WatermarkAssignerOperator -> TestSink
  */
 TEST_F(QueryExecutionTest, watermarkAssignerTest) {
-    uint64_t millisecondOfDelay = 1; /*second of delay*/
+    uint64_t millisecondOfallowedLateness = 1; /*second of allowedLateness*/
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
@@ -302,8 +330,9 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
 
     auto query = TestQuery::from(windowSource->getSchema());
 
-    // add a watermark assigner operator with delay of 1 millisecond
-    query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"), Milliseconds(millisecondOfDelay)));
+    // add a watermark assigner operator with allowedLateness of 1 millisecond
+    query.assignWatermark(
+        EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"), Milliseconds(millisecondOfallowedLateness)));
 
     // add a sink operator
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowSource->getSchema(), nodeEngine->getBufferManager());
@@ -333,7 +362,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto& resultBuffer = testSink->get(0);
 
     // 14 because we start at 5 (inclusive) and create 10 records
-    EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfDelay);
+    EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
     nodeEngine->stop();
 }
 
