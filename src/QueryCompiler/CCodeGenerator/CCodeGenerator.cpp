@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CCodeGenerator/Statements/ContinueStatement.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -24,6 +23,7 @@
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ContinueStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
@@ -508,7 +508,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
 
     // get allowed lateness
-//    auto allowedLateness = windowManager->getAllowedLateness();
+    //    auto allowedLateness = windowManager->getAllowedLateness();
     auto latenessHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "allowedLateness");
     auto getAllowedLatenessStateVariable = FunctionCallStatement("getAllowedLateness");
     auto allowedLatenessHandlerVariableStatement = VarRef(windowManagerVarDeclaration).accessPtr(getAllowedLatenessStateVariable);
@@ -593,14 +593,17 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     //get min watermark
     auto minWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "minWatermark");
     auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermark");
-    auto minWatermarkHandlerVariableStatement = VarDeclStatement(minWatermarkVariableDeclaration).assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
+    auto minWatermarkHandlerVariableStatement =
+        VarDeclStatement(minWatermarkVariableDeclaration)
+            .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
 
     //        if (ts < (minWatermark - allowedLatness)
     //{continue;}
-    auto ifStatementAllowedLateness = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration) -
-        VarRef(latenessHandlerVariableDeclaration), Continue());
+    auto ifStatementAllowedLateness = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
+                                                 - VarRef(latenessHandlerVariableDeclaration),
+                                         Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
     // update slices
@@ -896,13 +899,12 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     // generate result tuple struct
 
     // get allowed lateness
-//    auto allowedLateness = windowManager->getAllowedLateness();
+    //    auto allowedLateness = windowManager->getAllowedLateness();
     auto latenessHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "allowedLateness");
     auto getAllowedLatenessStateVariable = FunctionCallStatement("getAllowedLateness");
     auto allowedLatenessHandlerVariableStatement = VarRef(windowManagerVarDeclaration).accessPtr(getAllowedLatenessStateVariable);
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
-
 
     // initiate maxWatermark variable
     // auto maxWatermark = 0;
@@ -925,20 +927,21 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
 
-
     //get min watermark
     auto minWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "minWatermark");
     auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermark");
-    auto minWatermarkHandlerVariableStatement = VarDeclStatement(minWatermarkVariableDeclaration).assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
+    auto minWatermarkHandlerVariableStatement =
+        VarDeclStatement(minWatermarkVariableDeclaration)
+            .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
 
     //        if (ts < (minWatermark - allowedLatness)
     //{continue;}
-    auto ifStatementAllowedLateness = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration) -
-        VarRef(latenessHandlerVariableDeclaration), Continue());
+    auto ifStatementAllowedLateness = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
+                                                 - VarRef(latenessHandlerVariableDeclaration),
+                                         Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
-
 
     /**
      * within the loop
