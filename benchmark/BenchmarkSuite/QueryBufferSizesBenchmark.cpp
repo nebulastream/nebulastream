@@ -19,9 +19,9 @@
 #include <util/BenchmarkUtils.hpp>
 #include <util/SimpleBenchmarkSink.hpp>
 #include <util/SimpleBenchmarkSource.hpp>
-
-#include "../../tests/util/DummySink.hpp"
+#include <vector>
 #include "../../tests/util/TestQuery.hpp"
+#include "../../tests/util/DummySink.hpp"
 
 using namespace NES;
 using namespace NES::Benchmarking;
@@ -33,11 +33,11 @@ int main() {
 
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 450 * 1000 * 1000, 10 * 1000 * 1000);
-    //    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 200 * 1000 * 1000, 550 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 400 * 1000 * 1000, 410 * 1000 * 1000, 10 * 1000 * 1000);
+    //BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
-    BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 60, 70, 10);
+    BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 10, 20, 10);
 
     std::vector<uint64_t> allPeriodLengths;
     BenchmarkUtils::createRangeVector<uint64_t>(allPeriodLengths, 1, 2, 1);
@@ -49,21 +49,42 @@ int main() {
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     std::vector<uint64_t> allBufferSizes;
-    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4*1024, 8*1024, 4 * 1024);
+    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4*1024, 128*1024, 4*1024);
 
-    std::string benchmarkFolderName = "MapQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
-    if (!std::filesystem::create_directory(benchmarkFolderName))
+
+    std::string benchmarkFolderName = "QueriesBufferSize_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
+    if (!std::filesystem::create_directory(benchmarkFolderName)) {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
+    }
+
+    auto benchmarkSchema =  Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
-    auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
     BM_AddBenchmark(
         "BM_SimpleMapQuery",
         TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
         SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
                                       ingestionRate, 1),
-        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), "", "");
+        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
+        ",BufferSize,SchemaSize",
+        "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
+
+
+    //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
+    std::vector<uint64_t> allSelectivities;
+    BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 700, 100);
+
+    for (auto selectivity : allSelectivities) {
+        BM_AddBenchmark("BM_SimpleFilterQuery",
+                        TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).sink(DummySink::create()),
+                        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                      benchmarkSchema, ingestionRate, 1),
+                        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",Selectivity,BufferSize,SchemaSize",
+                        "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
+    }
+    //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------
+
 
     return 0;
 }
