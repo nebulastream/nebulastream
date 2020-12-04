@@ -53,7 +53,7 @@ class WindowSliceStore {
      * @param slice
      */
     inline void appendSlice(SliceMetaData slice) {
-        NES_DEBUG("appendSlice "
+        NES_TRACE("appendSlice "
                   << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
