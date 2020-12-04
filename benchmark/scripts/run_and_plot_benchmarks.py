@@ -254,7 +254,8 @@ def plotDataAllBenchmarks(allBenchmarks):
 													"SimpleDataPoint" : SimpleDataPoint, 
 													"built" : __builtins__,
 													"printHighlight" : printHighlight,
-													"autolabel" : autolabel})
+													"autolabel" : autolabel,
+													"createFolder" : createFolder})
 			except Exception as e:
 				cntErr += 1
 				printFail(f"Could not plot {benchmark.name} with custom plottingFile!!!")

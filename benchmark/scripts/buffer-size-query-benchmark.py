@@ -24,23 +24,20 @@ import math
 
 class CustomSimpleDataPoint(object):
 	"""docstring for CustomSimpleDataPoint"""
-	def __init__(self, ingestionRate, workerThreads, tupleSize, yValue, yErr):
+	def __init__(self, ingestionRate, workerThreads, bufferSize, yValue, yErr):
 		self.ingestionRate = ingestionRate
 		self.workerThreads = workerThreads
 		self.yErr = yErr
 		self.yValue = yValue
-		self.tupleSize = tupleSize
+		self.bufferSize = bufferSize
 
 # Load data into data frame 
 folder = os.path.dirname(resultCsvFile)
 fileDataFrame = pd.read_csv(resultCsvFile)
 
-
 # Create new folder for all plots
 fileName = os.path.splitext(os.path.basename(resultCsvFile))[0]
 createFolder(fileName)
-
-
 
 # Delete all rows that contain header
 headerAsList = list(fileDataFrame)
@@ -62,12 +59,12 @@ fileDataFrame.to_csv(resultCsvFile, index=False)
 fileDataFrame = pd.read_csv(resultCsvFile)
 
 # Calculate avg throughput for one ingestionrate
-groups = fileDataFrame.groupby(by=["Ingestionrate", "WorkerThreads", "SchemaSize"], sort=True)
+groups = fileDataFrame.groupby(by=["Ingestionrate", "WorkerThreads", "BufferSize"], sort=True)
 allDataPoints = []
 
-for i, ((ingestionRate, workerThreads, tupleSize), gbf) in enumerate(groups):
+for i, ((ingestionRate, workerThreads, bufferSize), gbf) in enumerate(groups):
 	print("Ingestionrate {:e} has throughput of {:e} tup/s with {} workerThreads".format(float(ingestionRate), gbf["TuplesPerSecond"].mean(), workerThreads))
-	dataPoint = CustomSimpleDataPoint(ingestionRate, workerThreads, tupleSize, gbf["TuplesPerSecond"].mean(), gbf["TuplesPerSecond"].std())
+	dataPoint = CustomSimpleDataPoint(ingestionRate, workerThreads, bufferSize, gbf["TuplesPerSecond"].mean(), gbf["TuplesPerSecond"].std())
 	allDataPoints.append(dataPoint)
 
 
@@ -83,7 +80,7 @@ overallHighestThroughputStr = "Overall highest throughput of {:e} tup/s was achi
 print2Log(overallHighestThroughputStr)
 
 allWorkerThreads 	= set([dataPoint.workerThreads for dataPoint in allDataPoints])
-allTupleSizes		= { workerThreads : [] for workerThreads in allWorkerThreads }
+allBufferSizes		= { workerThreads : [] for workerThreads in allWorkerThreads }
 allIngestionRate 	= { workerThreads : [] for workerThreads in allWorkerThreads }
 allyErr 			= { workerThreads : [] for workerThreads in allWorkerThreads }
 allyValues			= { workerThreads : [] for workerThreads in allWorkerThreads }
@@ -94,16 +91,16 @@ for workerThreads in allWorkerThreads:
 			allIngestionRate[workerThreads].append(dataPoint.ingestionRate)
 			allyErr[workerThreads].append(dataPoint.yErr)
 			allyValues[workerThreads].append(dataPoint.yValue)
-			allTupleSizes[workerThreads].append(dataPoint.tupleSize)
+			allTupleSizes[workerThreads].append(dataPoint.bufferSize)
 
 for workerThreads in allWorkerThreads:
 	fig, ax = plt.subplots(figsize=(24, 8))
 	rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
 	ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
-	ax.set_xticklabels([f"{millify(x) / y}" for x,y in zip(allIngestionRate[workerThreads], allTupleSizes[workerThreads)])
-	ax.set_xlabel("Ingestionrate / TupleSize [B]")
+	ax.set_xticklabels([f"{millify(x) / y}" for x,y in zip(allIngestionRate[workerThreads], allBufferSizes[workerThreads)])
+	ax.set_xlabel("Ingestionrate / BufferSize [B]")
 	ax.set_ylabel("Throughput [tup/s]")
 	autolabel(rects, ax)
 
 	plt.title(f"WorkerThreads: {workerThreads}")
-	plt.savefig(os.path.join(folder, os.path.join(fileName, f"avg_througput_tuple_size_query_{workerThreads}.png")))
+	plt.savefig(os.path.join(folder, os.path.join(fileName, f"avg_througput_buffer_size_query_{workerThreads}.png")))

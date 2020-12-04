@@ -44,7 +44,7 @@ int main() {
     BenchmarkUtils::createRangeVector<uint64_t>(allPeriodLengths, 1, 2, 1);
 
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 2, 1);
 
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
@@ -53,7 +53,7 @@ int main() {
     BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4*1024, 8*1024, 4 * 1024);
 
 
-    std::string benchmarkFolderName = "MapQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
+    std::string benchmarkFolderName = "QueriesTupleSize_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName)) {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
     }
@@ -71,10 +71,6 @@ int main() {
     }
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
 
-
-    benchmarkFolderName = "FilterQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
-    if (!std::filesystem::create_directory(benchmarkFolderName))
-        throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
