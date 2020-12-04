@@ -8,16 +8,16 @@ from time import sleep
 experiment_table = "experiment_monitoring_ysb"
 topology = "1Crd5Wrks"
 system = "NES"
-noIterations = 25
-noIterationsBeforeExecution = 5
+noIterations = 30
+noIterationsBeforeExecution = 0
 
-description = "10Tup-10Buf"
+description = "25Tup-30Buf"
 
-version = "2"
+version = "1"
 
 # types are None, "prometheus", "nes"
-types = [None, "prometheus", "nes"]
-monitoring_type = types[0]
+types = [None, "nes", "prometheus"]
+monitoring_type = types[1]
 
 
 def readDockerStats(containerIters, influxTable, topology, system, version, runtime, iteration, description, monitoring):
@@ -62,7 +62,7 @@ def make_request(request_type):
     if request_type == "ysb":
         nes_url = 'http://localhost:8081/v1/nes/query/execute-query'
         data = '''{
-        \"userQuery\" : \"Query::from(\\\"ysb\\\").windowByKey(Attribute(\\\"campaign_id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Milliseconds(1)), Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"ysbOut.csv\\\",\\\"CSV_FORMAT\\\",\\\"APPEND\\\"));\",
+        \"userQuery\" : \"Query::from(\\\"ysb\\\").filter(Attribute(\\\"event_type\\\") < 3).windowByKey(Attribute(\\\"campaign_id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Milliseconds(100)), Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"ysbOut.csv\\\",\\\"CSV_FORMAT\\\",\\\"APPEND\\\"));\",
         \"strategyName\" : \"BottomUp\"
         }'''
         return requests.post(nes_url, data=data)

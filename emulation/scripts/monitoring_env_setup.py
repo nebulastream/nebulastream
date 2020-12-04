@@ -23,8 +23,8 @@ from mininet.log import info, setLogLevel
 
 #params for the topology
 number_workers = 5
-num_tuples = 10
-num_buffers = 20
+num_tuples = 25
+num_buffers = 30
 
 enable_influx = True
 nesDir = "/home/xenofon/git/nebulastream/"
