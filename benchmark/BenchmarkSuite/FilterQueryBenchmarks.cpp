@@ -49,7 +49,7 @@ int main() {
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     std::vector<uint64_t> allBufferSizes;
-    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4*1024, 12*1024, 4*1024);
+    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4*1024, 32*1024, 4*1024);
 
 
     std::string benchmarkFolderName = "QueriesBufferSize_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();

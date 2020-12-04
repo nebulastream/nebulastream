@@ -35,12 +35,9 @@ class CustomSimpleDataPoint(object):
 folder = os.path.dirname(resultCsvFile)
 fileDataFrame = pd.read_csv(resultCsvFile)
 
-
 # Create new folder for all plots
 fileName = os.path.splitext(os.path.basename(resultCsvFile))[0]
-createFolder(fileName)
-
-
+createFolder(os.path.join(folder, fileName))
 
 # Delete all rows that contain header
 headerAsList = list(fileDataFrame)
@@ -56,7 +53,7 @@ fileDataFrame = pd.read_csv(resultCsvFile)
 # Adding bytesPerSecond and tuplesPerSecond columns
 fileDataFrame["TuplesPerSecond"] = fileDataFrame["ProcessedTuples"] / fileDataFrame["PeriodLength"]
 fileDataFrame["BytesPerSecond"] = fileDataFrame["ProcessedBytes"] / fileDataFrame["PeriodLength"]
-fileDataFrame["TuplesPerBuffer"] = fileDataFrame["BufferSize"] / fileDataFrame["SchemaSize"]
+fileDataFrame["TuplesPerBuffer"] = float(fileDataFrame["BufferSize"]) / float(fileDataFrame["SchemaSize"])
 
 fileDataFrame.to_csv(resultCsvFile, index=False)
 fileDataFrame = pd.read_csv(resultCsvFile)
@@ -100,7 +97,7 @@ for workerThreads in allWorkerThreads:
 	fig, ax = plt.subplots(figsize=(24, 8))
 	rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
 	ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
-	ax.set_xticklabels([f"{millify(x) / y}" for x,y in zip(allIngestionRate[workerThreads], allTupleSizes[workerThreads)])
+	ax.set_xticklabels([f"{millify(x)} / {y}" for x,y in zip(allIngestionRate[workerThreads], allTupleSizes[workerThreads])])
 	ax.set_xlabel("Ingestionrate / TupleSize [B]")
 	ax.set_ylabel("Throughput [tup/s]")
 	autolabel(rects, ax)

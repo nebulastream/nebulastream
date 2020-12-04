@@ -237,8 +237,6 @@ def runAllBenchmarks(allBenchmarks, benchmarkFolder, dryRun):
 				fullPath = os.path.join(os.getcwd(), folder)
 				for csvFile in [os.path.join(fullPath, file) for file in getAllFiles(fullPath) if str(os.path.join(fullPath, file)).endswith(".csv")]:
 					benchmark.resultCsvFiles.add(csvFile)
-			
-
 	return cntErr
 
 def plotDataAllBenchmarks(allBenchmarks):
