@@ -211,10 +211,10 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert
     EXPECT_TRUE(globalQueryMetaData.size() == 2);
-    std::set<QueryId> queryIdForMetaData1 = globalQueryMetaData[0]->getQueryIds();
+    std::set<QueryId> queryIdForMetaData1 = globalQueryMetaData[0]->getQueryIdToSinkGQNMap();
     EXPECT_EQ(queryIdForMetaData1.size(), 1);
     EXPECT_TRUE(queryIdForMetaData1.find(queryId1) != queryIdForMetaData1.end());
-    std::set<QueryId> queryIdForMetaData2 = globalQueryMetaData[1]->getQueryIds();
+    std::set<QueryId> queryIdForMetaData2 = globalQueryMetaData[1]->getQueryIdToSinkGQNMap();
     EXPECT_EQ(queryIdForMetaData2.size(), 1);
     EXPECT_TRUE(queryIdForMetaData2.find(queryId2) != queryIdForMetaData1.end());
 }
@@ -259,7 +259,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert
     EXPECT_TRUE(globalQueryMetaData.size() == 1);
-    std::set<QueryId> queryIds = globalQueryMetaData[0]->getQueryIds();
+    std::set<QueryId> queryIds = globalQueryMetaData[0]->getQueryIdToSinkGQNMap();
     EXPECT_TRUE(queryIds.find(queryId1) != queryIds.end());
     EXPECT_TRUE(queryIds.find(queryId2) != queryIds.end());
 }
@@ -311,11 +311,11 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert
     EXPECT_TRUE(globalQueryMetaData.size() == 2);
-    std::set<QueryId> queryIdForMetaData1 = globalQueryMetaData[0]->getQueryIds();
+    std::set<QueryId> queryIdForMetaData1 = globalQueryMetaData[0]->getQueryIdToSinkGQNMap();
     EXPECT_TRUE(queryIdForMetaData1.find(queryId1) != queryIdForMetaData1.end());
     EXPECT_TRUE(queryIdForMetaData1.find(queryId2) != queryIdForMetaData1.end());
 
-    std::set<QueryId> queryIdForMetaData2 = globalQueryMetaData[1]->getQueryIds();
+    std::set<QueryId> queryIdForMetaData2 = globalQueryMetaData[1]->getQueryIdToSinkGQNMap();
     EXPECT_EQ(queryIdForMetaData2.size(), 1);
     EXPECT_TRUE(queryIdForMetaData2.find(queryId3) != queryIdForMetaData1.end());
 }

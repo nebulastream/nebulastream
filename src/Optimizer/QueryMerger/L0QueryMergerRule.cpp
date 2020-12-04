@@ -16,10 +16,11 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
+#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {
@@ -45,20 +46,85 @@ bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
     for (auto& targetGQM : allGQMToDeploy) {
 
         for (auto& hostGQM : allGQMs) {
-            if (targetGQM->getGlobalQueryId() == hostGQM->getGlobalQueryId()){
+            if (targetGQM->getGlobalQueryId() == hostGQM->getGlobalQueryId()) {
                 continue;
             }
 
+            //TODO: we need to check how this will pan out when we will have more than 1
             auto hostQueryPlan = hostGQM->getQueryPlan();
             auto targetQueryPlan = targetGQM->getQueryPlan();
 
-            if(checkIfGQNCanMerge()){
-
-                break;
+            if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan)) {
+                hostGQM->merge(targetGQM);
             }
         }
     }
     return true;
+}
+
+bool L0QueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan) {
+
+    std::vector<OperatorNodePtr> targetSourceOperators = targetQueryPlan->getLeafOperators();
+    std::vector<OperatorNodePtr> hostSourceOperators = hostQueryPlan->getLeafOperators();
+
+    if (targetSourceOperators.size() != hostSourceOperators.size()) {
+        return false;
+    }
+
+    //Fetch the first source operator
+    auto& targetSourceOperator = targetSourceOperators[0];
+    for (auto& hostSourceOperator : hostSourceOperators) {
+        std::map<uint64_t, uint64_t> targetHostOperatorMap;
+        if (areOperatorEqual(targetSourceOperator, hostSourceOperator, targetHostOperatorMap)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool L0QueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
+                                         std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
+
+    if (targetHostOperatorMap.find(targetOperator->getId()) != targetHostOperatorMap.end()) {
+        if (targetHostOperatorMap[targetOperator->getId()] == hostOperator->getId()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    if (targetOperator->equal(hostOperator)) {
+        targetHostOperatorMap[targetOperator->getId()] = hostOperator->getId();
+
+        bool areParentsEqual = false;
+        for (auto& targetParent : targetOperator->getParents()) {
+            for (auto& hostParent : hostOperator->getParents()) {
+                if (areOperatorEqual(targetParent->as<OperatorNode>(), hostParent->as<OperatorNode>(), targetHostOperatorMap)) {
+                    areParentsEqual = true;
+                    break;
+                }
+            }
+            if (!areParentsEqual) {
+                targetHostOperatorMap.erase(targetOperator->getId());
+                return false;
+            }
+        }
+
+        bool areChildrenEqual = false;
+        for (auto& targetChild : targetOperator->getChildren()) {
+            for (auto& hostChild : hostOperator->getChildren()) {
+                if (areOperatorEqual(targetChild->as<OperatorNode>(), hostChild->as<OperatorNode>(), targetHostOperatorMap)) {
+                    areChildrenEqual = true;
+                    break;
+                }
+            }
+            if (!areChildrenEqual) {
+                targetHostOperatorMap.erase(targetOperator->getId());
+                return false;
+            }
+        }
+    }
+    return false;
 }
 
 bool L0QueryMergerRule::checkIfGQNCanMerge(const GlobalQueryNodePtr& targetGQNode, const GlobalQueryNodePtr& hostGQNode,
