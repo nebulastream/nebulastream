@@ -78,10 +78,18 @@ class GlobalQueryMetaData {
     static GlobalQueryMetaDataPtr create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     /**
+     * @brief Add a global query metadata into this
+     * @param queryMetaData :  the input query metadata
+     * @return true if successful else false
+     */
+    bool addGlobalQueryMetaData(GlobalQueryMetaDataPtr queryMetaData);
+
+    /**
      * @brief Add a new Set of Global Query Node with sink operators
      * @param globalQueryNodes :  the Global Query Node with sink operators
+     * @return true if successful else false
      */
-    bool addNewSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes);
+    bool addSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes);
 
     /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators

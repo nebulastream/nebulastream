@@ -59,19 +59,6 @@ class GlobalQueryNode : public Node {
     uint64_t getId();
 
     /**
-     * @brief Remove the query
-     * @param queryId
-     * @return true if successful
-     */
-    bool removeQuery(QueryId queryId);
-
-    /**
-     * @brief Check if the global query node was updated.
-     * @return true if updated else false.
-     */
-    bool hasNewUpdate();
-
-    /**
      * @brief Check if logical operator already present in the node
      * @param operatorNode : logical operator to check
      * @return returns an operator which is same as input operator else nullptr.
@@ -79,28 +66,15 @@ class GlobalQueryNode : public Node {
     OperatorNodePtr hasOperator(OperatorNodePtr operatorNode);
 
     /**
-     * @brief Check if the Global query node is empty or not.
-     * @return true if there exists no logical query operator in the node.
-     */
-    bool isEmpty();
-
-    /**
-     * @brief Mark the GlobalQueryNode as updated
-     */
-    void markAsUpdated();
-
-    /**
      * @brief helper function of get global query nodes with specific logical operator type
      */
     template<class T>
     void getNodesWithTypeHelper(std::vector<GlobalQueryNodePtr>& foundNodes) {
         NES_INFO("GlobalQueryNode: Get the global query node containing operator of specific type");
-        for (auto logicalOperator : logicalOperators) {
-            if (logicalOperator->instanceOf<T>()) {
-                foundNodes.push_back(shared_from_this()->as<GlobalQueryNode>());
-                break;
-            }
+        if (operatorNode->instanceOf<T>()) {
+            foundNodes.push_back(shared_from_this()->as<GlobalQueryNode>());
         }
+
         NES_INFO("GlobalQueryNode: Find if the child global query nodes of this node containing operator of specific type");
         for (auto& successor : this->children) {
             successor->as<GlobalQueryNode>()->getNodesWithTypeHelper<T>(foundNodes);
@@ -108,29 +82,10 @@ class GlobalQueryNode : public Node {
     }
 
     /**
-     * @brief Get all registered operators
-     * @return the list of operators
+     * @brief Get registered operator
+     * @return operator node
      */
-    std::vector<OperatorNodePtr> getOperators();
-
-    /**
-     * @brief Get all registered query ids and corresponding operators
-     * @return the list of operators
-     */
-    std::map<QueryId, OperatorNodePtr> getMapOfQueryIdToOperator();
-
-    /**
-     * @brief Get the set of query ids sharing the GQN
-     * @return set of query ids
-     */
-    const std::vector<QueryId> getQueryIds();
-
-    /**
-     * @brief Check if the Global query node contains the query id
-     * @param queryId : the query id to search
-     * @return true if query id exists in the global query node else false
-     */
-    bool hasQuery(QueryId queryId);
+    OperatorNodePtr getOperator();
 
     bool equal(const NodePtr rhs) const override;
 
@@ -142,9 +97,6 @@ class GlobalQueryNode : public Node {
 
     uint64_t id;
     OperatorNodePtr operatorNode;
-    bool scheduled;
-    bool querySetUpdated;
-    bool operatorSetUpdated;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYNODE_HPP

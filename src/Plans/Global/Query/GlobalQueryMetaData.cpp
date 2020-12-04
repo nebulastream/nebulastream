@@ -36,7 +36,7 @@ GlobalQueryMetaDataPtr GlobalQueryMetaData::create(QueryId queryId, std::set<Glo
     return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(queryId, std::move(sinkGlobalQueryNodes)));
 }
 
-bool GlobalQueryMetaData::addNewSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes) {
+bool GlobalQueryMetaData::addSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes) {
 
     NES_DEBUG("GlobalQueryMetaData: Add " << globalQueryNodes.size() << "new Global Query Nodes with sink operators for query "
                                           << queryId);
@@ -50,6 +50,7 @@ bool GlobalQueryMetaData::addNewSinkGlobalQueryNodes(QueryId queryId, const std:
     sinkGlobalQueryNodes.insert(globalQueryNodes.begin(), globalQueryNodes.end());
     //Mark the meta data as updated but not deployed
     markAsNotDeployed();
+    return true;
 }
 
 bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
@@ -101,7 +102,7 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
         auto gqnToProcess = globalQueryNodesToProcess.front()->as<GlobalQueryNode>();
         globalQueryNodesToProcess.pop_front();
         NES_TRACE("GlobalQueryMetaData: Deserialize operator " << gqnToProcess->toString());
-        OperatorNodePtr operatorNode = gqnToProcess->getOperators()[0]->copy();
+        OperatorNodePtr operatorNode = gqnToProcess->getOperator()->copy();
         uint64_t operatorId = operatorNode->getId();
         if (operatorIdToOperatorMap[operatorId]) {
             NES_TRACE("GlobalQueryMetaData: Operator was already deserialized previously");
@@ -116,7 +117,7 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
             if (parentGQN->getId() == 0) {
                 continue;
             }
-            OperatorNodePtr parentOperator = parentGQN->getOperators()[0];
+            OperatorNodePtr parentOperator = parentGQN->getOperator();
             uint64_t parentOperatorId = parentOperator->getId();
             if (operatorIdToOperatorMap[parentOperatorId]) {
                 NES_TRACE("GlobalQueryMetaData: Found the parent operator. Adding as parent to the current operator.");
@@ -136,7 +137,7 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
 
     for (const auto& sinkGlobalQueryNode : sinkGlobalQueryNodes) {
         NES_TRACE("GlobalQueryMetaData: Finding the operator with same id in the map.");
-        auto rootOperator = sinkGlobalQueryNode->getOperators()[0]->copy();
+        auto rootOperator = sinkGlobalQueryNode->getOperator()->copy();
         rootOperator = operatorIdToOperatorMap[rootOperator->getId()];
         NES_TRACE("GlobalQueryMetaData: Adding the root operator to the vector of roots for the query plan");
         rootOperators.push_back(rootOperator);
@@ -201,6 +202,22 @@ void GlobalQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQuery
         }
     }
     globalQueryNode->removeChildren();
+}
+
+bool GlobalQueryMetaData::addGlobalQueryMetaData(GlobalQueryMetaDataPtr queryMetaData) {
+
+    auto queryIdToSinkGqnMap = queryMetaData->getQueryIdToSinkGQNMap();
+    for(auto[queryId, sinkGQNs] : queryIdToSinkGqnMap){
+        if(!addSinkGlobalQueryNodes(queryId, sinkGQNs)){
+            NES_WARNING("Failed to insert Sink GQN for query "<< queryId << " in Global Query Meta Data.");
+            NES_DEBUG("Reverting all inserted Sink GQNs from global query metadata.");
+            for(auto[queryId, sinkGQNs] : queryIdToSinkGqnMap){
+                removeQueryId(queryId);
+            }
+            return false;
+        }
+    }
+    return true;
 }
 
 }// namespace NES
