@@ -34,17 +34,17 @@ int main() {
 
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 400 * 1000 * 1000, 410 * 1000 * 1000, 10 * 1000 * 1000);
     //BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
-    BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 5, 6, 10);
+    BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 10, 20, 10);
 
     std::vector<uint64_t> allPeriodLengths;
     BenchmarkUtils::createRangeVector<uint64_t>(allPeriodLengths, 1, 2, 1);
 
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 2, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 5, 1);
 
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
