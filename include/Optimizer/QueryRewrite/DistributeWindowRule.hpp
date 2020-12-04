@@ -67,10 +67,14 @@ typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
  *                                      Source(Car1)    Source(Car2)
 
  */
-class DistributeWindowRule : public BaseRewriteRule {
+class DistributeWindowRule : public BaseRefinementRule {
   public:
     // The number of child nodes from which on we will replace a central window operator with a distributed window operator.
     static const uint64_t CHILD_NODE_THRESHOLD = 2;
+
+    // The number of child nodes from which on we will introduce combinerr
+    static const uint64_t CHILD_NODE_THRESHOLD_COMBINER = 4;
+
     static DistributeWindowRulePtr create();
 
     /**

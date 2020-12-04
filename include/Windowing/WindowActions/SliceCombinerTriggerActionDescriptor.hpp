@@ -14,4 +14,19 @@
     limitations under the License.
 */
 
-#include "Optimizer/QueryRefinement/BaseRefinementRule.hpp"
+#ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_SLICECOMBINERTRIGGERACTION_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOWACTIONS_SLICECOMBINERTRIGGERACTION_HPP_
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+
+namespace NES::Windowing {
+
+class SliceCombinerTriggerActionDescriptor : public BaseWindowActionDescriptor {
+  public:
+    static WindowActionDescriptorPtr create();
+    ActionType getActionType() override;
+
+  private:
+    SliceCombinerTriggerActionDescriptor();
+};
+}// namespace NES::Windowing
+#endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_SLICECOMBINERTRIGGERACTION_HPP_

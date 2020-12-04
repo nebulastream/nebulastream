@@ -139,6 +139,40 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
     return true;
 }
 
+bool Node::insertBetweenThisAndChildNodes(const NodePtr newNode) {
+
+    if (newNode.get() == this) {
+        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
+        return false;
+    }
+
+    if (vectorContainsTheNode(children, newNode)) {
+        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+        return false;
+    }
+
+    NES_INFO("Node: Create temporary copy of this nodes parents.");
+    std::vector<NodePtr> copyOfChildren = children;
+
+    NES_INFO("Node: Remove all childs of this node.");
+    removeChildren();
+
+    if (!addChild(newNode)) {
+        NES_ERROR("Node: Unable to add input node as parent to this node.");
+        return false;
+    }
+
+    NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
+    for (NodePtr child : copyOfChildren) {
+        if (!newNode->addChild(child)) {
+            NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void Node::removeAllParent() {
     NES_INFO("Node: Removing all parents for current node");
     auto nodeItr = parents.begin();

@@ -28,7 +28,7 @@
 
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
-
+#include <Windowing/WindowActions/SliceCombinerTriggerActionDescriptor.hpp>
 namespace NES {
 
 DistributeWindowRule::DistributeWindowRule() {}
@@ -40,6 +40,9 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("DistributeWindowRule::apply: plan before replace " << queryPlan->toString());
     auto windowOps = queryPlan->getOperatorByType<WindowLogicalOperatorNode>();
     if (!windowOps.empty()) {
+        /**
+         * @end
+         */
         NES_DEBUG("DistributeWindowRule::apply: found " << windowOps.size() << " window operators");
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp << " << windowOp->toString()");
@@ -110,10 +113,33 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                                                       << " old node=" << logicalWindowOperator->toString());
     if (!logicalWindowOperator->replace(windowComputationOperator)) {
         NES_FATAL_ERROR("DistributeWindowRule:: replacement of window operator failed.");
-    };
+    }
 
-    //add a slicer to each child
     auto windowChildren = windowComputationOperator->getChildren();
+
+    //add
+    if (windowComputationOperator->getChildren().size() > CHILD_NODE_THRESHOLD_COMBINER) {
+        auto sliceCombinerWindowAggregation = windowAggregation->copy();
+        sliceCombinerWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");
+        auto triggerActionSlicing = Windowing::SliceCombinerTriggerActionDescriptor::create();
+
+        Windowing::LogicalWindowDefinitionPtr windowDef;
+        if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
+            windowDef = Windowing::LogicalWindowDefinition::create(
+                keyField, sliceCombinerWindowAggregation, windowType,
+                Windowing::DistributionCharacteristic::createSlicingWindowType(), 1, triggerPolicy, triggerActionSlicing);
+        } else {
+            windowDef = Windowing::LogicalWindowDefinition::create(
+                sliceCombinerWindowAggregation, windowType, Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
+                triggerPolicy, triggerActionSlicing);
+        }
+        NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice combiner operator"
+                  << windowDef->toString());
+        auto sliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
+        windowComputationOperator->insertBetweenThisAndChildNodes(sliceOp);
+        windowChildren = sliceOp->getChildren();
+    }
+
     for (auto& child : windowChildren) {
         NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
 

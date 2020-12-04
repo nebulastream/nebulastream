@@ -36,7 +36,8 @@
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
-
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 using namespace NES;
 
 class DistributeWindowRuleTest : public testing::Test {
@@ -74,6 +75,40 @@ void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
     streamCatalog->addPhysicalStream("default_logical", sce1);
     streamCatalog->addPhysicalStream("default_logical", sce2);
 }
+
+
+void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
+    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    TopologyPtr topology = Topology::create();
+
+    TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode3 = TopologyNode::create(3, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode4 = TopologyNode::create(4, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4);
+
+    std::cout << "topo=" << topology->toString() << std::endl;
+    PhysicalStreamConfigPtr streamConf =
+        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+            /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+            /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+            /**Logical Stream Name**/ "test_stream");
+
+    StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
+    StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
+    StreamCatalogEntryPtr sce3 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode3);
+    StreamCatalogEntryPtr sce4 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode4);
+    StreamCatalogEntryPtr sce5 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode5);
+
+
+    streamCatalog->addPhysicalStream("default_logical", sce1);
+    streamCatalog->addPhysicalStream("default_logical", sce2);
+    streamCatalog->addPhysicalStream("default_logical", sce3);
+    streamCatalog->addPhysicalStream("default_logical", sce4);
+    streamCatalog->addPhysicalStream("default_logical", sce5);
+
+}
+
 
 void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
@@ -135,4 +170,35 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
 
     auto sliceOps = queryPlan->getOperatorByType<SliceCreationOperator>();
     ASSERT_EQ(sliceOps.size(), 2);
+}
+
+TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupSensorNodeAndStreamCatalogFiveNodes(streamCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical")
+        .filter(Attribute("id") < 45)
+        .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                     Sum(Attribute("value")))
+        .sink(printSinkDescriptor);
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan = TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
+    std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
+    LogicalSourceExpansionRulePtr logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
+    QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+    std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
+
+    std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
+    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    updatedPlan = distributeWindowRule->apply(queryPlan);
+    std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
+
+    auto compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
+    ASSERT_EQ(compOps.size(), 1);
+
+    auto sliceOps = queryPlan->getOperatorByType<SliceCreationOperator>();
+    ASSERT_EQ(sliceOps.size(), 5);
 }
