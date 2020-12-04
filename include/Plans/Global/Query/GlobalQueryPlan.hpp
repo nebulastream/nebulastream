@@ -75,22 +75,6 @@ class GlobalQueryPlan {
     void removeEmptyMetaData();
 
     /**
-     * @brief Get all newly added Global Query Nodes with NodeType operators
-     * @tparam NodeType: type of logical operator
-     * @return vector of global query nodes
-     */
-    template<class T>
-    std::vector<GlobalQueryNodePtr> getAllNewGlobalQueryNodesWithOperatorType() {
-        NES_DEBUG("GlobalQueryPlan: Get all New Global query nodes with specific logical operators");
-        std::vector<GlobalQueryNodePtr> vector = getAllGlobalQueryNodesWithOperatorType<T>();
-        NES_DEBUG("GlobalQueryPlan: filter all pre-existing Global query nodes");
-        std::remove_if(vector.begin(), vector.end(), [](GlobalQueryNodePtr globalQueryNode) {
-            return globalQueryNode->hasNewUpdate();
-        });
-        return vector;
-    }
-
-    /**
      * @brief Get all Global Query Nodes with NodeType operators
      * @tparam NodeType: type of logical operator
      * @return vector of global query nodes
@@ -105,11 +89,11 @@ class GlobalQueryPlan {
         return vector;
     }
 
-    /**
-     * @brief Update the existing Global query meta data by re-grouping the queries
-     * @return true if successful
-     */
-    bool updateGlobalQueryMetaDataMap();
+//    /**
+//     * @brief Update the existing Global query meta data by re-grouping the queries
+//     * @return true if successful
+//     */
+//    bool updateGlobalQueryMetaDataMap();
 
     /**
      * @brief Get the all the Query Meta Data to be deployed
@@ -139,11 +123,11 @@ class GlobalQueryPlan {
      */
     uint64_t getNextFreeId();
 
-    /**
-     * @brief Check if constructed metadata is still valid or not.
-     * @return true if successful
-     */
-    bool checkMetaDataValidity();
+//    /**
+//     * @brief Check if constructed metadata is still valid or not.
+//     * @return true if successful
+//     */
+//    bool checkMetaDataValidity();
 
     /**
      * @brief Update the global query meta data information
