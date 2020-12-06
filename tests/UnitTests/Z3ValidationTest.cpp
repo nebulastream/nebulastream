@@ -174,12 +174,12 @@ TEST_F(Z3ValidationTest, equalityChecks) {
 
     s.reset();
     //We prove that equation (x=40) != (x=50) is unsatisfiable
-    s.add((x==x) != (x==x));
+    s.add((x == x) != (x == x));
     ASSERT_EQ(s.check(), unsat);
 
     s.reset();
     //We prove that equation (x=40) != (x=50) is unsatisfiable
-    s.add((x==x) != (x==y));
+    s.add((x == x) != (x == y));
     ASSERT_EQ(s.check(), unsat);
 }
 
@@ -209,32 +209,32 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     //Example: x>=y and y>=x .... for x==y they are equal but for x!=y they are not.
     //This means the equality and inequality both are satisfiable.
 
-    s.reset();
-    expr stream = c.constant("stream", c.string_sort());
-    expr streamVal = c.string_val("car");
-    expr value50 = c.int_val("50");
-    expr value40 = c.int_val("40");
-
-    // (stream == "car") != (stream =="car")
+    //    s.reset();
+    //    expr stream = c.constant("stream", c.string_sort());
+    //    expr streamVal = c.string_val("car");
+    //    expr value50 = c.int_val("50");
+    //    expr value40 = c.int_val("40");
     //
-    // Q1:from("car").map("speed" = 50).print()
-    // Q2:from("car").map("speed" = 40).print()
-
-//    s.add(value40 != value50);
-    s.add(!(((stream == streamVal) == (stream == streamVal)) && (value40 == value50)));
-    NES_INFO(s);
-    NES_INFO("Chk that " << s.check());
-    NES_INFO(s.get_model());
-
-    //(and (< (* (* value 40) 40) 40) (< (* value 40) 40) (= streamName "car"))
-
-
-    expr value = c.int_const("value");
-
-    s.reset();
-    s.add(((value * 10) < 40) != ((value * 10) < 40 && (value * 10) < 30));
-    NES_INFO(s.check());
-    NES_INFO(s.get_model());
+    //    // (stream == "car") != (stream =="car")
+    //    //
+    //    // Q1:from("car").map("speed" = 50).print()
+    //    // Q2:from("car").map("speed" = 40).print()
+    //
+    ////    s.add(value40 != value50);
+    //    s.add(!(((stream == streamVal) == (stream == streamVal)) && (value40 == value50)));
+    //    NES_INFO(s);
+    //    NES_INFO("Chk that " << s.check());
+    //    NES_INFO(s.get_model());
+    //
+    //    //(and (< (* (* value 40) 40) 40) (< (* value 40) 40) (= streamName "car"))
+    //
+    //
+    //    expr value = c.int_const("value");
+    //
+    //    s.reset();
+    //    s.add(((value * 10) < 40) != ((value * 10) < 40 && (value * 10) < 30));
+    //    NES_INFO(s.check());
+    //    NES_INFO(s.get_model());
 }
 
 }// namespace NES
