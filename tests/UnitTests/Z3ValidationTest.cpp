@@ -171,16 +171,6 @@ TEST_F(Z3ValidationTest, equalityChecks) {
     //We prove that equation (x==y and y==x) != (y==x and x==y) is unsatisfiable
     s.add((x == y && y == x) != (x == y && y == x));
     ASSERT_EQ(s.check(), unsat);
-
-    s.reset();
-    //We prove that equation (x=40) != (x=50) is unsatisfiable
-    s.add((x == x) != (x == x));
-    ASSERT_EQ(s.check(), unsat);
-
-    s.reset();
-    //We prove that equation (x=40) != (x=50) is unsatisfiable
-    s.add((x == x) != (x == y));
-    ASSERT_EQ(s.check(), unsat);
 }
 
 /**
