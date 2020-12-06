@@ -167,11 +167,12 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto catalogEntry3 = QueryCatalogEntry(2, "", "topdown", q2.getQueryPlan(), MarkedForStop);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1, catalogEntry2, catalogEntry3};
     auto resultPlan = phase->execute(batchOfQueryRequests);
+    resultPlan->removeEmptyMetaData();
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
     const auto& globalQueryMetadataToDeploy = resultPlan->getGlobalQueryMetaDataToDeploy();
-    ASSERT_TRUE(globalQueryMetadataToDeploy.size() == 1);
+    ASSERT_EQ(globalQueryMetadataToDeploy.size(), 1);
 }
 
 }// namespace NES
