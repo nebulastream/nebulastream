@@ -58,6 +58,7 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createFilterOperator(predicate, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setSignature(signature);
     return copy;
 }
 }// namespace NES

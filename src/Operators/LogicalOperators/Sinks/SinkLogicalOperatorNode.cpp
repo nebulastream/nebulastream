@@ -52,6 +52,7 @@ OperatorNodePtr SinkLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setSignature(signature);
     return copy;
 }
 }// namespace NES
