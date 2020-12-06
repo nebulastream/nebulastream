@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYPLANSIGNATURE_HPP
-#define NES_QUERYPLANSIGNATURE_HPP
+#ifndef NES_QUERYSIGNATURE_HPP
+#define NES_QUERYSIGNATURE_HPP
 
 #include <map>
 #include <memory>
@@ -27,8 +27,8 @@ typedef std::shared_ptr<expr> ExprPtr;
 }// namespace z3
 
 namespace NES::Optimizer {
-class QueryPlanSignature;
-typedef std::shared_ptr<QueryPlanSignature> QueryPlanSignaturePtr;
+class QuerySignature;
+typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 
 /**
  * @brief This class is responsible for holding the signature of a query plan. The signature of a query plan is used for comparing
@@ -48,7 +48,7 @@ typedef std::shared_ptr<QueryPlanSignature> QueryPlanSignaturePtr;
  *      The query plan signature (QPSig) is given by : (conds:(color=='RED' and speed*100>100); cols:(speed=speed*100))
  *
  */
-class QueryPlanSignature {
+class QuerySignature {
   public:
     /**
      * @brief Create instance of Query plan signature
@@ -56,7 +56,7 @@ class QueryPlanSignature {
      * @param cols : the predicates involving columns to be extracted
      * @return Shared instance of the query plan signature.
      */
-    static QueryPlanSignaturePtr create(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
+    static QuerySignaturePtr create(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
 
     /**
      * @brief Get the conditions
@@ -75,13 +75,13 @@ class QueryPlanSignature {
      * @param other : the signature to be compared against
      * @return true if equal else false
      */
-    bool isEqual(QueryPlanSignaturePtr other);
+    bool isEqual(QuerySignaturePtr other);
 
   private:
-    QueryPlanSignature(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
+    QuerySignature(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
     z3::ExprPtr conds;
     std::map<std::string, std::vector<z3::ExprPtr>> cols;
 };
 }// namespace NES::Optimizer
 
-#endif//NES_QUERYPLANSIGNATURE_HPP
+#endif//NES_QUERYSIGNATURE_HPP

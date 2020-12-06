@@ -31,8 +31,8 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 namespace NES::Optimizer {
 
-class QueryPlanSignature;
-typedef std::shared_ptr<QueryPlanSignature> QueryPlanSignaturePtr;
+class QuerySignature;
+typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 
 /**
  * @brief This class is responsible for creating the Query Plan Signature for the input operator.
@@ -47,8 +47,18 @@ class OperatorToQueryPlanSignatureUtil {
      * @param context: the context of Z3
      * @return the object representing signature of the query plan created by the operator and its children
      */
-    static QueryPlanSignaturePtr createForOperator(OperatorNodePtr operatorNode,
-                                                   std::vector<QueryPlanSignaturePtr> subQuerySignatures, z3::ContextPtr context);
+    static QuerySignaturePtr createForOperator(OperatorNodePtr operatorNode, std::vector<QuerySignaturePtr> subQuerySignatures,
+                                               z3::ContextPtr context);
+
+  private:
+    /**
+     * @brief Compute a CNF representation of Conds based on signatures from children operators
+     * @param context : z3 context
+     * @param subQuerySignatures : signatures of immediate children
+     * @return Signature based on children signatures
+     */
+    static QuerySignaturePtr buildFromSubQuerySignatures(z3::ContextPtr context,
+                                                         std::vector<QuerySignaturePtr> subQuerySignatures);
 };
 }// namespace NES::Optimizer
 

@@ -30,8 +30,8 @@ typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
 namespace NES::Optimizer {
-class QueryPlanSignature;
-typedef std::shared_ptr<QueryPlanSignature> QueryPlanSignaturePtr;
+class QuerySignature;
+typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 }// namespace NES::Optimizer
 
 namespace NES {
@@ -52,16 +52,16 @@ class LogicalOperatorNode : public OperatorNode {
      * @brief Set the signature for the logical operator
      * @param signature : the signature
      */
-    void setSignature(Optimizer::QueryPlanSignaturePtr signature);
+    void setSignature(Optimizer::QuerySignaturePtr signature);
 
     /**
      * @brief Get the Z3 expression for the logical operator
      * @return reference to the Z3 expression
      */
-    Optimizer::QueryPlanSignaturePtr getSignature();
+    Optimizer::QuerySignaturePtr getSignature();
 
   protected:
-    Optimizer::QueryPlanSignaturePtr signature;
+    Optimizer::QuerySignaturePtr signature;
 };
 
 }// namespace NES
