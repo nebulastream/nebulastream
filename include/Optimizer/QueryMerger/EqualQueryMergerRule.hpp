@@ -19,14 +19,9 @@
 
 #include <memory>
 
-namespace z3 {
-class context;
-typedef std::shared_ptr<context> ContextPtr;
-}// namespace z3
-
 namespace NES {
-class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -76,18 +71,17 @@ typedef std::shared_ptr<EqualQueryMergerRule> EqualQueryMergerRulePtr;
 class EqualQueryMergerRule {
 
   public:
-    static EqualQueryMergerRulePtr create(z3::ContextPtr context);
+    static EqualQueryMergerRulePtr create();
     ~EqualQueryMergerRule();
 
     /**
      * @brief apply the rule on Global Query Plan
      * @param globalQueryPlan : the global query plan
      */
-    bool apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan2);
+    bool apply(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
-    explicit EqualQueryMergerRule(z3::ContextPtr context);
-    z3::ContextPtr context;
+    explicit EqualQueryMergerRule();
 };
 }// namespace NES::Optimizer
 
