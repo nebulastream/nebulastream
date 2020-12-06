@@ -14,11 +14,12 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/EqualQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
+#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -26,22 +27,76 @@
 
 namespace NES::Optimizer {
 
-EqualQueryMergerRule::EqualQueryMergerRule(z3::ContextPtr context) : context(context) {}
+EqualQueryMergerRule::EqualQueryMergerRule() {}
 
 EqualQueryMergerRule::~EqualQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
 
-EqualQueryMergerRulePtr EqualQueryMergerRule::create(z3::ContextPtr context) {
-    return std::make_shared<EqualQueryMergerRule>(EqualQueryMergerRule(context));
-}
+EqualQueryMergerRulePtr EqualQueryMergerRule::create() { return std::make_shared<EqualQueryMergerRule>(EqualQueryMergerRule()); }
 
-bool EqualQueryMergerRule::apply(QueryPlanPtr queryPlan1, QueryPlanPtr queryPlan2) {
-    auto roots1 = queryPlan1->getRootOperators();
-    auto roots2 = queryPlan2->getRootOperators();
+bool EqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    auto querySig1 = roots1[0]->as<LogicalOperatorNode>()->getSignature();
-    auto querySig2 = roots2[0]->as<LogicalOperatorNode>()->getSignature();
+    NES_INFO("EqualQueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
 
-    return querySig1->isEqual(querySig2);
+    std::vector<GlobalQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllGlobalQueryMetaData();
+    if (allGQMs.size() == 1) {
+        NES_WARNING("EqualQueryMergerRule: Found only a single query metadata in the global query plan."
+                    " Skipping the Equal Query Merging.");
+        return true;
+    }
+
+    NES_DEBUG("EqualQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
+    for (uint16_t i = 0; i < allGQMs.size() - 1; i++) {
+        for (uint16_t j = i + 1; j < allGQMs.size(); j++) {
+
+            auto hostGQM = allGQMs[i];
+            auto targetGQM = allGQMs[j];
+
+            if (targetGQM->getGlobalQueryId() == hostGQM->getGlobalQueryId()) {
+                continue;
+            }
+
+            auto hostQueryPlan = hostGQM->getQueryPlan();
+            auto targetQueryPlan = targetGQM->getQueryPlan();
+
+            std::map<uint64_t, uint64_t> targetHostOperatorMap;
+
+            bool areEqual = false;
+            for (auto hostSink : hostQueryPlan->getSinkOperators()) {
+                for (auto targetSink : targetQueryPlan->getSinkOperators()) {
+                    if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
+                        targetHostOperatorMap[targetSink->getId()] = hostSink->getId();
+                        break;
+                    }
+                }
+                if (!areEqual) {
+                    NES_WARNING("Target and Host GQM are not equal");
+                    break;
+                }
+            }
+
+            std::set<GlobalQueryNodePtr> hostSinkGQNs = hostGQM->getSinkGlobalQueryNodes();
+            for (auto targetSinkGQN : targetGQM->getSinkGlobalQueryNodes()) {
+                uint64_t hostSinkOperatorId = targetHostOperatorMap[targetSinkGQN->getOperator()->getId()];
+
+                auto found =
+                    std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(), [hostSinkOperatorId](GlobalQueryNodePtr hostSinkGQN) {
+                        return hostSinkGQN->getOperator()->getId() == hostSinkOperatorId;
+                    });
+
+                if (found == hostSinkGQNs.end()) {
+                    NES_THROW_RUNTIME_ERROR("Unexpected behaviour");
+                }
+                targetSinkGQN->removeChildren();
+                for (auto hostChild : (*found)->getChildren()) {
+                    hostChild->addParent(targetSinkGQN);
+                }
+            }
+            hostGQM->addGlobalQueryMetaData(targetGQM);
+            targetGQM->clear();
+        }
+    }
+    globalQueryPlan->removeEmptyMetaData();
+    return true;
 }
 
 }// namespace NES::Optimizer

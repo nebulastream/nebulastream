@@ -51,7 +51,7 @@ bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
                 continue;
             }
 
-            //TODO: we need to check how this will pan out when we will have more than 1
+            //TODO: we need to check how this will pan out when we will have more than 1 sink
             auto hostQueryPlan = hostGQM->getQueryPlan();
             auto targetQueryPlan = targetGQM->getQueryPlan();
 
