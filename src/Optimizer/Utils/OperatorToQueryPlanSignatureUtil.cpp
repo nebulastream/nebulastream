@@ -48,10 +48,17 @@ QueryPlanSignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(Operat
         auto conds = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, var, val)));
         return QueryPlanSignature::create(conds, {});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        if (subQuerySignatures.empty() || subQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("Sink operator can't have empty or more than one children : " + operatorNode->toString());
+
+        if (subQuerySignatures.empty()) {
+            NES_THROW_RUNTIME_ERROR("Sink operator can't have empty children set : " + operatorNode->toString());
         }
-        return subQuerySignatures[0];
+
+        z3::expr_vector vect(*context);
+        for (auto& subQuerySignature : subQuerySignatures) {
+            vect.push_back(*subQuerySignature->getConds());
+        }
+        z3::ExprPtr conds = std::make_shared<z3::expr>(z3::mk_and(vect));
+        return QueryPlanSignature::create(conds, {});
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         if (subQuerySignatures.empty() || subQuerySignatures.size() > 1) {
             NES_THROW_RUNTIME_ERROR("Filter operator can't have empty or more than one children : " + operatorNode->toString());
@@ -66,16 +73,13 @@ QueryPlanSignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(Operat
         auto optrExpr = operatorCond->getExpr();
 
         for (auto constPair : constMap) {
-
             if (subQueryCols.find(constPair.first) != subQueryCols.end()) {
                 std::vector<z3::ExprPtr> vectorOfExprs = subQueryCols[constPair.first];
                 for (auto expr : vectorOfExprs) {
                     z3::expr_vector from(*context);
                     from.push_back(*constPair.second);
-
                     z3::expr_vector to(*context);
                     to.push_back(*expr);
-
                     optrExpr = std::make_shared<z3::expr>(optrExpr->substitute(from, to));
                 }
             }
