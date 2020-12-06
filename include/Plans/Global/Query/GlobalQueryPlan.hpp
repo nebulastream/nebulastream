@@ -89,12 +89,6 @@ class GlobalQueryPlan {
         return vector;
     }
 
-//    /**
-//     * @brief Update the existing Global query meta data by re-grouping the queries
-//     * @return true if successful
-//     */
-//    bool updateGlobalQueryMetaDataMap();
-
     /**
      * @brief Get the all the Query Meta Data to be deployed
      * @return vector of global query meta data to be deployed
@@ -114,6 +108,13 @@ class GlobalQueryPlan {
      */
     GlobalQueryId getGlobalQueryIdForQuery(QueryId queryId);
 
+    /**
+     * @brief Update the global query meta data information
+     * @param globalQueryMetaData: the global query metadata to be updated
+     * @return true if successful
+     */
+    bool updateGlobalQueryMetadata(GlobalQueryMetaDataPtr globalQueryMetaData);
+
   private:
     GlobalQueryPlan();
 
@@ -123,22 +124,8 @@ class GlobalQueryPlan {
      */
     uint64_t getNextFreeId();
 
-//    /**
-//     * @brief Check if constructed metadata is still valid or not.
-//     * @return true if successful
-//     */
-//    bool checkMetaDataValidity();
-
-    /**
-     * @brief Update the global query meta data information
-     * @param globalQueryMetaData: the global query metadata to be updated
-     * @return true if successful
-     */
-    bool updateGlobalQueryMetadata(GlobalQueryMetaDataPtr globalQueryMetaData);
-
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
-//    std::map<QueryId, std::vector<GlobalQueryNodePtr>> queryIdToGlobalQueryNodeMap;
     std::map<GlobalQueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
     std::map<QueryId, GlobalQueryId> queryIdToGlobalQueryIdMap;
 };

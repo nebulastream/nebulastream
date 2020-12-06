@@ -100,6 +100,7 @@ bool EqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             }
             hostGQM->addGlobalQueryMetaData(targetGQM);
             targetGQM->clear();
+            globalQueryPlan->updateGlobalQueryMetadata(hostGQM);
         }
     }
     globalQueryPlan->removeEmptyMetaData();
