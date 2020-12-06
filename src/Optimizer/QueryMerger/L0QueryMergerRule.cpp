@@ -77,6 +77,7 @@ bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
                 }
                 hostGQM->addGlobalQueryMetaData(targetGQM);
                 targetGQM->clear();
+                globalQueryPlan->updateGlobalQueryMetadata(hostGQM);
             }
         }
     }
