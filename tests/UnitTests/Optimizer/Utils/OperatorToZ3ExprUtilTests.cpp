@@ -29,7 +29,7 @@
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
+#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <z3++.h>
 
 using namespace NES;

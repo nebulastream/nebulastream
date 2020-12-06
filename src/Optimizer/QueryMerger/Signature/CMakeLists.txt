@@ -13,5 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        QueryPlanSignature.cpp
+        QuerySignature.cpp
 )

@@ -14,24 +14,24 @@
     limitations under the License.
 */
 
-#include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
+#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-QueryPlanSignaturePtr QueryPlanSignature::create(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols) {
-    return std::make_shared<QueryPlanSignature>(QueryPlanSignature(conds, cols));
+QuerySignaturePtr QuerySignature::create(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols) {
+    return std::make_shared<QuerySignature>(QuerySignature(conds, cols));
 }
 
-QueryPlanSignature::QueryPlanSignature(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols)
+QuerySignature::QuerySignature(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols)
     : conds(conds), cols(cols) {}
 
-z3::ExprPtr QueryPlanSignature::getConds() { return conds; }
+z3::ExprPtr QuerySignature::getConds() { return conds; }
 
-std::map<std::string, std::vector<z3::ExprPtr>> QueryPlanSignature::getCols() { return cols; }
+std::map<std::string, std::vector<z3::ExprPtr>> QuerySignature::getCols() { return cols; }
 
-bool QueryPlanSignature::isEqual(QueryPlanSignaturePtr other) {
+bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
     z3::context& context = conds->ctx();
     z3::solver solver(context);

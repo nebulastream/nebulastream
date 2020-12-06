@@ -15,7 +15,7 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/Signature/QueryPlanSignature.hpp>
+#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
