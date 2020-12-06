@@ -29,7 +29,7 @@ GlobalQueryMetaData::GlobalQueryMetaData(QueryId queryId, std::set<GlobalQueryNo
     : globalQueryId(PlanIdGenerator::getNextGlobalQueryId()), sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)),
       deployed(false), newMetaData(true) {
     NES_DEBUG("GlobalQueryMetaData()");
-    queryIdToSinkGQNMap[queryId] = sinkGlobalQueryNodes;
+    queryIdToSinkGQNMap[queryId] = this->sinkGlobalQueryNodes;
 }
 
 GlobalQueryMetaDataPtr GlobalQueryMetaData::create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
@@ -71,14 +71,15 @@ bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
             });
 
         if (found != sinkGlobalQueryNodes.end()) {
-            sinkGlobalQueryNodes.erase(found);
             (*found)->removeAllParent();
             removeExclusiveChildren(*found);
+            sinkGlobalQueryNodes.erase(found);
         } else {
             NES_ERROR("Unable to find query's sink global query node in the set of Sink global query nodes in the metadata");
             return false;
         }
     }
+    queryIdToSinkGQNMap.erase(queryId);
     //Mark the meta data as updated but not deployed
     markAsNotDeployed();
     return true;
@@ -196,8 +197,7 @@ void GlobalQueryMetaData::clear() {
 void GlobalQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode) {
 
     for(auto& child : globalQueryNode->getChildren()){
-        if(child->getParents().empty() || child->getParents().size() == 1){
-            child->removeAllParent();
+        if(!child->getParents().empty() && child->getParents().size() == 1){
             removeExclusiveChildren(child->as<GlobalQueryNode>());
         }
     }
