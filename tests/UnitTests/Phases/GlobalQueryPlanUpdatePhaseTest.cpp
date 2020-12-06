@@ -80,8 +80,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    const auto& globalQueryNodes = resultPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-    ASSERT_TRUE(globalQueryNodes.size() == 1);
+    const auto& globalQueryMetadataToDeploy = resultPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(globalQueryMetadataToDeploy.size() == 1);
 }
 
 /**
@@ -124,8 +124,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 2 global query node with sink operator.");
-    const auto& globalQueryNodes = resultPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-    ASSERT_TRUE(globalQueryNodes.size() == 2);
+    const auto& globalQueryMetadataToDeploy = resultPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(globalQueryMetadataToDeploy.size() == 2);
 }
 
 /**
@@ -170,8 +170,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    const auto& globalQueryNodes = resultPlan->getAllNewGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-    ASSERT_TRUE(globalQueryNodes.size() == 1);
+    const auto& globalQueryMetadataToDeploy = resultPlan->getGlobalQueryMetaDataToDeploy();
+    ASSERT_TRUE(globalQueryMetadataToDeploy.size() == 1);
 }
 
 }// namespace NES
