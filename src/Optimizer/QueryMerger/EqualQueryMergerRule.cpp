@@ -60,18 +60,25 @@ bool EqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
             std::map<uint64_t, uint64_t> targetHostOperatorMap;
 
-            bool areEqual = false;
+            bool areEqual;
             for (auto hostSink : hostQueryPlan->getSinkOperators()) {
+                areEqual = false;
                 for (auto targetSink : targetQueryPlan->getSinkOperators()) {
                     if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
                         targetHostOperatorMap[targetSink->getId()] = hostSink->getId();
+                        areEqual = true;
                         break;
                     }
                 }
                 if (!areEqual) {
-                    NES_WARNING("Target and Host GQM are not equal");
+                    NES_WARNING("There are not equal Target sink for Host sink "<< hostSink->toString());
                     break;
                 }
+            }
+
+            if(!areEqual){
+                NES_WARNING("Target and Host GQM are not equal");
+                break;
             }
 
             std::set<GlobalQueryNodePtr> hostSinkGQNs = hostGQM->getSinkGlobalQueryNodes();
