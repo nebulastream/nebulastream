@@ -94,10 +94,10 @@ for workerThreads in allWorkerThreads:
 			allBufferSizes[workerThreads].append(dataPoint.bufferSize)
 
 for workerThreads in allWorkerThreads:
-	fig, ax = plt.subplots(figsize=(24, 8))
+	fig, ax = plt.subplots(figsize=(24, 12))
 	rects = ax.bar(np.arange(0, len(allIngestionRate[workerThreads])), allyValues[workerThreads], yerr=allyErr[workerThreads], width=0.35)
 	ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
-	ax.set_xticklabels([f"{millify(x)} / {y}" for x,y in zip(allIngestionRate[workerThreads], allBufferSizes[workerThreads])], rotation=45, ha="right")
+	ax.set_xticklabels([f"{millify(x)} / {millify(y)}" for x,y in zip(allIngestionRate[workerThreads], allBufferSizes[workerThreads])], rotation=45, ha="right")
 	ax.set_xlabel("Ingestionrate / BufferSize [B]")
 	ax.set_ylabel("Throughput [tup/s]")
 	autolabel(rects, ax)
