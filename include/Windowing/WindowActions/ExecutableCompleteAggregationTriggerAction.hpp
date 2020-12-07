@@ -51,24 +51,36 @@ class ExecutableCompleteAggregationTriggerAction
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
             executableWindowAggregation)
-        : windowDefinition(windowDefinition),
-
-          executableWindowAggregation(executableWindowAggregation) {
-        if (windowDefinition->isKeyed()) {
-            this->windowSchema = Schema::create()
-                                     ->addField(createField("start", UINT64))
-                                     ->addField(createField("end", UINT64))
-                                     ->addField(createField("cnt", UINT64))
-                                     ->addField("key", windowDefinition->getOnKey()->getStamp())
-                                     ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+        : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation) {
+        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Complete) {
+            if (windowDefinition->isKeyed()) {
+                this->windowSchema = Schema::create()
+                                         ->addField(createField("start", UINT64))
+                                         ->addField(createField("end", UINT64))
+                                         ->addField(createField("cnt", UINT64))
+                                         ->addField("key", windowDefinition->getOnKey()->getStamp())
+                                         ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+            } else {
+                this->windowSchema = Schema::create()
+                                         ->addField(createField("start", UINT64))
+                                         ->addField(createField("end", UINT64))
+                                         ->addField(createField("cnt", UINT64))
+                                         ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+            }
         } else {
-            this->windowSchema = Schema::create()
-                                     ->addField(createField("start", UINT64))
-                                     ->addField(createField("end", UINT64))
-                                     ->addField(createField("cnt", UINT64))
-                                     ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+            if (windowDefinition->isKeyed()) {
+                this->windowSchema = Schema::create()
+                                         ->addField(createField("start", UINT64))
+                                         ->addField(createField("end", UINT64))
+                                         ->addField("key", windowDefinition->getOnKey()->getStamp())
+                                         ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+            } else {
+                this->windowSchema = Schema::create()
+                                         ->addField(createField("start", UINT64))
+                                         ->addField(createField("end", UINT64))
+                                         ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
+            }
         }
-
         windowTupleLayout = createRowLayout(this->windowSchema);
     }
 
@@ -182,8 +194,14 @@ class ExecutableCompleteAggregationTriggerAction
                           << i << " key=" << key << " value=" << value << " window.start()=" << window.getStartTs()
                           << " window.getEndTs()=" << window.getEndTs() << " recordsPerWindow[i]=" << recordsPerWindow[i]);
                 if (recordsPerWindow[i] != 0) {
-                    writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(), key,
-                                               value, recordsPerWindow[i]);
+                    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Complete) {
+                        writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(),
+                                                   key, value, recordsPerWindow[i]);
+                    } else {
+                        writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(),
+                                                   key, value);
+                    }
+
                     currentNumberOfTuples++;
                 }
 
@@ -237,6 +255,19 @@ class ExecutableCompleteAggregationTriggerAction
             windowTupleLayout->getValueField<ValueType>(index, 4)->write(tupleBuffer, value);
         } else {
             windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+        }
+    }
+
+    template<typename ValueType>
+    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
+                           ValueType value) {
+        windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
+        windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
+        if (windowDefinition->isKeyed()) {
+            windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
+            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+        } else {
+            windowTupleLayout->getValueField<ValueType>(index, 2)->write(tupleBuffer, value);
         }
     }
 
