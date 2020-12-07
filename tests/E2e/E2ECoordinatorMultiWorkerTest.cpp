@@ -68,23 +68,23 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "../nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
     bp::child coordinatorProc(cmdCoord.c_str());
 
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
 
-    string worker1RPCPort = std::to_string(rpcPort + 2);
+    string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
-    string cmdWrk1 =
-        "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
+    string cmdWrk1 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+        + " --dataPort=" + worker1DataPort;
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
-    string worker2RPCPort = std::to_string(rpcPort + 4);
+    string worker2RPCPort = std::to_string(rpcPort + 6);
     string worker2DataPort = std::to_string(dataPort + 2);
-    string cmdWrk2 =
-        "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort + " --dataPort=" + worker2DataPort;
+    string cmdWrk2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
+        + " --dataPort=" + worker2DataPort;
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
@@ -172,17 +172,23 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
-    string path2 = "./nesWorker --coordinatorPort=12346 --rpcPort=12351 --dataPort=12352 --logicalStreamName=QnV "
-                   "--physicalStreamName=test_stream1 --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv "
-                   "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+        + " --dataPort=" + worker1DataPort
+        + " --logicalStreamName=QnV --physicalStreamName=test_stream1 --sourceType=CSVSource "
+          "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(path2.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
     uint64_t workerPid1 = workerProc1.id();
     sleep(1);
 
-    string path3 = "./nesWorker --coordinatorPort=12346 --rpcPort=12353 --dataPort=12354 --logicalStreamName=QnV "
-                   "--physicalStreamName=test_stream2 --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short.csv "
-                   "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
+    string worker2RPCPort = std::to_string(rpcPort + 6);
+    string worker2DataPort = std::to_string(dataPort + 2);
+    string path3 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
+        + " --dataPort=" + worker2DataPort
+        + " --logicalStreamName=QnV --physicalStreamName=test_stream2 --sourceType=CSVSource "
+          "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc2(path3.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
     uint64_t workerPid2 = workerProc2.id();
@@ -252,19 +258,25 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
-    string path2 =
-        "./nesWorker --coordinatorPort=12346 --rpcPort=12351 --dataPort=12352 --logicalStreamName=QnV "
-        "--physicalStreamName=test_stream1 --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short_R2000073.csv "
-        "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+        + " --dataPort=" + worker1DataPort
+        + " --logicalStreamName=QnV --physicalStreamName=test_stream1 --sourceType=CSVSource "
+          "--sourceConfig=../tests/test_data/QnV_short_R2000073.csv "
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(path2.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
     uint64_t workerPid1 = workerProc1.id();
     sleep(1);
 
-    string path3 =
-        "./nesWorker --coordinatorPort=12346 --rpcPort=12353 --dataPort=12354 --logicalStreamName=QnV "
-        "--physicalStreamName=test_stream2 --sourceType=CSVSource --sourceConfig=../tests/test_data/QnV_short_R2000070.csv "
-        "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
+    string worker2RPCPort = std::to_string(rpcPort + 6);
+    string worker2DataPort = std::to_string(dataPort + 2);
+    string path3 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
+        + " --dataPort=" + worker2DataPort
+        + " --logicalStreamName=QnV --physicalStreamName=test_stream2 --sourceType=CSVSource "
+          "--sourceConfig=../tests/test_data/QnV_short_R2000070.csv "
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc2(path3.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
     uint64_t workerPid2 = workerProc2.id();
@@ -350,15 +362,23 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
 
-    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352 --logicalStreamName=window "
-                     "--physicalStreamName=test_stream_1 --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv "
-                     "--numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string cmdWrk1 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+        + " --dataPort=" + worker1DataPort
+        + " --logicalStreamName=window --physicalStreamName=test_stream_1 --sourceType=CSVSource "
+          "--sourceConfig=../tests/test_data/window.csv "
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
-    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354 --logicalStreamName=window "
-                     "--physicalStreamName=test_stream_2 --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv "
-                     "--numberOfBuffersToProduce=1 --sourceFrequency=1";
+    string worker2RPCPort = std::to_string(rpcPort + 6);
+    string worker2DataPort = std::to_string(dataPort + 2);
+    string cmdWrk2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
+        + " --dataPort=" + worker2DataPort
+        + " --logicalStreamName=window "
+          "--physicalStreamName=test_stream_2 --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv "
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1";
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
@@ -415,7 +435,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     string coordinatorRPCPort = std::to_string(rpcPort);
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
@@ -423,11 +443,17 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
 
-    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352";
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string cmdWrk1 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+        + " --dataPort=" + worker1DataPort;
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
-    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354";
+    string worker2RPCPort = std::to_string(rpcPort + 6);
+    string worker2DataPort = std::to_string(dataPort + 2);
+    string cmdWrk2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
+        + " --dataPort=" + worker2DataPort;
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
@@ -494,15 +520,22 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
-    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352 --logicalStreamName=ysb "
-                     "--physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
+
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string cmdWrk1 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+        + " --dataPort=" + worker1DataPort
+        + " --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
         + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples)
         + " --sourceFrequency=1 --endlessRepeat=on";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
-    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354 --logicalStreamName=ysb "
-                     "--physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
+    string worker2RPCPort = std::to_string(rpcPort + 6);
+    string worker2DataPort = std::to_string(dataPort + 2);
+    string cmdWrk2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
+        + " --dataPort=" + worker2DataPort
+        + " --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
         + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples)
         + " --sourceFrequency=1 --endlessRepeat=on";
 
