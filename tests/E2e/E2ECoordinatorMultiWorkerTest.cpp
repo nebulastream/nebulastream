@@ -42,7 +42,7 @@ namespace bp = boost::process;
 
 namespace NES {
 
-class E2ECoordinatorWorkerTest : public testing::Test {
+class E2ECoordinatorMultiWorkerTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("E2ECoordinatorWorkerTest.log", NES::LOG_DEBUG);
@@ -52,7 +52,7 @@ class E2ECoordinatorWorkerTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
 
-TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
@@ -135,7 +135,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWor
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerSameSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerSameSource) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
@@ -214,7 +214,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
@@ -310,7 +310,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidSimplePatternWithFileOutputTw
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     //TODO result content does not end up in file?
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
@@ -395,7 +395,7 @@ TEST_F(E2ECoordinatorWorkerTest, testExecutingValidUserQueryWithTumblingWindowFi
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
@@ -461,7 +461,7 @@ TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutputTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutputTwoWorker) {
     uint64_t numBuffers = 3;
     uint64_t numTuples = 10;
 
