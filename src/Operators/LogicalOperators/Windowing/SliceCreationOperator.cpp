@@ -28,7 +28,7 @@ namespace NES {
 
 SliceCreationOperator::SliceCreationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
     : WindowOperatorNode(windowDefinition, id) {
-    this->windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createSlicingWindowType());
+    this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
     this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());

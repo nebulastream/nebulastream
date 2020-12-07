@@ -40,7 +40,9 @@
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -127,6 +129,11 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SliceCreationOperator");
         auto windowDetails = serializeWindowOperator(operatorNode->as<SliceCreationOperator>());
+        serializedOperator->mutable_details()->PackFrom(windowDetails);
+    } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
+        // serialize window operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to SliceMergingOperator");
+        auto windowDetails = serializeWindowOperator(operatorNode->as<SliceMergingOperator>());
         serializedOperator->mutable_details()->PackFrom(windowDetails);
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         // serialize window operator
@@ -364,6 +371,9 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Slicing) {
         windowDetails.mutable_distrchar()->set_distr(
             SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing);
+    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Merging) {
+        windowDetails.mutable_distrchar()->set_distr(
+            SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -451,6 +461,9 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
     } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Slicing) {
         joinDetails.mutable_distrchar()->set_distr(
             SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Slicing);
+    } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Merging) {
+        joinDetails.mutable_distrchar()->set_distr(
+            SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Merging);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -566,6 +579,10 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Slicing);
+    } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
+        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging");
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Merging);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -576,7 +593,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
             auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, 1, trigger, action);
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
                 ->as<CentralWindowOperator>();
-        } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
+        } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining
+                   || distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
             auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar,
                                                                         windowDetails->numberofinputedges(), trigger, action);
             return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
@@ -597,7 +615,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                   action),
                        operatorId)
                 ->as<CentralWindowOperator>();
-        } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
+        } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining
+                   || distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
             return LogicalOperatorFactory::createWindowComputationSpecializedOperator(
                        Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar,
                                                                   windowDetails->numberofinputedges(), trigger, action),

@@ -58,12 +58,14 @@ class ExecutableCompleteAggregationTriggerAction
             this->windowSchema = Schema::create()
                                      ->addField(createField("start", UINT64))
                                      ->addField(createField("end", UINT64))
+                                     ->addField(createField("cnt", UINT64))
                                      ->addField("key", windowDefinition->getOnKey()->getStamp())
                                      ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         } else {
             this->windowSchema = Schema::create()
                                      ->addField(createField("start", UINT64))
                                      ->addField(createField("end", UINT64))
+                                     ->addField(createField("cnt", UINT64))
                                      ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
         }
 
@@ -181,7 +183,7 @@ class ExecutableCompleteAggregationTriggerAction
                           << " window.getEndTs()=" << window.getEndTs() << " recordsPerWindow[i]=" << recordsPerWindow[i]);
                 if (recordsPerWindow[i] != 0) {
                     writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(), key,
-                                               value);
+                                               value, recordsPerWindow[i]);
                     currentNumberOfTuples++;
                 }
 
@@ -226,14 +228,15 @@ class ExecutableCompleteAggregationTriggerAction
     */
     template<typename ValueType>
     void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
-                           ValueType value) {
+                           ValueType value, uint64_t cnt) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
+        windowTupleLayout->getValueField<uint64_t>(index, 2)->write(tupleBuffer, cnt);
         if (windowDefinition->isKeyed()) {
-            windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
-            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+            windowTupleLayout->getValueField<KeyType>(index, 3)->write(tupleBuffer, key);
+            windowTupleLayout->getValueField<ValueType>(index, 4)->write(tupleBuffer, value);
         } else {
-            windowTupleLayout->getValueField<ValueType>(index, 2)->write(tupleBuffer, value);
+            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
         }
     }
 

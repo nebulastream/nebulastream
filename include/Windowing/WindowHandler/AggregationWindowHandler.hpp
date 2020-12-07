@@ -78,6 +78,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             triggerType = "Combining";
         } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
             triggerType = "Slicing";
+        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Merging) {
+            triggerType = "Merging";
         } else {
             triggerType = "Complete";
         }

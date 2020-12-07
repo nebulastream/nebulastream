@@ -31,7 +31,7 @@ class DistributionCharacteristic {
     /**
      * @brief The type as enum.
      */
-    enum Type { Complete, Slicing, Combining };
+    enum Type { Complete, Slicing, Combining, Merging };
     explicit DistributionCharacteristic(Type type);
 
     /**
@@ -51,6 +51,12 @@ class DistributionCharacteristic {
     * @return
     */
     static DistributionCharacteristicPtr createCombiningWindowType();
+
+    /**
+    * @brief Factory to create a window merger
+    * @return
+    */
+    static DistributionCharacteristicPtr createMergingWindowType();
 
     /**
      * @return The DistributionCharacteristic type.

@@ -227,10 +227,10 @@ bool CoordinatorEngine::addParent(uint64_t childId, uint64_t parentId) {
             return false;
         }
     }
-
     bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
     if (added) {
-        NES_DEBUG("CoordinatorEngine::AddParent: created link successfully");
+        NES_DEBUG("CoordinatorEngine::AddParent: created link successfully new topology is=");
+        topology->print();
         return true;
     } else {
         NES_ERROR("CoordinatorEngine::AddParent: created NOT successfully added");

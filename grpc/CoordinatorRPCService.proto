@@ -35,6 +35,7 @@ service CoordinatorRPCService {
 
   rpc RemoveParent (RemoveParentRequest) returns (RemoveParentReply) {}
 
+  rpc ReplaceParent (ReplaceParentRequest) returns (ReplaceParentReply) {}
 }
 
 
@@ -114,6 +115,16 @@ message AddParentRequest {
 }
 
 message AddParentReply {
+  bool success = 1;
+}
+
+message ReplaceParentRequest {
+  uint64 childId = 1;
+  uint64 oldParent = 2;
+  uint64 newParent = 3;
+}
+
+message ReplaceParentReply {
   bool success = 1;
 }
 

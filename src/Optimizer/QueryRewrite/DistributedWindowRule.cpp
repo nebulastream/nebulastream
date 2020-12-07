@@ -46,11 +46,16 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
         NES_DEBUG("DistributeWindowRule::apply: found " << windowOps.size() << " window operators");
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp << " << windowOp->toString()");
-            if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
-                createCentralWindowOperator(windowOp);
-            } else {
-                createDistributedWindowOperator(windowOp);
-            }
+
+            /**
+             * @brief FOR DEBUG ONLY TODO CHANGE BACK
+             */
+            createDistributedWindowOperator(windowOp);
+            //            if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
+            //                createCentralWindowOperator(windowOp);
+            //            } else {
+            //                createDistributedWindowOperator(windowOp);
+            //            }
         }
     } else {
         NES_DEBUG("DistributeWindowRule::apply: no window operator in query");
@@ -79,6 +84,8 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     // The WindowComputation consumes that schema and outputs data in: {startTs, endTs, keyField, outputAggField}
     // First we prepare the final WindowComputation operator:
 
+    //if window has more than 4 edges, we introduce a combiner
+
     NES_DEBUG("DistributeWindowRule::apply: introduce distributed window operator for window "
               << logicalWindowOperator << " << logicalWindowOperator->toString()");
     auto windowDefinition = logicalWindowOperator->getWindowDefinition();
@@ -90,19 +97,25 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
     // For the final window computation we have to change copy aggregation function and manipulate the fields we want to aggregate.
     auto windowComputationAggregation = windowAggregation->copy();
-    windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
+    //    windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
+
+    //TODO: @Ankit we have to change this depending on how you do the placement
+    uint64_t numberOfEdges = logicalWindowOperator->getChildren().size();
+    if (logicalWindowOperator->getChildren().size() > CHILD_NODE_THRESHOLD_COMBINER) {
+        numberOfEdges = 1;
+    }
 
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
         windowDef = Windowing::LogicalWindowDefinition::create(keyField, windowComputationAggregation, windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               logicalWindowOperator->getChildren().size(), triggerPolicy,
+                                                               numberOfEdges, triggerPolicy,
                                                                triggerActionComplete);
 
     } else {
         windowDef = Windowing::LogicalWindowDefinition::create(
             windowComputationAggregation, windowType, Windowing::DistributionCharacteristic::createCombiningWindowType(),
-            logicalWindowOperator->getChildren().size(), triggerPolicy, triggerActionComplete);
+            numberOfEdges, triggerPolicy, triggerActionComplete);
     }
     NES_DEBUG("DistributeWindowRule::apply: created logical window definition for computation operator" << windowDef->toString());
 
@@ -115,37 +128,42 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         NES_FATAL_ERROR("DistributeWindowRule:: replacement of window operator failed.");
     }
 
+
     auto windowChildren = windowComputationOperator->getChildren();
 
-    //add
-    if (windowComputationOperator->getChildren().size() > CHILD_NODE_THRESHOLD_COMBINER) {
+    //add merger
+    if (windowComputationOperator->getChildren().size()
+        >= CHILD_NODE_THRESHOLD_COMBINER) {//TODO change back to CHILD_NODE_THRESHOLD_COMBINER
         auto sliceCombinerWindowAggregation = windowAggregation->copy();
-        sliceCombinerWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");
+        //        sliceCombinerWindowAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
         auto triggerActionSlicing = Windowing::SliceCombinerTriggerActionDescriptor::create();
 
         Windowing::LogicalWindowDefinitionPtr windowDef;
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 keyField, sliceCombinerWindowAggregation, windowType,
-                Windowing::DistributionCharacteristic::createSlicingWindowType(), 1, triggerPolicy, triggerActionSlicing);
+                Windowing::DistributionCharacteristic::createMergingWindowType(), windowComputationOperator->getChildren().size(),
+                triggerPolicy, triggerActionComplete);
+
         } else {
             windowDef = Windowing::LogicalWindowDefinition::create(
-                sliceCombinerWindowAggregation, windowType, Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
-                triggerPolicy, triggerActionSlicing);
+                sliceCombinerWindowAggregation, windowType, Windowing::DistributionCharacteristic::createMergingWindowType(),
+                windowComputationOperator->getChildren().size(), triggerPolicy, triggerActionComplete);
         }
-        NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice combiner operator"
+        NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice merger operator"
                   << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
         windowComputationOperator->insertBetweenThisAndChildNodes(sliceOp);
         windowChildren = sliceOp->getChildren();
     }
 
+
     for (auto& child : windowChildren) {
         NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
 
         // For the SliceCreation operator we have to change copy aggregation function and manipulate the fields we want to aggregate.
         auto sliceCreationWindowAggregation = windowAggregation->copy();
-        sliceCreationWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");
+        //        sliceCreationWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");//TODO: I am not sure if this is correct
         auto triggerActionSlicing = Windowing::SliceAggregationTriggerActionDescriptor::create();
 
         Windowing::LogicalWindowDefinitionPtr windowDef;

@@ -213,6 +213,7 @@ message SerializableOperator{
         Complete = 0;
         Slicing = 1;
         Combining = 3;
+        Merging = 4;
       }
       Distribution distr = 1;
     }
@@ -288,6 +289,7 @@ message SerializableOperator{
         Complete = 0;
         Slicing = 1;
         Combining = 3;
+        Merging = 4;
       }
       Distribution distr = 1;
     }
