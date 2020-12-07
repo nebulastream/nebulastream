@@ -41,12 +41,18 @@ namespace bp = boost::process;
 
 namespace NES {
 
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
+uint64_t rpcPort = 12345;
+
 class E2ECoordinatorMultiQueryTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
+
+    void SetUp() { rpcPort = rpcPort + 30; }
 
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
