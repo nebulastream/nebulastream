@@ -5,7 +5,7 @@
 restIp: 127.0.0.1
 
 # Set RPC IP address of NES Coordinator
-rpcIp: 127.0.0.1
+coordinatorIp: 127.0.0.1
 
 # Set RPC Server port of NES Coordinator
 rpcPort: 4000
