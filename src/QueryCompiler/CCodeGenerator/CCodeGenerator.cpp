@@ -36,8 +36,8 @@
 #include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/ExecutablePipelineStage.hpp>
@@ -1154,7 +1154,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     auto code = context->code;
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();
-    auto functionBuilder = FunctionDefinition::create("compiled_query")
+    auto functionBuilder = FunctionDefinition::create("execute")
                                           ->returns(tf->createDataType(DataTypeFactory::createUInt32()))
                                           ->addParameter(code->varDeclarationInputBuffer)
                                           ->addParameter(code->varDeclarationExecutionContext)
@@ -1191,13 +1191,6 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     executablePipeline->addBaseClass("ExecutablePipelineStage");
     executablePipeline->addMethod(ClassDefinition::Public, functionBuilder);
 
-    auto getIDFunction = FunctionDefinition::create("getID");
-    auto constant = Constant(CompilerTypesFactory()
-.createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(42))));
-    auto idReturn = ReturnStatement::create(constant.createCopy());
-    getIDFunction->addStatement(idReturn);
-    getIDFunction->returns(CompilerTypesFactory().createDataType(DataTypeFactory::createUInt64()));
-    executablePipeline->addMethod(ClassDefinition::Public, getIDFunction);
     auto executablePipelineDeclaration = executablePipeline->getDeclaration();
     auto pipelineNamespace = NamespaceDefinition::create("NES");
     pipelineNamespace->addDeclaration(executablePipelineDeclaration);
@@ -1221,13 +1214,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
     std::string src = generateCode(code);
     auto compiledCode = compiler->compile(src, true /*debugging flag replace later*/);
-    typedef std::shared_ptr<ExecutablePipelineStage> (*CreateFunctionPtr)();
-    auto createFunction = compiledCode->getFunctionPointer<CreateFunctionPtr>("_ZN3NES6createEv");
-    auto executablePipeline = (*createFunction)();
-    std::cout << executablePipeline->getID() << std::endl;
-    std::cout << std::dynamic_pointer_cast<ExecutablePipelineStage>(executablePipeline) << std::endl;
-
-    return std::dynamic_pointer_cast<ExecutablePipelineStage>(executablePipeline);
+    return CompiledExecutablePipelineStage::create(compiledCode);
 }
 
 BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(VariableDeclaration pipelineContext) {

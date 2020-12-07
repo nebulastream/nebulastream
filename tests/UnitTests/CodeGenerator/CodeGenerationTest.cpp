@@ -509,7 +509,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
     emitTupleBuffer.addParameter(VarRef(varDeclWorkerContext));
-    auto mainFunction = FunctionDefinition::create("compiled_query")
+    auto mainFunction = FunctionDefinition::create("execute")
                             ->returns(tf.createDataType(DataTypeFactory::createInt32()))
                             ->addParameter(varDeclTupleBuffers)
         ->addParameter(varDeclPipelineExecutionContext)
