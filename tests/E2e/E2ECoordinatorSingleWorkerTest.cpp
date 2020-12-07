@@ -43,6 +43,10 @@ namespace bp = boost::process;
 //#define _XPLATSTR(x) _XPLATSTR(x)
 namespace NES {
 
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
+uint64_t rpcPort = 12345;
+
 class E2ECoordinatorSingleWorkerTest : public testing::Test {
   public:
     static void SetUpTestCase() {

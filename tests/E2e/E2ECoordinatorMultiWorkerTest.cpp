@@ -42,11 +42,21 @@ namespace bp = boost::process;
 
 namespace NES {
 
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
+uint64_t rpcPort = 1200;
+uint64_t dataPort = 1400;
+
 class E2ECoordinatorMultiWorkerTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("E2ECoordinatorWorkerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
+    }
+
+    void SetUp() {
+        rpcPort = rpcPort + 10;
+        dataPort = dataPort + 10;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
@@ -57,17 +67,24 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     std::string outputFilePath = "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string cmdCoord = "../nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
     bp::child coordinatorProc(cmdCoord.c_str());
 
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
 
-    string cmdWrk1 = "./nesWorker --coordinatorPort=12348 --rpcPort=12351 --dataPort=12352";
+    string worker1RPCPort = std::to_string(rpcPort + 2);
+    string worker1DataPort = std::to_string(dataPort);
+    string cmdWrk1 =
+        "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort + " --dataPort=" + worker1DataPort;
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
-    string cmdWrk2 = "./nesWorker --coordinatorPort=12348 --rpcPort=12353 --dataPort=12354";
+    string worker2RPCPort = std::to_string(rpcPort + 4);
+    string worker2DataPort = std::to_string(dataPort + 2);
+    string cmdWrk2 =
+        "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort + " --dataPort=" + worker2DataPort;
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
@@ -140,7 +157,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --coordinatorPort=12346";
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -219,7 +237,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --coordinatorPort=12346";
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -316,7 +335,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     std::string outputFilePath = "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
     bp::child coordinatorProc(cmdCoord.c_str());
 
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
@@ -397,9 +417,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 
 TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
     bp::child coordinatorProc(cmdCoord.c_str());
-
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
 
@@ -469,7 +489,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "./nesCoordinator --coordinatorPort=12348";
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
