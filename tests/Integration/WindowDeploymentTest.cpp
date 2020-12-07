@@ -1062,7 +1062,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
     NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21,  NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21,  1, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);//id=3
     wrk2->replaceParent(1, 2);
     EXPECT_TRUE(retStart2);
@@ -1113,7 +1113,6 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     //register physical stream
     PhysicalStreamConfigPtr conf =
         PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", true);
-//    wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
     wrk4->registerPhysicalStream(conf);
@@ -1127,13 +1126,10 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-//    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-//    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
-//    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,cnt:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "1000,2000,3,1,17\n"
-                             "2000,3000,3,2,28\n";
+    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+                             "1000,2000,1,68\n"
+                             "2000,3000,2,112\n";
 
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
