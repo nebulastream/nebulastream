@@ -215,19 +215,6 @@ void BasePlacementStrategy::addNetworkSourceAndSinkOperators(const QueryPlanPtr&
     }
 }
 
-bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
-    NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    for (const auto& executionNode : executionNodes) {
-        NES_TRACE("BasePlacementStrategy: Get all query sub plans on the execution node for the query with id " << queryId);
-        const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
-        for (auto& querySubPlan : querySubPlans) {
-            typeInferencePhase->execute(querySubPlan);
-        }
-    }
-    return true;
-}
-
 void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const OperatorNodePtr& operatorNode) {
 
     NES_TRACE("BasePlacementStrategy: Get execution node where operator is placed");
@@ -291,6 +278,12 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                         if (targetDownstreamOperator) {
                             NES_TRACE("BasePlacementStrategy: add network source operator as child to the parent operator.");
                             targetDownstreamOperator->addChild(sourceOperator);
+                            if(parentOperator->getChildren().size() != targetDownstreamOperator->getChildren().size()){
+                                NES_WARNING("BasePlacementStrategy: parent operator need more network source operators");
+                                // Add the parent-child relation
+                                globalExecutionPlan->addExecutionNodeAsParentTo(executionNode->getId(), parentExecutionNode);
+                                return;
+                            }
                             found = true;
                             break;
                         }
@@ -334,8 +327,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
     }
 }
 
-void BasePlacementStrategy::addExecutionNodeAsRoot(
-    ExecutionNodePtr& executionNode) {// check if the topology of the execution node is a root node
+void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNode) {
+    // check if the topology of the execution node is a root node
     NES_TRACE("BasePlacementStrategy: Adding new execution node with id: " << executionNode->getTopologyNode()->getId());
     // Check if the candidateTopologyNode is a root node of the topology
     if (executionNode->getTopologyNode()->getParents().empty()) {
@@ -347,6 +340,19 @@ void BasePlacementStrategy::addExecutionNodeAsRoot(
             }
         }
     }
+}
+
+bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
+    NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    for (const auto& executionNode : executionNodes) {
+        NES_TRACE("BasePlacementStrategy: Get all query sub plans on the execution node for the query with id " << queryId);
+        const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
+        for (auto& querySubPlan : querySubPlans) {
+            typeInferencePhase->execute(querySubPlan);
+        }
+    }
+    return true;
 }
 
 }// namespace NES
