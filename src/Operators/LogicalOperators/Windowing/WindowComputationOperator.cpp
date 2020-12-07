@@ -69,7 +69,6 @@ bool WindowComputationOperator::inferSchema() {
             Schema::create()
                 ->addField(createField("start", UINT64))
                 ->addField(createField("end", UINT64))
-                ->addField(createField("cnt", UINT64))
                 ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
                                                   windowDefinition->getOnKey()->getStamp()))
                 ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
@@ -80,7 +79,6 @@ bool WindowComputationOperator::inferSchema() {
             Schema::create()
                 ->addField(createField("start", UINT64))
                 ->addField(createField("end", UINT64))
-                ->addField(createField("cnt", UINT64))
                 ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
                                                   windowAggregation->on()->getStamp()));
         return true;
