@@ -126,6 +126,14 @@ class NesWorker {
     bool addParent(uint64_t parentId);
 
     /**
+    * @brief method to replace old with new parent
+    * @param oldParentId
+    * @param newParentId
+    * @return bool indicating success
+    */
+    bool replaceParent(uint64_t oldParentId, uint64_t newParentId);
+
+    /**
     * @brief method remove parent from this node
     * @param parentId
     * @return bool indicating success

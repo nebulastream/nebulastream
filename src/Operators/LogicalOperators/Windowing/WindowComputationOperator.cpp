@@ -25,7 +25,7 @@ namespace NES {
 
 WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
     : WindowOperatorNode(windowDefinition, id) {
-    this->windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCombiningWindowType());
+    this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
     this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
@@ -69,6 +69,7 @@ bool WindowComputationOperator::inferSchema() {
             Schema::create()
                 ->addField(createField("start", UINT64))
                 ->addField(createField("end", UINT64))
+                ->addField(createField("cnt", UINT64))
                 ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
                                                   windowDefinition->getOnKey()->getStamp()))
                 ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
@@ -79,6 +80,7 @@ bool WindowComputationOperator::inferSchema() {
             Schema::create()
                 ->addField(createField("start", UINT64))
                 ->addField(createField("end", UINT64))
+                ->addField(createField("cnt", UINT64))
                 ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
                                                   windowAggregation->on()->getStamp()));
         return true;

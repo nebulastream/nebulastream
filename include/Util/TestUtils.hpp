@@ -422,7 +422,7 @@ class TestUtils {
                     NES_DEBUG("all lines found final content=" << content);
                     return true;
                 } else {
-                    NES_DEBUG("only " << found << " lines found final content" << content);
+                    NES_DEBUG("only " << found << " lines found final content=" << content);
                 }
             }
         }

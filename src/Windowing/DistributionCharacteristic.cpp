@@ -33,6 +33,11 @@ DistributionCharacteristicPtr DistributionCharacteristic::createCombiningWindowT
     return std::make_shared<DistributionCharacteristic>(Type::Combining);
 }
 
+DistributionCharacteristicPtr DistributionCharacteristic::createMergingWindowType() {
+    return std::make_shared<DistributionCharacteristic>(Type::Merging);
+}
+
+
 DistributionCharacteristic::Type DistributionCharacteristic::getType() { return type; }
 
 std::string DistributionCharacteristic::toString() {
@@ -42,6 +47,8 @@ std::string DistributionCharacteristic::toString() {
         return "Slicing";
     } else if (type == Combining) {
         return "Combining";
+    } else if (type == Merging) {
+        return "Merging";
     } else {
         return "";
     }

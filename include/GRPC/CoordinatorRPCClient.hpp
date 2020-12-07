@@ -76,6 +76,14 @@ class CoordinatorRPCClient {
      */
     bool addParent(uint64_t parentId);
 
+    /*
+    * @brief method to replace old with new parent
+    * @param oldParentId
+    * @param newParentId
+    * @return bool indicating success
+    */
+    bool replaceParent(uint64_t oldParentId, uint64_t newParentId);
+
     /**
      * @brief method to remove a parent from a node
      * @param newParentId

@@ -52,7 +52,6 @@ OperatorNodePtr WindowLogicalOperatorNode::copy() {
 }
 
 bool WindowLogicalOperatorNode::inferSchema() {
-
     WindowOperatorNode::inferSchema();
     // infer the default input and output schema
     NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema "
@@ -70,6 +69,7 @@ bool WindowLogicalOperatorNode::inferSchema() {
             Schema::create()
                 ->addField(createField("start", UINT64))
                 ->addField(createField("end", UINT64))
+                ->addField(createField("cnt", UINT64))
                 ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
                                                   windowDefinition->getOnKey()->getStamp()))
                 ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),

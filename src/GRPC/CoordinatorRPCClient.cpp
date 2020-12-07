@@ -170,6 +170,29 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
     }
 }
 
+bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
+    NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId=" << oldParentId << " newParentId=" << newParentId <<  " workerId=" << workerId);
+
+    ReplaceParentRequest request;
+    request.set_childid(workerId);
+    request.set_oldparent(oldParentId);
+    request.set_newparent(newParentId);
+    NES_DEBUG("CoordinatorRPCClient::replaceParent request=" << request.DebugString());
+
+    ReplaceParentReply reply;
+    ClientContext context;
+
+    Status status = coordinatorStub->ReplaceParent(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("CoordinatorRPCClient::replaceParent: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_DEBUG(" CoordinatorRPCClient::replaceParent error=" << status.error_code() << ": " << status.error_message());
+        return reply.success();
+    }
+}
+
 uint64_t CoordinatorRPCClient::getId() { return workerId; }
 
 bool CoordinatorRPCClient::removeParent(uint64_t parentId) {

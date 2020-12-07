@@ -256,6 +256,16 @@ bool NesWorker::addParent(uint64_t parentId) {
     return success;
 }
 
+bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
+    bool con = waitForConnect();
+    NES_DEBUG("connected= " << con);
+    assert(con);
+    bool success = coordinatorRpcClient->replaceParent(oldParentId, newParentId);
+    NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
+    return success;
+}
+
+
 bool NesWorker::removeParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
