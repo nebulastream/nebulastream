@@ -15,7 +15,6 @@
 */
 
 #include <NodeEngine/QueryManager.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/ExecutablePipelineStage.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Util/Logger.hpp>
