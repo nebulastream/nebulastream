@@ -49,6 +49,7 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 
 namespace NES {
 
@@ -855,7 +856,13 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
     auto code = context->code;
 
-    context->pipelineName = "combiningWindowType";
+    if (window->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
+        context->pipelineName = "combiningWindowType";
+    }
+    else
+    {
+        context->pipelineName = "sliceMergingWindowType";
+    }
 
     auto debugDecl = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), context->pipelineName);
     auto debState = VarDeclStatement(debugDecl).assign(
@@ -865,7 +872,6 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
 
     auto windowStateVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowStateVar");
-
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
 
     NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");

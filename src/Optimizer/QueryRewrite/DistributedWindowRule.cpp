@@ -101,7 +101,7 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
     //TODO: @Ankit we have to change this depending on how you do the placement
     uint64_t numberOfEdges = logicalWindowOperator->getChildren().size();
-    if (logicalWindowOperator->getChildren().size() > CHILD_NODE_THRESHOLD_COMBINER) {
+    if (logicalWindowOperator->getChildren().size() >= CHILD_NODE_THRESHOLD_COMBINER) {
         numberOfEdges = 1;
     }
 
