@@ -27,9 +27,13 @@ static backward::SignalHandling sh;
 void nesErrorHandler(int signal) {
     (void) signal;
     collectAndPrintStacktrace();
+    std::exit(-1);
 }
 
-void nesTerminateHandler() { collectAndPrintStacktrace(); }
+void nesTerminateHandler() {
+    collectAndPrintStacktrace();
+    std::exit(-1);
+}
 
 struct ErrorHandlerLoader {
   public:
