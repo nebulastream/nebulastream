@@ -32,8 +32,8 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <Windowing/Runtime/WindowSliceStore.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/TupleBuffer.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/WorkerContext.hpp>" << std::endl;
-    builder.declations << "#include <QueryCompiler/PipelineExecutionContext.hpp>" << std::endl;
-    builder.declations << "#include <QueryCompiler/ExecutablePipelineStage.hpp>" << std::endl;
+    builder.declations << "#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>" << std::endl;
+    builder.declations << "#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/JoinHandler.hpp>" << std::endl;
     return builder;
 }

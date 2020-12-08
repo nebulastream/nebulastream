@@ -14,12 +14,12 @@
     limitations under the License.
 */
 
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <set>

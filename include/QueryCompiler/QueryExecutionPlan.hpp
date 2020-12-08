@@ -16,9 +16,9 @@
 
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
+#include <NodeEngine/Pipelines/PipelineStage.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>

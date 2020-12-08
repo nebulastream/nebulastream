@@ -38,10 +38,10 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/ExecutablePipelineStage.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>

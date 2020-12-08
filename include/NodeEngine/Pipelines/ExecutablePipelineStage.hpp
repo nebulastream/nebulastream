@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>

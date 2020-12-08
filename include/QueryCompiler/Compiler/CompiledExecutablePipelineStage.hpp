@@ -1,6 +1,6 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
-#include <QueryCompiler/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
 
 namespace NES {
 
