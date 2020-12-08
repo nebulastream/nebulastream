@@ -27,4 +27,4 @@ add_source_nes(
         WorkerContext.cpp
 )
 add_subdirectory(MemoryLayout)
-add_subdirectory(Pipelines)
+add_subdirectory(Execution)

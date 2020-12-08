@@ -288,15 +288,15 @@ TEST_F(QueryExecutionTest, filterQuery) {
                     .build();
 
     // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Created);
+    ASSERT_EQ(plan->getStatus(), ExecutableQueryPlan::Created);
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
-    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Deployed);
+    ASSERT_EQ(plan->getStatus(), ExecutableQueryPlan::Deployed);
     plan->start();
-    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Running);
+    ASSERT_EQ(plan->getStatus(), ExecutableQueryPlan::Running);
     WorkerContext workerContext{1};
     plan->getStage(0)->execute(buffer, workerContext);
 

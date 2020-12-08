@@ -20,11 +20,11 @@
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <iostream>
 #include <pthread.h>
 #include <string>
@@ -174,7 +174,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     /**
      * @return return the status of a query
      */
-    QueryExecutionPlan::QueryExecutionPlanStatus getQueryStatus(QueryId queryId);
+    ExecutableQueryPlan::QueryExecutionPlanStatus getQueryStatus(QueryId queryId);
 
     /**
     * @brief method to return the query statistics

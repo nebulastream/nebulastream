@@ -49,12 +49,6 @@ typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
 class PipelineContext;
 typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
-class PipelineStage;
-typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
-
-class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
-
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 

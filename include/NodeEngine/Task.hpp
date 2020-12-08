@@ -21,8 +21,8 @@
 namespace NES {
 
 class WorkerContext;
-class PipelineStage;
-typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
+class ExecutablePipeline;
+typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
 
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers

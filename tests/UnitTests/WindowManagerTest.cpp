@@ -38,8 +38,8 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
-#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
@@ -184,7 +184,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(wAbstr);
 
     auto context = std::make_shared<MockedPipelineExecutionContext>();
-    auto nextPipeline = PipelineStage::create(0, 1, MockedExecutablePipelineStage::create(), context, nullptr);
+    auto nextPipeline = ExecutablePipeline::create(0, 1, MockedExecutablePipelineStage::create(), context, nullptr);
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(w)
@@ -256,7 +256,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
         windowDef, exec, windowOutputSchema);
     auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
-    auto nextPipeline = PipelineStage::create(/*PipelineStageId*/0, /*QueryID*/1,
+    auto nextPipeline = ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
                                               MockedExecutablePipelineStage::create(),
                                               MockedPipelineExecutionContext::create(),
                                               nullptr);
@@ -328,7 +328,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
         windowDef, exec, windowOutputSchema);
     auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
-    auto nextPipeline = PipelineStage::create(/*PipelineStageId*/0, /*QueryID*/1,
+    auto nextPipeline = ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
                                                                  MockedExecutablePipelineStage::create(),
                                                                  MockedPipelineExecutionContext::create(),
                                                                  nullptr);

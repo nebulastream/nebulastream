@@ -17,8 +17,8 @@
 #include <gtest/gtest.h>
 
 #include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
-#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
@@ -229,7 +229,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
         },
         nullptr, nullptr);
     auto executable = std::make_shared<TextExecutablePipeline>();
-    auto pipeline = PipelineStage::create(0, queryId, executable, context, nullptr);
+    auto pipeline = ExecutablePipeline::create(0, queryId, executable, context, nullptr);
     builder.addPipelineStage(pipeline);
     return std::make_tuple(builder.build(), executable);
 }
@@ -253,7 +253,7 @@ TEST_F(EngineTest, teststartDeployStop) {
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
     ASSERT_TRUE(engine->stop());
 
     testOutput();
@@ -266,7 +266,7 @@ TEST_F(EngineTest, testStartDeployUndeployStop) {
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
     ASSERT_TRUE(ptr->undeployQuery(testQueryId));
     ASSERT_TRUE(ptr->stop());
 
@@ -281,10 +281,10 @@ TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep));
     ASSERT_TRUE(ptr->startQuery(testQueryId));
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
     ASSERT_TRUE(ptr->stopQuery(testQueryId));
 
-    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Stopped);
+    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlan::QueryExecutionPlanStatus::Stopped);
 
     ASSERT_TRUE(ptr->unregisterQuery(testQueryId));
     ASSERT_TRUE(ptr->stop());
@@ -315,7 +315,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
         },
         nullptr, nullptr);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
+    auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
 
     GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
@@ -337,7 +337,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
         },
         nullptr, nullptr);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
+    auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
 
     ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
@@ -349,19 +349,19 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
 
     ASSERT_TRUE(engine->stopQuery(1));
     ASSERT_TRUE(engine->stopQuery(2));
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == QueryExecutionPlan::QueryExecutionPlanStatus::Stopped);
-    ASSERT_TRUE(engine->getQueryStatus(2) == QueryExecutionPlan::QueryExecutionPlanStatus::Stopped);
+    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlan::QueryExecutionPlanStatus::Stopped);
+    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlan::QueryExecutionPlanStatus::Stopped);
 
     ASSERT_TRUE(!engine->stop());
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
-    ASSERT_TRUE(engine->getQueryStatus(2) == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
+    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlan::QueryExecutionPlanStatus::Invalid);
+    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlan::QueryExecutionPlanStatus::Invalid);
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
@@ -390,7 +390,7 @@ TEST_F(EngineTest, testParallelSameSource) {
         },
         nullptr, nullptr);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
+    auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
 
     GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
@@ -412,7 +412,7 @@ TEST_F(EngineTest, testParallelSameSource) {
         },
         nullptr, nullptr);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
+    auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
 
     ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
@@ -424,8 +424,8 @@ TEST_F(EngineTest, testParallelSameSource) {
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
 
     ASSERT_TRUE(engine->undeployQuery(1));
     ASSERT_TRUE(engine->undeployQuery(2));
@@ -458,7 +458,7 @@ TEST_F(EngineTest, testParallelSameSink) {
         },
         nullptr, nullptr);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
+    auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
 
     GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
@@ -479,7 +479,7 @@ TEST_F(EngineTest, testParallelSameSink) {
         },
         nullptr, nullptr);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
+    auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
 
     ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
@@ -491,8 +491,8 @@ TEST_F(EngineTest, testParallelSameSink) {
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
 
     ASSERT_TRUE(engine->undeployQuery(1));
     ASSERT_TRUE(engine->undeployQuery(2));
@@ -523,7 +523,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
         },
         nullptr, nullptr);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
+    auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
 
     GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
@@ -543,7 +543,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
         },
         nullptr, nullptr);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
+    auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
 
     ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
@@ -555,8 +555,8 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
 
     ASSERT_TRUE(engine->undeployQuery(1));
     ASSERT_TRUE(engine->undeployQuery(2));
@@ -573,13 +573,13 @@ TEST_F(EngineTest, testStartStopStartStop) {
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
     pipeline->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlan::QueryExecutionPlanStatus::Running);
 
     ASSERT_TRUE(engine->undeployQuery(testQueryId));
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlan::QueryExecutionPlanStatus::Invalid);
 
     ASSERT_TRUE(engine->stop());
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == QueryExecutionPlan::QueryExecutionPlanStatus::Invalid);
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlan::QueryExecutionPlanStatus::Invalid);
     testOutput();
 }
 }// namespace NES

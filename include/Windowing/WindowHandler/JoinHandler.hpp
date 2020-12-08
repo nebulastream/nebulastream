@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
-#include <NodeEngine/Pipelines/PipelineStage.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
