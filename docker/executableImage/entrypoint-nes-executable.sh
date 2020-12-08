@@ -17,7 +17,7 @@
 
 if [ $# -eq 0 ]
 then
-    /opt/local/nebula-stream/nesCoordinator --serverIp=$serverIp --restPort=$restPort --coordinatorPort=$coordinatorPort \
+    /opt/local/nebula-stream/nesCoordinator --coordinatorIp=$coordinatorIp --coordinatorPort=$coordinatorPort --restIp=$restIp --restPort=$restPort \
                                             --enableQueryMerging=$enableQueryMerging &
     sleep 5s
     /opt/local/nebula-stream/nesWorker --coordinatorPort=$coordinatorPort --sourceType=$sourceType --sourceConfig=$sourceConfig \
