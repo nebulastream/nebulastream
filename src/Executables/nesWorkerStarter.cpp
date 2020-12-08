@@ -108,9 +108,9 @@ int main(int argc, char** argv) {
         "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
         "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
         "numWorkerThreads", po::value<uint16_t>(&numWorkerThreads)->default_value(numWorkerThreads),
-        "Set the number of worker threads.")(
-        "configPath", po::value<std::string>(&configPath)->default_value(configPath),
-        "Path to the NES Coordinator Configurations YAML file.")("help", "Display help message");
+        "Set the number of worker threads.")("configPath", po::value<std::string>(&configPath)->default_value(configPath),
+                                             "Path to the NES Coordinator Configurations YAML file.")("help",
+                                                                                                      "Display help message");
 
     /* Parse parameters. */
     po::variables_map vm;
@@ -122,16 +122,15 @@ int main(int argc, char** argv) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     if (vm.count("help")) {
-        NES_INFO("Basic Command Line Parameter ");
-        NES_INFO(desc);
+        std::cout << "Basic Command Line Parameter " << std::endl;
+        std::cout << desc << std::endl;
         return 0;
     }
 
     if (!configPath.empty()) {
-        NES_INFO("NESWORKERSTARTER: Using config file with path: " << configPath << " .");
+        std::cout << "NESWORKERSTARTER: Using config file with path: " << configPath << " ." << std::endl;
         struct stat buffer {};
         if (stat(configPath.c_str(), &buffer) == -1) {
             std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configPath << '\n';
@@ -151,7 +150,6 @@ int main(int argc, char** argv) {
         sourceConfig = config["sourceConfig"].As<string>();
         sourceFrequency = config["sourceFrequency"].As<uint16_t>();
         endlessRepeat = config["endlessRepeat"].As<string>();
-        ;
         skipHeader = config["skipHeader"].As<bool>();
         numberOfBuffersToProduce = config["numberOfBuffersToProduce"].As<uint16_t>();
         numberOfTuplesToProducePerBuffer = config["numberOfTuplesToProducePerBuffer"].As<uint32_t>();
@@ -160,13 +158,18 @@ int main(int argc, char** argv) {
         logicalStreamName = config["logicalStreamName"].As<string>();
         parentId = config["parentId"].As<string>();
         logLevel = config["logLevel"].As<string>();
-        numberOfSlots = config["numberOfSlots"].As<uint16_t>();
+        if (config["numberOfSlots"].As<uint16_t>() != 0) {
+            numberOfSlots = config["numberOfSlots"].As<uint16_t>();
+        }
         numWorkerThreads = config["numWorkerThreads"].As<uint16_t>();
 
-        NES_INFO("NESWORKERSTARTER: Read Worker Config. rpcPort: " << rpcPort << " , dataPort: " << zmqDataPort
-                     << " , logLevel: " << logLevel << " coordinatorIp: " << coordinatorIp << " localWorkerIp: " << localWorkerIp
-                     << " coordinatorPort: " << coordinatorPort << ":sourceType: " << sourceType << " sourceConfig: " << sourceConfig);
+        std::cout << "NESWORKERSTARTER: Read Worker Config. rpcPort: " << rpcPort << " , dataPort: " << zmqDataPort
+                  << " , logLevel: " << logLevel << " coordinatorIp: " << coordinatorIp << " localWorkerIp: " << localWorkerIp
+                  << " coordinatorPort: " << coordinatorPort << ":sourceType: " << sourceType << " sourceConfig: " << sourceConfig
+                  << std::endl;
     }
+
+    NES::setupLogging("nesWorkerStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     NES_INFO("NESWORKERSTARTER: Start with port=" << rpcPort << "localport=" << rpcPort << " pid=" << getpid());
 
