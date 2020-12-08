@@ -13,6 +13,9 @@ rpcPort: 4000
 # Set port exposed for REST endpoints
 restPort: 8081
 
+# Set the data port of the NES Worker
+dataPort: 3001
+
 
 # ~~ Processing Configurations ~~
 # Set the number of computing slots in NES Coordinator

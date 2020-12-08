@@ -53,6 +53,7 @@ int main(int argc, const char* argv[]) {
     // Initializing defaults
     uint16_t restPort = 8081;
     uint16_t rpcPort = 4000;
+    uint16_t dataPort = 3001;
     std::string restIp = "127.0.0.1";
     std::string coordinatorIp = "127.0.0.1";
     std::string logLevel = "LOG_DEBUG";
@@ -70,6 +71,7 @@ int main(int argc, const char* argv[]) {
                                 "Set NES ip of the REST server (default: 127.0.0.1).")(
         "coordinatorIp", po::value<std::string>(&coordinatorIp)->default_value(coordinatorIp),
         "Set NES ip for internal communication regarding zmq and rpc (default: 127.0.0.1).")(
+        "dataPort", po::value<uint16_t>(&dataPort)->default_value(dataPort), "Set NES data server port (default: 0).")(
         "restPort", po::value<uint16_t>(&restPort), "Set NES REST server port (default: 8081).")(
         "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort), "Set NES rpc server port (default: 4000).")(
         "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
@@ -91,16 +93,15 @@ int main(int argc, const char* argv[]) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     if (vm.count("help")) {
-        NES_INFO("Basic Command Line Parameter ");
-        NES_INFO(serverOptions);
+        std::cout << "Basic Command Line Parameter " << std::endl;
+        std::cout << serverOptions << std::endl;
         return 0;
     }
 
     if (!configPath.empty()) {
-        NES_INFO("NESWORKERSTARTER: Using config file with path: " << configPath << " .");
+        std::cout <<"NESWORKERSTARTER: Using config file with path: " << configPath << " ." << std::endl;
         struct stat buffer {};
         if (stat(configPath.c_str(), &buffer) == -1) {
             std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configPath << '\n';
@@ -112,12 +113,17 @@ int main(int argc, const char* argv[]) {
         // Initializing IPs and Ports
         restPort = config["restPort"].As<uint16_t>();
         rpcPort = config["rpcPort"].As<uint16_t>();
+        dataPort = config["dataPort"].As<uint16_t>();
         restIp = config["restIp"].As<string>();
         coordinatorIp = config["coordinatorIp"].As<string>();
-        numberOfSlots = config["numberOfSlots"].As<uint16_t>();
+        if (config["numberOfSlots"].As<uint16_t>() != 0){
+            numberOfSlots = config["numberOfSlots"].As<uint16_t>();
+        }
         enableQueryMerging = config["enableQueryMerging"].As<bool>();
         logLevel = config["logLevel"].As<string>();
     }
+
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     NES_INFO("Read Coordinator Config. restPort: " << restPort << " , rpcPort: " << rpcPort << " , logLevel: " << logLevel
               << " restIp: " << restIp << " rpcIp: " << coordinatorIp << " enableQueryMerging: " << enableQueryMerging);
