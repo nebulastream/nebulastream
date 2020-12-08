@@ -48,21 +48,21 @@ bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerConte
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << parentPlanId);
     //    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Created, "Setup : parent plan not running on net sink " << nesPartition);
-    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(parentPlanId, Initialize, this));
+    queryManager->addReconfigurationTask(parentPlanId, NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this));
 }
 
 void NetworkSink::shutdown() {
     NES_DEBUG("NetworkSink: shutdown() called " << nesPartition.toString() << " qep " << parentPlanId);
-    queryManager->addReconfigurationTask(parentPlanId, ReconfigurationTask(parentPlanId, Destroy, this), true);
+    queryManager->addReconfigurationTask(parentPlanId, NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Destroy, this), true);
 }
 
 const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
-void NetworkSink::reconfigure(ReconfigurationTask& task, WorkerContext& workerContext) {
+void NetworkSink::reconfigure(NodeEngine::ReconfigurationTask& task, WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << parentPlanId);
     Reconfigurable::reconfigure(task, workerContext);
     switch (task.getType()) {
-        case Initialize: {
+        case NodeEngine::Initialize: {
             //            NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Running, "parent plan not running on net sink " << nesPartition);
             auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
@@ -71,7 +71,7 @@ void NetworkSink::reconfigure(ReconfigurationTask& task, WorkerContext& workerCo
                                                                       << NesThread::getId());
             break;
         }
-        case Destroy: {
+        case NodeEngine::Destroy: {
             workerContext.releaseChannel(nesPartition.getOperatorId());
             NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
                                                                         << NesThread::getId());

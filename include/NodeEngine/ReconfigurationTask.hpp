@@ -23,7 +23,7 @@
 #include <Util/ThreadBarrier.hpp>
 #include <memory>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 /**
  * @brief this class contains the description of the reconfiguration that

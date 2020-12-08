@@ -30,7 +30,7 @@ enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
  */
-class SinkMedium : public Reconfigurable {
+class SinkMedium : public NodeEngine::Reconfigurable {
 
   public:
     /**

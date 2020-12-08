@@ -24,6 +24,10 @@ class TupleBuffer;
 class WorkerContext;
 typedef WorkerContext& WorkerContextRef;
 
+class BufferManager;
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
+
 namespace NodeEngine{
 
 class NodeEngine;
@@ -34,6 +38,8 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class QueryStatistics;
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
+
+class ReconfigurationTask;
 
 namespace Execution{
 

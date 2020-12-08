@@ -26,10 +26,6 @@
 #include <optional>
 #include <thread>
 namespace NES {
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class TupleBuffer;
 
 enum SourceType {
     OPC_SOURCE,
@@ -56,7 +52,7 @@ enum SourceType {
 *  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
 */
 
-class DataSource : public Reconfigurable {
+class DataSource : public NodeEngine::Reconfigurable {
   public:
     /**
      * @brief public constructor for data source

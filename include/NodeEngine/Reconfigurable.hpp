@@ -18,13 +18,9 @@
 #define NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_
 
 #include <NodeEngine/ReconfigurationType.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
-namespace NES {
-
-class WorkerContext;
-typedef WorkerContext& WorkerContextRef;
-
-class ReconfigurationTask;
+namespace NES::NodeEngine {
 
 /**
  * @brief Nes components that require to be reconfigured at runtime need to
