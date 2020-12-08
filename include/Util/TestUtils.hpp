@@ -55,7 +55,7 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    static bool checkCompleteOrTimeout(NodeEnginePtr ptr, QueryId queryId, uint64_t expectedResult) {
+    static bool checkCompleteOrTimeout(NodeEngine::NodeEnginePtr ptr, QueryId queryId, uint64_t expectedResult) {
         if (ptr->getQueryStatistics(queryId).empty()) {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;

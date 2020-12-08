@@ -18,12 +18,10 @@
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SINKS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Sources/DataSource.hpp>
 
 namespace NES {
-
-class NodeEngine;
-typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
 /**
  * @brief This class is responsible for creating logical source descriptor to physical source.
@@ -36,7 +34,7 @@ class ConvertLogicalToPhysicalSource {
      * @param sourceDescriptor : the logical source desciptor
      * @return Data source pointer for the physical source
      */
-    static DataSourcePtr createDataSource(SourceDescriptorPtr sourceDescriptor, NodeEnginePtr nodeEngine);
+    static DataSourcePtr createDataSource(SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine);
 
   private:
     ConvertLogicalToPhysicalSource() = default;

@@ -23,12 +23,12 @@ namespace NES {
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(QueryId queryId, QuerySubPlanId querySubPlanId,
                                                          std::vector<DataSourcePtr>&& sources, std::vector<DataSinkPtr>&& sinks,
-                                                         std::vector<PipelineStagePtr>&& stages, QueryManagerPtr&& queryManager,
+                                                         std::vector<NodeEngine::Execution::ExecutablePipelinePtr>&& pipelines, QueryManagerPtr&& queryManager,
                                                          BufferManagerPtr&& bufferManager)
-    : ExecutableQueryPlan(queryId, querySubPlanId, std::move(sources), std::move(sinks), std::move(stages),
+    : NodeEngine::Execution::ExecutableQueryPlan(queryId, querySubPlanId, std::move(sources), std::move(sinks), std::move(pipelines),
                          std::move(queryManager), std::move(bufferManager)) {
     // sanity checks
-    for (auto& stage : this->stages) {
+    for (auto& stage : this->pipelines) {
         NES_ASSERT(!!stage, "Invalid stage");
     }
 }

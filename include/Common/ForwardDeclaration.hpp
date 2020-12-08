@@ -24,20 +24,11 @@ namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
-
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
-
-class GeneratedQueryExecutionPlan;
-typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;
-
-class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
 
 class QueryCompiler;
 typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;

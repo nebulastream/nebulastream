@@ -33,7 +33,7 @@
 
 namespace NES {
 
-DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorPtr sourceDescriptor, NodeEnginePtr nodeEngine) {
+DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine) {
 
     NES_ASSERT(nodeEngine, "invalid engine");
     BufferManagerPtr bufferManager = nodeEngine->getBufferManager();

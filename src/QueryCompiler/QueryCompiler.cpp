@@ -53,7 +53,7 @@ namespace detail {
 class PipelineStageHolder {
   public:
     uint32_t currentStageId;
-    ExecutablePipelineStagePtr executablePipelineStage;
+    NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage;
     Windowing::AbstractWindowHandlerPtr windowHandler;
     Join::AbstractJoinHandlerPtr joinHandler;
     std::set<uint32_t> producers;
@@ -62,7 +62,7 @@ class PipelineStageHolder {
   public:
     PipelineStageHolder() = default;
 
-    PipelineStageHolder(uint32_t currentStageId, ExecutablePipelineStagePtr executablePipelineStage,
+    PipelineStageHolder(uint32_t currentStageId, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                         Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler)
         : currentStageId(currentStageId), executablePipelineStage(std::move(executablePipelineStage)),
           windowHandler(std::move(windowHandler)), joinHandler(std::move(joinHandler)) {
@@ -132,17 +132,17 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
         NES_THROW_RUNTIME_ERROR("No pipelines generated");
     }
 
-    std::map<uint32_t, PipelineStagePtr> pipelines;
+    std::map<uint32_t, NodeEngine::Execution::ExecutablePipelinePtr> pipelines;
     for (auto it = executableStages.rbegin(), last = executableStages.rend(); it != last; ++it) {
         auto& [stageId, holder] = *it;
-        QueryExecutionContextPtr executionContext;
+        NodeEngine::Execution::PipelineExecutionContextPtr executionContext;
         if (!holder.consumers.empty()) {
             // invoke next pipeline
-            std::vector<PipelineStagePtr> childPipelines;
+            std::vector<NodeEngine::Execution::ExecutablePipelinePtr> childPipelines;
             for (auto childStageId : holder.consumers) {
                 childPipelines.emplace_back(pipelines[childStageId]);
             }
-            executionContext = std::make_shared<PipelineExecutionContext>(
+            executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
                 [childPipelines](TupleBuffer& buffer, WorkerContextRef workerContext) {
                     for (auto& childPipeline : childPipelines) {
@@ -157,7 +157,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 NES_ERROR("compilePipelineStages failure: no sinks for " << builder.getQueryId());
                 NES_THROW_RUNTIME_ERROR("No sinks available in query plan");
             }
-            executionContext = std::make_shared<PipelineExecutionContext>(
+            executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
                 [sinks](TupleBuffer& buffer, WorkerContextRef workerContext) {
                     for (auto& sink : sinks) {
@@ -166,12 +166,12 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 },
                 holder.windowHandler, holder.joinHandler);
         }
-        PipelineStagePtr pipelineStage =
-            ExecutablePipeline::create(stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage,
-                                                               executionContext, pipelines[*holder.consumers.begin()]);
+        auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(stageId, builder.getQuerySubPlanId(),
+                                                                          holder.executablePipelineStage, executionContext,
+                                                                          pipelines[*holder.consumers.begin()]);
 
-        builder.addPipelineStage(pipelineStage);
-        pipelines[stageId] = pipelineStage;
+        builder.addPipeline(pipeline);
+        pipelines[stageId] = pipeline;
     }
 }
 

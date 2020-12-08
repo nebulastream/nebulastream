@@ -20,6 +20,9 @@
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -262,7 +265,7 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 
 TEST_F(QueryExecutionTest, filterQuery) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -288,15 +291,15 @@ TEST_F(QueryExecutionTest, filterQuery) {
                     .build();
 
     // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), ExecutableQueryPlan::Created);
-    EXPECT_EQ(plan->numberOfPipelineStages(), 1);
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
+    EXPECT_EQ(plan->getNumberOfPipelines(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
-    ASSERT_EQ(plan->getStatus(), ExecutableQueryPlan::Deployed);
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start();
-    ASSERT_EQ(plan->getStatus(), ExecutableQueryPlan::Running);
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
     WorkerContext workerContext{1};
     plan->getStage(0)->execute(buffer, workerContext);
 
@@ -841,7 +844,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     uint64_t expectedBuf = 20;
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager(), 1);
@@ -882,7 +885,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     nodeEngine->getQueryManager()->registerQuery(plan);
 
     // The plan should have three pipeline
-    EXPECT_EQ(plan->numberOfPipelineStages(), 3);
+    EXPECT_EQ(plan->getNumberOfPipelines(), 3);
 
     // TODO switch to event time if that is ready to remove sleep
     auto memoryLayout = createRowLayout(testSchema);
@@ -927,7 +930,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
 }
 
 TEST_F(QueryExecutionTest, ysbQueryTest) {
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::create());
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::create());
     int numBuf = 1;
     int numTup = 50;
 

@@ -23,6 +23,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <algorithm>
 #include <atomic>
 #include <iostream>
@@ -69,7 +70,9 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
+    virtual bool setup(QueryManagerPtr queryManager,
+                       BufferManagerPtr bufferManager,
+                       NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
                        uint32_t pipelineStageId, uint64_t originId) = 0;
 
     /**
@@ -169,7 +172,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     LogicalWindowDefinitionPtr windowDefinition;
     std::atomic_bool running{false};
     WindowManagerPtr windowManager;
-    PipelineStagePtr nextPipeline;
+    NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
     uint32_t pipelineStageId;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;

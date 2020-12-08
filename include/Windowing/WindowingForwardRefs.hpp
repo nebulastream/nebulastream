@@ -43,9 +43,6 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
-
 class MemoryLayout;
 typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
 

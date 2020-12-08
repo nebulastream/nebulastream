@@ -46,7 +46,7 @@ const DataSinkPtr createTestSink();
  * @return a data sink pointer
  */
 
-const DataSinkPtr createCSVFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+const DataSinkPtr createCSVFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                     const std::string& filePath, bool append);
 
 /**
@@ -57,7 +57,7 @@ const DataSinkPtr createCSVFileSink(SchemaPtr schema, QuerySubPlanId parentPlanI
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createTextFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+const DataSinkPtr createTextFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                      const std::string& filePath, bool append);
 
 /**
@@ -68,7 +68,7 @@ const DataSinkPtr createTextFileSink(SchemaPtr schema, QuerySubPlanId parentPlan
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                           const std::string& filePath, bool append);
 
 /**
@@ -79,7 +79,7 @@ const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, QuerySubPlanId paren
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createJSONFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+const DataSinkPtr createJSONFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                      const std::string& filePath, bool append);
 
 /**
@@ -91,7 +91,7 @@ const DataSinkPtr createJSONFileSink(SchemaPtr schema, QuerySubPlanId parentPlan
  * @param internal refers to the usage of this zmq sink as a fwd operator such that we dont have to send the schema, only the data
  * @return a data sink pointer
  */
-const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                     const std::string& host, const uint16_t port);
 #ifdef ENABLE_OPC_BUILD
 /**
@@ -104,7 +104,7 @@ const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanI
  * @param password as string to log in to the OPC server
  * @return a data sink pointer
  */
-const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::string url,
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::string url,
                                 UA_NodeId nodeId, std::string user, std::string password);
 #endif
 /**
@@ -115,7 +115,7 @@ const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, N
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+const DataSinkPtr createCSVZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                    const std::string& host, const uint16_t port);
 
 /**
@@ -126,7 +126,7 @@ const DataSinkPtr createCSVZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
+const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                       const std::string& host, const uint16_t port, bool internal);
 
 /**
@@ -136,7 +136,7 @@ const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, QuerySubPlanId parentPla
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::ostream& out);
+const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::ostream& out);
 
 /**
  * @brief create a print test sink with a schema
@@ -146,7 +146,7 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine, std::ostream& out);
+const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::ostream& out);
 
 /**
  * @brief create a network data sink
@@ -159,7 +159,7 @@ const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlan
  * @return a data sink pointer
  */
 const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, Network::NodeLocation nodeLocation,
-                                    Network::NesPartition nesPartition, NodeEnginePtr nodeEngine,
+                                    Network::NesPartition nesPartition, NodeEngine::NodeEnginePtr nodeEngine,
                                     std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
 
 #ifdef ENABLE_KAFKA_BUILD

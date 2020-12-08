@@ -17,48 +17,31 @@
 #ifndef INCLUDE_QUERY_MANAGER__H_
 #define INCLUDE_QUERY_MANAGER__H_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
+#include <NodeEngine/QueryStatistics.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/ReconfigurationTask.hpp>
+#include <NodeEngine/Task.hpp>
 #include <NodeEngine/ThreadPool.hpp>
+#include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Sources/DataSource.hpp>
+#include <Util/ThreadBarrier.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
+#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <thread>
 #include <unordered_set>
 
-#include <NodeEngine/QueryStatistics.hpp>
-#include <NodeEngine/Reconfigurable.hpp>
-#include <NodeEngine/ReconfigurationTask.hpp>
-#include <NodeEngine/Task.hpp>
-#include <Sources/DataSource.hpp>
-#include <Util/ThreadBarrier.hpp>
-#include <Util/libcuckoo/cuckoohash_map.hh>
-#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <memory>
-
 namespace NES {
-
-class TupleBuffer;
-
-class CompiledExecutablePipeline;
-typedef std::shared_ptr<CompiledExecutablePipeline> CompiledExecutablePipelinePtr;
-
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
-class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
-
-class ExecutablePipelineStage;
-typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
-
 
 /**
  * @brief the query manager is the central class to process queries.
@@ -91,7 +74,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * respective map
      * @param QueryExecutionPlan to be deployed
      */
-    bool registerQuery(QueryExecutionPlanPtr qep);
+    bool registerQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -99,7 +82,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param QueryExecutionPlan to be deployed
      * @return bool indicating if register was successful
      */
-    bool deregisterQuery(QueryExecutionPlanPtr qep);
+    bool deregisterQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief process task from task queue
@@ -124,7 +107,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param Pointer to the tuple buffer containing the data
      * @param Pointer to the pipeline stage that will be executed next
      */
-    void addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr nextPipeline);
+    void addWorkForNextPipeline(TupleBuffer& buffer, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline);
 
     void destroyCallback(ReconfigurationTask& task) override;
 
@@ -135,7 +118,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param id : the query sub plan id
      * @return status of the query sub plan
      */
-    ExecutableQueryPlan::QueryExecutionPlanStatus getQepStatus(QuerySubPlanId id);
+    NodeEngine::Execution::ExecutableQueryPlanStatus getQepStatus(QuerySubPlanId id);
 
     /**
      * @brief get general statistics of QueryManager and Buffer Manager
@@ -147,14 +130,14 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(QueryExecutionPlanPtr qep);
+    bool startQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief method to start a query
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool stopQuery(QueryExecutionPlanPtr qep);
+    bool stopQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and try again
@@ -189,7 +172,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
 
   private:
     friend class ThreadPool;
-    friend class NodeEngine;
+    friend class NodeEngine::NodeEngine;
     /**
     * @brief method to start the thread pool
     * @param nodeEngineId the id of the owning node engine
@@ -212,12 +195,12 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     std::deque<Task> taskQueue;
     ThreadPoolPtr threadPool;
 
-    std::map<OperatorId, std::unordered_set<QueryExecutionPlanPtr>> operatorIdToQueryMap;
+    std::map<OperatorId, std::unordered_set<NodeEngine::Execution::ExecutableQueryPlanPtr>> operatorIdToQueryMap;
     std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
     std::map<OperatorId, uint64_t> operatorIdToPipelineStage;
 
-    std::unordered_map<QuerySubPlanId, QueryExecutionPlanPtr> runningQEPs;
+    std::unordered_map<QuerySubPlanId, NodeEngine::Execution::ExecutableQueryPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
@@ -229,7 +212,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     std::condition_variable cv;
 
     BufferManagerPtr bufferManager;
-    ExecutablePipelineStagePtr reconfigurationExecutable;
+    NodeEngine::Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 
     uint64_t nodeEngineId;
 

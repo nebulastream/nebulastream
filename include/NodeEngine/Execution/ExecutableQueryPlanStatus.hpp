@@ -14,21 +14,18 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-namespace NES::NodeEngine::Execution{
-
-uint32_t ExecutablePipelineStage::setup(PipelineExecutionContext&) { return 0; }
-
-uint32_t ExecutablePipelineStage::start(PipelineExecutionContext&) { return 0; }
-
-uint32_t ExecutablePipelineStage::open(PipelineExecutionContext&, WorkerContext&) {
-    return 0;
+#ifndef NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
+#define NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
+namespace NES::NodeEngine::Execution {
+enum ExecutableQueryPlanStatus {
+    Created,
+    Deployed,// Created->Deployed when calling setup()
+    Running, // Deployed->Running when calling start()
+    Finished,
+    Stopped,// Running->Stopped when calling stop() and in Running state
+    ErrorState,
+    Invalid
+};
 }
 
-uint32_t ExecutablePipelineStage::close(PipelineExecutionContext&, WorkerContext&) {
-    return 0;
-}
-
-uint32_t ExecutablePipelineStage::stop(PipelineExecutionContext&) { return 0; }
-
-}// namespace NES
+#endif//NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_

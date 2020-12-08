@@ -44,7 +44,7 @@ class GeneratedQueryExecutionPlanBuilder {
      * @param pipelineStagePtr
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& addPipelineStage(PipelineStagePtr pipelineStagePtr);
+    GeneratedQueryExecutionPlanBuilder& addPipeline(NodeEngine::Execution::ExecutablePipelinePtr pipeline);
 
     /**
      * @brief configure buffer manager
@@ -101,7 +101,7 @@ class GeneratedQueryExecutionPlanBuilder {
     /**
      * @return a query execution plan with the specified configuration
      */
-    QueryExecutionPlanPtr build();
+    NodeEngine::Execution::ExecutableQueryPlanPtr build();
 
     /**
      * @brief configure query compiler
@@ -161,7 +161,7 @@ class GeneratedQueryExecutionPlanBuilder {
     QueryCompilerPtr queryCompiler;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
-    std::vector<PipelineStagePtr> stages;
+    std::vector<NodeEngine::Execution::ExecutablePipelinePtr> pipelines;
     std::vector<OperatorNodePtr> leaves;
 };
 }// namespace NES

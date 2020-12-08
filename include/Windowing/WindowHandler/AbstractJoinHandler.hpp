@@ -25,6 +25,7 @@
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <algorithm>
 #include <atomic>
 #include <iostream>
@@ -73,7 +74,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
+    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
                        uint32_t pipelineStageId, uint64_t originId) = 0;
 
     /**
@@ -207,7 +208,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     LogicalJoinDefinitionPtr joinDefinition;
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
-    PipelineStagePtr nextPipeline;
+    NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
     uint32_t pipelineStageId;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;

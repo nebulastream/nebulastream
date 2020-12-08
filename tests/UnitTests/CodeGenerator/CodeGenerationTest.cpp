@@ -87,7 +87,7 @@ class CodeGenerationTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down CodeGenerationTest test class." << std::endl; }
 };
 
-class TestPipelineExecutionContext : public PipelineExecutionContext {
+class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
     TestPipelineExecutionContext(BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler, AbstractWindowHandlerPtr)
         : PipelineExecutionContext(
@@ -331,10 +331,10 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6262, streamConf);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf);
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NES::TupleBuffer");
-    auto pipelineExecutionContextType = tf.createAnonymusDataType("NES::PipelineExecutionContext");
+    auto pipelineExecutionContextType = tf.createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
     auto workerContextType = tf.createAnonymusDataType("NES::WorkerContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
@@ -446,8 +446,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     fileB.addDeclaration(structDeclTuple.copy());
     fileB.addDeclaration(structDeclResultTuple.copy());
 
-    auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage0");
-    executablePipeline->addBaseClass("ExecutablePipelineStage");
+    auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage1");
+    executablePipeline->addBaseClass("NodeEngine::Execution::ExecutablePipelineStage");
     executablePipeline->addMethod(ClassDefinition::Public, mainFunction);
 
     auto executablePipelineDeclaration = executablePipeline->getDeclaration();
@@ -459,7 +459,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     createFunction->addStatement(returnStatement);
     ;
     createFunction->returns(
-        SharedPointerGen::createSharedPtrType(CompilerTypesFactory().createAnonymusDataType("ExecutablePipelineStage")));
+        SharedPointerGen::createSharedPtrType(CompilerTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 

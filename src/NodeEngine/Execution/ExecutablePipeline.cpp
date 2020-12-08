@@ -15,24 +15,24 @@
 */
 
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
+#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::NodeEngine::Execution {
 
-ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId,
-                             QuerySubPlanId qepId,
-                             ExecutablePipelineStagePtr executablePipelineStage,
-                             QueryExecutionContextPtr pipelineExecutionContext,
-                             PipelineStagePtr nextPipelineStage)
+ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId qepId,
+                                       ExecutablePipelineStagePtr executablePipelineStage,
+                                       PipelineExecutionContextPtr pipelineExecutionContext, ExecutablePipelinePtr nextPipeline)
     : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
-      nextStage(std::move(nextPipelineStage)), pipelineContext(std::move(pipelineExecutionContext)) {
+      nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
@@ -48,11 +48,11 @@ bool ExecutablePipeline::setup(QueryManagerPtr queryManager, BufferManagerPtr bu
     executablePipelineStage->setup(*pipelineContext.get());
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::setup windowHandler");
-        return pipelineContext->getWindowHandler()->setup(queryManager, bufferManager, nextStage, pipelineStageId, qepId);
+        return pipelineContext->getWindowHandler()->setup(queryManager, bufferManager, nextPipeline, pipelineStageId, qepId);
     }
     if (hasJoinHandler()) {
         NES_DEBUG("PipelineStage::setup joinHandler");
-        return pipelineContext->getJoinHandler()->setup(queryManager, bufferManager, nextStage, pipelineStageId, qepId);
+        return pipelineContext->getJoinHandler()->setup(queryManager, bufferManager, nextPipeline, pipelineStageId, qepId);
     }
     return true;
 }
@@ -94,7 +94,7 @@ bool ExecutablePipeline::stop() {
     return true;
 }
 
-PipelineStagePtr ExecutablePipeline::getNextStage() { return nextStage; }
+ExecutablePipelinePtr ExecutablePipeline::getNextPipeline() { return nextPipeline; }
 
 uint32_t ExecutablePipeline::getPipeStageId() { return pipelineStageId; }
 
@@ -106,11 +106,11 @@ bool ExecutablePipeline::hasJoinHandler() { return pipelineContext->getJoinHandl
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
-PipelineStagePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
-                                       ExecutablePipelineStagePtr executablePipelineStage, QueryExecutionContextPtr pipelineContext,
-                                       const PipelineStagePtr nextPipelineStage) {
+ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
+                                            ExecutablePipelineStagePtr executablePipelineStage,
+                                              PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline) {
     return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
-                                           nextPipelineStage);
+                                                nextPipeline);
 }
 
-}// namespace NES
+}// namespace NES::NodeEngine::Execution

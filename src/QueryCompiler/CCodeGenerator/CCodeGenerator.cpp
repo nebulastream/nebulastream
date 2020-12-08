@@ -123,7 +123,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     auto tf = getTypeFactory();
     /* === declarations === */
     auto tupleBufferType = tf->createAnonymusDataType("NES::TupleBuffer");
-    auto pipelineExecutionContextType = tf->createAnonymusDataType("NES::PipelineExecutionContext");
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
     auto workerContextType = tf->createAnonymusDataType("NES::WorkerContext");
     VariableDeclaration varDeclarationInputBuffer =
         VariableDeclaration::create(tf->createReference(tupleBufferType), "inputTupleBuffer");
@@ -1188,7 +1188,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 
 
     auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage" + context->pipelineName);
-    executablePipeline->addBaseClass("ExecutablePipelineStage");
+    executablePipeline->addBaseClass("NodeEngine::Execution::ExecutablePipelineStage");
     executablePipeline->addMethod(ClassDefinition::Public, functionBuilder);
 
     auto executablePipelineDeclaration = executablePipeline->getDeclaration();
@@ -1201,7 +1201,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     auto returnStatement = ReturnStatement::create(SharedPointerGen::makeShared(executablePipelineDeclaration->getType()));
     createFunction->addStatement(returnStatement);
    ;
-    createFunction->returns(SharedPointerGen::createSharedPtrType( CompilerTypesFactory().createAnonymusDataType("ExecutablePipelineStage")));
+    createFunction->returns(SharedPointerGen::createSharedPtrType( CompilerTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file  =  fileBuilder
         .addDeclaration(pipelineNamespace->getDeclaration()).build();
@@ -1211,7 +1211,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 
 
 
-ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
+NodeEngine::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
     std::string src = generateCode(code);
     auto compiledCode = compiler->compile(src, true /*debugging flag replace later*/);
     return CompiledExecutablePipelineStage::create(compiledCode);

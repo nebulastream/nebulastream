@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
 #include <Windowing/WindowingForwardRefs.hpp>
-
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
@@ -32,7 +32,7 @@ class BaseExecutableWindowAction {
 
     virtual std::string toString() = 0;
 
-    void setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint64_t originId) {
+    void setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline, uint64_t originId) {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->nextPipeline = nextPipeline;
@@ -44,7 +44,7 @@ class BaseExecutableWindowAction {
   protected:
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
-    PipelineStagePtr nextPipeline;
+    NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
     uint64_t originId;
     SchemaPtr windowSchema;
 };

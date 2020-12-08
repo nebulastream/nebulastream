@@ -17,6 +17,7 @@
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
@@ -24,29 +25,15 @@
 #include <memory>
 #include <vector>
 
-namespace NES {
-class TupleBuffer;
-class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
-
-class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
-
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
-class PipelineExecutionContext;
-typedef std::shared_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
-
-class ExecutablePipelineStage;
-typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
-
-typedef WorkerContext& WorkerContextRef;
+namespace NES::NodeEngine::Execution {
 
 class ExecutablePipeline {
   public:
-    ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
-                  QueryExecutionContextPtr pipelineContext, PipelineStagePtr nextPipelineStage);
+    ExecutablePipeline(uint32_t pipelineStageId,
+                       QuerySubPlanId qepId,
+                       ExecutablePipelineStagePtr  executablePipelineStage,
+                       PipelineExecutionContextPtr pipelineContext,
+                       ExecutablePipelinePtr nextPipeline);
 
     /**
      * @brief Execute a pipeline stage
@@ -78,7 +65,7 @@ class ExecutablePipeline {
      * @brief Get next pipeline stage
      * @return
      */
-    PipelineStagePtr getNextStage();
+    ExecutablePipelinePtr getNextPipeline();
 
     /**
     * @brief Get id of pipeline stage
@@ -96,23 +83,23 @@ class ExecutablePipeline {
     bool isReconfiguration() const;
 
   public:
-    static PipelineStagePtr create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
-                                   ExecutablePipelineStagePtr executablePipelineStage, QueryExecutionContextPtr pipelineContext,
-                                   const PipelineStagePtr nextPipelineStage);
+    static ExecutablePipelinePtr create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
+                                   ExecutablePipelineStagePtr executablePipelineStage, PipelineExecutionContextPtr pipelineContext,
+                                   const ExecutablePipelinePtr nextPipelineStage);
 
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;
     ExecutablePipelineStagePtr executablePipelineStage;
-    PipelineStagePtr nextStage;
-    QueryExecutionContextPtr pipelineContext;
+    ExecutablePipelinePtr nextPipeline;
+    PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
 
   public:
     bool hasWindowHandler();
     bool hasJoinHandler();
 };
-typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
+
 
 class CompiledCode;
 typedef std::shared_ptr<CompiledCode> CompiledCodePtr;

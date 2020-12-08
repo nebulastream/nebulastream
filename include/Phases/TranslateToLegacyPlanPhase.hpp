@@ -33,9 +33,6 @@ typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 class UserAPIExpression;
 typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 
-class NodeEngine;
-typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
-
 /**
  * @brief Translates a logical query plan to the legacy operator tree
  */

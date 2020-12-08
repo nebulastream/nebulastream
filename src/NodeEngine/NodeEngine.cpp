@@ -17,6 +17,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -34,12 +35,15 @@
 #include <Util/UtilityFunctions.hpp>
 #include <string>
 
-using namespace std;
-namespace NES {
+namespace NES::NodeEngine {
+
+NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
+    return NodeEngine::create(hostname, port, config);
+}
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
-std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
+NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
                                                uint16_t numThreads, uint64_t bufferSize, uint64_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
@@ -108,7 +112,7 @@ NodeEngine::~NodeEngine() {
     stop();
 }
 
-bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan) {
+bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << queryExecutionPlan);
     bool successRegister = registerQueryInNodeEngine(queryExecutionPlan);
@@ -188,7 +192,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     }
 }
 
-bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan) {
+bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
@@ -222,7 +226,7 @@ bool NodeEngine::startQuery(QueryId queryId) {
     NES_DEBUG("NodeEngine: startQuery=" << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
 
-        vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
             return false;
@@ -268,7 +272,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
     NES_DEBUG("NodeEngine: unregisterQuery query=" << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
 
-        vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
             return false;
@@ -295,7 +299,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine:stopQuery for qep" << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
-        vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
             return false;
@@ -377,13 +381,13 @@ Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManag
 
 QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }
 
-ExecutableQueryPlan::QueryExecutionPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
+Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
-        vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
-            return ExecutableQueryPlan::QueryExecutionPlanStatus::Invalid;
+            return Execution::ExecutableQueryPlanStatus::Invalid;
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
@@ -391,7 +395,7 @@ ExecutableQueryPlan::QueryExecutionPlanStatus NodeEngine::getQueryStatus(QueryId
             return deployedQEPs[querySubPlanId]->getStatus();
         }
     }
-    return ExecutableQueryPlan::QueryExecutionPlanStatus::Invalid;
+    return Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
 void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& buffer) {

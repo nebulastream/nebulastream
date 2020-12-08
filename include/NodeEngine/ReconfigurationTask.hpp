@@ -19,6 +19,7 @@
 
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationType.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <memory>
 

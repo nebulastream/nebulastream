@@ -19,6 +19,7 @@
 #include <memory>
 
 #include <API/Schema.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
@@ -46,9 +47,6 @@ typedef std::shared_ptr<AttributeReference> AttributeReferencePtr;
 class CodeGenerator;
 typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
 
-class PipelineContext;
-typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
-
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
@@ -67,8 +65,8 @@ typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 class GeneratableWindowAggregation;
 typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
 
-class ExecutablePipelineStage;
-typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
+class PipelineContext;
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
 /**
  * @brief The code generator encapsulates the code generation for different operators.
@@ -164,7 +162,7 @@ class CodeGenerator {
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
 
-    virtual ExecutablePipelineStagePtr compile(PipelineContextPtr pipelineContext) = 0;
+    virtual NodeEngine::Execution::ExecutablePipelineStagePtr compile(PipelineContextPtr pipelineContext) = 0;
 
     virtual std::string generateCode(PipelineContextPtr pipelineContext) = 0;
 
