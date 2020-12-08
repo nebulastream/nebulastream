@@ -47,15 +47,11 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp << " << windowOp->toString()");
 
-            /**
-             * @brief FOR DEBUG ONLY TODO CHANGE BACK
-             */
-            createDistributedWindowOperator(windowOp);
-            //            if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
-            //                createCentralWindowOperator(windowOp);
-            //            } else {
-            //                createDistributedWindowOperator(windowOp);
-            //            }
+            if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
+                createCentralWindowOperator(windowOp);
+            } else {
+                createDistributedWindowOperator(windowOp);
+            }
         }
     } else {
         NES_DEBUG("DistributeWindowRule::apply: no window operator in query");

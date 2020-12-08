@@ -921,6 +921,9 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
                 tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
     context->code->variableInitStmts.push_back(std::make_shared<BinaryOperatorStatement>(maxWatermarkInitStatement));
 
+    /**
+   * within the loop
+   */
     // get the value for current watermark
     // auto currentWatermark = record[index].ts - 0;
     auto currentWatermarkVariableDeclaration =
@@ -949,9 +952,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
                                          Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
-    /**
-     * within the loop
-     */
+
     // Check and update max watermark if current watermark is greater than maximum watermark
     // if (currentWatermark > maxWatermark) {
     //     maxWatermark = currentWatermark;
