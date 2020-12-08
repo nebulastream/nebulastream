@@ -101,7 +101,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (!configPath.empty()) {
-        std::cout <<"NESWORKERSTARTER: Using config file with path: " << configPath << " ." << std::endl;
+        std::cout << "NESWORKERSTARTER: Using config file with path: " << configPath << " ." << std::endl;
         struct stat buffer {};
         if (stat(configPath.c_str(), &buffer) == -1) {
             std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configPath << '\n';
@@ -116,7 +116,7 @@ int main(int argc, const char* argv[]) {
         dataPort = config["dataPort"].As<uint16_t>();
         restIp = config["restIp"].As<string>();
         coordinatorIp = config["coordinatorIp"].As<string>();
-        if (config["numberOfSlots"].As<uint16_t>() != 0){
+        if (config["numberOfSlots"].As<uint16_t>() != 0) {
             numberOfSlots = config["numberOfSlots"].As<uint16_t>();
         }
         enableQueryMerging = config["enableQueryMerging"].As<bool>();
@@ -126,13 +126,15 @@ int main(int argc, const char* argv[]) {
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
     NES_INFO("Read Coordinator Config. restPort: " << restPort << " , rpcPort: " << rpcPort << " , logLevel: " << logLevel
-              << " restIp: " << restIp << " rpcIp: " << coordinatorIp << " enableQueryMerging: " << enableQueryMerging);
+                                                   << " restIp: " << restIp << " rpcIp: " << coordinatorIp
+                                                   << " enableQueryMerging: " << enableQueryMerging);
 
     NES_INFO("creating coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(restIp, restPort, coordinatorIp, rpcPort, numberOfSlots, enableQueryMerging);
+    NesCoordinatorPtr crd =
+        std::make_shared<NesCoordinator>(restIp, restPort, coordinatorIp, rpcPort, numberOfSlots, enableQueryMerging);
 
-    NES_INFO("start coordinator with RestIp=" << restIp << " restPort=" << restPort << " rpcIp=" << coordinatorIp << " with rpc port "
-                                              << rpcPort << " numberOfSlots=" << numberOfSlots);
+    NES_INFO("start coordinator with RestIp=" << restIp << " restPort=" << restPort << " rpcIp=" << coordinatorIp
+                                              << " with rpc port " << rpcPort << " numberOfSlots=" << numberOfSlots);
     crd->startCoordinator(/**blocking**/ true);//blocking call
     crd->stopCoordinator(true);
     NES_INFO("coordinator started");

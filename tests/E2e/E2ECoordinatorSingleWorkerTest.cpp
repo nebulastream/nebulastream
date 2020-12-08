@@ -16,11 +16,10 @@
 
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
-#include <filesystem>
-
 
 #define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
