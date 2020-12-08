@@ -55,11 +55,12 @@ NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamC
  */
 class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_shared_from_this<NodeEngine> {
 
-    static constexpr auto DEFAULT_BUFFER_SIZE = 4096;
     static constexpr auto DEFAULT_NUM_BUFFERS = 1024;
     static constexpr auto DEFAULT_NUM_THREADS = 1;
 
   public:
+    static constexpr auto DEFAULT_BUFFER_SIZE = 4096;
+
     enum NodeEngineQueryStatus { started, stopped, registered };
 
     /**
@@ -219,6 +220,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param config : configuration to be set
      */
     void setConfig(AbstractPhysicalStreamConfigPtr config);
+
 
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
