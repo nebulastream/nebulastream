@@ -23,7 +23,9 @@ AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferMana
                                    uint64_t initialFrequency, bool endlessRepeat, OperatorId operatorId)
     : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency, operatorId), numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat),
-      frequency(initialFrequency), freqLastReceived(initialFrequency), freqRange(2) {}
+      frequency(initialFrequency), freqLastReceived(initialFrequency), freqRange(2), kfErrorWindow(20) {
+    calculateTotalEstimationErrorDivider(20);
+}
 
 const std::string AdaptiveKFSource::toString() const { return std::string(); }
 
@@ -40,6 +42,23 @@ void AdaptiveKFSource::decideNewGatheringInterval() {
 
 bool AdaptiveKFSource::desiredFreqInRange() {
     return freqDesired >= (freqLastReceived - (freqRange / 2)) && freqDesired <= (freqLastReceived + (freqRange / 2));
+}
+
+long AdaptiveKFSource::calculateTotalEstimationError() {
+    long j = 1; // eq. 9 iterator
+    long totalError = 0;
+    for (auto errorValue : kfErrorWindow) {
+        totalError += (errorValue / j);
+        ++j;
+    }
+    return totalError / totalEstimationErrorDivider;
+}
+
+void AdaptiveKFSource::calculateTotalEstimationErrorDivider(int size) {
+    totalEstimationErrorDivider = 0;
+    for (int i = 1; i <= size; ++i) {
+        totalEstimationErrorDivider += (1 / i);
+    }
 }
 
 }// namespace NES

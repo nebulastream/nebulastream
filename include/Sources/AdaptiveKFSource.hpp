@@ -18,6 +18,7 @@
 #define INCLUDE_ADAPTIVEKFESTIMATIONSOURCE_HPP_
 
 #include <Sources/AdaptiveSource.hpp>
+#include <Util/CircularBuffer.hpp>
 
 namespace NES {
 
@@ -33,8 +34,10 @@ class AdaptiveKFSource : public AdaptiveSource {
     void sampleSourceAndFillBuffer(TupleBuffer& buffer) override;
     void decideNewGatheringInterval() override;
 
-    // paper equation as method
+    // paper equations as methods
     bool desiredFreqInRange();// eq. 7
+    long calculateTotalEstimationError();// eq. 9
+    void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider)
 
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
@@ -48,6 +51,19 @@ class AdaptiveKFSource : public AdaptiveSource {
     uint64_t frequency;       // currently in use
     uint64_t freqLastReceived;// from coordinator
     uint64_t freqDesired;     // from KF prediction
+
+    /**
+     * @brief buffer of residual error from KF
+     */
+    CircularBuffer<long> kfErrorWindow;
+
+    /**
+     * @brief used in eq. 9 to weight the total
+     * estimation error. Since it's fixed to the
+     * size of the kfErrorWindow, it can be
+     * calculated once.
+     */
+    float totalEstimationErrorDivider;
 
     bool endlessRepeat;
 };
