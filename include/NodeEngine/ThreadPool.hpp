@@ -17,14 +17,13 @@
 #ifndef THREADPOOL_H_
 #define THREADPOOL_H_
 
-#include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <iostream>
 #include <thread>
 #include <vector>
 
 namespace NES {
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
+
 class WorkerContext;
 typedef WorkerContext& WorkerContextRef;
 /**
@@ -39,7 +38,7 @@ class ThreadPool {
     /**
      * @brief default constructor
      */
-    ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint16_t numThreads);
+    ThreadPool(uint64_t nodeId, NodeEngine::QueryManagerPtr queryManager, uint16_t numThreads);
 
     /**
      * @brief default destructor
@@ -111,7 +110,7 @@ class ThreadPool {
     std::atomic<uint16_t> numThreads;
     std::vector<std::thread> threads;
     std::mutex reconfigLock;
-    QueryManagerPtr queryManager;
+    NodeEngine::QueryManagerPtr queryManager;
 };
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;

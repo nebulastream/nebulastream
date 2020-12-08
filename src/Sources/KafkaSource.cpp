@@ -27,7 +27,7 @@
 
 namespace NES {
 
-KafkaSource::KafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+KafkaSource::KafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                          const std::string brokers, const std::string topic, const std::string groupId, bool autoCommit,
                          uint64_t kafkaConsumerTimeout)
     : DataSource(schema, bufferManager, queryManager), brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),

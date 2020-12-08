@@ -64,12 +64,12 @@ class GeneratedQueryExecutionPlanBuilder {
      * @param queryManager
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& setQueryManager(QueryManagerPtr queryManager);
+    GeneratedQueryExecutionPlanBuilder& setQueryManager(NodeEngine::QueryManagerPtr queryManager);
 
     /**
      * @return currently set query manager for the builder
      */
-    QueryManagerPtr getQueryManager() const;
+    NodeEngine::QueryManagerPtr getQueryManager() const;
 
     /**
      * @return total number of pipeline stages in the qep
@@ -157,7 +157,7 @@ class GeneratedQueryExecutionPlanBuilder {
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     BufferManagerPtr bufferManager;
-    QueryManagerPtr queryManager;
+    NodeEngine::QueryManagerPtr queryManager;
     QueryCompilerPtr queryCompiler;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;

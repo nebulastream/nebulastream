@@ -25,7 +25,7 @@ namespace Network {
 
 NetworkSink::NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkManagerPtr networkManager,
                          const NodeLocation nodeLocation, NesPartition nesPartition, BufferManagerPtr bufferManager,
-                         QueryManagerPtr queryManager, std::chrono::seconds waitTime, uint8_t retryTimes)
+                         NodeEngine::QueryManagerPtr queryManager, std::chrono::seconds waitTime, uint8_t retryTimes)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
       nodeLocation(nodeLocation), nesPartition(nesPartition), queryManager(queryManager), waitTime(waitTime),
       retryTimes(retryTimes) {

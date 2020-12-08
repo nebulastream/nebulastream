@@ -103,14 +103,14 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
     std::vector<TupleBuffer> buffers;
 };
 
-const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()), bPtr, dPtr,
                                            1, 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
   public:
-    SelectionDataGenSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr, const uint64_t pNum_buffers_to_process)
+    SelectionDataGenSource(SchemaPtr schema, BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr, const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
     ~SelectionDataGenSource() = default;
@@ -144,7 +144,7 @@ class SelectionDataGenSource : public GeneratorSource {
     };
 };
 
-const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     DataSourcePtr source(std::make_shared<SelectionDataGenSource>(Schema::create()
                                                                       ->addField("id", DataTypeFactory::createUInt32())
                                                                       ->addField("value", DataTypeFactory::createUInt32())
@@ -156,7 +156,7 @@ const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, QueryMa
 
 class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
-    PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
+    PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
@@ -198,7 +198,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(Schema::create()
                                                                   ->addField("id", DataTypeFactory::createUInt32())
@@ -214,7 +214,7 @@ const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, Quer
 
 class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
-    WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
+    WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
@@ -247,7 +247,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
 
 class WindowTestingWindowGeneratorSource : public GeneratorSource {
   public:
-    WindowTestingWindowGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
+    WindowTestingWindowGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                        const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
@@ -282,14 +282,14 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
+const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     DataSourcePtr source(std::make_shared<WindowTestingDataGeneratorSource>(
         Schema::create()->addField("key", DataTypeFactory::createUInt64())->addField("value", DataTypeFactory::createUInt64()),
         bPtr, dPtr, 10));
     return source;
 }
 
-const DataSourcePtr createWindowTestSliceSource(BufferManagerPtr bPtr, QueryManagerPtr dPtr, SchemaPtr schema) {
+const DataSourcePtr createWindowTestSliceSource(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr, SchemaPtr schema) {
     DataSourcePtr source(std::make_shared<WindowTestingWindowGeneratorSource>(schema, bPtr, dPtr, 10));
     return source;
 }

@@ -45,12 +45,12 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setBuffe
     return *this;
 }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQueryManager(QueryManagerPtr queryManager) {
+GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQueryManager(NodeEngine::QueryManagerPtr queryManager) {
     this->queryManager = std::move(queryManager);
     return *this;
 }
 
-QueryManagerPtr GeneratedQueryExecutionPlanBuilder::getQueryManager() const { return queryManager; }
+NodeEngine::QueryManagerPtr GeneratedQueryExecutionPlanBuilder::getQueryManager() const { return queryManager; }
 
 NodeEngine::Execution::ExecutableQueryPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(bufferManager, "GeneratedQueryExecutionPlanBuilder: Invalid bufferManager");

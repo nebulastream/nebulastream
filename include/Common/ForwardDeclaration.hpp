@@ -24,9 +24,6 @@ namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 

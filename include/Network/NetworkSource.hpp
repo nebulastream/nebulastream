@@ -30,7 +30,7 @@ namespace Network {
 class NetworkSource : public DataSource {
 
   public:
-    NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+    NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                   NetworkManagerPtr networkManager, NesPartition nesPartition);
 
     ~NetworkSource();
@@ -71,7 +71,7 @@ class NetworkSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    void runningRoutine(BufferManagerPtr, QueryManagerPtr);
+    void runningRoutine(BufferManagerPtr, NodeEngine::QueryManagerPtr);
 
   private:
     NetworkManagerPtr networkManager;

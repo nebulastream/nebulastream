@@ -18,6 +18,7 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Operators/OperatorId.hpp>
 #include <atomic>
@@ -27,9 +28,6 @@
 namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class TupleBuffer;
 
@@ -66,7 +64,7 @@ class DataSource : public Reconfigurable {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, OperatorId operatorId);
+    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId);
 
     DataSource() = delete;
 
@@ -91,7 +89,7 @@ class DataSource : public Reconfigurable {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    virtual void runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
+    virtual void runningRoutine(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager);
 
     /**
      * @brief virtual function to receive a buffer
@@ -178,7 +176,7 @@ class DataSource : public Reconfigurable {
     OperatorId operatorId;
     SourceType type;
     BufferManagerPtr bufferManager;
-    QueryManagerPtr queryManager;
+    NodeEngine::QueryManagerPtr queryManager;
 
   private:
     //bool indicating if the source is currently running'
