@@ -4,27 +4,31 @@
 
 namespace NES {
 
+/**
+ * @brief The CompiledExecutablePipelineStage maintains a reference to an compiled ExecutablePipelineStage.
+ * To this end, it ensures that the compiled code is correctly destructed.
+ */
 class CompiledExecutablePipelineStage : public ExecutablePipelineStage {
-    // TODO this might change across OS
-#if defined(__linux__)
-    static constexpr auto MANGELED_ENTY_POINT = "_ZN3NES6createEv";
-#else
-#error "unsupported platform/OS"
-#endif
 
   public:
     explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode);
     static ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode);
     ~CompiledExecutablePipelineStage();
-    uint32_t execute(TupleBuffer& inputTupleBuffer,
-                            PipelineExecutionContext& pipelineExecutionContext,
-                            WorkerContext& workerContext) override;
+
+    uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t start(PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
+                     WorkerContext& workerContext) override;
+    uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
   private:
-    typedef std::shared_ptr<ExecutablePipelineStage> (*CreateFunctionPtr)();
-
+    enum ExecutionStage { NotInitialized, Initialized, Running, Stopped };
     ExecutablePipelineStagePtr executablePipelineStage;
     CompiledCodePtr compiledCode;
+    std::mutex executionStageLock;
+    std::atomic<ExecutionStage> currentExecutionStage;
 };
 
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
