@@ -16,7 +16,7 @@ class BenchmarkSchemas {
         return std::vector<SchemaPtr>({
             Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT8),        //  3 Byte
             Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16),       //  4 Byte
-            /*Schema::create()->addField("key", BasicType::INT32)->addField("value", BasicType::INT8),        //  5 Byte
+            Schema::create()->addField("key", BasicType::INT32)->addField("value", BasicType::INT8),        //  5 Byte
             Schema::create()->addField("key", BasicType::INT32)->addField("value", BasicType::INT16),       //  6 Byte
             Schema::create()->addField("key", BasicType::INT32)->addField("value", BasicType::INT8)                    //  7 Byte
                             ->addField("value1", BasicType::INT8),
@@ -40,7 +40,7 @@ class BenchmarkSchemas {
                             ->addField("value7", BasicType::INT64)->addField("value8", BasicType::INT64)
                             ->addField("value9", BasicType::INT64)->addField("value10", BasicType::INT64)
                             ->addField("value11", BasicType::INT64)->addField("value12", BasicType::INT64)
-                            ->addField("value13", BasicType::INT64)->addField("value14", BasicType::INT64),*/
+                            ->addField("value13", BasicType::INT64)->addField("value14", BasicType::INT64),
         });
     }
 };
