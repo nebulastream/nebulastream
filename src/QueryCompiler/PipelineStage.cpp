@@ -45,11 +45,12 @@ PipelineStage::PipelineStage(uint32_t pipelineStageId,
 bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineStageId);
-    uint32_t ret = !executablePipelineStage->execute(inputBuffer, pipelineContext, workerContext);
+    uint32_t ret = !executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
     return ret;
 }
 
 bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
+    executablePipelineStage->setup(*pipelineContext.get());
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::setup windowHandler");
         return pipelineContext->getWindowHandler()->setup(queryManager, bufferManager, nextStage, pipelineStageId, qepId);
@@ -62,6 +63,7 @@ bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferM
 }
 
 bool PipelineStage::start() {
+    executablePipelineStage->start(*pipelineContext.get());
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::start: windowhandler start");
         return pipelineContext->getWindowHandler()->start();
@@ -80,6 +82,7 @@ bool PipelineStage::start() {
 }
 
 bool PipelineStage::stop() {
+    executablePipelineStage->stop(*pipelineContext.get());
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::stop: windowhandler stop");
         return pipelineContext->getWindowHandler()->stop();

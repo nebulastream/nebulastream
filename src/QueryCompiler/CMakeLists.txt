@@ -24,6 +24,7 @@ add_source_nes(
         PipelineContext.cpp
         PipelineExecutionContext.cpp
         CompilerTypeFactory.cpp
+        ExecutablePipelineStage
 )
 add_subdirectory(CCodeGenerator)
 add_subdirectory(Compiler)
