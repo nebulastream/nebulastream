@@ -26,6 +26,8 @@ class IFStatement : public Statement {
 
     IFStatement(const Statement& cond_expr, const Statement& cond_true_stmt);
 
+    IFStatement(const StatementPtr& cond_expr, const StatementPtr& cond_true_stmt);
+
     StatementType getStamentType() const override;
 
     const CodeExpressionPtr getCode() const override;
