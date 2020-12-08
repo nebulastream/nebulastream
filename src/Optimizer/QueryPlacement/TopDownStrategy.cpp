@@ -45,6 +45,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     const QueryId queryId = queryPlan->getQueryId();
     NES_INFO("TopDownStrategy: Performing placement of the input query plan with id " << queryId);
+    NES_INFO("TopDownStrategy: And query plan \n" << queryPlan->toString());
 
     NES_DEBUG("TopDownStrategy: Get all source operators");
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
@@ -119,7 +120,8 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
         candidateTopologyNode = topology->findCommonNodeBetween(childNodes, parentTopologyNodes);
 
         if (!candidateTopologyNode) {
-            NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator " << operatorNode);
+            NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
+                      << operatorNode->toString());
             throw QueryPlacementException("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                                           + operatorNode->toString());
         }
@@ -148,13 +150,13 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
 
     if (candidateTopologyNode->getAvailableResources() == 0) {
         NES_DEBUG("TopDownStrategy: Find the next Topology node where operator can be placed");
-        while (!candidateTopologyNode) {
-            //FIXME: we are considering only one root node currently
-            NES_TRACE("TopDownStrategy: Get the topology nodes where children source operators are to be placed.");
-            std::vector<TopologyNodePtr> childNodes = getTopologyNodesForSourceOperators(operatorNode);
-            NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
-            candidateTopologyNode = topology->findCommonNodeBetween(childNodes, {candidateTopologyNode});
-            if (candidateTopologyNode && candidateTopologyNode->getAvailableResources() > 0) {
+        std::vector<TopologyNodePtr> childNodes = getTopologyNodesForSourceOperators(operatorNode);
+        NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
+        //FIXME: we are considering only one root node currently
+        auto candidateTopologyNodes = topology->findNodesBetween(childNodes, {candidateTopologyNode});
+        for(auto topologyNodes : candidateTopologyNodes) {
+            if (topologyNodes && topologyNodes->getAvailableResources() > 0) {
+                candidateTopologyNode = topologyNodes;
                 NES_DEBUG(
                     "TopDownStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
                 break;
