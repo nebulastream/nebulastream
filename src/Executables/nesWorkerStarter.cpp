@@ -53,8 +53,11 @@ const string logo = "/********************************************************\n
 // TODO handle proper configuration properly
 int main(int argc, char** argv) {
     std::cout << logo << std::endl;
+
     namespace po = boost::program_options;
     po::options_description desc("Nes Worker Options");
+
+    // set default values for ports and ips
     std::string coordinatorPort = "0";
     uint16_t rpcPort = 3000;
     uint16_t zmqDataPort = 3001;
@@ -66,8 +69,9 @@ int main(int argc, char** argv) {
     const auto processorCount = std::thread::hardware_concurrency();
     uint16_t numberOfSlots = processorCount;
 
-    std::string sourceType = "";
-    std::string sourceConfig = "";
+    // set default values for sources
+    std::string sourceType = "No_Source";
+    std::string sourceConfig = "No_Config";
     uint16_t sourceFrequency = 0;
     uint16_t numberOfBuffersToProduce = 1;
     std::string physicalStreamName;
@@ -83,15 +87,18 @@ int main(int argc, char** argv) {
 
     desc.add_options()("coordinatorPort", po::value<string>(&coordinatorPort)->default_value(coordinatorPort),
                        "Set NES rpc server port (default: 0).")("rpcPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort),
-                                                                "Set NES rpc server port (default: 0).")(
-        "dataPort", po::value<uint16_t>(&zmqDataPort)->default_value(zmqDataPort), "Set NES data server port (default: 0).")(
+                                                                "Set NES rpc server port (default: 3000).")(
+        "dataPort", po::value<uint16_t>(&zmqDataPort)->default_value(zmqDataPort), "Set NES data server port (default: 3001).")(
         "coordinatorIp", po::value<string>(&coordinatorIp)->default_value(coordinatorIp),
-        "Set NES server ip (default: 127.0.0.1).")("sourceType", po::value<string>(&sourceType)->default_value(sourceType),
-                                                   "Set the type of the Source either CSVSource or DefaultSource")(
+        "Set NES server ip (default: 127.0.0.1).")(
+        "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
+        "Set the type of the Source (default: No_Source). See "
+        "http://iotdb.dfki.de/doku.php?id=how_to_start_stop_nes#configure_nes_worker for options.")(
         "sourceConfig", po::value<string>(&sourceConfig)->default_value(sourceConfig),
-        "Set the config for the source e.g. the file name")(
+        "Set the config for the source. This depends on the source, see "
+        "http://iotdb.dfki.de/doku.php?id=how_to_start_stop_nes#configure_nes_worker for specifications.")(
         "sourceFrequency", po::value<uint16_t>(&sourceFrequency)->default_value(sourceFrequency), "Set the sampling frequency")(
-        "endlessRepeat", po::value<string>(&endlessRepeat)->default_value("off"), "Looping endless over the file")(
+        "endlessRepeat", po::value<string>(&endlessRepeat)->default_value("off"), "Looping endlessly over the file")(
         "skipHeader", po::value<bool>(&skipHeader)->default_value("false"), "Skip first line of the file (default=false)")(
         "physicalStreamName", po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
         "Set the physical name of the stream")(
@@ -104,7 +111,7 @@ int main(int argc, char** argv) {
         "parentId", po::value<string>(&parentId)->default_value(parentId), "Set the parentId of this node")(
         "localWorkerIp", po::value<string>(&localWorkerIp)->default_value(localWorkerIp),
         "Set worker ip (default: 127.0.0.1)")("numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
-                                              "Set the computing capacity (default: number of processor.")(
+                                              "Set the computing capacity (default: number of processors).")(
         "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
         "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
         "numWorkerThreads", po::value<uint16_t>(&numWorkerThreads)->default_value(numWorkerThreads),
@@ -171,7 +178,8 @@ int main(int argc, char** argv) {
 
     NES::setupLogging("nesWorkerStarter.log", NES::getStringAsDebugLevel(logLevel));
 
-    NES_INFO("NESWORKERSTARTER: Start with port=" << rpcPort << "localport=" << rpcPort << " pid=" << getpid());
+    NES_INFO("NESWORKERSTARTER: Start with port=" << rpcPort << " localport=" << rpcPort << " pid=" << getpid()
+                                                  << " coordinatorPort=" << coordinatorPort);
 
     NesWorkerPtr wrk =
         std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort, zmqDataPort, numberOfSlots,
