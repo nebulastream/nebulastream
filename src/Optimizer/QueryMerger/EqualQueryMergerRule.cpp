@@ -101,6 +101,7 @@ bool EqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             hostGQM->addGlobalQueryMetaData(targetGQM);
             targetGQM->clear();
             globalQueryPlan->updateGlobalQueryMetadata(hostGQM);
+            //FIXME: add return call
         }
     }
     globalQueryPlan->removeEmptyMetaData();

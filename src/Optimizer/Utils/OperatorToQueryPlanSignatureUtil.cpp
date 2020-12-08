@@ -53,6 +53,7 @@ QuerySignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(OperatorNo
         }
         return buildFromSubQuerySignatures(context, subQuerySignatures);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+        //FIXME: add comment explaining
         if (subQuerySignatures.empty() || subQuerySignatures.size() > 1) {
             NES_THROW_RUNTIME_ERROR("Filter operator can't have empty or more than one children : " + operatorNode->toString());
         }
