@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
 namespace NES {
 
 uint32_t ExecutablePipelineStage::setup(PipelineExecutionContext&) { return 0; }

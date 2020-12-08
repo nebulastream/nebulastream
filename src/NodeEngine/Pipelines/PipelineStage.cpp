@@ -16,9 +16,8 @@
 
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
-#include <QueryCompiler/ExecutablePipeline.hpp>
-#include <QueryCompiler/ExecutablePipelineStage.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
+#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>

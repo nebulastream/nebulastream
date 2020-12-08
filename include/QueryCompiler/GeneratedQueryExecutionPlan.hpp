@@ -18,7 +18,7 @@
 #define INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_
 
 #include <NodeEngine/BufferManager.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
+#include <NodeEngine/Pipelines/PipelineStage.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 
 namespace NES {

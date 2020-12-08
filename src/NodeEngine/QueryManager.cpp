@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
+#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <QueryCompiler/ExecutablePipelineStage.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <iostream>

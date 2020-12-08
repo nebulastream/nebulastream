@@ -21,10 +21,12 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
+#include <NodeEngine/Pipelines/PipelineStage.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
@@ -41,8 +43,6 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>

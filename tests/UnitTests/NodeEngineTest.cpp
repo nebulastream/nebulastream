@@ -17,12 +17,11 @@
 #include <gtest/gtest.h>
 
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
-#include <QueryCompiler/ExecutablePipelineStage.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>

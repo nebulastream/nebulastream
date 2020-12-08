@@ -15,10 +15,10 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
+#include <NodeEngine/Pipelines/PipelineStage.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 

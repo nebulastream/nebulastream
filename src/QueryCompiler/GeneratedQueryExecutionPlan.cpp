@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 namespace NES {

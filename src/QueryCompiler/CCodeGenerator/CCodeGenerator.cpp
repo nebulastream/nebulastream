@@ -16,6 +16,7 @@
 
 #include <API/UserAPIExpression.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
@@ -36,11 +37,10 @@
 #include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/ExecutablePipelineStage.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>

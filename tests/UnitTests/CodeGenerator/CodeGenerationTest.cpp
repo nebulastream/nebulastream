@@ -21,6 +21,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
@@ -36,15 +37,12 @@
 #include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
@@ -420,7 +418,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
     emitTupleBuffer.addParameter(VarRef(varDeclWorkerContext));
     auto mainFunction = FunctionDefinition::create("execute")
-                            ->returns(tf.createDataType(DataTypeFactory::createInt32()))
+                            ->returns(tf.createDataType(DataTypeFactory::createUInt32()))
                             ->addParameter(varDeclTupleBuffers)
                             ->addParameter(varDeclPipelineExecutionContext)
                             ->addParameter(varDeclWorkerContext)
@@ -481,7 +479,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* execute code */
     auto wctx = WorkerContext{0};
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
-    ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), 0);
+    stage->setup(*context.get());
+    stage->start(*context.get());
+    ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), 0u);
     auto outputBuffer = context->buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
     /* check result for correctness */
