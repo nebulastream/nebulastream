@@ -42,11 +42,16 @@ typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
  *      For a logical stream "cars" with schema "Id, Color, Speed".
  *
  *  1.) Given a query Q1: Query::from("cars").map(attr("speed") = 100).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conds:(color=='RED'); cols:(speed=100))
+ *      The query plan signature (QPSig) is given by : (conds:(stream="cars" and color=='RED'); cols:(speed=100))
  *
- *  2.) Given a query Q1: Query::from("cars").filter(attr("color") == 'RED').map(attr("speed") = attr("speed")*100).filter(attr("speed") > 100 ).sink(Print());
- *      The query plan signature (QPSig) is given by : (conds:(color=='RED' and speed*100>100); cols:(speed=speed*100))
+ *  2.) Given a query Q1: Query::from("cars").map(attr("speed") = attr("speed")*100).filter(attr("speed") > 100 ).filter(attr("color") == 'RED').sink(Print());
+ *      The query plan signature (QPSig) is given by : (conds:(stream="cars" and speed*100>100 and color=='RED'); cols:(speed=speed*100))
  *
+ *  3.) Given a query Q1: Query::from("cars").filter(attr("speed") > 100 ).map(attr("speed") = attr("speed")*100).filter(attr("color") == 'RED').sink(Print());
+ *      The query plan signature (QPSig) is given by : (conds:(stream="cars" and speed>100 and color=='RED'); cols:(speed=speed*100))
+ *
+ *  4.) Given a query Q1: Query::from("cars").filter(attr("color") == 'RED').map(attr("speed") = attr("speed")*100).filter(attr("speed") +100 > 200 ).sink(Print());
+ *      The query plan signature (QPSig) is given by : (conds:(stream="cars" and color=='RED' and (speed*100)+100>200); cols:(speed=speed*100))
  */
 class QuerySignature {
   public:
