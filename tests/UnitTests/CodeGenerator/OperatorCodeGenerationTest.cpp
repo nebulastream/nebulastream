@@ -306,14 +306,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
-
+    context->pipelineName ="1";
     NES_INFO("Generate Code");
     /* generate code for scanning input buffer */
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context);
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()), context);
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context->code);
+    auto stage = codeGenerator->compile(context);
 
     /* prepare input and output tuple buffer */
     auto schema = Schema::create()->addField("i64", DataTypeFactory::createUInt64());
@@ -323,7 +323,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
     WorkerContext wctx{0};
-    stage->execute(buffer, queryContext, wctx);
+    stage->setup(*queryContext.get());
+    stage->start(*queryContext.get());
+    stage->execute(buffer, *queryContext.get(), wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
@@ -343,7 +345,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
-
+    context->pipelineName ="1";
     auto inputSchema = source->getSchema();
 
     /* generate code for scanning input buffer */
@@ -359,7 +361,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     codeGenerator->generateCodeForEmit(source->getSchema(), context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context->code);
+    auto stage = codeGenerator->compile(context);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -368,7 +370,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
     WorkerContext wctx{0};
-    stage->execute(inputBuffer, queryContext, wctx);
+    stage->setup(*queryContext.get());
+    stage->start(*queryContext.get());
+    stage->execute(inputBuffer,  *queryContext.get(), wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     NES_INFO("Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
@@ -389,19 +393,19 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
-
+    context1->pipelineName ="1";
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1->code);
+    auto stage1 = codeGenerator->compile(context1);
 }
 
 /**
  * @brief This test generates a window assigner
  */
-TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
+TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
@@ -409,7 +413,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
-
+    context1->pipelineName ="1";
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
@@ -428,11 +432,12 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     codeGenerator->generateCodeForWatermarkAssigner(strategy, context1);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1->code);
+    auto stage1 = codeGenerator->compile(context1);
 
     auto context2 = PipelineContext::create();
+    context2->pipelineName ="1";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(context2->code);
+    auto stage2 = codeGenerator->compile(context2);
 }
 
 /**
@@ -446,7 +451,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
-
+    context1->pipelineName ="1";
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
@@ -462,9 +467,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1->code);
+    auto stage1 = codeGenerator->compile(context1);
 
     auto context2 = PipelineContext::create();
+    context2->pipelineName ="1";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
 
@@ -602,7 +608,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
 
     auto context2 = PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(context2->code);
+    auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
@@ -614,7 +620,6 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
         windowDefinition, ExecutableSumAggregation<uint64_t>::create(), windowOutputSchema);
 
-    //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
@@ -629,7 +634,9 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowHandler, nullptr);
-    stage1->execute(inputBuffer, queryContext, wctx);
+    stage1->setup(*queryContext.get());
+    stage1->start(*queryContext.get());
+    stage1->execute(inputBuffer,  *queryContext.get(), wctx);
 
     //check partial aggregates in window state
     auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()
@@ -649,7 +656,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
-
+    context1->pipelineName ="1";
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
@@ -666,11 +673,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1->code);
+    auto stage1 = codeGenerator->compile(context1);
 
     auto context2 = PipelineContext::create();
+    context2->pipelineName ="2";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(context2->code);
+    auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
@@ -681,7 +689,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
         windowDefinition, ExecutableSumAggregation<uint64_t>::create(), windowOutputSchema);
 
-    //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
@@ -697,7 +704,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowHandler, nullptr);
     WorkerContext wctx(NesThread::getId());
-    stage1->execute(inputBuffer, queryContext, wctx);
+    stage1->setup(*queryContext.get());
+    stage1->start(*queryContext.get());
+    stage1->execute(inputBuffer,  *queryContext.get(), wctx);
 
     //check partial aggregates in window state
     auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()
@@ -723,7 +732,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
-
+    context1->pipelineName ="1";
     codeGenerator->generateCodeForScan(schema, schema, context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
@@ -739,11 +748,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1->code);
+    auto stage1 = codeGenerator->compile(context1);
 
     auto context2 = PipelineContext::create();
+    context2->pipelineName ="2";
     codeGenerator->generateCodeForScan(schema, schema, context2);
-    auto stage2 = codeGenerator->compile(context2->code);
+    auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
@@ -755,7 +765,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
         windowDefinition, ExecutableSumAggregation<uint64_t>::create(), windowOutputSchema);
 
-    //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
@@ -806,7 +815,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema) << std::endl;
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowHandler, nullptr);
-    stage1->execute(buffer, queryContext, wctx);
+    stage1->setup(*queryContext.get());
+    stage1->start(*queryContext.get());
+    stage1->execute(buffer,  *queryContext.get(), wctx);
 
     //check partial aggregates in window state
     auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()
@@ -858,7 +869,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
 
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
-
+    context1->pipelineName ="1";
     codeGenerator->generateCodeForScan(schema, schema, context1);
     WindowTriggerPolicyPtr trigger = OnRecordTriggerPolicyDescription::create();
 
@@ -872,7 +883,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1);
-    std::string codeString = codeGenerator->generateCode(context1->code);
+    std::string codeString = codeGenerator->generateCode(context1);
 
     auto found = codeString.find("windowHandler->trigger();");
     cout << "code=" << codeString << std::endl;
@@ -891,7 +902,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
-
+    context->pipelineName ="1";
     auto inputSchema = source->getSchema();
     codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);
 
@@ -904,7 +915,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     codeGenerator->generateCodeForEmit(inputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context->code);
+    auto stage = codeGenerator->compile(context);
 
     /* prepare input tuple buffer */
     auto optVal = source->receiveData();
@@ -916,7 +927,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
     cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
     WorkerContext wctx{0};
-    stage->execute(inputBuffer, queryContext, wctx);
+    stage->setup(*queryContext.get());
+    stage->start(*queryContext.get());
+    stage->execute(inputBuffer,  *queryContext.get(), wctx);
 
     auto resultBuffer = queryContext->buffers[0];
 
@@ -937,7 +950,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
-
+    context->pipelineName ="1";
     auto inputSchema = source->getSchema();
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
 
@@ -960,7 +973,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     codeGenerator->generateCodeForEmit(outputSchema, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(context->code);
+    auto stage = codeGenerator->compile(context);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -968,7 +981,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     /* execute Stage */
     WorkerContext wctx{0};
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
-    stage->execute(inputBuffer, queryContext, wctx);
+    stage->setup(*queryContext.get());
+    stage->start(*queryContext.get());
+    stage->execute(inputBuffer,  *queryContext.get(), wctx);
 
     auto resultBuffer = queryContext->buffers[0];
 
@@ -994,7 +1009,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
-
+    context1->pipelineName ="1";
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
@@ -1010,15 +1025,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     codeGenerator->generateCodeForJoin(joinDef, context1);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1->code);
+    auto stage1 = codeGenerator->compile(context1);
 
     auto context2 = PipelineContext::create();
+    context2->pipelineName ="1";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(context2->code);
+    auto stage2 = codeGenerator->compile(context2);
     // init window handler
     auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDef);
 
-    //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
@@ -1037,7 +1052,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, joinHandler);
     WorkerContext wctx(NesThread::getId());
-    stage1->execute(inputBuffer, queryContext, wctx);
+    stage1->setup(*queryContext.get());
+    stage1->start(*queryContext.get());
+    stage1->execute(inputBuffer,  *queryContext.get(), wctx);
 
     //check partial aggregates in window state
     auto stateVar = queryContext->getJoinHandler<Join::JoinHandler, int64_t>()->getLeftJoinState();

@@ -21,6 +21,7 @@
 #include <QueryCompiler/ExecutablePipeline.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
+#include <QueryCompiler/ExecutablePipelineStage.hpp>
 #include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -101,31 +102,33 @@ std::string joinedExpectedOutput10 =
 
 std::string filePath = "file.txt";
 
-class HandCodedExecutablePipeline : public ExecutablePipeline {
+class TextExecutablePipeline : public ExecutablePipelineStage {
   public:
     std::atomic<uint64_t> count = 0;
     std::atomic<uint64_t> sum = 0;
     std::promise<bool> completedPromise;
 
-    uint32_t execute(TupleBuffer& inBuf, QueryExecutionContextPtr context, WorkerContext&) override {
-        auto tuples = inBuf.getBufferAs<uint64_t>();
+    uint32_t execute(TupleBuffer& inputTupleBuffer,
+                     PipelineExecutionContext& pipelineExecutionContext,
+                     WorkerContext&) override {
+        auto tuples = inputTupleBuffer.getBufferAs<uint64_t>();
 
         NES_INFO("Test: Start execution");
 
         uint64_t psum = 0;
-        for (uint64_t i = 0; i < inBuf.getNumberOfTuples(); ++i) {
+        for (uint64_t i = 0; i < inputTupleBuffer.getNumberOfTuples(); ++i) {
             psum += tuples[i];
         }
-        count += inBuf.getNumberOfTuples();
+        count += inputTupleBuffer.getNumberOfTuples();
         sum += psum;
 
-        NES_INFO("Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << " psum: " << psum
+        NES_INFO("Test: query result = Processed Block:" << inputTupleBuffer.getNumberOfTuples() << " count: " << count << " psum: " << psum
                                                          << " sum: " << sum);
 
         if (sum == 10) {
             NES_DEBUG("TEST: result correct");
 
-            TupleBuffer outputBuffer = context->allocateTupleBuffer();
+            TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
 
             NES_DEBUG("TEST: got buffer");
             auto arr = outputBuffer.getBufferAs<uint32_t>();
@@ -133,7 +136,7 @@ class HandCodedExecutablePipeline : public ExecutablePipeline {
             outputBuffer.setNumberOfTuples(1);
             NES_DEBUG("TEST: written " << arr[0]);
             WorkerContext wctx{0};
-            context->emitBuffer(outputBuffer, wctx);
+            pipelineExecutionContext.emitBuffer(outputBuffer, wctx);
             completedPromise.set_value(true);
         } else {
             NES_DEBUG("TEST: result wrong ");
@@ -144,7 +147,6 @@ class HandCodedExecutablePipeline : public ExecutablePipeline {
         return 0;
     }
 };
-typedef std::shared_ptr<HandCodedExecutablePipeline> CompiledTestQueryExecutionPlanPtr;
 
 /**
  * @brief test for the engine
@@ -227,7 +229,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
             sink->writeData(buffer, wctx);
         },
         nullptr, nullptr);
-    auto executable = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = PipelineStage::create(0, queryId, executable, context, nullptr);
     builder.addPipelineStage(pipeline);
     return std::make_tuple(builder.build(), executable);
@@ -313,7 +315,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
             sink1->writeData(buffer, w);
         },
         nullptr, nullptr);
-    auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
 
@@ -335,7 +337,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
             sink2->writeData(buffer, w);
         },
         nullptr, nullptr);
-    auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
 
@@ -388,7 +390,7 @@ TEST_F(EngineTest, testParallelSameSource) {
             sink1->writeData(buffer, w);
         },
         nullptr, nullptr);
-    auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
 
@@ -410,7 +412,7 @@ TEST_F(EngineTest, testParallelSameSource) {
             sink2->writeData(buffer, w);
         },
         nullptr, nullptr);
-    auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
 
@@ -456,7 +458,7 @@ TEST_F(EngineTest, testParallelSameSink) {
             sink1->writeData(buffer, w);
         },
         nullptr, nullptr);
-    auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
 
@@ -477,7 +479,7 @@ TEST_F(EngineTest, testParallelSameSink) {
             sink1->writeData(buffer, w);
         },
         nullptr, nullptr);
-    auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
 
@@ -521,7 +523,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
             sink1->writeData(buffer, w);
         },
         nullptr, nullptr);
-    auto executable1 = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = PipelineStage::create(0, 1, executable1, context1, nullptr);
     builder1.addPipelineStage(pipeline1);
 
@@ -541,7 +543,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
             sink1->writeData(buffer, w);
         },
         nullptr, nullptr);
-    auto executable2 = std::make_shared<HandCodedExecutablePipeline>();
+    auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = PipelineStage::create(0, 2, executable2, context2, nullptr);
     builder2.addPipelineStage(pipeline2);
 
