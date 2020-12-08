@@ -31,7 +31,7 @@ crd = net.addDocker('crd', ip='10.1.1.1',
                             dimage="nebulastream/nes-executable-image",
                             ports=[8081, 12346, 4000, 4001, 4002],
                             port_bindings={8081:8081, 12346:12346, 4000:4000, 4001:4001, 4002:4002},
-                            dcmd='/opt/local/nebula-stream/nesCoordinator --serverIp=0.0.0.0')
+                            dcmd='/opt/local/nebula-stream/nesCoordinator --coordinatorIp=10.1.1.1 --restIp=0.0.0.0')
 
 w1 = net.addDocker('w1', ip='10.1.1.2',
                             dimage="nebulastream/nes-executable-image",
