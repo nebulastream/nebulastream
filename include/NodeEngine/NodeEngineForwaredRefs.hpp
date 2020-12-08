@@ -32,6 +32,9 @@ typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
+class QueryStatistics;
+typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
+
 namespace Execution{
 
 class ExecutableQueryPlan;

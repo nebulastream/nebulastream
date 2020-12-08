@@ -17,6 +17,7 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <future>
 #include <grpcpp/grpcpp.h>
@@ -50,9 +51,6 @@ typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
 
 class NesWorker;
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
-
-class QueryStatistics;
-typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
 class QueryRequestProcessorService;
 typedef std::shared_ptr<QueryRequestProcessorService> QueryRequestProcessorServicePtr;
@@ -110,7 +108,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     * @param id of the query
     * @return vector of queryStatistics
     */
-    std::vector<QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+    std::vector<NodeEngine::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
     /**
      * @brief catalog method for debug use only
