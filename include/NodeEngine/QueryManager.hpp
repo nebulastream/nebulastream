@@ -20,7 +20,7 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <deque>

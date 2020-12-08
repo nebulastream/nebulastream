@@ -19,7 +19,7 @@
 #include <NodeEngine/WorkerContext.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
 #include <vector>

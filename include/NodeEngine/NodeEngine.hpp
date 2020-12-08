@@ -24,7 +24,7 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <iostream>
 #include <pthread.h>
 #include <string>

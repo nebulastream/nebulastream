@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
