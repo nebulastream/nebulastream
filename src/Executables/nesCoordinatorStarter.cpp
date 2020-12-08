@@ -71,7 +71,7 @@ int main(int argc, const char* argv[]) {
                                 "Set NES ip of the REST server (default: 127.0.0.1).")(
         "coordinatorIp", po::value<std::string>(&coordinatorIp)->default_value(coordinatorIp),
         "Set NES ip for internal communication regarding zmq and rpc (default: 127.0.0.1).")(
-        "dataPort", po::value<uint16_t>(&dataPort)->default_value(dataPort), "Set NES data server port (default: 0).")(
+        "dataPort", po::value<uint16_t>(&dataPort)->default_value(dataPort), "Set NES data server port (default: 3001).")(
         "restPort", po::value<uint16_t>(&restPort), "Set NES REST server port (default: 8081).")(
         "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort), "Set NES rpc server port (default: 4000).")(
         "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
