@@ -18,7 +18,7 @@
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
-#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>

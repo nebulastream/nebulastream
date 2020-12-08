@@ -19,7 +19,7 @@
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Pipelines/PipelineStage.hpp>
-#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 
 namespace NES {
 class GeneratedQueryExecutionPlan;

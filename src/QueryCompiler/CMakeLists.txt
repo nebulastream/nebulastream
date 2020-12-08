@@ -16,7 +16,6 @@ add_source_nes(
         CodeExpression.cpp
         CodeGenerator.cpp
         GeneratedCode.cpp
-        QueryExecutionPlan.cpp
         GeneratedQueryExecutionPlan.cpp
         GeneratedQueryExecutionPlanBuilder.cpp
         QueryCompiler.cpp
