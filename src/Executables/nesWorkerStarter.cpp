@@ -27,11 +27,11 @@
 #include "boost/program_options.hpp"
 #include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
-#include <iostream>
-#include <thread>
 #include <Util/yaml/Yaml.hh>
 #include <Util/yaml/YamlDef.hh>
+#include <iostream>
 #include <sys/stat.h>
+#include <thread>
 
 namespace po = boost::program_options;
 
@@ -109,9 +109,9 @@ int main(int argc, char** argv) {
         "logLevel", po::value<std::string>(&logLevel)->default_value(logLevel),
         "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
         "numWorkerThreads", po::value<uint16_t>(&numWorkerThreads)->default_value(numWorkerThreads),
-        "Set the number of worker threads.")(
-        "configPath", po::value<std::string>(&configPath)->default_value(configPath),
-        "Path to the NES Coordinator Configurations YAML file.")("help", "Display help message");
+        "Set the number of worker threads.")("configPath", po::value<std::string>(&configPath)->default_value(configPath),
+                                             "Path to the NES Coordinator Configurations YAML file.")("help",
+                                                                                                      "Display help message");
 
     /* Parse parameters. */
     po::variables_map vm;
@@ -125,14 +125,14 @@ int main(int argc, char** argv) {
     }
 
     if (vm.count("help")) {
-        std::cout <<"Basic Command Line Parameter " << std::endl;
+        std::cout << "Basic Command Line Parameter " << std::endl;
         cout << desc << endl;
         return 0;
     }
 
     if (argc == 1) {
-        cout <<"Please specify at least the port you want to connect to" << endl;
-        cout <<"Basic Command Line Parameter" << endl;
+        cout << "Please specify at least the port you want to connect to" << endl;
+        cout << "Basic Command Line Parameter" << endl;
         cout << desc << endl;
         return 0;
     }
