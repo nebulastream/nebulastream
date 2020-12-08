@@ -408,7 +408,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    WorkerContext wctx(NesThread::getId());
+    WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
@@ -446,7 +446,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    WorkerContext wctx(NesThread::getId());
+    WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
@@ -702,7 +702,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowHandler, nullptr);
-    WorkerContext wctx(NesThread::getId());
+    WorkerContext wctx(NodeEngine::NesThread::getId());
     stage1->setup(*queryContext.get());
     stage1->start(*queryContext.get());
     stage1->execute(inputBuffer,  *queryContext.get(), wctx);
@@ -719,7 +719,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
-    WorkerContext wctx(NesThread::getId());
+    WorkerContext wctx(NodeEngine::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
@@ -856,7 +856,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
-    WorkerContext wctx(NesThread::getId());
+    WorkerContext wctx(NodeEngine::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
@@ -1049,7 +1049,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, joinHandler);
-    WorkerContext wctx(NesThread::getId());
+    WorkerContext wctx(NodeEngine::NesThread::getId());
     stage1->setup(*queryContext.get());
     stage1->start(*queryContext.get());
     stage1->execute(inputBuffer,  *queryContext.get(), wctx);

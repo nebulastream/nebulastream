@@ -22,9 +22,9 @@
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::NodeEngine {
 
-Task::Task(NodeEngine::Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
+Task::Task(Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
     id = UtilityFunctions::getNextTaskID();
 }
 
@@ -36,7 +36,7 @@ uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
 bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
 
-NodeEngine::Execution::ExecutablePipelinePtr Task::getPipeline() { return pipeline; }
+Execution::ExecutablePipelinePtr Task::getPipeline() { return pipeline; }
 
 bool Task::operator!() const { return pipeline == nullptr; }
 

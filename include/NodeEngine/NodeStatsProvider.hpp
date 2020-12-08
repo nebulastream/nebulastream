@@ -18,12 +18,10 @@
 #define _NODEENGINE_NODESTATSPROVIDER_HPP
 
 #include <NodeStats.pb.h>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
 
-namespace NES {
-
-class NodeStatsProvider;
-typedef std::shared_ptr<NodeStatsProvider> NodeStatsProviderPtr;
+namespace NES::NodeEngine {
 
 /**
  * @brief: This class gathers the properties of a node.

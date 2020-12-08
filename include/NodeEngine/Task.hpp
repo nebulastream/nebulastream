@@ -20,7 +20,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <memory>
-namespace NES {
+namespace NES::NodeEngine {
 
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers
@@ -35,7 +35,7 @@ class Task {
      * @param id of the pipeline stage inside the QEP that should be applied
      * @param pointer to the tuple buffer that has to be process
      */
-    explicit Task(NodeEngine::Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buf);
+    explicit Task(Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buf);
 
     explicit Task();
 
@@ -56,7 +56,7 @@ class Task {
      * @brief method to return the qep of a task
      * @return
      */
-    NodeEngine::Execution::ExecutablePipelinePtr getPipeline();
+    Execution::ExecutablePipelinePtr getPipeline();
 
     /**
      * @brief method to check if it is a watermark-only buffer
@@ -79,7 +79,7 @@ class Task {
     uint64_t getId();
 
   private:
-    NodeEngine::Execution::ExecutablePipelinePtr pipeline;
+    Execution::ExecutablePipelinePtr pipeline;
     TupleBuffer buf;
     uint64_t id;
 };

@@ -22,10 +22,8 @@
 #include <thread>
 #include <vector>
 
-namespace NES {
+namespace NES::NodeEngine {
 
-class WorkerContext;
-typedef WorkerContext& WorkerContextRef;
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during runtime
  * @Limitations
@@ -38,7 +36,7 @@ class ThreadPool {
     /**
      * @brief default constructor
      */
-    ThreadPool(uint64_t nodeId, NodeEngine::QueryManagerPtr queryManager, uint16_t numThreads);
+    ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint16_t numThreads);
 
     /**
      * @brief default destructor
@@ -110,7 +108,7 @@ class ThreadPool {
     std::atomic<uint16_t> numThreads;
     std::vector<std::thread> threads;
     std::mutex reconfigLock;
-    NodeEngine::QueryManagerPtr queryManager;
+    QueryManagerPtr queryManager;
 };
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;
