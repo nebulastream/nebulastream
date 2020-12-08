@@ -64,6 +64,44 @@ class E2ECoordinatorMultiWorkerTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
 
+bool waitForWorkers(uint16_t expectedWorkers) {
+    web::json::value json_return;
+    web::http::client::http_client client("http://localhost:8081/v1/nes/topology");
+    size_t nodeNo;
+
+    for (int i=0; i<5; i++) {
+        client.request(web::http::methods::GET)
+            .then([](const web::http::http_response& response) {
+              NES_INFO("get first then");
+              return response.extract_json();
+            })
+            .then([&json_return](const pplx::task<web::json::value>& task) {
+              try {
+                  NES_INFO("set return");
+                  json_return = task.get();
+              } catch (const web::http::http_exception& e) {
+                  NES_INFO("error while setting return");
+                  NES_INFO("error " << e.what());
+              }
+            })
+            .wait();
+
+        nodeNo = json_return.at("nodes").size();
+
+        if (nodeNo == expectedWorkers+1) {
+            NES_INFO("E2ECoordinatorMultiWorkerTest: Expected worker number reached correctly " << expectedWorkers);
+            return true;
+        }
+        else {
+            sleep(1);
+        }
+    }
+
+    NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly "
+              << nodeNo << " but expected " << expectedWorkers);
+    return false;
+}
+
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
@@ -93,6 +131,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     uint64_t coordinatorPid = coordinatorProc.id();
     uint64_t workerPid1 = workerProc1.id();
     uint64_t workerPid2 = workerProc2.id();
+
+    EXPECT_TRUE(waitForWorkers(2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -437,7 +477,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     string coordinatorRPCPort = std::to_string(rpcPort);
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
@@ -462,6 +502,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
     uint64_t coordinatorPid = coordinatorProc.id();
     uint64_t workerPid1 = workerProc1.id();
     uint64_t workerPid2 = workerProc2.id();
+
+    EXPECT_TRUE(waitForWorkers(2));
 
     web::json::value json_return;
 
@@ -547,6 +589,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     uint64_t coordinatorPid = coordinatorProc.id();
     uint64_t workerPid1 = workerProc1.id();
     uint64_t workerPid2 = workerProc2.id();
+
+    EXPECT_TRUE(waitForWorkers(2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
