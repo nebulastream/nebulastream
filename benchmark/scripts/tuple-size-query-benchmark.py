@@ -104,3 +104,4 @@ for workerThreads in allWorkerThreads:
 
 	plt.title(f"WorkerThreads: {workerThreads}")
 	plt.savefig(os.path.join(folder, os.path.join(fileName, f"avg_througput_tuple_size_query_{workerThreads}.png")))
+	plt.close(fig)

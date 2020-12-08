@@ -347,6 +347,7 @@ def defaultPlotBenchmark(benchmark):
 
 			plt.title(f"WorkerThreads: {workerThreads}")
 			plt.savefig(os.path.join(folder, f"avg_througput_{benchmark.name}_{workerThreads}.png"))
+			plt.close(fig)
 
 
 def runAndPlotBenchmark(options):

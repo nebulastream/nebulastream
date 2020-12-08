@@ -89,3 +89,4 @@ for workerThreads in allWorkerThreads:
 
 	plt.title(f"WorkerThreads: {workerThreads}")
 	plt.savefig(os.path.join(folder, f"avg_througput_map_query_{workerThreads}.png"))
+	plt.close(fig)
