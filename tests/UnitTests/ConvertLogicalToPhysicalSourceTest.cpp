@@ -30,7 +30,7 @@
 namespace NES {
 class ConvertLogicalToPhysicalSourceTest : public testing::Test {
   public:
-    NodeEnginePtr engine;
+    NodeEngine::NodeEnginePtr engine;
 
     static void SetUpTestCase() {
         NES::setupLogging("ConvertLogicalToPhysicalSourceTest.log", NES::LOG_DEBUG);
@@ -42,7 +42,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
     void SetUp() {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-        engine = NodeEngine::create("127.0.0.1", 9090, streamConf);
+        engine = NodeEngine::NodeEngine::create("127.0.0.1", 9090, streamConf);
     }
 
     void TearDown() {

@@ -8,30 +8,29 @@ namespace NES {
  * @brief The CompiledExecutablePipelineStage maintains a reference to an compiled ExecutablePipelineStage.
  * To this end, it ensures that the compiled code is correctly destructed.
  */
-class CompiledExecutablePipelineStage : public ExecutablePipelineStage {
+class CompiledExecutablePipelineStage : public NodeEngine::Execution::ExecutablePipelineStage {
 
   public:
     explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode);
-    static ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode);
+    static NodeEngine::Execution::ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode);
     ~CompiledExecutablePipelineStage();
 
-    uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
-    uint32_t start(PipelineExecutionContext& pipelineExecutionContext) override;
-    uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
-    uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
+    uint32_t setup(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t start(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t execute(TupleBuffer& inputTupleBuffer, NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
                      WorkerContext& workerContext) override;
-    uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
-    uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t close(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t stop(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
   private:
     enum ExecutionStage { NotInitialized, Initialized, Running, Stopped };
-    ExecutablePipelineStagePtr executablePipelineStage;
+    NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage;
     CompiledCodePtr compiledCode;
     std::mutex executionStageLock;
     std::atomic<ExecutionStage> currentExecutionStage;
 };
 
-typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 
 }// namespace NES
 

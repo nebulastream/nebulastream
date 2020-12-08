@@ -35,8 +35,8 @@ BufferManagerPtr GeneratedQueryExecutionPlanBuilder::getBufferManager() const { 
 
 QueryId GeneratedQueryExecutionPlanBuilder::getQueryId() const { return queryId; }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addPipelineStage(PipelineStagePtr pipelineStagePtr) {
-    stages.push_back(pipelineStagePtr);
+GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addPipeline(NodeEngine::Execution::ExecutablePipelinePtr pipeline) {
+    pipelines.push_back(pipeline);
     return *this;
 }
 
@@ -52,7 +52,7 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQuery
 
 QueryManagerPtr GeneratedQueryExecutionPlanBuilder::getQueryManager() const { return queryManager; }
 
-QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
+NodeEngine::Execution::ExecutableQueryPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(bufferManager, "GeneratedQueryExecutionPlanBuilder: Invalid bufferManager");
     NES_ASSERT(queryManager, "GeneratedQueryExecutionPlanBuilder: Invalid queryManager");
     NES_ASSERT(!sources.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sources");
@@ -61,16 +61,16 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(querySubPlanId != INVALID_QUERY_SUB_PLAN_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Subplan Id");
     NES_ASSERT(queryCompiler, "GeneratedQueryExecutionPlanBuilder: Invalid compiler or no stages");
 
-    if (stages.empty() && !leaves.empty()) {
+    if (pipelines.empty() && !leaves.empty()) {
         for (auto& operatorPlan : leaves) {
             queryCompiler->compile(*this, operatorPlan);
         }
-        NES_ASSERT(!stages.empty(), "GeneratedQueryExecutionPlanBuilder: No stages after query compilation");
-        std::reverse(stages.begin(), stages.end());// this is necessary, check plan generator documentation
+        NES_ASSERT(!pipelines.empty(), "GeneratedQueryExecutionPlanBuilder: No stages after query compilation");
+        std::reverse(pipelines.begin(), pipelines.end());// this is necessary, check plan generator documentation
     }
 
     return std::make_shared<GeneratedQueryExecutionPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks),
-                                                         std::move(stages), std::move(queryManager), std::move(bufferManager));
+                                                         std::move(pipelines), std::move(queryManager), std::move(bufferManager));
 }
 
 std::vector<DataSinkPtr>& GeneratedQueryExecutionPlanBuilder::getSinks() { return sinks; }
@@ -104,7 +104,7 @@ DataSourcePtr GeneratedQueryExecutionPlanBuilder::getSource(uint64_t index) { re
 
 DataSinkPtr GeneratedQueryExecutionPlanBuilder::getSink(uint64_t index) { return sinks[index]; }
 
-uint64_t GeneratedQueryExecutionPlanBuilder::getNumberOfPipelineStages() const { return stages.size(); }
+uint64_t GeneratedQueryExecutionPlanBuilder::getNumberOfPipelineStages() const { return pipelines.size(); }
 
 GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQuerySubPlanId(QuerySubPlanId querySubPlanId) {
     this->querySubPlanId = querySubPlanId;

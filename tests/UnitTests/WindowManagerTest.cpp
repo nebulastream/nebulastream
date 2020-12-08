@@ -20,6 +20,8 @@
 #include <vector>
 
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
@@ -38,7 +40,6 @@
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
@@ -57,8 +58,6 @@
 using namespace NES::Windowing;
 namespace NES {
 
-typedef std::shared_ptr<PipelineExecutionContext> PipelineExecutionContextPtr;
-
 class WindowManagerTest : public testing::Test {
   public:
     void SetUp() {
@@ -72,26 +71,26 @@ class WindowManagerTest : public testing::Test {
     const uint64_t buffer_size = 4 * 1024;
 };
 
-class MockedExecutablePipelineStage : public ExecutablePipelineStage {
+class MockedExecutablePipelineStage : public NodeEngine::Execution::ExecutablePipelineStage {
   public:
 
-    static ExecutablePipelineStagePtr create(){
+    static NodeEngine::Execution::ExecutablePipelineStagePtr create(){
         return std::make_shared<MockedExecutablePipelineStage>();
     }
 
-    uint32_t execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
+    uint32_t execute(TupleBuffer&, NodeEngine::Execution::PipelineExecutionContext&, WorkerContext&) override {
         return 0;
     }
 };
 
-class MockedPipelineExecutionContext : public PipelineExecutionContext {
+class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
     MockedPipelineExecutionContext()
         : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, WorkerContextRef) { },  nullptr, nullptr) {
         // nop
     }
 
-    static PipelineExecutionContextPtr create(){
+    static NodeEngine::Execution::PipelineExecutionContextPtr create(){
         return std::make_shared<MockedPipelineExecutionContext>();
     }
 };
@@ -184,7 +183,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(wAbstr);
 
     auto context = std::make_shared<MockedPipelineExecutionContext>();
-    auto nextPipeline = ExecutablePipeline::create(0, 1, MockedExecutablePipelineStage::create(), context, nullptr);
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(0, 1, MockedExecutablePipelineStage::create(), context, nullptr);
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(w)
@@ -256,7 +255,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
         windowDef, exec, windowOutputSchema);
     auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
-    auto nextPipeline = ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
                                               MockedExecutablePipelineStage::create(),
                                               MockedPipelineExecutionContext::create(),
                                               nullptr);
@@ -328,7 +327,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
         windowDef, exec, windowOutputSchema);
     auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
-    auto nextPipeline = ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
                                                                  MockedExecutablePipelineStage::create(),
                                                                  MockedPipelineExecutionContext::create(),
                                                                  nullptr);

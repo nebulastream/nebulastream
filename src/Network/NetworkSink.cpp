@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "Network/NetworkSink.hpp"
+#include <Network/NetworkSink.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {

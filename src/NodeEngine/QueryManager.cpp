@@ -27,9 +27,9 @@ namespace NES {
 using std::string;
 namespace detail {
 
-class ReconfigurationTaskEntryPointPipelineStage: public ExecutablePipelineStage{
+class ReconfigurationTaskEntryPointPipelineStage: public NodeEngine::Execution::ExecutablePipelineStage{
   public:
-    uint32_t execute(TupleBuffer& buffer, PipelineExecutionContext&, WorkerContextRef workerContext) {
+    uint32_t execute(TupleBuffer& buffer, NodeEngine::Execution::PipelineExecutionContext&, WorkerContextRef workerContext) {
         NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread "
               << workerContext.getId());
         auto* task = buffer.getBufferAs<ReconfigurationTask>();
@@ -87,7 +87,7 @@ void QueryManager::destroy() {
     NES_DEBUG("QueryManager::resetQueryManager finished");
 }
 
-bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
+bool QueryManager::registerQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep);
     std::scoped_lock lock(queryMutex, statisticsMutex);
 
@@ -118,7 +118,7 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
         } else {
             NES_DEBUG("QueryManager: Source " << source->getOperatorId() << " not found. Creating new element with with qep "
                                               << qep);
-            std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
+            std::unordered_set<NodeEngine::Execution::ExecutableQueryPlanPtr> qepSet = {qep};
             operatorIdToQueryMap[source->getOperatorId()] = qepSet;
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
             queryMapToOperatorId[qep->getQueryId()].push_back(source->getOperatorId());
@@ -147,7 +147,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
          it != operatorIdToQueryMap.end(); ++it) {
         ss << " operatorId=" << it->first;
         for (auto& a : it->second) {
-            ss << " \t qepID=" << a->getQueryId() << " subqep=" << a->getQuerySubPlanId() << " stages=" << a->getStageSize();
+            ss << " \t qepID=" << a->getQueryId() << " subqep=" << a->getQuerySubPlanId() << " pipelines=" << a->getStageSize();
         }
     }
 
@@ -185,9 +185,9 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     cv.notify_all();
 }
 
-bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
+bool QueryManager::startQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
-    NES_ASSERT(qep->getStatus() == ExecutableQueryPlan::QueryExecutionPlanStatus::Created,
+    NES_ASSERT(qep->getStatus() == NodeEngine::Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     for (const auto& sink : qep->getSinks()) {
@@ -215,7 +215,7 @@ bool QueryManager::startQuery(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool QueryManager::deregisterQuery(QueryExecutionPlanPtr qep) {
+bool QueryManager::deregisterQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query" << qep);
 
     std::unique_lock lock(queryMutex);
@@ -248,7 +248,7 @@ bool QueryManager::deregisterQuery(QueryExecutionPlanPtr qep) {
     return succeed;
 }
 
-bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
+bool QueryManager::stopQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::stopQuery: query" << qep);
     {
         std::unique_lock lock(queryMutex);
@@ -296,12 +296,12 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     auto buffer = optBuffer.value();
     auto task = new (buffer.getBuffer())
         ReconfigurationTask(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
-    auto pipelineContext = std::make_shared<PipelineExecutionContext>(
+    auto pipelineContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         queryExecutionPlanId, bufferManager,
         [](TupleBuffer&, NES::WorkerContext&) {
         },
         nullptr, nullptr);
-    auto pipeline = ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
+    auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     {
         std::unique_lock lock(workMutex);
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
@@ -361,13 +361,13 @@ QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerC
         lock.unlock();
         if (!hitReconfiguration) {// execute all pending tasks until first reconfiguration
             task(workerContext);
-            if (task.getPipelineStage()->isReconfiguration()) {
+            if (task.getPipeline()->isReconfiguration()) {
                 hitReconfiguration = true;
             }
             lock.lock();
             continue;
         } else {
-            if (task.getPipelineStage()->isReconfiguration()) {// execute only pending reconfigurations
+            if (task.getPipeline()->isReconfiguration()) {// execute only pending reconfigurations
                 task(workerContext);
             }
             lock.lock();
@@ -377,7 +377,7 @@ QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerC
     return Finished;
 }
 
-void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr nextPipeline) {
+void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline) {
     std::unique_lock lock(workMutex);
     // dispatch buffer as task
     taskQueue.emplace_back(std::move(nextPipeline), buffer);
@@ -389,13 +389,13 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, PipelineStagePtr 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
     NES_INFO("QueryManager::completedWork: Work for task=" << task.toString());
     std::unique_lock lock(statisticsMutex);
-    if (queryToStatisticsMap.contains(task.getPipelineStage()->getQepParentId())) {
-        auto statistics = queryToStatisticsMap.find(task.getPipelineStage()->getQepParentId());
+    if (queryToStatisticsMap.contains(task.getPipeline()->getQepParentId())) {
+        auto statistics = queryToStatisticsMap.find(task.getPipeline()->getQepParentId());
 
         statistics->incProcessedTasks();
         if (task.isWatermarkOnly()) {
             statistics->incProcessedWatermarks();
-        } else if (!task.getPipelineStage()->isReconfiguration()) {
+        } else if (!task.getPipeline()->isReconfiguration()) {
             statistics->incProcessedBuffers();
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());
@@ -404,13 +404,13 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     }
 }
 
-ExecutableQueryPlan::QueryExecutionPlanStatus QueryManager::getQepStatus(QuerySubPlanId id) {
+NodeEngine::Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(QuerySubPlanId id) {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(id);
     if (it != runningQEPs.end()) {
         return it->second->getStatus();
     }
-    return ExecutableQueryPlan::QueryExecutionPlanStatus::Invalid;
+    return NodeEngine::Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
 std::string QueryManager::getQueryManagerStatistics() {
@@ -464,7 +464,7 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
         case Destroy: {
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
-            NES_ASSERT(status == ExecutableQueryPlan::Stopped || status == ExecutableQueryPlan::ErrorState,
+            NES_ASSERT(status == NodeEngine::Execution::ExecutableQueryPlanStatus::Stopped || status == NodeEngine::Execution::ExecutableQueryPlanStatus::ErrorState,
                        "query plan is not in valid state " << status);
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object

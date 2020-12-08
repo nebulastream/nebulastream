@@ -41,6 +41,12 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class PhysicalStreamConfig;
 typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
+}
+
+namespace NES::NodeEngine {
+
+NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
+
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
@@ -66,7 +72,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @return
      */
 
-    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
+    static NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
                                               uint16_t numThreads = DEFAULT_NUM_THREADS,
                                               uint64_t bufferSize = DEFAULT_BUFFER_SIZE,
                                               uint64_t numBuffers = DEFAULT_NUM_BUFFERS);
@@ -89,7 +95,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan);
+    bool deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -103,7 +109,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan);
+    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
 
     /**
      * @brief registers a query
@@ -174,7 +180,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     /**
      * @return return the status of a query
      */
-    ExecutableQueryPlan::QueryExecutionPlanStatus getQueryStatus(QueryId queryId);
+    Execution::ExecutableQueryPlanStatus getQueryStatus(QueryId queryId);
 
     /**
     * @brief method to return the query statistics
@@ -220,7 +226,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     PhysicalStreamConfigPtr config;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
-    std::map<QuerySubPlanId, QueryExecutionPlanPtr> deployedQEPs;
+    std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;

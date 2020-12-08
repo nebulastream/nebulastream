@@ -16,7 +16,6 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -27,6 +26,7 @@
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 
 namespace NES::Join {
 template<class KeyType>
@@ -140,7 +140,7 @@ class JoinHandler : public AbstractJoinHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
                uint32_t pipelineStageId, uint64_t originId) override {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;

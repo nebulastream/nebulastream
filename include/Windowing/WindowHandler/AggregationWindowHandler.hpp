@@ -18,6 +18,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -138,7 +139,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
+    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
                uint32_t pipelineStageId, uint64_t originId) override {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;

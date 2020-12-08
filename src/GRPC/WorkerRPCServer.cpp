@@ -25,7 +25,7 @@
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine) : nodeEngine(nodeEngine) {
+WorkerRPCServer::WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine) : nodeEngine(nodeEngine) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 

@@ -87,7 +87,7 @@ class OperatorCodeGenerationTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
 };
 
-class TestPipelineExecutionContext : public PipelineExecutionContext {
+class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
     TestPipelineExecutionContext(BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler,
                                  Join::AbstractJoinHandlerPtr joinHandler)
@@ -300,9 +300,8 @@ const DataSourcePtr createWindowTestSliceSource(BufferManagerPtr bPtr, QueryMana
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
@@ -339,8 +338,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -387,8 +386,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -407,8 +406,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     WorkerContext wctx(NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -418,7 +417,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
 
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
 
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -445,8 +444,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     /* prepare objects for test */
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     WorkerContext wctx(NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -620,13 +619,13 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
         windowDefinition, ExecutableSumAggregation<uint64_t>::create(), windowOutputSchema);
 
-    auto executionContext = std::make_shared<PipelineExecutionContext>(
+    auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
+    auto nextPipeline = std::make_shared<NodeEngine::Execution::ExecutablePipeline>(1, 0, stage2, executionContext, nullptr);
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
@@ -650,8 +649,8 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -660,7 +659,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto input_schema = source->getSchema();
 
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
@@ -689,13 +688,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
         windowDefinition, ExecutableSumAggregation<uint64_t>::create(), windowOutputSchema);
 
-    auto executionContext = std::make_shared<PipelineExecutionContext>(
+    auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
+    auto nextPipeline = std::make_shared<NodeEngine::Execution::ExecutablePipeline>(1, 0, stage2, executionContext, nullptr);
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
@@ -721,9 +720,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     WorkerContext wctx(NesThread::getId());
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    SchemaPtr schema = Schema::create()
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto schema = Schema::create()
                            ->addField(createField("start", UINT64))
                            ->addField(createField("end", UINT64))
                            ->addField(createField("cnt", UINT64))
@@ -734,7 +733,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto context1 = PipelineContext::create();
     context1->pipelineName ="1";
     codeGenerator->generateCodeForScan(schema, schema, context1);
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -765,13 +764,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
         windowDefinition, ExecutableSumAggregation<uint64_t>::create(), windowOutputSchema);
 
-    auto executionContext = std::make_shared<PipelineExecutionContext>(
+    auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<ExecutablePipeline>(1, 0, stage2, executionContext,
+    auto nextPipeline = std::make_shared<NodeEngine::Execution::ExecutablePipeline>(1, 0, stage2, executionContext,
                                                         nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
@@ -858,9 +857,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
     WorkerContext wctx(NesThread::getId());
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    SchemaPtr schema = Schema::create()
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto schema = Schema::create()
                            ->addField(createField("start", UINT64))
                            ->addField(createField("end", UINT64))
                            ->addField(createField("cnt", UINT64))
@@ -871,7 +870,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto context1 = PipelineContext::create();
     context1->pipelineName ="1";
     codeGenerator->generateCodeForScan(schema, schema, context1);
-    WindowTriggerPolicyPtr trigger = OnRecordTriggerPolicyDescription::create();
+    auto trigger = OnRecordTriggerPolicyDescription::create();
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -896,7 +895,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -943,8 +942,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -1003,8 +1002,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     /* prepare objects for test */
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -1034,14 +1033,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     // init window handler
     auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDef);
 
-    auto executionContext = std::make_shared<PipelineExecutionContext>(
+    auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
             buff.isValid();
         },
         nullptr, joinHandler);//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<ExecutablePipeline>(1, 0, stage2, executionContext,
-                                                        nullptr);// TODO Philipp, plz add pass-through pipeline here
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr);
     joinHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */

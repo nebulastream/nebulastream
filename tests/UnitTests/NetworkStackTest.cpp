@@ -22,6 +22,7 @@
 #include <Network/ZmqServer.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
@@ -41,6 +42,7 @@
 using namespace std;
 
 namespace NES {
+
 const uint64_t buffersManaged = 8 * 1024;
 const uint64_t bufferSize = 4 * 1024;
 
@@ -615,7 +617,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
 TEST_F(NetworkStackTest, testNetworkSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -632,7 +634,7 @@ TEST_F(NetworkStackTest, testNetworkSource) {
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -655,7 +657,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<QueryManager>(bufferManager, 0, 1);
-        auto networkManagerCreator = [=](NodeEnginePtr engine) {
+        auto networkManagerCreator = [=](NodeEngine::NodeEnginePtr engine) {
             return Network::NetworkManager::create(hostname, port, Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager);
         };
@@ -681,7 +683,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
 
-    class MockedNodeEngine : public NodeEngine {
+    class MockedNodeEngine : public NodeEngine::NodeEngine {
       public:
         NesPartition nesPartition;
         std::promise<bool>& completed;
@@ -690,7 +692,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf, BufferManagerPtr&& bufferManager,
                                   QueryManagerPtr&& queryManager,
-                                  std::function<Network::NetworkManagerPtr(NodeEnginePtr)>&& networkManagerCreator,
+                                  std::function<Network::NetworkManagerPtr(NES::NodeEngine::NodeEnginePtr)>&& networkManagerCreator,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler,
                                   std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)
             : NodeEngine(std::move(streamConf), std::move(bufferManager), std::move(queryManager),
@@ -776,7 +778,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                            ->addField("value", DataTypeFactory::createInt64());
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink
     auto networkSource1 = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),

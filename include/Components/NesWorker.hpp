@@ -151,7 +151,7 @@ class NesWorker {
      * @brief method to get a ptr to the node engine
      * @return pt to node engine
      */
-    NodeEnginePtr getNodeEngine();
+    NodeEngine::NodeEnginePtr getNodeEngine();
 
   private:
     /**
@@ -162,7 +162,7 @@ class NesWorker {
     std::shared_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
 
-    NodeEnginePtr nodeEngine;
+    NodeEngine::NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
     bool connected;

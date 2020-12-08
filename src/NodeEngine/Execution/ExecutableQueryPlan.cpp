@@ -15,22 +15,27 @@
 */
 
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
 
-namespace NES {
+namespace NES::NodeEngine::Execution{
 
-ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
-                                       std::vector<DataSinkPtr>&& sinks, std::vector<PipelineStagePtr>&& stages,
-                                       QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
+ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
+                                         QuerySubPlanId querySubPlanId,
+                                         std::vector<DataSourcePtr>&& sources,
+                                         std::vector<DataSinkPtr>&& sinks,
+                                         std::vector<ExecutablePipelinePtr>&& stages,
+                                         QueryManagerPtr&& queryManager,
+                                         BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
-      stages(std::move(stages)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
+      pipelines(std::move(stages)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Created) {}
 
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 
-std::vector<PipelineStagePtr>& ExecutableQueryPlan::getStages() { return stages; }
+std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getStages() { return pipelines; }
 
 QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
@@ -39,7 +44,7 @@ ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_ASSERT(qepStatus.load() == Stopped || qepStatus.load() == ErrorState,
                "QueryPlan is created but not executing " << queryId);
     sources.clear();
-    stages.clear();
+    pipelines.clear();
 }
 
 bool ExecutableQueryPlan::stop() {
@@ -49,7 +54,7 @@ bool ExecutableQueryPlan::stop() {
     auto expected = Running;
     if (qepStatus.compare_exchange_strong(expected, Stopped)) {
         NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
-        for (auto& stage : stages) {
+        for (auto& stage : pipelines) {
             if (!stage->stop()) {
                 NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
                 ret = false;
@@ -63,13 +68,13 @@ bool ExecutableQueryPlan::stop() {
     return ret;
 }
 
-ExecutableQueryPlan::QueryExecutionPlanStatus ExecutableQueryPlan::getStatus() { return qepStatus.load(); }
+ExecutableQueryPlanStatus ExecutableQueryPlan::getStatus() { return qepStatus.load(); }
 
 bool ExecutableQueryPlan::setup() {
     NES_DEBUG("QueryExecutionPlan: setup " << queryId << " " << querySubPlanId);
     auto expected = Created;
     if (qepStatus.compare_exchange_strong(expected, Deployed)) {
-        for (auto& stage : stages) {
+        for (auto& stage : pipelines) {
             if (!stage->setup(queryManager, bufferManager)) {
                 NES_ERROR("QueryExecutionPlan: setup failed!" << queryId << " " << querySubPlanId);
                 this->stop();
@@ -86,7 +91,7 @@ bool ExecutableQueryPlan::start() {
     NES_DEBUG("QueryExecutionPlan: start " << queryId << " " << querySubPlanId);
     auto expected = Deployed;
     if (qepStatus.compare_exchange_strong(expected, Running)) {
-        for (auto& stage : stages) {
+        for (auto& stage : pipelines) {
             if (!stage->start()) {
                 NES_ERROR("QueryExecutionPlan: start failed! " << queryId << " " << querySubPlanId);
                 this->stop();
@@ -107,9 +112,9 @@ std::vector<DataSourcePtr> ExecutableQueryPlan::getSources() const { return sour
 
 std::vector<DataSinkPtr> ExecutableQueryPlan::getSinks() const { return sinks; }
 
-PipelineStagePtr ExecutableQueryPlan::getStage(uint64_t index) const { return stages[index]; }
+ExecutablePipelinePtr ExecutableQueryPlan::getStage(uint64_t index) const { return pipelines[index]; }
 
-uint64_t ExecutableQueryPlan::getStageSize() const { return stages.size(); }
+uint64_t ExecutableQueryPlan::getStageSize() const { return pipelines.size(); }
 
 void ExecutableQueryPlan::print() {
     for (auto source : sources) {

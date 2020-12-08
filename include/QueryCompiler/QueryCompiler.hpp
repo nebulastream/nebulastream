@@ -26,17 +26,11 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
-
 class QueryCompiler;
 typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
 
 class CodeGenerator;
 typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
-
-class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
 
 class PipelineContext;
 typedef std::shared_ptr<PipelineContext> PipelineContextPtr;

@@ -16,20 +16,15 @@
 
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
-#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <map>
 
-namespace NES {
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
-class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
+namespace NES::NodeEngine::Execution {
 
 /**
  * @brief A running execution plan on a node engine.
@@ -37,20 +32,12 @@ typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
  */
 class ExecutableQueryPlan {
   public:
-    enum QueryExecutionPlanStatus {
-        Created,
-        Deployed,// Created->Deployed when calling setup()
-        Running, // Deployed->Running when calling start()
-        Finished,
-        Stopped,// Running->Stopped when calling stop() and in Running state
-        ErrorState,
-        Invalid
-    };
+
 
   protected:
     explicit ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
-                                std::vector<DataSinkPtr>&& sinks, std::vector<PipelineStagePtr>&& stages,
-                                QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
+                                 std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& stages,
+                                 QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 
   public:
     virtual ~ExecutableQueryPlan();
@@ -70,7 +57,7 @@ class ExecutableQueryPlan {
      */
     bool stop();
 
-    QueryExecutionPlanStatus getStatus();
+    ExecutableQueryPlanStatus getStatus();
 
     /**
      * @brief Get data sources.
@@ -85,16 +72,16 @@ class ExecutableQueryPlan {
     /**
      * @brief Get i-th stage.
      */
-    PipelineStagePtr getStage(uint64_t index) const;
+    ExecutablePipelinePtr getStage(uint64_t index) const;
 
     uint64_t getStageSize() const;
 
-    std::vector<PipelineStagePtr>& getStages();
+    std::vector<ExecutablePipelinePtr>& getStages();
 
     /**
      * @brief Gets number of pipeline stages.
      */
-    uint32_t numberOfPipelineStages() { return stages.size(); }
+    uint32_t getNumberOfPipelines() { return pipelines.size(); }
 
     QueryManagerPtr getQueryManager();
 
@@ -119,10 +106,10 @@ class ExecutableQueryPlan {
     const QuerySubPlanId querySubPlanId;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
-    std::vector<PipelineStagePtr> stages;
+    std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
-    std::atomic<QueryExecutionPlanStatus> qepStatus;
+    std::atomic<ExecutableQueryPlanStatus> qepStatus;
 };
 
 }// namespace NES

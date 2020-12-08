@@ -31,7 +31,7 @@
 namespace NES {
 
 DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor,
-                                                         NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) {
+                                                         NodeEngine::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) {
     NES_ASSERT(nodeEngine, "Invalid node engine");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());

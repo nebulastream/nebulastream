@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
@@ -26,12 +27,9 @@ using grpc::Status;
 
 namespace NES {
 
-class NodeEngine;
-typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
-
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
-    WorkerRPCServer(NodeEnginePtr nodeEngine);
+    WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -44,6 +42,6 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Status RequestMonitoringData(ServerContext* context, const MonitoringRequest* request, MonitoringReply* reply) override;
 
   private:
-    NodeEnginePtr nodeEngine;
+    NodeEngine::NodeEnginePtr nodeEngine;
 };
 }// namespace NES

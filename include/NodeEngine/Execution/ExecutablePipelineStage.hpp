@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <State/StateVariable.hpp>
@@ -10,7 +11,7 @@
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 
-namespace NES {
+namespace NES::NodeEngine::Execution {
 
 class ExecutablePipelineStage {
   public:
@@ -67,8 +68,6 @@ class ExecutablePipelineStage {
      */
     virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
 };
-
-typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 
 }// namespace NES
 

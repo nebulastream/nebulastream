@@ -19,23 +19,11 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <functional>
 #include <memory>
-namespace NES {
 
-class WorkerContext;
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
-
-typedef WorkerContext& WorkerContextRef;
-
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
-
-class TupleBuffer;
+namespace NES::NodeEngine::Execution {
 
 // TODO Philipp, please clarify if we should introduce WindowManager, StateVars, etc... here
 // TODO so that we have one central point that the compiled code uses to access runtime

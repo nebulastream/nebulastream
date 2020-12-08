@@ -14,15 +14,13 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_TASK_H_
-#define INCLUDE_TASK_H_
+#ifndef INCLUDE_NODEENGINE_TASK_H_
+#define INCLUDE_NODEENGINE_TASK_H_
+
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <memory>
 namespace NES {
-
-class WorkerContext;
-class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
 
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers
@@ -37,7 +35,7 @@ class Task {
      * @param id of the pipeline stage inside the QEP that should be applied
      * @param pointer to the tuple buffer that has to be process
      */
-    explicit Task(PipelineStagePtr pipeline, TupleBuffer& buf);
+    explicit Task(NodeEngine::Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buf);
 
     explicit Task();
 
@@ -58,7 +56,7 @@ class Task {
      * @brief method to return the qep of a task
      * @return
      */
-    PipelineStagePtr getPipelineStage();
+    NodeEngine::Execution::ExecutablePipelinePtr getPipeline();
 
     /**
      * @brief method to check if it is a watermark-only buffer
@@ -81,11 +79,11 @@ class Task {
     uint64_t getId();
 
   private:
-    PipelineStagePtr pipeline;
+    NodeEngine::Execution::ExecutablePipelinePtr pipeline;
     TupleBuffer buf;
     uint64_t id;
 };
 
 }// namespace NES
 
-#endif /* INCLUDE_TASK_H_ */
+#endif /* INCLUDE_NODEENGINE_TASK_H_ */

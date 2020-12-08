@@ -20,7 +20,7 @@
 #include <NodeEngine/WorkerContext.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::NodeEngine::Execution{
 
 PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,

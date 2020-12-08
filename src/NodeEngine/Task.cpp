@@ -24,7 +24,7 @@
 
 namespace NES {
 
-Task::Task(PipelineStagePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
+Task::Task(NodeEngine::Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
     id = UtilityFunctions::getNextTaskID();
 }
 
@@ -36,7 +36,7 @@ uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
 bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
 
-PipelineStagePtr Task::getPipelineStage() { return pipeline; }
+NodeEngine::Execution::ExecutablePipelinePtr Task::getPipeline() { return pipeline; }
 
 bool Task::operator!() const { return pipeline == nullptr; }
 
@@ -47,7 +47,7 @@ std::string Task::toString() {
     std::stringstream ss;
     ss << "Task: id=" << id;
     ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId()
-       << " nextPipelineId=" << pipeline->getNextStage();
+       << " nextPipelineId=" << pipeline->getNextPipeline();
     ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples()
        << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark() << " originID=" << buf.getOriginId();
     return ss.str();
