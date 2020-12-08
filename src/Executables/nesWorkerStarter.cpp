@@ -136,6 +136,14 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    if (argc == 1) {
+        std::cout << "Please specify at least the port (coordinatorPort) you want to connect to or provide a path to a configFile"
+                  << std::endl;
+        std::cout << "Basic Command Line Parameter" << std::endl;
+        std::cout << desc << std::endl;
+        return 0;
+    }
+
     if (!configPath.empty()) {
         std::cout << "NESWORKERSTARTER: Using config file with path: " << configPath << " ." << std::endl;
         struct stat buffer {};
