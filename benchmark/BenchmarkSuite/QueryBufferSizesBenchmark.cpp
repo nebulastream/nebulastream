@@ -60,14 +60,14 @@ int main() {
     auto benchmarkSchema =  Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
-    BM_AddBenchmark(
-        "BM_SimpleMapQuery",
-        TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
-        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
-                                      ingestionRate, 1),
-        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
-        ",BufferSize,SchemaSize",
-        "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
+    for (auto bufferSize : allBufferSizes) {
+        BM_AddBenchmarkCustomBufferSize(
+            "BM_SimpleMapQuery",
+            TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
+            SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema, ingestionRate, 1),
+            SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",BufferSize,SchemaSize",
+            "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
+    }
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
 
 
@@ -75,13 +75,17 @@ int main() {
     std::vector<uint64_t> allSelectivities;
     BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 700, 100);
 
-    for (auto selectivity : allSelectivities) {
-        BM_AddBenchmark("BM_SimpleFilterQuery",
-                        TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).sink(DummySink::create()),
-                        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                      benchmarkSchema, ingestionRate, 1),
-                        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",Selectivity,BufferSize,SchemaSize",
-                        "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
+    for (auto bufferSize : allBufferSizes) {
+        for (auto selectivity : allSelectivities) {
+            BM_AddBenchmarkCustomBufferSize("BM_SimpleFilterQuery",
+                            TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).sink(DummySink::create()),
+                            SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                          benchmarkSchema, ingestionRate, 1),
+                            SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
+                            ",Selectivity,BufferSize,SchemaSize",
+                            "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + ","
+                                + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
+        }
     }
     //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------
 
