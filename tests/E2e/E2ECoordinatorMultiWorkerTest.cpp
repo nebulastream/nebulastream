@@ -46,6 +46,7 @@ namespace NES {
 // by assigning a different RPC port for each test case
 uint64_t rpcPort = 1200;
 uint64_t dataPort = 1400;
+uint64_t restPort = 8000;
 
 class E2ECoordinatorMultiWorkerTest : public testing::Test {
   public:
@@ -55,8 +56,9 @@ class E2ECoordinatorMultiWorkerTest : public testing::Test {
     }
 
     void SetUp() {
-        rpcPort = rpcPort + 10;
-        dataPort = dataPort + 10;
+        rpcPort += 10;
+        dataPort += 10;
+        restPort += 10;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
@@ -68,7 +70,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
 
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
@@ -100,7 +102,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
     NES_INFO("string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
 
     QueryId queryId = json_return.at("queryId").as_integer();
 
@@ -108,8 +110,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -158,7 +160,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
+    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -170,7 +172,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -203,15 +205,15 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
     QueryId queryId = json_return.at("queryId").as_integer();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -244,7 +246,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
+    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort +  " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -256,7 +258,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -293,15 +295,15 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     NES_INFO("query string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
     QueryId queryId = json_return.at("queryId").as_integer();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -348,7 +350,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" +  coordinatorRPCPort +  " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
 
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
@@ -360,7 +362,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str()));
+    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -398,15 +400,15 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 
     NES_INFO("query string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
     QueryId queryId = json_return.at("queryId").as_integer();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -438,7 +440,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" +  coordinatorRPCPort +  " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
@@ -516,7 +518,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort;
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" +  coordinatorRPCPort +  " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
@@ -559,15 +561,15 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str());
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
     QueryId queryId = json_return.at("queryId").as_integer();
 
     NES_INFO("try to acc return");
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 4));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 4, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());

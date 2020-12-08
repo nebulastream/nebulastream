@@ -84,7 +84,7 @@ class TestUtils {
      * @param expectedResult: The expected value
      * @return true if matched the expected result within the timeout
      */
-    static bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult) {
+    static bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, std::string restPort = "8081") {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         uint64_t currentResult = 0;
@@ -93,7 +93,7 @@ class TestUtils {
 
         NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
-            web::http::client::http_client clientProc("http://localhost:8081/v1/nes/queryCatalog/status");
+            web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
             clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
                 .then([](const web::http::http_response& response) {
                     cout << "Get query status" << endl;
@@ -117,7 +117,7 @@ class TestUtils {
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
 
-            web::http::client::http_client clientProc("http://localhost:8081/v1/nes/queryCatalog/getNumberOfProducedBuffers");
+            web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
             clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
                 .then([](const web::http::http_response& response) {
                     cout << "read number of buffers" << endl;
@@ -151,10 +151,10 @@ class TestUtils {
      * @param queryId: Id of the query
      * @return if stopped
      */
-    static bool stopQueryViaRest(QueryId queryId) {
+    static bool stopQueryViaRest(QueryId queryId, std::string restPort = "8081") {
         web::json::value json_return;
 
-        web::http::client::http_client client("http://127.0.0.1:8081/v1/nes/query/stop-query");
+        web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/query/stop-query");
         client.request(web::http::methods::DEL, _XPLATSTR("/"), queryId)
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
@@ -181,10 +181,10 @@ class TestUtils {
      * @param query string
      * @return if stopped
      */
-    static web::json::value startQueryViaRest(string queryString) {
+    static web::json::value startQueryViaRest(string queryString, std::string restPort = "8081") {
         web::json::value json_return;
 
-        web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
+        web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort+ "/v1/nes/");
         clientQ1.request(web::http::methods::POST, "/query/execute-query", queryString)
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
@@ -211,10 +211,10 @@ class TestUtils {
    * @param query string
    * @return
    */
-    static bool addLogicalStream(string schemaString) {
+    static bool addLogicalStream(string schemaString, std::string restPort = "8081") {
         web::json::value json_returnSchema;
 
-        web::http::client::http_client clientSchema("http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
+        web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort +"/v1/nes/streamCatalog/addLogicalStream");
         clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
