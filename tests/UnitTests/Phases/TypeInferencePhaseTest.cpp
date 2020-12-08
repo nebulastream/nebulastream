@@ -124,7 +124,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     std::cout << resultPlan->getSinkOperators()[0]->getOutputSchema()->toString() << std::endl;
     // we just access the old references
-    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 4);
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5);
 }
 
 /**
