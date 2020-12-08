@@ -19,7 +19,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
-namespace NES {
+namespace NES::NodeEngine {
 
 class QueryStatistics {
   public:
@@ -95,7 +95,6 @@ class QueryStatistics {
     std::atomic<uint64_t> processedBuffers;
     std::atomic<uint64_t> processedWatermarks;
 };
-typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
 }// namespace NES
 

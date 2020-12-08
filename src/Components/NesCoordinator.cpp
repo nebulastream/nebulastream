@@ -254,7 +254,7 @@ void NesCoordinator::buildAndStartGRPCServer(std::promise<bool>& prom) {
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
 }
 
-std::vector<QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
+std::vector<NodeEngine::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
     NES_INFO("NesCoordinator: Get query statistics for query Id " << queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
