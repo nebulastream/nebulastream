@@ -177,7 +177,15 @@ class Topology {
      * @param destinationNode : the destination topology node
      * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
      */
-    std::vector<TopologyNodePtr> findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
+    std::vector<TopologyNodePtr> findNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode);
+
+    /**
+     * @brief Find the set of shared nodes (inclusive of) between a set of source and destination topology nodes
+     * @param sourceNodes : the source topology nodes
+     * @param destinationNodes : the destination topology nodes
+     * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
+     */
+    std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes, std::vector<TopologyNodePtr> destinationNodes);
 
     ~Topology();
 

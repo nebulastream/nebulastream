@@ -1055,7 +1055,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
     NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11,  NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -1113,6 +1113,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     //register physical stream
     PhysicalStreamConfigPtr conf =
         PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", true);
+    //    wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
     wrk4->registerPhysicalStream(conf);
@@ -1123,14 +1124,16 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
                    "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    //    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "1000,2000,1,68\n"
-                             "2000,3000,2,112\n";
-
+    string expectedContent = "start:INTEGER,end:INTEGER,cnt:INTEGER,id:INTEGER,value:INTEGER\n"
+                             "1000,2000,3,1,17\n"
+                             "2000,3000,3,2,28\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
