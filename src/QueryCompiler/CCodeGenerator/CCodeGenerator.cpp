@@ -16,7 +16,7 @@
 
 #include <API/UserAPIExpression.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>

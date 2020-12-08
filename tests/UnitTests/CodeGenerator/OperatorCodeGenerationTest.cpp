@@ -19,10 +19,10 @@
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
-#include <NodeEngine/Pipelines/PipelineStage.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
@@ -491,7 +491,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
+    auto nextPipeline = std::make_shared<ExecutablePipeline>(1, 0, stage2, executionContext, nullptr);
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
@@ -559,7 +559,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTime) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
+    auto nextPipeline = std::make_shared<ExecutablePipeline>(1, 0, stage2, executionContext, nullptr);
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
@@ -771,7 +771,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext,
+    auto nextPipeline = std::make_shared<ExecutablePipeline>(1, 0, stage2, executionContext,
                                                         nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
@@ -1040,7 +1040,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
             buff.isValid();
         },
         nullptr, joinHandler);//valid check due to compiler error for unused var
-    auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext,
+    auto nextPipeline = std::make_shared<ExecutablePipeline>(1, 0, stage2, executionContext,
                                                         nullptr);// TODO Philipp, plz add pass-through pipeline here
     joinHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 

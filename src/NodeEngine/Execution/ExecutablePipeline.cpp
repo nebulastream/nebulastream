@@ -15,22 +15,18 @@
 */
 
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
-#include <NodeEngine/Pipelines/ExecutablePipelineStage.hpp>
-#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
-#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
 namespace NES {
 
-PipelineStage::PipelineStage(uint32_t pipelineStageId,
+ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId,
                              QuerySubPlanId qepId,
                              ExecutablePipelineStagePtr executablePipelineStage,
                              QueryExecutionContextPtr pipelineExecutionContext,
@@ -41,14 +37,14 @@ PipelineStage::PipelineStage(uint32_t pipelineStageId,
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
 
-bool PipelineStage::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
+bool ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineStageId);
     uint32_t ret = !executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
     return ret;
 }
 
-bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
+bool ExecutablePipeline::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
     executablePipelineStage->setup(*pipelineContext.get());
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::setup windowHandler");
@@ -61,7 +57,7 @@ bool PipelineStage::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferM
     return true;
 }
 
-bool PipelineStage::start() {
+bool ExecutablePipeline::start() {
     executablePipelineStage->start(*pipelineContext.get());
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::start: windowhandler start");
@@ -80,7 +76,7 @@ bool PipelineStage::start() {
     return true;
 }
 
-bool PipelineStage::stop() {
+bool ExecutablePipeline::stop() {
     executablePipelineStage->stop(*pipelineContext.get());
     if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::stop: windowhandler stop");
@@ -98,22 +94,22 @@ bool PipelineStage::stop() {
     return true;
 }
 
-PipelineStagePtr PipelineStage::getNextStage() { return nextStage; }
+PipelineStagePtr ExecutablePipeline::getNextStage() { return nextStage; }
 
-uint32_t PipelineStage::getPipeStageId() { return pipelineStageId; }
+uint32_t ExecutablePipeline::getPipeStageId() { return pipelineStageId; }
 
-QuerySubPlanId PipelineStage::getQepParentId() const { return qepId; }
+QuerySubPlanId ExecutablePipeline::getQepParentId() const { return qepId; }
 
-bool PipelineStage::hasWindowHandler() { return pipelineContext->getWindowHandler() != nullptr; }
+bool ExecutablePipeline::hasWindowHandler() { return pipelineContext->getWindowHandler() != nullptr; }
 
-bool PipelineStage::hasJoinHandler() { return pipelineContext->getJoinHandler() != nullptr; }
+bool ExecutablePipeline::hasJoinHandler() { return pipelineContext->getJoinHandler() != nullptr; }
 
-bool PipelineStage::isReconfiguration() const { return reconfiguration; }
+bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
-PipelineStagePtr PipelineStage::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
+PipelineStagePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
                                        ExecutablePipelineStagePtr executablePipelineStage, QueryExecutionContextPtr pipelineContext,
                                        const PipelineStagePtr nextPipelineStage) {
-    return std::make_shared<PipelineStage>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
+    return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
                                            nextPipelineStage);
 }
 

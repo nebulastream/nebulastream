@@ -22,6 +22,7 @@
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <algorithm>
 #include <atomic>
 #include <iostream>

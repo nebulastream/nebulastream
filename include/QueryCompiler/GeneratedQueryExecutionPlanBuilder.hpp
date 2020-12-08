@@ -30,7 +30,7 @@ namespace NES {
 
 /**
  * @brief This GeneratedQueryExecutionPlanBuilder is a mutable object that allows constructing
- * immutable QueryExecutionPlan using the builder pattern.
+ * immutable ExecutableQueryPlan using the builder pattern.
  */
 class GeneratedQueryExecutionPlanBuilder {
   public:

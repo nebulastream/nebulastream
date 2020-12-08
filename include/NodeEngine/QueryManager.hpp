@@ -18,9 +18,9 @@
 #define INCLUDE_QUERY_MANAGER__H_
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -53,8 +53,8 @@ typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
-class QueryExecutionPlan;
-typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+class ExecutableQueryPlan;
+typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
 
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
@@ -130,23 +130,12 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
 
     void reconfigure(ReconfigurationTask&, WorkerContext& context) override;
 
-  private:
-    /**
-     * @brief finalize task execution by:
-     * 1.) update statistics (number of processed tuples and tasks)
-     * 2.) release input buffer (give back to the buffer manager)
-     * @param reference to processed task
-     * @oaram reference to worker context
-     */
-    void completedWork(Task& task, WorkerContext& workerContext);
-
-  public:
     /**
      * @brief retrieve the execution status of a given local query sub plan id.
      * @param id : the query sub plan id
      * @return status of the query sub plan
      */
-    QueryExecutionPlan::QueryExecutionPlanStatus getQepStatus(QuerySubPlanId id);
+    ExecutableQueryPlan::QueryExecutionPlanStatus getQepStatus(QuerySubPlanId id);
 
     /**
      * @brief get general statistics of QueryManager and Buffer Manager
@@ -207,6 +196,16 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     * @return bool indicating success
     */
     bool startThreadPool();
+
+    /**
+     * @brief finalize task execution by:
+     * 1.) update statistics (number of processed tuples and tasks)
+     * 2.) release input buffer (give back to the buffer manager)
+     * @param reference to processed task
+     * @oaram reference to worker context
+     */
+    void completedWork(Task& task, WorkerContext& workerContext);
+
 
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 

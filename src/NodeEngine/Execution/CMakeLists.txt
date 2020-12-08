@@ -15,6 +15,6 @@
 add_source_nes(
         ExecutablePipelineStage.cpp
         PipelineExecutionContext.cpp
-        PipelineStage.cpp
-        QueryExecutionPlan.cpp
+        ExecutablePipeline.cpp
+        ExecutableQueryPlan.cpp
 )

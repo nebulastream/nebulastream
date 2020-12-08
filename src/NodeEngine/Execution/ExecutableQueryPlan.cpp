@@ -14,27 +14,27 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
 
 namespace NES {
 
-QueryExecutionPlan::QueryExecutionPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
+ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
                                        std::vector<DataSinkPtr>&& sinks, std::vector<PipelineStagePtr>&& stages,
                                        QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       stages(std::move(stages)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Created) {}
 
-QueryId QueryExecutionPlan::getQueryId() { return queryId; }
+QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 
-std::vector<PipelineStagePtr>& QueryExecutionPlan::getStages() { return stages; }
+std::vector<PipelineStagePtr>& ExecutableQueryPlan::getStages() { return stages; }
 
-QuerySubPlanId QueryExecutionPlan::getQuerySubPlanId() const { return querySubPlanId; }
+QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
-QueryExecutionPlan::~QueryExecutionPlan() {
+ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);
     NES_ASSERT(qepStatus.load() == Stopped || qepStatus.load() == ErrorState,
                "QueryPlan is created but not executing " << queryId);
@@ -42,7 +42,7 @@ QueryExecutionPlan::~QueryExecutionPlan() {
     stages.clear();
 }
 
-bool QueryExecutionPlan::stop() {
+bool ExecutableQueryPlan::stop() {
     bool ret = true;
     //    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId << " " << querySubPlanId);
 
@@ -63,9 +63,9 @@ bool QueryExecutionPlan::stop() {
     return ret;
 }
 
-QueryExecutionPlan::QueryExecutionPlanStatus QueryExecutionPlan::getStatus() { return qepStatus.load(); }
+ExecutableQueryPlan::QueryExecutionPlanStatus ExecutableQueryPlan::getStatus() { return qepStatus.load(); }
 
-bool QueryExecutionPlan::setup() {
+bool ExecutableQueryPlan::setup() {
     NES_DEBUG("QueryExecutionPlan: setup " << queryId << " " << querySubPlanId);
     auto expected = Created;
     if (qepStatus.compare_exchange_strong(expected, Deployed)) {
@@ -82,7 +82,7 @@ bool QueryExecutionPlan::setup() {
     return true;
 }
 
-bool QueryExecutionPlan::start() {
+bool ExecutableQueryPlan::start() {
     NES_DEBUG("QueryExecutionPlan: start " << queryId << " " << querySubPlanId);
     auto expected = Deployed;
     if (qepStatus.compare_exchange_strong(expected, Running)) {
@@ -99,19 +99,19 @@ bool QueryExecutionPlan::start() {
     return true;
 }
 
-QueryManagerPtr QueryExecutionPlan::getQueryManager() { return queryManager; }
+QueryManagerPtr ExecutableQueryPlan::getQueryManager() { return queryManager; }
 
-BufferManagerPtr QueryExecutionPlan::getBufferManager() { return bufferManager; }
+BufferManagerPtr ExecutableQueryPlan::getBufferManager() { return bufferManager; }
 
-std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
+std::vector<DataSourcePtr> ExecutableQueryPlan::getSources() const { return sources; }
 
-std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
+std::vector<DataSinkPtr> ExecutableQueryPlan::getSinks() const { return sinks; }
 
-PipelineStagePtr QueryExecutionPlan::getStage(uint64_t index) const { return stages[index]; }
+PipelineStagePtr ExecutableQueryPlan::getStage(uint64_t index) const { return stages[index]; }
 
-uint64_t QueryExecutionPlan::getStageSize() const { return stages.size(); }
+uint64_t ExecutableQueryPlan::getStageSize() const { return stages.size(); }
 
-void QueryExecutionPlan::print() {
+void ExecutableQueryPlan::print() {
     for (auto source : sources) {
         NES_INFO("Source:" << source);
         NES_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers());

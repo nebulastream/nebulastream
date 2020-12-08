@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
@@ -25,7 +25,7 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(QueryId queryId, QueryS
                                                          std::vector<DataSourcePtr>&& sources, std::vector<DataSinkPtr>&& sinks,
                                                          std::vector<PipelineStagePtr>&& stages, QueryManagerPtr&& queryManager,
                                                          BufferManagerPtr&& bufferManager)
-    : QueryExecutionPlan(queryId, querySubPlanId, std::move(sources), std::move(sinks), std::move(stages),
+    : ExecutableQueryPlan(queryId, querySubPlanId, std::move(sources), std::move(sinks), std::move(stages),
                          std::move(queryManager), std::move(bufferManager)) {
     // sanity checks
     for (auto& stage : this->stages) {

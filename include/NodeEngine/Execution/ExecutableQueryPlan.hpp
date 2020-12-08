@@ -16,7 +16,7 @@
 
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
-#include <NodeEngine/Pipelines/PipelineStage.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -28,14 +28,14 @@ namespace NES {
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
-class QueryExecutionPlan;
-typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+class ExecutableQueryPlan;
+typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
 
 /**
  * @brief A running execution plan on a node engine.
  * This class is thread-safe.
  */
-class QueryExecutionPlan {
+class ExecutableQueryPlan {
   public:
     enum QueryExecutionPlanStatus {
         Created,
@@ -48,12 +48,12 @@ class QueryExecutionPlan {
     };
 
   protected:
-    explicit QueryExecutionPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
+    explicit ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
                                 std::vector<DataSinkPtr>&& sinks, std::vector<PipelineStagePtr>&& stages,
                                 QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 
   public:
-    virtual ~QueryExecutionPlan();
+    virtual ~ExecutableQueryPlan();
 
     /**
      * @brief Setup the query plan, e.g., instantiate state variables.

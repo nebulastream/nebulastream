@@ -16,24 +16,21 @@
 
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <NodeEngine/Pipelines/QueryExecutionPlan.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
 #include <vector>
 
 namespace NES {
 class TupleBuffer;
-class PipelineStage;
-typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
-
 class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
+typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
 
-class QueryExecutionPlan;
-typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+class ExecutableQueryPlan;
+typedef std::shared_ptr<ExecutableQueryPlan> QueryExecutionPlanPtr;
 
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
@@ -46,9 +43,9 @@ typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 
 typedef WorkerContext& WorkerContextRef;
 
-class PipelineStage {
+class ExecutablePipeline {
   public:
-    PipelineStage(uint32_t pipelineStageId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
+    ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
                   QueryExecutionContextPtr pipelineContext, PipelineStagePtr nextPipelineStage);
 
     /**
@@ -91,7 +88,7 @@ class PipelineStage {
 
     QuerySubPlanId getQepParentId() const;
 
-    ~PipelineStage() = default;
+    ~ExecutablePipeline() = default;
 
     /**
     * @return returns true if the pipeline contains a function pointer for a reconfiguration task
@@ -115,7 +112,7 @@ class PipelineStage {
     bool hasWindowHandler();
     bool hasJoinHandler();
 };
-typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
+typedef std::shared_ptr<ExecutablePipeline> PipelineStagePtr;
 
 class CompiledCode;
 typedef std::shared_ptr<CompiledCode> CompiledCodePtr;

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Pipelines/PipelineExecutionContext.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
@@ -166,7 +166,8 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 },
                 holder.windowHandler, holder.joinHandler);
         }
-        PipelineStagePtr pipelineStage = PipelineStage::create(stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage,
+        PipelineStagePtr pipelineStage =
+            ExecutablePipeline::create(stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage,
                                                                executionContext, pipelines[*holder.consumers.begin()]);
 
         builder.addPipelineStage(pipelineStage);
