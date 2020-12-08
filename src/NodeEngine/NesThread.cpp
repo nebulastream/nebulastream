@@ -16,7 +16,7 @@
 
 #include <NodeEngine/NesThread.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 /// The first thread will have index 0.
 std::atomic<uint32_t> NesThread::next_index{0};

@@ -36,7 +36,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                                                      std::chrono::seconds waitTime, uint8_t retryTimes) {
     int linger = -1;
     try {
-        ChannelId channelId(nesPartition, NesThread::getId());
+        ChannelId channelId(nesPartition, NodeEngine::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));

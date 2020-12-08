@@ -19,7 +19,7 @@
 #include <Util/StacktraceLoader.hpp>
 #include <csignal>
 
-namespace NES {
+namespace NES::NodeEngine {
 namespace detail {
 static backward::SignalHandling sh;
 

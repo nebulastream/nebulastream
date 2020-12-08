@@ -30,6 +30,9 @@ typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 namespace NodeEngine{
 
+class NodeStatsProvider;
+typedef std::shared_ptr<NodeStatsProvider> NodeStatsProviderPtr;
+
 class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 

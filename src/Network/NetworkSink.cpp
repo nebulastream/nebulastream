@@ -68,13 +68,13 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationTask& task, WorkerConte
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "
-                                                                      << NesThread::getId());
+                                                                      << NodeEngine::NesThread::getId());
             break;
         }
         case NodeEngine::Destroy: {
             workerContext.releaseChannel(nesPartition.getOperatorId());
             NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
-                                                                        << NesThread::getId());
+                                                                        << NodeEngine::NesThread::getId());
             break;
         }
         default: {

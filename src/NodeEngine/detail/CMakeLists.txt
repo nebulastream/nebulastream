@@ -13,17 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        NodeEngine.cpp
-        NodeStatsProvider.cpp
-        QueryManager.cpp
-        BufferManager.cpp
-        ThreadPool.cpp
-        Task.cpp
-        TupleBuffer.cpp
-        QueryStatistics.cpp
-        NesThread.cpp
-        WorkerContext.cpp
+      SignalHandling.cpp
+      TupleBufferImpl.cpp
 )
-add_subdirectory(MemoryLayout)
-add_subdirectory(Execution)
-add_subdirectory(detail)

@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <utility>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 NodeStatsProvider::NodeStatsProvider() : nbrProcessors(0), nodeStats(NodeStats()) {}
 
