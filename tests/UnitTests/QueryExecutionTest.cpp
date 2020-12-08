@@ -92,7 +92,7 @@ class WindowSource : public NES::DefaultSource {
     int64_t timestamp;
     bool varyWatermark;
     bool decreaseTime;
-    WindowSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+    WindowSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                  const uint64_t numbersOfBufferToProduce, uint64_t frequency, bool varyWatermark, bool decreaseTime,
                  int64_t timestamp)
         : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency,
@@ -166,7 +166,7 @@ class WindowSource : public NES::DefaultSource {
         return buffer;
     };
 
-    static DataSourcePtr create(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+    static DataSourcePtr create(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                 const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false,
                                 bool decreaseTime = false, int64_t timestamp = 5) {
         auto windowSchema = Schema::create()

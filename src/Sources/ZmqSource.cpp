@@ -15,7 +15,6 @@
 */
 
 #include <Sources/ZmqSource.hpp>
-
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
@@ -28,7 +27,7 @@
 
 namespace NES {
 
-ZmqSource::ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& host,
+ZmqSource::ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const std::string& host,
                      const uint16_t port, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), host(host.substr(0, host.find(":"))), port(port),
       connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {

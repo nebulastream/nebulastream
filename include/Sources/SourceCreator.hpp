@@ -38,7 +38,7 @@ namespace NES {
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                                                  QueryManagerPtr queryManager, OperatorId operatorId);
+                                                                  NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one in N buffers of based on a schema
@@ -48,7 +48,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager,
-                                                                   QueryManagerPtr queryManager,
+                                                                   NodeEngine::QueryManagerPtr queryManager,
                                                                    uint64_t numbersOfBufferToProduce, uint64_t frequency,
                                                                    OperatorId operatorId);
 
@@ -57,14 +57,14 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr sch
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager,
-                                                                             QueryManagerPtr queryManager, OperatorId operatorId);
+                                                                             NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId);
 
 /**
  * @brief function to create an empty zmq source
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                     const std::string& host, const uint16_t port, OperatorId operatorId);
 
 /**
@@ -73,7 +73,7 @@ const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferMan
  * @param path to the file to reading
  * @return a const data source pointer
  */
-const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                            const std::string& pathToFile, OperatorId operatorId);
 
 /**
@@ -82,7 +82,7 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bu
  * @param udfs of the file
  * @return a const data source pointer
  */
-const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                       const std::string& udfs, OperatorId operatorId);
 
 /**
@@ -90,7 +90,7 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                         const std::string& path_to_file, const std::string& delimiter,
                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
                                         uint64_t frequency, bool skipHeader, OperatorId operatorId);
@@ -100,7 +100,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                     uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                     OperatorId operatorId);
 
@@ -113,7 +113,7 @@ const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManager
  * @param nesPartition
  * @return a const data source pointer
  */
-const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                         Network::NetworkManagerPtr networkManager, Network::NesPartition nesPartition);
 
 #ifdef ENABLE_KAFKA_BUILD

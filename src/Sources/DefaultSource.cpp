@@ -27,7 +27,7 @@
 
 namespace NES {
 
-DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                              const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce,
                       operatorId) {

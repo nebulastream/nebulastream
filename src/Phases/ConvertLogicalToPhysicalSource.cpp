@@ -37,7 +37,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
 
     NES_ASSERT(nodeEngine, "invalid engine");
     BufferManagerPtr bufferManager = nodeEngine->getBufferManager();
-    QueryManagerPtr queryManager = nodeEngine->getQueryManager();
+    NodeEngine::QueryManagerPtr queryManager = nodeEngine->getQueryManager();
     Network::NetworkManagerPtr networkManager = nodeEngine->getNetworkManager();
 
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {

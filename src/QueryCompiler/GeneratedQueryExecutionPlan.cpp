@@ -23,7 +23,7 @@ namespace NES {
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(QueryId queryId, QuerySubPlanId querySubPlanId,
                                                          std::vector<DataSourcePtr>&& sources, std::vector<DataSinkPtr>&& sinks,
-                                                         std::vector<NodeEngine::Execution::ExecutablePipelinePtr>&& pipelines, QueryManagerPtr&& queryManager,
+                                                         std::vector<NodeEngine::Execution::ExecutablePipelinePtr>&& pipelines, NodeEngine::QueryManagerPtr&& queryManager,
                                                          BufferManagerPtr&& bufferManager)
     : NodeEngine::Execution::ExecutableQueryPlan(queryId, querySubPlanId, std::move(sources), std::move(sinks), std::move(pipelines),
                          std::move(queryManager), std::move(bufferManager)) {

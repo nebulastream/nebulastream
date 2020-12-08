@@ -20,11 +20,6 @@
 #include <memory>
 #include <vector>
 namespace NES {
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 class QueryCompiler;
 typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;

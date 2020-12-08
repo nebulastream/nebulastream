@@ -38,7 +38,7 @@ class BaseExecutableJoinAction {
 
     virtual SchemaPtr getJoinSchema() = 0;
 
-    void setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline, uint64_t originId) {
+    void setup(NodeEngine::QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline, uint64_t originId) {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->nextPipeline = nextPipeline;
@@ -46,7 +46,7 @@ class BaseExecutableJoinAction {
     }
 
   protected:
-    QueryManagerPtr queryManager;
+    NodeEngine::QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
     uint64_t originId;

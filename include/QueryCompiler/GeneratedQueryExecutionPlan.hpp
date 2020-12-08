@@ -33,7 +33,7 @@ class GeneratedQueryExecutionPlan : public NodeEngine::Execution::ExecutableQuer
   public:
     explicit GeneratedQueryExecutionPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
                                          std::vector<DataSinkPtr>&& sinks, std::vector<NodeEngine::Execution::ExecutablePipelinePtr>&& stages,
-                                         QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
+                                         NodeEngine::QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 };
 
 }// namespace NES

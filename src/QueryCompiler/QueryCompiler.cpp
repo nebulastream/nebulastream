@@ -71,7 +71,7 @@ class PipelineStageHolder {
 };
 
 void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId, CodeGeneratorPtr codeGenerator, BufferManagerPtr,
-                                 QueryManagerPtr, PipelineContextPtr context,
+                                 NodeEngine::QueryManagerPtr, PipelineContextPtr context,
                                  std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
     // BFS visit to figure out producer-consumer relations among pipelines
     std::deque<std::tuple<int32_t, int32_t, PipelineContextPtr>> queue;

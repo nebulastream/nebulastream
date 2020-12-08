@@ -37,9 +37,6 @@ typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
 
 class ExpressionItem;
 
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 

@@ -41,7 +41,7 @@
 #include <thread>
 #include <unordered_set>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 /**
  * @brief the query manager is the central class to process queries.
@@ -74,7 +74,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * respective map
      * @param QueryExecutionPlan to be deployed
      */
-    bool registerQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
+    bool registerQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -82,7 +82,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param QueryExecutionPlan to be deployed
      * @return bool indicating if register was successful
      */
-    bool deregisterQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
+    bool deregisterQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief process task from task queue
@@ -107,7 +107,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param Pointer to the tuple buffer containing the data
      * @param Pointer to the pipeline stage that will be executed next
      */
-    void addWorkForNextPipeline(TupleBuffer& buffer, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline);
+    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::ExecutablePipelinePtr nextPipeline);
 
     void destroyCallback(ReconfigurationTask& task) override;
 
@@ -118,7 +118,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param id : the query sub plan id
      * @return status of the query sub plan
      */
-    NodeEngine::Execution::ExecutableQueryPlanStatus getQepStatus(QuerySubPlanId id);
+    Execution::ExecutableQueryPlanStatus getQepStatus(QuerySubPlanId id);
 
     /**
      * @brief get general statistics of QueryManager and Buffer Manager
@@ -130,14 +130,14 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
+    bool startQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief method to start a query
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool stopQuery(NodeEngine::Execution::ExecutableQueryPlanPtr qep);
+    bool stopQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and try again
@@ -172,7 +172,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
 
   private:
     friend class ThreadPool;
-    friend class NodeEngine::NodeEngine;
+    friend class NodeEngine;
     /**
     * @brief method to start the thread pool
     * @param nodeEngineId the id of the owning node engine
@@ -195,12 +195,12 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     std::deque<Task> taskQueue;
     ThreadPoolPtr threadPool;
 
-    std::map<OperatorId, std::unordered_set<NodeEngine::Execution::ExecutableQueryPlanPtr>> operatorIdToQueryMap;
+    std::map<OperatorId, std::unordered_set<Execution::ExecutableQueryPlanPtr>> operatorIdToQueryMap;
     std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
     std::map<OperatorId, uint64_t> operatorIdToPipelineStage;
 
-    std::unordered_map<QuerySubPlanId, NodeEngine::Execution::ExecutableQueryPlanPtr> runningQEPs;
+    std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
@@ -212,7 +212,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     std::condition_variable cv;
 
     BufferManagerPtr bufferManager;
-    NodeEngine::Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
+    Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 
     uint64_t nodeEngineId;
 

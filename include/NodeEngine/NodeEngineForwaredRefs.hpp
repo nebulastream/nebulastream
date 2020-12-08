@@ -21,9 +21,6 @@ namespace NES{
 
 class TupleBuffer;
 
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
 class WorkerContext;
 typedef WorkerContext& WorkerContextRef;
 
@@ -31,6 +28,9 @@ namespace NodeEngine{
 
 class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
+
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 namespace Execution{
 

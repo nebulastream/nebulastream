@@ -656,7 +656,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
-        auto queryManager = std::make_shared<QueryManager>(bufferManager, 0, 1);
+        auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
         auto networkManagerCreator = [=](NodeEngine::NodeEnginePtr engine) {
             return Network::NetworkManager::create(hostname, port, Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager);
@@ -691,7 +691,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         atomic<int>& bufferCnt;
 
         explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf, BufferManagerPtr&& bufferManager,
-                                  QueryManagerPtr&& queryManager,
+                                  NES::NodeEngine::QueryManagerPtr&& queryManager,
                                   std::function<Network::NetworkManagerPtr(NES::NodeEngine::NodeEnginePtr)>&& networkManagerCreator,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler,
                                   std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)

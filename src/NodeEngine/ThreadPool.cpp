@@ -26,7 +26,7 @@
 #include <string.h>
 namespace NES {
 
-ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint16_t numThreads)
+ThreadPool::ThreadPool(uint64_t nodeId, NodeEngine::QueryManagerPtr queryManager, uint16_t numThreads)
     : running(false), numThreads(numThreads), nodeId(nodeId), threads(), queryManager(queryManager) {}
 
 ThreadPool::~ThreadPool() {
@@ -40,14 +40,14 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     try {
         while (running) {
             switch (queryManager->processNextTask(running, workerContext)) {
-                case QueryManager::Ok: {
+                case NodeEngine::QueryManager::Ok: {
                     break;
                 }
-                case QueryManager::Finished: {
+                case NodeEngine::QueryManager::Finished: {
                     running = false;
                     break;
                 }
-                case QueryManager::Error: {
+                case NodeEngine::QueryManager::Error: {
                     // TODO add here error handling (see issues 524 and 463)
                     NES_ERROR("Threadpool: finished task with error");
                     running = false;
