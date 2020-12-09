@@ -27,14 +27,14 @@
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
+#include <Optimizer/Utils/OperatorToQuerySignatureUtil.hpp>
 #include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(OperatorNodePtr operatorNode,
+QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePtr operatorNode,
                                                                       std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                                                       z3::ContextPtr context) {
     NES_DEBUG("OperatorToQueryPlanSignatureUtil: Creating Z3 expression for operator " << operatorNode->toString());
@@ -161,7 +161,7 @@ QuerySignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(OperatorNo
 }
 
 QuerySignaturePtr
-OperatorToQueryPlanSignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context,
+OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context,
                                                               std::vector<QuerySignaturePtr> childrenQuerySignatures) {
 
     NES_DEBUG("OperatorToQueryPlanSignatureUtil: Computing Signature from children signatures");

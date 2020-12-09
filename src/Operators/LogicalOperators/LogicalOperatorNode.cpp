@@ -16,7 +16,7 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
+#include <Optimizer/Utils/OperatorToQuerySignatureUtil.hpp>
 
 namespace NES {
 
@@ -35,7 +35,7 @@ void LogicalOperatorNode::inferSignature(z3::ContextPtr context) {
         childOperator->inferSignature(context);
         subQuerySignatures.emplace_back(childOperator->getSignature());
     }
-    signature = Optimizer::OperatorToQueryPlanSignatureUtil::createForOperator(operatorNode, subQuerySignatures, context);
+    signature = Optimizer::OperatorToQuerySignatureUtil::createForOperator(operatorNode, subQuerySignatures, context);
 }
 
 void LogicalOperatorNode::setSignature(Optimizer::QuerySignaturePtr signature) {
