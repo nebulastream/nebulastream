@@ -30,7 +30,7 @@
 #include <vector>
 namespace NES {
 
-CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const std::string filePath,
+CSVSource::CSVSource(SchemaPtr schema,  NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const std::string filePath,
                      const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
                      uint64_t frequency, bool skipHeader, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),

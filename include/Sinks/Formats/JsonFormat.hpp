@@ -22,7 +22,7 @@ namespace NES {
 
 class JsonFormat : public SinkFormat {
   public:
-    JsonFormat(SchemaPtr schema, BufferManagerPtr bufferManager);
+    JsonFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager);
 
     /**
     * @brief method to write a TupleBuffer

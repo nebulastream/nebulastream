@@ -17,6 +17,7 @@
 #include <API/Schema.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -24,7 +25,7 @@
 #include <iostream>
 namespace NES {
 
-TextFormat::TextFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
+TextFormat::TextFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
     NES_DEBUG("TextFormat::()");
 }
 

@@ -21,7 +21,7 @@
 #include <iostream>
 #include <thread>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 BufferManager::BufferManager() : bufferSize(0), numOfBuffers(0), isConfigured(false) {
     // nop

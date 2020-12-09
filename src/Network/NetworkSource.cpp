@@ -21,7 +21,7 @@
 namespace NES {
 namespace Network {
 
-NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+NetworkSource::NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                              NetworkManagerPtr networkManager, NesPartition nesPartition)
     : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId()), networkManager(networkManager),
       nesPartition(nesPartition) {
@@ -51,7 +51,7 @@ bool NetworkSource::stop() {
     return true;
 }
 
-void NetworkSource::runningRoutine(BufferManagerPtr, NodeEngine::QueryManagerPtr) {
+void NetworkSource::runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
 

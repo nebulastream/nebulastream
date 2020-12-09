@@ -53,7 +53,7 @@ OPCSink::~OPCSink() {
     NES_DEBUG("OPCSink  " << this << ": Destroy OPC Sink");
 }
 
-bool OPCSink::writeData(TupleBuffer& inputBuffer, WorkerContext&) {
+bool OPCSink::writeData(TupleBuffer& inputBuffer, NodeEngine::WorkerContext&) {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("OPCSINK::writeData()  " << this);
     NES_DEBUG("OPCSINK::writeData url: " << url << ".");

@@ -31,7 +31,7 @@ std::string PrintSink::toString() { return "PRINT_SINK"; }
 
 SinkMediumTypes PrintSink::getSinkMediumType() { return PRINT_SINK; }
 
-bool PrintSink::writeData(TupleBuffer& inputBuffer, WorkerContextRef) {
+bool PrintSink::writeData(TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("PrintSink: getSchema medium " << toString() << " format " << sinkFormat->toString());
 

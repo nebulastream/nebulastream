@@ -31,7 +31,7 @@ namespace NES {
 
 class TupleBufferTest : public testing::Test {
   public:
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup TupleBufferTest test class." << std::endl; }
@@ -40,7 +40,7 @@ class TupleBufferTest : public testing::Test {
     void SetUp() {
         NES::setupLogging("TupleBufferTest.log", NES::LOG_DEBUG);
         std::cout << "Setup TupleBufferTest test case." << std::endl;
-        bufferManager = std::make_shared<BufferManager>(1024, 1024);
+        bufferManager = std::make_shared<NodeEngine::BufferManager>(1024, 1024);
     }
 
     /* Will be called before a test is executed. */

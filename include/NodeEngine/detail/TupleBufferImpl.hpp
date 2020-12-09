@@ -29,8 +29,13 @@
 #endif
 
 namespace NES {
-class BufferManager;
 class TupleBuffer;
+
+namespace NodeEngine{
+class BufferManager;
+
+}
+
 namespace detail {
 
 class MemorySegment;
@@ -174,7 +179,7 @@ class BufferControlBlock {
 class MemorySegment {
     friend class NES::TupleBuffer;
 
-    friend class NES::BufferManager;
+    friend class NES::NodeEngine::BufferManager;
 
   public:
     MemorySegment(const MemorySegment& other);

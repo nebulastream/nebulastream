@@ -21,8 +21,6 @@
 
 namespace NES {
 
-class TupleBuffer;
-
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
@@ -36,9 +34,6 @@ class FieldAccessExpressionNode;
 typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
 
 class ExpressionItem;
-
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 class MemoryLayout;
 typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;

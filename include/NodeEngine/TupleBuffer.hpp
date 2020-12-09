@@ -25,7 +25,6 @@
 #include <memory>
 
 namespace NES {
-class BufferManager;
 class TupleBuffer;
 
 /**
@@ -48,8 +47,7 @@ class TupleBuffer;
  * Reminder: this class should be header-only to help inlining
  */
 class TupleBuffer {
-    friend class NES::BufferManager;
-
+    friend class NES::NodeEngine::BufferManager;
     friend class detail::MemorySegment;
 
   public:

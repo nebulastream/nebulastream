@@ -17,6 +17,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
@@ -28,6 +29,7 @@
 //#define DEBUG_OUTPUT
 
 namespace NES {
+using namespace NodeEngine;
 class MemoryLayoutTest : public testing::Test {
   public:
     BufferManagerPtr bufferManager;

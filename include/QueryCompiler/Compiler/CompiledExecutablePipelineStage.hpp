@@ -17,10 +17,10 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
 
     uint32_t setup(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t start(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
-    uint32_t open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, NodeEngine::WorkerContext& workerContext) override;
     uint32_t execute(TupleBuffer& inputTupleBuffer, NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                     WorkerContext& workerContext) override;
-    uint32_t close(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+                     NodeEngine::WorkerContext& workerContext) override;
+    uint32_t close(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, NodeEngine::WorkerContext& workerContext) override;
     uint32_t stop(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
   private:

@@ -21,9 +21,6 @@
 // TODO ALL: this is only for runtime components
 namespace NES {
 
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 

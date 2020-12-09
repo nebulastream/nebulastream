@@ -41,41 +41,41 @@
 
 namespace NES {
 
-const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, BufferManagerPtr bufferManager,
+const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                                                   NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId) {
     return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1, operatorId);
 }
 
-const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager,
+const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                                                    NodeEngine::QueryManagerPtr queryManager,
                                                                    uint64_t numbersOfBufferToProduce, uint64_t frequency,
                                                                    OperatorId operatorId) {
     return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId);
 }
 
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager,
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
                                                                              NodeEngine::QueryManagerPtr queryManager,
                                                                              OperatorId operatorId) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager,
                                            queryManager, /**bufferCnt*/ 1, /*frequency*/ 1, operatorId);
 }
 
-const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                     const std::string& host, const uint16_t port, OperatorId operatorId) {
     return std::make_shared<ZmqSource>(schema, bufferManager, queryManager, host, port, operatorId);
 }
 
-const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createBinaryFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                            const std::string& pathToFile, OperatorId operatorId) {
     return std::make_shared<BinarySource>(schema, bufferManager, queryManager, pathToFile, operatorId);
 }
 
-const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createSenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                       const std::string& udfs, OperatorId operatorId) {
     return std::make_shared<SenseSource>(schema, bufferManager, queryManager, udfs, operatorId);
 }
 
-const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                         const std::string& pathToFile, const std::string& delimiter,
                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numbersOfBufferToProduce,
                                         uint64_t frequency, bool skipHeader, OperatorId operatorId) {
@@ -84,14 +84,14 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                        operatorId);
 }
 
-const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createYSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                     uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                     OperatorId operatorId) {
     return std::make_shared<YSBSource>(bufferManager, queryManager, numBuffersToProcess, numberOfTuplesToProducePerBuffer,
                                        frequency, operatorId);
 }
 
-const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                         Network::NetworkManagerPtr networkManager, Network::NesPartition nesPartition) {
     return std::make_shared<Network::NetworkSource>(schema, bufferManager, queryManager, networkManager, nesPartition);
 }

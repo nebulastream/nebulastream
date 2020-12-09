@@ -32,6 +32,8 @@ class MemorySegment;
 }
 class TupleBuffer;
 
+namespace NodeEngine {
+
 /**
  * @brief The BufferManager is responsible for:
  * 1. Pooled Buffers: preallocated fixed-size buffers of memory that must be reference counted
@@ -162,8 +164,8 @@ class BufferManager {
 
     std::atomic<bool> isConfigured;
 };
+}
 
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 }// namespace NES
 #endif

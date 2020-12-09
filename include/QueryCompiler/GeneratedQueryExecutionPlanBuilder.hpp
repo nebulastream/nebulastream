@@ -51,13 +51,13 @@ class GeneratedQueryExecutionPlanBuilder {
      * @param bufferManager
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& setBufferManager(BufferManagerPtr bufferManager);
+    GeneratedQueryExecutionPlanBuilder& setBufferManager(NodeEngine::BufferManagerPtr bufferManager);
 
     /**
      * @brief returns currently set buffer manager for the builder
      * @return currently set buffer manager for the builder
      */
-    BufferManagerPtr getBufferManager() const;
+    NodeEngine::BufferManagerPtr getBufferManager() const;
 
     /**
      * @brief configure query manager
@@ -156,7 +156,7 @@ class GeneratedQueryExecutionPlanBuilder {
 
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
     QueryCompilerPtr queryCompiler;
     std::vector<DataSourcePtr> sources;

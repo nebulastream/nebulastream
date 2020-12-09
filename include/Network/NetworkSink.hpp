@@ -26,8 +26,6 @@
 #include <string>
 
 namespace NES {
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 namespace Network {
 
@@ -41,17 +39,17 @@ class NetworkSink : public SinkMedium {
      * @param nesPartition
      */
     explicit NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkManagerPtr networkManager,
-                         const NodeLocation nodeLocation, NesPartition nesPartition, BufferManagerPtr bufferManager,
+                         const NodeLocation nodeLocation, NesPartition nesPartition, NodeEngine::BufferManagerPtr bufferManager,
                          NodeEngine::QueryManagerPtr queryManager, std::chrono::seconds waitTime = std::chrono::seconds(2),
                          uint8_t retryTimes = 5);
 
     ~NetworkSink();
 
-    bool writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) override;
+    bool writeData(TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) override;
 
     const std::string toString() const override;
 
-    void reconfigure(NodeEngine::ReconfigurationTask& task, WorkerContext& workerContext) override;
+    void reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& workerContext) override;
     void setup() override;
     void shutdown() override;
 

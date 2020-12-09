@@ -22,7 +22,7 @@
 
 namespace NES {
 
-JsonFormat::JsonFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
+JsonFormat::JsonFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
 
 std::vector<TupleBuffer> JsonFormat::getData(TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 

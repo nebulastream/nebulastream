@@ -16,7 +16,7 @@
 
 #include <NodeEngine/WorkerContext.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 WorkerContext::WorkerContext(uint32_t workerId) : workerId(workerId) {}
 

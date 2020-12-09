@@ -49,7 +49,7 @@ class NetworkManager {
      * @return the shared_ptr object
      */
     static std::shared_ptr<NetworkManager> create(const std::string& hostname, uint16_t port,
-                                                  Network::ExchangeProtocol&& exchangeProtocol, BufferManagerPtr bufferManager,
+                                                  Network::ExchangeProtocol&& exchangeProtocol, NodeEngine::BufferManagerPtr bufferManager,
                                                   uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
@@ -87,7 +87,7 @@ class NetworkManager {
                                                   std::chrono::seconds waitTime, uint8_t retryTimes);
 
     explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol,
-                            BufferManagerPtr bufferManager, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+                            NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocol exchangeProtocol;

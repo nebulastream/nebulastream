@@ -124,7 +124,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     /* === declarations === */
     auto tupleBufferType = tf->createAnonymusDataType("NES::TupleBuffer");
     auto pipelineExecutionContextType = tf->createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
-    auto workerContextType = tf->createAnonymusDataType("NES::WorkerContext");
+    auto workerContextType = tf->createAnonymusDataType("NodeEngine::WorkerContext");
     VariableDeclaration varDeclarationInputBuffer =
         VariableDeclaration::create(tf->createReference(tupleBufferType), "inputTupleBuffer");
 

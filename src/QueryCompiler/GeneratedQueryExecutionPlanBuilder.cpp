@@ -31,7 +31,7 @@ GeneratedQueryExecutionPlanBuilder::GeneratedQueryExecutionPlanBuilder() {
 
 GeneratedQueryExecutionPlanBuilder GeneratedQueryExecutionPlanBuilder::create() { return GeneratedQueryExecutionPlanBuilder(); }
 
-BufferManagerPtr GeneratedQueryExecutionPlanBuilder::getBufferManager() const { return bufferManager; }
+NodeEngine::BufferManagerPtr GeneratedQueryExecutionPlanBuilder::getBufferManager() const { return bufferManager; }
 
 QueryId GeneratedQueryExecutionPlanBuilder::getQueryId() const { return queryId; }
 
@@ -40,7 +40,7 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addPipel
     return *this;
 }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setBufferManager(BufferManagerPtr bufferManager) {
+GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setBufferManager(NodeEngine::BufferManagerPtr bufferManager) {
     this->bufferManager = std::move(bufferManager);
     return *this;
 }

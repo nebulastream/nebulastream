@@ -47,7 +47,7 @@ struct __attribute__((packed)) inputRow {
 
 class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
-    MockCSVAdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    MockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                           uint64_t initialGatheringInterval, std::string filePath)
         : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1), filePath(filePath){};
 
@@ -97,7 +97,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     };
 };
 
-const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                                 uint64_t initialGatheringInterval, std::string filePath) {
     return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager, initialGatheringInterval, filePath);
 }

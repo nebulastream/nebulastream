@@ -24,7 +24,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 /**
  * @brief A WorkerContext represents the current state of a worker thread

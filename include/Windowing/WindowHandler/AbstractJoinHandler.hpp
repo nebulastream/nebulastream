@@ -74,7 +74,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(NodeEngine::QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
+    virtual bool setup(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
                        uint32_t pipelineStageId, uint64_t originId) = 0;
 
     /**
@@ -209,9 +209,9 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
     NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
-    uint32_t pipelineStageId;
     NodeEngine::QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
+    uint32_t pipelineStageId;
     uint64_t originId;
     std::map<uint64_t, uint64_t> originIdToMaxTsMapLeft;
     std::map<uint64_t, uint64_t> originIdToMaxTsMapRight;

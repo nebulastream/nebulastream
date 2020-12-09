@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <cstdlib>
@@ -38,7 +39,7 @@ class BufferManagerTest : public testing::Test {
 };
 
 TEST_F(BufferManagerTest, initializedBufferManager) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
     size_t buffers_count = bufferManager->getNumOfPooledBuffers();
     size_t buffers_free = bufferManager->getAvailableBuffers();
     ASSERT_EQ(buffers_count, buffers_managed);
@@ -46,14 +47,13 @@ TEST_F(BufferManagerTest, initializedBufferManager) {
 }
 
 TEST_F(BufferManagerTest, testBufferManagerNoSingleton) {
-    auto manager = std::make_unique<BufferManager>();
+    auto manager = std::make_unique<NodeEngine::BufferManager>();
     manager->configure(1024, 1024);
     manager.reset();
 }
 
 TEST_F(BufferManagerTest, singleThreadedBufferRecycling) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
-
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
     auto buffer0 = bufferManager->getBufferBlocking();
@@ -69,8 +69,7 @@ TEST_F(BufferManagerTest, singleThreadedBufferRecycling) {
 }
 
 TEST_F(BufferManagerTest, singleThreadedBufferRecyclingUnpooled) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
-
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
     auto buffer0 = bufferManager->getUnpooledBuffer(16384);
     ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1);
     {
@@ -81,7 +80,7 @@ TEST_F(BufferManagerTest, singleThreadedBufferRecyclingUnpooled) {
 }
 
 TEST_F(BufferManagerTest, singleThreadedManyBufferRecyclingUnpooled) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(1024, 1);
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(1024, 1);
     for (int i = 0; i < 500; i++) {
         auto buffer0 = bufferManager->getUnpooledBuffer(16384);
         ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1);
@@ -90,7 +89,7 @@ TEST_F(BufferManagerTest, singleThreadedManyBufferRecyclingUnpooled) {
 }
 
 TEST_F(BufferManagerTest, getBufferAfterRelease) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
 
     std::vector<TupleBuffer> buffers;
 
@@ -121,7 +120,7 @@ TEST_F(BufferManagerTest, getBufferAfterRelease) {
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtAccess) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
@@ -143,7 +142,7 @@ TEST_F(BufferManagerTest, bufferManagerMtAccess) {
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
@@ -213,7 +212,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoSingleton) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
@@ -282,7 +281,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoSingleton) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-TupleBuffer getBufferTimeout(std::shared_ptr<BufferManager> bufferManager, std::chrono::milliseconds&& timeout) {
+TupleBuffer getBufferTimeout(std::shared_ptr<NodeEngine::BufferManager> bufferManager, std::chrono::milliseconds&& timeout) {
     std::optional<TupleBuffer> opt;
     while (!(opt = bufferManager->getBufferTimeout(timeout)).has_value()) {
         // nop
@@ -292,7 +291,7 @@ TupleBuffer getBufferTimeout(std::shared_ptr<BufferManager> bufferManager, std::
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     using namespace std::chrono_literals;
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
@@ -362,7 +361,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-std::optional<TupleBuffer> getBufferNoBlocking(BufferManager& bufferManager) {
+std::optional<TupleBuffer> getBufferNoBlocking(NodeEngine::BufferManager& bufferManager) {
     size_t retries = 0;
     while (true) {
         auto optBuffer = bufferManager.getBufferNoBlocking();
@@ -379,7 +378,7 @@ std::optional<TupleBuffer> getBufferNoBlocking(BufferManager& bufferManager) {
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);

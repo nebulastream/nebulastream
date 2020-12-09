@@ -89,11 +89,11 @@ class OperatorCodeGenerationTest : public testing::Test {
 
 class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler,
+    TestPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler,
                                  Join::AbstractJoinHandlerPtr joinHandler)
         : PipelineExecutionContext(
             0, std::move(bufferManager),
-            [this](TupleBuffer& buffer, WorkerContextRef) {
+            [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             std::move(windowHandler), std::move(joinHandler)){
@@ -103,14 +103,14 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
     std::vector<TupleBuffer> buffers;
 };
 
-const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGen(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()), bPtr, dPtr,
                                            1, 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
   public:
-    SelectionDataGenSource(SchemaPtr schema, BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr, const uint64_t pNum_buffers_to_process)
+    SelectionDataGenSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr, const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
     ~SelectionDataGenSource() = default;
@@ -144,7 +144,7 @@ class SelectionDataGenSource : public GeneratorSource {
     };
 };
 
-const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGenFilter(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     DataSourcePtr source(std::make_shared<SelectionDataGenSource>(Schema::create()
                                                                       ->addField("id", DataTypeFactory::createUInt32())
                                                                       ->addField("value", DataTypeFactory::createUInt32())
@@ -156,7 +156,7 @@ const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, NodeEng
 
 class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
-    PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
+    PredicateTestingDataGeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
@@ -198,7 +198,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGenPredicate(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(Schema::create()
                                                                   ->addField("id", DataTypeFactory::createUInt32())
@@ -214,7 +214,7 @@ const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, Node
 
 class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
-    WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
+    WindowTestingDataGeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
@@ -247,7 +247,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
 
 class WindowTestingWindowGeneratorSource : public GeneratorSource {
   public:
-    WindowTestingWindowGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
+    WindowTestingWindowGeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                        const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
 
@@ -282,14 +282,14 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
+const DataSourcePtr createWindowTestDataSource(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     DataSourcePtr source(std::make_shared<WindowTestingDataGeneratorSource>(
         Schema::create()->addField("key", DataTypeFactory::createUInt64())->addField("value", DataTypeFactory::createUInt64()),
         bPtr, dPtr, 10));
     return source;
 }
 
-const DataSourcePtr createWindowTestSliceSource(BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr, SchemaPtr schema) {
+const DataSourcePtr createWindowTestSliceSource(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr, SchemaPtr schema) {
     DataSourcePtr source(std::make_shared<WindowTestingWindowGeneratorSource>(schema, bPtr, dPtr, 10));
     return source;
 }
@@ -321,7 +321,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* execute Stage */
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
-    WorkerContext wctx{0};
+    NodeEngine::WorkerContext wctx{0};
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
     stage->execute(buffer, *queryContext.get(), wctx);
@@ -368,7 +368,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
-    WorkerContext wctx{0};
+    NodeEngine::WorkerContext wctx{0};
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
     stage->execute(inputBuffer,  *queryContext.get(), wctx);
@@ -408,7 +408,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    WorkerContext wctx(NodeEngine::NesThread::getId());
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
@@ -446,7 +446,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
-    WorkerContext wctx(NodeEngine::NesThread::getId());
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
@@ -621,7 +621,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
 
     auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
-        [](TupleBuffer& buff, WorkerContext&) {
+        [](TupleBuffer& buff, NodeEngine::WorkerContext&) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
@@ -690,7 +690,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
-        [](TupleBuffer& buff, WorkerContext&) {
+        [](TupleBuffer& buff, NodeEngine::WorkerContext&) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
@@ -702,7 +702,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowHandler, nullptr);
-    WorkerContext wctx(NodeEngine::NesThread::getId());
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     stage1->setup(*queryContext.get());
     stage1->start(*queryContext.get());
     stage1->execute(inputBuffer,  *queryContext.get(), wctx);
@@ -719,7 +719,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
-    WorkerContext wctx(NodeEngine::NesThread::getId());
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
@@ -766,7 +766,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
     auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
-        [](TupleBuffer& buff, WorkerContext&) {
+        [](TupleBuffer& buff, NodeEngine::WorkerContext&) {
             buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
@@ -856,7 +856,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
-    WorkerContext wctx(NodeEngine::NesThread::getId());
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
@@ -925,7 +925,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
     cout << "inputBuffer=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
-    WorkerContext wctx{0};
+    NodeEngine::WorkerContext wctx{0};
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
     stage->execute(inputBuffer,  *queryContext.get(), wctx);
@@ -978,7 +978,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    WorkerContext wctx{0};
+    NodeEngine::WorkerContext wctx{0};
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
@@ -1035,7 +1035,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
 
     auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
-        [](TupleBuffer& buff, WorkerContext&) {
+        [](TupleBuffer& buff, NodeEngine::WorkerContext&) {
             buff.isValid();
         },
         nullptr, joinHandler);//valid check due to compiler error for unused var
@@ -1049,7 +1049,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, joinHandler);
-    WorkerContext wctx(NodeEngine::NesThread::getId());
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     stage1->setup(*queryContext.get());
     stage1->start(*queryContext.get());
     stage1->execute(inputBuffer,  *queryContext.get(), wctx);
