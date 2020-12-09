@@ -33,6 +33,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
       pipelines(std::move(stages)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Created) {}
 
+
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 
 std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getStages() { return pipelines; }
@@ -102,6 +103,10 @@ bool ExecutableQueryPlan::start() {
         NES_THROW_RUNTIME_ERROR("QEP expected to be Deployed but was not");
     }
     return true;
+}
+
+uint32_t ExecutableQueryPlan::getNumberOfPipelines() {
+    return pipelines.size();
 }
 
 QueryManagerPtr ExecutableQueryPlan::getQueryManager() { return queryManager; }
