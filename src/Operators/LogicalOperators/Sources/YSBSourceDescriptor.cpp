@@ -22,28 +22,27 @@
 namespace NES {
 
 SourceDescriptorPtr YSBSourceDescriptor::create(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                uint64_t frequency, bool endlessRepeat, OperatorId operatorId) {
+                                                uint64_t frequency, OperatorId operatorId) {
     return std::make_shared<YSBSourceDescriptor>(
-        YSBSourceDescriptor(numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat, operatorId));
+        YSBSourceDescriptor(numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, operatorId));
 }
 
 SourceDescriptorPtr YSBSourceDescriptor::create(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                                uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat,
-                                                OperatorId operatorId) {
+                                                uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId) {
     return std::make_shared<YSBSourceDescriptor>(YSBSourceDescriptor(std::move(streamName), numberOfTuplesToProducePerBuffer,
-                                                                     numBuffersToProcess, frequency, endlessRepeat, operatorId));
+                                                                     numBuffersToProcess, frequency, operatorId));
 }
 
 YSBSourceDescriptor::YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                         uint64_t frequency, bool endlessRepeat, OperatorId operatorId)
+                                         uint64_t frequency, OperatorId operatorId)
     : SourceDescriptor(YSBSource::YsbSchema(), operatorId), numBuffersToProcess(numBuffersToProcess),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency), endlessRepeat(endlessRepeat) {}
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency) {}
 
 YSBSourceDescriptor::YSBSourceDescriptor(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                         uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat,
+                                         uint64_t numBuffersToProcess, uint64_t frequency,
                                          OperatorId operatorId)
     : SourceDescriptor(YSBSource::YsbSchema(), std::move(streamName), operatorId), numBuffersToProcess(numBuffersToProcess),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency), endlessRepeat(endlessRepeat) {}
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency){}
 
 uint64_t YSBSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
@@ -51,11 +50,10 @@ uint64_t YSBSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { retu
 
 uint64_t YSBSourceDescriptor::getFrequency() const { return frequency; }
 
-bool YSBSourceDescriptor::isEndlessRepeat() const { return endlessRepeat; }
 
 std::string YSBSourceDescriptor::toString() {
     return "YSBSourceDescriptor(" + std::to_string(numberOfTuplesToProducePerBuffer) + "," + ", "
-        + std::to_string(numBuffersToProcess) + ", " + std::to_string(frequency) + std::to_string(endlessRepeat) + ")";
+        + std::to_string(numBuffersToProcess) + ", " + std::to_string(frequency) + ")";
 }
 
 bool YSBSourceDescriptor::equal(SourceDescriptorPtr other) {
@@ -64,7 +62,7 @@ bool YSBSourceDescriptor::equal(SourceDescriptorPtr other) {
     auto otherSource = other->as<YSBSourceDescriptor>();
     return numberOfTuplesToProducePerBuffer == otherSource->getNumberOfTuplesToProducePerBuffer()
         && numBuffersToProcess == otherSource->getNumBuffersToProcess() && frequency == otherSource->getFrequency()
-        && getSchema()->equals(otherSource->getSchema()) && endlessRepeat == otherSource->isEndlessRepeat();
+        && getSchema()->equals(otherSource->getSchema());
 }
 
 }// namespace NES

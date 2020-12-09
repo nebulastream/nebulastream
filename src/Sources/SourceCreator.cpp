@@ -78,17 +78,16 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                         const std::string& pathToFile, const std::string& delimiter,
                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numbersOfBufferToProduce,
-                                        uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
+                                        uint64_t frequency, bool skipHeader, OperatorId operatorId) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
-                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat,
-                                       skipHeader, operatorId);
+                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, skipHeader, operatorId);
 }
 
 const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                     uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                    bool endlessRepeat, OperatorId operatorId) {
+                                    OperatorId operatorId) {
     return std::make_shared<YSBSource>(bufferManager, queryManager, numBuffersToProcess, numberOfTuplesToProducePerBuffer,
-                                       frequency, endlessRepeat, operatorId);
+                                       frequency, operatorId);
 }
 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,

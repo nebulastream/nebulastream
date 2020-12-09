@@ -42,7 +42,7 @@ struct PhysicalStreamConfig {
                                           uint32_t sourceFrequency = 1, uint32_t numberOfTuplesToProducePerBuffer = 1,
                                           uint32_t numberOfBuffersToProduce = 1,
                                           std::string physicalStreamName = "default_physical",
-                                          std::string logicalStreamName = "default_logical", bool endlessRepeat = false,
+                                          std::string logicalStreamName = "default_logical",
                                           bool skipHeader = false);
 
     /**
@@ -89,18 +89,12 @@ struct PhysicalStreamConfig {
 
     std::string toString();
 
-    /**
-     * @brief getter/setter endlessRepeat
-     */
-    bool isEndlessRepeat() const;
-    void setEndlessRepeat(bool endlessRepeat);
-
     bool getSkipHeader() const;
 
   private:
     explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
                                   uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                  std::string physicalStreamName, std::string logicalStreamName, bool endlessRepeat,
+                                  std::string physicalStreamName, std::string logicalStreamName,
                                   bool skipHeader);
 
     std::string sourceType;
@@ -110,7 +104,6 @@ struct PhysicalStreamConfig {
     uint32_t numberOfBuffersToProduce;
     std::string physicalStreamName;
     std::string logicalStreamName;
-    bool endlessRepeat;
     bool skipHeader;
 };
 

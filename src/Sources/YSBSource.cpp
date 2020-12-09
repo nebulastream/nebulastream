@@ -46,9 +46,9 @@ void YSBSource::generate(YSBSource::YsbRecord& rec, uint64_t ts, uint64_t eventT
 }
 
 YSBSource::YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
-                     uint64_t numberOfTuplesPerBuffer, uint64_t frequency, bool endlessRepeat, OperatorId operatorId)
+                     uint64_t numberOfTuplesPerBuffer, uint64_t frequency, OperatorId operatorId)
     : DefaultSource(YsbSchema(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
-      numberOfTuplesPerBuffer(numberOfTuplesPerBuffer), endlessRepeat(endlessRepeat), tmpEventType(0), currentMs(0) {}
+      numberOfTuplesPerBuffer(numberOfTuplesPerBuffer), tmpEventType(0), currentMs(0) {}
 
 std::optional<TupleBuffer> YSBSource::receiveData() {
     NES_DEBUG("YSBSource:" << this << " requesting buffer");

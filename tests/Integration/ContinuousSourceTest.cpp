@@ -68,7 +68,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
         PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "../tests/test_data/exdra.csv",
                                      /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
                                      /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test_stream",
-                                     /**Logical Stream Name**/ "exdra", true);
+                                     /**Logical Stream Name**/ "exdra", false);
     wrk1->registerPhysicalStream(conf);
 
     std::string filePath = "contTestOut.csv";
@@ -171,7 +171,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
         PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
                                      /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 1,
                                      /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", true);
+                                     /**Logical Stream Name**/ "testStream", false);
 
     //register physical stream
     wrk1->registerPhysicalStream(conf);
@@ -228,7 +228,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
         PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
                                      /**Source Frequence**/ 3, /**Number Of Tuples To Produce Per Buffer**/ 1,
                                      /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", true);
+                                     /**Logical Stream Name**/ "testStream", false);
     wrk1->registerPhysicalStream(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -283,7 +283,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
         PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
                                      /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 1,
                                      /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", true);
+                                     /**Logical Stream Name**/ "testStream", false);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFile.txt";
@@ -397,7 +397,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
         PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
                                      /**Source Frequence**/ 3, /**Number Of Tuples To Produce Per Buffer**/ 1,
                                      /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", true);
+                                     /**Logical Stream Name**/ "testStream", false);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
@@ -521,7 +521,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
         PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
                                      /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
                                      /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", true);
+                                     /**Logical Stream Name**/ "testStream", false);
     wrk1->registerPhysicalStream(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -584,7 +584,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
         PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
                                      /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
                                      /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", true);
+                                     /**Logical Stream Name**/ "testStream", false);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromCSVSourceWriteTest.out";
@@ -1169,7 +1169,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
         PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "../tests/test_data/exdra.csv",
                                      /**Source Frequency**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
                                      /**Number of Buffers To Produce**/ 5, /**Physical Stream Name**/ "test_stream",
-                                     /**Logical Stream Name**/ "exdra", true);
+                                     /**Logical Stream Name**/ "exdra", false);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testExdraUseCaseWithOutput.csv";
@@ -1403,7 +1403,7 @@ TEST_F(ContinuousSourceTest, testYSB) {
         PhysicalStreamConfig::create(/**Source Type**/ "YSBSource", /**Source Config**/ "",
                                      /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ producedTuples,
                                      /**Number of Buffers To Produce**/ producedBuffers, /**Physical Stream Name**/ "test_stream",
-                                     /**Logical Stream Name**/ "ysb", true);
+                                     /**Logical Stream Name**/ "ysb", false);
     wrk1->registerPhysicalStream(conf);
 
     std::string filePath = "contTestOut.csv";

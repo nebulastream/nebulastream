@@ -64,7 +64,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
             csvSourceDescriptor->getSchema(), bufferManager, queryManager, csvSourceDescriptor->getFilePath(),
             csvSourceDescriptor->getDelimiter(), csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
             csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
-            csvSourceDescriptor->isEndlessRepeat(), csvSourceDescriptor->getSkipHeader(), sourceDescriptor->getOperatorId());
+            csvSourceDescriptor->getSkipHeader(), sourceDescriptor->getOperatorId());
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");
@@ -98,7 +98,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         const YSBSourceDescriptorPtr ysbSourceDescriptor = sourceDescriptor->as<YSBSourceDescriptor>();
         return createYSBSource(bufferManager, queryManager, ysbSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
                                ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequency(),
-                               ysbSourceDescriptor->isEndlessRepeat(), ysbSourceDescriptor->getOperatorId());
+                               ysbSourceDescriptor->getOperatorId());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

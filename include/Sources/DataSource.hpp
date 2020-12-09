@@ -124,12 +124,6 @@ class DataSource : public Reconfigurable {
     virtual bool isRunning();
 
     /**
-     * @brief debug function for testing to set different buffer counts to be processed
-     * @param number of buffers to be processed
-     */
-    void setNumBuffersToProcess(uint64_t cnt);
-
-    /**
      * @brief debug function for testing to get number of generated tuples
      * @return number of generated tuples
      */

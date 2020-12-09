@@ -873,7 +873,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     int numTup = 50;
 
     auto ysbSource =
-        std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, false, 1);
+        std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, 1);
 
     //TODO: make query work
     auto query = TestQuery::from(ysbSource->getSchema())

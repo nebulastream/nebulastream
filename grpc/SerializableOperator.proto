@@ -66,7 +66,6 @@ message SerializableOperator{
       uint64 numberOfTuplesToProducePerBuffer = 3;
       uint64 numBuffersToProcess = 4;
       uint64 frequency = 5;
-      bool endlessRepeat = 6;
       SerializableSchema sourceSchema = 7;
       bool skipHeader = 8;
     }

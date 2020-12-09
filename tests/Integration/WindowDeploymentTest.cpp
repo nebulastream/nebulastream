@@ -74,7 +74,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 
     //register physical stream
     PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/exdra.csv", 1, 0, 1, "test_stream", "exdra", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/exdra.csv", 1, 0, 1, "test_stream", "exdra", false);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -150,7 +150,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -225,7 +225,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -321,7 +321,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 
     //register physical stream
     PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
 
@@ -399,7 +399,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
@@ -486,7 +486,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "windowStream", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "windowStream", false);
 
     wrk1->registerPhysicalStream(windowStream);
 
@@ -559,7 +559,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -645,7 +645,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "windowStream", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "windowStream", false);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
@@ -731,7 +731,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
@@ -805,7 +805,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 5, 3, 3, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 5, 3, 3, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -873,7 +873,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
 
     //register physical stream
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 5, 3, 3, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 5, 3, 3, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -936,7 +936,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 6, 3, "test_stream", "windowStream", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 6, 3, "test_stream", "windowStream", false);
 
     wrk1->registerPhysicalStream(windowStream);
 
@@ -1006,7 +1006,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "windowStream", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "windowStream", false);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);

@@ -22,19 +22,19 @@ namespace NES {
 PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std::string sourceConfig, uint32_t sourceFrequency,
                                                      uint32_t numberOfTuplesToProducePerBuffer, uint32_t numberOfBuffersToProduce,
                                                      std::string physicalStreamName, std::string logicalStreamName,
-                                                     bool endlessRepeat, bool skipHeader) {
+                                                     bool skipHeader) {
     return std::make_shared<PhysicalStreamConfig>(
         PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                             numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endlessRepeat, skipHeader));
+                             numberOfBuffersToProduce, physicalStreamName, logicalStreamName, skipHeader));
 }
 
 PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
                                            uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                           std::string physicalStreamName, std::string logicalStreamName, bool endlessRepeat,
+                                           std::string physicalStreamName, std::string logicalStreamName,
                                            bool skipHeader)
     : sourceType(sourceType), sourceConfig(sourceConfig), sourceFrequency(sourceFrequency),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProduce(numberOfBuffersToProduce),
-      physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), endlessRepeat(endlessRepeat),
+      physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName),
       skipHeader(skipHeader){};
 
 std::string PhysicalStreamConfig::toString() {
@@ -42,7 +42,7 @@ std::string PhysicalStreamConfig::toString() {
     ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig << " sourceFrequency=" << sourceFrequency
        << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
        << " numberOfBuffersToProduce=" << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
-       << " logicalStreamName=" << logicalStreamName << " endlessRepeat=" << endlessRepeat;
+       << " logicalStreamName=" << logicalStreamName;
     return ss.str();
 }
 
@@ -59,8 +59,6 @@ uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numb
 const std::string PhysicalStreamConfig::getPhysicalStreamName() const { return physicalStreamName; }
 
 const std::string PhysicalStreamConfig::getLogicalStreamName() const { return logicalStreamName; }
-bool PhysicalStreamConfig::isEndlessRepeat() const { return endlessRepeat; }
-void PhysicalStreamConfig::setEndlessRepeat(bool endlessRepeat) { this->endlessRepeat = endlessRepeat; }
 
 bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
 }// namespace NES

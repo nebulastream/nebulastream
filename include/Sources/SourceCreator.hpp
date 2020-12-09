@@ -93,7 +93,7 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferM
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                         const std::string& path_to_file, const std::string& delimiter,
                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                        uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId);
+                                        uint64_t frequency, bool skipHeader, OperatorId operatorId);
 
 /**
  * @brief function to create a ysb source
@@ -102,7 +102,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
  */
 const DataSourcePtr createYSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                     uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                    bool endlessRepeat, OperatorId operatorId);
+                                    OperatorId operatorId);
 
 /**
  * @brief function to create a network source

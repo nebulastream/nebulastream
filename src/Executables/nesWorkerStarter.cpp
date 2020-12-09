@@ -71,7 +71,6 @@ int main(int argc, char** argv) {
     std::string physicalStreamName;
     std::string logicalStreamName;
     std::string parentId = "-1";
-    std::string endlessRepeat = "";
     std::string skipHeader = "false";
 
     size_t numberOfTuplesToProducePerBuffer = 0;
@@ -87,7 +86,6 @@ int main(int argc, char** argv) {
         "sourceConfig", po::value<string>(&sourceConfig)->default_value(sourceConfig),
         "Set the config for the source e.g. the file name")(
         "sourceFrequency", po::value<size_t>(&sourceFrequency)->default_value(sourceFrequency), "Set the sampling frequency")(
-        "endlessRepeat", po::value<string>(&endlessRepeat)->default_value("off"), "Looping endless over the file")(
         "skipHeader", po::value<string>(&skipHeader)->default_value("false"), "Skip first line of the file (default=false)")(
         "physicalStreamName", po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
         "Set the physical name of the stream")(
@@ -143,12 +141,11 @@ int main(int argc, char** argv) {
 
     //register phy stream if necessary
     if (sourceType != "") {
-        bool endless = endlessRepeat == "on";
         bool skip = skipHeader == "true";
-        cout << "start with dedicated source=" << sourceType << " endlessRepeat=" << endlessRepeat << " end=" << endless << endl;
+        cout << "start with dedicated source=" << sourceType;
         PhysicalStreamConfigPtr conf =
             PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                                         numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endless, skip);
+                                         numberOfBuffersToProduce, physicalStreamName, logicalStreamName, skip);
 
         wrk->setWithRegister(conf);
     } else if (parentId != "-1") {
