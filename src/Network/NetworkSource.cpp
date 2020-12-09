@@ -31,7 +31,7 @@ NetworkSource::NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr buff
 
 NetworkSource::~NetworkSource() { NES_DEBUG("NetworkSink: Destroying NetworkSource " << nesPartition.toString()); }
 
-std::optional<TupleBuffer> NetworkSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> NetworkSource::receiveData() {
     NES_THROW_RUNTIME_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
 }
 

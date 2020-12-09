@@ -17,10 +17,12 @@
 #ifndef NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_ARRAYPHYSICALFIELD_HPP_
 #define NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_ARRAYPHYSICALFIELD_HPP_
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
-namespace NES {
 
+namespace NES{
 class PhysicalType;
 typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+}
+namespace NES::NodeEngine {
 
 /**
  * @brief Represents an array field at a specific position in a memory buffer.

@@ -19,7 +19,7 @@
 
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
-
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
@@ -36,7 +36,6 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-class TupleBuffer;
 class MonitoringPlan;
 
 class MonitoringPlan;
@@ -103,7 +102,7 @@ class WorkerRPCClient {
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, TupleBuffer& buf);
+    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, NodeEngine::TupleBuffer& buf);
 
   private:
 };

@@ -20,9 +20,9 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
-class TupleBuffer;
 class Schema;
 class MonitoringPlan;
 typedef std::shared_ptr<Schema> SchemaPtr;
@@ -45,7 +45,7 @@ class MemoryMetrics {
      * @param prefix
      * @return The MemoryMetrics object
      */
-    static MemoryMetrics fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
+    static MemoryMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     //equality operators
     bool operator==(const MemoryMetrics& rhs) const;
@@ -74,7 +74,7 @@ class MemoryMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const MemoryMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const MemoryMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
 typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
 }// namespace NES

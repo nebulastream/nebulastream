@@ -19,11 +19,8 @@
 #include <memory>
 namespace NES{
 
-class TupleBuffer;
-
-
-
 namespace NodeEngine{
+class TupleBuffer;
 
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -60,7 +57,9 @@ class PipelineExecutionContext;
 typedef std::shared_ptr<PipelineExecutionContext> PipelineExecutionContextPtr;
 
 }
+
 }
+
 }
 
 #endif//NES_INCLUDE_NODEENGINE_NODEENGINEFORWAREDREFS_HPP_

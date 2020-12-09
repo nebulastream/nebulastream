@@ -28,7 +28,7 @@ NesFormat::NesFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
     serializedSchema = new SerializableSchema();
 }
 
-std::optional<TupleBuffer> NesFormat::getSchema() {
+std::optional<NodeEngine::TupleBuffer> NesFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     SerializableSchema* protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
     bool success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSize());
@@ -38,8 +38,8 @@ std::optional<TupleBuffer> NesFormat::getSchema() {
     return buf;
 }
 
-std::vector<TupleBuffer> NesFormat::getData(TupleBuffer& inputBuffer) {
-    std::vector<TupleBuffer> buffers;
+std::vector<NodeEngine::TupleBuffer> NesFormat::getData(NodeEngine::TupleBuffer& inputBuffer) {
+    std::vector<NodeEngine::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("NesFormat::getData: write watermark-only buffer");

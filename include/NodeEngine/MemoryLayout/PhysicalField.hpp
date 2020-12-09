@@ -20,7 +20,12 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
-namespace NES {
+
+namespace NES{
+class PhysicalType;
+typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+}
+namespace NES::NodeEngine {
 class TupleBuffer;
 class PhysicalField;
 typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
@@ -28,8 +33,7 @@ template<class ValueType>
 class BasicPhysicalField;
 class ArrayPhysicalField;
 
-class PhysicalType;
-typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+
 
 /**
  * @brief This is the base class to represent a physical field.

@@ -46,7 +46,7 @@ class GeneratorSource : public DataSource {
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-    virtual std::optional<TupleBuffer> receiveData() = 0;
+    virtual std::optional<NodeEngine::TupleBuffer> receiveData() = 0;
 
     /**
      * @brief override the toString method for the generator source

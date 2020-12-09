@@ -19,10 +19,10 @@
 
 #include <cstdint>
 #include <memory>
+#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 class Schema;
-class TupleBuffer;
 class MonitoringPlan;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
@@ -44,7 +44,7 @@ class DiskMetrics {
      * @param prefix
      * @return The object
      */
-    static DiskMetrics fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
+    static DiskMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     uint64_t fBsize;
     uint64_t fFrsize;
@@ -63,7 +63,7 @@ typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const DiskMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const DiskMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

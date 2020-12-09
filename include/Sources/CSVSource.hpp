@@ -22,7 +22,6 @@
 #include <string>
 
 namespace NES {
-class TupleBuffer;
 
 /**
  * @brief this class implement the CSV as an input source
@@ -44,13 +43,13 @@ class CSVSource : public DataSource {
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
      */
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    void fillBuffer(TupleBuffer&);
+    void fillBuffer(NodeEngine::TupleBuffer&);
 
     /**
      * @brief override the toString method for the csv source

@@ -47,7 +47,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                            ->addField(createField("end", UINT64))
                            ->addField("key", this->joinDefinition->getJoinKey()->getStamp())
                            ->addField("value", this->joinDefinition->getJoinKey()->getStamp());
-        windowTupleLayout = createRowLayout(windowSchema);
+        windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
     }
 
     bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
@@ -131,7 +131,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   * @param tupleBuffer
   */
     void joinWindows(KeyType key, Windowing::WindowSliceStore<KeyType>* leftStore,
-                     Windowing::WindowSliceStore<KeyType>* rightStore, TupleBuffer& tupleBuffer, uint64_t currentWatermarkLeft,
+                     Windowing::WindowSliceStore<KeyType>* rightStore, NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermarkLeft,
                      uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore  watermark is="
                   << currentWatermarkLeft << " lastwatermark=" << lastWatermarkLeft);
@@ -244,7 +244,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     * @param value value
     */
     template<typename ValueType>
-    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
                            ValueType value) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
@@ -257,7 +257,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   private:
     LogicalJoinDefinitionPtr joinDefinition;
     SchemaPtr windowSchema;
-    MemoryLayoutPtr windowTupleLayout;
+    NodeEngine::MemoryLayoutPtr windowTupleLayout;
 };
 }// namespace NES::Join
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction_HPP_

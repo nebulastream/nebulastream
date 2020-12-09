@@ -57,6 +57,7 @@
 
 using namespace NES::Windowing;
 namespace NES {
+using NodeEngine::TupleBuffer;
 
 class WindowManagerTest : public testing::Test {
   public:

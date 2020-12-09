@@ -74,7 +74,7 @@ class MonitoringPlan {
      * @param buf
      * @return
      */
-    GroupedValues fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf);
+    GroupedValues fromBuffer(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf);
 
     /**
      * @brief Creates a serializable monitoring plan according to the Protobuf definition.

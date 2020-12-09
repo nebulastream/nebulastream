@@ -25,7 +25,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 class ArrayDataType;
 

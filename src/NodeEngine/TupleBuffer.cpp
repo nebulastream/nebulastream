@@ -18,7 +18,7 @@
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 TupleBuffer::TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullptr) {
     //nop

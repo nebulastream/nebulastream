@@ -43,6 +43,8 @@
 using namespace std;
 
 namespace NES {
+using NodeEngine::TupleBuffer;
+using NodeEngine::MemoryLayoutPtr;
 
 const uint64_t buffersManaged = 8 * 1024;
 const uint64_t bufferSize = 4 * 1024;
@@ -77,7 +79,7 @@ class TestSink : public SinkMedium {
     TestSink(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
 
-    bool writeData(TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override {
+    bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override {
         std::unique_lock lock(m);
         NES_DEBUG("TestSink:\n" << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 

@@ -21,9 +21,6 @@
 
 namespace NES {
 
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
-
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
@@ -34,9 +31,6 @@ class FieldAccessExpressionNode;
 typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
 
 class ExpressionItem;
-
-class MemoryLayout;
-typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;

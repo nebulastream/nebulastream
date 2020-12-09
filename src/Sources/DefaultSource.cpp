@@ -35,14 +35,14 @@ DefaultSource::DefaultSource(SchemaPtr schema, NodeEngine::BufferManagerPtr buff
     this->gatheringInterval = frequency;
 }
 
-std::optional<TupleBuffer> DefaultSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
     // 10 tuples of size one
     NES_DEBUG("Source:" << this << " requesting buffer");
 
     auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("Source:" << this << " got buffer");
     uint64_t tupleCnt = 10;
-    auto layout = createRowLayout(std::make_shared<Schema>(schema));
+    auto layout = NodeEngine::createRowLayout(std::make_shared<Schema>(schema));
 
     auto value = 1;
     auto fields = schema->fields;

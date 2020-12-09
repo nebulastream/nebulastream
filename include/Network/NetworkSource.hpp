@@ -39,7 +39,7 @@ class NetworkSource : public DataSource {
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
      * @return TupleBufferPtr containing the received buffer
      */
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method

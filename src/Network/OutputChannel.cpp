@@ -110,7 +110,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
     return nullptr;
 }
 
-bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, uint64_t tupleSize) {
+bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tupleSize) {
     auto bufferSize = inputBuffer.getBufferSize();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto originId = inputBuffer.getOriginId();
@@ -123,7 +123,7 @@ bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, uint64_t tupleSize) {
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples, originId);
     inputBuffer.retain();
     auto sentBytesOpt = zmqSocket.send(
-        zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer), zmq::send_flags::none);
+        zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer), zmq::send_flags::none);
     if (sentBytesOpt.has_value()) {
         //NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
         //                                               << inputBuffer.getNumberOfTuples() << "/"

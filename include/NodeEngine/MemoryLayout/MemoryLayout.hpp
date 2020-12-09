@@ -21,21 +21,26 @@
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <memory>
-namespace NES {
 
-class TupleBuffer;
-
+namespace NES{
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-class PhysicalSchema;
-typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
+
+
+}
+namespace NES::NodeEngine {
+
+class TupleBuffer;
 
 class MemoryLayout;
 typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
 
 class ArrayPhysicalField;
 typedef std::shared_ptr<ArrayPhysicalField> ArrayPhysicalFieldPtr;
+
+class PhysicalSchema;
+typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
 
 /**
  * The MemoryLayout maps a schema to a physical representation,

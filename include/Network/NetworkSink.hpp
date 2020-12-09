@@ -45,7 +45,7 @@ class NetworkSink : public SinkMedium {
 
     ~NetworkSink();
 
-    bool writeData(TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) override;
+    bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) override;
 
     const std::string toString() const override;
 

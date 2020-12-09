@@ -20,7 +20,6 @@
 #include <Sources/DataSource.hpp>
 
 namespace NES {
-class TupleBuffer;
 
 /**
  * @brief This class defines a source that adapts its sampling rate
@@ -46,19 +45,19 @@ class AdaptiveSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    void runningRoutine( NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr) override;
+    void runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr) override;
 
     /**
      * @brief sample data and choose to update the new frequency
      * @return the filled tuple buffer
      */
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
   private:
     /**
      * @brief sample a source, implemented by derived
      */
-    virtual void sampleSourceAndFillBuffer(TupleBuffer&) = 0;
+    virtual void sampleSourceAndFillBuffer(NodeEngine::TupleBuffer&) = 0;
 
     /**
      * @brief decision of new frequency, implemented by derived

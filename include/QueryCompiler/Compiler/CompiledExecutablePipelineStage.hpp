@@ -3,7 +3,9 @@
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 
 namespace NES {
-
+using NodeEngine::TupleBuffer;
+using NodeEngine::WorkerContext;
+using NodeEngine::Execution::PipelineExecutionContext;
 /**
  * @brief The CompiledExecutablePipelineStage maintains a reference to an compiled ExecutablePipelineStage.
  * To this end, it ensures that the compiled code is correctly destructed.
@@ -15,13 +17,13 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     static NodeEngine::Execution::ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode);
     ~CompiledExecutablePipelineStage();
 
-    uint32_t setup(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
-    uint32_t start(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
-    uint32_t open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, NodeEngine::WorkerContext& workerContext) override;
-    uint32_t execute(TupleBuffer& inputTupleBuffer, NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
+    uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t start(PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
                      NodeEngine::WorkerContext& workerContext) override;
-    uint32_t close(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, NodeEngine::WorkerContext& workerContext) override;
-    uint32_t stop(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
   private:
     enum ExecutionStage { NotInitialized, Initialized, Running, Stopped };

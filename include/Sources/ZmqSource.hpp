@@ -51,7 +51,7 @@ class ZmqSource : public DataSource {
      * @brief blocking method to receive a buffer from the zmq source
      * @return TupleBufferPtr containing thre received buffer
      */
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the zmq source

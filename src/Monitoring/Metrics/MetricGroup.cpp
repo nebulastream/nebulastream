@@ -32,7 +32,7 @@ bool MetricGroup::add(const std::string& desc, const Metric& metric) {
 
 bool MetricGroup::remove(const std::string& name) { return metricMap.erase(name); }
 
-void MetricGroup::getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf) {
+void MetricGroup::getSample(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf) {
     NES_DEBUG("MetricGroup: Collecting sample via serialize(..)");
     for (auto const& x : metricMap) {
         serialize(x.second, schema, buf, x.first);

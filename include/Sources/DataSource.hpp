@@ -92,7 +92,7 @@ class DataSource : public NodeEngine::Reconfigurable {
      * @Note this function is overwritten by the particular data source
      * @return returns a tuple buffer
      */
-    virtual std::optional<TupleBuffer> receiveData() = 0;
+    virtual std::optional<NodeEngine::TupleBuffer> receiveData() = 0;
 
     /**
      * @brief virtual function to get a string describing the particular source

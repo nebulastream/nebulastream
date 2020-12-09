@@ -62,7 +62,7 @@ class PrintSink : public SinkMedium {
      * @param tuple buffer to write
      * @return bool indicating success of the write
      */
-    bool writeData(TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
+    bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) override;
 
     /**
      * @brief override the toString method for the print sink

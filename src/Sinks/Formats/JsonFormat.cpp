@@ -24,9 +24,9 @@ namespace NES {
 
 JsonFormat::JsonFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
 
-std::vector<TupleBuffer> JsonFormat::getData(TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+std::vector<NodeEngine::TupleBuffer> JsonFormat::getData(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
-std::optional<TupleBuffer> JsonFormat::getSchema() { NES_NOT_IMPLEMENTED(); }
+std::optional<NodeEngine::TupleBuffer> JsonFormat::getSchema() { NES_NOT_IMPLEMENTED(); }
 
 std::string JsonFormat::toString() { return "JSON_FORMAT"; }
 SinkFormatTypes JsonFormat::getSinkFormat() { return JSON_FORMAT; }

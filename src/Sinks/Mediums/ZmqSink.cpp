@@ -50,7 +50,7 @@ ZmqSink::~ZmqSink() {
     NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
 }
 
-bool ZmqSink::writeData(TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
+bool ZmqSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     connect();
     if (!connected) {

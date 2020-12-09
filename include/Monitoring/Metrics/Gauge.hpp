@@ -19,13 +19,12 @@
 
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Util/Logger.hpp>
-
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <functional>
 #include <memory>
 
 namespace NES {
 class Schema;
-class TupleBuffer;
 class MonitoringPlan;
 
 template<typename T>
@@ -52,7 +51,7 @@ MetricType getMetricType(const Gauge<T>&) {
 }
 
 template<typename T>
-void serialize(Gauge<T>& metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(Gauge<T>& metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     serialize(metric.measure(), schema, buf, prefix);
 }
 

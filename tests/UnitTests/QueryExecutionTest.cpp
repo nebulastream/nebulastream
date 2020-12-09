@@ -57,6 +57,8 @@
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
+using NodeEngine::TupleBuffer;
+using NodeEngine::MemoryLayoutPtr;
 
 class QueryExecutionTest : public testing::Test {
   public:
@@ -101,7 +103,7 @@ class WindowSource : public NES::DefaultSource {
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
-        auto rowLayout = createRowLayout(schema);
+        auto rowLayout = NodeEngine::createRowLayout(schema);
 
         for (int i = 0; i < 10; i++) {
             rowLayout->getValueField<int64_t>(i, 0)->write(buffer, 1);
@@ -294,7 +296,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getNumberOfPipelines(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = createRowLayout(testSchema);
+    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -499,7 +501,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
-    auto resultLayout = createRowLayout(windowResultSchema);
+    auto resultLayout = NodeEngine::createRowLayout(windowResultSchema);
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
         EXPECT_EQ(resultLayout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), 0);
@@ -584,7 +586,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
-    auto resultLayout = createRowLayout(windowResultSchema);
+    auto resultLayout = NodeEngine::createRowLayout(windowResultSchema);
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
         EXPECT_EQ(resultLayout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), 30);
@@ -888,7 +890,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     EXPECT_EQ(plan->getNumberOfPipelines(), 3);
 
     // TODO switch to event time if that is ready to remove sleep
-    auto memoryLayout = createRowLayout(testSchema);
+    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
@@ -988,7 +990,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     uint64_t noBufs = 0;
     for (auto buf : testSink->resultBuffers) {
         noBufs++;
-        auto resultLayout = createRowLayout(ysbResultSchema);
+        auto resultLayout = NodeEngine::createRowLayout(ysbResultSchema);
         for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
             auto campaignId = resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 2)->read(buf);
             EXPECT_TRUE(0 <= campaignId && campaignId < 10000);

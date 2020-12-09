@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
@@ -57,7 +58,7 @@ class ExecutableCompleteAggregationTriggerAction
 
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString());
         this->windowSchema = outputSchema;
-        windowTupleLayout = createRowLayout(this->windowSchema);
+        windowTupleLayout = NodeEngine::createRowLayout(this->windowSchema);
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
@@ -103,7 +104,7 @@ class ExecutableCompleteAggregationTriggerAction
   * @param tupleBuffer
   */
     void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
-                          TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark) {
+                          NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -243,7 +244,7 @@ class ExecutableCompleteAggregationTriggerAction
     }
 
     template<typename ValueType>
-    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
                            ValueType value) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
@@ -258,7 +259,7 @@ class ExecutableCompleteAggregationTriggerAction
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    MemoryLayoutPtr windowTupleLayout;
+    NodeEngine::MemoryLayoutPtr windowTupleLayout;
 };
 }// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_

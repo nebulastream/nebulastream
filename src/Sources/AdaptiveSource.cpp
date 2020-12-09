@@ -34,7 +34,7 @@ AdaptiveSource::AdaptiveSource(SchemaPtr schema,  NodeEngine::BufferManagerPtr b
 
 SourceType AdaptiveSource::getType() const { return ADAPTIVE_SOURCE; }
 
-std::optional<TupleBuffer> AdaptiveSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> AdaptiveSource::receiveData() {
     NES_DEBUG("AdaptiveSource::receiveData called");
     auto buf = this->bufferManager->getBufferBlocking();
     this->sampleSourceAndFillBuffer(buf);

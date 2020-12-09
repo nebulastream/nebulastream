@@ -136,7 +136,7 @@ MetricGroupPtr MonitoringPlan::createMetricGroup(MetricCatalogPtr) const {
     return metricGroup;
 }
 
-GroupedValues MonitoringPlan::fromBuffer(std::shared_ptr<Schema> schema, TupleBuffer& buf) {
+GroupedValues MonitoringPlan::fromBuffer(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf) {
     auto output = GroupedValues();
 
     if (cpuMetrics) {

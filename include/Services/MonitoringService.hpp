@@ -50,7 +50,7 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    std::tuple<SchemaPtr, TupleBuffer> requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
+    std::tuple<SchemaPtr, NodeEngine::TupleBuffer> requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
                                                              MonitoringPlanPtr plan);
 
     /**

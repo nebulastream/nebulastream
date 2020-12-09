@@ -26,7 +26,7 @@ namespace NES {
 
 CsvFormat::CsvFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
 
-std::optional<TupleBuffer> CsvFormat::getSchema() {
+std::optional<NodeEngine::TupleBuffer> CsvFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     std::stringstream ss;
     uint64_t numberOfFields = schema->fields.size();
@@ -47,8 +47,8 @@ std::optional<TupleBuffer> CsvFormat::getSchema() {
     return buf;
 }
 
-std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
-    std::vector<TupleBuffer> buffers;
+std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer& inputBuffer) {
+    std::vector<NodeEngine::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("CsvFormat::getData: write watermark-only buffer");

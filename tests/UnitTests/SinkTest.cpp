@@ -35,6 +35,7 @@ using namespace std;
  * @todo add tests for processing multiple buffers in a row
  */
 namespace NES {
+using NodeEngine::TupleBuffer;
 
 class SinkTest : public testing::Test {
   public:
