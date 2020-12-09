@@ -60,7 +60,7 @@ bool Node::addChild(const NodePtr newNode) {
 
 bool Node::removeChild(const NodePtr node) {
 
-    if(!node){
+    if (!node) {
         NES_ERROR("Node: Can't remove null node");
         return false;
     }
@@ -163,7 +163,7 @@ void Node::removeChildren() {
 
 bool Node::removeParent(const NodePtr node) {
 
-    if(!node){
+    if (!node) {
         NES_ERROR("Node: Can't remove null node");
         return false;
     }
@@ -189,7 +189,7 @@ bool Node::replace(NodePtr newNode) { return replace(newNode, shared_from_this()
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
 
-    if(!newNode || !oldNode) {
+    if (!newNode || !oldNode) {
         NES_ERROR("Node: Can't replace null node");
         return false;
     }
