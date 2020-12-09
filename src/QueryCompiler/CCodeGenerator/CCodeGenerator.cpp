@@ -40,6 +40,7 @@
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
@@ -49,7 +50,6 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
 
 namespace NES {
 
@@ -858,9 +858,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 
     if (window->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
         context->pipelineName = "combiningWindowType";
-    }
-    else
-    {
+    } else {
         context->pipelineName = "sliceMergingWindowType";
     }
 
@@ -951,7 +949,6 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
                                                  - VarRef(latenessHandlerVariableDeclaration),
                                          Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
-
 
     // Check and update max watermark if current watermark is greater than maximum watermark
     // if (currentWatermark > maxWatermark) {

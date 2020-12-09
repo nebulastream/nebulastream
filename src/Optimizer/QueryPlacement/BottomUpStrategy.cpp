@@ -103,7 +103,8 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
                                                    TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
-    if ((operatorNode->isNAryOperator() && !operatorNode->instanceOf<SourceLogicalOperatorNode>()) || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+    if ((operatorNode->isNAryOperator() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
+        || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
         //Check if all children operators already placed
         NES_TRACE("BottomUpStrategy: Get the topology nodes where child operators are placed.");

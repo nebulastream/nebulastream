@@ -153,14 +153,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", UINT64)
-        ->addField("value", UINT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", UINT64)
+                                  ->addField("value", UINT64);
 
     auto exec = ExecutableSumAggregation<uint64_t>::create();
-    auto wAbstr =
-        WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(windowDef, exec, windowOutputSchema);
+    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
+        windowDef, exec, windowOutputSchema);
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
@@ -211,8 +211,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    auto windowAction =
-        ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDef, exec, windowOutputSchema);
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(
+        windowDef, exec, windowOutputSchema);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts);
 
@@ -243,13 +243,14 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
         DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", INT64)
-        ->addField("value", INT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", INT64)
+                                  ->addField("value", INT64);
 
     auto exec = ExecutableSumAggregation<int64_t>::create();
-    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec, windowOutputSchema);
+    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(
+        windowDef, exec, windowOutputSchema);
     auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
@@ -298,7 +299,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec, windowOutputSchema);
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(
+        windowDef, exec, windowOutputSchema);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
 
@@ -329,13 +331,13 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto exec = ExecutableSumAggregation<int64_t>::create();
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", INT64)
-        ->addField("value", INT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", INT64)
+                                  ->addField("value", INT64);
 
-
-    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(windowDef, exec, windowOutputSchema);
+    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(
+        windowDef, exec, windowOutputSchema);
     auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
     class MockedExecutablePipeline : public ExecutablePipeline {
@@ -388,7 +390,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(windowDef, exec, windowOutputSchema);
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(
+        windowDef, exec, windowOutputSchema);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
     uint64_t tupleCnt = buf.getNumberOfTuples();

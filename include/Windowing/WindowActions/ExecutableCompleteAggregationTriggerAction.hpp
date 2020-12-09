@@ -43,13 +43,16 @@ class ExecutableCompleteAggregationTriggerAction
     static ExecutableCompleteAggregationTriggerActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType>
     create(LogicalWindowDefinitionPtr windowDefinition,
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
-               executableWindowAggregation, SchemaPtr outputSchema) {
-        return std::make_shared<ExecutableCompleteAggregationTriggerAction>(windowDefinition, executableWindowAggregation, outputSchema);
+               executableWindowAggregation,
+           SchemaPtr outputSchema) {
+        return std::make_shared<ExecutableCompleteAggregationTriggerAction>(windowDefinition, executableWindowAggregation,
+                                                                            outputSchema);
     }
     ExecutableCompleteAggregationTriggerAction(
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
-            executableWindowAggregation, SchemaPtr outputSchema)
+            executableWindowAggregation,
+        SchemaPtr outputSchema)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation) {
 
         this->windowSchema = outputSchema;
@@ -58,15 +61,17 @@ class ExecutableCompleteAggregationTriggerAction
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
                   uint64_t lastWatermark) {
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): doAction for currentWatermark="
-                  << currentWatermark << " lastWatermark=" << lastWatermark);
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+                                                                 << "): doAction for currentWatermark=" << currentWatermark
+                                                                 << " lastWatermark=" << lastWatermark);
 
         auto tupleBuffer = this->bufferManager->getBufferBlocking();
         tupleBuffer.setOriginId(this->originId);
 
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): " << toString() << " check key=" << it.first
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+                                                                     << "): " << toString() << " check key=" << it.first
                                                                      << "nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
@@ -76,8 +81,9 @@ class ExecutableCompleteAggregationTriggerAction
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
             //write remaining buffer
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): Dispatch last buffer output buffer with "
-                      << tupleBuffer.getNumberOfTuples()
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                      << this->windowDefinition->getDistributionType()->toString()
+                      << "): Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
@@ -110,16 +116,18 @@ class ExecutableCompleteAggregationTriggerAction
 
         //trigger a central window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): trigger sliceid="
-                      << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                      << this->windowDefinition->getDistributionType()->toString() << "): trigger sliceid=" << sliceId
+                      << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
 
         if (currentWatermark > lastWatermark) {
             NES_DEBUG("aggregateWindows trigger because currentWatermark=" << currentWatermark
                                                                            << " > lastWatermark=" << lastWatermark);
             windowDefinition->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): trigger Complete or combining window for slices="
-                      << slices.size() << " windows=" << windows.size());
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                      << this->windowDefinition->getDistributionType()->toString()
+                      << "): trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
         } else {
             NES_DEBUG("aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
                                                                                   << " > lastWatermark=" << lastWatermark);
@@ -135,15 +143,17 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): key="
-                          << key << " window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                          << this->windowDefinition->getDistributionType()->toString() << "): key=" << key
+                          << " window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs()
                           << " slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs()
                           << " recCnt=" << slices[sliceId].getRecordsPerSlice());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()
                     && slices[sliceId].getRecordsPerSlice() != 0) {
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): create partial agg windowId="
-                              << windowId << " sliceId=" << sliceId << " key=" << key
+                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                              << this->windowDefinition->getDistributionType()->toString()
+                              << "): create partial agg windowId=" << windowId << " sliceId=" << sliceId << " key=" << key
                               << " partAgg=" << executableWindowAggregation->lower(partialAggregates[sliceId])
                               << " recCnt=" << slices[sliceId].getRecordsPerSlice());
                     partialFinalAggregates[windowId] =
@@ -162,8 +172,9 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
                 auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): write i="
-                          << i << " key=" << key << " value=" << value << " window.start()=" << window.getStartTs()
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                          << this->windowDefinition->getDistributionType()->toString() << "): write i=" << i << " key=" << key
+                          << " value=" << value << " window.start()=" << window.getStartTs()
                           << " window.getEndTs()=" << window.getEndTs() << " recordsPerWindow[i]=" << recordsPerWindow[i]);
                 if (recordsPerWindow[i] != 0) {
                     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
@@ -182,8 +193,9 @@ class ExecutableCompleteAggregationTriggerAction
                     && i + 1 < partialFinalAggregates.size()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): Dispatch intermediate output buffer with "
-                              << currentNumberOfTuples
+                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                              << this->windowDefinition->getDistributionType()->toString()
+                              << "): Dispatch intermediate output buffer with " << currentNumberOfTuples
                               << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
                     //forward buffer to next  pipeline stage
@@ -201,7 +213,8 @@ class ExecutableCompleteAggregationTriggerAction
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString() << "): aggregate: no window qualifies");
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+                                                                     << "): aggregate: no window qualifies");
         }
     }
 
@@ -248,5 +261,5 @@ class ExecutableCompleteAggregationTriggerAction
     LogicalWindowDefinitionPtr windowDefinition;
     MemoryLayoutPtr windowTupleLayout;
 };
-}// namespace NES::Windowingg
+}// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_

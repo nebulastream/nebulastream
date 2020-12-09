@@ -40,14 +40,17 @@ class ExecutableSliceAggregationTriggerAction
     static BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType>
     create(LogicalWindowDefinitionPtr windowDefinition,
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
-               executableWindowAggregation, SchemaPtr outputSchema) {
-        return std::make_shared<ExecutableSliceAggregationTriggerAction>(windowDefinition, executableWindowAggregation, outputSchema);
+               executableWindowAggregation,
+           SchemaPtr outputSchema) {
+        return std::make_shared<ExecutableSliceAggregationTriggerAction>(windowDefinition, executableWindowAggregation,
+                                                                         outputSchema);
     }
 
     ExecutableSliceAggregationTriggerAction(
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
-            executableWindowAggregation, SchemaPtr outputSchema)
+            executableWindowAggregation,
+        SchemaPtr outputSchema)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation) {
 
         this->windowSchema = outputSchema;

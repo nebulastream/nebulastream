@@ -21,7 +21,8 @@
 
 namespace NES::Windowing {
 
-AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr outputSchema) {
+AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
+                                                                              SchemaPtr outputSchema) {
     if (windowDefinition->isKeyed()) {
         auto logicalKeyType = windowDefinition->getOnKey()->getStamp();
         auto physicalKeyType = DefaultPhysicalTypeFactory().getPhysicalType(logicalKeyType);
@@ -32,12 +33,14 @@ AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(Lo
                     //                case BasicPhysicalType::UINT_16: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint16_t>(windowDefinition);
                     //                case BasicPhysicalType::UINT_32: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint32_t>(windowDefinition);
                 case BasicPhysicalType::UINT_64:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint64_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint64_t>(windowDefinition,
+                                                                                                           outputSchema);
                     //                case BasicPhysicalType::INT_8: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int8_t>(windowDefinition);
                     //                case BasicPhysicalType::INT_16: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int16_t>(windowDefinition);
                     //                case BasicPhysicalType::INT_32: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int32_t>(windowDefinition);
                 case BasicPhysicalType::INT_64:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int64_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int64_t>(windowDefinition,
+                                                                                                          outputSchema);
                     //                case BasicPhysicalType::FLOAT: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<float>(windowDefinition);
                     //                case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<double>(windowDefinition);
                     //                case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<char>(windowDefinition);
@@ -54,29 +57,41 @@ AbstractWindowHandlerPtr WindowHandlerFactory::createAggregationWindowHandler(Lo
             auto basicKeyType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalKeyType);
             switch (basicKeyType->getNativeType()) {
                 case BasicPhysicalType::UINT_8:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint8_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint8_t>(windowDefinition,
+                                                                                                          outputSchema);
                 case BasicPhysicalType::UINT_16:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint16_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint16_t>(windowDefinition,
+                                                                                                           outputSchema);
                 case BasicPhysicalType::UINT_32:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint32_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint32_t>(windowDefinition,
+                                                                                                           outputSchema);
                 case BasicPhysicalType::UINT_64:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint64_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<uint64_t>(windowDefinition,
+                                                                                                           outputSchema);
                 case BasicPhysicalType::INT_8:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int8_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int8_t>(windowDefinition,
+                                                                                                         outputSchema);
                 case BasicPhysicalType::INT_16:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int16_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int16_t>(windowDefinition,
+                                                                                                          outputSchema);
                 case BasicPhysicalType::INT_32:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int32_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int32_t>(windowDefinition,
+                                                                                                          outputSchema);
                 case BasicPhysicalType::INT_64:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int64_t>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<int64_t>(windowDefinition,
+                                                                                                          outputSchema);
                 case BasicPhysicalType::FLOAT:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<float>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<float>(windowDefinition,
+                                                                                                        outputSchema);
                 case BasicPhysicalType::DOUBLE:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<double>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<double>(windowDefinition,
+                                                                                                         outputSchema);
                 case BasicPhysicalType::CHAR:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<char>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<char>(windowDefinition,
+                                                                                                       outputSchema);
                 case BasicPhysicalType::BOOLEAN:
-                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<bool>(windowDefinition, outputSchema);
+                    return WindowHandlerFactoryDetails::createWindowHandlerForAggregationKeyType<bool>(windowDefinition,
+                                                                                                       outputSchema);
                 default: NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: basicKeyType is not supported");
             }
         } else {

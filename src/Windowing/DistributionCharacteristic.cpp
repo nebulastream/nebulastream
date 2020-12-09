@@ -37,7 +37,6 @@ DistributionCharacteristicPtr DistributionCharacteristic::createMergingWindowTyp
     return std::make_shared<DistributionCharacteristic>(Type::Merging);
 }
 
-
 DistributionCharacteristic::Type DistributionCharacteristic::getType() { return type; }
 
 std::string DistributionCharacteristic::toString() {

@@ -154,7 +154,7 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
         NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
         //FIXME: we are considering only one root node currently
         auto candidateTopologyNodes = topology->findNodesBetween(childNodes, {candidateTopologyNode});
-        for(auto topologyNodes : candidateTopologyNodes) {
+        for (auto topologyNodes : candidateTopologyNodes) {
             if (topologyNodes && topologyNodes->getAvailableResources() > 0) {
                 candidateTopologyNode = topologyNodes;
                 NES_DEBUG(
