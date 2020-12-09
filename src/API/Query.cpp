@@ -44,8 +44,9 @@ Query::Query(const Query& query) : queryPlan(query.queryPlan) {}
 
 Query Query::from(const std::string sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(
-        LogicalStreamSourceDescriptor::create(sourceStreamName, UtilityFunctions::getNextOperatorId()));
+    OperatorId id = UtilityFunctions::getNextOperatorId();
+    auto sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName, id), id);
     auto queryPlan = QueryPlan::create(sourceOperator);
     return Query(queryPlan);
 }
