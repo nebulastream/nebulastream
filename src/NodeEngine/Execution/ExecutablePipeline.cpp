@@ -14,16 +14,14 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
-#include <Util/Logger.hpp>
-#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
 #include <utility>
 
 namespace NES::NodeEngine::Execution {

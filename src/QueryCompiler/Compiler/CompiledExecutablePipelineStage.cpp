@@ -1,5 +1,6 @@
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
+#include <Util/Logger.hpp>
 namespace NES {
 
 // TODO this might change across OS

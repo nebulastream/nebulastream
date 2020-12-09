@@ -18,10 +18,9 @@
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>

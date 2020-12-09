@@ -303,7 +303,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     plan->start();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
     NodeEngine::WorkerContext workerContext{1};
-    plan->getStage(0)->execute(buffer, workerContext);
+    plan->getPipeline(0)->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
@@ -898,8 +898,8 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     plan->setup();
     plan->start();
     NodeEngine::WorkerContext workerContext{1};
-    auto stage_0 = plan->getStage(0);
-    auto stage_1 = plan->getStage(1);
+    auto stage_0 = plan->getPipeline(0);
+    auto stage_1 = plan->getPipeline(1);
     for (int i = 0; i < 10; i++) {
 
         stage_0->execute(buffer, workerContext);// P1

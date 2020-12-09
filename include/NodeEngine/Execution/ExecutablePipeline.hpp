@@ -18,10 +18,7 @@
 #define INCLUDE_PIPELINESTAGE_H_
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/WorkerContext.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
 #include <vector>
 
@@ -99,10 +96,6 @@ class ExecutablePipeline {
     bool hasWindowHandler();
     bool hasJoinHandler();
 };
-
-
-class CompiledCode;
-typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
 
 }// namespace NES
 
