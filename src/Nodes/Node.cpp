@@ -59,6 +59,12 @@ bool Node::addChild(const NodePtr newNode) {
 }
 
 bool Node::removeChild(const NodePtr node) {
+
+    if(!node){
+        NES_ERROR("Can not remove null node");
+        return false;
+    }
+
     // check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
         NES_DEBUG("Node: remove " << (*nodeItr)->toString() << " from " << node->toString() << " this=" << this
@@ -156,6 +162,12 @@ void Node::removeChildren() {
 }
 
 bool Node::removeParent(const NodePtr node) {
+
+    if(!node){
+        NES_ERROR("Can not remove null node");
+        return false;
+    }
+
     // check all parents.
     for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
         if ((*nodeItr).get() == node.get()) {
@@ -176,6 +188,12 @@ bool Node::removeParent(const NodePtr node) {
 bool Node::replace(NodePtr newNode) { return replace(newNode, shared_from_this()); }
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
+
+    if(!newNode || !oldNode) {
+        NES_ERROR("Can not replace null node");
+        return false;
+    }
+
     if (shared_from_this() == oldNode) {
         insertBetweenThisAndParentNodes(newNode);
         removeAndJoinParentAndChildren();

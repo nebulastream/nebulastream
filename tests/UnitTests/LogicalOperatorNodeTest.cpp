@@ -42,6 +42,12 @@ namespace NES {
 
 class LogicalOperatorNodeTest : public testing::Test {
   public:
+
+    static void SetUpTestCase() {
+        NES::setupLogging("LogicalOperatorNodeTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup LogicalOperatorNodeTest test class.");
+    }
+
     void SetUp() {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
@@ -225,12 +231,14 @@ TEST_F(LogicalOperatorNodeTest, addAndRemoveLogicalDuplicateButDifferentOperator
     EXPECT_EQ(children.size(), 0u);
 }
 
-TEST_F(LogicalOperatorNodeTest, DISABLED_addAndRemoveNullSuccessor) {
+TEST_F(LogicalOperatorNodeTest, addAndRemoveNullSuccessor) {
     // assertion fail due to nullptr
     sourceOp->addChild(filterOp1);
+    children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 1u);
-    sourceOp->addChild(nullptr);
+    EXPECT_FALSE(sourceOp->addChild(nullptr));
     removed = sourceOp->removeChild(nullptr);
+    EXPECT_FALSE(removed);
 }
 
 TEST_F(LogicalOperatorNodeTest, addSelfAsPredecessor) {
@@ -371,11 +379,11 @@ TEST_F(LogicalOperatorNodeTest, consistencyBetweenSuccessorPredecesorRelation2) 
     EXPECT_EQ(parents.size(), 0u);
 }
 
-TEST_F(LogicalOperatorNodeTest, DISABLED_addAndRemoveNullPredecessor) {
+TEST_F(LogicalOperatorNodeTest, addAndRemoveNullPredecessor) {
     // assertion failed due to nullptr
-    filterOp3->addParent(filterOp1);
-    filterOp3->addParent(nullptr);
-    filterOp3->removeParent(nullptr);
+    EXPECT_TRUE(filterOp3->addParent(filterOp1));
+    EXPECT_FALSE(filterOp3->addParent(nullptr));
+    EXPECT_FALSE(filterOp3->removeParent(nullptr));
 }
 
 /**
@@ -526,24 +534,24 @@ TEST_F(LogicalOperatorNodeTest, replaceWithNoneSuccessor) {
     EXPECT_EQ(children.size(), 0u);
 }
 
-TEST_F(LogicalOperatorNodeTest, DISABLED_replaceSuccessorInvalidOldOperator) {
+TEST_F(LogicalOperatorNodeTest, replaceSuccessorInvalidOldOperator) {
     children = filterOp3->getChildren();
     EXPECT_EQ(children.size(), 0u);
 
     sourceOp->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
 
-    sourceOp->replace(filterOp3, nullptr);
+    EXPECT_FALSE(sourceOp->replace(filterOp3, nullptr));
 }
 
-TEST_F(LogicalOperatorNodeTest, DISABLED_replaceWithWithInvalidNewOperator) {
+TEST_F(LogicalOperatorNodeTest, replaceWithWithInvalidNewOperator) {
     children = filterOp3->getChildren();
     EXPECT_EQ(children.size(), 0u);
 
     sourceOp->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
 
-    sourceOp->replace(nullptr, filterOp1);
+    EXPECT_FALSE(sourceOp->replace(nullptr, filterOp1));
 }
 
 /**
@@ -934,24 +942,24 @@ TEST_F(LogicalOperatorNodeTest, asBadCast) {
  *                     \-> filterOp3 -> filterOp5
  *
  */
-// TEST_F(LogicalOperatorNodeTest, DISABLED_findRecurisivelyOperatorNotExists) {
+TEST_F(LogicalOperatorNodeTest, findRecurisivelyOperatorNotExists) {
 
-//     // topology1
-//     filterOp6->addChild(filterOp3);
-//     filterOp6->addChild(filterOp1);
-//     filterOp1->addChild(filterOp2);
-//     filterOp1->addChild(filterOp4);
-//     filterOp3->addChild(filterOp5);
+    // topology1
+    filterOp6->addChild(filterOp3);
+    filterOp6->addChild(filterOp1);
+    filterOp1->addChild(filterOp2);
+    filterOp1->addChild(filterOp4);
+    filterOp3->addChild(filterOp5);
 
-//     NodePtr x = nullptr;
-//     // case 1: filterOp7 not in this graph
-//     x = filterOp6->findRecursively(filterOp6, filterOp7);
-//     EXPECT_TRUE(x == nullptr);
-//     // case 2: filterOp6 is in this graph, but not the
-//     // children of filterOp1
-//     x = filterOp6->findRecursively(filterOp1, filterOp6);
-//     EXPECT_TRUE(x == nullptr);
-// }
+    NodePtr x = nullptr;
+    // case 1: filterOp7 not in this graph
+    x = filterOp6->findRecursively(filterOp6, filterOp7);
+    EXPECT_TRUE(x == nullptr);
+    // case 2: filterOp6 is in this graph, but not the
+    // children of filterOp1
+    x = filterOp6->findRecursively(filterOp1, filterOp6);
+    EXPECT_TRUE(x == nullptr);
+}
 
 /**
  *                                  /-> filterOp4

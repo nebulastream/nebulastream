@@ -125,6 +125,11 @@ OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) 
 
 bool OperatorNode::addChild(NodePtr newNode) {
 
+    if(!newNode) {
+        NES_ERROR("Can not add null node");
+        return false;
+    }
+
     if (newNode->as<OperatorNode>()->getId() == id) {
         NES_ERROR("OperatorNode: can not add self as child to itself");
         return false;
@@ -146,6 +151,11 @@ bool OperatorNode::addChild(NodePtr newNode) {
 }
 
 bool OperatorNode::addParent(NodePtr newNode) {
+
+    if(!newNode){
+        NES_ERROR("Can not add null node");
+        return false;
+    }
 
     if (newNode->as<OperatorNode>()->getId() == id) {
         NES_ERROR("OperatorNode: can not add self as parent to itself");
