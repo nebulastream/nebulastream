@@ -41,11 +41,12 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
     NES_ASSERT(this->queryManager, "Invalid query manager");
 
     /**
-     * we allow only two cases:
+     * we allow only three cases:
      *  1.) If the user specifies a numBuffersToProcess:
      *      1.1) if the source e.g. file is large enough we will read in numBuffersToProcess and then terminate
      *      1.2) if the file is not large enough, we will start at the beginning until we produced numBuffersToProcess
      *  2.) If the user set numBuffersToProcess to 0, we read the source until it ends, e.g, until the file ends
+     *  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
      */
 
 }
