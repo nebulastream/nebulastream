@@ -101,6 +101,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     flags->addFlag("-DNES_LOGGING_FATAL_ERROR_LEVEL=1");
 #endif
 
+    flags->addFlag("-fno-diagnostics-color");
     flags->addFlag(filename);
 
     // call compiler to generate shared lib from source code
@@ -197,7 +198,7 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     auto ret = system(compilerCall.str().c_str());
     if (ret != 0) {
         NES_ERROR("Compiler: compilation failed");
-        throw "Compilation failed";
+        throw std::runtime_error(strstream.str());
     }
 #endif
 }
