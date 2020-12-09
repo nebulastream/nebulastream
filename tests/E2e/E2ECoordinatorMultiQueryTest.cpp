@@ -47,7 +47,6 @@ uint64_t rpcPort = 1200;
 uint64_t dataPort = 1400;
 uint64_t restPort = 8000;
 
-
 class E2ECoordinatorMultiQueryTest : public testing::Test {
   public:
     static void SetUpTestCase() {
@@ -76,7 +75,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     remove(pathQuery2.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --numberOfSlots=8" + " --restPort=" + std::to_string(restPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --numberOfSlots=8"
+        + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();

@@ -117,7 +117,8 @@ class TestUtils {
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
 
-            web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
+            web::http::client::http_client clientProc("http://localhost:" + restPort
+                                                      + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
             clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
                 .then([](const web::http::http_response& response) {
                     cout << "read number of buffers" << endl;
@@ -184,7 +185,7 @@ class TestUtils {
     static web::json::value startQueryViaRest(string queryString, std::string restPort = "8081") {
         web::json::value json_return;
 
-        web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort+ "/v1/nes/");
+        web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort + "/v1/nes/");
         clientQ1.request(web::http::methods::POST, "/query/execute-query", queryString)
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
@@ -214,7 +215,7 @@ class TestUtils {
     static bool addLogicalStream(string schemaString, std::string restPort = "8081") {
         web::json::value json_returnSchema;
 
-        web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort +"/v1/nes/streamCatalog/addLogicalStream");
+        web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/streamCatalog/addLogicalStream");
         clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
