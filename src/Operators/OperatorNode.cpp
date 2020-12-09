@@ -125,7 +125,7 @@ OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) 
 
 bool OperatorNode::addChild(NodePtr newNode) {
 
-    if(!newNode) {
+    if (!newNode) {
         NES_ERROR("OperatorNode: Can't add null node");
         return false;
     }
@@ -152,7 +152,7 @@ bool OperatorNode::addChild(NodePtr newNode) {
 
 bool OperatorNode::addParent(NodePtr newNode) {
 
-    if(!newNode){
+    if (!newNode) {
         NES_ERROR("OperatorNode: Can't add null node");
         return false;
     }

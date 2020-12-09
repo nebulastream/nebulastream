@@ -42,7 +42,6 @@ namespace NES {
 
 class LogicalOperatorNodeTest : public testing::Test {
   public:
-
     static void SetUpTestCase() {
         NES::setupLogging("LogicalOperatorNodeTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup LogicalOperatorNodeTest test class.");
