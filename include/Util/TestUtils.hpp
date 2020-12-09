@@ -29,6 +29,8 @@
 #include <cpprest/http_client.h>
 #include <iostream>
 #include <memory>
+#include <cpprest/filestream.h>
+#include <cpprest/http_client.h>
 
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
@@ -514,35 +516,40 @@ class TestUtils {
         return nodePtr;
     }
 
-    static bool waitForWorkers(uint16_t maxTimeout, uint16_t expectedWorkers) {
+    static bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers) {
+        auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
+        NES_INFO("TestUtil: Executen GET request on URI " << baseUri);
         web::json::value json_return;
-        web::http::client::http_client client("http://localhost:8081/v1/nes/topology");
+        web::http::client::http_client client(baseUri);
         size_t nodeNo;
 
         for (int i=0; i<maxTimeout; i++) {
-            client.request(web::http::methods::GET)
-                .then([](const web::http::http_response& response) {
-                  NES_INFO("get first then");
-                  return response.extract_json();
-                })
-                .then([&json_return](const pplx::task<web::json::value>& task) {
-                  try {
-                      NES_INFO("set return");
-                      json_return = task.get();
-                  } catch (const web::http::http_exception& e) {
-                      NES_INFO("error while setting return");
-                      NES_INFO("error " << e.what());
-                  }
-                })
-                .wait();
+            try {
+                client.request(web::http::methods::GET)
+                    .then([](const web::http::http_response& response) {
+                      NES_INFO("get first then");
+                      return response.extract_json();
+                    })
+                    .then([&json_return](const pplx::task<web::json::value>& task) {
+                      try {
+                          json_return = task.get();
+                      } catch (const web::http::http_exception& e) {
+                          NES_ERROR("TestUtils: Error while setting return: " << e.what());
+                      }
+                    })
+                    .wait();
 
-            nodeNo = json_return.at("nodes").size();
+                nodeNo = json_return.at("nodes").size();
 
-            if (nodeNo == expectedWorkers+1) {
-                NES_INFO("E2ECoordinatorMultiWorkerTest: Expected worker number reached correctly " << expectedWorkers);
-                return true;
-            }
-            else {
+                if (nodeNo == expectedWorkers+1) {
+                    NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
+                    return true;
+                }
+                else {
+                    sleep(1);
+                }
+            } catch (const std::exception& e) {
+                NES_ERROR("TestUtils: WaitForWorkers error occured " << e.what());
                 sleep(1);
             }
         }

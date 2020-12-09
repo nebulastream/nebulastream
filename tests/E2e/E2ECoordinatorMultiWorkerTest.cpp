@@ -74,6 +74,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
 
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
@@ -94,7 +95,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     uint64_t workerPid1 = workerProc1.id();
     uint64_t workerPid2 = workerProc2.id();
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(timeout, 2));
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -166,6 +167,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -195,7 +197,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
     uint64_t workerPid2 = workerProc2.id();
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(timeout, 2));
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"pattern\" : ";
@@ -251,6 +253,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -282,7 +285,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
     uint64_t workerPid2 = workerProc2.id();
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(timeout, 2));
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"pattern\" : ";
@@ -353,6 +356,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
 
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
 
     std::stringstream schema;
@@ -361,7 +365,6 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(timeout, 0));
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
@@ -389,7 +392,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     uint64_t workerPid1 = workerProc1.id();
     uint64_t workerPid2 = workerProc2.id();
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(timeout, 2));
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -445,6 +448,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
     string coordinatorRPCPort = std::to_string(rpcPort);
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
@@ -465,11 +470,11 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
     uint64_t workerPid1 = workerProc1.id();
     uint64_t workerPid2 = workerProc2.id();
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(timeout, 2));
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     web::json::value json_return;
 
-    web::http::client::http_client client("http://localhost:8081/v1/nes/monitoring/metrics/");
+    web::http::client::http_client client("http://localhost:" + std::to_string(restPort) + "/v1/nes/monitoring/metrics/");
 
     client.request(web::http::methods::GET)
         .then([](const web::http::http_response& response) {
@@ -524,6 +529,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     string coordinatorRPCPort = std::to_string(rpcPort);
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
@@ -551,7 +558,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     uint64_t workerPid1 = workerProc1.id();
     uint64_t workerPid2 = workerProc2.id();
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(timeout, 2));
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
