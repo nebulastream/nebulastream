@@ -243,10 +243,10 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
     NESLogger->addAppender(console);
 }
 
-static void setLogLevel(DebugLevel level){
+static void setLogLevel(DebugLevel level) {
     // set log level
 #ifdef NES_LOGGING_LEVEL
-    #if NES_LOGGING_LEVEL == LEVEL_FATAL
+#if NES_LOGGING_LEVEL == LEVEL_FATAL
     NESLogger->setLevel(log4cxx::Level::getFatal());
 #endif
 #if NES_LOGGING_LEVEL == LEVEL_ERROR

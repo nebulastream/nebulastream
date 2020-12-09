@@ -50,9 +50,7 @@ uint16_t timeout = 5;
 
 class E2ECoordinatorMultiQueryTest : public testing::Test {
   public:
-    static void SetUpTestCase() {
-        NES_INFO("Setup E2e test class.");
-    }
+    static void SetUpTestCase() { NES_INFO("Setup E2e test class."); }
 
     void SetUp() {
         rpcPort += 10;

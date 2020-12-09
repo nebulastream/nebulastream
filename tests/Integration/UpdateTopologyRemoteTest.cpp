@@ -60,15 +60,15 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
     NES_INFO("start worker");
     uint64_t node1RpcPort = port + 10;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, node1RpcPort, port + 11,
-                                                   workerNumberOfSlots, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, port, ipAddress, node1RpcPort, port + 11, workerNumberOfSlots, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
     uint64_t node2RpcPort = port + 20;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, port, ipAddress, node2RpcPort, port + 21,
-                                                    workerNumberOfSlots, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>(ipAddress, port, ipAddress, node2RpcPort, port + 21, workerNumberOfSlots, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");
@@ -125,15 +125,15 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
 
     NES_INFO("start worker");
     uint64_t node1RpcPort = port + 10;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, node1RpcPort, port + 11,
-                                                   workerNumberOfSlots, NodeType::Sensor);
+    NesWorkerPtr wrk =
+        std::make_shared<NesWorker>(ipAddress, port, ipAddress, node1RpcPort, port + 11, workerNumberOfSlots, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
     uint64_t node2RpcPort = port + 20;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(ipAddress, port, ipAddress, node2RpcPort, port + 21,
-                                                    workerNumberOfSlots, NodeType::Sensor);
+    NesWorkerPtr wrk2 =
+        std::make_shared<NesWorker>(ipAddress, port, ipAddress, node2RpcPort, port + 21, workerNumberOfSlots, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");

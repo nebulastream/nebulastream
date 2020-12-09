@@ -127,7 +127,7 @@ int main(int argc, const char* argv[]) {
 
     NES::setLogLevel(NES::getStringAsDebugLevel(logLevel));
 
-        NES_INFO("Read Coordinator Config. restPort: " << restPort << " , rpcPort: " << rpcPort << " , logLevel: " << logLevel
+    NES_INFO("Read Coordinator Config. restPort: " << restPort << " , rpcPort: " << rpcPort << " , logLevel: " << logLevel
                                                    << " restIp: " << restIp << " coordinatorIp: " << coordinatorIp
                                                    << " enableQueryMerging: " << enableQueryMerging);
 

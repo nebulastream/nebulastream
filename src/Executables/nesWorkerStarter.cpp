@@ -172,9 +172,10 @@ int main(int argc, char** argv) {
         }
         numWorkerThreads = config["numWorkerThreads"].As<uint16_t>();
 
-        NES_INFO("NESWORKERSTARTER: Read Worker Config. rpcPort: " << rpcPort << " , dataPort: " << dataPort
-                  << " , logLevel: " << logLevel << " coordinatorIp: " << coordinatorIp << " localWorkerIp: " << localWorkerIp
-                  << " coordinatorPort: " << coordinatorPort << ":sourceType: " << sourceType << " sourceConfig: " << sourceConfig << "\n");
+        NES_INFO("NESWORKERSTARTER: Read Worker Config. rpcPort: "
+                 << rpcPort << " , dataPort: " << dataPort << " , logLevel: " << logLevel << " coordinatorIp: " << coordinatorIp
+                 << " localWorkerIp: " << localWorkerIp << " coordinatorPort: " << coordinatorPort
+                 << ":sourceType: " << sourceType << " sourceConfig: " << sourceConfig << "\n");
     }
 
     NES::setLogLevel(NES::getStringAsDebugLevel(logLevel));
