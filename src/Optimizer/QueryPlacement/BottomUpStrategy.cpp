@@ -48,6 +48,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     const QueryId queryId = queryPlan->getQueryId();
     NES_INFO("BottomUpStrategy: Performing placement of the input query plan with id " << queryId);
+    NES_INFO("BottomUpStrategy: And query plan \n" << queryPlan->toString());
 
     NES_DEBUG("BottomUpStrategy: Get all source operators");
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
@@ -102,9 +103,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
                                                    TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
-    if (operatorNode->instanceOf<MergeLogicalOperatorNode>() || operatorNode->instanceOf<SliceMergingOperator>()
-        || operatorNode->instanceOf<WindowComputationOperator>() || operatorNode->instanceOf<CentralWindowOperator>()
-        || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+    if ((operatorNode->isNAryOperator() && !operatorNode->instanceOf<SourceLogicalOperatorNode>()) || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
         //Check if all children operators already placed
         NES_TRACE("BottomUpStrategy: Get the topology nodes where child operators are placed.");
