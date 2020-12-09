@@ -246,7 +246,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort +  " --restPort=" + std::to_string(restPort);
+    string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
@@ -350,7 +350,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" +  coordinatorRPCPort +  " --restPort=" + std::to_string(restPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
 
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
@@ -440,7 +440,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" +  coordinatorRPCPort +  " --restPort=" + std::to_string(restPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
@@ -518,7 +518,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "./nesCoordinator --coordinatorPort=" +  coordinatorRPCPort +  " --restPort=" + std::to_string(restPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(2);
