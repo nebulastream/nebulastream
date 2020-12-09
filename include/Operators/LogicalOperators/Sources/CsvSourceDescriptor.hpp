@@ -28,12 +28,12 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath, std::string delimiter, uint64_t numBuffersToProcess,
-                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency, bool endlessRepeat,
+                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency,
                                       bool skipHeader, OperatorId operatorId);
 
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                       uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                      bool endlessRepeat, bool skipHeader, OperatorId operatorId);
+                                      bool skipHeader, OperatorId operatorId);
 
     /**
      * @brief get file path for reading the csv file
@@ -68,28 +68,20 @@ class CsvSourceDescriptor : public SourceDescriptor {
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;
 
-    /**
-     * @brief getter/setter endlessRepeat
-     * @return
-     */
-    bool isEndlessRepeat() const;
-    void setEndlessRepeat(bool endlessRepeat);
-
   private:
     explicit CsvSourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                 bool endlessRepeat, bool skipHeader, OperatorId operatorId);
+                                 bool skipHeader, OperatorId operatorId);
 
     explicit CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                 bool endlessRepeat, bool skipHeader, OperatorId operatorId);
+                                 bool skipHeader, OperatorId operatorId);
 
     std::string filePath;
     std::string delimiter;
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
     uint64_t frequency;
-    bool endlessRepeat;
     bool skipHeader;
 };
 

@@ -32,16 +32,13 @@ namespace NES {
 
 CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
                      const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                     uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId)
+                     uint64_t frequency, bool skipHeader, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat), currentPosInFile(0),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0),
       skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = frequency;
     tupleSize = schema->getSchemaSizeInBytes();
-    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
-                                      << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
-                                      << numberOfTuplesToProducePerBuffer << "endlessRepeat=" << endlessRepeat);
 
     char* path = realpath(filePath.c_str(), NULL);
     NES_DEBUG("CSVSource: Opening path " << path);
@@ -53,6 +50,20 @@ CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryMana
     if (fileSize == -1) {
         NES_ERROR("CSVSource::fillBuffer File " + filePath + " is corrupted");
     }
+
+    if(numBuffersToProcess != 0)
+    {
+        loopOnFile = true;
+    }
+    else
+    {
+        loopOnFile = false;
+    }
+
+    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
+                                      << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
+                                      << numberOfTuplesToProducePerBuffer << "loopOnFile=" << loopOnFile);
+
     fileEnded = false;
 }
 
@@ -61,7 +72,14 @@ std::optional<TupleBuffer> CSVSource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
     NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
-    return buf;
+    if(buf.getNumberOfTuples() == 0)
+    {
+        return std::nullopt;
+    }
+    else
+    {
+        return buf;
+    }
 }
 
 const std::string CSVSource::toString() const {
@@ -76,7 +94,6 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     if (fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");
         buf.setNumberOfTuples(0);
-        generatedBuffers++;
         return;
     }
     input.seekg(currentPosInFile, input.beg);
@@ -110,7 +127,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
             input.clear();
             input.seekg(0, input.beg);
-            if (!endlessRepeat) {
+            if (!loopOnFile) {
                 NES_DEBUG("CSVSource::fillBuffer: break because file ended");
                 fileEnded = true;
                 break;
@@ -182,7 +199,8 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
             offset += fieldSize;
         }
         tupCnt++;
-    }
+    }//end of while
+
     currentPosInFile = input.tellg();
     buf.setNumberOfTuples(tupCnt);
     NES_DEBUG("CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile=" << currentPosInFile);
@@ -200,8 +218,6 @@ const std::string CSVSource::getFilePath() const { return filePath; }
 const std::string CSVSource::getDelimiter() const { return delimiter; }
 
 const uint64_t CSVSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
-bool CSVSource::isEndlessRepeat() const { return endlessRepeat; }
-void CSVSource::setEndlessRepeat(bool endlessRepeat) { this->endlessRepeat = endlessRepeat; }
 
 bool CSVSource::getSkipHeader() const { return skipHeader; }
 }// namespace NES

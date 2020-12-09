@@ -38,7 +38,7 @@ class CSVSource : public DataSource {
    */
     explicit CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
                        const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                       uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId);
+                       uint64_t frequency, bool skipHeader, OperatorId operatorId);
 
     /**
      * @brief override the receiveData method for the csv source
@@ -80,15 +80,9 @@ class CSVSource : public DataSource {
     const uint64_t getNumberOfTuplesToProducePerBuffer() const;
 
     /**
-     * @brief getter/setter for endlessRepeat
+     * @brief getter for skip header
      */
     bool getSkipHeader() const;
-
-    /**
-     * @brief getter/setter for endlessRepeat
-     */
-    bool isEndlessRepeat() const;
-    void setEndlessRepeat(bool endlessRepeat);
 
   private:
     std::string filePath;
@@ -96,7 +90,7 @@ class CSVSource : public DataSource {
     uint64_t numberOfTuplesToProducePerBuffer;
     std::string delimiter;
     uint64_t currentPosInFile;
-    bool endlessRepeat;
+    bool loopOnFile;
     std::ifstream input;
     uint64_t fileSize;
     bool fileEnded;

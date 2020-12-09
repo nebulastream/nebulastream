@@ -28,10 +28,10 @@ class YSBSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                      bool endlessRepeat, OperatorId operatorId);
+                                      OperatorId operatorId);
 
     static SourceDescriptorPtr create(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat,
+                                      uint64_t numBuffersToProcess, uint64_t frequency,
                                       OperatorId operatorId);
 
     bool equal(SourceDescriptorPtr other) override;
@@ -40,20 +40,18 @@ class YSBSourceDescriptor : public SourceDescriptor {
     uint64_t getNumBuffersToProcess() const;
     uint64_t getNumberOfTuplesToProducePerBuffer() const;
     uint64_t getFrequency() const;
-    bool isEndlessRepeat() const;
 
   private:
     explicit YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                 bool endlessRepeat, OperatorId operatorId);
+                                 OperatorId operatorId);
 
     explicit YSBSourceDescriptor(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                 uint64_t frequency, bool endlessRepeat, OperatorId operatorId);
+                                 uint64_t frequency, OperatorId operatorId);
 
   private:
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
     uint64_t frequency;
-    bool endlessRepeat;
 };
 
 typedef std::shared_ptr<YSBSourceDescriptor> YSBSourceDescriptorPtr;
