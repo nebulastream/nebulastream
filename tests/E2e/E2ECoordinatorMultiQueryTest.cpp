@@ -51,7 +51,6 @@ uint16_t timeout = 5;
 class E2ECoordinatorMultiQueryTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        //NES::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
 

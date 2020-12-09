@@ -58,6 +58,8 @@ int main(int argc, const char* argv[]) {
     std::string coordinatorIp = "127.0.0.1";
     std::string logLevel = "LOG_DEBUG";
 
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
+
     // set the default numberOfSlots to the number of processor
     const auto processorCount = std::thread::hardware_concurrency();
     uint16_t numberOfSlots = processorCount;
@@ -72,7 +74,7 @@ int main(int argc, const char* argv[]) {
         "coordinatorIp", po::value<std::string>(&coordinatorIp)->default_value(coordinatorIp),
         "Set NES ip for internal communication regarding zmq and rpc (default: 127.0.0.1).")(
         "dataPort", po::value<uint16_t>(&dataPort)->default_value(dataPort), "Set NES data server port (default: 3001).")(
-        "restPort", po::value<uint16_t>(&restPort), "Set NES REST server port (default: 8081).")(
+        "restPort", po::value<uint16_t>(&restPort)->default_value(restPort), "Set NES REST server port (default: 8081).")(
         "coordinatorPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort), "Set NES rpc server port (default: 4000).")(
         "numberOfSlots", po::value<uint16_t>(&numberOfSlots)->default_value(numberOfSlots),
         "Set the computing capacity (default: number of processor).")(
@@ -89,8 +91,8 @@ int main(int argc, const char* argv[]) {
         po::store(po::command_line_parser(argc, argv).options(serverOptions).run(), vm);
         po::notify(vm);
     } catch (const std::exception& e) {
-        std::cerr << "NESCOORDINATORSTARTER: Failure while parsing connection parameters!" << std::endl;
-        std::cerr << e.what() << std::endl;
+        NES_ERROR("NESCOORDINATORSTARTER: Failure while parsing connection parameters!");
+        NES_ERROR(e.what());
         return EXIT_FAILURE;
     }
 
@@ -101,10 +103,10 @@ int main(int argc, const char* argv[]) {
     }
 
     if (!configPath.empty()) {
-        std::cout << "NESWORKERSTARTER: Using config file with path: " << configPath << " ." << std::endl;
+        NES_INFO("NESWORKERSTARTER: Using config file with path: " << configPath << " .");
         struct stat buffer {};
         if (stat(configPath.c_str(), &buffer) == -1) {
-            std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configPath << '\n';
+            NES_ERROR("NESWORKERSTARTER: Configuration file not found at: " << configPath);
             return EXIT_FAILURE;
         }
         Yaml::Node config;
@@ -123,17 +125,17 @@ int main(int argc, const char* argv[]) {
         logLevel = config["logLevel"].As<string>();
     }
 
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
+    NES::setLogLevel(NES::getStringAsDebugLevel(logLevel));
 
-    NES_INFO("Read Coordinator Config. restPort: " << restPort << " , rpcPort: " << rpcPort << " , logLevel: " << logLevel
-                                                   << " restIp: " << restIp << " rpcIp: " << coordinatorIp
+        NES_INFO("Read Coordinator Config. restPort: " << restPort << " , rpcPort: " << rpcPort << " , logLevel: " << logLevel
+                                                   << " restIp: " << restIp << " coordinatorIp: " << coordinatorIp
                                                    << " enableQueryMerging: " << enableQueryMerging);
 
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd =
         std::make_shared<NesCoordinator>(restIp, restPort, coordinatorIp, rpcPort, numberOfSlots, enableQueryMerging);
 
-    NES_INFO("start coordinator with RestIp=" << restIp << " restPort=" << restPort << " rpcIp=" << coordinatorIp
+    NES_INFO("start coordinator with RestIp=" << restIp << " restPort=" << restPort << " coordinatorIp=" << coordinatorIp
                                               << " with rpc port " << rpcPort << " numberOfSlots=" << numberOfSlots);
     crd->startCoordinator(/**blocking**/ true);//blocking call
     crd->stopCoordinator(true);

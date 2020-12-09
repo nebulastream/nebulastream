@@ -56,19 +56,21 @@ int main(int argc, char** argv) {
 
     namespace po = boost::program_options;
     po::options_description desc("Nes Worker Options");
-    std::string coordinatorPort = "0";
+    uint16_t coordinatorPort = 0;
     uint16_t rpcPort = 3000;
     uint16_t dataPort = 3001;
     std::string coordinatorIp = "127.0.0.1";
     std::string localWorkerIp = "127.0.0.1";
     std::string logLevel = "LOG_DEBUG";
 
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
+
     // set the default numberOfSlots to the number of processor
     const auto processorCount = std::thread::hardware_concurrency();
     uint16_t numberOfSlots = processorCount;
 
-    std::string sourceType = "No_Source";
-    std::string sourceConfig = "No_Config";
+    std::string sourceType = "NoSource";
+    std::string sourceConfig = "NoConfig";
     uint64_t sourceFrequency = 0;
     uint64_t numberOfBuffersToProduce = 1;
     std::string physicalStreamName;
@@ -82,7 +84,7 @@ int main(int argc, char** argv) {
 
     std::string configPath = "";
 
-    desc.add_options()("coordinatorPort", po::value<std::string>(&coordinatorPort)->default_value(coordinatorPort),
+    desc.add_options()("coordinatorPort", po::value<uint16_t>(&coordinatorPort)->default_value(coordinatorPort),
                        "Set NES rpc server port (default: 0).")("rpcPort", po::value<uint16_t>(&rpcPort)->default_value(rpcPort),
                                                                 "Set NES rpc server port (default: 0).")(
         "dataPort", po::value<uint16_t>(&dataPort)->default_value(dataPort), "Set NES data server port (default: 0).")(
@@ -110,8 +112,7 @@ int main(int argc, char** argv) {
         "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)")(
         "numWorkerThreads", po::value<uint16_t>(&numWorkerThreads)->default_value(numWorkerThreads),
         "Set the number of worker threads.")("configPath", po::value<std::string>(&configPath)->default_value(configPath),
-                                             "Path to the NES Coordinator Configurations YAML file.")("help",
-                                                                                                      "Display help message");
+                                             "Path to the NES Worker Configurations YAML file.")("help", "Display help message");
 
     /* Parse parameters. */
     po::variables_map vm;
@@ -119,29 +120,29 @@ int main(int argc, char** argv) {
         po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
         po::notify(vm);
     } catch (const std::exception& e) {
-        std::cerr << "Failure while parsing connection parameters!" << std::endl;
-        std::cerr << e.what() << std::endl;
+        NES_ERROR("NESWORKERSTARTER: Failure while parsing connection parameters!");
+        NES_ERROR(e.what());
         return EXIT_FAILURE;
     }
 
     if (vm.count("help")) {
-        std::cout << "Basic Command Line Parameter " << std::endl;
-        cout << desc << endl;
+        NES_INFO("NESWORKERSTARTER: Basic Command Line Parameter ");
+        NES_INFO(desc);
         return 0;
     }
 
     if (argc == 1) {
-        cout << "Please specify at least the port you want to connect to" << endl;
-        cout << "Basic Command Line Parameter" << endl;
-        cout << desc << endl;
+        NES_INFO("NESWORKERSTARTER: Please specify at least the port you want to connect to");
+        NES_INFO("NESWORKERSTARTER: Basic Command Line Parameter");
+        NES_INFO(desc);
         return 0;
     }
 
     if (!configPath.empty()) {
-        std::cout << "NESWORKERSTARTER: Using config file with path: " << configPath << " ." << std::endl;
+        NES_INFO("NESWORKERSTARTER: Using config file with path: " << configPath << " .");
         struct stat buffer {};
         if (stat(configPath.c_str(), &buffer) == -1) {
-            std::cerr << "NESWORKERSTARTER: Configuration file not found at: " << configPath << '\n';
+            NES_ERROR("NESWORKERSTARTER: Configuration file not found at: " << configPath << '\n');
             return EXIT_FAILURE;
         }
         Yaml::Node config;
@@ -150,7 +151,7 @@ int main(int argc, char** argv) {
         // Initializing IPs and Ports
         rpcPort = config["rpcPort"].As<uint16_t>();
         coordinatorIp = config["coordinatorIp"].As<string>();
-        coordinatorPort = config["coordinatorPort"].As<string>();
+        coordinatorPort = config["coordinatorPort"].As<uint16_t>();
         dataPort = config["dataPort"].As<uint16_t>();
         localWorkerIp = config["localWorkerIp"].As<string>();
         // Initializing Source Handling variables
@@ -171,13 +172,12 @@ int main(int argc, char** argv) {
         }
         numWorkerThreads = config["numWorkerThreads"].As<uint16_t>();
 
-        std::cout << "NESWORKERSTARTER: Read Worker Config. rpcPort: " << rpcPort << " , dataPort: " << dataPort
+        NES_INFO("NESWORKERSTARTER: Read Worker Config. rpcPort: " << rpcPort << " , dataPort: " << dataPort
                   << " , logLevel: " << logLevel << " coordinatorIp: " << coordinatorIp << " localWorkerIp: " << localWorkerIp
-                  << " coordinatorPort: " << coordinatorPort << ":sourceType: " << sourceType << " sourceConfig: " << sourceConfig
-                  << std::endl;
+                  << " coordinatorPort: " << coordinatorPort << ":sourceType: " << sourceType << " sourceConfig: " << sourceConfig << "\n");
     }
 
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
+    NES::setLogLevel(NES::getStringAsDebugLevel(logLevel));
 
     NES_INFO("NESWORKERSTARTER: Start with port=" << rpcPort << " localport=" << rpcPort << " pid=" << getpid()
                                                   << " coordinatorPort=" << coordinatorPort);
@@ -187,9 +187,10 @@ int main(int argc, char** argv) {
                                     numWorkerThreads);
 
     //register phy stream if necessary
-    if (sourceType != "No_Source") {
+    if (sourceType != "NoSource") {
         bool endless = endlessRepeat == "on";
-        cout << "start with dedicated source=" << sourceType << " endlessRepeat=" << endlessRepeat << " end=" << endless << endl;
+        NES_INFO("start with dedicated source=" << sourceType << " endlessRepeat=" << endlessRepeat << " end=" << endless
+                                                << "\n");
         PhysicalStreamConfigPtr conf =
             PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
                                          numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endless, skipHeader);
