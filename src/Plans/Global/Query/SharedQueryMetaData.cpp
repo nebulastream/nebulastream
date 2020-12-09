@@ -16,8 +16,8 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
+#include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <algorithm>
@@ -25,27 +25,27 @@
 
 namespace NES {
 
-GlobalQueryMetaData::GlobalQueryMetaData(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes)
-    : globalQueryId(PlanIdGenerator::getNextGlobalQueryId()), sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)),
+SharedQueryMetaData::SharedQueryMetaData(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes)
+    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), sinkGlobalQueryNodes(std::move(sinkGlobalQueryNodes)),
       deployed(false), newMetaData(true) {
-    NES_DEBUG("GlobalQueryMetaData()");
+    NES_DEBUG("SharedQueryMetaData()");
     queryIdToSinkGQNMap[queryId] = this->sinkGlobalQueryNodes;
 }
 
-GlobalQueryMetaDataPtr GlobalQueryMetaData::create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
-    return std::make_shared<GlobalQueryMetaData>(GlobalQueryMetaData(queryId, std::move(sinkGlobalQueryNodes)));
+SharedQueryMetaDataPtr SharedQueryMetaData::create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes) {
+    return std::make_shared<SharedQueryMetaData>(SharedQueryMetaData(queryId, std::move(sinkGlobalQueryNodes)));
 }
 
-bool GlobalQueryMetaData::addSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes) {
+bool SharedQueryMetaData::addSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes) {
 
-    NES_DEBUG("GlobalQueryMetaData: Add " << globalQueryNodes.size() << "new Global Query Nodes with sink operators for query "
+    NES_DEBUG("SharedQueryMetaData: Add " << globalQueryNodes.size() << "new Global Query Nodes with sink operators for query "
                                           << queryId);
     if (queryIdToSinkGQNMap.find(queryId) != queryIdToSinkGQNMap.end()) {
-        NES_ERROR("GlobalQueryMetaData: query id " << queryId << " already present in metadata information.");
+        NES_ERROR("SharedQueryMetaData: query id " << queryId << " already present in metadata information.");
         return false;
     }
 
-    NES_TRACE("GlobalQueryMetaData: Inserting new entries into metadata");
+    NES_TRACE("SharedQueryMetaData: Inserting new entries into metadata");
     queryIdToSinkGQNMap[queryId] = globalQueryNodes;
     sinkGlobalQueryNodes.insert(globalQueryNodes.begin(), globalQueryNodes.end());
     //Mark the meta data as updated but not deployed
@@ -53,15 +53,15 @@ bool GlobalQueryMetaData::addSinkGlobalQueryNodes(QueryId queryId, const std::se
     return true;
 }
 
-bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
-    NES_DEBUG("GlobalQueryMetaData: Remove the Query Id " << queryId
+bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
+    NES_DEBUG("SharedQueryMetaData: Remove the Query Id " << queryId
                                                           << " and associated Global Query Nodes with sink operators.");
     if (queryIdToSinkGQNMap.find(queryId) == queryIdToSinkGQNMap.end()) {
-        NES_ERROR("GlobalQueryMetaData: query id " << queryId << " is not present in metadata information.");
+        NES_ERROR("SharedQueryMetaData: query id " << queryId << " is not present in metadata information.");
         return false;
     }
 
-    NES_TRACE("GlobalQueryMetaData: Remove the Global Query Nodes with sink operators for query " << queryId);
+    NES_TRACE("SharedQueryMetaData: Remove the Global Query Nodes with sink operators for query " << queryId);
     std::set<GlobalQueryNodePtr> querySinkGQNs = queryIdToSinkGQNMap[queryId];
     auto itr = sinkGlobalQueryNodes.begin();
     for (auto& querySinkGQN : querySinkGQNs) {
@@ -85,9 +85,9 @@ bool GlobalQueryMetaData::removeQueryId(QueryId queryId) {
     return true;
 }
 
-QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
+QueryPlanPtr SharedQueryMetaData::getQueryPlan() {
 
-    NES_DEBUG("GlobalQueryMetaData: Prepare the Query Plan based on the Global Query Metadata information");
+    NES_DEBUG("SharedQueryMetaData: Prepare the Query Plan based on the Global Query Metadata information");
     std::vector<OperatorNodePtr> rootOperators;
     std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
 
@@ -102,14 +102,14 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
     while (!globalQueryNodesToProcess.empty()) {
         auto gqnToProcess = globalQueryNodesToProcess.front()->as<GlobalQueryNode>();
         globalQueryNodesToProcess.pop_front();
-        NES_TRACE("GlobalQueryMetaData: Deserialize operator " << gqnToProcess->toString());
+        NES_TRACE("SharedQueryMetaData: Deserialize operator " << gqnToProcess->toString());
         OperatorNodePtr operatorNode = gqnToProcess->getOperator()->copy();
         uint64_t operatorId = operatorNode->getId();
         if (operatorIdToOperatorMap[operatorId]) {
-            NES_TRACE("GlobalQueryMetaData: Operator was already deserialized previously");
+            NES_TRACE("SharedQueryMetaData: Operator was already deserialized previously");
             operatorNode = operatorIdToOperatorMap[operatorId];
         } else {
-            NES_TRACE("GlobalQueryMetaData: Deserializing the operator and inserting into map");
+            NES_TRACE("SharedQueryMetaData: Deserializing the operator and inserting into map");
             operatorIdToOperatorMap[operatorId] = operatorNode;
         }
 
@@ -121,80 +121,80 @@ QueryPlanPtr GlobalQueryMetaData::getQueryPlan() {
             OperatorNodePtr parentOperator = parentGQN->getOperator();
             uint64_t parentOperatorId = parentOperator->getId();
             if (operatorIdToOperatorMap[parentOperatorId]) {
-                NES_TRACE("GlobalQueryMetaData: Found the parent operator. Adding as parent to the current operator.");
+                NES_TRACE("SharedQueryMetaData: Found the parent operator. Adding as parent to the current operator.");
                 parentOperator = operatorIdToOperatorMap[parentOperatorId];
                 operatorNode->addParent(parentOperator);
             } else {
-                NES_ERROR("GlobalQueryMetaData: unable to find the parent operator. This should not have occurred!");
+                NES_ERROR("SharedQueryMetaData: unable to find the parent operator. This should not have occurred!");
                 return nullptr;
             }
         }
 
-        NES_TRACE("GlobalQueryMetaData: add the child global query nodes for further processing.");
+        NES_TRACE("SharedQueryMetaData: add the child global query nodes for further processing.");
         for (const auto& childGQN : gqnToProcess->getChildren()) {
             globalQueryNodesToProcess.push_back(childGQN);
         }
     }
 
     for (const auto& sinkGlobalQueryNode : sinkGlobalQueryNodes) {
-        NES_TRACE("GlobalQueryMetaData: Finding the operator with same id in the map.");
+        NES_TRACE("SharedQueryMetaData: Finding the operator with same id in the map.");
         auto rootOperator = sinkGlobalQueryNode->getOperator()->copy();
         rootOperator = operatorIdToOperatorMap[rootOperator->getId()];
-        NES_TRACE("GlobalQueryMetaData: Adding the root operator to the vector of roots for the query plan");
+        NES_TRACE("SharedQueryMetaData: Adding the root operator to the vector of roots for the query plan");
         rootOperators.push_back(rootOperator);
     }
     operatorIdToOperatorMap.clear();
-    return QueryPlan::create(globalQueryId, INVALID_QUERY_ID, rootOperators);
+    return QueryPlan::create(sharedQueryId, INVALID_QUERY_ID, rootOperators);
 }
 
-void GlobalQueryMetaData::markAsNotDeployed() {
-    NES_TRACE("GlobalQueryMetaData: Mark the Global Query Metadata as updated but not deployed");
+void SharedQueryMetaData::markAsNotDeployed() {
+    NES_TRACE("SharedQueryMetaData: Mark the Global Query Metadata as updated but not deployed");
     this->deployed = false;
 }
 
-void GlobalQueryMetaData::markAsDeployed() {
-    NES_TRACE("GlobalQueryMetaData: Mark the Global Query Metadata as deployed.");
+void SharedQueryMetaData::markAsDeployed() {
+    NES_TRACE("SharedQueryMetaData: Mark the Global Query Metadata as deployed.");
     this->deployed = true;
     this->newMetaData = false;
 }
 
-bool GlobalQueryMetaData::isEmpty() {
-    NES_TRACE("GlobalQueryMetaData: Check if Global Query Metadata is empty. Found : " << queryIdToSinkGQNMap.empty());
+bool SharedQueryMetaData::isEmpty() {
+    NES_TRACE("SharedQueryMetaData: Check if Global Query Metadata is empty. Found : " << queryIdToSinkGQNMap.empty());
     return queryIdToSinkGQNMap.empty();
 }
 
-bool GlobalQueryMetaData::isDeployed() const {
-    NES_TRACE("GlobalQueryMetaData: Checking if Global Query Metadata was already deployed. Found : " << deployed);
+bool SharedQueryMetaData::isDeployed() const {
+    NES_TRACE("SharedQueryMetaData: Checking if Global Query Metadata was already deployed. Found : " << deployed);
     return deployed;
 }
 
-bool GlobalQueryMetaData::isNew() const {
-    NES_TRACE("GlobalQueryMetaData: Checking if Global Query Metadata was newly constructed. Found : " << newMetaData);
+bool SharedQueryMetaData::isNew() const {
+    NES_TRACE("SharedQueryMetaData: Checking if Global Query Metadata was newly constructed. Found : " << newMetaData);
     return newMetaData;
 }
 
-void GlobalQueryMetaData::setAsOld() {
-    NES_TRACE("GlobalQueryMetaData: Marking Global Query Metadata as old post deployment");
+void SharedQueryMetaData::setAsOld() {
+    NES_TRACE("SharedQueryMetaData: Marking Global Query Metadata as old post deployment");
     this->newMetaData = false;
 }
 
-std::set<GlobalQueryNodePtr> GlobalQueryMetaData::getSinkGlobalQueryNodes() {
-    NES_TRACE("GlobalQueryMetaData: Get all Global Query Nodes with sink operators for the current Metadata");
+std::set<GlobalQueryNodePtr> SharedQueryMetaData::getSinkGlobalQueryNodes() {
+    NES_TRACE("SharedQueryMetaData: Get all Global Query Nodes with sink operators for the current Metadata");
     return sinkGlobalQueryNodes;
 }
 
-std::map<QueryId, std::set<GlobalQueryNodePtr>> GlobalQueryMetaData::getQueryIdToSinkGQNMap() { return queryIdToSinkGQNMap; }
+std::map<QueryId, std::set<GlobalQueryNodePtr>> SharedQueryMetaData::getQueryIdToSinkGQNMap() { return queryIdToSinkGQNMap; }
 
-GlobalQueryId GlobalQueryMetaData::getGlobalQueryId() const { return globalQueryId; }
+SharedQueryId SharedQueryMetaData::getSharedQueryId() const { return sharedQueryId; }
 
-void GlobalQueryMetaData::clear() {
-    NES_DEBUG("GlobalQueryMetaData: clearing all metadata information.");
+void SharedQueryMetaData::clear() {
+    NES_DEBUG("SharedQueryMetaData: clearing all metadata information.");
     queryIdToSinkGQNMap.clear();
     sinkGlobalQueryNodes.clear();
     markAsNotDeployed();
 }
 
-void GlobalQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode) {
+void SharedQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode) {
 
     for(auto& child : globalQueryNode->getChildren()){
         if(!child->getParents().empty() && child->getParents().size() == 1){
@@ -204,7 +204,7 @@ void GlobalQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQuery
     globalQueryNode->removeChildren();
 }
 
-bool GlobalQueryMetaData::addGlobalQueryMetaData(GlobalQueryMetaDataPtr queryMetaData) {
+bool SharedQueryMetaData::addSharedQueryMetaData(SharedQueryMetaDataPtr queryMetaData) {
 
     auto queryIdToSinkGqnMap = queryMetaData->getQueryIdToSinkGQNMap();
     for(auto[queryId, sinkGQNs] : queryIdToSinkGqnMap){

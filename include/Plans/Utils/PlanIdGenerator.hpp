@@ -17,7 +17,7 @@
 #ifndef NES_PLANIDGENERATOR_HPP
 #define NES_PLANIDGENERATOR_HPP
 
-#include <Plans/Global/Query/GlobalQueryId.hpp>
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 
@@ -33,7 +33,7 @@ class PlanIdGenerator {
      * @brief Returns the next free global query Id
      * @return global query id
      */
-    static GlobalQueryId getNextGlobalQueryId();
+    static SharedQueryId getNextSharedQueryId();
 
     /**
      * @brief Returns the next free query Sub Plan Id

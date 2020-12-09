@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#ifndef NES_GLOBALQUERYMETADATA_HPP
-#define NES_GLOBALQUERYMETADATA_HPP
+#ifndef NES_SHAREDQUERYMETADATA_HPP
+#define NES_SHAREDQUERYMETADATA_HPP
 
-#include <Plans/Global/Query/GlobalQueryId.hpp>
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <memory>
 #include <set>
@@ -37,14 +37,14 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class GlobalQueryNode;
 typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
 
-class GlobalQueryMetaData;
-typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
+class SharedQueryMetaData;
+typedef std::shared_ptr<SharedQueryMetaData> SharedQueryMetaDataPtr;
 
 /**
  * @brief This class holds the meta-data about a collection of QueryPlans.
  * The QueryPlans in the metadata are inter-connected, i.e. from its source nodes we can reach all sink nodes.
- * A Global Query Plan can consists of multiple Global Query Meta Data. However, a query plan con only occur in
- * one of the Global Query Meta Data from the collection within a Global Query Plan.
+ * A Global Query Plan can consists of multiple Shared Query Plans and for each shared query plan we store a Shared Query Meta Data.
+ * Additionally, a user query con only occur in one of the Shared Query Meta Data within a Global Query Plan.
  *
  * Example:
  *                                                         GQPRoot
@@ -60,9 +60,9 @@ typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
  * In the above GQP, we have two QueryPlans with GQN1 and GQN5 as respective sink nodes.
- * A GlobalQueryMetaData consists of a unique:
- *  - Global Query Id : this id is equivalent to the Query Id assigned to the user queryId. Since, there can be more than one query that can be merged
- *                      together we generate a unique Global Query Id that can be associated to more than one Query Ids.
+ * A SharedQueryMetaData consists of a unique:
+ *  - Shared Query Id : this id is equivalent to the Query Id assigned to the user queryId. Since, there can be more than one query that can be merged
+ *                      together we generate a unique Shared Query Id that can be associated to more than one Query Ids.
  *  - Query Ids : A vector of original Query Ids that shares a common Global Query Id.
  *  - Sink Global Query Nodes : The vector of Global Query Nodes that contains sink operators of all the Query Ids that share a common Global QueryId.
  *  - Deployed : A boolean flag indicating if the query plan is deployed or not.
@@ -72,17 +72,17 @@ typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
  *  GQM = {1, {Q1, Q2}, {Sink1, Sink2}, False, True}
  *
  */
-class GlobalQueryMetaData {
+class SharedQueryMetaData {
 
   public:
-    static GlobalQueryMetaDataPtr create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    static SharedQueryMetaDataPtr create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
     /**
      * @brief Add a global query metadata into this
      * @param queryMetaData :  the input query metadata
      * @return true if successful else false
      */
-    bool addGlobalQueryMetaData(GlobalQueryMetaDataPtr queryMetaData);
+    bool addSharedQueryMetaData(SharedQueryMetaDataPtr queryMetaData);
 
     /**
      * @brief Add a new Set of Global Query Node with sink operators
@@ -156,10 +156,10 @@ class GlobalQueryMetaData {
     std::map<QueryId, std::set<GlobalQueryNodePtr>> getQueryIdToSinkGQNMap();
 
     /**
-     * @brief Get the global query id
-     * @return global query id
+     * @brief Get the shared query id
+     * @return shared query id
      */
-    GlobalQueryId getGlobalQueryId() const;
+    SharedQueryId getSharedQueryId() const;
 
     /**
      * @brief Set the meta data as old
@@ -168,9 +168,9 @@ class GlobalQueryMetaData {
     void setAsOld();
 
   private:
-    explicit GlobalQueryMetaData(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    explicit SharedQueryMetaData(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
 
-    GlobalQueryId globalQueryId;
+    SharedQueryId sharedQueryId;
     std::map<QueryId, std::set<GlobalQueryNodePtr>> queryIdToSinkGQNMap;
     std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes;
     bool deployed;
@@ -178,4 +178,4 @@ class GlobalQueryMetaData {
 };
 }// namespace NES
 
-#endif//NES_GLOBALQUERYMETADATA_HPP
+#endif//NES_SHAREDQUERYMETADATA_HPP

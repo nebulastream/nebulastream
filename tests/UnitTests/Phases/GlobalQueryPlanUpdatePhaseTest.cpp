@@ -80,8 +80,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    const auto& globalQueryMetadataToDeploy = resultPlan->getGlobalQueryMetaDataToDeploy();
-    ASSERT_TRUE(globalQueryMetadataToDeploy.size() == 1);
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    ASSERT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
 }
 
 /**
@@ -124,8 +124,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 2 global query node with sink operator.");
-    const auto& globalQueryMetadataToDeploy = resultPlan->getGlobalQueryMetaDataToDeploy();
-    ASSERT_TRUE(globalQueryMetadataToDeploy.size() == 2);
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    ASSERT_TRUE(sharedQueryMetadataToDeploy.size() == 2);
 }
 
 /**
@@ -167,12 +167,12 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto catalogEntry3 = QueryCatalogEntry(2, "", "topdown", q2.getQueryPlan(), MarkedForStop);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1, catalogEntry2, catalogEntry3};
     auto resultPlan = phase->execute(batchOfQueryRequests);
-    resultPlan->removeEmptyMetaData();
+    resultPlan->removeEmptySharedQueryMetaData();
 
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
-    const auto& globalQueryMetadataToDeploy = resultPlan->getGlobalQueryMetaDataToDeploy();
-    ASSERT_EQ(globalQueryMetadataToDeploy.size(), 1);
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    ASSERT_EQ(sharedQueryMetadataToDeploy.size(), 1);
 }
 
 }// namespace NES

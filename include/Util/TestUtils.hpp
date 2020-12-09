@@ -280,21 +280,21 @@ class TestUtils {
     static bool checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
                                        uint64_t expectedResult) {
 
-        GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
-        if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
+        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
             return false;
         }
 
-        NES_INFO("Found global query id " << globalQueryId << " for user query " << queryId);
+        NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
             //FIXME: handle vector of statistics properly in #977
-            auto statistics = nesWorker->getQueryStatistics(globalQueryId);
+            auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
             if (statistics.empty()) {
-                NES_DEBUG("checkCompleteOrTimeout: query=" << globalQueryId << " stats size=" << statistics.size());
+                NES_DEBUG("checkCompleteOrTimeout: query=" << sharedQueryId << " stats size=" << statistics.size());
                 sleep(1);
                 continue;
             }
@@ -310,7 +310,7 @@ class TestUtils {
                       << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
             sleep(1);
         }
-        auto statistics = nesWorker->getQueryStatistics(globalQueryId);
+        auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
         uint64_t processed = statistics[0]->getProcessedBuffers();
         NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected="
                   << expectedResult << " final result=" << processed);
@@ -328,20 +328,20 @@ class TestUtils {
     template<typename Predicate = std::equal_to<uint64_t>>
     static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
                                        uint64_t expectedResult) {
-        GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
-        if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
+        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
             return false;
         }
 
-        NES_INFO("Found global query id " << globalQueryId << " for user query " << queryId);
+        NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
 
             //FIXME: handle vector of statistics properly in #977
-            auto statistics = nesCoordinator->getQueryStatistics(globalQueryId);
+            auto statistics = nesCoordinator->getQueryStatistics(sharedQueryId);
             if (statistics.empty()) {
                 continue;
             }

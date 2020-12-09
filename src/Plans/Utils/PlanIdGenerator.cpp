@@ -24,7 +24,7 @@ QueryId PlanIdGenerator::getNextQueryId() {
     return ++id;
 }
 
-GlobalQueryId PlanIdGenerator::getNextGlobalQueryId() {
+SharedQueryId PlanIdGenerator::getNextSharedQueryId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
