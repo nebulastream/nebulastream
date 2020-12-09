@@ -30,17 +30,14 @@ namespace NES::NodeEngine::Execution {
  * @brief A running execution plan on a node engine.
  * This class is thread-safe.
  */
-class ExecutableQueryPlan {
+class  ExecutableQueryPlan {
+
   public:
-
-
-  protected:
     explicit ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
                                  std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& stages,
                                  QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 
-  public:
-    virtual ~ExecutableQueryPlan();
+    ~ExecutableQueryPlan();
 
     /**
      * @brief Setup the query plan, e.g., instantiate state variables.
@@ -81,7 +78,7 @@ class ExecutableQueryPlan {
     /**
      * @brief Gets number of pipeline stages.
      */
-    uint32_t getNumberOfPipelines() { return pipelines.size(); }
+    uint32_t getNumberOfPipelines();
 
     QueryManagerPtr getQueryManager();
 

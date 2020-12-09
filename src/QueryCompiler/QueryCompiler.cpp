@@ -15,9 +15,10 @@
 */
 
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>

@@ -15,7 +15,7 @@
 */
 
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
@@ -69,7 +69,7 @@ NodeEngine::Execution::ExecutableQueryPlanPtr GeneratedQueryExecutionPlanBuilder
         std::reverse(pipelines.begin(), pipelines.end());// this is necessary, check plan generator documentation
     }
 
-    return std::make_shared<GeneratedQueryExecutionPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks),
+    return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks),
                                                          std::move(pipelines), std::move(queryManager), std::move(bufferManager));
 }
 
