@@ -34,8 +34,8 @@ typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
 namespace NES::Optimizer {
 
-class ReturnValue;
-typedef std::shared_ptr<ReturnValue> ReturnValuePtr;
+class Z3ExprAndFieldMap;
+typedef std::shared_ptr<Z3ExprAndFieldMap> Z3ExprAndFieldMapPtr;
 /**
  * @brief This class is responsible for taking input as a logical expression and generating an equivalent Z3 expression.
  */
@@ -48,7 +48,7 @@ class ExpressionToZ3ExprUtil {
      * @param context: Z3 context
      * @return returns object representing Z3 expression
      */
-    static ReturnValuePtr createForExpression(ExpressionNodePtr expression, z3::ContextPtr context);
+    static Z3ExprAndFieldMapPtr createForExpression(ExpressionNodePtr expression, z3::ContextPtr context);
 
   private:
     /**
@@ -57,7 +57,7 @@ class ExpressionToZ3ExprUtil {
      * @param context: the Z3 context
      * @return returns object representing Z3 expression
      */
-    static ReturnValuePtr createForLogicalExpressions(ExpressionNodePtr expression, z3::ContextPtr context);
+    static Z3ExprAndFieldMapPtr createForLogicalExpressions(ExpressionNodePtr expression, z3::ContextPtr context);
 
     /**
      * @brief Convert input arithmetic expression into an equivalent Z3 expression
@@ -65,7 +65,7 @@ class ExpressionToZ3ExprUtil {
      * @param context: the Z3 context
      * @return returns object representing Z3 expression
      */
-    static ReturnValuePtr createForArithmeticalExpressions(ExpressionNodePtr expression, z3::ContextPtr context);
+    static Z3ExprAndFieldMapPtr createForArithmeticalExpressions(ExpressionNodePtr expression, z3::ContextPtr context);
 };
 }// namespace NES::Optimizer
 

@@ -14,35 +14,17 @@
     limitations under the License.
 */
 
-#ifndef NES_RETURNVALUE_HPP
-#define NES_RETURNVALUE_HPP
-
-#include <map>
-#include <memory>
-
-namespace z3 {
-class expr;
-typedef std::shared_ptr<expr> ExprPtr;
-}// namespace z3
+#include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 
 namespace NES::Optimizer {
-class ReturnValue;
-typedef std::shared_ptr<ReturnValue> ReturnValuePtr;
 
-class ReturnValue {
+Z3ExprAndFieldMap::Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap) : expr(expr), fieldMap(fieldMap) {}
 
-  public:
-    ReturnValue(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap);
+z3::ExprPtr Z3ExprAndFieldMap::getExpr() { return expr; }
 
-    static ReturnValuePtr create(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap);
+std::map<std::string, z3::ExprPtr> Z3ExprAndFieldMap::getFieldMap() { return fieldMap; }
 
-    z3::ExprPtr getExpr();
-
-    std::map<std::string, z3::ExprPtr> getConstMap();
-
-  private:
-    z3::ExprPtr expr;
-    std::map<std::string, z3::ExprPtr> constMap;
-};
+Z3ExprAndFieldMapPtr Z3ExprAndFieldMap::create(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap) {
+    return std::make_shared<Z3ExprAndFieldMap>(expr, constMap);
+}
 }// namespace NES::Optimizer
-#endif//NES_RETURNVALUE_HPP

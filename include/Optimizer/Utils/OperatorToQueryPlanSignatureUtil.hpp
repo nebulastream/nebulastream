@@ -43,22 +43,22 @@ class OperatorToQueryPlanSignatureUtil {
     /**
      * @brief Convert input operator into an equivalent logical expression
      * @param operatorNode: the input operator
-     * @param subQuerySignatures: vector containing signatures for each of the operator child (empty for source operator)
+     * @param childrenQuerySignatures: vector containing signatures for each of the children operators (empty for source operator)
      * @param context: the context of Z3
      * @return the object representing signature of the query plan created by the operator and its children
      */
-    static QuerySignaturePtr createForOperator(OperatorNodePtr operatorNode, std::vector<QuerySignaturePtr> subQuerySignatures,
-                                               z3::ContextPtr context);
+    static QuerySignaturePtr createForOperator(OperatorNodePtr operatorNode,
+                                               std::vector<QuerySignaturePtr> childrenQuerySignatures, z3::ContextPtr context);
 
   private:
     /**
      * @brief Compute a CNF representation of Conds based on signatures from children operators
      * @param context : z3 context
-     * @param subQuerySignatures : signatures of immediate children
+     * @param childrenQuerySignatures : signatures of immediate children
      * @return Signature based on children signatures
      */
-    static QuerySignaturePtr buildFromSubQuerySignatures(z3::ContextPtr context,
-                                                         std::vector<QuerySignaturePtr> subQuerySignatures);
+    static QuerySignaturePtr buildFromChildrenSignatures(z3::ContextPtr context,
+                                                         std::vector<QuerySignaturePtr> childrenQuerySignatures);
 };
 }// namespace NES::Optimizer
 

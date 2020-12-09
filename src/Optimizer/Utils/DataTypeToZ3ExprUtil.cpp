@@ -24,14 +24,14 @@
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/ReturnValue.hpp>
+#include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-ReturnValuePtr DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::ContextPtr context) {
+Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::ContextPtr context) {
     z3::ExprPtr expr;
     if (dataType->isInteger()) {
         expr = std::make_shared<z3::expr>(context->int_const(fieldName.c_str()));
@@ -44,11 +44,11 @@ ReturnValuePtr DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataT
     } else {
         NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + dataType->toString());
     }
-    std::map<std::string, z3::ExprPtr> constMap{{fieldName, expr}};
-    return ReturnValue::create(expr, constMap);
+    std::map<std::string, z3::ExprPtr> fieldMap{{fieldName, expr}};
+    return Z3ExprAndFieldMap::create(expr, fieldMap);
 }
 
-ReturnValuePtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::ContextPtr context) {
+Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::ContextPtr context) {
     if (valueType->isArrayValue()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of array type.");
     } else {
@@ -70,7 +70,7 @@ ReturnValuePtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, 
         } else {
             NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueType->toString());
         }
-        return ReturnValue::create(expr, {});
+        return Z3ExprAndFieldMap::create(expr, {});
     }
 }
 }// namespace NES::Optimizer

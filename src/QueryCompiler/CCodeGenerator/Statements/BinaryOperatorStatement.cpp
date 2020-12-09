@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 
+#include <API/Pattern.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
@@ -137,7 +138,7 @@ BinaryOperatorStatement operator>(const ExpressionStatment& lhs, const Expressio
 BinaryOperatorStatement operator>=(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
     return BinaryOperatorStatement(lhs, GREATER_THAN_EQUAL_OP, rhs);
 }
-BinaryOperatorStatement operator+(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
+BinaryOperatorStatement operator+(NES::ExpressionItem lhs, const ExpressionStatment& rhs) {
     return BinaryOperatorStatement(lhs, PLUS_OP, rhs);
 }
 BinaryOperatorStatement operator-(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
