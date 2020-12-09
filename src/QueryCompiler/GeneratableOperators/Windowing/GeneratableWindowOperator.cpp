@@ -24,7 +24,7 @@ GeneratableWindowOperator::GeneratableWindowOperator(Windowing::LogicalWindowDef
                                                      GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
     : WindowLogicalOperatorNode(std::move(windowDefinition), id), generatableWindowAggregation(generatableWindowAggregation) {}
 
-Windowing::AbstractWindowHandlerPtr GeneratableWindowOperator::createWindowHandler() {
-    return Windowing::WindowHandlerFactory::createAggregationWindowHandler(windowDefinition);
+Windowing::AbstractWindowHandlerPtr GeneratableWindowOperator::createWindowHandler(SchemaPtr outputSchema) {
+    return Windowing::WindowHandlerFactory::createAggregationWindowHandler(windowDefinition, outputSchema);
 }
 }// namespace NES

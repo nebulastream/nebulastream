@@ -29,7 +29,7 @@ void GeneratableCompleteWindowOperator::produce(CodeGeneratorPtr codegen, Pipeli
 }
 
 void GeneratableCompleteWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto windowHandler = createWindowHandler();
+    auto windowHandler = createWindowHandler(outputSchema);
     context->setWindow(windowHandler);
     codegen->generateCodeForCompleteWindow(getWindowDefinition(), generatableWindowAggregation, context);
 }

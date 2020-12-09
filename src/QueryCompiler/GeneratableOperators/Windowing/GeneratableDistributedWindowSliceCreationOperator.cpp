@@ -29,7 +29,7 @@ void GeneratableSlicingWindowOperator::produce(CodeGeneratorPtr codegen, Pipelin
 }
 
 void GeneratableSlicingWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto windowHandler = createWindowHandler();
+    auto windowHandler = createWindowHandler(outputSchema);
     context->setWindow(windowHandler);
     codegen->generateCodeForSlicingWindow(getWindowDefinition(), generatableWindowAggregation, context);
 }
