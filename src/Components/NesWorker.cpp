@@ -44,8 +44,8 @@ NesWorker::NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::s
 }
 
 // constructor with default numberOfSlots set to the number of processors
-NesWorker::NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::string localWorkerIp,
-                     uint16_t localWorkerRpcPort, uint16_t localWorkerZmqPort, NodeType type)
+NesWorker::NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::string localWorkerIp, uint16_t localWorkerRpcPort,
+                     uint16_t localWorkerZmqPort, NodeType type)
     : NesWorker(coordinatorIp, coordinatorPort, localWorkerIp, localWorkerRpcPort, localWorkerZmqPort,
                 std::thread::hardware_concurrency(), type) {}
 

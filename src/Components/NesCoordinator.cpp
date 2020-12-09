@@ -151,8 +151,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    worker = std::make_shared<NesWorker>(rpcIp, rpcPort, rpcIp, rpcPort + 1, rpcPort + 2, numberOfSlots,
-                                         NodeType::Worker);
+    worker = std::make_shared<NesWorker>(rpcIp, rpcPort, rpcIp, rpcPort + 1, rpcPort + 2, numberOfSlots, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //create the monitoring service, it can only be used if a NesWorker has started

@@ -316,8 +316,7 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
     NES_INFO("MonitoringStackTest: Start worker 1");
-    NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
@@ -356,8 +355,7 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
     NES_INFO("MonitoringStackTest: Start worker 1");
-    NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
