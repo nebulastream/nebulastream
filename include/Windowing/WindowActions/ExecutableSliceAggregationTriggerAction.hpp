@@ -40,29 +40,18 @@ class ExecutableSliceAggregationTriggerAction
     static BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType>
     create(LogicalWindowDefinitionPtr windowDefinition,
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
-               executableWindowAggregation) {
-        return std::make_shared<ExecutableSliceAggregationTriggerAction>(windowDefinition, executableWindowAggregation);
+               executableWindowAggregation, SchemaPtr outputSchema) {
+        return std::make_shared<ExecutableSliceAggregationTriggerAction>(windowDefinition, executableWindowAggregation, outputSchema);
     }
 
     ExecutableSliceAggregationTriggerAction(
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
-            executableWindowAggregation)
+            executableWindowAggregation, SchemaPtr outputSchema)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation) {
-        if (windowDefinition->isKeyed()) {
-            this->windowSchema = Schema::create()
-                                     ->addField(createField("start", UINT64))
-                                     ->addField(createField("end", UINT64))
-                                     ->addField(createField("cnt", UINT64))
-                                     ->addField("key", windowDefinition->getOnKey()->getStamp())
-                                     ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
-        } else {
-            this->windowSchema = Schema::create()
-                                     ->addField(createField("start", UINT64))
-                                     ->addField(createField("end", UINT64))
-                                     ->addField(createField("cnt", UINT64))
-                                     ->addField("value", windowDefinition->getWindowAggregation()->as()->getStamp());
-        }
+
+        this->windowSchema = outputSchema;
+
         windowTupleLayout = createRowLayout(this->windowSchema);
     }
 

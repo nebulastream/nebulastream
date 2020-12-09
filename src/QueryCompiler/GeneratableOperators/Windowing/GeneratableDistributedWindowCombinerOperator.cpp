@@ -29,7 +29,7 @@ void GeneratableCombiningWindowOperator::produce(CodeGeneratorPtr codegen, Pipel
 }
 
 void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto windowHandler = createWindowHandler();
+    auto windowHandler = createWindowHandler(outputSchema);
     context->setWindow(windowHandler);
     codegen->generateCodeForCombiningWindow(getWindowDefinition(), generatableWindowAggregation, context);
 }

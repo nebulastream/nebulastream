@@ -52,7 +52,7 @@ class WindowHandlerFactoryDetails {
     static AbstractWindowHandlerPtr
     createKeyedAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
                                  std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
-                                     executableWindowAggregation) {
+                                     executableWindowAggregation, SchemaPtr outputSchema) {
         auto policy = windowDefinition->getTriggerPolicy();
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {
@@ -67,11 +67,11 @@ class WindowHandlerFactoryDetails {
         if (action->getActionType() == WindowAggregationTriggerAction) {
             executableWindowAction =
                 ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(
-                    windowDefinition, executableWindowAggregation);
+                    windowDefinition, executableWindowAggregation, outputSchema);
         } else if (action->getActionType() == SliceAggregationTriggerAction) {
             executableWindowAction =
                 ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(
-                    windowDefinition, executableWindowAggregation);
+                    windowDefinition, executableWindowAggregation, outputSchema);
         } else {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
         }
@@ -82,31 +82,31 @@ class WindowHandlerFactoryDetails {
     }
 
     template<class KeyType, class InputType>
-    static AbstractWindowHandlerPtr createWindowHandlerForAggregationForKeyAndInput(LogicalWindowDefinitionPtr windowDefinition) {
+    static AbstractWindowHandlerPtr createWindowHandlerForAggregationForKeyAndInput(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr outputSchema) {
         auto onField = windowDefinition->getWindowAggregation()->on();
         auto asField = windowDefinition->getWindowAggregation()->as();
         switch (windowDefinition->getWindowAggregation()->getType()) {
             case WindowAggregationDescriptor::Avg:
                 return createKeyedAggregationWindow<KeyType, InputType, AVGPartialType<InputType>, AVGResultType>(
-                    windowDefinition, ExecutableAVGAggregation<InputType>::create());
+                    windowDefinition, ExecutableAVGAggregation<InputType>::create(), outputSchema);
             case WindowAggregationDescriptor::Count:
                 return createKeyedAggregationWindow<KeyType, InputType, CountType, CountType>(
-                    windowDefinition, ExecutableCountAggregation<InputType>::create());
+                    windowDefinition, ExecutableCountAggregation<InputType>::create(), outputSchema);
             case WindowAggregationDescriptor::Max:
                 return createKeyedAggregationWindow<KeyType, InputType, InputType, InputType>(
-                    windowDefinition, ExecutableMaxAggregation<InputType>::create());
+                    windowDefinition, ExecutableMaxAggregation<InputType>::create(), outputSchema);
             case WindowAggregationDescriptor::Min:
                 return createKeyedAggregationWindow<KeyType, InputType, InputType, InputType>(
-                    windowDefinition, ExecutableMinAggregation<InputType>::create());
+                    windowDefinition, ExecutableMinAggregation<InputType>::create(), outputSchema);
             case WindowAggregationDescriptor::Sum:
                 return createKeyedAggregationWindow<KeyType, InputType, InputType, InputType>(
-                    windowDefinition, ExecutableSumAggregation<InputType>::create());
+                    windowDefinition, ExecutableSumAggregation<InputType>::create(), outputSchema);
         }
         NES_THROW_RUNTIME_ERROR("WindowHandlerFactory: Avg aggregation currently not supported");
     };
 
     template<typename KeyType>
-    static AbstractWindowHandlerPtr createWindowHandlerForAggregationKeyType(LogicalWindowDefinitionPtr windowDefinition) {
+    static AbstractWindowHandlerPtr createWindowHandlerForAggregationKeyType(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr outputSchema) {
         auto logicalAggregationInput = windowDefinition->getWindowAggregation()->on();
         auto physicalInputType = DefaultPhysicalTypeFactory().getPhysicalType(logicalAggregationInput->getStamp());
         if (physicalInputType->isBasicType()) {
@@ -116,12 +116,12 @@ class WindowHandlerFactoryDetails {
                     //                case BasicPhysicalType::UINT_16: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint16_t>(windowDefinition);
                     //                case BasicPhysicalType::UINT_32: return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint32_t>(windowDefinition);
                 case BasicPhysicalType::UINT_64:
-                    return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint64_t>(windowDefinition);
+                    return createWindowHandlerForAggregationForKeyAndInput<KeyType, uint64_t>(windowDefinition, outputSchema);
                     //                case BasicPhysicalType::INT_8: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int8_t>(windowDefinition);
                     //                case BasicPhysicalType::INT_16: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int16_t>(windowDefinition);
                     //                case BasicPhysicalType::INT_32: return createWindowHandlerForAggregationForKeyAndInput<KeyType, int32_t>(windowDefinition);
                 case BasicPhysicalType::INT_64:
-                    return createWindowHandlerForAggregationForKeyAndInput<KeyType, int64_t>(windowDefinition);
+                    return createWindowHandlerForAggregationForKeyAndInput<KeyType, int64_t>(windowDefinition, outputSchema);
                     //                case BasicPhysicalType::FLOAT: return createWindowHandlerForAggregationForKeyAndInput<KeyType, float>(windowDefinition);
                     //                case BasicPhysicalType::DOUBLE: return createWindowHandlerForAggregationForKeyAndInput<KeyType, double>(windowDefinition);
                     //                case BasicPhysicalType::CHAR:

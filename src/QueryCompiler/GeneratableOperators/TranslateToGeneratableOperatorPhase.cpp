@@ -117,15 +117,18 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
         auto generatableWindowOperator =
             GeneratableCompleteWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     } else if (windowOperator->instanceOf<SliceCreationOperator>()) {
         auto generatableWindowOperator = GeneratableSlicingWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     } else if (windowOperator->instanceOf<WindowComputationOperator>()) {
         auto generatableWindowOperator =
             GeneratableCombiningWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     }
     NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: "
