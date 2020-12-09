@@ -100,7 +100,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status AddParent(ServerContext* context, const AddParentRequest* request, AddParentReply* reply) override;
 
-
     /**
      * @brief RPC Call to replace parent
      * @param context
@@ -109,7 +108,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @return success
      */
     Status ReplaceParent(ServerContext* context, const ReplaceParentRequest* request, ReplaceParentReply* reply) override;
-
 
     /**
      * @brief RPC Call to remove parent

@@ -138,8 +138,7 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
     }
 }
 
-Status CoordinatorRPCServer::ReplaceParent(ServerContext* , const ReplaceParentRequest* request,
-                                           ReplaceParentReply* reply) {
+Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request =" << request);
 
     bool success = coordinatorEngine->removeParent(request->childid(), request->oldparent());

@@ -52,7 +52,8 @@ class WindowHandlerFactoryDetails {
     static AbstractWindowHandlerPtr
     createKeyedAggregationWindow(LogicalWindowDefinitionPtr windowDefinition,
                                  std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
-                                     executableWindowAggregation, SchemaPtr outputSchema) {
+                                     executableWindowAggregation,
+                                 SchemaPtr outputSchema) {
         auto policy = windowDefinition->getTriggerPolicy();
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
         if (policy->getPolicyType() == triggerOnTime) {
@@ -82,7 +83,8 @@ class WindowHandlerFactoryDetails {
     }
 
     template<class KeyType, class InputType>
-    static AbstractWindowHandlerPtr createWindowHandlerForAggregationForKeyAndInput(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr outputSchema) {
+    static AbstractWindowHandlerPtr createWindowHandlerForAggregationForKeyAndInput(LogicalWindowDefinitionPtr windowDefinition,
+                                                                                    SchemaPtr outputSchema) {
         auto onField = windowDefinition->getWindowAggregation()->on();
         auto asField = windowDefinition->getWindowAggregation()->as();
         switch (windowDefinition->getWindowAggregation()->getType()) {
@@ -106,7 +108,8 @@ class WindowHandlerFactoryDetails {
     };
 
     template<typename KeyType>
-    static AbstractWindowHandlerPtr createWindowHandlerForAggregationKeyType(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr outputSchema) {
+    static AbstractWindowHandlerPtr createWindowHandlerForAggregationKeyType(LogicalWindowDefinitionPtr windowDefinition,
+                                                                             SchemaPtr outputSchema) {
         auto logicalAggregationInput = windowDefinition->getWindowAggregation()->on();
         auto physicalInputType = DefaultPhysicalTypeFactory().getPhysicalType(logicalAggregationInput->getStamp());
         if (physicalInputType->isBasicType()) {

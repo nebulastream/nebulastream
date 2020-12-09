@@ -105,13 +105,12 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
         windowDef = Windowing::LogicalWindowDefinition::create(keyField, windowComputationAggregation, windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               numberOfEdges, triggerPolicy,
-                                                               triggerActionComplete);
+                                                               numberOfEdges, triggerPolicy, triggerActionComplete);
 
     } else {
-        windowDef = Windowing::LogicalWindowDefinition::create(
-            windowComputationAggregation, windowType, Windowing::DistributionCharacteristic::createCombiningWindowType(),
-            numberOfEdges, triggerPolicy, triggerActionComplete);
+        windowDef = Windowing::LogicalWindowDefinition::create(windowComputationAggregation, windowType,
+                                                               Windowing::DistributionCharacteristic::createCombiningWindowType(),
+                                                               numberOfEdges, triggerPolicy, triggerActionComplete);
     }
     NES_DEBUG("DistributeWindowRule::apply: created logical window definition for computation operator" << windowDef->toString());
 
@@ -123,7 +122,6 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     if (!logicalWindowOperator->replace(windowComputationOperator)) {
         NES_FATAL_ERROR("DistributeWindowRule:: replacement of window operator failed.");
     }
-
 
     auto windowChildren = windowComputationOperator->getChildren();
 
@@ -152,7 +150,6 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         windowComputationOperator->insertBetweenThisAndChildNodes(sliceOp);
         windowChildren = sliceOp->getChildren();
     }
-
 
     for (auto& child : windowChildren) {
         NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());

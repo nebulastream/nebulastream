@@ -265,7 +265,6 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     return success;
 }
 
-
 bool NesWorker::removeParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);

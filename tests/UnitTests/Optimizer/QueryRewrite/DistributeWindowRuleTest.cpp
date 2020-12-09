@@ -76,7 +76,6 @@ void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
     streamCatalog->addPhysicalStream("default_logical", sce2);
 }
 
-
 void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyPtr topology = Topology::create();
@@ -90,9 +89,9 @@ void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
     std::cout << "topo=" << topology->toString() << std::endl;
     PhysicalStreamConfigPtr streamConf =
         PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-            /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-            /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-            /**Logical Stream Name**/ "test_stream");
+                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+                                     /**Logical Stream Name**/ "test_stream");
 
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
@@ -100,15 +99,12 @@ void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
     StreamCatalogEntryPtr sce4 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode4);
     StreamCatalogEntryPtr sce5 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode5);
 
-
     streamCatalog->addPhysicalStream("default_logical", sce1);
     streamCatalog->addPhysicalStream("default_logical", sce2);
     streamCatalog->addPhysicalStream("default_logical", sce3);
     streamCatalog->addPhysicalStream("default_logical", sce4);
     streamCatalog->addPhysicalStream("default_logical", sce5);
-
 }
-
 
 void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
@@ -179,10 +175,10 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-        .filter(Attribute("id") < 45)
-        .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
-                     Sum(Attribute("value")))
-        .sink(printSinkDescriptor);
+                      .filter(Attribute("id") < 45)
+                      .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                   Sum(Attribute("value")))
+                      .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = TypeInferencePhase::create(streamCatalog)->execute(queryPlan);

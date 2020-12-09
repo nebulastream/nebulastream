@@ -835,7 +835,6 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1);
 
-
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
 
@@ -844,10 +843,10 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindow) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", UINT64)
-        ->addField("value", UINT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", UINT64)
+                                  ->addField("value", UINT64);
 
     // init window handler
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
@@ -912,10 +911,10 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
-                                             ->addField(createField("start", UINT64))
-                                             ->addField(createField("end", UINT64))
-                                             ->addField("key", UINT64)
-                                             ->addField("value", UINT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", UINT64)
+                                  ->addField("value", UINT64);
     // init window handler
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
         windowDefinition, ExecutableSumAggregation<uint64_t>::create(), windowOutputSchema);
@@ -985,10 +984,10 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", UINT64)
-        ->addField("value", UINT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", UINT64)
+                                  ->addField("value", UINT64);
 
     // init window handler
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(

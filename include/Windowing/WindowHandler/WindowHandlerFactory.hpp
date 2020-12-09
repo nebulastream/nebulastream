@@ -35,7 +35,8 @@ class WindowHandlerFactory {
      * @param windowDefinition window definition
      * @return AbstractWindowHandlerPtr
      */
-    static AbstractWindowHandlerPtr createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr outputSchema);
+    static AbstractWindowHandlerPtr createAggregationWindowHandler(LogicalWindowDefinitionPtr windowDefinition,
+                                                                   SchemaPtr outputSchema);
 
     /**
    * @brief Creates a join handler

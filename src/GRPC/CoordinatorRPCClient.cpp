@@ -171,7 +171,8 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
 }
 
 bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
-    NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId=" << oldParentId << " newParentId=" << newParentId <<  " workerId=" << workerId);
+    NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId=" << oldParentId << " newParentId=" << newParentId
+                                                                 << " workerId=" << workerId);
 
     ReplaceParentRequest request;
     request.set_childid(workerId);
