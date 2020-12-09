@@ -150,7 +150,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto gqmToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto gqmToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(gqmToDeploy.size() == 2);
 
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
@@ -178,7 +178,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
 
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
@@ -267,7 +267,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources)
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         bool found = false;
@@ -337,7 +337,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
@@ -408,7 +408,7 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperators) 
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
@@ -482,7 +482,7 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorChi
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
@@ -556,7 +556,7 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsWi
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
@@ -623,7 +623,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
@@ -689,7 +689,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
@@ -756,7 +756,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
@@ -823,7 +823,7 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
     equalQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
         for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {

@@ -30,8 +30,8 @@
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
@@ -45,7 +45,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
                                                            StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                                            QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
-      enableQueryMerging(enableQueryMerging), globalQueryPlan(globalQueryPlan) {
+      globalQueryPlan(globalQueryPlan), enableQueryMerging(enableQueryMerging) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -82,13 +82,15 @@ void QueryRequestProcessorService::start() {
                         NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                         queryPlan = queryRewritePhase->execute(queryPlan);
                         if (!queryPlan) {
-                            throw Exception("QueryProcessingService: Failed during query rewrite phase for query: " + queryId);
+                            throw Exception("QueryProcessingService: Failed during query rewrite phase for query: "
+                                            + std::to_string(queryId));
                         }
 
                         NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                         queryPlan = typeInferencePhase->execute(queryPlan);
                         if (!queryPlan) {
-                            throw Exception("QueryProcessingService: Failed during Type inference phase for query: " + queryId);
+                            throw Exception("QueryProcessingService: Failed during Type inference phase for query: "
+                                            + std::to_string(queryId));
                         }
 
                         NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
@@ -105,44 +107,45 @@ void QueryRequestProcessorService::start() {
                         queryMergerPhase->execute(globalQueryPlan);
                     }
 
-                    auto globalQueryMetaDataToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
-                    for (auto globalQueryMetaData : globalQueryMetaDataToDeploy) {
-                        GlobalQueryId globalQueryId = globalQueryMetaData->getGlobalQueryId();
-                        NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << globalQueryId);
+                    auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+                    for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
+                        SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
+                        NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
-                        if (!globalQueryMetaData->isNew()) {
-                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << globalQueryId);
-                            bool successful = queryUndeploymentPhase->execute(globalQueryId);
+                        if (!sharedQueryMetaData->isNew()) {
+                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                            bool successful = queryUndeploymentPhase->execute(sharedQueryId);
                             if (!successful) {
-                                throw QueryUndeploymentException("Unable to stop Global QueryId " + globalQueryId);
+                                throw QueryUndeploymentException("Unable to stop Global QueryId "
+                                                                 + std::to_string(sharedQueryId));
                             }
                         }
 
-                        if (!globalQueryMetaData->isEmpty()) {
+                        if (!sharedQueryMetaData->isEmpty()) {
 
-                            auto queryPlan = globalQueryMetaData->getQueryPlan();
+                            auto queryPlan = sharedQueryMetaData->getQueryPlan();
 
                             NES_DEBUG(
-                                "QueryProcessingService: Performing Query Operator placement for query with global query id : "
-                                << globalQueryId);
+                                "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
+                                << sharedQueryId);
                             std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
                             bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
                             if (!placementSuccessful) {
                                 throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with global query id: "
-                                                              + globalQueryId);
+                                                              "query plan with shared query id: "
+                                                              + std::to_string(sharedQueryId));
                             }
 
-                            bool successful = queryDeploymentPhase->execute(globalQueryId);
+                            bool successful = queryDeploymentPhase->execute(sharedQueryId);
                             if (!successful) {
                                 throw QueryDeploymentException(
                                     "QueryRequestProcessingService: Failed to deploy query with global query Id "
-                                    + globalQueryId);
+                                    + std::to_string(sharedQueryId));
                             }
                         }
                         //Mark the meta data as deployed
-                        globalQueryMetaData->markAsDeployed();
-                        globalQueryMetaData->setAsOld();
+                        sharedQueryMetaData->markAsDeployed();
+                        sharedQueryMetaData->setAsOld();
                     }
 
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {

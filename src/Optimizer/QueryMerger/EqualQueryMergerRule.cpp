@@ -19,8 +19,8 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/EqualQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
@@ -37,7 +37,7 @@ bool EqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("EqualQueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
 
-    std::vector<GlobalQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllGlobalQueryMetaData();
+    std::vector<SharedQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllSharedQueryMetaData();
     if (allGQMs.size() == 1) {
         NES_WARNING("EqualQueryMergerRule: Found only a single query metadata in the global query plan."
                     " Skipping the Equal Query Merging.");
@@ -51,7 +51,7 @@ bool EqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
             auto hostGQM = allGQMs[i];
             auto targetGQM = allGQMs[j];
 
-            if (targetGQM->getGlobalQueryId() == hostGQM->getGlobalQueryId()) {
+            if (targetGQM->getSharedQueryId() == hostGQM->getSharedQueryId()) {
                 continue;
             }
 
@@ -98,13 +98,13 @@ bool EqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                     hostChild->addParent(targetSinkGQN);
                 }
             }
-            hostGQM->addGlobalQueryMetaData(targetGQM);
+            hostGQM->addSharedQueryMetaData(targetGQM);
             targetGQM->clear();
-            globalQueryPlan->updateGlobalQueryMetadata(hostGQM);
+            globalQueryPlan->updateSharedQueryMetadata(hostGQM);
             //FIXME: add return call
         }
     }
-    globalQueryPlan->removeEmptyMetaData();
+    globalQueryPlan->removeEmptySharedQueryMetaData();
     return true;
 }
 

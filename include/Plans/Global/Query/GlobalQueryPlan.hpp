@@ -17,8 +17,8 @@
 #ifndef NES_GLOBALQUERYPLAN_HPP
 #define NES_GLOBALQUERYPLAN_HPP
 
-#include <Plans/Global/Query/GlobalQueryId.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <algorithm>
@@ -44,8 +44,8 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 
-class GlobalQueryMetaData;
-typedef std::shared_ptr<GlobalQueryMetaData> GlobalQueryMetaDataPtr;
+class SharedQueryMetaData;
+typedef std::shared_ptr<SharedQueryMetaData> SharedQueryMetaDataPtr;
 
 /**
  * @brief This class is responsible for storing all currently running and to be deployed QueryPlans in the NES system.
@@ -72,7 +72,7 @@ class GlobalQueryPlan {
     /**
      * @brief This method will remove all deployed empty metadata information
      */
-    void removeEmptyMetaData();
+    void removeEmptySharedQueryMetaData();
 
     /**
      * @brief Get all Global Query Nodes with NodeType operators
@@ -93,27 +93,27 @@ class GlobalQueryPlan {
      * @brief Get the all the Query Meta Data to be deployed
      * @return vector of global query meta data to be deployed
      */
-    std::vector<GlobalQueryMetaDataPtr> getGlobalQueryMetaDataToDeploy();
+    std::vector<SharedQueryMetaDataPtr> getSharedQueryMetaDataToDeploy();
 
     /**
      * @brief Get all global query metadata information
      * @return vector of global query meta data
      */
-    std::vector<GlobalQueryMetaDataPtr> getAllGlobalQueryMetaData();
+    std::vector<SharedQueryMetaDataPtr> getAllSharedQueryMetaData();
 
     /**
      * @brief Get the global query id for the query
      * @param queryId: the original query id
      * @return the corresponding global query id
      */
-    GlobalQueryId getGlobalQueryIdForQuery(QueryId queryId);
+    SharedQueryId getSharedQueryIdForQuery(QueryId queryId);
 
     /**
      * @brief Update the global query meta data information
-     * @param globalQueryMetaData: the global query metadata to be updated
+     * @param sharedQueryMetaData: the global query metadata to be updated
      * @return true if successful
      */
-    bool updateGlobalQueryMetadata(GlobalQueryMetaDataPtr globalQueryMetaData);
+    bool updateSharedQueryMetadata(SharedQueryMetaDataPtr sharedQueryMetaData);
 
   private:
     GlobalQueryPlan();
@@ -126,8 +126,8 @@ class GlobalQueryPlan {
 
     uint64_t freeGlobalQueryNodeId;
     GlobalQueryNodePtr root;
-    std::map<GlobalQueryId, GlobalQueryMetaDataPtr> globalQueryIdToMetaDataMap;
-    std::map<QueryId, GlobalQueryId> queryIdToGlobalQueryIdMap;
+    std::map<SharedQueryId, SharedQueryMetaDataPtr> sharedQueryIdToMetaDataMap;
+    std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

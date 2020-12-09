@@ -20,8 +20,8 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
-#include <Plans/Global/Query/GlobalQueryMetaData.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger.hpp>
@@ -90,7 +90,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWi
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: A global query node containing operator of type SinkLogicalOperatorNode should be returned");
-    auto listOfGQMsToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
 }
 
@@ -127,7 +127,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: should return 1 global query node with logical sink operator");
-    auto listOfGQMsToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the global query plan");
@@ -138,7 +138,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddMultipleQueries) {
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: should return 2 global query node with logical sink");
-    listOfGQMsToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    listOfGQMsToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 2);
 }
 
@@ -158,7 +158,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: should 1 global query node with logical sink");
-    auto listOfGQMsToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
 
     NES_DEBUG("GlobalQueryPlanTest: Removing the query plan for the query with id Q1");
@@ -166,7 +166,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: Should return empty global query nodes");
-    listOfGQMsToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    listOfGQMsToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
     EXPECT_TRUE(listOfGQMsToDeploy[0]->isEmpty());
 }
@@ -196,14 +196,14 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert To check if Global Query Plan is created properly
     //Get MetaData information
-    std::vector<GlobalQueryMetaDataPtr> globalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     //Assert
-    EXPECT_TRUE(globalQueryMetaData.size() == 2);
-    auto queryIdToSinkGQNs1 = globalQueryMetaData[0]->getQueryIdToSinkGQNMap();
+    EXPECT_TRUE(sharedQueryMetaData.size() == 2);
+    auto queryIdToSinkGQNs1 = sharedQueryMetaData[0]->getQueryIdToSinkGQNMap();
     EXPECT_EQ(queryIdToSinkGQNs1.size(), 1);
     EXPECT_TRUE(queryIdToSinkGQNs1.find(queryId1) != queryIdToSinkGQNs1.end());
-    auto queryIdToSinkGQNs2 = globalQueryMetaData[1]->getQueryIdToSinkGQNMap();
+    auto queryIdToSinkGQNs2 = sharedQueryMetaData[1]->getQueryIdToSinkGQNMap();
     EXPECT_EQ(queryIdToSinkGQNs2.size(), 1);
     EXPECT_TRUE(queryIdToSinkGQNs2.find(queryId2) != queryIdToSinkGQNs1.end());
 }
@@ -233,7 +233,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert To check if Global Query Plan is created properly
     NES_DEBUG("GlobalQueryPlanTest: should return 2 global query node with logical sink");
-    auto listOfGQMsToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 2);
 
     //Apply L0 query merger rule
@@ -241,11 +241,11 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     l0MergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
-    std::vector<GlobalQueryMetaDataPtr> globalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     //Assert
-    EXPECT_TRUE(globalQueryMetaData.size() == 1);
-    auto queryIdToSinkGQNsMap = globalQueryMetaData[0]->getQueryIdToSinkGQNMap();
+    EXPECT_TRUE(sharedQueryMetaData.size() == 1);
+    auto queryIdToSinkGQNsMap = sharedQueryMetaData[0]->getQueryIdToSinkGQNMap();
     EXPECT_TRUE(queryIdToSinkGQNsMap.find(queryId1) != queryIdToSinkGQNsMap.end());
     EXPECT_TRUE(queryIdToSinkGQNsMap.find(queryId2) != queryIdToSinkGQNsMap.end());
 }
@@ -282,7 +282,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert To check if Global Query Plan is created properly
     NES_DEBUG("GlobalQueryPlanTest: should return 3 global query metadata");
-    auto listOfGQMsToDeploy = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 3);
 
     //Apply L0 query merger rule
@@ -290,22 +290,22 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     l0MergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
-    std::vector<GlobalQueryMetaDataPtr> globalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
+    std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
 
     //Assert
-    EXPECT_TRUE(globalQueryMetaData.size() == 2);
-    auto queryIdToSinkGQNMap1 = globalQueryMetaData[0]->getQueryIdToSinkGQNMap();
+    EXPECT_TRUE(sharedQueryMetaData.size() == 2);
+    auto queryIdToSinkGQNMap1 = sharedQueryMetaData[0]->getQueryIdToSinkGQNMap();
     EXPECT_TRUE(queryIdToSinkGQNMap1.find(queryId1) != queryIdToSinkGQNMap1.end());
     EXPECT_TRUE(queryIdToSinkGQNMap1.find(queryId2) != queryIdToSinkGQNMap1.end());
 
     globalQueryPlan->removeQuery(queryId1);
     //Get MetaData information
-    globalQueryMetaData = globalQueryPlan->getGlobalQueryMetaDataToDeploy();
-    queryIdToSinkGQNMap1 = globalQueryMetaData[0]->getQueryIdToSinkGQNMap();
+    sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    queryIdToSinkGQNMap1 = sharedQueryMetaData[0]->getQueryIdToSinkGQNMap();
     EXPECT_TRUE(queryIdToSinkGQNMap1.find(queryId1) == queryIdToSinkGQNMap1.end());
     EXPECT_TRUE(queryIdToSinkGQNMap1.find(queryId2) != queryIdToSinkGQNMap1.end());
 
-    auto queryIdToSinkGQNMap2 = globalQueryMetaData[1]->getQueryIdToSinkGQNMap();
+    auto queryIdToSinkGQNMap2 = sharedQueryMetaData[1]->getQueryIdToSinkGQNMap();
     EXPECT_EQ(queryIdToSinkGQNMap2.size(), 1);
     EXPECT_TRUE(queryIdToSinkGQNMap2.find(queryId3) != queryIdToSinkGQNMap1.end());
 }
