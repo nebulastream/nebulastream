@@ -72,12 +72,8 @@ uint64_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, 
         }
 
         std::string sourceType = streamConf->getSourceType();
-        if (sourceType != "CSVSource" && sourceType != "DefaultSource" && sourceType != "OPCSource" && sourceType != "ZMQSource"
-            && sourceType != "KafkaSource" && sourceType != "BinarySource" && sourceType != "SenseSource"
-            && sourceType != "NetworkSource" && sourceType != "AdaptiveSource") {
+        if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
             NES_ERROR("CoordinatorEngine::registerNode: error source type " << sourceType << " is not supported");
-            NES_ERROR("CoordinatorEngine::registerNode: available options: OPCSource, ZMQSource, KafkaSource, TestSource, "
-                      "BinarySource, SenseSource, NetworkSource, AdaptiveSource");
             throw Exception("CoordinatorEngine::registerNode: error source type " + sourceType + " is not supported");
         }
 

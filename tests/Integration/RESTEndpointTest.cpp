@@ -57,7 +57,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
 
     NES_INFO("RESTEndpointTest: Start worker 1");
     NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");

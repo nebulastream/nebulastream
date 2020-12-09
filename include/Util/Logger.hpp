@@ -243,6 +243,45 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
     NESLogger->addAppender(console);
 }
 
+static void setLogLevel(DebugLevel level){
+    // set log level
+#ifdef NES_LOGGING_LEVEL
+    #if NES_LOGGING_LEVEL == LEVEL_FATAL
+    NESLogger->setLevel(log4cxx::Level::getFatal());
+#endif
+#if NES_LOGGING_LEVEL == LEVEL_ERROR
+    NESLogger->setLevel(log4cxx::Level::getError());
+#endif
+#if NES_LOGGING_LEVEL == LEVEL_WARN
+    NESLogger->setLevel(log4cxx::Level::getWarn());
+#endif
+#if NES_LOGGING_LEVEL == LEVEL_INFO
+    NESLogger->setLevel(log4cxx::Level::getInfo());
+#endif
+#if NES_LOGGING_LEVEL == LEVEL_DEBUG
+    NESLogger->setLevel(log4cxx::Level::getDebug());
+#endif
+#if NES_LOGGING_LEVEL == LEVEL_TRACE
+    NESLogger->setLevel(log4cxx::Level::getTrace());
+#endif
+#else
+    if (level == LOG_NONE) {
+        NESLogger->setLevel(log4cxx::Level::getOff());
+    } else if (level == LOG_WARNING) {
+        NESLogger->setLevel(log4cxx::Level::getWarn());
+    } else if (level == LOG_DEBUG) {
+        NESLogger->setLevel(log4cxx::Level::getDebug());
+    } else if (level == LOG_INFO) {
+        NESLogger->setLevel(log4cxx::Level::getInfo());
+    } else if (level == LOG_TRACE) {
+        NESLogger->setLevel(log4cxx::Level::getTrace());
+    } else {
+        NES_ERROR("setLogLevel: log level not supported " << getDebugLevelAsString(level));
+        throw Exception("Error while trying to change log level");
+    }
+#endif
+}
+
 #define NES_NOT_IMPLEMENTED()                                                                                                    \
     do {                                                                                                                         \
         NES_ERROR("Function Not Implemented!");                                                                                  \

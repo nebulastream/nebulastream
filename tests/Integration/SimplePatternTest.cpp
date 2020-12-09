@@ -62,7 +62,7 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
 
     NES_DEBUG("SimplePatternTest: start worker 1");
     NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("SimplePatternTest: worker1 started successfully");
@@ -105,7 +105,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 
     NES_DEBUG("start worker 1");
     NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>(ipAddress, std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+        std::make_shared<NesWorker>(ipAddress, port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("worker1 started successfully");
@@ -181,14 +181,14 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
 
     NES_INFO("SimplePatternTest: Start worker 1");
     NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 2");
     NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("SimplePatternTest: Worker2 started successfully");
@@ -282,7 +282,7 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
 
     NES_INFO("SimplePatternTest: Start worker 1");
     NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
@@ -360,7 +360,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
 
     NES_DEBUG("start worker 1");
     NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>(ipAddress, std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+        std::make_shared<NesWorker>(ipAddress, port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("worker1 started successfully");
@@ -435,14 +435,14 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
 
     NES_INFO("SimplePatternTest: Start worker 1");
     NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
     NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("SimplePatternTest: Worker2 started successfully");

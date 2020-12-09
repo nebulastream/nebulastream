@@ -20,10 +20,10 @@ localWorkerIp: 127.0.0.1
 
 # ~~ Source Handling ~~
 # Set the source type (available options: No_Source, DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
-sourceType: No_Source
+sourceType: NoSource
 
 # Set source configuration. Options depend on source type.
-# DefaultSource: No_Config (not needed)
+# DefaultSource: NoConfig (not needed)
 # CSVSource: String with path to CSV file.
 # OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
 #            where the url is a string containing the full OPC server url,
@@ -42,8 +42,8 @@ sourceType: No_Source
 #            kafkaConnectTimeout is a uint16_t providing the time out for the connection
 # BinarySource: String with path to binary file.
 # SenseSource (ToDo: Make source available): String with udsf inside
-# YSBSource: No_Config (not needed)
-sourceConfig: No_Config
+# YSBSource: NoConfig (not needed)
+sourceConfig: NoConfig
 
 # Set sampling frequency of source
 sourceFrequency: 0
