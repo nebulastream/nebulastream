@@ -28,81 +28,111 @@
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
 #include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
-#include <Optimizer/Utils/ReturnValue.hpp>
+#include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
 QuerySignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(OperatorNodePtr operatorNode,
-                                                                      std::vector<QuerySignaturePtr> subQuerySignatures,
+                                                                      std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                                                       z3::ContextPtr context) {
-    NES_TRACE("Creating Z3 expression for operator " << operatorNode->toString());
+    NES_DEBUG("OperatorToQueryPlanSignatureUtil: Creating Z3 expression for operator " << operatorNode->toString());
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        if (!subQuerySignatures.empty()) {
+        if (!childrenQuerySignatures.empty()) {
             NES_THROW_RUNTIME_ERROR("Source operator can't have children : " + operatorNode->toString());
         }
+        //Will return a Z3 expression equivalent to: streamName = <logical stream name>
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
         auto var = context->constant(context->str_symbol("streamName"), context->string_sort());
         auto val = context->string_val(sourceOperator->getSourceDescriptor()->getStreamName());
         auto conds = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, var, val)));
         return QuerySignature::create(conds, {});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        if (subQuerySignatures.empty()) {
+        if (childrenQuerySignatures.empty()) {
             NES_THROW_RUNTIME_ERROR("Sink operator can't have empty children set : " + operatorNode->toString());
         }
-        return buildFromSubQuerySignatures(context, subQuerySignatures);
+        //Will return a z3 expression computed by CNF of children signatures
+        return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-        //FIXME: add comment explaining
-        if (subQuerySignatures.empty() || subQuerySignatures.size() > 1) {
+        //We do not expect a filter to have no or more than 1 children
+        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
             NES_THROW_RUNTIME_ERROR("Filter operator can't have empty or more than one children : " + operatorNode->toString());
         }
 
+        NES_TRACE("OperatorToQueryPlanSignatureUtil: Computing Z3Expression and filed map for filter predicate");
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
-        auto subQueryCols = subQuerySignatures[0]->getCols();
-
         auto operatorCond = ExpressionToZ3ExprUtil::createForExpression(filterOperator->getPredicate(), context);
+        auto fieldMap = operatorCond->getFieldMap();
+        auto z3Expr = operatorCond->getExpr();
 
-        auto constMap = operatorCond->getConstMap();
-        auto optrExpr = operatorCond->getExpr();
+        z3::expr_vector allConds(*context);
+        allConds.push_back(*z3Expr);
 
-        for (auto constPair : constMap) {
+        NES_TRACE("OperatorToQueryPlanSignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
+                  "children signatures");
+        //As filter can't have more than 1 children so fetch the only child signature
+        auto subQueryCols = childrenQuerySignatures[0]->getCols();
+
+        //Prepare a vector of conditions by substituting the field expressions in the predicate with col values from children signature
+        for (auto constPair : fieldMap) {
             if (subQueryCols.find(constPair.first) != subQueryCols.end()) {
                 std::vector<z3::ExprPtr> vectorOfExprs = subQueryCols[constPair.first];
+                z3::expr_vector from(*context);
+                from.push_back(*constPair.second);
+                z3::expr_vector updatedConds(*context);
                 for (auto expr : vectorOfExprs) {
-                    z3::expr_vector from(*context);
-                    from.push_back(*constPair.second);
                     z3::expr_vector to(*context);
                     to.push_back(*expr);
-                    optrExpr = std::make_shared<z3::expr>(optrExpr->substitute(from, to));
+                    for (auto cond : allConds) {
+                        auto updatedCond = cond.substitute(from, to);
+                        updatedConds.push_back(updatedCond);
+                    }
                 }
+                allConds = updatedConds;
             }
         }
+        //Compute a DNF condition for all different conditions identified by substituting the col values
+        auto filterCond = z3::mk_or(allConds);
 
-        auto subQueryConds = subQuerySignatures[0]->getConds();
-        Z3_ast array[] = {*optrExpr, *subQueryConds};
+        //Compute a CNF condition using the children and filter conds
+        auto childrenConds = childrenQuerySignatures[0]->getConds();
+        Z3_ast array[] = {filterCond, *childrenConds};
         auto conds = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
+
         return QuerySignature::create(conds, subQueryCols);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         //TODO: Will be done in issue #1272
         NES_NOT_IMPLEMENTED();
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
-        return buildFromSubQuerySignatures(context, subQuerySignatures);
+        //We do not expect a broadcast operator to have no or more than 1 children
+        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
+            NES_THROW_RUNTIME_ERROR("Broadcast operator can't have empty or more than one children : " + operatorNode->toString());
+        }
+        return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-        if (subQuerySignatures.empty() || subQuerySignatures.size() > 1) {
+        //We do not expect a Map operator to have no or more than 1 children
+        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
             NES_THROW_RUNTIME_ERROR("Map operator can't have empty or more than one children : " + operatorNode->toString());
         }
+
+        // compute the expression for only the right side of the assignment operator
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
-        auto conds = subQuerySignatures[0]->getConds();
-        auto cols = subQuerySignatures[0]->getCols();
         z3::ExprPtr expr = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context)->getExpr();
 
         std::string fieldName = mapOperator->getMapExpression()->getField()->getFieldName();
 
+        //Fetch the signature of only children and get the column values
+        auto cols = childrenQuerySignatures[0]->getCols();
+
         if (cols.find(fieldName) != cols.end()) {
+            //Substitute the field expressions with the children column values
             auto colExprs = cols[fieldName];
+
+            //Compute the filed expression
             DataTypePtr fieldType = mapOperator->getMapExpression()->getField()->getStamp();
             auto filedExpr = DataTypeToZ3ExprUtil::createForField(fieldName, fieldType, context);
+
             z3::expr_vector from(*context);
             from.push_back(*filedExpr->getExpr());
 
@@ -118,6 +148,10 @@ QuerySignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(OperatorNo
         } else {
             cols[fieldName] = {expr};
         }
+
+        //Fetch child cond
+        auto conds = childrenQuerySignatures[0]->getConds();
+
         return QuerySignature::create(conds, cols);
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         //TODO: Will be done in issue #1138
@@ -127,12 +161,16 @@ QuerySignaturePtr OperatorToQueryPlanSignatureUtil::createForOperator(OperatorNo
 }
 
 QuerySignaturePtr
-OperatorToQueryPlanSignatureUtil::buildFromSubQuerySignatures(z3::ContextPtr context,
-                                                              std::vector<QuerySignaturePtr> subQuerySignatures) {
-    z3::expr_vector cnfConds(*context);
+OperatorToQueryPlanSignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context,
+                                                              std::vector<QuerySignaturePtr> childrenQuerySignatures) {
+
+    NES_DEBUG("OperatorToQueryPlanSignatureUtil: Computing Signature from children signatures");
+
+    z3::expr_vector allConds(*context);
     std::map<std::string, std::vector<z3::ExprPtr>> allCols;
 
-    for (auto& subQuerySignature : subQuerySignatures) {
+    for (auto& subQuerySignature : childrenQuerySignatures) {
+        //Merge the columns
         if (allCols.empty()) {
             allCols = subQuerySignature->getCols();
         } else {
@@ -146,9 +184,10 @@ OperatorToQueryPlanSignatureUtil::buildFromSubQuerySignatures(z3::ContextPtr con
                 }
             }
         }
-        cnfConds.push_back(*subQuerySignature->getConds());
+        //Add condition to the array
+        allConds.push_back(*subQuerySignature->getConds());
     }
-    z3::ExprPtr conds = std::make_shared<z3::expr>(z3::mk_and(cnfConds));
+    z3::ExprPtr conds = std::make_shared<z3::expr>(z3::mk_and(allConds));
     return QuerySignature::create(conds, allCols);
 }
 
