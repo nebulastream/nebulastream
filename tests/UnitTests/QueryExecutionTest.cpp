@@ -409,6 +409,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
 
     std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
         generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
+    winOps[0]->setOutputSchema(windowResultSchema);
     std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
         queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
 
@@ -496,6 +497,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
         generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
     std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
         queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+    winOps[0]->setOutputSchema(windowResultSchema);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
@@ -575,6 +577,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
         generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
     std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
         queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+    winOps[0]->setOutputSchema(windowResultSchema);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
@@ -651,6 +654,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
         generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
     std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
         queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+    winOps[0]->setOutputSchema(windowResultSchema);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
@@ -731,6 +735,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
         generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
     std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
         queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+    winOps[0]->setOutputSchema(windowResultSchema);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
