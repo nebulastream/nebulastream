@@ -46,6 +46,7 @@ namespace NES {
 uint64_t rpcPort = 1200;
 uint64_t dataPort = 1400;
 uint64_t restPort = 8000;
+uint16_t timeout = 5;
 
 class E2ECoordinatorMultiQueryTest : public testing::Test {
   public:
@@ -80,7 +81,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     uint64_t coordinatorPid = coordinatorProc.id();
-    sleep(1);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -90,7 +91,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     NES_INFO("started worker with pid = " << workerProc.id());
 
     uint64_t workerPid = workerProc.id();
-    sleep(3);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssQuery1;
     ssQuery1 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
@@ -174,7 +175,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    sleep(1);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -185,7 +186,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 
     uint64_t coordinatorPid = coordinatorProc.id();
     uint64_t workerPid = workerProc.id();
-    sleep(3);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssQuery1;
     ssQuery1 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
@@ -280,8 +281,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     string coordinatorRPCPort = std::to_string(rpcPort);
     string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(path.c_str());
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    sleep(1);
     uint64_t coordinatorPid = coordinatorProc.id();
 
     std::stringstream schema;
@@ -301,7 +302,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t workerPid = workerProc.id();
-    sleep(3);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssPattern1;
     ssPattern1 << "{\"pattern\" : ";
@@ -390,7 +391,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    sleep(1);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"window\",\"schema\" "
@@ -409,7 +410,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t workerPid = workerProc.id();
-    sleep(1);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -501,7 +502,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     string path = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(path.c_str());
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
-    sleep(1);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"window\",\"schema\" "
@@ -520,7 +521,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t workerPid = workerProc.id();
-    sleep(1);
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
