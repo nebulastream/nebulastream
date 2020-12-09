@@ -38,7 +38,7 @@ typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
  * @brief This class is responsible for creating the Query Plan Signature for the input operator.
  * The query plan is composed of the input operator and all its upstream child operators.
  */
-class OperatorToQueryPlanSignatureUtil {
+class OperatorToQuerySignatureUtil {
   public:
     /**
      * @brief Convert input operator into an equivalent logical expression

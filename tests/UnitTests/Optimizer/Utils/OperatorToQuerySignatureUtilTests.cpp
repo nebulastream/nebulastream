@@ -17,7 +17,7 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
-#include <Optimizer/Utils/OperatorToQueryPlanSignatureUtil.hpp>
+#include <Optimizer/Utils/OperatorToQuerySignatureUtil.hpp>
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <API/Expressions/Expressions.hpp>
@@ -34,7 +34,7 @@
 
 using namespace NES;
 
-class OperatorToZ3ExprUtilTest : public testing::Test {
+class OperatorToQuerySignatureUtilTest : public testing::Test {
 
   public:
     SchemaPtr schema;
@@ -53,7 +53,7 @@ class OperatorToZ3ExprUtilTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down OperatorToFOLUtilTest test class."); }
 };
 
-TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithExactPredicates) {
+TEST_F(OperatorToQuerySignatureUtilTest, testFiltersWithExactPredicates) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
@@ -80,7 +80,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithExactPredicates) {
     ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithEqualPredicates) {
+TEST_F(OperatorToQuerySignatureUtilTest, testFiltersWithEqualPredicates) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
@@ -109,7 +109,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithEqualPredicates) {
     ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleExactPredicates) {
+TEST_F(OperatorToQuerySignatureUtilTest, testFiltersWithMultipleExactPredicates) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
@@ -136,7 +136,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleExactPredicates) {
     ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates1) {
+TEST_F(OperatorToQuerySignatureUtilTest, testFiltersWithMultipleEqualPredicates1) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
@@ -165,7 +165,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates1) {
     ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates2) {
+TEST_F(OperatorToQuerySignatureUtilTest, testFiltersWithMultipleEqualPredicates2) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
@@ -194,7 +194,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleEqualPredicates2) {
     ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
+TEST_F(OperatorToQuerySignatureUtilTest, testFiltersWithDifferentPredicates) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
@@ -223,7 +223,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithDifferentPredicates) {
     ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
+TEST_F(OperatorToQuerySignatureUtilTest, testFiltersWithMultipleDifferentPredicates) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
 
@@ -251,7 +251,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testFiltersWithMultipleDifferentPredicates) {
     ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testMapWithExactExpression) {
+TEST_F(OperatorToQuerySignatureUtilTest, testMapWithExactExpression) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
@@ -277,7 +277,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithExactExpression) {
     ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpression) {
+TEST_F(OperatorToQuerySignatureUtilTest, testMapWithDifferentExpression) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
@@ -305,7 +305,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpression) {
     ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testMultipleMapsWithDifferentOrder) {
+TEST_F(OperatorToQuerySignatureUtilTest, testMultipleMapsWithDifferentOrder) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
@@ -337,7 +337,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testMultipleMapsWithDifferentOrder) {
     ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpressionOnSameField) {
+TEST_F(OperatorToQuerySignatureUtilTest, testMapWithDifferentExpressionOnSameField) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
@@ -365,7 +365,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testMapWithDifferentExpressionOnSameField) {
     ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testSourceWithSameStreamName) {
+TEST_F(OperatorToQuerySignatureUtilTest, testSourceWithSameStreamName) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
@@ -384,7 +384,7 @@ TEST_F(OperatorToZ3ExprUtilTest, testSourceWithSameStreamName) {
     ASSERT_TRUE(sig1->isEqual(sig2));
 }
 
-TEST_F(OperatorToZ3ExprUtilTest, testSourceWithDifferentStreamName) {
+TEST_F(OperatorToQuerySignatureUtilTest, testSourceWithDifferentStreamName) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
