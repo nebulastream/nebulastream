@@ -56,7 +56,7 @@ OPCSource::~OPCSource() {
     }
 }
 
-std::optional<TupleBuffer> OPCSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> OPCSource::receiveData() {
 
     NES_DEBUG("OPCSOURCE::receiveData()  " << this << ": receiveData() ");
     if (connect()) {

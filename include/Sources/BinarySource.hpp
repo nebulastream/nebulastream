@@ -39,7 +39,7 @@ class BinarySource : public DataSource {
      * @brief override the receiveData method for the binary source
      * @return returns a buffer if available
      */
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the binary source
@@ -51,7 +51,7 @@ class BinarySource : public DataSource {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    void fillBuffer(TupleBuffer&);
+    void fillBuffer(NodeEngine::TupleBuffer&);
 
     SourceType getType() const override;
 

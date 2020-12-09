@@ -63,7 +63,7 @@ CSVSource::CSVSource(SchemaPtr schema,  NodeEngine::BufferManagerPtr bufferManag
     fileEnded = false;
 }
 
-std::optional<TupleBuffer> CSVSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called");
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
@@ -82,7 +82,7 @@ const std::string CSVSource::toString() const {
     return ss.str();
 }
 
-void CSVSource::fillBuffer(TupleBuffer& buf) {
+void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
     NES_DEBUG("CSVSource::fillBuffer: start at pos=" << currentPosInFile << " fileSize=" << fileSize);
     if (fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");

@@ -56,7 +56,7 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
     }
 }
 
-void ExchangeProtocol::onBuffer(NesPartition nesPartition, TupleBuffer& buffer) {
+void ExchangeProtocol::onBuffer(NesPartition nesPartition, NodeEngine::TupleBuffer& buffer) {
     protocolListener->onDataBuffer(nesPartition, buffer);
 }
 

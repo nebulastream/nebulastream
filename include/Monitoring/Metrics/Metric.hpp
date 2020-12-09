@@ -17,12 +17,12 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 
 namespace NES {
-class TupleBuffer;
 class Schema;
 class MonitoringPlan;
 
@@ -40,8 +40,8 @@ MetricType getMetricType(const T&) {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(uint64_t metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
-void serialize(const std::string& metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(uint64_t metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void serialize(const std::string& metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
 /**
  * @brief The metric class is a conceptual superclass that represents all metrics in NES.
@@ -93,7 +93,7 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend void serialize(const Metric& x, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix) {
+    friend void serialize(const Metric& x, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
         x.self->serializeC(schema, buf, prefix);
     }
 
@@ -109,7 +109,7 @@ class Metric {
         /**
          * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
          */
-        virtual void serializeC(std::shared_ptr<Schema>, TupleBuffer&, std::string) = 0;
+        virtual void serializeC(std::shared_ptr<Schema>, NodeEngine::TupleBuffer&, std::string) = 0;
     };
 
     /**
@@ -124,7 +124,7 @@ class Metric {
 
         MetricType getType() const override { return getMetricType(data); }
 
-        void serializeC(std::shared_ptr<Schema> schema, TupleBuffer& buf, std::string prefix) override {
+        void serializeC(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, std::string prefix) override {
             serialize(data, schema, buf, prefix);
         }
 

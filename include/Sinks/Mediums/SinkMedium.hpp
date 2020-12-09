@@ -24,7 +24,6 @@
 #include <mutex>
 
 namespace NES {
-class TupleBuffer;
 
 enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK, OPC_SINK };
 /**
@@ -62,7 +61,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    virtual bool writeData(TupleBuffer& inputBuffer,  NodeEngine::WorkerContext& workerContext) = 0;
+    virtual bool writeData(NodeEngine::TupleBuffer& inputBuffer,  NodeEngine::WorkerContext& workerContext) = 0;
 
     /**
      * @brief get the id of the owning plan

@@ -41,13 +41,13 @@ class SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    virtual std::vector<TupleBuffer> getData(TupleBuffer& inputBuffer) = 0;
+    virtual std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer) = 0;
 
     /**
     * @brief method to write the schema of the data
     * @return TupleBuffer containing the schema
     */
-    virtual std::optional<TupleBuffer> getSchema() = 0;
+    virtual std::optional<NodeEngine::TupleBuffer> getSchema() = 0;
 
     /**
      * @brief method to return the format as a string

@@ -40,7 +40,7 @@ MonitoringService::~MonitoringService() {
     topology.reset();
 }
 
-std::tuple<SchemaPtr, TupleBuffer> MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
+std::tuple<SchemaPtr, NodeEngine::TupleBuffer> MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
                                                                             MonitoringPlanPtr plan) {
     if (!plan) {
         auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});

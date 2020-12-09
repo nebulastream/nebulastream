@@ -18,6 +18,7 @@
 #define UTILITY_FUNCTIONS_HPP
 
 #include <Operators/OperatorId.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <cpprest/json.h>
 #include <string>
 /*
@@ -35,8 +36,6 @@
 namespace NES {
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
-
-class TupleBuffer;
 
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
@@ -128,20 +127,20 @@ class UtilityFunctions {
    * @param schema  the schema
    * @return
    */
-    static std::string prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
+    static std::string prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, SchemaPtr schema);
 
     /**
    * @brief Outputs a tuple buffer in text format
    * @param buffer the tuple buffer
    * @return string of tuple buffer
    */
-    static std::string printTupleBufferAsText(TupleBuffer& buffer);
+    static std::string printTupleBufferAsText(NodeEngine::TupleBuffer& buffer);
 
     /**
     * @brief this method creates a string from the content of a tuple buffer
     * @return string of the buffer content
     */
-    static std::string printTupleBufferAsCSV(TupleBuffer& tbuffer, SchemaPtr schema);
+    static std::string printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, SchemaPtr schema);
 
     /**
       * @brief function to obtain JSON representation of a NES Topology

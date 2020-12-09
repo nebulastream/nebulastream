@@ -15,6 +15,8 @@
 */
 
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/AdaptiveSource.hpp>
 
@@ -26,7 +28,7 @@
 #include <string>
 
 namespace NES {
-
+using NodeEngine::TupleBuffer;
 class AdaptiveSourceTest : public testing::Test {
   public:
     static void SetUpTestCase() {

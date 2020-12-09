@@ -16,8 +16,7 @@
 
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 
-namespace NES {
-
+namespace NES::NodeEngine {
 PhysicalField::PhysicalField(uint64_t bufferOffset) : bufferOffset(bufferOffset){};
 
 PhysicalField::~PhysicalField(){};

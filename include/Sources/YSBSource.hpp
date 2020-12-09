@@ -28,7 +28,7 @@ class YSBSource : public DefaultSource {
 
     SourceType getType() const override;
 
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the binary source

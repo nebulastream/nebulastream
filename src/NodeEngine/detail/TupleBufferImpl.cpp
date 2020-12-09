@@ -31,7 +31,7 @@
 #include <thread>
 #endif
 
-namespace NES {
+namespace NES::NodeEngine {
 
 namespace detail {
 

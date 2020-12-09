@@ -19,10 +19,12 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <memory>
 #include <vector>
-namespace NES {
 
+namespace NES{
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
+}
+namespace NES::NodeEngine {
 
 template<class ValueType>
 class BasicPhysicalField;

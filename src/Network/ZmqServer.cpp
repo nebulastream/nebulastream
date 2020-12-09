@@ -199,7 +199,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                                                                             << bufferHeader->getPayloadSize());
 
                     // receive buffer content
-                    TupleBuffer buffer = bufferManager->getBufferBlocking();
+                    auto buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
                     buffer.setOriginId(bufferHeader->getOriginId());

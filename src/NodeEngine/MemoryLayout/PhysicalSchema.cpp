@@ -23,7 +23,7 @@
 #include <Util/Logger.hpp>
 #include <assert.h>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(schemaPtr){};
 

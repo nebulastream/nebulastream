@@ -24,8 +24,7 @@
 #include <functional>
 #include <memory>
 
-namespace NES {
-class TupleBuffer;
+namespace NES::NodeEngine {
 
 /**
  * @brief The TupleBuffer is the NES API that allows runtime components to access memory to store records
@@ -47,7 +46,7 @@ class TupleBuffer;
  * Reminder: this class should be header-only to help inlining
  */
 class TupleBuffer {
-    friend class NES::NodeEngine::BufferManager;
+    friend class BufferManager;
     friend class detail::MemorySegment;
 
   public:

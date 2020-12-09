@@ -46,7 +46,7 @@ ZmqSource::~ZmqSource() {
     NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
 }
 
-std::optional<TupleBuffer> ZmqSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
     NES_DEBUG("ZMQSource  " << this << ": receiveData ");
     if (connect()) {// was if (connect()) {
         try {

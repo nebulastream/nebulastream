@@ -144,7 +144,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [childPipelines](TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
+                [childPipelines](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
                     }
@@ -159,7 +159,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [sinks](TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
+                [sinks](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& sink : sinks) {
                         sink->writeData(buffer, workerContext);
                     }

@@ -44,14 +44,14 @@ CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const { return cpuVa
 
 CpuValues CpuMetrics::getTotal() const { return total; }
 
-CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     //get index where the schema for CpuMetrics is starting
     auto idx = schema->getIndex(prefix + "CORE_NO");
 
     if (idx < schema->getSize() && buf.getNumberOfTuples() == 1
         && UtilityFunctions::endsWith(schema->fields[idx]->name, "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
-        auto layout = createRowLayout(schema);
+        auto layout = NodeEngine::createRowLayout(schema);
         auto numCores = layout->getValueField<uint16_t>(0, idx)->read(buf);
         auto cpu = std::vector<CpuValues>(numCores);
         auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");
@@ -66,14 +66,14 @@ CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std:
     }
 }
 
-void serialize(const CpuMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     // extend the schema with the core number
     auto noFields = schema->getSize();
     schema->addField(prefix + "CORE_NO", BasicType::UINT16);
     // the buffer contains only one metric tuple
     buf.setNumberOfTuples(1);
 
-    auto layout = createRowLayout(schema);
+    auto layout = NodeEngine::createRowLayout(schema);
     layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getNumCores());
     // call serialize for the total metrics over all cores
     serialize(metrics.getTotal(), schema, buf, prefix + "CPU[TOTAL]_");

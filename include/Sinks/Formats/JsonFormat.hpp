@@ -29,13 +29,13 @@ class JsonFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    std::vector<TupleBuffer> getData(TupleBuffer& inputBuffer);
+    std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer);
 
     /**
     * @brief method to write the schema of the data
     * @return TupleBuffer containing the schema
     */
-    std::optional<TupleBuffer> getSchema();
+    std::optional<NodeEngine::TupleBuffer> getSchema();
 
     /**
      * @brief method to return the format as a string

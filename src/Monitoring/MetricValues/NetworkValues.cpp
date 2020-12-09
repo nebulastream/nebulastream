@@ -46,7 +46,7 @@ SchemaPtr NetworkValues::getSchema(const std::string& prefix) {
     return schema;
 }
 
-NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     NetworkValues output{};
     auto i = schema->getIndex(prefix);
 
@@ -61,7 +61,7 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, cons
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 
-    auto layout = createRowLayout(schema);
+    auto layout =  NodeEngine::createRowLayout(schema);
 
     output.rBytes = layout->getValueField<uint64_t>(0, i++)->read(buf);
     output.rPackets = layout->getValueField<uint64_t>(0, i++)->read(buf);
@@ -84,11 +84,11 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, cons
     return output;
 }
 
-void serialize(const NetworkValues& metric, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const NetworkValues& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     auto noFields = schema->getSize();
     schema->copyFields(NetworkValues::getSchema(prefix));
 
-    auto layout = createRowLayout(schema);
+    auto layout = NodeEngine::createRowLayout(schema);
     //get buffer location to write to from the layout and write the specific value to it
     layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rBytes);
     layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rPackets);

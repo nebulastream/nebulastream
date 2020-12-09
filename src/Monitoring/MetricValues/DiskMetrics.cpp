@@ -34,11 +34,11 @@ SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void serialize(const DiskMetrics& metric, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const DiskMetrics& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     auto noFields = schema->getSize();
     schema->copyFields(DiskMetrics::getSchema(prefix));
 
-    auto layout = createRowLayout(schema);
+    auto layout = NodeEngine::createRowLayout(schema);
     layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.fBsize);
     layout->getValueField<uint64_t>(0, noFields + 1)->write(buf, metric.fFrsize);
     layout->getValueField<uint64_t>(0, noFields + 2)->write(buf, metric.fBlocks);
@@ -47,7 +47,7 @@ void serialize(const DiskMetrics& metric, SchemaPtr schema, TupleBuffer& buf, co
     buf.setNumberOfTuples(1);
 }
 
-DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     DiskMetrics output{};
     auto i = schema->getIndex(prefix);
 
@@ -62,7 +62,7 @@ DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const st
         NES_THROW_RUNTIME_ERROR("DiskMetrics: Missing fields in schema.");
     }
 
-    auto layout = createRowLayout(schema);
+    auto layout = NodeEngine::createRowLayout(schema);
 
     output.fBsize = layout->getValueField<uint64_t>(0, i++)->read(buf);
     output.fFrsize = layout->getValueField<uint64_t>(0, i++)->read(buf);

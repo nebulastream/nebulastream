@@ -50,7 +50,7 @@ YSBSource::YSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::Que
     : DefaultSource(YsbSchema(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       numberOfTuplesPerBuffer(numberOfTuplesPerBuffer), tmpEventType(0), currentMs(0) {}
 
-std::optional<TupleBuffer> YSBSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> YSBSource::receiveData() {
     NES_DEBUG("YSBSource:" << this << " requesting buffer");
     auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("YSBSource:" << this << " got buffer");

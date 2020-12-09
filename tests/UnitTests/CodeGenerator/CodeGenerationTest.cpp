@@ -333,7 +333,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf);
     auto tf = CompilerTypesFactory();
-    auto tupleBufferType = tf.createAnonymusDataType("NES::TupleBuffer");
+    auto tupleBufferType = tf.createAnonymusDataType("NodeEngine::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
     auto workerContextType = tf.createAnonymusDataType("NodeEngine::WorkerContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
@@ -469,7 +469,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* setup input and output for test */
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto recordSchema = Schema::create()->addField("id", DataTypeFactory::createInt64());
-    auto layout = createRowLayout(recordSchema);
+    auto layout = NodeEngine::createRowLayout(recordSchema);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->write(inputBuffer, recordIndex);

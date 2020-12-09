@@ -39,7 +39,7 @@ SchemaPtr CpuValues::getSchema(const std::string& prefix) {
     return schema;
 }
 
-CpuValues CpuValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
     //get index where the schema for CpuValues is starting
     auto i = schema->getIndex(prefix + "USER");
@@ -47,7 +47,7 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::s
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "USER")
         && UtilityFunctions::endsWith(schema->fields[i + 9]->name, "GUESTNICE")) {
         NES_DEBUG("CpuValues: Index found for " + prefix + "USER" + " at " + std::to_string(i));
-        auto layout = createRowLayout(schema);
+        auto layout = NodeEngine::createRowLayout(schema);
         //set the values to the output object
         output.USER = layout->getValueField<uint64_t>(0, i)->read(buf);
         output.NICE = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
@@ -66,11 +66,11 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::s
     return output;
 }
 
-void serialize(const CpuValues& metric, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const CpuValues& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     auto schemaSize = schema->getSize();
     schema->copyFields(CpuValues::getSchema(prefix));
 
-    auto layout = createRowLayout(schema);
+    auto layout = NodeEngine::createRowLayout(schema);
     layout->getValueField<uint64_t>(0, schemaSize)->write(buf, metric.USER);
     layout->getValueField<uint64_t>(0, schemaSize + 1)->write(buf, metric.NICE);
     layout->getValueField<uint64_t>(0, schemaSize + 2)->write(buf, metric.SYSTEM);

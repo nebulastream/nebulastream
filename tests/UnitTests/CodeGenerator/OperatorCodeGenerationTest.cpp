@@ -328,7 +328,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
-    auto layout = createRowLayout(schema);
+    auto layout =  NodeEngine::createRowLayout(schema);
     for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(1, layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(buffer));
     }
@@ -774,7 +774,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
                                                         nullptr);// TODO Philipp, plz add pass-through pipeline here
     windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
-    auto layout = createRowLayout(schema);
+    auto layout =  NodeEngine::createRowLayout(schema);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     layout->getValueField<uint64_t>(0, 0)->write(buffer, 100);//start 100
     layout->getValueField<uint64_t>(0, 1)->write(buffer, 110);//stop 200
@@ -986,8 +986,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto resultBuffer = queryContext->buffers[0];
 
-    auto inputLayout = createRowLayout(inputSchema);
-    auto outputLayout = createRowLayout(outputSchema);
+    auto inputLayout =  NodeEngine::createRowLayout(inputSchema);
+    auto outputLayout =  NodeEngine::createRowLayout(outputSchema);
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/ 2)->read(inputBuffer);
         auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 3)->read(inputBuffer);

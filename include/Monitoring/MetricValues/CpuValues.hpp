@@ -18,10 +18,9 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
 #include <memory>
-
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 namespace NES {
 class Schema;
-class TupleBuffer;
 class MonitoringPlan;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
@@ -46,7 +45,7 @@ class CpuValues {
      * @param prefix
      * @return The object
      */
-    static CpuValues fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
+    static CpuValues fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     uint64_t USER;
     uint64_t NICE;
@@ -68,7 +67,7 @@ class CpuValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const CpuValues& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const CpuValues& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

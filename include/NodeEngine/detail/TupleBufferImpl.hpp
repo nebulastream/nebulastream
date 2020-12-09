@@ -29,12 +29,10 @@
 #endif
 
 namespace NES {
-class TupleBuffer;
 
-namespace NodeEngine{
+namespace NodeEngine {
 class BufferManager;
-
-}
+class TupleBuffer;
 
 namespace detail {
 
@@ -177,7 +175,7 @@ class BufferControlBlock {
  *
  */
 class MemorySegment {
-    friend class NES::TupleBuffer;
+    friend class NES::NodeEngine::TupleBuffer;
 
     friend class NES::NodeEngine::BufferManager;
 
@@ -237,6 +235,7 @@ class MemorySegment {
 void zmqBufferRecyclingCallback(void* ptr, void* hint);
 
 }// namespace detail
+}
 }// namespace NES
 
 #endif//NES_INCLUDE_NODEENGINE_DETAIL_TUPLEBUFFERIMPL_HPP_

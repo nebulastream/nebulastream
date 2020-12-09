@@ -122,7 +122,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     code->structDeclarationResultTuple = getStructDeclarationFromSchema("ResultTuple", outputSchema);
     auto tf = getTypeFactory();
     /* === declarations === */
-    auto tupleBufferType = tf->createAnonymusDataType("NES::TupleBuffer");
+    auto tupleBufferType = tf->createAnonymusDataType("NES::NodeEngine::TupleBuffer");
     auto pipelineExecutionContextType = tf->createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
     auto workerContextType = tf->createAnonymusDataType("NodeEngine::WorkerContext");
     VariableDeclaration varDeclarationInputBuffer =

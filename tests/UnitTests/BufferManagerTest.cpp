@@ -29,6 +29,7 @@
 #include <thread>
 
 namespace NES {
+using NodeEngine::TupleBuffer;
 const size_t buffers_managed = 1024;
 const size_t buffer_size = 32 * 1024;
 

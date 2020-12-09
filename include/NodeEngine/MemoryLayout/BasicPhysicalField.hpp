@@ -18,7 +18,7 @@
 #define NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-namespace NES {
+namespace NES::NodeEngine {
 /**
  * @brief Represents an value field at a specific position in a memory buffer.
  * This class has to be implemented in the header as it is a template type.

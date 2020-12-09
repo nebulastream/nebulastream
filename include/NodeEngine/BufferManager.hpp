@@ -27,13 +27,12 @@
 #include <vector>
 
 namespace NES {
+
+namespace NodeEngine {
+class TupleBuffer;
 namespace detail {
 class MemorySegment;
 }
-class TupleBuffer;
-
-namespace NodeEngine {
-
 /**
  * @brief The BufferManager is responsible for:
  * 1. Pooled Buffers: preallocated fixed-size buffers of memory that must be reference counted
