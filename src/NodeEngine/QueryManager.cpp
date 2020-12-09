@@ -14,11 +14,14 @@
     limitations under the License.
 */
 
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
-#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -92,7 +95,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     std::scoped_lock lock(queryMutex, statisticsMutex);
 
     bool isBinaryOperator = false;
-    for (auto& pipe : qep->getStages()) {
+    for (auto& pipe : qep->getPipelines()) {
         if (pipe->hasJoinHandler()) {
             isBinaryOperator = true;
         }
@@ -176,7 +179,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
-        taskQueue.emplace_back(qep->getStage(operatorIdToPipelineStage[operatorId]), buf);
+        taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
 
         NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
                                                          << " for QEP " << qep << " inputBuffer " << buf

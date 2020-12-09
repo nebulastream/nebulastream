@@ -14,15 +14,17 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
-#define INCLUDE_QUERYEXECUTIONPLAN_H_
+#ifndef INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_
+#define INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <Sources/DataSource.hpp>
+#include <Sinks/SinksForwaredRefs.hpp>
+#include <Sources/SourcesForwaredRefs.hpp>
 #include <map>
+#include <atomic>
+#include <vector>
 
 namespace NES::NodeEngine::Execution {
 
@@ -30,11 +32,11 @@ namespace NES::NodeEngine::Execution {
  * @brief A running execution plan on a node engine.
  * This class is thread-safe.
  */
-class  ExecutableQueryPlan {
+class ExecutableQueryPlan {
 
   public:
     explicit ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
-                                 std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& stages,
+                                 std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& pipelines,
                                  QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 
     ~ExecutableQueryPlan();
@@ -67,13 +69,15 @@ class  ExecutableQueryPlan {
     std::vector<DataSinkPtr> getSinks() const;
 
     /**
-     * @brief Get i-th stage.
+     * @brief Get i-th pipeline.
      */
-    ExecutablePipelinePtr getStage(uint64_t index) const;
+    ExecutablePipelinePtr getPipeline(uint64_t index) const;
 
-    uint64_t getStageSize() const;
-
-    std::vector<ExecutablePipelinePtr>& getStages();
+    /**
+     * @brief Get pipelines.
+     * @return
+     */
+    std::vector<ExecutablePipelinePtr>& getPipelines();
 
     /**
      * @brief Gets number of pipeline stages.
@@ -83,8 +87,6 @@ class  ExecutableQueryPlan {
     QueryManagerPtr getQueryManager();
 
     BufferManagerPtr getBufferManager();
-
-    void print();
 
     /**
      * @brief Get the query id
@@ -111,4 +113,4 @@ class  ExecutableQueryPlan {
 
 }// namespace NES
 
-#endif /* INCLUDE_QUERYEXECUTIONPLAN_H_ */
+#endif /* INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_ */

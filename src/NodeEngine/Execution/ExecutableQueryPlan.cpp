@@ -26,17 +26,17 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
                                          QuerySubPlanId querySubPlanId,
                                          std::vector<DataSourcePtr>&& sources,
                                          std::vector<DataSinkPtr>&& sinks,
-                                         std::vector<ExecutablePipelinePtr>&& stages,
+                                         std::vector<ExecutablePipelinePtr>&& pipelines,
                                          QueryManagerPtr&& queryManager,
                                          BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
-      pipelines(std::move(stages)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
+      pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Created) {}
 
 
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 
-std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getStages() { return pipelines; }
+std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getPipelines() { return pipelines; }
 
 QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
@@ -117,22 +117,6 @@ std::vector<DataSourcePtr> ExecutableQueryPlan::getSources() const { return sour
 
 std::vector<DataSinkPtr> ExecutableQueryPlan::getSinks() const { return sinks; }
 
-ExecutablePipelinePtr ExecutableQueryPlan::getStage(uint64_t index) const { return pipelines[index]; }
-
-uint64_t ExecutableQueryPlan::getStageSize() const { return pipelines.size(); }
-
-void ExecutableQueryPlan::print() {
-    for (auto source : sources) {
-        NES_INFO("Source:" << source);
-        NES_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers());
-        NES_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples());
-        NES_INFO("\t Schema=" << source->getSourceSchemaAsString());
-    }
-    for (auto sink : sinks) {
-        NES_INFO("Sink:" << sink);
-        NES_INFO("\t Generated Buffers=" << sink->getNumberOfWrittenOutBuffers());
-        NES_INFO("\t Generated Tuples=" << sink->getNumberOfWrittenOutTuples());
-    }
-}
+ExecutablePipelinePtr ExecutableQueryPlan::getPipeline(uint64_t index) const { return pipelines[index]; }
 
 }// namespace NES

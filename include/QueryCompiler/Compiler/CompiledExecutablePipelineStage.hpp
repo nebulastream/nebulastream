@@ -1,7 +1,9 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-
+#include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
+#include <mutex>
+#include <atomic>
 namespace NES {
 using NodeEngine::TupleBuffer;
 using NodeEngine::WorkerContext;

@@ -1,15 +1,6 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/WorkerContext.hpp>
-#include <State/StateVariable.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/Runtime/WindowManager.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
-#include <Windowing/WindowHandler/JoinHandler.hpp>
 
 namespace NES::NodeEngine::Execution {
 
