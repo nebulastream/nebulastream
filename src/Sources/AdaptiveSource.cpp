@@ -25,7 +25,7 @@
 
 namespace NES {
 
-AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+AdaptiveSource::AdaptiveSource(SchemaPtr schema,  NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                uint64_t initialGatheringInterval, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval);
@@ -43,7 +43,7 @@ std::optional<TupleBuffer> AdaptiveSource::receiveData() {
     return buf;
 }
 
-void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
+void AdaptiveSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
     setThreadName("AdaptSrc-%d", operatorId);
     std::string thName = "AdaptSrc-" + operatorId;
 

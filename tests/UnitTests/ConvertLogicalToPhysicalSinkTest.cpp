@@ -41,7 +41,6 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4 * 1024, 10);
     SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create("file.log", "CSV_FORMAT", "APPEND");
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     DataSinkPtr fileOutputSink =

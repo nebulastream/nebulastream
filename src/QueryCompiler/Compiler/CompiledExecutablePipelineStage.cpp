@@ -49,7 +49,7 @@ uint32_t CompiledExecutablePipelineStage::start(NodeEngine::Execution::PipelineE
     return executablePipelineStage->start(pipelineExecutionContext);
 }
 
-uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) {
+uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, NodeEngine::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Running) {
         NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
@@ -61,7 +61,7 @@ uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineEx
 
 uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                   NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                                                  WorkerContext& workerContext) {
+                                                  NodeEngine::WorkerContext& workerContext) {
     // we dont get the lock here as we dont was to serialize the execution.
     // currentExecutionStage is an atomic so its still save to read it
     if (currentExecutionStage != Running) {
@@ -75,7 +75,7 @@ uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
 
 
 uint32_t CompiledExecutablePipelineStage::close(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                                                WorkerContext& workerContext) {
+                                                NodeEngine::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Running) {
         NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "

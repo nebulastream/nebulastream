@@ -32,7 +32,7 @@
 #include <zconf.h>
 namespace NES {
 
-DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                        OperatorId operatorId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId) {
@@ -120,7 +120,7 @@ bool DataSource::isRunning() { return running; }
 
 void DataSource::setGatheringInterval(uint64_t interval) { this->gatheringInterval = interval; }
 
-void DataSource::runningRoutine(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
+void DataSource::runningRoutine( NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());

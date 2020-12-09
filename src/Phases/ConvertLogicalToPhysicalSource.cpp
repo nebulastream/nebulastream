@@ -29,6 +29,7 @@
 #include <Util/Logger.hpp>
 
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
 
 namespace NES {
@@ -36,9 +37,9 @@ namespace NES {
 DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine) {
 
     NES_ASSERT(nodeEngine, "invalid engine");
-    BufferManagerPtr bufferManager = nodeEngine->getBufferManager();
-    NodeEngine::QueryManagerPtr queryManager = nodeEngine->getQueryManager();
-    Network::NetworkManagerPtr networkManager = nodeEngine->getNetworkManager();
+    auto bufferManager = nodeEngine->getBufferManager();
+    auto queryManager = nodeEngine->getQueryManager();
+    auto networkManager = nodeEngine->getNetworkManager();
 
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ZMQ source");

@@ -92,7 +92,7 @@ class WindowSource : public NES::DefaultSource {
     int64_t timestamp;
     bool varyWatermark;
     bool decreaseTime;
-    WindowSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    WindowSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                  const uint64_t numbersOfBufferToProduce, uint64_t frequency, bool varyWatermark, bool decreaseTime,
                  int64_t timestamp)
         : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency,
@@ -166,7 +166,7 @@ class WindowSource : public NES::DefaultSource {
         return buffer;
     };
 
-    static DataSourcePtr create(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    static DataSourcePtr create(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                 const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false,
                                 bool decreaseTime = false, int64_t timestamp = 5) {
         auto windowSchema = Schema::create()
@@ -182,14 +182,14 @@ typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
 
 class TestSink : public SinkMedium {
   public:
-    TestSink(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager)
+    TestSink(uint64_t expectedBuffer, SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
 
-    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema, BufferManagerPtr bufferManager) {
+    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) {
         return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
     }
 
-    bool writeData(TupleBuffer& input_buffer, WorkerContext&) override {
+    bool writeData(TupleBuffer& input_buffer, NodeEngine::WorkerContext&) override {
         std::unique_lock lock(m);
         NES_DEBUG("QueryExecutionTest: TestSink: got buffer " << input_buffer);
         NES_DEBUG("QueryExecutionTest: PrettyPrintTupleBuffer"
@@ -300,7 +300,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
-    WorkerContext workerContext{1};
+    NodeEngine::WorkerContext workerContext{1};
     plan->getStage(0)->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
@@ -895,7 +895,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     // ingest test data
     plan->setup();
     plan->start();
-    WorkerContext workerContext{1};
+    NodeEngine::WorkerContext workerContext{1};
     auto stage_0 = plan->getStage(0);
     auto stage_1 = plan->getStage(1);
     for (int i = 0; i < 10; i++) {

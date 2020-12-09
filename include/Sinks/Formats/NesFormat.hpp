@@ -24,7 +24,7 @@ class SerializableSchema;
 
 class NesFormat : public SinkFormat {
   public:
-    NesFormat(SchemaPtr schema, BufferManagerPtr bufferManager);
+    NesFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager);
 
     /**
     * @brief method to write a TupleBuffer

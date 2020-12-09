@@ -43,7 +43,7 @@ class OPCSource : public DataSource {
      * @param user name if connecting with a server with authentication
      * @param password for authentication if needed
      */
-    OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId,
+    OPCSource(SchemaPtr schema,  NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId,
               std::string password, std::string user, OperatorId operatorId);
 
     /**

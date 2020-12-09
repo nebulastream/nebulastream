@@ -21,6 +21,7 @@
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
+#include <mutex>
 
 namespace NES {
 class TupleBuffer;
@@ -61,7 +62,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    virtual bool writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) = 0;
+    virtual bool writeData(TupleBuffer& inputBuffer,  NodeEngine::WorkerContext& workerContext) = 0;
 
     /**
      * @brief get the id of the owning plan

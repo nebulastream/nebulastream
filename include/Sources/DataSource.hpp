@@ -60,7 +60,7 @@ class DataSource : public NodeEngine::Reconfigurable {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId);
+    explicit DataSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId);
 
     DataSource() = delete;
 
@@ -85,7 +85,7 @@ class DataSource : public NodeEngine::Reconfigurable {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    virtual void runningRoutine(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager);
+    virtual void runningRoutine( NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager);
 
     /**
      * @brief virtual function to receive a buffer
@@ -171,7 +171,7 @@ class DataSource : public NodeEngine::Reconfigurable {
     std::atomic<uint64_t> gatheringInterval;
     OperatorId operatorId;
     SourceType type;
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
 
   private:

@@ -29,7 +29,7 @@ namespace NES {
 namespace Network {
 
 ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol,
-                     BufferManagerPtr bufferManager)
+                     NodeEngine::BufferManagerPtr bufferManager)
     : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
       exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
     NES_DEBUG("ZmqServer: Creating ZmqServer()");

@@ -45,7 +45,7 @@ void YSBSource::generate(YSBSource::YsbRecord& rec, uint64_t ts, uint64_t eventT
     rec.ip = 0x01020304;
 }
 
-YSBSource::YSBSource(BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
+YSBSource::YSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
                      uint64_t numberOfTuplesPerBuffer, uint64_t frequency, OperatorId operatorId)
     : DefaultSource(YsbSchema(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       numberOfTuplesPerBuffer(numberOfTuplesPerBuffer), tmpEventType(0), currentMs(0) {}

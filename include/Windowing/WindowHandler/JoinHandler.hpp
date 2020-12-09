@@ -140,7 +140,7 @@ class JoinHandler : public AbstractJoinHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(NodeEngine::QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
+    bool setup(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
                uint32_t pipelineStageId, uint64_t originId) override {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;

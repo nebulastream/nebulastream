@@ -71,7 +71,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     * @brief Initialises the state of this window depending on the window definition.
     */
     virtual bool setup(NodeEngine::QueryManagerPtr queryManager,
-                       BufferManagerPtr bufferManager,
+                       NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
                        uint32_t pipelineStageId, uint64_t originId) = 0;
 
@@ -175,7 +175,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
     uint32_t pipelineStageId;
     NodeEngine::QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
     uint64_t originId;
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;
     uint64_t lastWatermark;

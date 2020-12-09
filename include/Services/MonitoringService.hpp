@@ -19,6 +19,7 @@
 
 #include <cpprest/json.h>
 #include <memory>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -34,14 +35,10 @@ typedef std::shared_ptr<Topology> TopologyPtr;
 class MonitoringPlan;
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class TupleBuffer;
 
 class MonitoringService {
   public:
-    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, BufferManagerPtr bufferManager);
+    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager);
 
     ~MonitoringService();
 
@@ -104,7 +101,7 @@ class MonitoringService {
   private:
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
 };
 
 typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;

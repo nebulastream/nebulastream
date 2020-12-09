@@ -21,14 +21,15 @@ namespace NES{
 
 class TupleBuffer;
 
-class WorkerContext;
-typedef WorkerContext& WorkerContextRef;
+
+
+namespace NodeEngine{
 
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-
-namespace NodeEngine{
+class WorkerContext;
+typedef WorkerContext& WorkerContextRef;
 
 class NodeStatsProvider;
 typedef std::shared_ptr<NodeStatsProvider> NodeStatsProviderPtr;

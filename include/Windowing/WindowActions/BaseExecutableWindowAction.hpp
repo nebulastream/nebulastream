@@ -32,7 +32,7 @@ class BaseExecutableWindowAction {
 
     virtual std::string toString() = 0;
 
-    void setup(NodeEngine::QueryManagerPtr queryManager, BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline, uint64_t originId) {
+    void setup(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline, uint64_t originId) {
         this->queryManager = queryManager;
         this->bufferManager = bufferManager;
         this->nextPipeline = nextPipeline;
@@ -43,7 +43,7 @@ class BaseExecutableWindowAction {
 
   protected:
     NodeEngine::QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
     NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
     uint64_t originId;
     SchemaPtr windowSchema;

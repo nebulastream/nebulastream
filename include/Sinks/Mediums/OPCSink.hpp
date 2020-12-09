@@ -54,7 +54,7 @@ class OPCSink : public SinkMedium {
      * @param input_buffer a tuple buffer's pointer
      * @return bool indicating if the write was completed
      */
-    bool writeData(TupleBuffer& input_buffer, WorkerContextRef) override;
+    bool writeData(TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
 
     /**
      * @brief method to override virtual setup function

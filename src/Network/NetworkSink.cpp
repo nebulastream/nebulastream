@@ -24,7 +24,7 @@ namespace NES {
 namespace Network {
 
 NetworkSink::NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkManagerPtr networkManager,
-                         const NodeLocation nodeLocation, NesPartition nesPartition, BufferManagerPtr bufferManager,
+                         const NodeLocation nodeLocation, NesPartition nesPartition, NodeEngine::BufferManagerPtr bufferManager,
                          NodeEngine::QueryManagerPtr queryManager, std::chrono::seconds waitTime, uint8_t retryTimes)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
       nodeLocation(nodeLocation), nesPartition(nesPartition), queryManager(queryManager), waitTime(waitTime),
@@ -39,7 +39,7 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesPartition); }
 
-bool NetworkSink::writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) {
+bool NetworkSink::writeData(TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) {
     auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
     NES_VERIFY(channel, "invalid channel on " << nesPartition);
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
@@ -58,7 +58,7 @@ void NetworkSink::shutdown() {
 
 const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
-void NetworkSink::reconfigure(NodeEngine::ReconfigurationTask& task, WorkerContext& workerContext) {
+void NetworkSink::reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << parentPlanId);
     Reconfigurable::reconfigure(task, workerContext);
     switch (task.getType()) {

@@ -70,7 +70,7 @@ class PipelineStageHolder {
     }
 };
 
-void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId, CodeGeneratorPtr codeGenerator, BufferManagerPtr,
+void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId, CodeGeneratorPtr codeGenerator, NodeEngine::BufferManagerPtr,
                                  NodeEngine::QueryManagerPtr, PipelineContextPtr context,
                                  std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
     // BFS visit to figure out producer-consumer relations among pipelines
@@ -144,7 +144,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [childPipelines](TupleBuffer& buffer, WorkerContextRef workerContext) {
+                [childPipelines](TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
                     }
@@ -159,7 +159,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [sinks](TupleBuffer& buffer, WorkerContextRef workerContext) {
+                [sinks](TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& sink : sinks) {
                         sink->writeData(buffer, workerContext);
                     }

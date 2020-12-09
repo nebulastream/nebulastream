@@ -29,7 +29,7 @@
 
 namespace NES {
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, BufferManagerPtr bufferManager)
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager)
     : workerClient(workerClient), topology(topology), bufferManager(bufferManager) {
     NES_DEBUG("MonitoringService: Initializing");
 }

@@ -18,12 +18,13 @@
 #include <API/Schema.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 namespace NES {
 
-NesFormat::NesFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
+NesFormat::NesFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
     serializedSchema = new SerializableSchema();
 }
 

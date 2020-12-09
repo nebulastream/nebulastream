@@ -49,7 +49,7 @@ uint64_t rpcPort = 5000;
 
 class MonitoringStackTest : public testing::Test {
   public:
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
@@ -63,7 +63,7 @@ class MonitoringStackTest : public testing::Test {
     /* Will be called before a  test is executed. */
     void SetUp() override {
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
+        bufferManager = std::make_shared<NodeEngine::BufferManager>(4096, 10);
         rpcPort = rpcPort + 30;
     }
 

@@ -16,6 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -23,7 +24,7 @@
 #include <iostream>
 namespace NES {
 
-CsvFormat::CsvFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
+CsvFormat::CsvFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
 
 std::optional<TupleBuffer> CsvFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();

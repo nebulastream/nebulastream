@@ -298,7 +298,7 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
         ReconfigurationTask(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
     auto pipelineContext = std::make_shared<Execution::PipelineExecutionContext>(
         queryExecutionPlanId, bufferManager,
-        [](TupleBuffer&, NES::WorkerContext&) {
+        [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
         },
         nullptr, nullptr);
     auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);

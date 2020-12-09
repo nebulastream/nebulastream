@@ -89,10 +89,10 @@ class CodeGenerationTest : public testing::Test {
 
 class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler, AbstractWindowHandlerPtr)
+    TestPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler, AbstractWindowHandlerPtr)
         : PipelineExecutionContext(
             0, std::move(bufferManager),
-            [this](TupleBuffer& buffer, WorkerContextRef) {
+            [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             std::move(windowHandler), nullptr){
@@ -335,7 +335,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NES::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
-    auto workerContextType = tf.createAnonymusDataType("NES::WorkerContext");
+    auto workerContextType = tf.createAnonymusDataType("NodeEngine::WorkerContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
     auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
 
@@ -477,7 +477,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     inputBuffer.setNumberOfTuples(100);
 
     /* execute code */
-    auto wctx = WorkerContext{0};
+    auto wctx = NodeEngine::WorkerContext{0};
     auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
     stage->setup(*context.get());
     stage->start(*context.get());
