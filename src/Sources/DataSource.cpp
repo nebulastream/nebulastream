@@ -39,16 +39,6 @@ DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, 
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->bufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
-
-    /**
-     * we allow only three cases:
-     *  1.) If the user specifies a numBuffersToProcess:
-     *      1.1) if the source e.g. file is large enough we will read in numBuffersToProcess and then terminate
-     *      1.2) if the file is not large enough, we will start at the beginning until we produced numBuffersToProcess
-     *  2.) If the user set numBuffersToProcess to 0, we read the source until it ends, e.g, until the file ends
-     *  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
-     */
-
 }
 OperatorId DataSource::getOperatorId() { return operatorId; }
 
@@ -144,7 +134,6 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
         NES_ERROR("bufferManager not set");
         throw std::logic_error("DataSource: BufferManager not set");
     }
-
 
     auto ts = std::chrono::system_clock::now();
     std::chrono::seconds lastTimeStampSec = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch());
