@@ -42,6 +42,7 @@ class ConstantExpressionStatement : public ExpressionStatment {
 
 typedef ConstantExpressionStatement Constant;
 
+
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CONSTANTEXPRESSIONSTATEMENT_HPP_

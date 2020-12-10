@@ -36,6 +36,9 @@ typedef std::shared_ptr<Declaration> DeclarationPtr;
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
+class BlockScopeStatement;
+typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
+
 /**
  * @brief The Pipeline Context represents the context of one pipeline during code generation.
  * todo it requires a refactoring if we redesign the compiler.
@@ -45,6 +48,7 @@ class PipelineContext {
     PipelineContext();
     static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);
+    BlockScopeStatementPtr createSetupScope();
     std::vector<DeclarationPtr> variable_declarations;
 
     SchemaPtr getInputSchema() const;
@@ -67,9 +71,10 @@ class PipelineContext {
 
     std::string pipelineName;
     bool isLeftSide;
-
+    std::vector<BlockScopeStatementPtr> getSetupScopes();
   private:
     std::vector<PipelineContextPtr> nextPipelines;
+    std::vector<BlockScopeStatementPtr> setupScopes;
     Windowing::AbstractWindowHandlerPtr windowHandler;
     Join::AbstractJoinHandlerPtr joinHandler;
 };

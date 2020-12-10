@@ -14,17 +14,18 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BlockScopeStatement.hpp>
+
+#include <sstream>
 
 namespace NES {
 
-CodeGenerator::CodeGenerator() = default;
+BlockScopeStatementPtr BlockScopeStatement::create() {
+    return std::make_shared<BlockScopeStatement>();
+}
 
-CodeGenerator::~CodeGenerator() = default;
-
-CompilerTypesFactoryPtr CodeGenerator::getTypeFactory() { return std::make_shared<CompilerTypesFactory>(); }
-FunctionCallStatementPtr CodeGenerator::call(std::string function) { return FunctionCallStatement::create(function); }
+const CodeExpressionPtr BlockScopeStatement::getCode() const {
+    return std::make_shared<CodeExpression>("{" + CompoundStatement::getCode()->code_ + "}");
+}
 
 }// namespace NES

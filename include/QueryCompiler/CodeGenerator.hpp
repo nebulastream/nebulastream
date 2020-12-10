@@ -169,5 +169,6 @@ class CodeGenerator {
     virtual ~CodeGenerator();
 
     CompilerTypesFactoryPtr getTypeFactory();
+    FunctionCallStatementPtr call(std::string function);
 };
 }// namespace NES

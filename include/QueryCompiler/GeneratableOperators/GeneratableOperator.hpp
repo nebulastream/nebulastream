@@ -49,6 +49,7 @@ class GeneratableOperator {
     * @param context a pointer to the current pipeline context.
     */
     virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context) = 0;
+
 };
 
 }// namespace NES

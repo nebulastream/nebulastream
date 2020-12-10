@@ -87,6 +87,15 @@ DataTypePtr DataTypeFactory::createChar() { return std::make_shared<Char>(); }
 ValueTypePtr DataTypeFactory::createBasicValue(DataTypePtr type, std::string value) {
     return std::make_shared<BasicValue>(type, value);
 }
+
+ValueTypePtr DataTypeFactory::createBasicValue(uint64_t value) {
+    return createBasicValue(createUInt64(), std::to_string(value));
+}
+
+ValueTypePtr DataTypeFactory::createBasicValue(int64_t value) {
+    return createBasicValue(createInt64(), std::to_string(value));
+}
+
 ValueTypePtr DataTypeFactory::createBasicValue(BasicType type, std::string value) {
     return createBasicValue(createType(type), value);
 }

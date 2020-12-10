@@ -38,4 +38,8 @@ BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment& ref
     return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
 }
 
+BinaryOperatorStatement ExpressionStatment::assign(ExpressionStatmentPtr ref) {
+    return BinaryOperatorStatement(this->copy(), ASSIGNMENT_OP, ref);
+}
+
 }// namespace NES

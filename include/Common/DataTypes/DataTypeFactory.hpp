@@ -179,6 +179,20 @@ class DataTypeFactory {
     static ValueTypePtr createBasicValue(BasicType type, std::string value);
 
     /**
+     * @brief Create a basic typed value. For instance a Integer with value "42".
+     * @param value the value as a uint64_t
+     * @return ValueTypePtr
+     */
+    static ValueTypePtr createBasicValue(uint64_t value);
+
+    /**
+     * @brief Create a basic typed value. For instance a Integer with value "42".
+     * @param value the value as a int64_t
+     * @return ValueTypePtr
+     */
+    static ValueTypePtr createBasicValue(int64_t value);
+
+    /**
      * @brief Create a array typed value. For instance a Array of Integers with values ["42", "9"].
      * @param type the data type as a DataTypePtr
      * @param values the value as a vector of strings, which represent the individual values.
