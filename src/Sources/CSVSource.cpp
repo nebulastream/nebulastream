@@ -34,8 +34,7 @@ CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryMana
                      const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
                      uint64_t frequency, bool skipHeader, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0),
-      skipHeader(skipHeader) {
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0), skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = frequency;
     tupleSize = schema->getSchemaSizeInBytes();
@@ -51,12 +50,9 @@ CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryMana
         NES_ERROR("CSVSource::fillBuffer File " + filePath + " is corrupted");
     }
 
-    if(numBuffersToProcess != 0)
-    {
+    if (numBuffersToProcess != 0) {
         loopOnFile = true;
-    }
-    else
-    {
+    } else {
         loopOnFile = false;
     }
 
@@ -72,12 +68,9 @@ std::optional<TupleBuffer> CSVSource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
     NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
-    if(buf.getNumberOfTuples() == 0)
-    {
+    if (buf.getNumberOfTuples() == 0) {
         return std::nullopt;
-    }
-    else
-    {
+    } else {
         return buf;
     }
 }
