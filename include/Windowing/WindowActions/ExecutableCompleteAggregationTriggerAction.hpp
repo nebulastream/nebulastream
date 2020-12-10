@@ -55,6 +55,7 @@ class ExecutableCompleteAggregationTriggerAction
         SchemaPtr outputSchema)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation) {
 
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString());
         this->windowSchema = outputSchema;
         windowTupleLayout = createRowLayout(this->windowSchema);
     }

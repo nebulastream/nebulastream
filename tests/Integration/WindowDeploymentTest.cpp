@@ -1112,7 +1112,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     //register physical stream
     PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
     //    wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
@@ -1233,7 +1233,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     //register physical stream
     PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
     //    wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
