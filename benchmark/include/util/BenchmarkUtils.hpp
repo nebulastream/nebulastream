@@ -108,7 +108,7 @@ class BenchmarkUtils {
  */
 #define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
     {                                                                                                                            \
-        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_INFO);                                  \
+        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);                                  \
                                                                                                                                  \
         try {                                                                                                                    \
             std::ofstream benchmarkFile;                                                                                         \
