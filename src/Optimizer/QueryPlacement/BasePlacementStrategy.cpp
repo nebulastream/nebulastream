@@ -280,7 +280,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                             NES_TRACE("BasePlacementStrategy: add network source operator as child to the parent operator.");
                             targetDownstreamOperator->addChild(sourceOperator);
                             allChildrenPlaced =
-                                (parentOperator->getChildren().size() != targetDownstreamOperator->getChildren().size());
+                                (parentOperator->getChildren().size() == targetDownstreamOperator->getChildren().size());
                             found = true;
                             break;
                         }
