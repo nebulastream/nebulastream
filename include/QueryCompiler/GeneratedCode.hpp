@@ -42,6 +42,7 @@ typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 class GeneratedCode {
   public:
     GeneratedCode();
+    std::vector<StatementPtr> setupCode;
     std::vector<VariableDeclaration> variableDeclarations;
     std::vector<StatementPtr> variableInitStmts;
     std::shared_ptr<FOR> forLoopStmt;

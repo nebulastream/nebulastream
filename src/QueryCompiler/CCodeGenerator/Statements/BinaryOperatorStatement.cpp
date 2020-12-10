@@ -61,6 +61,10 @@ BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatment& lhs, 
                                                  const ExpressionStatment& rhs, BracketMode bracket_mode)
     : lhs_(lhs.copy()), rhs_(rhs.copy()), op_(op), bracket_mode_(bracket_mode) {}
 
+BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatmentPtr lhs, const BinaryOperatorType& op,
+                                                 const ExpressionStatmentPtr rhs, BracketMode bracket_mode)
+    : lhs_(lhs), rhs_(rhs), op_(op), bracket_mode_(bracket_mode) {}
+
 BinaryOperatorStatement BinaryOperatorStatement::addRight(const BinaryOperatorType& op, const VarRefStatement& rhs,
                                                           BracketMode bracket_mode) {
     return BinaryOperatorStatement(*this, op, rhs, bracket_mode);

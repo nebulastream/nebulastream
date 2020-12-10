@@ -40,6 +40,7 @@ class ExpressionStatment : public Statement {
     //  }
 
     BinaryOperatorStatement assign(const ExpressionStatment& ref);
+    BinaryOperatorStatement assign(ExpressionStatmentPtr ref);
     BinaryOperatorStatement accessPtr(const ExpressionStatment& ref);
     BinaryOperatorStatement accessRef(const ExpressionStatment& ref);
 

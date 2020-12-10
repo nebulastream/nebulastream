@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BlockScopeStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <memory>
@@ -25,6 +26,9 @@ namespace NES {
 PipelineContext::PipelineContext() { this->code = std::make_shared<GeneratedCode>(); }
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
+BlockScopeStatementPtr PipelineContext::createSetupScope() {
+    return setupScopes.emplace_back(BlockScopeStatement::create());
+}
 void PipelineContext::setWindow(Windowing::AbstractWindowHandlerPtr window) { this->windowHandler = std::move(window); }
 
 void PipelineContext::setJoin(Join::AbstractJoinHandlerPtr join) { this->joinHandler = std::move(join); }
@@ -47,5 +51,9 @@ SchemaPtr PipelineContext::getInputSchema() const { return inputSchema; }
 SchemaPtr PipelineContext::getResultSchema() const { return resultSchema; }
 
 PipelineContextPtr PipelineContext::create() { return std::make_shared<PipelineContext>(); }
+
+std::vector<BlockScopeStatementPtr> PipelineContext::getSetupScopes() {
+    return setupScopes;
+}
 
 }// namespace NES

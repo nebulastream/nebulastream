@@ -36,6 +36,7 @@
 #include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BlockScopeStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
@@ -1154,6 +1155,17 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     auto code = context->code;
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();
+    auto setupFunction = FunctionDefinition::create("setup")
+                             ->returns(tf->createDataType(DataTypeFactory::createUInt32()));
+
+    for(auto setupScope: context->getSetupScopes()){
+        setupFunction->addStatement(setupScope);
+    }
+
+    setupFunction->addStatement(ReturnStatement::create(Constant(
+        tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))).createCopy()));
+
+
     auto functionBuilder = FunctionDefinition::create("execute")
                                           ->returns(tf->createDataType(DataTypeFactory::createUInt32()))
                                           ->addParameter(code->varDeclarationInputBuffer)
@@ -1190,6 +1202,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage" + context->pipelineName);
     executablePipeline->addBaseClass("NodeEngine::Execution::ExecutablePipelineStage");
     executablePipeline->addMethod(ClassDefinition::Public, functionBuilder);
+    executablePipeline->addMethod(ClassDefinition::Public, setupFunction);
 
     auto executablePipelineDeclaration = executablePipeline->getDeclaration();
     auto pipelineNamespace = NamespaceDefinition::create("NES");
@@ -1200,7 +1213,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     auto createFunction = FunctionDefinition::create("create");
     auto returnStatement = ReturnStatement::create(SharedPointerGen::makeShared(executablePipelineDeclaration->getType()));
     createFunction->addStatement(returnStatement);
-   ;
+
     createFunction->returns(SharedPointerGen::createSharedPtrType( CompilerTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file  =  fileBuilder

@@ -53,10 +53,14 @@ class GeneratableWindowOperator : public WindowLogicalOperatorNode, public Gener
 
     Windowing::AbstractWindowHandlerPtr createWindowHandler(SchemaPtr outputSchema);
 
+    void generateSetupCode(CodeGeneratorPtr codegen, PipelineContextPtr context);
+
   protected:
     explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                        GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);
     GeneratableWindowAggregationPtr generatableWindowAggregation;
+
+
 };
 
 }// namespace NES
