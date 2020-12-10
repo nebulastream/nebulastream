@@ -26,11 +26,10 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <chrono>
+#include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
 #include <iostream>
 #include <memory>
-#include <cpprest/filestream.h>
-#include <cpprest/http_client.h>
 
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
@@ -523,29 +522,28 @@ class TestUtils {
         web::http::client::http_client client(baseUri);
         size_t nodeNo;
 
-        for (int i=0; i<maxTimeout; i++) {
+        for (int i = 0; i < maxTimeout; i++) {
             try {
                 client.request(web::http::methods::GET)
                     .then([](const web::http::http_response& response) {
-                      NES_INFO("get first then");
-                      return response.extract_json();
+                        NES_INFO("get first then");
+                        return response.extract_json();
                     })
                     .then([&json_return](const pplx::task<web::json::value>& task) {
-                      try {
-                          json_return = task.get();
-                      } catch (const web::http::http_exception& e) {
-                          NES_ERROR("TestUtils: Error while setting return: " << e.what());
-                      }
+                        try {
+                            json_return = task.get();
+                        } catch (const web::http::http_exception& e) {
+                            NES_ERROR("TestUtils: Error while setting return: " << e.what());
+                        }
                     })
                     .wait();
 
                 nodeNo = json_return.at("nodes").size();
 
-                if (nodeNo == expectedWorkers+1) {
+                if (nodeNo == expectedWorkers + 1) {
                     NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
                     return true;
-                }
-                else {
+                } else {
                     sleep(1);
                 }
             } catch (const std::exception& e) {
@@ -554,8 +552,8 @@ class TestUtils {
             }
         }
 
-        NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly "
-                      << nodeNo << " but expected " << expectedWorkers);
+        NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly " << nodeNo << " but expected "
+                                                                                                 << expectedWorkers);
         return false;
     }
 };
