@@ -31,8 +31,7 @@ class YSBSourceDescriptor : public SourceDescriptor {
                                       OperatorId operatorId);
 
     static SourceDescriptorPtr create(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess, uint64_t frequency,
-                                      OperatorId operatorId);
+                                      uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
 
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;

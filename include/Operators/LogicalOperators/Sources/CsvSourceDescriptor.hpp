@@ -28,8 +28,8 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath, std::string delimiter, uint64_t numBuffersToProcess,
-                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency,
-                                      bool skipHeader, OperatorId operatorId);
+                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency, bool skipHeader,
+                                      OperatorId operatorId);
 
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                       uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,

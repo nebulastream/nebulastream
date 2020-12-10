@@ -139,12 +139,10 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
     std::chrono::seconds lastTimeStampSec = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch());
 
     NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType());
-    if(numBuffersToProcess == 0)
-    {
-        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until the source is empty");
-    }
-    else
-    {
+    if (numBuffersToProcess == 0) {
+        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+                  "the source is empty");
+    } else {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
 
