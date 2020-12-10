@@ -43,11 +43,11 @@ SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, std::string fi
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string filePath,
                                                 std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
-                                                uint64_t numBuffersToProcess, uint64_t frequency,
-                                                bool skipHeader, OperatorId operatorId) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(
-        std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer,
-        numBuffersToProcess, frequency, skipHeader, operatorId));
+                                                uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader,
+                                                OperatorId operatorId) {
+    return std::make_shared<CsvSourceDescriptor>(
+        CsvSourceDescriptor(std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter),
+                            numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, skipHeader, operatorId));
 }
 
 const std::string& CsvSourceDescriptor::getFilePath() const { return filePath; }

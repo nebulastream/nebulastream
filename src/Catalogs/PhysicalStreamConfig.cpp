@@ -23,19 +23,17 @@ PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std
                                                      uint32_t numberOfTuplesToProducePerBuffer, uint32_t numberOfBuffersToProduce,
                                                      std::string physicalStreamName, std::string logicalStreamName,
                                                      bool skipHeader) {
-    return std::make_shared<PhysicalStreamConfig>(
-        PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                             numberOfBuffersToProduce, physicalStreamName, logicalStreamName, skipHeader));
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency,
+                                                                       numberOfTuplesToProducePerBuffer, numberOfBuffersToProduce,
+                                                                       physicalStreamName, logicalStreamName, skipHeader));
 }
 
 PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
                                            uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                           std::string physicalStreamName, std::string logicalStreamName,
-                                           bool skipHeader)
+                                           std::string physicalStreamName, std::string logicalStreamName, bool skipHeader)
     : sourceType(sourceType), sourceConfig(sourceConfig), sourceFrequency(sourceFrequency),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProduce(numberOfBuffersToProduce),
-      physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName),
-      skipHeader(skipHeader){};
+      physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), skipHeader(skipHeader){};
 
 std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;

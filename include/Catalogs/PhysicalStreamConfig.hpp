@@ -42,8 +42,7 @@ struct PhysicalStreamConfig {
                                           uint32_t sourceFrequency = 1, uint32_t numberOfTuplesToProducePerBuffer = 1,
                                           uint32_t numberOfBuffersToProduce = 1,
                                           std::string physicalStreamName = "default_physical",
-                                          std::string logicalStreamName = "default_logical",
-                                          bool skipHeader = false);
+                                          std::string logicalStreamName = "default_logical", bool skipHeader = false);
 
     /**
      * @brief Get the source type
@@ -94,8 +93,7 @@ struct PhysicalStreamConfig {
   private:
     explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
                                   uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                  std::string physicalStreamName, std::string logicalStreamName,
-                                  bool skipHeader);
+                                  std::string physicalStreamName, std::string logicalStreamName, bool skipHeader);
 
     std::string sourceType;
     std::string sourceConfig;

@@ -60,11 +60,11 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
         const CsvSourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
-        return createCSVFileSource(
-            csvSourceDescriptor->getSchema(), bufferManager, queryManager, csvSourceDescriptor->getFilePath(),
-            csvSourceDescriptor->getDelimiter(), csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-            csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
-            csvSourceDescriptor->getSkipHeader(), sourceDescriptor->getOperatorId());
+        return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
+                                   csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
+                                   csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
+                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
+                                   csvSourceDescriptor->getSkipHeader(), sourceDescriptor->getOperatorId());
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");
