@@ -125,6 +125,11 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         //Fetch the signature of only children and get the column values
         auto cols = childrenQuerySignatures[0]->getCols();
 
+//        const z3::expr_vector& vector = expr->contains();
+//        for(auto ele : vector){
+//            NES_INFO(ele);
+//        }
+        
         if (cols.find(fieldName) != cols.end()) {
             //Substitute the field expressions with the children column values
             auto colExprs = cols[fieldName];
