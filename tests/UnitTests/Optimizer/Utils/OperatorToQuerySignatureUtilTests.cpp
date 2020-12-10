@@ -21,6 +21,7 @@
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
@@ -311,7 +312,7 @@ TEST_F(OperatorToQuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("id") = 40;
     expression1->inferStamp(schema);
-    FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = Attribute("id");
+    FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = Attribute("id") + Attribute("value");
     expression2->inferStamp(schema);
 
     //Create Source
@@ -327,9 +328,9 @@ TEST_F(OperatorToQuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     auto sig1 = logicalOperator12->getSignature();
 
     LogicalOperatorNodePtr logicalOperator21 = LogicalOperatorFactory::createMapOperator(expression2);
-    logicalOperator11->addChild(sourceOperator);
+    logicalOperator21->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression1);
-    logicalOperator22->addChild(logicalOperator11);
+    logicalOperator22->addChild(logicalOperator21);
     logicalOperator22->inferSignature(context);
     auto sig2 = logicalOperator22->getSignature();
 

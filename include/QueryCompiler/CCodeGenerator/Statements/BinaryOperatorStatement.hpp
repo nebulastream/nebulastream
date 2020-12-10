@@ -73,7 +73,7 @@ BinaryOperatorStatement operator>(const ExpressionStatment& lhs, const Expressio
 
 BinaryOperatorStatement operator>=(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
 
-BinaryOperatorStatement operator+(ExpressionItem lhs, const ExpressionStatment& rhs);
+BinaryOperatorStatement operator+(const ExpressionStatment&, const ExpressionStatment& rhs);
 
 BinaryOperatorStatement operator-(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
 
