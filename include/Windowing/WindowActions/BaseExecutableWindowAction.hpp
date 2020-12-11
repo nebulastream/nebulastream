@@ -32,20 +32,12 @@ class BaseExecutableWindowAction {
 
     virtual std::string toString() = 0;
 
-    void setup(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline, uint64_t originId) {
-        this->queryManager = queryManager;
-        this->bufferManager = bufferManager;
-        this->nextPipeline = nextPipeline;
-        this->originId = originId;
+    void setup(NodeEngine::Execution::PipelineExecutionContextPtr executionContext) {
+        this->executionContext = executionContext;
     }
 
-    SchemaPtr getWindowSchema() { return windowSchema; }
-
   protected:
-    NodeEngine::QueryManagerPtr queryManager;
-    NodeEngine::BufferManagerPtr bufferManager;
-    NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
-    uint64_t originId;
+    NodeEngine::Execution::PipelineExecutionContextPtr executionContext;
     SchemaPtr windowSchema;
 };
 }// namespace NES::Windowing

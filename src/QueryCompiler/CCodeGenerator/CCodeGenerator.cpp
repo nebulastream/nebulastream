@@ -1156,6 +1156,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();
     auto setupFunction = FunctionDefinition::create("setup")
+                             ->addParameter(code->varDeclarationExecutionContext)
                              ->returns(tf->createDataType(DataTypeFactory::createUInt32()));
 
     for(auto setupScope: context->getSetupScopes()){

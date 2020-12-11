@@ -30,8 +30,16 @@ BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatment& 
     return BinaryOperatorStatement(*this, MEMBER_SELECT_POINTER_OP, ref);
 }
 
+BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatmentPtr ref) {
+    return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_POINTER_OP, ref);
+}
+
 BinaryOperatorStatement ExpressionStatment::accessRef(const ExpressionStatment& ref) {
     return BinaryOperatorStatement(*this, MEMBER_SELECT_REFERENCE_OP, ref);
+}
+
+BinaryOperatorStatement ExpressionStatment::accessRef(ExpressionStatmentPtr ref) {
+    return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_REFERENCE_OP, ref);
 }
 
 BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment& ref) {

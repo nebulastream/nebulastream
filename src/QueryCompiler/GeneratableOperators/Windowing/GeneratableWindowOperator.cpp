@@ -20,12 +20,15 @@
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
@@ -43,12 +46,42 @@ Windowing::AbstractWindowHandlerPtr GeneratableWindowOperator::createWindowHandl
     return Windowing::WindowHandlerFactory::createAggregationWindowHandler(windowDefinition, outputSchema);
 }
 
-void GeneratableWindowOperator::generateSetupCode(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+uint64_t GeneratableWindowOperator::generateSetupCode(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto tf = codegen->getTypeFactory();
+
+    auto executionContextRef= VarRefStatement(context->code->varDeclarationExecutionContext);
+    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, outputSchema);
+    auto windowOperatorIndex = context->registerOperatorHandler(windowOperatorHandler);
+
+
     // create a new setup scope for this operator
     auto setupScope = context->createSetupScope();
 
-    auto aggregation = windowDefinition->getWindowAggregation();
+    auto windowOperatorHandlerDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = codegen->call("getOperatorHandler<Windowing::WindowOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
+                                       .assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    setupScope->addStatement(windowOperatorStatement.copy());
+
+    // getWindowDefinition
+    auto windowDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowDefinition");
+    auto getWindowDefinitionCall = codegen->call("getWindowDefinition");
+    auto windowDefinitionStatement = VarDeclStatement(windowDefDeclaration)
+        .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getWindowDefinitionCall));
+    setupScope->addStatement(windowDefinitionStatement.copy());
+
+
+
+    // getResultSchema
+    auto resultSchemaDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "resultSchema");
+    auto getResultSchemaCall = codegen->call("getResultSchema");
+    auto resultSchemaStatement = VarDeclStatement(resultSchemaDeclaration)
+        .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getResultSchemaCall));
+    setupScope->addStatement(resultSchemaStatement.copy());
+
 
     auto isKeyed = windowDefinition->isKeyed();
     GeneratableDataTypePtr keyType;
@@ -56,7 +89,7 @@ void GeneratableWindowOperator::generateSetupCode(CodeGeneratorPtr codegen, Pipe
         auto logicalKeyType = windowDefinition->getOnKey()->getStamp();
         keyType = tf->createDataType(logicalKeyType);
     }
-    auto windowDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowDefinition");
+    auto aggregation = windowDefinition->getWindowAggregation();
     auto aggregationInputType = tf->createDataType(aggregation->getInputStamp());
     auto partialAggregateType = tf->createDataType(aggregation->getPartialAggregateStamp());
     auto finalAggregateType = tf->createDataType(aggregation->getFinalAggregateStamp());
@@ -91,6 +124,7 @@ void GeneratableWindowOperator::generateSetupCode(CodeGeneratorPtr codegen, Pipe
                       + finalAggregateType->getCode()->code_ + ">::create");
         createTriggerActionCall->addParameter(VarRef(windowDefDeclaration));
         createTriggerActionCall->addParameter(VarRef(executableAggregation));
+        createTriggerActionCall->addParameter(VarRef(resultSchemaDeclaration));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else if (action->getActionType() == Windowing::SliceAggregationTriggerAction) {
@@ -99,13 +133,37 @@ void GeneratableWindowOperator::generateSetupCode(CodeGeneratorPtr codegen, Pipe
                                                          + finalAggregateType->getCode()->code_ + ">::create");
         createTriggerActionCall->addParameter(VarRef(windowDefDeclaration));
         createTriggerActionCall->addParameter(VarRef(executableAggregation));
+        createTriggerActionCall->addParameter(VarRef(resultSchemaDeclaration));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
         NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
     }
 
+
+    // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
+    //    windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     auto windowHandler = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
+    auto createAggregationWindowHandlerCall = codegen->call("Windowing::AggregationWindowHandler<"
+                                                     + keyType->getCode()->code_ + ","
+                                                     + aggregationInputType->getCode()->code_ + ","
+                                                     + partialAggregateType->getCode()->code_ + ","
+                                                     + finalAggregateType->getCode()->code_ + ">::create");
+    createAggregationWindowHandlerCall->addParameter(VarRef(windowDefDeclaration));
+    createAggregationWindowHandlerCall->addParameter(VarRef(executableAggregation));
+    createAggregationWindowHandlerCall->addParameter(VarRef(executableTrigger));
+    createAggregationWindowHandlerCall->addParameter(VarRef(executableTriggerAction));
+    auto windowHandlerStatement = VarDeclStatement(windowHandler).assign(createAggregationWindowHandlerCall);
+    setupScope->addStatement(windowHandlerStatement.copy());
+
+
+    // windowOperatorHandler->setWindowHandler(windowHandler);
+    auto setWindowHandlerCall = codegen->call("setWindowHandler");
+    setWindowHandlerCall->addParameter(VarRef(windowHandler));
+    auto setWindowHandlerStatement = VarRef(windowOperatorHandlerDeclaration).accessPtr(setWindowHandlerCall);
+    setupScope->addStatement(setWindowHandlerStatement.copy());
+
+    return windowOperatorIndex;
 }
 
 }// namespace NES

@@ -303,7 +303,9 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
         queryExecutionPlanId, bufferManager,
         [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
         },
-        nullptr, nullptr);
+        [](TupleBuffer&) {
+        },
+        std::vector<Execution::OperatorHandlerPtr>());
     auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
     {
         std::unique_lock lock(workMutex);
@@ -478,6 +480,10 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
             NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
         }
     }
+}
+
+uint64_t QueryManager::getNodeId() const {
+    return nodeEngineId;
 }
 
 }// namespace NES

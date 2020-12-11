@@ -18,6 +18,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -63,8 +64,8 @@ class ExecutableSliceAggregationTriggerAction
         NES_DEBUG("ExecutableSliceAggregationTriggerAction: doAction for currentWatermark="
                   << currentWatermark << " lastWatermark=" << lastWatermark);
 
-        auto tupleBuffer = this->bufferManager->getBufferBlocking();
-        tupleBuffer.setOriginId(this->originId);
+        auto tupleBuffer = this->executionContext->allocateTupleBuffer();
+        //tupleBuffer.setOriginId(this->originId);
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             NES_DEBUG("ExecutableSliceAgresultsgregationTriggerAction: " << toString() << " check key=" << it.first
@@ -81,9 +82,9 @@ class ExecutableSliceAggregationTriggerAction
                       << " lastWatermark=" << lastWatermark
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
-                      << " this->nextPipeline=" << this->nextPipeline << std::endl);
+                      << " this->nextPipeline=" << this->executionContext->toString() << std::endl);
             //forward buffer to next  pipeline stage
-            this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
+            this->executionContext->dispatchBuffer(tupleBuffer);
         }
         return true;
     }
@@ -143,11 +144,11 @@ class ExecutableSliceAggregationTriggerAction
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
 
                     //forward buffer to next  pipeline stage
-                    this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
+                    this->executionContext->dispatchBuffer(tupleBuffer);
 
                     // request new buffer
-                    tupleBuffer = this->bufferManager->getBufferBlocking();
-                    tupleBuffer.setOriginId(this->originId);
+                    tupleBuffer = this->executionContext->allocateTupleBuffer();
+                    //tupleBuffer.setOriginId(this->originId);
                     currentNumberOfTuples = 0;
                 }
                 store->removeSlicesUntil(currentWatermark);

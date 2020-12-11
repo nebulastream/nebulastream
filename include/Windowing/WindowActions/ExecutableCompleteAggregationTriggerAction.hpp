@@ -18,6 +18,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
@@ -67,8 +68,7 @@ class ExecutableCompleteAggregationTriggerAction
                                                                  << "): doAction for currentWatermark=" << currentWatermark
                                                                  << " lastWatermark=" << lastWatermark);
 
-        auto tupleBuffer = this->bufferManager->getBufferBlocking();
-        tupleBuffer.setOriginId(this->originId);
+        auto tupleBuffer = this->executionContext->allocateTupleBuffer();
 
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
@@ -90,7 +90,7 @@ class ExecutableCompleteAggregationTriggerAction
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
             //forward buffer to next  pipeline stage
-            this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
+            this->executionContext->dispatchBuffer(tupleBuffer);
         }
         return true;
     }
@@ -200,11 +200,9 @@ class ExecutableCompleteAggregationTriggerAction
                               << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
                     //forward buffer to next  pipeline stage
-                    this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
-
+                    this->executionContext->dispatchBuffer(tupleBuffer);
                     // request new buffer
-                    tupleBuffer = this->bufferManager->getBufferBlocking();
-                    tupleBuffer.setOriginId(this->originId);
+                    tupleBuffer = this->executionContext->allocateTupleBuffer();
                     currentNumberOfTuples = 0;
                 }
             }//end of for
@@ -230,7 +228,7 @@ class ExecutableCompleteAggregationTriggerAction
     * @param value value
     */
     template<typename ValueType>
-    void writeResultRecord(TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
                            ValueType value, uint64_t cnt) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
