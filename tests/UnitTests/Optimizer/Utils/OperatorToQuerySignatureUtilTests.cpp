@@ -32,6 +32,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <z3++.h>
+#include <Phases/TypeInferencePhase.hpp>
 
 using namespace NES;
 
@@ -436,3 +437,44 @@ TEST_F(OperatorToQuerySignatureUtilTests, testSourceWithDifferentStreamName) {
     //Assert
     ASSERT_FALSE(sig1->isEqual(sig2));
 }
+
+//FIXME: fix this test in the next issue
+//TEST_F(OperatorToQuerySignatureUtilTests, testEqualQueries) {
+//    // Prepare
+//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+//    Query query1 = Query::from("car")
+//        .map(Attribute("value") = Attribute("value") * 10)
+//        .filter(Attribute("value") < 40 && Attribute("value") < 31)
+//        .sink(printSinkDescriptor);
+//    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+//    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+//    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+//    queryPlan1->setQueryId(queryId1);
+//
+//
+//    //slover.add(!(value*40 < 40 && value*40*40 < 40 == value*80 < 40 && value*80*40 < 40 && value*80*40 == value * 40 *40))
+//
+//    Query query2 = Query::from("car")
+//        .map(Attribute("value") = Attribute("value") * 10)
+//        .filter(Attribute("value") < 40 && Attribute("value") < 40)
+//        .sink(printSinkDescriptor);
+//    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+//    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+//    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+//    queryPlan2->setQueryId(queryId2);
+//
+//    z3::ContextPtr context = std::make_shared<z3::context>();
+//
+//    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+//    typeInferencePhase->execute(queryPlan1);
+//    typeInferencePhase->execute(queryPlan2);
+//
+//    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+//    z3InferencePhase->execute(queryPlan1);
+//    z3InferencePhase->execute(queryPlan2);
+//
+//    auto equalQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+//    bool isEqual = equalQueryMergerRule->apply();
+//
+//    ASSERT_TRUE(isEqual);
+//}
