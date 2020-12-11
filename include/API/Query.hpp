@@ -26,6 +26,9 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <API/Expressions/Expressions.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
