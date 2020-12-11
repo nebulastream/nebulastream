@@ -20,6 +20,12 @@
 
 namespace NES {
 
+enum PipelineStageArity : uint8_t {
+    Unary,
+    BinaryLeft,
+    BinaryRight
+};
+
 class PhysicalType;
 typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
 

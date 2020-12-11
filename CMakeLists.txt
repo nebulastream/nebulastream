@@ -42,6 +42,7 @@ if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "-DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
 
+
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -Werror=unused-variable -Werror=unused-parameter -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK -DNES_DEBUG_MODE=1")
@@ -266,6 +267,8 @@ add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
 add_definitions(-D '__STDC_CONSTANT_MACROS')
 add_definitions(-D '__STDC_LIMIT_MACROS')
 
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 # $ORIGIN is to read the shared object from the installation directory
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
@@ -297,8 +300,6 @@ target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
     target_link_libraries(nesCoordinator PRIVATE ${GRPC_LIBRARIES})
 endif ()
-set_target_properties(nesCoordinator PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC ${LIBRARIES} nes)
@@ -307,15 +308,13 @@ target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
     target_link_libraries(nesWorker PRIVATE ${GRPC_LIBRARIES})
 endif ()
-set_target_properties(nesWorker PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-
 
 # Add tests with command
 enable_testing()
 add_subdirectory(tests)
 
 #Add benchmarks with command
-add_subdirectory(benchmark)
+#add_subdirectory(benchmark)
 
 install(TARGETS nesCoordinator nesWorker nes
         COMPONENT NebulaStream

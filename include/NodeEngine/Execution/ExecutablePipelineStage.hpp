@@ -26,7 +26,17 @@ namespace NES::NodeEngine::Execution {
  */
 class ExecutablePipelineStage {
   public:
-    explicit ExecutablePipelineStage() = default;
+    explicit ExecutablePipelineStage(PipelineStageArity arity = Unary) : arity(arity) {
+        // nop
+    }
+
+    /**
+     * @brief Returns the arity of this pipeline
+     * @return the arity of this pipeline
+     */
+    PipelineStageArity getArity() const {
+        return arity;
+    }
     /**
     * @brief Must be called only once per executable pipeline and initializes the pipeline execution context.
     * e.g, creates the individual operator states -> window handler
@@ -78,6 +88,9 @@ class ExecutablePipelineStage {
      * @return 0 if no error occurred.
      */
     virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
+
+  private:
+    PipelineStageArity arity;
 };
 
 }// namespace NES::NodeEngine::Execution

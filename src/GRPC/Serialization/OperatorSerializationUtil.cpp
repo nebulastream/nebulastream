@@ -313,6 +313,12 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_rightinputschema()));
     }
 
+    if (details.Is<SerializableOperator_JoinDetails>()) {
+        auto joinOp = operatorNode->as<JoinLogicalOperatorNode>();
+        joinOp->getJoinDefinition()->updateStreamTypes(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
+        joinOp->getJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
+    }
+
     NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to "
                                                           << operatorNode->toString());
     return operatorNode;
@@ -444,7 +450,10 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
     auto joinDetails = SerializableOperator_JoinDetails();
     auto joinDefinition = joinOperator->getJoinDefinition();
 
-    ExpressionSerializationUtil::serializeExpression(joinDefinition->getJoinKey(), joinDetails.mutable_onkey());
+    ExpressionSerializationUtil::serializeExpression(joinDefinition->getLeftJoinKey(), joinDetails.mutable_onleftkey());
+    ExpressionSerializationUtil::serializeExpression(joinDefinition->getRightJoinKey(), joinDetails.mutable_onrightkey());
+//    ExpressionSerializationUtil::serializeExpression(joinDefinition->getLeftStreamType(), joinDetails.mutable_leftstreamtype());
+//    ExpressionSerializationUtil::serializeExpression(joinDefinition->getRightStreamType(), joinDetails.mutable_rightstreamtype());
 
     auto windowType = joinDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
@@ -496,7 +505,7 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
             break;
         }
         default: {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not cast aggregation type");
         }
     }
 
@@ -507,7 +516,7 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
             break;
         }
         default: {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast action type");
+            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not cast action type");
         }
     }
 
@@ -759,10 +768,16 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
 
     LogicalOperatorNodePtr ptr;
     auto distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
-    auto keyAccessExpression =
-        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
+    auto leftKeyAccessExpression =
+        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onleftkey())->as<FieldAccessExpressionNode>();
+    auto rightKeyAccessExpression =
+        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onrightkey())->as<FieldAccessExpressionNode>();
+//    auto leftStreamType =
+//        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_leftstreamtype())->as<FieldAccessExpressionNode>();
+//    auto rightStreamType =
+//        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_rightstreamtype())->as<FieldAccessExpressionNode>();
     auto joinDefinition =
-        Join::LogicalJoinDefinition::create(keyAccessExpression, window, distChar, trigger, action,
+        Join::LogicalJoinDefinition::create(leftKeyAccessExpression, rightKeyAccessExpression, window, distChar, trigger, action,
                                             joinDetails->numberofinputedgesleft(), joinDetails->numberofinputedgesright());
     auto retValue = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<JoinLogicalOperatorNode>();
     return retValue;

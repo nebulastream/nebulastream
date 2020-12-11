@@ -27,7 +27,9 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySu
                                          QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created) {}
+      qepStatus(Created) {
+    // nop
+}
 
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 

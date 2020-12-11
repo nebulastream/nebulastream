@@ -17,16 +17,23 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableJoinOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 
 namespace NES {
 
 void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    NES_ASSERT(getChildren().size() == 2, "GeneratableJoinOperator does not have two children");
+
+    auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDefinition, context->getResultSchema());
+
     auto newPipelineContext1 = PipelineContext::create();
-    newPipelineContext1->isLeftSide = true;
+    newPipelineContext1->arity = PipelineContext::BinaryLeft;
+    NES_ASSERT(0 == newPipelineContext1->registerOperatorHandler(joinOperatorHandler), "invalid operator handler index");
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
 
     auto newPipelineContext2 = PipelineContext::create();
-    newPipelineContext2->isLeftSide = false;
+    newPipelineContext2->arity = PipelineContext::BinaryRight;
+    NES_ASSERT(0 == newPipelineContext2->registerOperatorHandler(joinOperatorHandler), "invalid operator handler index");
     getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2);
 
     context->addNextPipeline(newPipelineContext1);
@@ -40,18 +47,18 @@ void GeneratableJoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextP
 
 GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNodePtr logicalJoinOperator, OperatorId id) {
     return std::make_shared<GeneratableJoinOperator>(
-        GeneratableJoinOperator(logicalJoinOperator->getOutputSchema(), logicalJoinOperator->getJoinDefinition(), id));
+        GeneratableJoinOperator(logicalJoinOperator->getLeftInputSchema(), logicalJoinOperator->getRightInputSchema(), logicalJoinOperator->getOutputSchema(), logicalJoinOperator->getJoinDefinition(), id));
 }
 
-GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr schema, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
+GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outSchema, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
     : JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
 
-    if (!schema) {
-        NES_ERROR("GeneratableJoinOperator invalid schema");
-    }
-    setLeftInputSchema(schema);
-    setRightInputSchema(schema);
-    setOutputSchema(schema);
+    NES_ASSERT(leftSchema, "invalid left schema");
+    NES_ASSERT(rightSchema, "invalid right schema");
+    NES_ASSERT(outSchema, "invalid out schema");
+    setLeftInputSchema(leftSchema);
+    setRightInputSchema(rightSchema);
+    setOutputSchema(outSchema);
 }
 
 const std::string GeneratableJoinOperator::toString() const {

@@ -100,6 +100,8 @@ class ExecutablePipeline {
     */
     bool isReconfiguration() const;
 
+    PipelineStageArity getArity();
+
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;

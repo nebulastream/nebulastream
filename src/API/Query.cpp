@@ -59,14 +59,22 @@ Query& Query::merge(Query* subQuery) {
     return *this;
 }
 
-Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::WindowTypePtr windowType) {
+Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+                   const Windowing::WindowTypePtr windowType) {
     NES_DEBUG("Query: join the subQuery to current query");
 
-    auto keyExpression = onKey.getExpressionNode();
-    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+    auto leftLeyExpression = onLeftKey.getExpressionNode();
+    if (!leftLeyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + leftLeyExpression->toString());
+        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
     }
-    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+    auto rightKeyExpression = onRightKey.getExpressionNode();
+    if (!rightKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + rightKeyExpression->toString());
+        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
+    }
+    auto leftKeyFieldAccess = leftLeyExpression->as<FieldAccessExpressionNode>();
+    auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
 
     //we use a on time trigger as default that triggers every 1 second
     auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
@@ -76,9 +84,10 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
 
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
-    //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
-    auto joinDefinition =
-        Join::LogicalJoinDefinition::create(fieldAccess, windowType, distrType, triggerPolicy, triggerAction, 1, 1);
+
+    auto rootOperatorRhs = subQueryRhs->getQueryPlan()->getRootOperators()[0];
+    auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
+    auto rightJoinType = rootOperatorRhs->getOutputSchema();
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
@@ -93,8 +102,26 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
         }
     }
 
+    auto rhsQueryPlan = subQueryRhs->getQueryPlan();
+    if (rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+        if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
+            rhsQueryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
+        } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
+            rhsQueryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
+                EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name),
+                                                             Milliseconds(0),
+                                                             windowType->getTimeCharacteristic()->getTimeUnit())));
+        }
+    }
+
+    //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
+    //TODO(Ventura?>Steffen) can we know this at this query submission time?
+    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess, rightKeyFieldAccess,
+                                                              windowType, distrType, triggerPolicy, triggerAction, 1, 1);
+
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
-    queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
+    queryPlan->addRootOperator(rhsQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }

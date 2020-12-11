@@ -122,7 +122,7 @@ class TupleBuffer {
      * @brief method to get the watermark as a timestamp
      * @return watermark
      */
-    int64_t getWatermark();
+    int64_t getWatermark() const;
 
     /**
      * @brief method to set the watermark with a timestamp
@@ -131,7 +131,7 @@ class TupleBuffer {
     void setWatermark(int64_t value);
 
     void setOriginId(uint64_t id);
-    uint64_t getOriginId();
+    uint64_t getOriginId() const ;
 
   private:
     detail::BufferControlBlock* controlBlock;

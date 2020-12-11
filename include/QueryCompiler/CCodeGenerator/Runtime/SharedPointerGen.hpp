@@ -16,6 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RUNTIME_SHAREDPOINTERGENERATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RUNTIME_SHAREDPOINTERGENERATION_HPP_
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/VariableDeclaration.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 namespace NES {
 
 /**
@@ -28,14 +30,22 @@ class SharedPointerGen {
      * @param type GeneratableDataTypePtr
      * @return GeneratableDataTypePtr
      */
-    GeneratableDataTypePtr static createSharedPtrType(GeneratableDataTypePtr type);
+    static GeneratableDataTypePtr createSharedPtrType(GeneratableDataTypePtr type);
 
     /**
      * @brief Creates function call to make shared.
      * @param type GeneratableDataTypePtr
      * @return StatementPtr
      */
-    StatementPtr static makeShared(GeneratableDataTypePtr type);
+    static StatementPtr makeShared(GeneratableDataTypePtr type);
+
+    /**
+    * @brief Creates function call to make shared.
+    * @param type GeneratableDataTypePt
+    * @param type VariableDeclaration
+    * @return StatementPtr
+    */
+    static StatementPtr makeShared1(GeneratableDataTypePtr type, ExpressionStatmentPtr param);
 };
 
 }// namespace NES

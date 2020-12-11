@@ -27,7 +27,7 @@ namespace NES {
  */
 static void BM_Statemanager_SingleKey_Updates(benchmark::State& state) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-0");
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-0");
 
     int64_t numberOfUpdates = state.range(0);
 
@@ -51,7 +51,7 @@ static void BM_Statemanager_SingleKey_Updates(benchmark::State& state) {
  */
 static void BM_Statemanager_SingleKey_Updates_KeyVec(benchmark::State& state) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-0");
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-0");
 
     int64_t numberOfUpdates = state.range(0);
 
@@ -81,7 +81,7 @@ static void BM_Statemanager_SingleKey_Updates_KeyVec(benchmark::State& state) {
  */
 static void BM_Statemanager_KeyRange_Uniform_Distribution(benchmark::State& state) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-1");
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-1");
 
     int64_t numberOfUpdates = state.range(0);
     int64_t numberOfKeys = state.range(1);
@@ -112,7 +112,7 @@ static void BM_Statemanager_KeyRange_Uniform_Distribution(benchmark::State& stat
  */
 static void BM_Statemanager_KeyRange_Uniform_Distribution_KeyVec(benchmark::State& state) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-1");
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-1");
 
     int64_t numberOfUpdates = state.range(0);
     int64_t numberOfKeys = state.range(1);
@@ -149,7 +149,7 @@ static void BM_Statemanager_KeyRange_Uniform_Distribution_KeyVec(benchmark::Stat
  */
 static void BM_Statemanager_KeyRange_Skewed_Distribution(benchmark::State& state) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-1");
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-1");
 
     int64_t numberOfUpdates = state.range(0);
     int64_t numberOfKeys = state.range(1);
@@ -185,7 +185,7 @@ static void BM_Statemanager_KeyRange_Skewed_Distribution(benchmark::State& state
  */
 static void BM_Statemanager_KeyRange_Skewed_Distribution_KeyVec(benchmark::State& state) {
     StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-1");
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-1");
 
     int64_t numberOfUpdates = state.range(0);
     int64_t numberOfKeys = state.range(1);
@@ -232,7 +232,7 @@ static void BM_Multithreaded_Key_Updates(benchmark::State& state) {
 
     StateManager& stateManager = StateManager::instance();
 
-    StateVariable<uint32_t, uint32_t>& var = stateManager.registerState<uint32_t, uint32_t>("window-content-1");
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-1");
 
     int64_t numberOfUpdates, numberOfKeys, distributionType, numThreads;
     numberOfUpdates = state.range(0);

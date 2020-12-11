@@ -47,6 +47,10 @@ class ExecutableSliceAggregationTriggerAction
                                                                          outputSchema);
     }
 
+    virtual ~ExecutableSliceAggregationTriggerAction() {
+        // nop
+    }
+
     ExecutableSliceAggregationTriggerAction(
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>

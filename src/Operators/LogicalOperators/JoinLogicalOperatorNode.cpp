@@ -56,15 +56,21 @@ bool JoinLogicalOperatorNode::inferSchema() {
     }
 
     // infer the data type of the key field.
-    //TODO: we have to also do it for the right input schema
-    joinDefinition->getJoinKey()->inferStamp(leftInputSchema);
+    joinDefinition->getLeftJoinKey()->inferStamp(leftInputSchema);
+    joinDefinition->getRightJoinKey()->inferStamp(rightInputSchema);
+    NES_ASSERT(joinDefinition->getLeftJoinKey()->getStamp()->isEquals(joinDefinition->getRightJoinKey()->getStamp()), "left and right join key type dont match");
 
     outputSchema = Schema::create()
                        ->addField(createField("start", UINT64))
                        ->addField(createField("end", UINT64))
-                       ->addField(AttributeField::create("key", joinDefinition->getJoinKey()->getStamp()))
-                       ->addField(AttributeField::create("value", joinDefinition->getJoinKey()->getStamp()));
-
+                       ->addField(AttributeField::create("key", joinDefinition->getLeftJoinKey()->getStamp()));
+    for (auto field : schema1->fields) {
+        outputSchema = outputSchema->addField("left_" + field->name, field->getDataType());
+    }
+    for (auto field : schema2->fields) {
+        outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
+    }
+    joinDefinition->updateOutputDefinition(outputSchema);
     return true;
 }
 

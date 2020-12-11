@@ -28,4 +28,10 @@ StatementPtr SharedPointerGen::makeShared(GeneratableDataTypePtr type) {
     return FunctionCallStatement::create("std::make_shared<" + type->getTypeDefinitionCode()->code_ + ">");
 }
 
+StatementPtr SharedPointerGen::makeShared1(GeneratableDataTypePtr type, ExpressionStatmentPtr param) {
+    auto p = FunctionCallStatement::create("std::make_shared<" + type->getTypeDefinitionCode()->code_ + ">");
+    p->addParameter(param);
+    return p;
+}
+
 }// namespace NES

@@ -95,9 +95,9 @@ void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) { controlBlock->set
 
 void TupleBuffer::revertEndianness(SchemaPtr schema) { detail::revertEndianness(*this, schema); }
 
-int64_t TupleBuffer::getWatermark() { return controlBlock->getWatermark(); }
+int64_t TupleBuffer::getWatermark() const { return controlBlock->getWatermark(); }
 
-uint64_t TupleBuffer::getOriginId() { return controlBlock->getOriginId(); }
+uint64_t TupleBuffer::getOriginId() const { return controlBlock->getOriginId(); }
 
 void TupleBuffer::setOriginId(uint64_t id) { controlBlock->setOriginId(id); }
 

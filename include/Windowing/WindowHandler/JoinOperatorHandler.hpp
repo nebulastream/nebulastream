@@ -59,9 +59,9 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
      * @tparam KeyType
      * @return JoinHandlerType
      */
-    template<template<class> class JoinHandlerType, class KeyType>
+    template<template<class, class, class> class JoinHandlerType, class KeyType, class LeftStreamType, class RightStreamType>
     auto getJoinHandler() {
-        return std::static_pointer_cast<JoinHandlerType<KeyType>>(joinHandler);
+        return std::static_pointer_cast<JoinHandlerType<KeyType, LeftStreamType, RightStreamType>>(joinHandler);
     }
 
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;

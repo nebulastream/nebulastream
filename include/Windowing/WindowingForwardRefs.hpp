@@ -17,7 +17,9 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
 
-#include "memory"
+#include <cstdint>
+#include <string.h>
+#include <memory>
 
 namespace NES {
 
@@ -90,6 +92,9 @@ typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 
 template<class PartialAggregateType>
 class WindowSliceStore;
+
+template<class ValueType>
+class WindowedJoinSliceListStore;
 
 class SliceMetaData;
 

@@ -148,6 +148,9 @@ class CCodeGenerator : public CodeGenerator {
     ~CCodeGenerator() override;
 
   private:
+    CompilerPtr compiler;
+
+  private:
     BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
     VariableDeclaration getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable,
                                                  uint64_t index);
@@ -181,10 +184,11 @@ class CCodeGenerator : public CodeGenerator {
 
     BinaryOperatorStatement getWindowManager(VariableDeclaration);
 
-    void generateCodeForWatermarkUpdater(PipelineContextPtr context, VariableDeclaration handler);
+    void generateCodeForWatermarkUpdaterWindow(PipelineContextPtr context, VariableDeclaration handler);
+    void generateCodeForWatermarkUpdaterJoin(PipelineContextPtr context, VariableDeclaration handler, bool leftSide);
 
     StructDeclaration getStructDeclarationFromWindow(std::string structName);
-    CompilerPtr compiler;
+
     VariableDeclaration getJoinOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable,
                                                uint64_t joinOperatorIndex);
 };

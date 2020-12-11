@@ -44,7 +44,8 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
  */
 class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHandler> {
   public:
-    explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
+    explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition, Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger)
+        : joinDefinition(std::move(joinDefinition)), executablePolicyTrigger(std::move(executablePolicyTrigger)) {
         // nop
     }
 
@@ -186,27 +187,11 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      * @param ts
      * @param originId
      */
-    virtual void updateMaxTs(uint64_t ts, uint64_t originId) {
-        NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
-        //TODO this is not correct as we have to distinguish between left and rigt side
-        if (joinDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
-            auto beforeMinLeft = getMinWatermark(leftSide);
-            auto beforeMinRight = getMinWatermark(rightSide);
-            originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
-            originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
-            auto afterMinLeft = getMinWatermark(leftSide);
-            auto afterMinRight = getMinWatermark(rightSide);
-            if (beforeMinLeft < afterMinLeft || beforeMinRight < afterMinRight) {
-                trigger();
-            }
-        } else {
-            originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
-            originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
-        }
-    }
+    virtual void updateMaxTs(uint64_t ts, uint64_t originId, bool leftSide) = 0;
 
   protected:
     LogicalJoinDefinitionPtr joinDefinition;
+    Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
     uint64_t originId;

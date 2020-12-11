@@ -45,7 +45,13 @@ typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
  */
 class PipelineContext {
   public:
-    PipelineContext();
+    enum PipelineContextArity {
+        Unary,
+        BinaryLeft,
+        BinaryRight
+    };
+  public:
+    PipelineContext(PipelineContextArity arity = Unary);
     ~PipelineContext() { NES_DEBUG("~PipelineContext(" + pipelineName + ")"); }
     static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);
@@ -74,7 +80,7 @@ class PipelineContext {
     const std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
 
     std::string pipelineName;
-    bool isLeftSide;
+    PipelineContextArity arity;
     std::vector<BlockScopeStatementPtr> getSetupScopes();
     std::vector<BlockScopeStatementPtr> getStartScopes();
 

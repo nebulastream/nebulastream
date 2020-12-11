@@ -56,7 +56,7 @@ class GeneratedCode {
     StatementPtr returnStmt;
     std::shared_ptr<VariableDeclaration> varDeclarationRecordIndex;
     std::shared_ptr<VariableDeclaration> varDeclarationReturnValue;
-    StructDeclaration structDeclaratonInputTuple;
+    std::vector<StructDeclaration> structDeclaratonInputTuples;
     StructDeclaration structDeclarationResultTuple;
     VariableDeclaration varDeclarationInputBuffer;
     VariableDeclaration varDeclarationResultBuffer;

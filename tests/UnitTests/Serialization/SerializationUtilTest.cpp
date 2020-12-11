@@ -479,6 +479,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
         Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)), distrType,
             triggerPolicy, triggerAction, 1, 1);
 

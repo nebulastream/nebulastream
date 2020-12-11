@@ -19,4 +19,5 @@ add_source_nes(
         FunctionDeclaration.cpp
         ClassDeclaration.cpp
         NamespaceDeclaration.cpp
+        ConstructorDeclaration.cpp
 )
