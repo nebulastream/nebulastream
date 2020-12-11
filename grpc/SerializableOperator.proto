@@ -170,7 +170,8 @@ message SerializableOperator{
   message WatermarkStrategyDetails {
     message SerializableEventTimeWatermarkStrategyDescriptor {
       SerializableExpression onField = 1;
-      uint64 delay = 2;
+      uint64 allowedLateness = 2;
+      uint64 multiplier = 3;
     }
 
     message SerializableIngestionTimeWatermarkStrategyDescriptor {
@@ -224,6 +225,7 @@ message SerializableOperator{
       }
       Type type = 1;
       string field = 2;
+      uint64 multiplier = 3;
     }
     message TumblingWindow {
       TimeCharacteristic timeCharacteristic = 1;

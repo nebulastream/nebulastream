@@ -61,7 +61,7 @@ class KafkaSource : public DataSource {
     const std::string getGroupId() const;
 
     /**
-     * @brief If kafka offset is to be committed automatically
+     * @brief If kafka multiplier is to be committed automatically
      */
     bool isAutoCommit() const;
 

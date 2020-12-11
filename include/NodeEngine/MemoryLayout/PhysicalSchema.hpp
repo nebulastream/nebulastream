@@ -49,10 +49,10 @@ class PhysicalSchema {
     uint64_t getRecordSize();
 
     /**
-     * @brief Calculated the offset of a particular field in a record.
+     * @brief Calculated the multiplier of a particular field in a record.
      * @param fieldIndex index of the field we want to access.
      * @throws IllegalArgumentException if fieldIndex is not valid
-     * @return offset in byte
+     * @return multiplier in byte
      */
     uint64_t getFieldOffset(uint64_t fieldIndex);
 

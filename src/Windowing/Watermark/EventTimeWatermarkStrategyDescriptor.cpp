@@ -18,12 +18,12 @@
 
 namespace NES::Windowing {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure allowedLateness)
-    : onField(onField), allowedLateness(allowedLateness) {}
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit)
+    : onField(onField), allowedLateness(allowedLateness), unit(unit) {}
 
-WatermarkStrategyDescriptorPtr EventTimeWatermarkStrategyDescriptor::create(ExpressionItem onField, TimeMeasure allowedLateness) {
+WatermarkStrategyDescriptorPtr EventTimeWatermarkStrategyDescriptor::create(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit) {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
-        Windowing::EventTimeWatermarkStrategyDescriptor(onField, allowedLateness));
+        Windowing::EventTimeWatermarkStrategyDescriptor(onField, allowedLateness, unit));
 }
 ExpressionItem EventTimeWatermarkStrategyDescriptor::getOnField() { return onField; }
 TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() { return allowedLateness; }
@@ -32,4 +32,10 @@ bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr 
     return eventTimeWatermarkStrategyDescriptor->onField.getExpressionNode() == onField.getExpressionNode()
         && eventTimeWatermarkStrategyDescriptor->allowedLateness.getTime() == allowedLateness.getTime();
 }
+
+TimeUnit EventTimeWatermarkStrategyDescriptor::getTimeUnit()
+{
+    return unit;
+}
+
 }// namespace NES::Windowing

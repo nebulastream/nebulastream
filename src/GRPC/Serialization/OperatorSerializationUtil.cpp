@@ -279,6 +279,8 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
+    timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMultiplier());
+
     if (windowType->isTumblingWindow()) {
         auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
         auto tumblingWindowDetails = SerializableOperator_WindowDetails_TumblingWindow();
@@ -531,7 +533,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
             auto eventTimeField =
                 AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
+            auto multiplier = serializedTimeCharacterisitc.multiplier();
+            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                                                    Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacterisitc.type()
                    == SerializableOperator_WindowDetails_TimeCharacteristic_Type_IngestionTime) {
@@ -1154,7 +1157,8 @@ SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serial
             SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
         ExpressionSerializationUtil::serializeExpression(eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode(),
                                                          serializedWatermarkStrategyDescriptor.mutable_onfield());
-        serializedWatermarkStrategyDescriptor.set_delay(eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime());
+        serializedWatermarkStrategyDescriptor.set_allowedlateness(eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime());
+        serializedWatermarkStrategyDescriptor.set_multiplier(eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMultiplier());
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
     } else if (auto ingestionTimeWatermarkStrategyDescriptor =
                    std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
@@ -1184,7 +1188,10 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
                 ->as<FieldAccessExpressionNode>();
         NES_DEBUG("OperatorSerializationUtil:: deserialized field name " << onField->getFieldName());
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute(onField->getFieldName()), Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.delay()));
+            Attribute(onField->getFieldName()),
+            Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.allowedlateness()),
+            Windowing::TimeUnit(serializedEventTimeWatermarkStrategyDescriptor.multiplier())
+            );
         return eventTimeWatermarkStrategyDescriptor;
     } else if (deserializedWatermarkStrategyDescriptor
                    .Is<SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor>()) {

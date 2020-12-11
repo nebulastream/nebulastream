@@ -341,6 +341,8 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         auto calculateMaxTupleStatement =
             VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                 VarRef(tsVariableDeclaration))
+                * ConstantExpressionStatement(
+                    tf->createValueType(DataTypeFactory::createBasicValue(BasicType::UINT64, std::to_string(eventTimeWatermarkStrategy->getMultiplier()))))
             - Constant(tf->createValueType(DataTypeFactory::createBasicValue(
                 DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness()))));
         auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
@@ -581,13 +583,29 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     } else {
         auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(
             window->getWindowType()->getTimeCharacteristic()->getField()->name);
-        auto tsVariableDeclarationStatement =
-            VarDeclStatement(currentTimeVariableDeclaration)
-                .assign(
-                    VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                        VarRef(tsVariableDeclaration)));
-        context->code->currentCodeInsertionPoint->addStatement(
-            std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
+        //TODO: get unit
+        /**
+         * calculateUnitMultiplier => cal to ms
+         */
+        auto multiplier = window->getWindowType()->getTimeCharacteristic()->getTimeUnit().getMultiplier();
+        if (multiplier == 1) {
+            //In this case we don't to adjust the timestamp as it is already in ms
+            auto tsVariableDeclarationStatement =
+                VarDeclStatement(currentTimeVariableDeclaration)
+                    .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]
+                                .accessRef(VarRef(tsVariableDeclaration)));
+            context->code->currentCodeInsertionPoint->addStatement(
+                std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
+        } else {
+            //In this case we need to multiply the ts with the multiplier to get ms
+            auto tsVariableDeclarationStatement =
+                VarDeclStatement(currentTimeVariableDeclaration)
+                    .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]
+                                .accessRef(VarRef(tsVariableDeclaration)) * ConstantExpressionStatement(
+                        tf->createValueType(DataTypeFactory::createBasicValue(BasicType::UINT64, std::to_string(multiplier)))));
+            context->code->currentCodeInsertionPoint->addStatement(
+                std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
+        }
     }
 
     //within the loop
@@ -929,7 +947,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto tsVariableDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration("end");
     auto calculateMaxTupleStatement =
         VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-            VarRef(tsVariableDeclaration))
+            VarRef(tsVariableDeclaration)) * ConstantExpressionStatement(
+    tf->createValueType(DataTypeFactory::createBasicValue(BasicType::UINT64, std::to_string(window->getWindowType()->getTimeCharacteristic()->getTimeUnit().getMultiplier()))))
         - Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0))));
     auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
