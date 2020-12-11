@@ -798,7 +798,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "+----------------------------------------------------+\n"
-                             "|id:UINT32|value:UINT64|\n"
+                             "|id:UINT32|\n"
                              "+----------------------------------------------------+\n"
                              "|1|\n"
                              "|1|\n"
