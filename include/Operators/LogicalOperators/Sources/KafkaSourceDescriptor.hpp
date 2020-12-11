@@ -48,7 +48,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     const std::string& getGroupId() const;
 
     /**
-     * @brief Is kafka topic multiplier to be auto committed
+     * @brief Is kafka topic offset to be auto committed
      */
     bool isAutoCommit() const;
 

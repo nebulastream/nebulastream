@@ -123,7 +123,7 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, BufferManagerPtr buffe
  * @param brokers list of brokers
  * @param topic kafka topic
  * @param groupId group id
- * @param autoCommit bool indicating if multiplier has to be committed automatically or not
+ * @param autoCommit bool indicating if offset has to be committed automatically or not
  * @param kafkaConsumerTimeout  kafka consumer timeout
  * @return
  */
