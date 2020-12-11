@@ -147,9 +147,9 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(std::vector<TopologyNodePt
                         occurrenceCount = occurrenceCount + nodeCountMap[member->as<TopologyNode>()->getId()];
                     }
 
-                    NES_TRACE("Topology: Compute cost by multiplying aggregate occurrence count with base offset and "
+                    NES_TRACE("Topology: Compute cost by multiplying aggregate occurrence count with base multiplier and "
                               "dividing the result by the number of nodes in the path.");
-                    double cost = (occurrenceCount * BASE_offset) / family.size();
+                    double cost = (occurrenceCount * BASE_MULTIPLIER) / family.size();
 
                     if (cost > maxCost) {
                         NES_TRACE("Topology: The cost is more than max cost found till now.");
