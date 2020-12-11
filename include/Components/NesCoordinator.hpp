@@ -66,23 +66,13 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
   public:
-    explicit NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort, uint16_t numberOfSlots,
-                            bool enableQueryMerging);
+    explicit NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort,
+                            uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
 
     /**
      * @brief Constructor where ip = restIp and rpcIp
      */
-    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging);
-
-    /**
-     * @brief constructor with default numberOfSlots
-     */
-    NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort);
-
-    /**
-     * @brief Constructor where ip = restIp and rpcIp
-     */
-    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort);
+    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
 
     /**
      * @brief dtor

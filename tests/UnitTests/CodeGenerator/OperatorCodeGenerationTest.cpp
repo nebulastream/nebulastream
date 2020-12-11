@@ -1016,16 +1016,35 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     pipelineContext1->pipelineName = "1";
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), pipelineContext1);
     WindowTriggerPolicyPtr triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)), distrType, triggerPolicy, triggerAction,
-        1, 1);
+        1,
+        1);
 
-    pipelineContext1->isLeftSide = true;
+    joinDef->updateStreamTypes(input_schema, input_schema);
+
+
+    auto outputSchema = Schema::create()
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField(AttributeField::create("key", joinDef->getLeftJoinKey()->getStamp()));
+    for (auto field : input_schema->fields) {
+        outputSchema = outputSchema->addField("left_" + field->name, field->getDataType());
+    }
+    for (auto field : input_schema->fields) {
+        outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
+    }
+    joinDef->updateOutputDefinition(outputSchema);
+    auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
+
+    pipelineContext1->registerOperatorHandler(joinOperatorHandler);
+    pipelineContext1->arity = PipelineContext::BinaryLeft;
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), pipelineContext1);
     auto index = codeGenerator->generateJoinSetup(joinDef, pipelineContext1);
     codeGenerator->generateCodeForJoin(joinDef, pipelineContext1, index);
 
@@ -1033,13 +1052,20 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     auto stage1 = codeGenerator->compile(pipelineContext1);
 
     auto context2 = PipelineContext::create();
-    context2->pipelineName = "1";
+    context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2);
-    auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), joinOperatorHandler);
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr);
+
+    auto context3 = PipelineContext::create();
+    context3->registerOperatorHandler(joinOperatorHandler);
+    context3->arity = PipelineContext::BinaryRight;
+    context3->pipelineName = "3";
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context3);
+    codeGenerator->generateCodeForJoin(joinDef, context3, 0);
+    auto stage3 = codeGenerator->compile(context3);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -1050,31 +1076,31 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     stage1->setup(*executionContext.get());
     stage1->start(*executionContext.get());
     executionContext->getOperatorHandlers()[0]->start(executionContext);
-    executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)->getJoinHandler<Join::JoinHandler, int64_t>()->start();
+    executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()->start();
     stage1->execute(inputBuffer, *executionContext.get(), wctx);
+    stage3->execute(inputBuffer, *executionContext.get(), wctx);
 
-    //check partial aggregates in window state
-    auto stateVar = joinOperatorHandler->getJoinHandler<Join::JoinHandler, int64_t>()->getLeftJoinState();
-
-    for (auto& it : stateVar->rangeAll()) {
-        cout << "key=" << it.first << " value=" << it.second << endl;
-    }
+    auto stateVarLeft = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()->getLeftJoinState();
+    auto stateVarRight = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()->getRightJoinState();
     std::vector<int64_t> results;
-    for (auto& [key, val] : stateVar->rangeAll()) {
+    for (auto& [key, val] : stateVarLeft->rangeAll()) {
         NES_DEBUG("Key: " << key << " Value: " << val);
-        for (auto& slice : val->getSliceMetadata()) {
-            std::cout << "start=" << slice.getStartTs() << " end=" << slice.getEndTs() << std::endl;
-        }
-        for (auto& agg : val->getPartialAggregates()) {
-            std::cout << "key=" << key << std::endl;
-            std::cout << "value=" << agg << std::endl;
-            results.push_back(agg);
+        auto lock = std::unique_lock(val->mutex());
+        for (auto& list : val->getAppendList()) {
+            for (auto& value : list) {
+                results.push_back(value);
+            }
         }
     }
-
-    cout << "results[0]=" << results[0] << endl;
-    cout << "results[1]=" << results[1] << endl;
-    EXPECT_EQ(results[0], 5);
-    EXPECT_EQ(results[1], 5);
+    for (auto& [key, val] : stateVarRight->rangeAll()) {
+        NES_DEBUG("Key: " << key << " Value: " << val);
+        auto lock = std::unique_lock(val->mutex());
+        for (auto& list : val->getAppendList()) {
+            for (auto& value : list) {
+                results.push_back(value);
+            }
+        }
+    }
+    EXPECT_EQ(results.size(), 40);
 }
 }// namespace NES

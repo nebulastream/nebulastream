@@ -73,13 +73,6 @@ NesCoordinator::NesCoordinator(const std::string& ip, uint16_t restPort, uint16_
                                bool enableQueryMerging)
     : NesCoordinator(ip, restPort, ip, rpcPort, numberOfSlots, enableQueryMerging) {}
 
-// constructor with default numberOfSlots set to the number of processors
-NesCoordinator::NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort)
-    : NesCoordinator(restIp, restPort, rpcIp, rpcPort, std::thread::hardware_concurrency(), false) {}
-
-NesCoordinator::NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort)
-    : NesCoordinator(ip, restPort, ip, rpcPort) {}
-
 NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator()");
     NES_DEBUG("NesCoordinator::~NesCoordinator() ptr usage=" << workerRpcClient.use_count());

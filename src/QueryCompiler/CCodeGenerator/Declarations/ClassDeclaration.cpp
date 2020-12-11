@@ -17,6 +17,7 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/ClassDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
@@ -45,6 +46,12 @@ const Code ClassDeclaration::getCode() const {
     classCode << "class " << classDefinition->name;
     classCode << generateBaseClassNames();
     classCode << "{";
+
+    if (!classDefinition->publicConstructors.empty()) {
+        classCode << "public:";
+        classCode << generateConstructors(classDefinition->publicConstructors);
+    }
+
     if (!classDefinition->publicFunctions.empty()) {
         classCode << "public:";
         classCode << generateFunctions(classDefinition->publicFunctions);
@@ -63,6 +70,15 @@ std::string ClassDeclaration::generateFunctions(std::vector<FunctionDefinitionPt
     std::stringstream classCode;
     for (const auto& function : functions) {
         auto functionDeclaration = function->getDeclaration();
+        classCode << functionDeclaration->getCode();
+    }
+    return classCode.str();
+}
+
+std::string ClassDeclaration::generateConstructors(std::vector<ConstructorDefinitionPtr>& ctors) const {
+    std::stringstream classCode;
+    for (const auto& ctor : ctors) {
+        auto functionDeclaration = ctor->getDeclaration();
         classCode << functionDeclaration->getCode();
     }
     return classCode.str();

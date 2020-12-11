@@ -29,9 +29,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <Windowing/LogicalWindowDefinition.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>"<< std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowManager.hpp>" << std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowSliceStore.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/TupleBuffer.hpp>" << std::endl;
@@ -40,10 +38,13 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/JoinHandler.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>" << std::endl;
     return builder;
 }
 FileBuilder& FileBuilder::addDeclaration(DeclarationPtr declaration) {

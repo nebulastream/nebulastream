@@ -23,7 +23,10 @@
 
 namespace NES {
 
-PipelineContext::PipelineContext() { this->code = std::make_shared<GeneratedCode>(); }
+PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity) {
+    this->code = std::make_shared<GeneratedCode>();
+}
+
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
 BlockScopeStatementPtr PipelineContext::createSetupScope() { return setupScopes.emplace_back(BlockScopeStatement::create()); }

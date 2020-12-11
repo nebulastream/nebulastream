@@ -24,13 +24,13 @@ namespace NES::Join {
 
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr leftJoinKeyType, FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
                                            Windowing::DistributionCharacteristicPtr distributionType,
                                            Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                            BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight);
 
-    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
+    explicit LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType, FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
                           Windowing::DistributionCharacteristicPtr distributionType,
                           Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
                           uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight);
@@ -38,7 +38,22 @@ class LogicalJoinDefinition {
     /**
     * @brief getter/setter for on left join key
     */
-    FieldAccessExpressionNodePtr getJoinKey();
+    FieldAccessExpressionNodePtr getLeftJoinKey();
+
+    /**
+   * @brief getter/setter for on left join key
+   */
+    FieldAccessExpressionNodePtr getRightJoinKey();
+
+    /**
+   * @brief getter left stream type
+   */
+    SchemaPtr getLeftStreamType();
+
+    /**
+   * @brief getter of right stream type
+   */
+    SchemaPtr getRightStreamType();
 
     /**
      * @brief getter/setter for window type
@@ -65,8 +80,18 @@ class LogicalJoinDefinition {
     uint64_t getNumberOfInputEdgesLeft();
     uint64_t getNumberOfInputEdgesRight();
 
+    void updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType);
+
+    void updateOutputDefinition(SchemaPtr outputSchema);
+
+    SchemaPtr getOutputSchema() const;
+
   private:
-    FieldAccessExpressionNodePtr joinKey;
+    FieldAccessExpressionNodePtr leftJoinKeyType;
+    FieldAccessExpressionNodePtr rightJoinKeyType;
+    SchemaPtr leftStreamType;
+    SchemaPtr rightStreamType;
+    SchemaPtr outputSchema;
     Windowing::WindowTriggerPolicyPtr triggerPolicy;
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;

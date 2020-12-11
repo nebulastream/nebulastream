@@ -63,7 +63,7 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
 }
 
 std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
-    NES_DEBUG("CSVSource::receiveData called");
+    NES_DEBUG("CSVSource::receiveData called on " << operatorId);
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
     NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());

@@ -70,6 +70,10 @@ QuerySubPlanId ExecutablePipeline::getQepParentId() const { return qepId; }
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
+PipelineStageArity ExecutablePipeline::getArity() {
+    return executablePipelineStage->getArity();
+}
+
 ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
                                                  ExecutablePipelineStagePtr executablePipelineStage,
                                                  PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline,

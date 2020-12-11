@@ -31,7 +31,12 @@ using std::string;
 namespace detail {
 
 class ReconfigurationTaskEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
+    typedef Execution::ExecutablePipelineStage base;
   public:
+    explicit ReconfigurationTaskEntryPointPipelineStage() : base(Unary) {
+        // nop
+    }
+
     uint32_t execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext) {
         NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread "
                   << workerContext.getId());
@@ -96,6 +101,18 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     std::scoped_lock lock(queryMutex, statisticsMutex);
 
     bool isBinaryOperator = false;
+    for (auto& pipeline : qep->getPipelines()) {
+        switch (pipeline->getArity()) {
+            case Unary: {
+                break;
+            }
+            case BinaryLeft:
+            case BinaryRight: {
+                isBinaryOperator |= true;
+                break;
+            }
+        }
+    }
 
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
@@ -122,6 +139,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
             queryMapToOperatorId[qep->getQueryId()].push_back(source->getOperatorId());
             if (isBinaryOperator) {
+                NES_ASSERT(qep->getPipelines().size() >= 2, "Binary operator must have at least two pipelines");
                 if (queryMapToOperatorId[qep->getQueryId()].size() == 1) {
                     NES_DEBUG("QueryManager: mm.size() == 1 " << qep << " to Source" << source->getOperatorId());
                     operatorIdToPipelineStage[source->getOperatorId()] = 0;
@@ -171,6 +189,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     NES_TRACE(ss2.str());
     NES_TRACE(ss3.str());
 #endif
+    NES_VERIFY(!operatorIdToQueryMap[operatorId].empty(), "Operator id to query map for operator is empty");
     for (const auto& qep : operatorIdToQueryMap[operatorId]) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly

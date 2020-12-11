@@ -16,4 +16,5 @@ add_source_nes(
         ClassDefinition.cpp
         FunctionDefinition.cpp
         NamespaceDefinition.cpp
+        ConstructorDefinition.cpp
 )

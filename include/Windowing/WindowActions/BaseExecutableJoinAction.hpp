@@ -16,21 +16,22 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <State/StateVariable.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
 
-template<class KeyType>
+template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class BaseExecutableJoinAction {
   public:
     /**
      * @brief This function does the action
      * @return bool indicating success
      */
-    virtual bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
-                          StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
+    virtual bool doAction(StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
+                          StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
                           uint64_t currentWatermarkLeft, uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft,
                           uint64_t lastWatermarkRight) = 0;
 
@@ -39,12 +40,19 @@ class BaseExecutableJoinAction {
     virtual SchemaPtr getJoinSchema() = 0;
 
     void setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
+        NES_ASSERT(!!pipelineExecutionContext, "invalid pipelineExecutionContext");
+//        this->queryManager = queryManager;
+//        this->bufferManager = bufferManager;
+//        this->nextPipeline = nextPipeline;
         this->originId = originId;
         this->weakExecutionContext = pipelineExecutionContext;
     }
 
   protected:
     std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
+//    QueryManagerPtr queryManager;
+//    BufferManagerPtr bufferManager;
+//    PipelineStagePtr nextPipeline;
     uint64_t originId;
 };
 }// namespace NES::Join

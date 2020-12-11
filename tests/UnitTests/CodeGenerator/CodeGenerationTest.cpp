@@ -468,7 +468,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 
     Compiler compiler;
-    auto stage = CompiledExecutablePipelineStage::create(compiler.compile(file.code, true /** debugging **/));
+    auto stage = CompiledExecutablePipelineStage::create(compiler.compile(file.code, true /** debugging **/), Unary);
 
     /* setup input and output for test */
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();

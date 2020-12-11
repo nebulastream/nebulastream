@@ -98,9 +98,11 @@ StructDeclaration::StructDeclaration(const std::string& type_name, const std::st
 
 VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string& field_name) const {
     DeclarationPtr decl = getField(field_name);
-    if (!decl)
+    if (!decl) {
         NES_ERROR("Error during Code Generation: Field '" << field_name << "' does not exist in struct '" << getTypeName()
                                                           << "'");
+        NES_THROW_RUNTIME_ERROR("Error during Code Generation");
+    }
     return VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
 }
 

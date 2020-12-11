@@ -29,10 +29,10 @@ using NodeEngine::Execution::PipelineExecutionContext;
  * To this end, it ensures that the compiled code is correctly destructed.
  */
 class CompiledExecutablePipelineStage : public NodeEngine::Execution::ExecutablePipelineStage {
-
+    typedef NodeEngine::Execution::ExecutablePipelineStage base;
   public:
-    explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode);
-    static NodeEngine::Execution::ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode);
+    explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity);
+    static NodeEngine::Execution::ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode, PipelineStageArity arity);
     ~CompiledExecutablePipelineStage();
 
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;

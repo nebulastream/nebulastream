@@ -28,6 +28,12 @@ typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 class FunctionDefinition;
 typedef std::shared_ptr<FunctionDefinition> FunctionDefinitionPtr;
 
+class ConstructorDefinition;
+typedef std::shared_ptr<ConstructorDefinition> ConstructorDefinitionPtr;
+
+class ConstructorDeclaration;
+typedef std::shared_ptr<ConstructorDeclaration> ConstructorDeclarationPtr;
+
 class NamespaceDefinition;
 typedef std::shared_ptr<NamespaceDefinition> NamespaceDefinitionPtr;
 

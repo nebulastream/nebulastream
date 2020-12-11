@@ -88,14 +88,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(),
                                                                             generatableParentOperator);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-        auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
-        //TODO: we have to create two scan operators here
-        auto scanOperator =
-            GeneratableScanOperator::create(binaryOperator->getLeftInputSchema(), binaryOperator->getOutputSchema());
-        generatableParentOperator->addChild(scanOperator);
-        auto childOperator = GeneratableJoinOperator::create(operatorNode->as<JoinLogicalOperatorNode>());
-        scanOperator->addChild(childOperator);
-        return childOperator;
+        return TranslateToGeneratableOperatorPhase::transformJoinOperator(operatorNode->as<JoinLogicalOperatorNode>(), generatableParentOperator);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator =
             GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
@@ -105,7 +98,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         return generatableParentOperator;
     } else {
         NES_FATAL_ERROR(
-            "TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
+            "TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode->toString());
         NES_NOT_IMPLEMENTED();
     }
 
@@ -141,6 +134,15 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
     NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: "
                     << windowOperator->toString());
     NES_NOT_IMPLEMENTED();
+}
+
+OperatorNodePtr TranslateToGeneratableOperatorPhase::transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator, OperatorNodePtr downstreamOperator) {
+    auto scanOperator = GeneratableScanOperator::create(joinOperator->getOutputSchema(), joinOperator->getOutputSchema());
+    auto generatedJoinOperator = GeneratableJoinOperator::create(joinOperator->as<JoinLogicalOperatorNode>());
+    // JOIN -> SCAN -> DOWNSTREAM OPERATOR
+    scanOperator->addChild(generatedJoinOperator);
+    downstreamOperator->addChild(scanOperator);
+    return generatedJoinOperator;
 }
 
 GeneratableWindowAggregationPtr TranslateToGeneratableOperatorPhase::transformWindowAggregation(
