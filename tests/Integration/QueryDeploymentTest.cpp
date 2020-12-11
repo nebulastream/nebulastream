@@ -760,6 +760,73 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     EXPECT_TRUE(response == 0);
 }
 
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
+    remove("test.out");
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    NesWorkerPtr wrk1 =
+        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = "Query::from(\"default_logical\").project(Attribute(\"id\")).sink(FileSinkDescriptor::create(\"test.out\"));";
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    ifstream my_file("test.out");
+    EXPECT_TRUE(my_file.good());
+
+    std::ifstream ifs("test.out");
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|id:UINT32|value:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "|1|\n"
+                             "+----------------------------------------------------+";
+    NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): content=" << content);
+    NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+    int response = remove("test.out");
+    EXPECT_TRUE(response == 0);
+}
+
 TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     remove("test.out");
 

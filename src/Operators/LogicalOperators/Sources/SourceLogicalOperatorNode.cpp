@@ -45,7 +45,7 @@ const std::string SourceLogicalOperatorNode::toString() const {
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() { return sourceDescriptor; }
 bool SourceLogicalOperatorNode::inferSchema() {
     inputSchema = sourceDescriptor->getSchema()->copy();
-    if (projectSchema->getSize() == 0) {
+    if (!projectSchema || projectSchema->getSize() == 0) {
         outputSchema = sourceDescriptor->getSchema();
     } else {
         outputSchema = sourceDescriptor->getSchema()->copy();
@@ -72,6 +72,11 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    if(copy->instanceOf<SourceLogicalOperatorNode>())
+    {
+        copy->as<SourceLogicalOperatorNode>()->setProjectSchema(projectSchema);
+    }
+
     return copy;
 }
 }// namespace NES
