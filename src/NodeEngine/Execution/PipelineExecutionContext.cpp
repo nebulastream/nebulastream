@@ -20,14 +20,15 @@
 #include <NodeEngine/WorkerContext.hpp>
 #include <utility>
 
-namespace NES::NodeEngine::Execution{
+namespace NES::NodeEngine::Execution {
 
 PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
-                                                   Windowing::AbstractWindowHandlerPtr windowHandler,
-                                                   Join::AbstractJoinHandlerPtr joinHandler)
+                                                   std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
+                                                   std::vector<OperatorHandlerPtr> operatorHandlers)
     : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)),
-      windowHandler(windowHandler), joinHandler(joinHandler) {
+      emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
+      operatorHandlers(std::move(operatorHandlers)) {
     // nop
 }
 
@@ -38,4 +39,11 @@ void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer, WorkerConte
     emitFunctionHandler(outputBuffer, workerContext);
 }
 
-}// namespace NES
+void PipelineExecutionContext::dispatchBuffer(TupleBuffer& outputBuffer) {
+    // call the function handler
+    emitToQueryManagerFunctionHandler(outputBuffer);
+}
+
+std::string PipelineExecutionContext::toString() { return "PipelineContext(queryID:" + std::to_string(queryId); }
+
+}// namespace NES::NodeEngine::Execution

@@ -42,8 +42,8 @@ class PipelineExecutionContext {
      */
     explicit PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-                                      Windowing::AbstractWindowHandlerPtr windowHandler,
-                                      Join::AbstractJoinHandlerPtr joinHandler);
+                                      std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
+                                      std::vector<OperatorHandlerPtr> operatorHandlers);
 
     /**
      * @brief Allocates a new tuple buffer.
@@ -54,33 +54,25 @@ class PipelineExecutionContext {
     /**
      * @brief Emits a output tuple buffer to the runtime. Internally we call the emit function which is a callback to the correct handler.
      * @param outputBuffer the output tuple buffer that is passed to the runtime
+     * @param workerContext the worker context
      */
     void emitBuffer(TupleBuffer& outputBuffer, WorkerContext&);
 
     /**
-     * @brief
-     */
-    Windowing::AbstractWindowHandlerPtr getWindowHandler() { return windowHandler; }
+    * @brief Dispatch a buffer as a new task to the query manager.
+    * @param outputBuffer the output tuple buffer that is passed to the runtime
+    * @param workerContext the worker context
+    */
+    void dispatchBuffer(TupleBuffer& outputBuffer);
 
-    Join::AbstractJoinHandlerPtr getJoinHandler() { return joinHandler; }
 
-    /**
-     * @brief this method is called from the compiled code to get the join handler
-     * @tparam KeyTypeLeft
-     * @param id
-     * @return
-     */
-    template<template<class> class WindowHandlerType, class KeyType>
-    auto getJoinHandler() {
-        return std::dynamic_pointer_cast<WindowHandlerType<KeyType>>(joinHandler);
+    template<class OperatorHandlerType>
+    auto getOperatorHandler(int index) {
+        return std::static_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }
 
-    template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType,
-             class PartialAggregateType, class FinalAggregateType>
-    auto getWindowHandler() {
-        return std::dynamic_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
-            windowHandler);
-    }
+    std::string toString();
+
 
   private:
     /**
@@ -97,9 +89,12 @@ class PipelineExecutionContext {
      */
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
 
-    Windowing::AbstractWindowHandlerPtr windowHandler;
+    /**
+    * @brief The emit function handler to react on an emitted tuple buffer.
+    */
+    std::function<void(TupleBuffer&)> emitToQueryManagerFunctionHandler;
 
-    Join::AbstractJoinHandlerPtr joinHandler;
+    const std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
 };
 
 }// namespace NES

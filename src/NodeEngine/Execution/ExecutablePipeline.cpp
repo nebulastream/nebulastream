@@ -42,22 +42,26 @@ bool ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef work
     return ret;
 }
 
-bool ExecutablePipeline::setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
+bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
     executablePipelineStage->setup(*pipelineContext.get());
-    if (hasWindowHandler()) {
+
+   /* if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::setup windowHandler");
-        return pipelineContext->getWindowHandler()->setup(queryManager, bufferManager, nextPipeline, pipelineStageId, qepId);
+        return true;
+        //return pipelineContext->getWindowHandler()->setup(queryManager, bufferManager, nextPipeline, pipelineStageId, qepId);
     }
     if (hasJoinHandler()) {
         NES_DEBUG("PipelineStage::setup joinHandler");
         return pipelineContext->getJoinHandler()->setup(queryManager, bufferManager, nextPipeline, pipelineStageId, qepId);
     }
+    */
     return true;
 }
 
 bool ExecutablePipeline::start() {
     executablePipelineStage->start(*pipelineContext.get());
-    if (hasWindowHandler()) {
+
+    /*if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::start: windowhandler start");
         return pipelineContext->getWindowHandler()->start();
     } else {
@@ -69,14 +73,14 @@ bool ExecutablePipeline::start() {
         return pipelineContext->getJoinHandler()->start();
     } else {
         NES_DEBUG("PipelineStage::start: no join to start");
-    }
+    }*/
 
     return true;
 }
 
 bool ExecutablePipeline::stop() {
     executablePipelineStage->stop(*pipelineContext.get());
-    if (hasWindowHandler()) {
+    /*if (hasWindowHandler()) {
         NES_DEBUG("PipelineStage::stop: windowhandler stop");
         return pipelineContext->getWindowHandler()->stop();
     } else {
@@ -88,7 +92,7 @@ bool ExecutablePipeline::stop() {
         return pipelineContext->getJoinHandler()->stop();
     } else {
         NES_DEBUG("PipelineStage::stop: no joinHandler to stop");
-    }
+    }*/
     return true;
 }
 
@@ -98,9 +102,9 @@ uint32_t ExecutablePipeline::getPipeStageId() { return pipelineStageId; }
 
 QuerySubPlanId ExecutablePipeline::getQepParentId() const { return qepId; }
 
-bool ExecutablePipeline::hasWindowHandler() { return pipelineContext->getWindowHandler() != nullptr; }
+bool ExecutablePipeline::hasWindowHandler() { return false; }
 
-bool ExecutablePipeline::hasJoinHandler() { return pipelineContext->getJoinHandler() != nullptr; }
+bool ExecutablePipeline::hasJoinHandler() { return false; }
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 

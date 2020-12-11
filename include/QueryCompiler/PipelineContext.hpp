@@ -69,12 +69,23 @@ class PipelineContext {
     void addNextPipeline(PipelineContextPtr nextPipeline);
     bool hasNextPipeline() const;
 
+    /**
+     * @brief Appends a new operator handler and returns the handler index.
+     * The index enables runtime lookups.
+     * @param operatorHandler
+     * @return operator handler index
+     */
+    int64_t registerOperatorHandler(NodeEngine::Execution::OperatorHandlerPtr operatorHandler);
+
+    const std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
+
     std::string pipelineName;
     bool isLeftSide;
     std::vector<BlockScopeStatementPtr> getSetupScopes();
   private:
     std::vector<PipelineContextPtr> nextPipelines;
     std::vector<BlockScopeStatementPtr> setupScopes;
+    std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
     Windowing::AbstractWindowHandlerPtr windowHandler;
     Join::AbstractJoinHandlerPtr joinHandler;
 };

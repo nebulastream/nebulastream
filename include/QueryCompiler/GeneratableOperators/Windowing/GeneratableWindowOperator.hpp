@@ -53,7 +53,7 @@ class GeneratableWindowOperator : public WindowLogicalOperatorNode, public Gener
 
     Windowing::AbstractWindowHandlerPtr createWindowHandler(SchemaPtr outputSchema);
 
-    void generateSetupCode(CodeGeneratorPtr codegen, PipelineContextPtr context);
+    uint64_t generateSetupCode(CodeGeneratorPtr codegen, PipelineContextPtr context);
 
   protected:
     explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,

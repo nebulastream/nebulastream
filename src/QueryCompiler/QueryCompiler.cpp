@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
@@ -55,8 +55,7 @@ class PipelineStageHolder {
   public:
     uint32_t currentStageId;
     NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage;
-    Windowing::AbstractWindowHandlerPtr windowHandler;
-    Join::AbstractJoinHandlerPtr joinHandler;
+    std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
     std::set<uint32_t> producers;
     std::set<uint32_t> consumers;
 
@@ -64,15 +63,15 @@ class PipelineStageHolder {
     PipelineStageHolder() = default;
 
     PipelineStageHolder(uint32_t currentStageId, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                        Windowing::AbstractWindowHandlerPtr windowHandler, Join::AbstractJoinHandlerPtr joinHandler)
+                        const std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : currentStageId(currentStageId), executablePipelineStage(std::move(executablePipelineStage)),
-          windowHandler(std::move(windowHandler)), joinHandler(std::move(joinHandler)) {
+          operatorHandlers(std::move(operatorHandlers)){
         // nop
     }
 };
 
-void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId, CodeGeneratorPtr codeGenerator, NodeEngine::BufferManagerPtr,
-                                 NodeEngine::QueryManagerPtr, PipelineContextPtr context,
+void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId, CodeGeneratorPtr codeGenerator,
+                                 NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, PipelineContextPtr context,
                                  std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
     // BFS visit to figure out producer-consumer relations among pipelines
     std::deque<std::tuple<int32_t, int32_t, PipelineContextPtr>> queue;
@@ -102,7 +101,7 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
             }
 
             accumulator[currentPipelineStateId] =
-                PipelineStageHolder(currentPipelineStateId, executablePipelineStage, windowHandlerPtr, joinHandlerPtr);
+                PipelineStageHolder(currentPipelineStateId, executablePipelineStage, currContext->getOperatorHandlers());
             if (consumerPipelineStateId >= 0) {
                 accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }
@@ -132,7 +131,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
         NES_ERROR("compilePipelineStages failure: no pipelines to generate");
         NES_THROW_RUNTIME_ERROR("No pipelines generated");
     }
-
+    auto originId = builder.getQueryManager()->getNodeId();
     std::map<uint32_t, NodeEngine::Execution::ExecutablePipelinePtr> pipelines;
     for (auto it = executableStages.rbegin(), last = executableStages.rend(); it != last; ++it) {
         auto& [stageId, holder] = *it;
@@ -145,12 +144,20 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [childPipelines](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
+                [childPipelines, builder, originId](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
+                    buffer.setOriginId(originId);
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
                     }
                 },
-                holder.windowHandler, holder.joinHandler);
+                [childPipelines, builder, originId](NodeEngine::TupleBuffer& buffer) {
+                    buffer.setOriginId(originId);
+                    auto queryManager = builder.getQueryManager();
+                    for (auto& childPipeline : childPipelines) {
+                        queryManager->addWorkForNextPipeline(buffer, childPipeline);
+                    }
+                },
+                holder.operatorHandlers);
         } else {
             // invoke sink
             auto& sinks = builder.getSinks();
@@ -160,12 +167,16 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [sinks](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
+                [sinks, originId](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
+                    buffer.setOriginId(originId);
                     for (auto& sink : sinks) {
                         sink->writeData(buffer, workerContext);
                     }
                 },
-                holder.windowHandler, holder.joinHandler);
+                [sinks, builder](NodeEngine::TupleBuffer&) {
+                    NES_ERROR("QueryCompiler: we cant emit to a sink, if no worker context is provided");
+                },
+                holder.operatorHandlers);
         }
         auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(stageId, builder.getQuerySubPlanId(),
                                                                           holder.executablePipelineStage, executionContext,
