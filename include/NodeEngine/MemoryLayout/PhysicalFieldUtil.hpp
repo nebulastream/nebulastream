@@ -30,14 +30,14 @@ class PhysicalType;
 typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
 
 /**
- * @brief Util class to create a PhysicalField for a specific data type and a offset in a buffer.
+ * @brief Util class to create a PhysicalField for a specific data type and a multiplier in a buffer.
  */
 class PhysicalFieldUtil {
   public:
     /**
      * @brief creates the corresponding PhysicalFieldPtr with respect to a particular data type.
      * @param dataType
-     * @param bufferOffset offset in the underling buffer
+     * @param bufferOffset multiplier in the underling buffer
      */
     static PhysicalFieldPtr createPhysicalField(const PhysicalTypePtr dataType, uint64_t bufferOffset);
 };

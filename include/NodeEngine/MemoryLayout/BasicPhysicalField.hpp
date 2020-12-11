@@ -36,7 +36,7 @@ class BasicPhysicalField : public PhysicalField {
      */
     void write(TupleBuffer& tupleBuffer, ValueType value) {
         auto byteBuffer = tupleBuffer.getBufferAs<int8_t>();
-        // interpret the target address as value type and write value to tuple buffer(ValueType *) byteBuffer[offset]) = value;
+        // interpret the target address as value type and write value to tuple buffer(ValueType *) byteBuffer[multiplier]) = value;
         ((ValueType*) (&byteBuffer[bufferOffset]))[0] = value;
     };
 

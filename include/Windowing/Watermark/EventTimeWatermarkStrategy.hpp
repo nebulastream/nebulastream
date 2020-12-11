@@ -26,20 +26,22 @@ typedef std::shared_ptr<EventTimeWatermarkStrategy> EventTimeWatermarkStrategyPt
 
 class EventTimeWatermarkStrategy : public WatermarkStrategy {
   public:
-    EventTimeWatermarkStrategy(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness);
+    EventTimeWatermarkStrategy(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness, uint64_t multiplier);
 
     FieldAccessExpressionNodePtr getField();
 
     uint64_t getAllowedLateness();
 
+    uint64_t getMultiplier();
+
     Type getType() override;
 
-    static EventTimeWatermarkStrategyPtr create(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness);
+    static EventTimeWatermarkStrategyPtr create(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness, uint64_t multiplier);
 
   private:
     // Field where the watermark should be retrieved
     FieldAccessExpressionNodePtr onField;
-
+    uint64_t multiplier;
     uint64_t allowedLateness;
 };
 

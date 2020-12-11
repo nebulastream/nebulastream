@@ -17,8 +17,9 @@
 #ifndef NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_
 #define NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_
 
+#include <API/Windowing.hpp>
+#include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-
 namespace NES::Windowing {
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
@@ -30,7 +31,7 @@ class TimeCharacteristic {
      */
     enum Type { IngestionTime, EventTime };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, AttributeFieldPtr field);
+    TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit);
 
     /**
      * @brief Factory to create a time characteristic for ingestion time window
@@ -43,7 +44,7 @@ class TimeCharacteristic {
      * @param field the field from which we want to extract the time.
      * @return
      */
-    static TimeCharacteristicPtr createEventTime(ExpressionItem field);
+    static TimeCharacteristicPtr createEventTime(ExpressionItem field, TimeUnit unit = API::Milliseconds());
 
     /**
      * @return The TimeCharacteristic type.
@@ -57,10 +58,12 @@ class TimeCharacteristic {
 
     std::string toString();
     std::string getTypeAsString();
+    TimeUnit getTimeUnit();
 
   private:
     Type type;
     AttributeFieldPtr field;
+    TimeUnit unit;
 };
 }// namespace NES::Windowing
 

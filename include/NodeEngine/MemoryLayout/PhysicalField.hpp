@@ -76,7 +76,7 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
 
   protected:
     /**
-     * @brief Field offset in the underling memory buffer.
+     * @brief Field multiplier in the underling memory buffer.
      */
     uint64_t bufferOffset;
 };

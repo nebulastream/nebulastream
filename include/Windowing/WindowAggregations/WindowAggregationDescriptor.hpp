@@ -18,9 +18,9 @@
 #define INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing {
-
 /**
  * Abstract class for window aggregations. All window aggregations operate on a field and output another field.
  */

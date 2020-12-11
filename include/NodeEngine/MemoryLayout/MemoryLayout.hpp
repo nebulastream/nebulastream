@@ -46,10 +46,10 @@ class MemoryLayout {
     virtual MemoryLayoutPtr copy() const = 0;
 
     /**
-     * @brief Calculates the offset position of a particular field in a particular record.
+     * @brief Calculates the multiplier position of a particular field in a particular record.
      * @param recordIndex the index of the record we want to access
      * @param fieldIndex the index of the field we want to access
-     * @return uint64_t field offset in the tuple buffer
+     * @return uint64_t field multiplier in the tuple buffer
      */
     virtual uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) = 0;
 

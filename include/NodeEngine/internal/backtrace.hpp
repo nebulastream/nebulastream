@@ -2185,7 +2185,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdwarf> : public TraceResolve
     die_cache_entry& get_die_cache(dwarf_fileobject& fobj, Dwarf_Die die) {
         Dwarf_Error error = DW_DLE_NE;
 
-        // Get the die offset, we use it as the cache key
+        // Get the die multiplier, we use it as the cache key
         Dwarf_Off die_offset;
         if (dwarf_dieoffset(die, &die_offset, &error) != DW_DLV_OK) {
             die_offset = 0;
@@ -2295,16 +2295,16 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdwarf> : public TraceResolve
 
         Dwarf_Die found_die = NULL;
         if (dwarf_attr(die, attr, &attr_mem, &error) == DW_DLV_OK) {
-            Dwarf_Off offset;
+            Dwarf_Off multiplier;
             int result = 0;
             if (global) {
-                result = dwarf_global_formref(attr_mem, &offset, &error);
+                result = dwarf_global_formref(attr_mem, &multiplier, &error);
             } else {
-                result = dwarf_formref(attr_mem, &offset, &error);
+                result = dwarf_formref(attr_mem, &multiplier, &error);
             }
 
             if (result == DW_DLV_OK) {
-                if (dwarf_offdie(dwarf, offset, &found_die, &error) != DW_DLV_OK) {
+                if (dwarf_offdie(dwarf, multiplier, &found_die, &error) != DW_DLV_OK) {
                     found_die = NULL;
                 }
             }
@@ -2373,7 +2373,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdwarf> : public TraceResolve
             has_lowpc = true;
 
             if (dwarf_highpc_b(die, &high_pc, &high_pc_form, &return_class, &error) == DW_DLV_OK) {
-                // We do have a high pc. In DWARF 4+ this is an offset from the
+                // We do have a high pc. In DWARF 4+ this is an multiplier from the
                 // low pc, but in earlier versions it's an absolute address.
 
                 has_highpc = true;
@@ -2400,13 +2400,13 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdwarf> : public TraceResolve
         Dwarf_Attribute attr;
         if (dwarf_attr(die, DW_AT_ranges, &attr, &error) == DW_DLV_OK) {
 
-            Dwarf_Off offset;
-            if (dwarf_global_formref(attr, &offset, &error) == DW_DLV_OK) {
+            Dwarf_Off multiplier;
+            if (dwarf_global_formref(attr, &multiplier, &error) == DW_DLV_OK) {
                 Dwarf_Ranges* ranges;
                 Dwarf_Signed ranges_count = 0;
                 Dwarf_Unsigned byte_count = 0;
 
-                if (dwarf_get_ranges_a(dwarf, offset, die, &ranges, &ranges_count, &byte_count, &error) == DW_DLV_OK) {
+                if (dwarf_get_ranges_a(dwarf, multiplier, die, &ranges, &ranges_count, &byte_count, &error) == DW_DLV_OK) {
                     has_ranges = ranges_count != 0;
                     for (int i = 0; i < ranges_count; i++) {
                         if (ranges[i].dwr_addr1 != 0 && pc >= ranges[i].dwr_addr1 + low_pc && pc < ranges[i].dwr_addr2 + low_pc) {
@@ -3019,12 +3019,12 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdwarf> : public TraceResolve
             Dwarf_Arange arange;
             if (dwarf_get_arange(aranges, arange_count, addr, &arange, &error) == DW_DLV_OK) {
 
-                // We found our address. Get the compilation-unit DIE offset
+                // We found our address. Get the compilation-unit DIE multiplier
                 // represented by the given address range.
                 Dwarf_Off cu_die_offset;
                 if (dwarf_get_cu_die_offset(arange, &cu_die_offset, &error) == DW_DLV_OK) {
-                    // Get the DIE at the offset returned by the aranges search.
-                    // We set is_info to 1 to specify that the offset is from
+                    // Get the DIE at the multiplier returned by the aranges search.
+                    // We set is_info to 1 to specify that the multiplier is from
                     // the .debug_info section (and not .debug_types)
                     int dwarf_result = dwarf_offdie_b(dwarf, cu_die_offset, 1, &returnDie, &error);
 
@@ -3124,7 +3124,7 @@ class TraceResolverDarwinImpl<trace_resolver_tag::backtrace_symbol> : public Tra
 
     ResolvedTrace resolve(ResolvedTrace trace) {
         // parse:
-        // <n>  <file>  <addr>  <mangled-name> + <offset>
+        // <n>  <file>  <addr>  <mangled-name> + <multiplier>
         char* filename = _symbols[trace.idx];
 
         // skip "<n>  "
@@ -3135,7 +3135,7 @@ class TraceResolverDarwinImpl<trace_resolver_tag::backtrace_symbol> : public Tra
 
         // find start of <mangled-name> from end (<file> may contain a space)
         char* p = filename + strlen(filename) - 1;
-        // skip to start of " + <offset>"
+        // skip to start of " + <multiplier>"
         while (p > filename && *p != ' ')
             p--;
         while (p > filename && *p == ' ')
@@ -3286,13 +3286,13 @@ class TraceResolverImpl<system_tag::windows_tag> {
         }
         UnDecorateSymbolName(sym.sym.Name, (PSTR) name, 256, UNDNAME_COMPLETE);
 
-        DWORD offset = 0;
+        DWORD multiplier = 0;
         IMAGEHLP_LINE line;
-        if (SymGetLineFromAddr(process, (ULONG64) t.addr, &offset, &line)) {
+        if (SymGetLineFromAddr(process, (ULONG64) t.addr, &multiplier, &line)) {
             t.object_filename = line.FileName;
             t.source.filename = line.FileName;
             t.source.line = line.LineNumber;
-            t.source.col = offset;
+            t.source.col = multiplier;
         }
 
         t.source.function = name;

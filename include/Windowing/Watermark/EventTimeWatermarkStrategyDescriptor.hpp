@@ -20,7 +20,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-
+#include <Windowing/WindowMeasures/TimeUnit.hpp>
 namespace NES::Windowing {
 
 class EventTimeWatermarkStrategyDescriptor;
@@ -28,21 +28,23 @@ typedef std::shared_ptr<EventTimeWatermarkStrategyDescriptor> EventTimeWatermark
 
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
   public:
-    static WatermarkStrategyDescriptorPtr create(ExpressionItem onField, TimeMeasure allowedLateness);
+    static WatermarkStrategyDescriptorPtr create(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit);
 
     ExpressionItem getOnField();
 
     TimeMeasure getAllowedLateness();
+
+    TimeUnit getTimeUnit();
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
 
   private:
     // Field where the watermark should be retrieved
     ExpressionItem onField;
-
+    TimeUnit unit;
     TimeMeasure allowedLateness;
 
-    explicit EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure allowedLateness);
+    explicit EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit);
 };
 
 }// namespace NES::Windowing
