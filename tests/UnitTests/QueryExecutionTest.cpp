@@ -315,6 +315,66 @@ TEST_F(QueryExecutionTest, filterQuery) {
     nodeEngine->stop();
 }
 
+
+TEST_F(QueryExecutionTest, projectionQuery) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
+    // creating query plan
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+                                                                    nodeEngine->getQueryManager(), 1);
+
+    auto outputSchema = Schema::create()
+        ->addField("id", BasicType::INT64);
+    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id")).sink(DummySink::create());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+
+    auto plan = GeneratedQueryExecutionPlanBuilder::create()
+        .addSink(testSink)
+        .addSource(testSource)
+        .addOperatorQueryPlan(generatableOperators)
+        .setCompiler(nodeEngine->getCompiler())
+        .setBufferManager(nodeEngine->getBufferManager())
+        .setQueryManager(nodeEngine->getQueryManager())
+        .setQueryId(1)
+        .setQuerySubPlanId(1)
+        .build();
+
+    // The plan should have one pipeline
+    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Created);
+    EXPECT_EQ(plan->numberOfPipelineStages(), 1);
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto memoryLayout = createRowLayout(testSchema);
+    fillBuffer(buffer, memoryLayout);
+    plan->setup();
+    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Deployed);
+    plan->start();
+    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Running);
+    WorkerContext workerContext{1};
+    plan->getStage(0)->execute(buffer, workerContext);
+
+    // This plan should produce one output buffer
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+
+    auto& resultBuffer = testSink->get(0);
+    // The output buffer should contain 5 tuple;
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
+
+    auto resultLayout = createRowLayout(outputSchema);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        // id
+        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), recordIndex);
+    }
+    testSink->shutdown();
+    plan->stop();
+    nodeEngine->stop();
+}
+
 /**
  * @brief This test verify that the watermark assigned correctly.
  * WindowSource -> WatermarkAssignerOperator -> TestSink

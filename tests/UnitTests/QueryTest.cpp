@@ -92,6 +92,39 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sinkOperators.size(), 1);
 }
 
+TEST_F(QueryTest, testQueryProjection) {
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
+            /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+            /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+            /**Logical Stream Name**/ "test_stream");
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+
+    auto lessExpression = Attribute("id");
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical").project(Attribute("id"), Attribute("value")).sink(printSinkDescriptor);
+    auto plan = query.getQueryPlan();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
+    EXPECT_EQ(sourceOperators.size(), 1);
+
+    SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+
+    const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1);
+
+    SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
+    EXPECT_EQ(sinkOperators.size(), 1);
+}
+
 TEST_F(QueryTest, testQueryTumblingWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 

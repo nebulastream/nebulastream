@@ -76,6 +76,12 @@ class Schema {
     SchemaPtr addField(const std::string& name, DataTypePtr data);
 
     /**
+     * @brief removes a AttributeField from the schema
+     * @param field
+     */
+    void removeField(AttributeFieldPtr field);
+
+    /**
      * @brief Replaces a field, which is already part of the schema.
      * @param name
      * @param type

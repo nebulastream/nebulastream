@@ -25,6 +25,8 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sources/DataSource.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
@@ -81,6 +83,28 @@ class Query {
      */
     static Query from(const std::string sourceStreamName);
 
+    /**
+     * @brief this call projects out the attributes in the parameter list
+     * @param attribute list
+     * @return
+     */
+    template<typename... Args>
+    Query& project(Args&&... args) {
+        SchemaPtr schema = Schema::create();
+        std::vector<ExpressionItem> vec({std::forward<Args>(args)...});
+        for (auto& item : vec) {
+            auto keyExpression = item.getExpressionNode();
+            if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
+                NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+            }
+            auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+            schema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
+        }
+        auto sources = queryPlan->getSourceOperators();
+        NES_ASSERT(sources.size() == 1, "More than one source is not supported");
+        sources[0]->setProjectSchema(schema);
+        return *this;
+    }
     /**
      * This looks ugly, but we can't reference to QueryPtr at this line.
      * @param subQuery is the query to be merged

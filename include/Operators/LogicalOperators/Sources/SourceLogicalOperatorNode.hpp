@@ -53,8 +53,10 @@ class SourceLogicalOperatorNode : public LogicalOperatorNode {
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
+    void setProjectSchema(SchemaPtr schema);
   private:
     SourceDescriptorPtr sourceDescriptor;
+    SchemaPtr projectSchema;
 };
 
 typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
