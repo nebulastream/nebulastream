@@ -46,7 +46,7 @@ class ExpressionToZ3ExprUtil {
      * @brief Convert input expression into an equivalent Z3 expressions
      * @param expression: the input expression
      * @param context: Z3 context
-     * @return returns object representing Z3 expression
+     * @return returns Z3 expression and field map
      */
     static Z3ExprAndFieldMapPtr createForExpression(ExpressionNodePtr expression, z3::ContextPtr context);
 
@@ -55,7 +55,7 @@ class ExpressionToZ3ExprUtil {
      * @brief Convert input Logical expression into an equivalent Z3 expression
      * @param expression: the input logical expression
      * @param context: the Z3 context
-     * @return returns object representing Z3 expression
+     * @return returns Z3 expression and field map
      */
     static Z3ExprAndFieldMapPtr createForLogicalExpressions(ExpressionNodePtr expression, z3::ContextPtr context);
 
@@ -63,7 +63,7 @@ class ExpressionToZ3ExprUtil {
      * @brief Convert input arithmetic expression into an equivalent Z3 expression
      * @param expression: the input arithmetic expression
      * @param context: the Z3 context
-     * @return returns object representing Z3 expression
+     * @return returns Z3 expression and field map
      */
     static Z3ExprAndFieldMapPtr createForArithmeticalExpressions(ExpressionNodePtr expression, z3::ContextPtr context);
 };

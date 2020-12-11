@@ -32,6 +32,7 @@
 namespace NES::Optimizer {
 
 Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::ContextPtr context) {
+    NES_DEBUG("DataTypeToZ3ExprUtil: creating z3 expression for field");
     z3::ExprPtr expr;
     if (dataType->isInteger()) {
         expr = std::make_shared<z3::expr>(context->int_const(fieldName.c_str()));
@@ -49,6 +50,7 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForField(std::string fieldName,
 }
 
 Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::ContextPtr context) {
+    NES_DEBUG("DataTypeToZ3ExprUtil: creating z3 expression for value type");
     if (valueType->isArrayValue()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of array type.");
     } else {

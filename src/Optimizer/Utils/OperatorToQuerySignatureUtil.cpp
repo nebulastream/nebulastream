@@ -170,7 +170,7 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
     std::map<std::string, std::vector<z3::ExprPtr>> allCols;
 
     for (auto& subQuerySignature : childrenQuerySignatures) {
-        //Merge the columns
+        //Merge the columns together from different children signatures
         if (allCols.empty()) {
             allCols = subQuerySignature->getCols();
         } else {
@@ -187,6 +187,8 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
         //Add condition to the array
         allConds.push_back(*subQuerySignature->getConds());
     }
+
+    //Create a CNF using all conditions from children signatures
     z3::ExprPtr conds = std::make_shared<z3::expr>(z3::mk_and(allConds));
     return QuerySignature::create(conds, allCols);
 }
