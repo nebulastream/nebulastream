@@ -82,10 +82,11 @@ class CodeGenerator {
     /**
      * @brief Code generation for a scan, which depends on a particular input schema.
      * @param schema The input schema, in which we receive the input buffer.
+     * @param schema The out schema, in which we forward to the next operator
      * @param context The context of the current pipeline.
      * @return flag if the generation was successful.
      */
-    virtual bool generateCodeForScan(SchemaPtr schema, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) = 0;
 
     /**
      * @brief Code generation for a filter operator, which depends on a particular filter predicate.

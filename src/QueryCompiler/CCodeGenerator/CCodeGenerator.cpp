@@ -105,15 +105,15 @@ const std::string toString(void*, DataTypePtr) {
 
 CodeGeneratorPtr CCodeGenerator::create() { return std::make_shared<CCodeGenerator>(); }
 
-bool CCodeGenerator::generateCodeForScan(SchemaPtr schema, PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) {
 
-    context->inputSchema = schema->copy();
+    context->inputSchema = inputSchema->copy();
     auto code = context->code;
-    code->structDeclaratonInputTuple = getStructDeclarationFromSchema("InputTuple", schema);
+    code->structDeclaratonInputTuple = getStructDeclarationFromSchema("InputTuple", inputSchema);
 
     /** === set the result tuple depending on the input tuple===*/
-    context->resultSchema = context->inputSchema;
-    code->structDeclarationResultTuple = getStructDeclarationFromSchema("ResultTuple", schema);
+    context->resultSchema = outputSchema;
+    code->structDeclarationResultTuple = getStructDeclarationFromSchema("ResultTuple", outputSchema);
     auto tf = getTypeFactory();
     /* === declarations === */
     auto tupleBufferType = tf->createAnonymusDataType("NES::TupleBuffer");

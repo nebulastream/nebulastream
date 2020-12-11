@@ -66,6 +66,17 @@ SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
 
 SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return addField(AttributeField::create(name, data)); }
 
+void Schema::removeField(AttributeFieldPtr field) {
+    auto it = fields.begin();
+    while (it != fields.end()) {
+        if (it->get()->name == field->name) {
+            fields.erase(it);
+            break;
+        }
+        it++;
+    }
+}
+
 void Schema::replaceField(const std::string& name, DataTypePtr type) {
     for (auto i = 0; i < fields.size(); i++) {
         if (fields[i]->name == name) {
@@ -136,7 +147,7 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
 };
 
 uint64_t Schema::getIndex(const std::string& fieldName) {
-    int i = 0;
+    int i = 0;//TODO: this does not work for the first item
     for (const auto& field : this->fields) {
         if (UtilityFunctions::startsWith(field->name, fieldName)) {
             break;

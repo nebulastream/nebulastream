@@ -63,7 +63,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.
         auto scanOperator = operatorNode->as<SourceLogicalOperatorNode>();
-        auto childOperator = GeneratableScanOperator::create(scanOperator->getOutputSchema());
+        auto childOperator = GeneratableScanOperator::create(scanOperator->getInputSchema(), scanOperator->getOutputSchema());
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
@@ -75,7 +75,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        auto scanOperator = GeneratableScanOperator::create(operatorNode->getInputSchema(), operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableMergeOperator::create(operatorNode->as<MergeLogicalOperatorNode>());
         scanOperator->addChild(childOperator);
@@ -86,7 +86,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(),
                                                                             generatableParentOperator);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        auto scanOperator = GeneratableScanOperator::create(operatorNode->getInputSchema(), operatorNode->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableJoinOperator::create(operatorNode->as<JoinLogicalOperatorNode>());
         scanOperator->addChild(childOperator);
@@ -111,7 +111,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
                                                                              OperatorNodePtr generatableParentOperator) {
     auto windowDefinition = windowOperator->getWindowDefinition();
     auto generatableWindowAggregation = transformWindowAggregation(windowDefinition->getWindowAggregation());
-    auto scanOperator = GeneratableScanOperator::create(windowOperator->getOutputSchema());
+    auto scanOperator = GeneratableScanOperator::create(windowOperator->getInputSchema(), windowOperator->getOutputSchema());
     generatableParentOperator->addChild(scanOperator);
     if (windowOperator->instanceOf<CentralWindowOperator>()) {
         auto generatableWindowOperator =

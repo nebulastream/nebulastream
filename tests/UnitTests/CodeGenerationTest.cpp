@@ -683,7 +683,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
     NES_INFO("Generate Code");
     /* generate code for scanning input buffer */
-    codeGenerator->generateCodeForScan(source->getSchema(), context);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context);
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(Schema::create()->addField("campaign_id", DataTypeFactory::createUInt64()), context);
     /* compile code to pipeline stage */
@@ -721,7 +721,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     auto inputSchema = source->getSchema();
 
     /* generate code for scanning input buffer */
-    codeGenerator->generateCodeForScan(source->getSchema(), context);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context);
 
     auto pred = std::dynamic_pointer_cast<Predicate>((PredicateItem(inputSchema->get(0)) < PredicateItem(
                                                           DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "5")))
@@ -766,7 +766,7 @@ TEST_F(CodeGenerationTest, codeGenerationScanOperator) {
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1->code);
@@ -786,7 +786,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
 
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
@@ -805,7 +805,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto stage1 = codeGenerator->compile(context1->code);
 
     auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
 }
 
@@ -823,7 +823,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
@@ -839,7 +839,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     auto stage1 = codeGenerator->compile(context1->code);
 
     auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
@@ -907,7 +907,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTime) {
     auto stage1 = codeGenerator->compile(context1->code);
 
     auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
@@ -1026,7 +1026,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
@@ -1098,7 +1098,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
 
-    codeGenerator->generateCodeForScan(schema, context1);
+    codeGenerator->generateCodeForScan(schema, schema, context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
@@ -1116,7 +1116,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage1 = codeGenerator->compile(context1->code);
 
     auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(schema, context2);
+    codeGenerator->generateCodeForScan(schema, schema, context2);
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
@@ -1233,7 +1233,7 @@ TEST_F(CodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
 
-    codeGenerator->generateCodeForScan(schema, context1);
+    codeGenerator->generateCodeForScan(schema, schema, context1);
     WindowTriggerPolicyPtr trigger = OnRecordTriggerPolicyDescription::create();
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", UINT64));
@@ -1267,7 +1267,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto context = PipelineContext::create();
 
     auto inputSchema = source->getSchema();
-    codeGenerator->generateCodeForScan(inputSchema, context);
+    codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);
 
     //predicate definition
     codeGenerator->generateCodeForFilter(
@@ -1314,7 +1314,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto inputSchema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(inputSchema, context);
+    codeGenerator->generateCodeForScan(inputSchema, inputSchema, context);
 
     //predicate definition
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
@@ -1370,7 +1370,7 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
@@ -1386,7 +1386,7 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     auto stage1 = codeGenerator->compile(context1->code);
 
     auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
     // init window handler
     auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDef);
