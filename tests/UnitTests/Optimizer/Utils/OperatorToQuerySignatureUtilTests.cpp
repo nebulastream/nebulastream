@@ -338,6 +338,38 @@ TEST_F(OperatorToQuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
+TEST_F(OperatorToQuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    //Define expression
+    FieldAssignmentExpressionNodePtr expression1 = Attribute("id") = 40;
+    expression1->inferStamp(schema);
+    FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = Attribute("id") + Attribute("value");
+    expression2->inferStamp(schema);
+
+    //Create Source
+    LogicalOperatorNodePtr sourceOperator =
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+
+    //Create map
+    LogicalOperatorNodePtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
+    logicalOperator11->addChild(sourceOperator);
+    LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
+    logicalOperator12->addChild(logicalOperator11);
+    logicalOperator12->inferSignature(context);
+    auto sig1 = logicalOperator12->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator21 = LogicalOperatorFactory::createMapOperator(expression1);
+    logicalOperator21->addChild(sourceOperator);
+    LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression2);
+    logicalOperator22->addChild(logicalOperator21);
+    logicalOperator22->inferSignature(context);
+    auto sig2 = logicalOperator22->getSignature();
+
+    //Assert
+    ASSERT_TRUE(sig1->isEqual(sig2));
+}
+
 TEST_F(OperatorToQuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
