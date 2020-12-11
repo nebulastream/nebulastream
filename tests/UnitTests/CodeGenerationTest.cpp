@@ -895,9 +895,10 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTime) {
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Seconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
+    auto windowDefinition =
+        LogicalWindowDefinition::create(Attribute("key", BasicType::UINT64), sum,
+                                        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Seconds(10)),
+                                        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1);
@@ -910,10 +911,10 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTime) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", UINT64)
-        ->addField("value", UINT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", UINT64)
+                                  ->addField("value", UINT64);
 
     // init window handler
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
@@ -923,7 +924,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTime) {
     auto executionContext = std::make_shared<PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
-          buff.isValid();
+            buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
@@ -938,11 +939,10 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTime) {
 
     //check partial aggregates in window state
     auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()
-        ->getTypedWindowState();
+                        ->getTypedWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
-
 
 /**
  * @brief This test generates a window assigner
@@ -964,7 +964,8 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value"), Seconds()), Seconds(10)),
+        Attribute("key", BasicType::UINT64), sum,
+        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value"), Seconds()), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
@@ -978,10 +979,10 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", UINT64)
-        ->addField("value", UINT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", UINT64)
+                                  ->addField("value", UINT64);
 
     // init window handler
     auto windowHandler = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
@@ -991,7 +992,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     auto executionContext = std::make_shared<PipelineExecutionContext>(
         0, nodeEngine->getBufferManager(),
         [](TupleBuffer& buff, WorkerContext&) {
-          buff.isValid();
+            buff.isValid();
         },
         windowHandler, nullptr);//valid check due to compiler error for unused var
     auto nextPipeline = std::make_shared<PipelineStage>(1, 0, stage2, executionContext, nullptr);
@@ -1006,11 +1007,10 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
 
     //check partial aggregates in window state
     auto stateVar = queryContext->getWindowHandler<Windowing::AggregationWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>()
-        ->getTypedWindowState();
+                        ->getTypedWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
-
 
 /**
  * @brief This test generates a window slicer

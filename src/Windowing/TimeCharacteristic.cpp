@@ -46,10 +46,7 @@ AttributeFieldPtr TimeCharacteristic::getField() { return field; }
 
 TimeCharacteristic::Type TimeCharacteristic::getType() { return type; }
 
-TimeUnit TimeCharacteristic::getTimeUnit()
-{
-    return unit;
-}
+TimeUnit TimeCharacteristic::getTimeUnit() { return unit; }
 
 std::string TimeCharacteristic::toString() {
     std::stringstream ss;

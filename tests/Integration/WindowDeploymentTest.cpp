@@ -194,7 +194,6 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-
 TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -231,10 +230,10 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\"), Seconds()), "
-        "Minutes(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), "
+                   "TumblingWindow::of(EventTime(Attribute(\"timestamp\"), Seconds()), "
+                   "Minutes(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -482,8 +481,9 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     wrk2->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"ts\"), Seconds()), "
-                   "Minutes(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+    string query =
+        "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"ts\"), Seconds()), "
+        "Minutes(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
