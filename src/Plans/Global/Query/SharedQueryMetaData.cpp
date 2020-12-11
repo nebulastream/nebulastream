@@ -63,7 +63,7 @@ bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
 
     NES_TRACE("SharedQueryMetaData: Remove the Global Query Nodes with sink operators for query " << queryId);
     std::set<GlobalQueryNodePtr> querySinkGQNs = queryIdToSinkGQNMap[queryId];
-    auto itr = sinkGlobalQueryNodes.begin();
+
     for (auto& querySinkGQN : querySinkGQNs) {
         auto found =
             std::find_if(sinkGlobalQueryNodes.begin(), sinkGlobalQueryNodes.end(), [querySinkGQN](GlobalQueryNodePtr sinkGQN) {

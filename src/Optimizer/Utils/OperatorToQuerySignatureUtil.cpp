@@ -35,8 +35,8 @@
 namespace NES::Optimizer {
 
 QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePtr operatorNode,
-                                                                      std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                                      z3::ContextPtr context) {
+                                                                  std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                                  z3::ContextPtr context) {
     NES_DEBUG("OperatorToQueryPlanSignatureUtil: Creating Z3 expression for operator " << operatorNode->toString());
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         if (!childrenQuerySignatures.empty()) {
@@ -107,7 +107,8 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         //We do not expect a broadcast operator to have no or more than 1 children
         if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("Broadcast operator can't have empty or more than one children : " + operatorNode->toString());
+            NES_THROW_RUNTIME_ERROR("Broadcast operator can't have empty or more than one children : "
+                                    + operatorNode->toString());
         }
         return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
@@ -120,39 +121,33 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
         z3::ExprPtr expr = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context)->getExpr();
 
-        std::string fieldName = mapOperator->getMapExpression()->getField()->getFieldName();
-
         //Fetch the signature of only children and get the column values
         auto cols = childrenQuerySignatures[0]->getCols();
 
-//        const z3::expr_vector& vector = expr->contains();
-//        for(auto ele : vector){
-//            NES_INFO(ele);
-//        }
-        
-        if (cols.find(fieldName) != cols.end()) {
-            //Substitute the field expressions with the children column values
-            auto colExprs = cols[fieldName];
+        //Prepare all combinations of col expression for the given map by substituting the previous col values in the assignment expression
+        std::vector<z3::ExprPtr> allColExprForMap{expr};
+        for (unsigned i = 0; i < expr->num_args(); i++) {
+            const auto& exprArg = expr->arg(i);
+            auto exprArgString = exprArg.to_string();
+            if (cols.find(exprArgString) != cols.end()) {
+                auto exprArgCol = cols[exprArgString];
+                z3::expr_vector from(*context);
+                from.push_back(exprArg);
 
-            //Compute the filed expression
-            DataTypePtr fieldType = mapOperator->getMapExpression()->getField()->getStamp();
-            auto filedExpr = DataTypeToZ3ExprUtil::createForField(fieldName, fieldType, context);
-
-            z3::expr_vector from(*context);
-            from.push_back(*filedExpr->getExpr());
-
-            std::vector<z3::ExprPtr> updatedColExprs;
-            for (auto& colExpr : colExprs) {
-                z3::expr_vector to(*context);
-                to.push_back(*colExpr);
-                auto newColExpr = std::make_shared<z3::expr>(expr->substitute(from, to));
-                updatedColExprs.push_back(newColExpr);
+                std::vector<z3::ExprPtr> updatedColExprForMap;
+                for (auto& colExpr : exprArgCol) {
+                    for (auto& mapColExpr : allColExprForMap) {
+                        z3::expr_vector to(*context);
+                        to.push_back(*colExpr);
+                        auto newColExpr = std::make_shared<z3::expr>(mapColExpr->substitute(from, to));
+                        updatedColExprForMap.push_back(newColExpr);
+                    }
+                }
+                allColExprForMap = updatedColExprForMap;
             }
-
-            cols[fieldName] = updatedColExprs;
-        } else {
-            cols[fieldName] = {expr};
         }
+        std::string fieldName = mapOperator->getMapExpression()->getField()->getFieldName();
+        cols[fieldName] = allColExprForMap;
 
         //Fetch child cond
         auto conds = childrenQuerySignatures[0]->getConds();
@@ -167,7 +162,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
 
 QuerySignaturePtr
 OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context,
-                                                              std::vector<QuerySignaturePtr> childrenQuerySignatures) {
+                                                          std::vector<QuerySignaturePtr> childrenQuerySignatures) {
 
     NES_DEBUG("OperatorToQueryPlanSignatureUtil: Computing Signature from children signatures");
 
