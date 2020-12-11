@@ -43,6 +43,22 @@ class StateManager {
 
   public:
     /**
+     * Register a new StateVariable object with default value callback
+     * @tparam Key
+     * @tparam Value
+     * @param variable_name an unique identifier for the state variable
+     * @param defaultCallback a function that gets called when retrieving a value not present in the state
+     * @return the state variable as a reference
+     */
+    template<typename Key, typename Value>
+    StateVariable<Key, Value>* registerStateWithDefault(const std::string& variable_name, std::function<Value(const Key&)>&& defaultCallback) {
+        std::unique_lock<std::mutex> lock(mutex);
+        auto state_var = new StateVariable<Key, Value>(variable_name, std::move(defaultCallback));
+        state_variables[variable_name] = state_var;
+        return state_var;
+    }
+
+    /**
      * Register a new StateVariable object
      * @tparam Key
      * @tparam Value
@@ -50,11 +66,11 @@ class StateManager {
      * @return the state variable as a reference
      */
     template<typename Key, typename Value>
-    StateVariable<Key, Value>& registerState(const std::string& variable_name) {
+    StateVariable<Key, Value>* registerState(const std::string& variable_name) {
         std::unique_lock<std::mutex> lock(mutex);
         auto state_var = new StateVariable<Key, Value>(variable_name);
         state_variables[variable_name] = state_var;
-        return *state_var;
+        return state_var;
     }
 
     /**

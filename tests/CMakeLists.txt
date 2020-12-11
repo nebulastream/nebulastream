@@ -296,6 +296,11 @@ add_executable(signature-based-equal-query-merger-rule-test "UnitTests/Optimizer
 target_link_libraries(signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME signature-based-equal-query-merger-rule-test COMMAND signature-based-equal-query-merger-rule-test)
 
+### Join Handler Tests ###
+add_executable(join-handler-tests "UnitTests/JoinHandlerTest.cpp")
+target_link_libraries(join-handler-tests nes ${GTEST_LIBRARIES})
+add_test(NAME join-handler-tests COMMAND join-handler-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

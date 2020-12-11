@@ -445,6 +445,8 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
     auto joinDefinition = joinOperator->getJoinDefinition();
 
     ExpressionSerializationUtil::serializeExpression(joinDefinition->getJoinKey(), joinDetails.mutable_onkey());
+    ExpressionSerializationUtil::serializeExpression(joinDefinition->getLeftStreamType(), joinDetails.mutable_onkey());
+    ExpressionSerializationUtil::serializeExpression(joinDefinition->getRightStreamType(), joinDetails.mutable_onkey());
 
     auto windowType = joinDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
@@ -496,7 +498,7 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
             break;
         }
         default: {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not cast aggregation type");
         }
     }
 
@@ -507,7 +509,7 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
             break;
         }
         default: {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast action type");
+            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not cast action type");
         }
     }
 
@@ -761,8 +763,12 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     auto distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
     auto keyAccessExpression =
         ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
+    auto leftStreamType =
+        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
+    auto rightStreamType =
+        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
     auto joinDefinition =
-        Join::LogicalJoinDefinition::create(keyAccessExpression, window, distChar, trigger, action,
+        Join::LogicalJoinDefinition::create(keyAccessExpression, leftStreamType, rightStreamType, window, distChar, trigger, action,
                                             joinDetails->numberofinputedgesleft(), joinDetails->numberofinputedgesright());
     auto retValue = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<JoinLogicalOperatorNode>();
     return retValue;

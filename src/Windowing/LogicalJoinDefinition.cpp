@@ -18,24 +18,48 @@
 #include <Windowing/LogicalJoinDefinition.hpp>
 namespace NES::Join {
 
-LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
+LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKeyType, FieldAccessExpressionNodePtr leftStreamType,
+                                             FieldAccessExpressionNodePtr rightStreamType, Windowing::WindowTypePtr windowType,
                                              Windowing::DistributionCharacteristicPtr distributionType,
                                              Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                              BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight)
-    : joinKey(joinKey), windowType(windowType), distributionType(distributionType), triggerPolicy(triggerPolicy),
+    : joinKeyType(joinKeyType), leftStreamType(leftStreamType), rightStreamType(rightStreamType),
+      windowType(windowType), distributionType(distributionType), triggerPolicy(triggerPolicy),
       triggerAction(triggerAction), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
-      numberOfInputEdgesRight(numberOfInputEdgesRight) {}
-LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
+      numberOfInputEdgesRight(numberOfInputEdgesRight) {
+
+    NES_ASSERT(this->joinKeyType, "Invalid join key type");
+#if 1
+    this->leftStreamType = this->rightStreamType = this->joinKeyType;
+#else
+    NES_ASSERT(this->leftStreamType, "Invalid left stream type");
+    NES_ASSERT(this->rightStreamType, "Invalid right stream type");
+#endif
+
+    NES_ASSERT(this->windowType, "Invalid window type");
+    NES_ASSERT(this->triggerPolicy, "Invalid trigger policy");
+    NES_ASSERT(this->triggerAction, "Invalid trigger action");
+    NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
+    NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
+}
+
+LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr joinKeyType, FieldAccessExpressionNodePtr leftStreamType,
+                                                       FieldAccessExpressionNodePtr rightStreamType, Windowing::WindowTypePtr windowType,
                                                        Windowing::DistributionCharacteristicPtr distributionType,
                                                        Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                                        BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
                                                        uint64_t numberOfInputEdgesRight) {
-    return std::make_shared<Join::LogicalJoinDefinition>(joinKey, windowType, distributionType, triggerPolicy, triggerAction,
+    return std::make_shared<Join::LogicalJoinDefinition>(joinKeyType, leftStreamType, rightStreamType, windowType,
+                                                         distributionType, triggerPolicy, triggerAction,
                                                          numberOfInputEdgesLeft, numberOfInputEdgesRight);
 }
 
-FieldAccessExpressionNodePtr LogicalJoinDefinition::getJoinKey() { return joinKey; }
+FieldAccessExpressionNodePtr LogicalJoinDefinition::getJoinKey() { return joinKeyType; }
+
+FieldAccessExpressionNodePtr LogicalJoinDefinition::getLeftStreamType() { return leftStreamType; }
+
+FieldAccessExpressionNodePtr LogicalJoinDefinition::getRightStreamType() { return rightStreamType; }
 
 Windowing::WindowTypePtr LogicalJoinDefinition::getWindowType() { return windowType; }
 

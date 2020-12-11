@@ -43,7 +43,8 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
  */
 class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHandler> {
   public:
-    explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
+    explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition, Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger)
+        : joinDefinition(std::move(joinDefinition)), executablePolicyTrigger(std::move(executablePolicyTrigger)) {
         // nop
     }
 
@@ -205,6 +206,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
 
   protected:
     LogicalJoinDefinitionPtr joinDefinition;
+    Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
     PipelineStagePtr nextPipeline;

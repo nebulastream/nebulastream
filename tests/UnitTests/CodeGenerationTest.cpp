@@ -1377,6 +1377,8 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)), distrType, triggerPolicy, triggerAction,
         1, 1);
 

@@ -32,13 +32,14 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 
 namespace NES::Join {
-template<class KeyType>
-class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<KeyType> {
+template<class KeyType, class InputTypeLeft, class InputTypeRight>
+class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<KeyType, InputTypeLeft, InputTypeRight> {
   public:
-    static ExecutableNestedLoopJoinTriggerActionPtr<KeyType> create(LogicalJoinDefinitionPtr joinDefintion) {
-        return std::make_shared<Join::ExecutableNestedLoopJoinTriggerAction<KeyType>>(joinDefintion);
+    static ExecutableNestedLoopJoinTriggerActionPtr<KeyType, InputTypeLeft, InputTypeRight> create(LogicalJoinDefinitionPtr joinDefintion) {
+        return std::make_shared<Join::ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>>(joinDefintion);
     }
 
     ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
@@ -50,9 +51,14 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         windowTupleLayout = createRowLayout(windowSchema);
     }
 
-    bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
-                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate, uint64_t currentWatermarkLeft,
-                  uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
+    virtual ~ExecutableNestedLoopJoinTriggerAction() {
+        // nop
+    }
+
+    bool doAction(StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
+                  StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
+                  uint64_t currentWatermarkLeft, uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft,
+                  uint64_t lastWatermarkRight) override {
 
         auto tupleBuffer = this->bufferManager->getBufferBlocking();
         tupleBuffer.setOriginId(this->originId);
@@ -63,8 +69,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                                              << " nextEdge=" << leftHashTable.second->nextEdge);
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: rightHashTable"
-                          << toString() << " check key=" << rightHashTable.first
-                          << " nextEdge=" << rightHashTable.second->nextEdge);
+                              << toString() << " check key=" << rightHashTable.first
+                              << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
                     if (leftHashTable.first == rightHashTable.first) {
 
@@ -79,9 +85,9 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         if (tupleBuffer.getNumberOfTuples() != 0) {
             //write remaining buffer
             NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: Dispatch last buffer output buffer with "
-                      << tupleBuffer.getNumberOfTuples()
-                      << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
-                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
+                          << tupleBuffer.getNumberOfTuples()
+                          << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
+                          << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
             //forward buffer to next  pipeline stage
             this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
         }
@@ -130,20 +136,19 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   * @param store
   * @param tupleBuffer
   */
-    void joinWindows(KeyType key, Windowing::WindowSliceStore<KeyType>* leftStore,
-                     Windowing::WindowSliceStore<KeyType>* rightStore, TupleBuffer& tupleBuffer, uint64_t currentWatermarkLeft,
+    void joinWindows(KeyType key, Windowing::WindowedJoinSliceListStore<InputTypeLeft>* leftStore,
+                     Windowing::WindowedJoinSliceListStore<InputTypeRight>* rightStore, TupleBuffer& tupleBuffer, uint64_t currentWatermarkLeft,
                      uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore  watermark is="
                   << currentWatermarkLeft << " lastwatermark=" << lastWatermarkLeft);
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:rightStore  watermark is="
                   << currentWatermarkRight << " lastwatermark=" << lastWatermarkRight);
 
-        // create result vector of windows, note that both sides will have the same windows
         auto windows = std::vector<Windowing::WindowState>();
 
-        //do the partial aggregation on the left side
+        auto leftLock = std::unique_lock(leftStore->mutex());
+        auto listLeft = rightStore->getAppendList();
         auto slicesLeft = leftStore->getSliceMetadata();
-        auto partialAggregatesLeft = leftStore->getPartialAggregates();
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger " << windows.size() << " windows, on "
                                                                              << slicesLeft.size() << " slices");
         for (uint64_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
@@ -151,10 +156,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                       << sliceId << " start=" << slicesLeft[sliceId].getStartTs() << " end=" << slicesLeft[sliceId].getEndTs());
         }
 
+        auto rightLock = std::unique_lock(leftStore->mutex());
         auto slicesRight = rightStore->getSliceMetadata();
-        auto partialAggregatesRight = rightStore->getPartialAggregates();
+        auto listRight = rightStore->getAppendList();
 
-        //currently we only check left hand side
         if (currentWatermarkLeft > lastWatermarkLeft) {
             NES_DEBUG("joinWindows trigger because currentWatermarkLeft=" << currentWatermarkLeft
                                                                           << " > lastWatermarkLeft=" << lastWatermarkLeft);
@@ -182,8 +187,9 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                     && window.getEndTs() >= slicesLeft[sliceId].getEndTs()) {
                     NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: create partial agg windowId=" << windowId
                                                                                                     << " sliceId=" << sliceId);
-                    partialFinalAggregates[windowId] =
-                        partialFinalAggregates[windowId] + partialAggregatesLeft[sliceId] + partialAggregatesRight[sliceId];
+                    NES_THROW_RUNTIME_ERROR("how do we join here?");
+//                    partialFinalAggregates[windowId] =
+//                        partialFinalAggregates[windowId] + partialAggregatesLeft[sliceId] + partialAggregatesRight[sliceId];
                 } else {
                     NES_TRACE("ExecutableNestedLoopJoinTriggerAction: condition not true");
                 }

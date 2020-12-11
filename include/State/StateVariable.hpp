@@ -86,6 +86,7 @@ class StateVariable : public detail::Destroyable {
   private:
     std::string name;
     StateBackend backend;
+    std::function<Value(const Key&)> defaultCallback;
 
   public:
     class KeyValueHandle {
@@ -94,9 +95,12 @@ class StateVariable : public detail::Destroyable {
       private:
         StateBackendRef backend;
         Key key;
+        std::function<Value(const Key&)> defaultCallback;
 
       private:
-        explicit KeyValueHandle(StateBackend& backend, Key key) : backend(backend), key(key) {}
+        explicit KeyValueHandle(StateBackend& backend, Key key, std::function<Value(const Key&)> defaultCallback) : backend(backend), key(key), defaultCallback(defaultCallback) {
+            // nop
+        }
 
       public:
         /**
@@ -126,6 +130,19 @@ class StateVariable : public detail::Destroyable {
         Value valueOrDefault(Arguments&&... args) {
             if (!backend.contains(key)) {
                 emplace(std::forward<Arguments>(args)...);
+            }
+            return value();
+        }
+
+        /**
+        * Retrieves the actual value for a key.
+        * If the value is not set yet, we set a default value.
+        * @return the actual value for a key
+        */
+        Value valueOrDefaultWithCallback() {
+            NES_VERIFY(defaultCallback, "invalid default callback");
+            if (!backend.contains(key)) {
+                emplace(defaultCallback(key));
             }
             return value();
         }
@@ -223,7 +240,12 @@ class StateVariable : public detail::Destroyable {
     };
 
   public:
-    explicit StateVariable(std::string name) : name(std::move(name)), backend() {}
+    explicit StateVariable(std::string name, std::function<Value(const Key&)> defaultCallback) : name(std::move(name)), backend(), defaultCallback(defaultCallback) {
+        NES_ASSERT(this->defaultCallback, "invalid default callback");
+    }
+
+    explicit StateVariable(std::string name) : name(std::move(name)), backend(), defaultCallback(nullptr) {}
+
 
     explicit StateVariable(const StateVariable<Key, Value>& other) = delete;
 
@@ -245,21 +267,21 @@ class StateVariable : public detail::Destroyable {
      * @param key
      * @return an accessor to a key-value pair
      */
-    KeyValueHandle get(Key key) { return KeyValueHandle(backend, key); }
+    KeyValueHandle get(Key key) { return KeyValueHandle(backend, key, defaultCallback); }
 
     /**
    * Point lookup of a key-value pair
    * @param key
    * @return an accessor to a key-value pair
    */
-    KeyValueHandle operator[](Key&& key) { return KeyValueHandle(backend, key); }
+    KeyValueHandle operator[](Key&& key) { return KeyValueHandle(backend, key, defaultCallback); }
 
     /**
    * Point lookup of a key-value pair
    * @param key
    * @return an accessor to a key-value pair
    */
-    KeyValueHandle operator[](const Key& key) { return KeyValueHandle(backend, key); }
+    KeyValueHandle operator[](const Key& key) { return KeyValueHandle(backend, key, defaultCallback); }
 
     KeyValueRangeHandle range(Key, Key) { assert(false && "not implemented yet"); }
 

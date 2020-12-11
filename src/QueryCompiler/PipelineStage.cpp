@@ -62,14 +62,14 @@ bool PipelineStage::start() {
         NES_DEBUG("PipelineStage::start: windowhandler start");
         return pipelineContext->getWindowHandler()->start();
     } else {
-        NES_DEBUG("PipelineStage::start: no windowhandler to start");
+        NES_TRACE("PipelineStage::start: no windowhandler to start");
     }
 
     if (hasJoinHandler()) {
         NES_DEBUG("PipelineStage::start: joinHandler start");
         return pipelineContext->getJoinHandler()->start();
     } else {
-        NES_DEBUG("PipelineStage::start: no join to start");
+        NES_TRACE("PipelineStage::start: no join to start");
     }
 
     return true;

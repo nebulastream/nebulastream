@@ -712,10 +712,13 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     auto windowJoinVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinHandler");
 
-    NES_ASSERT(!joinDef->getJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
+    NES_ASSERT(!joinDef->getJoinKey()->getStamp()->isUndefined(), "join key is undefined");
+    NES_ASSERT(!joinDef->getLeftStreamType()->getStamp()->isUndefined(), "left join type is undefined");
+    NES_ASSERT(!joinDef->getRightStreamType()->getStamp()->isUndefined(), "right join type is undefined");
 
     auto getJoinHandlerStatement =
-        getJoinWindowHandler(context->code->varDeclarationExecutionContext, joinDef->getJoinKey()->getStamp());
+        getJoinWindowHandler(context->code->varDeclarationExecutionContext, joinDef->getJoinKey()->getStamp(),
+                             joinDef->getLeftStreamType()->getStamp(), joinDef->getRightStreamType()->getStamp());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
 
@@ -767,8 +770,6 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // auto windowState = key_value_handle.value();
     auto windowStateVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
-    getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
-        tf->createValueType(DataTypeFactory::createBasicValue(joinDef->getJoinKey()->getStamp(), "0"))));
 
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
@@ -818,23 +819,33 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(currentSliceIndexVariableStatement));
 
-    // get the partial aggregates
-    // auto& partialAggregates = windowState->getPartialAggregates();
-    auto getPartialAggregates = FunctionCallStatement("getPartialAggregates");
-    auto getPartialAggregatesCall = VarRef(windowStateVariableDeclaration).accessPtr(getPartialAggregates);
-    VariableDeclaration partialAggregatesVarDeclaration =
-        VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "partialAggregates");
-    auto assignment = VarDeclStatement(partialAggregatesVarDeclaration).assign(getPartialAggregatesCall);
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
+    // get the join state
+//    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
+//    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
+//    auto stateMutex = FunctionCallStatement("mutex");
+//    uniqueLockCtor.addParameter(std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
+//    context->code->currentCodeInsertionPoint->addStatement(
+//        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
 
-    // update partial aggregate
-    const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
-    auto sum = Windowing::SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
-    GeneratableWindowAggregationPtr agg = GeneratableCountAggregation::create(sum);
+    auto joinStateCall = FunctionCallStatement("append");
+    joinStateCall.addParameter(VarRef(currentSliceIndexVariableDeclaration));
+    joinStateCall.addParameter(VarRef(keyVariableDeclaration)); // TODO use tuple instead of key
+    auto getJoinStateCall = VarRef(windowStateVariableDeclaration).accessPtr(joinStateCall);
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getJoinStateCall));
 
-    agg->compileLiftCombine(
-        context->code->currentCodeInsertionPoint, partialRef, context->code->structDeclaratonInputTuple,
-        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+    // append
+//    const BinaryOperatorStatement& partialRef = VarRef(joinStateVar)[current_slice_ref];
+//    auto sum = Windowing::SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+//    GeneratableWindowAggregationPtr agg = GeneratableCountAggregation::create(sum);
+//
+//    agg->compileLiftCombine(
+//        context->code->currentCodeInsertionPoint, partialRef, context->code->structDeclaratonInputTuple,
+//        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]);
+//
+//    auto appendCallFunction = FunctionCallStatement("emplace_back");
+//    appendCallFunction.addParameter(VarRef(keyVariableDeclaration));
+//    auto appendCallStatement = VarRef(joinStateVar).accessPtr(appendCallFunction);
+//    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(appendCallStatement));
 
     // joinHandler->trigger();
     switch (joinDef->getTriggerPolicy()->getPolicyType()) {
@@ -1260,9 +1271,11 @@ BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(VariableDecl
     return VarRef(pipelineContextVariable).accessRef(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType) {
+BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType,
+                                                             DataTypePtr leftType, DataTypePtr rightType) {
     auto tf = getTypeFactory();
-    auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(KeyType) + " >");
+    auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(keyType) + ","
+                                      + TO_CODE(leftType) + "," + TO_CODE(rightType) + " >");
     return VarRef(pipelineContextVariable).accessRef(call);
 }
 

@@ -72,6 +72,13 @@ class TranslateToGeneratableOperatorPhase {
     OperatorNodePtr transformWindowOperator(WindowOperatorNodePtr windowOperator, OperatorNodePtr generatableParentOperator);
 
     /**
+    * @brief Translates an join operator to its generatable representation.
+    * @param windowOperator
+    * @return Generatable Operator
+    */
+    OperatorNodePtr transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator, OperatorNodePtr generatableParentOperator);
+
+    /**
     * @brief Translates an window aggregation to its generatable representation.
     * @param windowAggregationDescriptor
     * @return Generatable Operator

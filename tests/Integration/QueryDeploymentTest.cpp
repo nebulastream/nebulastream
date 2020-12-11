@@ -1219,7 +1219,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

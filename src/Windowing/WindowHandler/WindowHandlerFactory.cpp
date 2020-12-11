@@ -15,7 +15,6 @@
 */
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
 #include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
 
@@ -110,12 +109,12 @@ Join::AbstractJoinHandlerPtr WindowHandlerFactory::createJoinWindowHandler(Join:
                 //            case BasicPhysicalType::UINT_16: return WindowHandlerFactoryDetails::createJoinHandler<uint16_t>(joinDefinition);
                 //            case BasicPhysicalType::UINT_32: return WindowHandlerFactoryDetails::createJoinHandler<uint32_t>(joinDefinition);
             case BasicPhysicalType::UINT_64:
-                return WindowHandlerFactoryDetails::createJoinHandler<uint64_t>(joinDefinition);
+                return WindowHandlerFactoryDetails::createJoinHandler<uint64_t, uint64_t, uint64_t>(joinDefinition);
                 //            case BasicPhysicalType::INT_8: return WindowHandlerFactoryDetails::createJoinHandler<int8_t>(joinDefinition);
                 //            case BasicPhysicalType::INT_16: return WindowHandlerFactoryDetails::createJoinHandler<int16_t>(joinDefinition);
                 //            case BasicPhysicalType::INT_32: return WindowHandlerFactoryDetails::createJoinHandler<int32_t>(joinDefinition);
             case BasicPhysicalType::INT_64:
-                return WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDefinition);
+                return WindowHandlerFactoryDetails::createJoinHandler<int64_t, uint64_t, uint64_t>(joinDefinition);
                 //            case BasicPhysicalType::FLOAT: return WindowHandlerFactoryDetails::createJoinHandler<float>(joinDefinition);
                 //            case BasicPhysicalType::DOUBLE: return WindowHandlerFactoryDetails::createJoinHandler<double>(joinDefinition);
                 //            case BasicPhysicalType::CHAR: return WindowHandlerFactoryDetails::createJoinHandler<char>(joinDefinition);

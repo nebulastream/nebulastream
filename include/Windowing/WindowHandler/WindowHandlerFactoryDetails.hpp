@@ -20,17 +20,17 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
-#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
-#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>
-#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
+#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>
+#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
@@ -193,7 +193,7 @@ class WindowHandlerFactoryDetails {
             windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     }
 
-    template<class KeyType>
+    template<class KeyType, class InputTypeLeft, class InputTypeRight>
     static Join::AbstractJoinHandlerPtr createJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition) {
         auto policy = joinDefinition->getTriggerPolicy();
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
@@ -205,16 +205,15 @@ class WindowHandlerFactoryDetails {
         }
 
         auto action = joinDefinition->getTriggerAction();
-        Join::ExecutableNestedLoopJoinTriggerActionPtr<KeyType> executableActionTrigger;
+        Join::ExecutableNestedLoopJoinTriggerActionPtr<KeyType, InputTypeLeft, InputTypeRight> executableActionTrigger;
         if (action->getActionType() == Join::LazyNestedLoopJoin) {
-            executableActionTrigger = Join::ExecutableNestedLoopJoinTriggerAction<KeyType>::create(joinDefinition);
-
+            executableActionTrigger = Join::ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>::create(joinDefinition);
         } else {
             NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
         }
 
         //add compile method return handler
-        return std::make_shared<Join::JoinHandler<KeyType>>(joinDefinition, executablePolicyTrigger, executableActionTrigger);
+        return std::make_shared<Join::JoinHandler<KeyType, InputTypeLeft, InputTypeRight>>(joinDefinition, executablePolicyTrigger, executableActionTrigger);
     }
 };
 }// namespace NES::Windowing

@@ -104,6 +104,9 @@ typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 template<class PartialAggregateType>
 class WindowSliceStore;
 
+template<class ValueType>
+class WindowedJoinSliceListStore;
+
 class SliceMetaData;
 
 class WindowType;

@@ -82,9 +82,9 @@ class PipelineExecutionContext {
      * @param id
      * @return
      */
-    template<template<class> class WindowHandlerType, class KeyType>
+    template<template<class, class, class> class HandlerType, class KeyType, class LeftStreamType, class RightStreamType>
     auto getJoinHandler() {
-        return std::dynamic_pointer_cast<WindowHandlerType<KeyType>>(joinHandler);
+        return std::dynamic_pointer_cast<HandlerType<KeyType, LeftStreamType, RightStreamType>>(joinHandler);
     }
 
     template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType,

@@ -45,10 +45,10 @@ class ExecutableCompleteAggregationTriggerAction
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
                executableWindowAggregation,
            SchemaPtr outputSchema) {
-        return std::make_shared<ExecutableCompleteAggregationTriggerAction>(windowDefinition, executableWindowAggregation,
+        return std::make_shared<ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation,
                                                                             outputSchema);
     }
-    ExecutableCompleteAggregationTriggerAction(
+    explicit ExecutableCompleteAggregationTriggerAction(
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
             executableWindowAggregation,
@@ -58,6 +58,10 @@ class ExecutableCompleteAggregationTriggerAction
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString());
         this->windowSchema = outputSchema;
         windowTupleLayout = createRowLayout(this->windowSchema);
+    }
+
+    virtual ~ExecutableCompleteAggregationTriggerAction() {
+        // nop
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
@@ -71,13 +75,12 @@ class ExecutableCompleteAggregationTriggerAction
 
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
-                                                                     << "): " << toString() << " check key=" << it.first
-                                                                     << "nextEdge=" << it.second->nextEdge);
-
             // write all window aggregates to the tuple buffer
             aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark,
                              lastWatermark);//put key into this
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+                                                                     << "): " << toString() << " check key=" << it.first
+                                                                     << "nextEdge=" << it.second->nextEdge);
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {

@@ -342,10 +342,12 @@ message SerializableOperator{
     google.protobuf.Any windowType = 2;
     DistributionCharacteristic distrChar = 3;
     SerializableExpression onKey = 4;
-    TriggerPolicy triggerPolicy = 5;
-    TriggerAction action = 6;
-    uint64 numberOfInputEdgesLeft = 7;
-    uint64 numberOfInputEdgesRight = 8;
+    SerializableExpression leftStreamType = 5;
+    SerializableExpression rightStreamType = 6;
+    TriggerPolicy triggerPolicy = 7;
+    TriggerAction action = 8;
+    uint64 numberOfInputEdgesLeft = 9;
+    uint64 numberOfInputEdgesRight = 10;
   }
 
   google.protobuf.Any details = 1;

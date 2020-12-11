@@ -24,13 +24,15 @@ namespace NES::Join {
 
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKeyType, FieldAccessExpressionNodePtr leftStreamType,
+                                           FieldAccessExpressionNodePtr rightStreamType, Windowing::WindowTypePtr windowType,
                                            Windowing::DistributionCharacteristicPtr distributionType,
                                            Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                            BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight);
 
-    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
+    explicit LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKeyType, FieldAccessExpressionNodePtr leftStreamType,
+                          FieldAccessExpressionNodePtr rightStreamType, Windowing::WindowTypePtr windowType,
                           Windowing::DistributionCharacteristicPtr distributionType,
                           Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
                           uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight);
@@ -39,6 +41,16 @@ class LogicalJoinDefinition {
     * @brief getter/setter for on left join key
     */
     FieldAccessExpressionNodePtr getJoinKey();
+
+    /**
+   * @brief getter/setter for on left join key
+   */
+    FieldAccessExpressionNodePtr getLeftStreamType();
+
+    /**
+   * @brief getter/setter for on left join key
+   */
+    FieldAccessExpressionNodePtr getRightStreamType();
 
     /**
      * @brief getter/setter for window type
@@ -66,7 +78,9 @@ class LogicalJoinDefinition {
     uint64_t getNumberOfInputEdgesRight();
 
   private:
-    FieldAccessExpressionNodePtr joinKey;
+    FieldAccessExpressionNodePtr joinKeyType;
+    FieldAccessExpressionNodePtr leftStreamType;
+    FieldAccessExpressionNodePtr rightStreamType;
     Windowing::WindowTriggerPolicyPtr triggerPolicy;
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;

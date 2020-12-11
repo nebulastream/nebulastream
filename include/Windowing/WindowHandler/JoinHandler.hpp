@@ -27,25 +27,25 @@
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 
 namespace NES::Join {
-template<class KeyType>
+template<class KeyType, class ValueTypeLeft, class ValueTypeRight>
 class JoinHandler : public AbstractJoinHandler {
   public:
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction)
-        : AbstractJoinHandler(std::move(joinDefinition)), executablePolicyTrigger(executablePolicyTrigger),
-          executableJoinAction(executableJoinAction) {
-        NES_DEBUG("Construct JoinHandler");
-        NES_ASSERT(this->joinDefinition, "wrong join def def");
+                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction)
+        : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
+          executableJoinAction(std::move(executableJoinAction)) {
+        NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
         lastWatermarkLeft = 0;
         lastWatermarkRight = 0;
     }
 
-    ~JoinHandler() {
+    virtual ~JoinHandler() {
         NES_DEBUG("JoinHandler: calling destructor");
         stop();
     }
@@ -78,10 +78,12 @@ class JoinHandler : public AbstractJoinHandler {
     * @brief triggers all ready windows.
     */
     void trigger() override {
+        std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString());
 
         if (originIdToMaxTsMapLeft.size() != numberOfInputEdgesLeft
             && originIdToMaxTsMapRight.size() != numberOfInputEdgesRight) {
+            // TODO should we drop data as there are no matching join tuples?
             NES_DEBUG(
                 "JoinHandler: trigger cannot be applied as we did not get one buffer per edge yet, originIdToMaxTsMapLeft size="
                 << originIdToMaxTsMapLeft.size() << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft
@@ -106,6 +108,7 @@ class JoinHandler : public AbstractJoinHandler {
         if (lastWatermarkLeft == 0) {
             lastWatermarkLeft = std::numeric_limits<uint64_t>::max();
             for (auto& it : leftJoinState->rangeAll()) {
+                std::unique_lock innerLock(it.second->mutex()); // sorry we have to lock here too :(
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
                     lastWatermarkLeft = std::min(lastWatermarkLeft, slices[0].getStartTs());
@@ -117,6 +120,7 @@ class JoinHandler : public AbstractJoinHandler {
         if (lastWatermarkRight == 0) {
             lastWatermarkRight = std::numeric_limits<uint64_t>::max();
             for (auto& it : rightJoinState->rangeAll()) {
+                std::unique_lock innerLock(it.second->mutex()); // sorry we have to lock here too :(
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
                     lastWatermarkRight = std::min(lastWatermarkRight, slices[0].getStartTs());
@@ -128,13 +132,28 @@ class JoinHandler : public AbstractJoinHandler {
         NES_DEBUG("JoinHandler: run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
                                                                << " lastWatermarkLeft=" << lastWatermarkLeft
                                                                << " lastWatermarkRight=" << lastWatermarkRight);
+        lock.unlock();
         executableJoinAction->doAction(leftJoinState, rightJoinState, watermarkLeft, watermarkRight, lastWatermarkLeft,
                                        lastWatermarkRight);
+        lock.lock();
 
         NES_DEBUG("JoinHandler:  set lastWatermarkLeft to=" << std::max(watermarkLeft, lastWatermarkLeft));
         lastWatermarkLeft = std::max(watermarkLeft, lastWatermarkLeft);
         NES_DEBUG("JoinHandler:  set lastWatermarkRight to=" << std::max(watermarkRight, lastWatermarkRight));
         lastWatermarkRight = std::max(watermarkRight, lastWatermarkRight);
+    }
+
+    /**
+     * @brief updates all maxTs in all stores
+     * @param ts
+     * @param originId
+     */
+    void updateMaxTs(uint64_t ts, uint64_t originId) override {
+        std::unique_lock lock(mutex);
+        NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
+        //TODO this is not correct as we have to distinguish between left and rigt side
+        originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
+        originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
     }
 
     /**
@@ -150,9 +169,10 @@ class JoinHandler : public AbstractJoinHandler {
         // Initialize JoinHandler Manager
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable
-        this->leftJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("leftSide");
-        this->rightJoinState =
-            &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("rightSide");
+        auto leftDefaultCallback = [](const KeyType&) { return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>(); };
+        auto rightDefaultCallback = [](const KeyType&) { return new Windowing::WindowedJoinSliceListStore<ValueTypeRight>(); };
+        this->leftJoinState = StateManager::instance().registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>("leftSide", leftDefaultCallback);
+        this->rightJoinState = StateManager::instance().registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>("rightSide", rightDefaultCallback);
         this->nextPipeline = nextPipeline;
 
         executableJoinAction->setup(queryManager, bufferManager, nextPipeline, originId);
@@ -171,18 +191,14 @@ class JoinHandler : public AbstractJoinHandler {
 
     auto getRightJoinState() { return rightJoinState; }
 
-    LogicalJoinDefinitionPtr getJoinDefinition() { return joinDefinition; }
 
   private:
-    StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState;
-    StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinState;
+    std::recursive_mutex mutex;
 
-    //TODO: this will activated once we have a slice store that is capable of handling vectors
-    //    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeLeft>>*>* leftJoinState;
-    //    StateVariable<KeyType, Windowing::WindowSliceStore<std::vector<ValueTypeRight>>*>* rightJoinState;
+    StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* leftJoinState;
+    StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>* rightJoinState;
 
-    Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
-    Join::BaseExecutableJoinActionPtr<KeyType> executableJoinAction;
+    Join::BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction;
 };
 }// namespace NES::Join
 #endif//NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
