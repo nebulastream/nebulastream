@@ -52,7 +52,7 @@ class DataTypeToZ3ExprUtil {
      * @param fieldName: name of the filed
      * @param dataType: the type of the field
      * @param context: the z3 context
-     * @return expression for the field
+     * @return expression and field map for the field
      */
     static Z3ExprAndFieldMapPtr createForField(std::string fieldName, DataTypePtr dataType, z3::ContextPtr context);
 
@@ -60,7 +60,7 @@ class DataTypeToZ3ExprUtil {
      * @brief Create Z3 expression for data value of specific type
      * @param valueType: the input value
      * @param context: Z3 context
-     * @return expression for the data value
+     * @return expression and field map for the data value
      */
     static Z3ExprAndFieldMapPtr createForDataValue(ValueTypePtr valueType, z3::ContextPtr context);
 };

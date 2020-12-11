@@ -45,7 +45,7 @@ class OperatorToQuerySignatureUtil {
      * @param operatorNode: the input operator
      * @param childrenQuerySignatures: vector containing signatures for each of the children operators (empty for source operator)
      * @param context: the context of Z3
-     * @return the object representing signature of the query plan created by the operator and its children
+     * @return the object representing signature created by the operator and its children
      */
     static QuerySignaturePtr createForOperator(OperatorNodePtr operatorNode,
                                                std::vector<QuerySignaturePtr> childrenQuerySignatures, z3::ContextPtr context);
