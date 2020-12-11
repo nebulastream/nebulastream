@@ -20,97 +20,45 @@
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
-#include <Optimizer/QueryMerger/EqualQueryMergerRule.hpp>
-#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/QueryMerger/SyntaxBasedEqualQueryMergerRule.hpp>
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Phases/TypeInferencePhase.hpp>
-#include <z3++.h>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 
 using namespace NES;
 
-class EqualQueryMergerRuleTest : public testing::Test {
+class SyntaxBasedEqualQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
-    StreamCatalogPtr streamCatalog;
 
-    /* Will be called before a test is executed. */
-    void SetUp() {
-        NES::setupLogging("EqualQueryMergerRuleTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup EqualQueryMergerRuleTest test case.");
-        schema = Schema::create()
-                     ->addField("id", BasicType::UINT32)
-                     ->addField("value", BasicType::UINT64)
-                     ->addField("id1", BasicType::UINT32)
-                     ->addField("value1", BasicType::UINT64);
-        streamCatalog = std::make_shared<StreamCatalog>();
-        streamCatalog->addLogicalStream("car", schema);
-        streamCatalog->addLogicalStream("truck", schema);
+    /* Will be called before all tests in this class are started. */
+    static void SetUpTestCase() {
+        NES::setupLogging("SyntaxBasedEqualQueryMergerRuleTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup SyntaxBasedEqualQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Setup EqualQueryMergerRuleTest test case."); }
+    void SetUp(){
+        schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() { NES_INFO("Setup SyntaxBasedEqualQueryMergerRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down EqualQueryMergerRuleTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down SyntaxBasedEqualQueryMergerRuleTest test class."); }
 };
 
-///**
-// * @brief Test applying L0 merge on Global query plan with same queries
-// */
-//TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
-//    // Prepare
-//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-//    Query query1 = Query::from("car")
-//                       .map(Attribute("value") = Attribute("value") * 10)
-//                       .filter(Attribute("value") < 40 && Attribute("value") < 31)
-//                       .sink(printSinkDescriptor);
-//    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-//    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
-//    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-//    queryPlan1->setQueryId(queryId1);
-//
-//
-//    //slover.add(!(value*40 < 40 && value*40*40 < 40 == value*80 < 40 && value*80*40 < 40 && value*80*40 == value * 40 *40))
-//
-//    Query query2 = Query::from("car")
-//                       .map(Attribute("value") = Attribute("value") * 10)
-//                       .filter(Attribute("value") < 40 && Attribute("value") < 40)
-//                       .sink(printSinkDescriptor);
-//    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-//    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
-//    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-//    queryPlan2->setQueryId(queryId2);
-//
-//    z3::ContextPtr context = std::make_shared<z3::context>();
-//
-//    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-//    typeInferencePhase->execute(queryPlan1);
-//    typeInferencePhase->execute(queryPlan2);
-//
-//    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-//    z3InferencePhase->execute(queryPlan1);
-//    z3InferencePhase->execute(queryPlan2);
-//
-//    auto equalQueryMergerRule = Optimizer::EqualQueryMergerRule::create(context);
-//    bool isEqual = equalQueryMergerRule->apply(queryPlan1, queryPlan2);
-//
-//    ASSERT_TRUE(isEqual);
-//}
-
 /**
- * @brief Test applying L0 merge on Global query plan with same queries
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries
  */
-TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -136,15 +84,6 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
-
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -174,8 +113,8 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -189,9 +128,9 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueries) {
 }
 
 /**
- * @brief Test applying L0 merge on Global query plan with same queries with multiple same source
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries with multiple same source
  */
-TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -222,15 +161,6 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources)
     queryPlan2->addRootOperator(sinkOperator12);
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
-
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -263,8 +193,8 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources)
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -281,9 +211,9 @@ TEST_F(EqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources)
 }
 
 /**
- * @brief Test applying L0 merge on Global query plan with two queries with different source
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different source
  */
-TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -297,15 +227,6 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
-
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -333,8 +254,8 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -346,11 +267,10 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     }
 }
 
-//FIXME: as part of issue #1272
 /**
- * @brief Test applying L0 merge on Global query plan with same queries with merge operators
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries with merge operators
  */
-TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperators) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
@@ -369,15 +289,6 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperators) 
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
-
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
@@ -404,8 +315,8 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperators) 
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -417,11 +328,10 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperators) 
     }
 }
 
-//FIXME: as part of issue #1272
 /**
- * @brief Test applying L0 merge on Global query plan with queries with different order of merge operator children
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with different order of merge operator children
  */
-TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorChildrenOrder) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
@@ -443,15 +353,6 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorChi
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
-
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
@@ -478,8 +379,8 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorChi
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -491,11 +392,10 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorChi
     }
 }
 
-//FIXME: as part of issue #1272
 /**
- * @brief Test applying L0 merge on Global query plan with queries with merge operators but different children
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with merge operators but different children
  */
-TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
@@ -517,15 +417,6 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsWi
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
-
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
@@ -552,8 +443,8 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsWi
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -566,9 +457,9 @@ TEST_F(EqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsWi
 }
 
 /**
- * @brief Test applying L0 merge on Global query plan with two queries with different filters
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different filters
  */
-TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -584,15 +475,6 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
-
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
@@ -619,8 +501,8 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -633,9 +515,9 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 }
 
 /**
- * @brief Test applying L0 merge on Global query plan with two queries with different filters
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different filters
  */
-TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -650,15 +532,6 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
-
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
@@ -685,8 +558,8 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -699,9 +572,9 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
 }
 
 /**
- * @brief Test applying L0 merge on Global query plan with two queries with different map
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different map
  */
-TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -717,15 +590,6 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
-
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
@@ -752,8 +616,8 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
@@ -766,9 +630,9 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 }
 
 /**
- * @brief Test applying L0 merge on Global query plan with two queries with different map
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different map
  */
-TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
+TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -784,15 +648,6 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    typeInferencePhase->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan2);
-
-    z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
-
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
@@ -819,8 +674,8 @@ TEST_F(EqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto equalQueryMergerRule = NES::Optimizer::EqualQueryMergerRule::create();
-    equalQueryMergerRule->apply(globalQueryPlan);
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
     auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();

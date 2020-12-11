@@ -17,8 +17,8 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/EqualQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/QueryMerger/SignatureBasedEqualQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -27,13 +27,13 @@
 
 namespace NES::Optimizer {
 
-EqualQueryMergerRule::EqualQueryMergerRule() {}
+SignatureBasedEqualQueryMergerRule::SignatureBasedEqualQueryMergerRule() {}
 
-EqualQueryMergerRule::~EqualQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
+SignatureBasedEqualQueryMergerRule::~SignatureBasedEqualQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
 
-EqualQueryMergerRulePtr EqualQueryMergerRule::create() { return std::make_shared<EqualQueryMergerRule>(EqualQueryMergerRule()); }
+SignatureBasedEqualQueryMergerRulePtr SignatureBasedEqualQueryMergerRule::create() { return std::make_shared<SignatureBasedEqualQueryMergerRule>(SignatureBasedEqualQueryMergerRule()); }
 
-bool EqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("EqualQueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
 

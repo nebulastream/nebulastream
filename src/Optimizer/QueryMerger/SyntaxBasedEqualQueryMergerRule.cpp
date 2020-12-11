@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Optimizer/QueryMerger/L0QueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/SyntaxBasedEqualQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
@@ -25,22 +25,22 @@
 
 namespace NES {
 
-L0QueryMergerRule::L0QueryMergerRule() : processedNodes() {}
+SyntaxBasedEqualQueryMergerRule::SyntaxBasedEqualQueryMergerRule() : processedNodes() {}
 
-L0QueryMergerRulePtr L0QueryMergerRule::create() { return std::make_shared<L0QueryMergerRule>(L0QueryMergerRule()); }
+SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedEqualQueryMergerRule::create() { return std::make_shared<SyntaxBasedEqualQueryMergerRule>(SyntaxBasedEqualQueryMergerRule()); }
 
-bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
+bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
-    NES_INFO("L0QueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
+    NES_INFO("SyntaxBasedEqualQueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
 
     std::vector<SharedQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllSharedQueryMetaData();
     if (allGQMs.size() == 1) {
-        NES_WARNING("L0QueryMergerRule: Found only a single query metadata in the global query plan."
+        NES_WARNING("SyntaxBasedEqualQueryMergerRule: Found only a single query metadata in the global query plan."
                     " Skipping the L0 Query Merging.");
         return true;
     }
 
-    NES_DEBUG("L0QueryMergerRule: Iterating over all GQMs in the Global Query Plan");
+    NES_DEBUG("SyntaxBasedEqualQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
     for (uint16_t i = 0; i < allGQMs.size() - 1; i++) {
         for (uint16_t j = i + 1; j < allGQMs.size(); j++) {
 
@@ -85,7 +85,7 @@ bool L0QueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
     return true;
 }
 
-bool L0QueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
+bool SyntaxBasedEqualQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
                                            std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     std::vector<OperatorNodePtr> targetSourceOperators = targetQueryPlan->getLeafOperators();
@@ -106,7 +106,7 @@ bool L0QueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPl
     return false;
 }
 
-bool L0QueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
+bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
                                          std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     if (targetHostOperatorMap.find(targetOperator->getId()) != targetHostOperatorMap.end()) {

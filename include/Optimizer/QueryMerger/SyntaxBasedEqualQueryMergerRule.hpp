@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_L0QUERYMERGERRULE_HPP
-#define NES_L0QUERYMERGERRULE_HPP
+#ifndef NES_SYNTAXBASEDEQUALQUERYMERGERRULE_HPP
+#define NES_SYNTAXBASEDEQUALQUERYMERGERRULE_HPP
 
 #include <map>
 #include <memory>
@@ -38,11 +38,11 @@ typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
-class L0QueryMergerRule;
-typedef std::shared_ptr<L0QueryMergerRule> L0QueryMergerRulePtr;
+class SyntaxBasedEqualQueryMergerRule;
+typedef std::shared_ptr<SyntaxBasedEqualQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
 
 /**
- * @brief L0QueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule
+ * @brief SyntaxBasedEqualQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule
  * all equivalent operator chains should be merged together and only a single representative operator chain should exists in the Global Query Plan for all of them.
  * Effectively this will prune the global query plan size.
  *
@@ -67,7 +67,7 @@ typedef std::shared_ptr<L0QueryMergerRule> L0QueryMergerRulePtr;
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
  *
- * After running the L0QueryMergerRule, the resulting Global Query Plan will look as follow:
+ * After running the SyntaxBasedEqualQueryMergerRule, the resulting Global Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \
@@ -82,10 +82,10 @@ typedef std::shared_ptr<L0QueryMergerRule> L0QueryMergerRulePtr;
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class L0QueryMergerRule {
+class SyntaxBasedEqualQueryMergerRule {
 
   public:
-    static L0QueryMergerRulePtr create();
+    static SyntaxBasedEqualQueryMergerRulePtr create();
 
     /**
      * @brief apply L0QueryMerger rule on the globalQuery plan
@@ -95,7 +95,7 @@ class L0QueryMergerRule {
     bool apply(const GlobalQueryPlanPtr& globalQueryPlan);
 
   private:
-    explicit L0QueryMergerRule();
+    explicit SyntaxBasedEqualQueryMergerRule();
 
     /**
      * @brief identify if the query plans are equal or not
@@ -134,4 +134,4 @@ class L0QueryMergerRule {
     std::vector<GlobalQueryNodePtr> processedNodes;
 };
 }// namespace NES
-#endif//NES_L0QUERYMERGERRULE_HPP
+#endif//NES_SYNTAXBASEDEQUALQUERYMERGERRULE_HPP

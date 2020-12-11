@@ -252,10 +252,10 @@ add_executable(logical-source-expansion-rule-test "UnitTests/Optimizer/QueryRewr
 target_link_libraries(logical-source-expansion-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME logical-source-expansion-rule-test COMMAND logical-source-expansion-rule-test)
 
-### L0 Query Merger Rule Tests ###
-add_executable(l0-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/L0QueryMergerRuleTest.cpp")
-target_link_libraries(l0-query-merger-rule-test nes ${GTEST_LIBRARIES})
-add_test(NAME l0-query-merger-rule-test COMMAND l0-query-merger-rule-test)
+### Syntax Based Equal Query Merger Rule Test ###
+add_executable(syntax-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SyntaxBasedEqualQueryMergerRuleTest.cpp")
+target_link_libraries(syntax-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME syntax-based-equal-query-merger-rule-test COMMAND syntax-based-equal-query-merger-rule-test)
 
 ### Query Placement Tests ###
 add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp")
@@ -292,10 +292,10 @@ add_executable(circular-buffer-tests "UnitTests/CircularBufferTest.cpp")
 target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
 add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
 
-### Z3 Expression Inference Phase Test ###
-add_executable(equal-query-merger-rule-tests "UnitTests/Optimizer/QueryMerger/EqualQueryMergerRuleTest.cpp")
-target_link_libraries(equal-query-merger-rule-tests nes ${GTEST_LIBRARIES})
-add_test(NAME equal-query-merger-rule-tests COMMAND equal-query-merger-rule-tests)
+### Signature Based Equal Query Merger Rule Test ###
+add_executable(signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedEqualQueryMergerRuleTest.cpp")
+target_link_libraries(signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME signature-based-equal-query-merger-rule-test COMMAND signature-based-equal-query-merger-rule-test)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###

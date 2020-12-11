@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_EQUALQUERYMERGERRULE_HPP
-#define NES_EQUALQUERYMERGERRULE_HPP
+#ifndef NES_SIGNATUREBASEDEQUALQUERYMERGERRULE_HPP
+#define NES_SIGNATUREBASEDEQUALQUERYMERGERRULE_HPP
 
 #include <memory>
 
@@ -26,11 +26,11 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 namespace NES::Optimizer {
 
-class EqualQueryMergerRule;
-typedef std::shared_ptr<EqualQueryMergerRule> EqualQueryMergerRulePtr;
+class SignatureBasedEqualQueryMergerRule;
+typedef std::shared_ptr<SignatureBasedEqualQueryMergerRule> SignatureBasedEqualQueryMergerRulePtr;
 
 /**
- * @brief EqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
+ * @brief SignatureBasedEqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
  * only a single representative operator chain should exists in the Global Query Plan for all of them.
  * Effectively this rule will prune the global query plan for duplicate operators.
  *
@@ -53,7 +53,7 @@ typedef std::shared_ptr<EqualQueryMergerRule> EqualQueryMergerRulePtr;
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
  *
- * After running the L0QueryMergerRule, the resulting Global Query Plan will look as follow:
+ * After running the SignatureBasedEqualQueryMergerRule, the resulting Global Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \
@@ -68,11 +68,11 @@ typedef std::shared_ptr<EqualQueryMergerRule> EqualQueryMergerRulePtr;
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class EqualQueryMergerRule {
+class SignatureBasedEqualQueryMergerRule {
 
   public:
-    static EqualQueryMergerRulePtr create();
-    ~EqualQueryMergerRule();
+    static SignatureBasedEqualQueryMergerRulePtr create();
+    ~SignatureBasedEqualQueryMergerRule();
 
     /**
      * @brief apply the rule on Global Query Plan
@@ -81,8 +81,8 @@ class EqualQueryMergerRule {
     bool apply(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
-    explicit EqualQueryMergerRule();
+    explicit SignatureBasedEqualQueryMergerRule();
 };
 }// namespace NES::Optimizer
 
-#endif//NES_EQUALQUERYMERGERRULE_HPP
+#endif//NES_SIGNATUREBASEDEQUALQUERYMERGERRULE_HPP
