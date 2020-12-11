@@ -60,9 +60,9 @@ endif (NES_LOGGING_LEVEL)
 
 # Compiler should produce specific code for system architecture
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+CHECK_CXX_COMPILER_FLAG("-march=x86-64" COMPILER_SUPPORTS_MARCH_NATIVE)
 if (COMPILER_SUPPORTS_MARCH_NATIVE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=intel")
 endif ()
 
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
