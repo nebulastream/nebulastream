@@ -220,9 +220,9 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
  *  std::bitset<16> x2(val);
  *  std::cout << "16-After biseq=" << x2 << " val=" << val << endl;
  *
- *  cout << "buffer=" << buffer << " multiplier=" << multiplier << " i=" << i
+ *  cout << "buffer=" << buffer << " offset=" << offset << " i=" << i
  *            << " tupleSize=" << tupleSize << " fieldSize=" << fieldSize
- *            << " res=" << (char*)buffer + multiplier + i * tupleSize << endl;
+ *            << " res=" << (char*)buffer + offset + i * tupleSize << endl;
  */
 void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
     auto tupleSize = schema->getSchemaSizeInBytes();

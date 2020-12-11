@@ -147,9 +147,9 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(std::vector<TopologyNodePt
                         occurrenceCount = occurrenceCount + nodeCountMap[member->as<TopologyNode>()->getId()];
                     }
 
-                    NES_TRACE("Topology: Compute cost by multiplying aggregate occurrence count with base multiplier and "
+                    NES_TRACE("Topology: Compute cost by multiplying aggregate occurrence count with base offset and "
                               "dividing the result by the number of nodes in the path.");
-                    double cost = (occurrenceCount * BASE_MULTIPLIER) / family.size();
+                    double cost = (occurrenceCount * BASE_offset) / family.size();
 
                     if (cost > maxCost) {
                         NES_TRACE("Topology: The cost is more than max cost found till now.");
@@ -276,7 +276,7 @@ std::string Topology::toString() {
     std::deque<std::pair<TopologyNodePtr, uint64_t>> parentToPrint{std::make_pair(rootNode, 0)};
     std::deque<std::pair<TopologyNodePtr, uint64_t>> childToPrint;
 
-    // indent multiplier
+    // indent offset
     int indent = 2;
 
     // perform dfs traverse
