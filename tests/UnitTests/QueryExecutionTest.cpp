@@ -331,8 +331,8 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto query = TestQuery::from(windowSource->getSchema());
 
     // add a watermark assigner operator with allowedLateness of 1 millisecond
-    query.assignWatermark(
-        EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"), Milliseconds(millisecondOfallowedLateness), Milliseconds()));
+    query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(
+        Attribute("ts"), Milliseconds(millisecondOfallowedLateness), Milliseconds()));
 
     // add a sink operator
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowSource->getSchema(), nodeEngine->getBufferManager());

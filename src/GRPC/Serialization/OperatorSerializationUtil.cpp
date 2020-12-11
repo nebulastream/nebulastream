@@ -534,8 +534,9 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                 AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
             auto multiplier = serializedTimeCharacterisitc.multiplier();
-            window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
-                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
+            window = Windowing::TumblingWindow::of(
+                Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
+                Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacterisitc.type()
                    == SerializableOperator_WindowDetails_TimeCharacteristic_Type_IngestionTime) {
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
@@ -1157,7 +1158,8 @@ SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serial
             SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
         ExpressionSerializationUtil::serializeExpression(eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode(),
                                                          serializedWatermarkStrategyDescriptor.mutable_onfield());
-        serializedWatermarkStrategyDescriptor.set_allowedlateness(eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime());
+        serializedWatermarkStrategyDescriptor.set_allowedlateness(
+            eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime());
         serializedWatermarkStrategyDescriptor.set_multiplier(eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMultiplier());
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
     } else if (auto ingestionTimeWatermarkStrategyDescriptor =
@@ -1190,8 +1192,7 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
             Attribute(onField->getFieldName()),
             Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.allowedlateness()),
-            Windowing::TimeUnit(serializedEventTimeWatermarkStrategyDescriptor.multiplier())
-            );
+            Windowing::TimeUnit(serializedEventTimeWatermarkStrategyDescriptor.multiplier()));
         return eventTimeWatermarkStrategyDescriptor;
     } else if (deserializedWatermarkStrategyDescriptor
                    .Is<SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor>()) {

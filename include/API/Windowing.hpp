@@ -18,10 +18,10 @@
 #define NES_INCLUDE_API_WINDOWING_HPP_
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/WindowMeasures/TimeUnit.hpp>
 
 /**
  * @brief The following declares API functions for windowing.
@@ -123,7 +123,6 @@ Windowing::TimeUnit Minutes();
  * @return TimeUnit
  */
 Windowing::TimeUnit Hours();
-
 
 /**
  * @brief A time measure in Days.

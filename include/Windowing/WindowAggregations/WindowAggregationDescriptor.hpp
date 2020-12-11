@@ -17,8 +17,8 @@
 #ifndef INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #define INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 
-#include <Windowing/WindowingForwardRefs.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Windowing {
 /**
