@@ -39,8 +39,8 @@ GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr inputSchema
 }
 
 GeneratableScanOperator::GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema,  OperatorId id) :
-                                                                                                                 inputSchema(inputSchema),
-                                                                                                                 outputSchema(outputSchema),
+                                                                                                                 inputSchema(inputSchema->copy()),
+                                                                                                                 outputSchema(outputSchema->copy()),
                                                                                                                  OperatorNode(id) {}
 
 const std::string GeneratableScanOperator::toString() const {
