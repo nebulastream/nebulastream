@@ -29,6 +29,7 @@
 #include <Util/Logger.hpp>
 
 #include <NodeEngine/NodeEngine.hpp>
+#include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
 
 namespace NES {
@@ -65,6 +66,14 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
             csvSourceDescriptor->getDelimiter(), csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
             csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
             csvSourceDescriptor->isEndlessRepeat(), csvSourceDescriptor->getSkipHeader(), sourceDescriptor->getOperatorId());
+    } else if (sourceDescriptor->instanceOf<NettySourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating Netty source");
+        const NettySourceDescriptorPtr nettySourceDescriptor = sourceDescriptor->as<NettySourceDescriptor>();
+        return createNettyFileSource(
+            nettySourceDescriptor->getSchema(), bufferManager, queryManager, nettySourceDescriptor->getFilePath(),
+            nettySourceDescriptor->getDelimiter(), nettySourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
+            nettySourceDescriptor->getNumBuffersToProcess(), nettySourceDescriptor->getFrequency(),
+            nettySourceDescriptor->isEndlessRepeat(), nettySourceDescriptor->getSkipHeader(), sourceDescriptor->getOperatorId());
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");

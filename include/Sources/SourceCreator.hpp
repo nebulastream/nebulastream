@@ -95,6 +95,11 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
                                         uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId);
 
+const DataSourcePtr createNettyFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                        const std::string& path_to_file, const std::string& delimiter,
+                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                        uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId);
+
 /**
  * @brief function to create a ysb source
  * @param schema of data source

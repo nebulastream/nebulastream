@@ -26,6 +26,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/KafkaSource.hpp>
+#include <Sources/NettySource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -80,6 +81,15 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr buffe
                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numbersOfBufferToProduce,
                                         uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
+                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat,
+                                       skipHeader, operatorId);
+}
+
+const DataSourcePtr createNettyFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                        const std::string& pathToFile, const std::string& delimiter,
+                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numbersOfBufferToProduce,
+                                        uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
+    return std::make_shared<NettySource>(schema, bufferManager, queryManager, pathToFile, delimiter,
                                        numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, endlessRepeat,
                                        skipHeader, operatorId);
 }

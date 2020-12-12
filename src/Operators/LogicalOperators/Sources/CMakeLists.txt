@@ -25,4 +25,5 @@ add_source_nes(
         NetworkSourceDescriptor.cpp
         OPCSourceDescriptor.cpp
         YSBSourceDescriptor.cpp
+        NettySourceDescriptor.cpp
 )

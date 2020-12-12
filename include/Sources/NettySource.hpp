@@ -1,3 +1,10 @@
+//
+// Created by nabil on 10.12.20.
+//
+
+
+
+
 /*
     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
@@ -14,8 +21,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_CSVSOURCE_H_
-#define INCLUDE_CSVSOURCE_H_
+#ifndef NES_NETTYSOURCE_HPP
+#define NES_NETTYSOURCE_HPP
 
 #include <Sources/DataSource.hpp>
 #include <fstream>
@@ -27,7 +34,7 @@ class TupleBuffer;
 /**
  * @brief this class implement the CSV as an input source
  */
-class CSVSource : public DataSource {
+class NettySource : public DataSource {
   public:
     /**
    * @brief constructor of CSV sou1rce
@@ -36,7 +43,7 @@ class CSVSource : public DataSource {
    * @param delimiter inside the file, default ","
    * @param number of buffers to create
    */
-    explicit CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
+    explicit NettySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
                        const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
                        uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId);
 
@@ -103,7 +110,7 @@ class CSVSource : public DataSource {
     bool skipHeader;
 };
 
-typedef std::shared_ptr<CSVSource> CSVSourcePtr;
+typedef std::shared_ptr<NettySource> NettySourcePtr;
 }// namespace NES
 
 #endif /* INCLUDE_CSVSOURCE_H_ */

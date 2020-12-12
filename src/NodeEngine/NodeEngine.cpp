@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
@@ -499,6 +500,10 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
         NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
         return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency, endlessRepeat,
                                            sourceDescriptor->getOperatorId());
+    } else if (type == "NettySource") {
+        NES_DEBUG("TypeInferencePhase: create Netty source for " << conf << " buffers");
+        return NettySourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
+                                           numBuffers, frequency, endlessRepeat, skipHeader, sourceDescriptor->getOperatorId());
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
     }

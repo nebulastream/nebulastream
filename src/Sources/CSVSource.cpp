@@ -29,6 +29,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define PORT 31000
+#define BUFFER_SIZE 1024
+
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -64,6 +72,7 @@ std::optional<TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called");
     auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
+    //fillSocket(buf);
     NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
     return buf;
 }
@@ -89,8 +98,11 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     //fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0) {
         generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
+        NES_DEBUG("CSVSource::fillBuffer: buf.getBufferSize() =" << buf.getBufferSize());
+        NES_DEBUG("CSVSource::fillBuffer:  tupleSize=" << tupleSize);
     } else {
         generated_tuples_this_pass = numberOfTuplesToProducePerBuffer;
+        NES_DEBUG("CSVSource::fillBuffer: numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer);
     }
     NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generated_tuples_this_pass);
 
@@ -197,6 +209,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
     generatedTuples += tupCnt;
     generatedBuffers++;
 }
+
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }
 

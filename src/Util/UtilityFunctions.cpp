@@ -45,6 +45,9 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <random>
 
+using Clock = std::chrono::high_resolution_clock;
+
+
 namespace NES {
 
 // removes leading and trailing whitespaces
@@ -318,6 +321,12 @@ std::string UtilityFunctions::printTupleBufferAsCSV(TupleBuffer& tbuffer, Schema
             ss << str.c_str();
             if (j < schema->getSize() - 1) {
                 ss << ",";
+            }
+            else{
+                ss << ",";
+                auto time =  std::to_string( std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count());
+               // outputFile.write((char*)time.c_str(),time.size());
+                ss << time.c_str();
             }
             offset += fieldSize;
         }
