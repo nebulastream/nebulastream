@@ -303,6 +303,13 @@ std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbu
             if (j < schema->getSize() - 1) {
                 ss << ",";
             }
+            else{
+                ss << ",";
+                //Adding time stamp
+                auto time =  std::to_string( std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count());
+               // outputFile.write((char*)time.c_str(),time.size());
+                ss << time.c_str();
+            }
             offset += fieldSize;
         }
         ss << std::endl;
