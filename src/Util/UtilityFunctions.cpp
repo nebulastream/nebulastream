@@ -251,7 +251,6 @@ std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
 }
 
 std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema) {
-    return printTupleBufferAsCSV(buffer, schema);
     if (!buffer.isValid()) {
         return "INVALID_BUFFER_PTR";
     }
@@ -324,6 +323,7 @@ std::string UtilityFunctions::printTupleBufferAsCSV(TupleBuffer& tbuffer, Schema
             }
             else{
                 ss << ",";
+                //Adding time stamp
                 auto time =  std::to_string( std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count());
                // outputFile.write((char*)time.c_str(),time.size());
                 ss << time.c_str();
