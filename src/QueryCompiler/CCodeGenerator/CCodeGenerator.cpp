@@ -107,7 +107,7 @@ CodeGeneratorPtr CCodeGenerator::create() { return std::make_shared<CCodeGenerat
 
 bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) {
 
-    context->inputSchema = inputSchema->copy();
+    context->inputSchema = outputSchema->copy();
     auto code = context->code;
     code->structDeclaratonInputTuple = getStructDeclarationFromSchema("InputTuple", inputSchema);
 

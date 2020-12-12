@@ -111,7 +111,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
                                                                              OperatorNodePtr generatableParentOperator) {
     auto windowDefinition = windowOperator->getWindowDefinition();
     auto generatableWindowAggregation = transformWindowAggregation(windowDefinition->getWindowAggregation());
-    auto scanOperator = GeneratableScanOperator::create(windowOperator->getInputSchema(), windowOperator->getOutputSchema());
+    auto scanOperator = GeneratableScanOperator::create(windowOperator->getOutputSchema(), windowOperator->getOutputSchema());
     generatableParentOperator->addChild(scanOperator);
     if (windowOperator->instanceOf<CentralWindowOperator>()) {
         auto generatableWindowOperator =
