@@ -32,16 +32,16 @@ SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedEqualQueryMergerRule::create() { r
 bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
     NES_INFO("SyntaxBasedEqualQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllSharedQueryMetaData();
-    if (allGQMs.size() == 1) {
+    std::vector<SharedQueryMetaDataPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryMetaData();
+    if (allSharedQueryMetaData.size() == 1) {
         NES_WARNING("SyntaxBasedEqualQueryMergerRule: Found only a single query metadata in the global query plan."
                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
 
     NES_DEBUG("SyntaxBasedEqualQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
-    for (uint16_t i = 0; i < allGQMs.size() - 1; i++) {
-        for (uint16_t j = i + 1; j < allGQMs.size(); j++) {
+    for (uint16_t i = 0; i < allSharedQueryMetaData.size() - 1; i++) {
+        for (uint16_t j = i + 1; j < allSharedQueryMetaData.size(); j++) {
 
             auto targetSharedQueryMetaData = allSharedQueryMetaData[i];
             auto hostSharedQueryMetaData = allSharedQueryMetaData[j];

@@ -551,9 +551,9 @@ std::vector<NodePtr> Node::split(const NodePtr splitNode) {
 
 bool Node::isValid() { return !isCyclic(); }
 
-std::vector<NodePtr> Node::getAndFlattenAllChildren(bool allowDuplicate) {
+std::vector<NodePtr> Node::getAndFlattenAllChildren(bool withDuplicateChildren) {
     std::vector<NodePtr> allChildren{};
-    getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this(), allowDuplicate);
+    getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this(), withDuplicateChildren);
     return allChildren;
 }
 
