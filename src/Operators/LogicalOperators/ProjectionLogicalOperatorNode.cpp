@@ -15,10 +15,10 @@
 */
 
 #include <API/Schema.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
 #include <Util/Logger.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES {
 
@@ -46,29 +46,22 @@ const std::string ProjectionLogicalOperatorNode::toString() const {
 bool ProjectionLogicalOperatorNode::inferSchema() {
     OperatorNode::inferSchema();
     outputSchema = Schema::create();
-    for(auto& exp : expressions)
-    {
+    for (auto& exp : expressions) {
         auto expression = exp.getExpressionNode();
         if (!expression->instanceOf<FieldAccessExpressionNode>()) {
             NES_ERROR("Query: stream has to be an FieldAccessExpression but it was a " + expression->toString());
         }
         auto fieldAccess = expression->as<FieldAccessExpressionNode>();
-        if(inputSchema->contains(fieldAccess->getFieldName()))
-        {
+        if (inputSchema->contains(fieldAccess->getFieldName())) {
             outputSchema->addField(inputSchema->get(fieldAccess->getFieldName()));
-        }
-        else
-        {
+        } else {
             NES_ERROR("ProjectionLogicalOperatorNode::inferSchema(): expression not found=" << fieldAccess->getFieldName());
         }
     }
     return true;
 }
 
-std::vector<ExpressionItem> ProjectionLogicalOperatorNode::getExpressions()
-{
-    return expressions;
-}
+std::vector<ExpressionItem> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
 
 OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createProjectionOperator(expressions, id);

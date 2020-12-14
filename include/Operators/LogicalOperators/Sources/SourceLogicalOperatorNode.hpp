@@ -54,6 +54,7 @@ class SourceLogicalOperatorNode : public LogicalOperatorNode {
     OperatorNodePtr copy() override;
 
     void setProjectSchema(SchemaPtr schema);
+
   private:
     SourceDescriptorPtr sourceDescriptor;
     SchemaPtr projectSchema;

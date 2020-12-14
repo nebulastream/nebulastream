@@ -1317,19 +1317,18 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
-        ->addField("id", DataTypeFactory::createInt32())
-        ->addField("valueSmall", DataTypeFactory::createInt16())
-        ->addField("valueFloat", DataTypeFactory::createFloat())
-        ->addField("valueDouble", DataTypeFactory::createDouble())
-        ->addField(mappedValue)
-        ->addField("valueChar", DataTypeFactory::createChar())
-        ->addField("text", DataTypeFactory::createFixedChar(12));
+                            ->addField("id", DataTypeFactory::createInt32())
+                            ->addField("valueSmall", DataTypeFactory::createInt16())
+                            ->addField("valueFloat", DataTypeFactory::createFloat())
+                            ->addField("valueDouble", DataTypeFactory::createDouble())
+                            ->addField(mappedValue)
+                            ->addField("valueChar", DataTypeFactory::createChar())
+                            ->addField("text", DataTypeFactory::createFixedChar(12));
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
 
     //predicate definition
     codeGenerator->generateCodeForMap(mappedValue, createPredicate((inputSchema->get(2) * inputSchema->get(3)) + 2), context);
-
 
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(outputSchema, context);

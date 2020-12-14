@@ -55,6 +55,7 @@ class ProjectionLogicalOperatorNode : public LogicalOperatorNode {
     OperatorNodePtr copy() override;
 
     std::vector<ExpressionItem> getExpressions();
+
   private:
     std::vector<ExpressionItem> expressions;
 };

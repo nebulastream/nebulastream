@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
@@ -24,7 +25,6 @@
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>

@@ -110,7 +110,8 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         std::vector<NES::ExpressionItem> exps = projectionOperator->getExpressions();
         for (size_t i = 0; i < exps.size(); i++) {
             projectionDetail.mutable_expression()->Add();
-            ExpressionSerializationUtil::serializeExpression(exps.at(i).getExpressionNode(), projectionDetail.mutable_expression(i));
+            ExpressionSerializationUtil::serializeExpression(exps.at(i).getExpressionNode(),
+                                                             projectionDetail.mutable_expression(i));
         }
 
         serializedOperator->mutable_details()->PackFrom(projectionDetail);
@@ -232,7 +233,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
 
         // de-serialize projection expression
         //TODO: if required, we could serialize the projection list too
-        operatorNode = LogicalOperatorFactory::createProjectionOperator(std::vector<NES::ExpressionItem>(), serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createProjectionOperator(std::vector<NES::ExpressionItem>(),
+                                                                        serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_MergeDetails>()) {
         // de-serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MergeLogicalOperator");
