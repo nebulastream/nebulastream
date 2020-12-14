@@ -557,17 +557,17 @@ std::vector<NodePtr> Node::getAndFlattenAllChildren(bool allowDuplicate) {
     return allChildren;
 }
 
-void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludednode,
+void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludedNode,
                                           bool allowDuplicate) {
 
     // todo this implementation may be slow
     for (auto&& currentNode : node->children) {
         if (allowDuplicate) {
             allChildren.push_back(currentNode);
-            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode, allowDuplicate);
-        } else if (!find(allChildren, currentNode) && (currentNode != excludednode)) {
+            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludedNode, allowDuplicate);
+        } else if (!find(allChildren, currentNode) && (currentNode != excludedNode)) {
             allChildren.push_back(currentNode);
-            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode, allowDuplicate);
+            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludedNode, allowDuplicate);
         }
     }
 }

@@ -35,45 +35,45 @@ typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
  * it with the signature of another query plan to establish equality relationship among them.
  *
  * A signature is represented by First-Order Logic (FOL) formula derived for the operators contained in the query plan.
- * We prepare a conjunctive normal form (CNF) of conditions (conds) occurring in the query plan and a CNF of columns (cols) or projections
+ * We prepare a conjunctive normal form (CNF) of conditions occurring in the query plan and a CNF of columns or projections
  * expected as result.
  *
  * For Example:
  *      For a logical stream "cars" with schema "Id, Color, Speed".
  *
  *  1.) Given a query Q1: Query::from("cars").map(attr("speed") = 100).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conds:(stream="cars" and color=='RED'); cols:(speed=100))
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and color=='RED'); columns:(speed=100))
  *
  *  2.) Given a query Q1: Query::from("cars").map(attr("speed") = attr("speed")*100).filter(attr("speed") > 100 ).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conds:(stream="cars" and speed*100>100 and color=='RED'); cols:(speed=speed*100))
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and speed*100>100 and color=='RED'); columns:(speed=speed*100))
  *
  *  3.) Given a query Q1: Query::from("cars").filter(attr("speed") > 100 ).map(attr("speed") = attr("speed")*100).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conds:(stream="cars" and speed>100 and color=='RED'); cols:(speed=speed*100))
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and speed>100 and color=='RED'); columns:(speed=speed*100))
  *
  *  4.) Given a query Q1: Query::from("cars").filter(attr("color") == 'RED').map(attr("speed") = attr("speed")*100).filter(attr("speed") +100 > 200 ).sink(Print());
- *      The query plan signature (QPSig) is given by : (conds:(stream="cars" and color=='RED' and (speed*100)+100>200); cols:(speed=speed*100))
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and color=='RED' and (speed*100)+100>200); columns:(speed=speed*100))
  */
 class QuerySignature {
   public:
     /**
      * @brief Create instance of Query plan signature
-     * @param conds : the predicates involved in the query
-     * @param cols : the predicates involving columns to be extracted
+     * @param conditions : the predicates involved in the query
+     * @param columns : the predicates involving columns to be extracted
      * @return Shared instance of the query plan signature.
      */
-    static QuerySignaturePtr create(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
+    static QuerySignaturePtr create(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns);
 
     /**
      * @brief Get the conditions
      * @return Condition predicates in CNF form
      */
-    z3::ExprPtr getConds();
+    z3::ExprPtr getConditions();
 
     /**
      * @brief Get the column predicates
      * @return map of column name to list of predicates
      */
-    std::map<std::string, std::vector<z3::ExprPtr>> getCols();
+    std::map<std::string, std::vector<z3::ExprPtr>> getColumns();
 
     /**
      * @brief Validate if this signature is equal to input signature
@@ -83,9 +83,9 @@ class QuerySignature {
     bool isEqual(QuerySignaturePtr other);
 
   private:
-    QuerySignature(z3::ExprPtr conds, std::map<std::string, std::vector<z3::ExprPtr>> cols);
-    z3::ExprPtr conds;
-    std::map<std::string, std::vector<z3::ExprPtr>> cols;
+    QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> cols);
+    z3::ExprPtr conditions;
+    std::map<std::string, std::vector<z3::ExprPtr>> columns;
 };
 }// namespace NES::Optimizer
 

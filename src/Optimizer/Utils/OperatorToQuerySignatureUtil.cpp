@@ -72,7 +72,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         NES_TRACE("OperatorToQueryPlanSignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
                   "children signatures");
         //As filter can't have more than 1 children so fetch the only child signature
-        auto subQueryCols = childrenQuerySignatures[0]->getCols();
+        auto subQueryCols = childrenQuerySignatures[0]->getColumns();
 
         //Prepare a vector of conditions by substituting the field expressions in the predicate with col values from children signature
         for (auto constPair : fieldMap) {
@@ -96,7 +96,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         auto filterCond = z3::mk_or(allConds);
 
         //Compute a CNF condition using the children and filter conds
-        auto childrenConds = childrenQuerySignatures[0]->getConds();
+        auto childrenConds = childrenQuerySignatures[0]->getConditions();
         Z3_ast array[] = {filterCond, *childrenConds};
         auto conds = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
 
@@ -122,7 +122,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         z3::ExprPtr expr = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context)->getExpr();
 
         //Fetch the signature of only children and get the column values
-        auto cols = childrenQuerySignatures[0]->getCols();
+        auto cols = childrenQuerySignatures[0]->getColumns();
 
         //Prepare all combinations of col expression for the given map by substituting the previous col values in the assignment expression
         std::vector<z3::ExprPtr> allColExprForMap{expr};
@@ -150,7 +150,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         cols[fieldName] = allColExprForMap;
 
         //Fetch child cond
-        auto conds = childrenQuerySignatures[0]->getConds();
+        auto conds = childrenQuerySignatures[0]->getConditions();
 
         return QuerySignature::create(conds, cols);
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
@@ -172,9 +172,9 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
     for (auto& subQuerySignature : childrenQuerySignatures) {
         //Merge the columns together from different children signatures
         if (allCols.empty()) {
-            allCols = subQuerySignature->getCols();
+            allCols = subQuerySignature->getColumns();
         } else {
-            for (auto [colName, colExprs] : subQuerySignature->getCols()) {
+            for (auto [colName, colExprs] : subQuerySignature->getColumns()) {
                 if (allCols.find(colName) != allCols.end()) {
                     std::vector<z3::ExprPtr> existingColExprs = allCols[colName];
                     existingColExprs.insert(existingColExprs.end(), colExprs.begin(), colExprs.end());
@@ -185,7 +185,7 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
             }
         }
         //Add condition to the array
-        allConds.push_back(*subQuerySignature->getConds());
+        allConds.push_back(*subQuerySignature->getConditions());
     }
 
     //Create a CNF using all conditions from children signatures
