@@ -95,17 +95,9 @@ class Query {
     Query& project(Args&&... args) {
         SchemaPtr schema = Schema::create();
         std::vector<ExpressionItem> vec({std::forward<Args>(args)...});
-        for (auto& item : vec) {
-            auto keyExpression = item.getExpressionNode();
-            if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-                NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
-            }
-            auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-            schema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
-        }
-        auto sources = queryPlan->getSourceOperators();
-        NES_ASSERT(sources.size() == 1, "More than one source is not supported");
-        sources[0]->setProjectSchema(schema);
+
+        OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(vec);
+        queryPlan->appendOperatorAsNewRoot(op);
         return *this;
     }
     /**

@@ -22,6 +22,7 @@
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
+class ExpressionItem;
 
 class LogicalOperatorFactory {
   public:
@@ -38,6 +39,16 @@ class LogicalOperatorFactory {
      */
     static LogicalOperatorNodePtr createFilterOperator(const ExpressionNodePtr predicate,
                                                        OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+    * @brief Create a new logical projection operator.
+    * @param expression list
+    * @param id: the id of the operator if not defined then next free operator id is used.
+    * @return LogicalOperatorNodePtr
+    */
+    static LogicalOperatorNodePtr createProjectionOperator(std::vector<ExpressionItem> expressions,
+                                                       OperatorId id = UtilityFunctions::getNextOperatorId());
+
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.

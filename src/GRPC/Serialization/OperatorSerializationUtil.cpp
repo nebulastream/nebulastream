@@ -60,6 +60,7 @@
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -100,6 +101,12 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         // serialize filter expression
         ExpressionSerializationUtil::serializeExpression(filterOperator->getPredicate(), filterDetails.mutable_predicate());
         serializedOperator->mutable_details()->PackFrom(filterDetails);
+    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        // serialize projection operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to ProjectionLogicalOperatorNode");
+        auto projectionDetail = SerializableOperator_ProjectionDetails();
+        auto projectionOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
+        serializedOperator->mutable_details()->PackFrom(projectionDetail);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         // serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: serialize to MergeLogicalOperatorNode");
@@ -202,6 +209,14 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         // de-serialize filter expression
         auto filterExpression = ExpressionSerializationUtil::deserializeExpression(serializedFilterOperator.mutable_predicate());
         operatorNode = LogicalOperatorFactory::createFilterOperator(filterExpression, serializedOperator->operatorid());
+    } else if (details.Is<SerializableOperator_ProjectionDetails>()) {
+        // de-serialize projection operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to ProjectionLogicalOperator");
+        auto serializedProjectionOperator = SerializableOperator_ProjectionDetails();
+        details.UnpackTo(&serializedProjectionOperator);
+        // de-serialize projection expression
+        //TODO: if required, we could serialize the projection list too
+        operatorNode = LogicalOperatorFactory::createProjectionOperator(std::vector<NES::ExpressionItem>(), serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_MergeDetails>()) {
         // de-serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MergeLogicalOperator");

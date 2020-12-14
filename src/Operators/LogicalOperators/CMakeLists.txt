@@ -1,6 +1,7 @@
 add_source_nes(
         LogicalOperatorNode.cpp
         FilterLogicalOperatorNode.cpp
+        ProjectionLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
         MergeLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp

@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -30,6 +31,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <API/Expressions/Expressions.hpp>
 
 namespace NES {
 
@@ -43,6 +45,10 @@ LogicalOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const SinkDesc
 
 LogicalOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr predicate, OperatorId id) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate, id);
+}
+
+LogicalOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(std::vector<ExpressionItem> expressions, OperatorId id) {
+    return std::make_shared<ProjectionLogicalOperatorNode>(expressions, id);
 }
 
 LogicalOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression,
