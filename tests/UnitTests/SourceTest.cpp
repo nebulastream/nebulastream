@@ -28,6 +28,15 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
+#include <Monitoring/Metrics/MetricCatalog.hpp>
+#include <Monitoring/Metrics/MetricGroup.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
+#include <Monitoring/MetricValues/MetricValueType.hpp>
+#include <Monitoring/Metrics/MetricGroup.hpp>
+#include <Monitoring/MetricValues/GroupedValues.hpp>
+
+#include <Sources/MonitoringSource.hpp>
 #include <Sources/YSBSource.hpp>
 
 namespace NES {
@@ -496,6 +505,33 @@ TEST_F(SourceTest, testYSBSource) {
 
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(source->getNumberOfGeneratedTuples(), numBuffers * numTuples);
+}
+
+TEST_F(SourceTest, testMonitoringSource) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
+    uint64_t numBuffers = 2;
+
+    // create the MonitoringSource
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
+
+    auto source = std::make_shared<MonitoringSource>(plan, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 1, 1);
+
+    SchemaPtr schema = source->getSchema();
+
+    while (source->getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = source->receiveData();
+        GroupedValues parsedValues = plan->fromBuffer(schema, optBuf.value());
+
+        ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().USER > 0);
+        ASSERT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
+        ASSERT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
+    }
+
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), 2);
 }
 
 }// namespace NES
