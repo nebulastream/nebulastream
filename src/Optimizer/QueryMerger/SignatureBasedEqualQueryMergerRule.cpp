@@ -31,79 +31,97 @@ SignatureBasedEqualQueryMergerRule::SignatureBasedEqualQueryMergerRule() {}
 
 SignatureBasedEqualQueryMergerRule::~SignatureBasedEqualQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
 
-SignatureBasedEqualQueryMergerRulePtr SignatureBasedEqualQueryMergerRule::create() { return std::make_shared<SignatureBasedEqualQueryMergerRule>(SignatureBasedEqualQueryMergerRule()); }
+SignatureBasedEqualQueryMergerRulePtr SignatureBasedEqualQueryMergerRule::create() {
+    return std::make_shared<SignatureBasedEqualQueryMergerRule>(SignatureBasedEqualQueryMergerRule());
+}
 
 bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO("EqualQueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
-
-    std::vector<SharedQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllSharedQueryMetaData();
-    if (allGQMs.size() == 1) {
-        NES_WARNING("EqualQueryMergerRule: Found only a single query metadata in the global query plan."
-                    " Skipping the Equal Query Merging.");
+    NES_INFO("SignatureBasedEqualQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    std::vector<SharedQueryMetaDataPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryMetaData();
+    if (allSharedQueryMetaData.size() == 1) {
+        NES_WARNING("SignatureBasedEqualQueryMergerRule: Found only a single query metadata in the global query plan."
+                    " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("EqualQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
-    for (uint16_t i = 0; i < allGQMs.size() - 1; i++) {
-        for (uint16_t j = i + 1; j < allGQMs.size(); j++) {
+    NES_DEBUG("SignatureBasedEqualQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    //Iterate over all shared query metadata to identify equal shared metadata
+    for (uint16_t i = 0; i < allSharedQueryMetaData.size() - 1; i++) {
+        for (uint16_t j = i + 1; j < allSharedQueryMetaData.size(); j++) {
 
-            auto hostGQM = allGQMs[i];
-            auto targetGQM = allGQMs[j];
+            auto targetSharedQueryMetaData = allSharedQueryMetaData[i];
+            auto hostSharedQueryMetaData = allSharedQueryMetaData[j];
 
-            if (targetGQM->getSharedQueryId() == hostGQM->getSharedQueryId()) {
+            if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
                 continue;
             }
 
-            auto hostQueryPlan = hostGQM->getQueryPlan();
-            auto targetQueryPlan = targetGQM->getQueryPlan();
+            auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
+            auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
 
-            std::map<uint64_t, uint64_t> targetHostOperatorMap;
-
+            // Prepare a map of matching host and target sink global query nodes
+            // if there are no matching global query nodes then the shared query metadata are not matched
+            std::map<uint64_t, uint64_t> targetHostSinkNodeMap;
             bool areEqual;
             for (auto hostSink : hostQueryPlan->getSinkOperators()) {
                 areEqual = false;
                 for (auto targetSink : targetQueryPlan->getSinkOperators()) {
+                    //Check if the host and target sink signatures match each other
                     if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
-                        targetHostOperatorMap[targetSink->getId()] = hostSink->getId();
+                        targetHostSinkNodeMap[targetSink->getId()] = hostSink->getId();
                         areEqual = true;
                         break;
                     }
                 }
                 if (!areEqual) {
-                    NES_WARNING("There are not equal Target sink for Host sink "<< hostSink->toString());
+                    NES_WARNING("SignatureBasedEqualQueryMergerRule: There are not equal Target sink for Host sink " << hostSink->toString());
                     break;
                 }
             }
 
-            if(!areEqual){
-                NES_WARNING("Target and Host GQM are not equal");
-                break;
+            //Not all sinks found an equivalent entry in the target shared query metadata
+            if (!areEqual) {
+                NES_WARNING("SignatureBasedEqualQueryMergerRule: Target and Host Shared Query MetaData are not equal");
+                continue;
             }
 
-            std::set<GlobalQueryNodePtr> hostSinkGQNs = hostGQM->getSinkGlobalQueryNodes();
-            for (auto targetSinkGQN : targetGQM->getSinkGlobalQueryNodes()) {
-                uint64_t hostSinkOperatorId = targetHostOperatorMap[targetSinkGQN->getOperator()->getId()];
+            std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkGlobalQueryNodes();
+            //Iterate over all target sink global query node
+            for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkGlobalQueryNodes()) {
+                //Check for the target sink global query node the corresponding host sink global query node id in the map
+                uint64_t hostSinkOperatorId = targetHostSinkNodeMap[targetSinkGQN->getOperator()->getId()];
 
+                // Find the host sink global query node with the matching id
                 auto found =
                     std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(), [hostSinkOperatorId](GlobalQueryNodePtr hostSinkGQN) {
                         return hostSinkGQN->getOperator()->getId() == hostSinkOperatorId;
                     });
 
                 if (found == hostSinkGQNs.end()) {
-                    NES_THROW_RUNTIME_ERROR("Unexpected behaviour");
+                    NES_THROW_RUNTIME_ERROR("SignatureBasedEqualQueryMergerRule: Unexpected behaviour");
                 }
+
+                //Remove all children of target sink global query node
                 targetSinkGQN->removeChildren();
+
+                //Add children of matched host sink global query node to the target sink global query node
                 for (auto hostChild : (*found)->getChildren()) {
                     hostChild->addParent(targetSinkGQN);
                 }
             }
-            hostGQM->addSharedQueryMetaData(targetGQM);
-            targetGQM->clear();
-            globalQueryPlan->updateSharedQueryMetadata(hostGQM);
-            //FIXME: add return call
+
+            NES_TRACE("SignatureBasedEqualQueryMergerRule: Merge target Shared metadata into host metadata");
+            hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
+            //Clear the target shared query metadata
+            targetSharedQueryMetaData->clear();
+            //Update the shared query meta data
+            globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
+            // exit the for loop as we found a matching host shared query meta data
+            break;
         }
     }
+    //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryMetaData();
     return true;
 }

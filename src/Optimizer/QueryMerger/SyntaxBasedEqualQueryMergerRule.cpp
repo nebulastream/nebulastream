@@ -31,12 +31,11 @@ SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedEqualQueryMergerRule::create() { r
 
 bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
-    NES_INFO("SyntaxBasedEqualQueryMergerRule: Applying L0 Merging rule to the Global Query Plan");
-
+    NES_INFO("SyntaxBasedEqualQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allGQMs = globalQueryPlan->getAllSharedQueryMetaData();
     if (allGQMs.size() == 1) {
         NES_WARNING("SyntaxBasedEqualQueryMergerRule: Found only a single query metadata in the global query plan."
-                    " Skipping the L0 Query Merging.");
+                    " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
 
@@ -44,22 +43,27 @@ bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQuer
     for (uint16_t i = 0; i < allGQMs.size() - 1; i++) {
         for (uint16_t j = i + 1; j < allGQMs.size(); j++) {
 
-            auto hostGQM = allGQMs[i];
-            auto targetGQM = allGQMs[j];
+            auto targetSharedQueryMetaData = allSharedQueryMetaData[i];
+            auto hostSharedQueryMetaData = allSharedQueryMetaData[j];
 
-            if (targetGQM->getSharedQueryId() == hostGQM->getSharedQueryId()) {
+            if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
                 continue;
             }
 
             //TODO: we need to check how this will pan out when we will have more than 1 sink
-            auto hostQueryPlan = hostGQM->getQueryPlan();
-            auto targetQueryPlan = targetGQM->getQueryPlan();
+            auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
+            auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
 
+            //create a map of matching target to host operator id map
             std::map<uint64_t, uint64_t> targetHostOperatorMap;
+
+            //Check if the target and host query plan are equal and return the target and host operator mappings
             if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetHostOperatorMap)) {
 
-                std::set<GlobalQueryNodePtr> hostSinkGQNs = hostGQM->getSinkGlobalQueryNodes();
-                for (auto targetSinkGQN : targetGQM->getSinkGlobalQueryNodes()) {
+                std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkGlobalQueryNodes();
+                //Iterate over all target sink global query nodes and try to identify a matching host global query node
+                // using the target host operator map
+                for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkGlobalQueryNodes()) {
                     uint64_t hostSinkOperatorId = targetHostOperatorMap[targetSinkGQN->getOperator()->getId()];
 
                     auto found = std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(),
@@ -68,19 +72,28 @@ bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQuer
                                               });
 
                     if (found == hostSinkGQNs.end()) {
-                        NES_THROW_RUNTIME_ERROR("Unexpected behaviour");
+                        NES_THROW_RUNTIME_ERROR("SyntaxBasedEqualQueryMergerRule: Unexpected behaviour");
                     }
+                    //Remove all children of target sink global query node
                     targetSinkGQN->removeChildren();
+
+                    //Add children of matched host sink global query node to the target sink global query node
                     for (auto hostChild : (*found)->getChildren()) {
                         hostChild->addParent(targetSinkGQN);
                     }
                 }
-                hostGQM->addSharedQueryMetaData(targetGQM);
-                targetGQM->clear();
-                globalQueryPlan->updateSharedQueryMetadata(hostGQM);
+                NES_TRACE("SyntaxBasedEqualQueryMergerRule: Merge target Shared metadata into host metadata");
+                hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
+                //Clear the target shared query metadata
+                targetSharedQueryMetaData->clear();
+                //Update the shared query meta data
+                globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
+                // exit the for loop as we found a matching host shared query meta data
+                break;
             }
         }
     }
+    //Remove all empty shared query metadata
     globalQueryPlan->removeEmptySharedQueryMetaData();
     return true;
 }
@@ -97,7 +110,7 @@ bool SyntaxBasedEqualQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQuer
         return false;
     }
 
-    //Fetch the first source operator
+    //Fetch the first source operator and find a corresponding matching source operator in the host source operator list
     auto& targetSourceOperator = targetSourceOperators[0];
     for (auto& hostSourceOperator : hostSourceOperators) {
         targetHostOperatorMap.clear();
