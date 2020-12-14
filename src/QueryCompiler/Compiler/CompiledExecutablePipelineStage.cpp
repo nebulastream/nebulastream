@@ -46,6 +46,7 @@ uint32_t CompiledExecutablePipelineStage::start(NodeEngine::Execution::PipelineE
                         "It is not allowed to call start if setup was not called.");
         return -1;
     }
+    NES_DEBUG("CompiledExecutablePipelineStage: Start compiled executable pipeline stage");
     currentExecutionStage = Running;
     return executablePipelineStage->start(pipelineExecutionContext);
 }
@@ -66,9 +67,11 @@ uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
     // we dont get the lock here as we dont was to serialize the execution.
     // currentExecutionStage is an atomic so its still save to read it
     if (currentExecutionStage != Running) {
-        NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
+        NES_ERROR("CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
                         "call setup and start.");
-        return -1;
+        // TODO we have to assure that execute is never called after stop.
+        // This is somehow not working currently.
+       // return -1;
     }
     return executablePipelineStage->execute(inputTupleBuffer, pipelineExecutionContext, workerContext);
 }
@@ -91,6 +94,7 @@ uint32_t CompiledExecutablePipelineStage::stop(NodeEngine::Execution::PipelineEx
                         "call setup and start.");
         return -1;
     }
+    NES_DEBUG("CompiledExecutablePipelineStage: Stop compiled executable pipeline stage");
     currentExecutionStage = Stopped;
     return executablePipelineStage->stop(pipelineExecutionContext);
 }

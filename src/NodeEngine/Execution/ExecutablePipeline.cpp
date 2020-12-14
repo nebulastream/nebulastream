@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <NodeEngine/Execution/OperatorHandler.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
@@ -43,56 +44,22 @@ bool ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef work
 }
 
 bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
-    executablePipelineStage->setup(*pipelineContext.get());
-
-   /* if (hasWindowHandler()) {
-        NES_DEBUG("PipelineStage::setup windowHandler");
-        return true;
-        //return pipelineContext->getWindowHandler()->setup(queryManager, bufferManager, nextPipeline, pipelineStageId, qepId);
-    }
-    if (hasJoinHandler()) {
-        NES_DEBUG("PipelineStage::setup joinHandler");
-        return pipelineContext->getJoinHandler()->setup(queryManager, bufferManager, nextPipeline, pipelineStageId, qepId);
-    }
-    */
-    return true;
+    return executablePipelineStage->setup(*pipelineContext.get())==0;
 }
 
 bool ExecutablePipeline::start() {
-    executablePipelineStage->start(*pipelineContext.get());
-
-    /*if (hasWindowHandler()) {
-        NES_DEBUG("PipelineStage::start: windowhandler start");
-        return pipelineContext->getWindowHandler()->start();
-    } else {
-        NES_DEBUG("PipelineStage::start: no windowhandler to start");
+    for(auto operatorHandler: pipelineContext->getOperatorHandlers()){
+        operatorHandler->start(pipelineContext);
     }
-
-    if (hasJoinHandler()) {
-        NES_DEBUG("PipelineStage::start: joinHandler start");
-        return pipelineContext->getJoinHandler()->start();
-    } else {
-        NES_DEBUG("PipelineStage::start: no join to start");
-    }*/
-
+    executablePipelineStage->start(*pipelineContext.get());
     return true;
 }
 
 bool ExecutablePipeline::stop() {
-    executablePipelineStage->stop(*pipelineContext.get());
-    /*if (hasWindowHandler()) {
-        NES_DEBUG("PipelineStage::stop: windowhandler stop");
-        return pipelineContext->getWindowHandler()->stop();
-    } else {
-        NES_DEBUG("PipelineStage::stop: no windowhandler to stop");
+    for(auto operatorHandler: pipelineContext->getOperatorHandlers()){
+        operatorHandler->stop(pipelineContext);
     }
-
-    if (hasJoinHandler()) {
-        NES_DEBUG("PipelineStage::stop: joinHandler stop");
-        return pipelineContext->getJoinHandler()->stop();
-    } else {
-        NES_DEBUG("PipelineStage::stop: no joinHandler to stop");
-    }*/
+    executablePipelineStage->stop(*pipelineContext.get());
     return true;
 }
 
@@ -114,5 +81,6 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const
     return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
                                                 nextPipeline);
 }
+
 
 }// namespace NES::NodeEngine::Execution

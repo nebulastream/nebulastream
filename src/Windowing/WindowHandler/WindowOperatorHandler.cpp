@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 namespace NES::Windowing{
 
 NodeEngine::Execution::OperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema) {
@@ -35,7 +36,10 @@ void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHand
 SchemaPtr WindowOperatorHandler::getResultSchema() {
     return resultSchema;
 }
-
-
-
+void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) {
+    windowHandler->start();
+}
+void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) {
+    windowHandler->stop();
+}
 }

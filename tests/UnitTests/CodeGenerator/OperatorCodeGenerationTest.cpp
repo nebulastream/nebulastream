@@ -463,7 +463,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction);
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1);
+    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1);

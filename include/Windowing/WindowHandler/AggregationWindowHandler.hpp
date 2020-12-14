@@ -54,6 +54,13 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         handlerType = this->windowDefinition->getDistributionType()->toString();
     }
 
+    static auto create(LogicalWindowDefinitionPtr windowDefinition,
+                       std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
+                       BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
+                       BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction){
+       return std::make_shared<AggregationWindowHandler>(windowDefinition, windowAggregation, executablePolicyTrigger, executableWindowAction);
+    }
+
     ~AggregationWindowHandler() {
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  calling destructor");
         stop();

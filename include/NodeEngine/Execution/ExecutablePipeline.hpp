@@ -79,8 +79,8 @@ class ExecutablePipeline {
     */
     bool isReconfiguration() const;
 
-  public:
-    static ExecutablePipelinePtr create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
+
+   static ExecutablePipelinePtr create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
                                    ExecutablePipelineStagePtr executablePipelineStage, PipelineExecutionContextPtr pipelineContext,
                                    const ExecutablePipelinePtr nextPipelineStage);
 

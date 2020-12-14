@@ -467,8 +467,20 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context, V
  */
 bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                    GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                   PipelineContextPtr context) {
+                                                   PipelineContextPtr context, uint64_t windowOperatorIndex) {
+
     auto tf = getTypeFactory();
+    auto windowOperatorHandlerDeclaration = getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
+    auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
+    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp():  window->getWindowAggregation()->on()->getStamp();
+    auto getWindowHandlerStatement = getAggregationWindowHandler(
+        windowOperatorHandlerDeclaration, keyStamp,
+        window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
+        window->getWindowAggregation()->getFinalAggregateStamp());
+    context->code->variableInitStmts.emplace_back(
+        VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+
+
     auto constStatement =
         ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0")));
 
@@ -485,12 +497,11 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
 
     auto windowStateVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowStateVar");
 
-    auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
 
     NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
-
+/*
     if (window->isKeyed()) {
         auto getWindowHandlerStatement = getAggregationWindowHandler(
             context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
@@ -499,13 +510,14 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
     } else {
-        auto getWindowHandlerStatement = getAggregationWindowHandler(
+       auto getWindowHandlerStatement = getAggregationWindowHandler(
             context->code->varDeclarationExecutionContext, window->getWindowAggregation()->on()->getStamp(),
             window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
             window->getWindowAggregation()->getFinalAggregateStamp());
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
     }
+    */
 
     auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
     context->code->variableInitStmts.emplace_back(
@@ -701,7 +713,7 @@ bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefini
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
-    return generateCodeForCompleteWindow(window, generatableWindowAggregation, context);
+    return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, 0);
 }
 
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) {
@@ -866,7 +878,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 }
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                     GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                    PipelineContextPtr context) {
+                                                    PipelineContextPtr context, uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
     auto code = context->code;
@@ -885,6 +897,18 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
 
     auto windowStateVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowStateVar");
+    auto windowOperatorHandlerDeclaration = getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
+    auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
+
+    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp():  window->getWindowAggregation()->on()->getStamp();
+
+    auto getWindowHandlerStatement = getAggregationWindowHandler(
+        windowOperatorHandlerDeclaration, keyStamp,
+        window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
+        window->getWindowAggregation()->getFinalAggregateStamp());
+    context->code->variableInitStmts.emplace_back(
+        VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
+    /*
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
 
     NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
@@ -906,7 +930,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
     }
-
+*/
     auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
@@ -1159,11 +1183,24 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
                              ->addParameter(code->varDeclarationExecutionContext)
                              ->returns(tf->createDataType(DataTypeFactory::createUInt32()));
 
+
     for(auto setupScope: context->getSetupScopes()){
         setupFunction->addStatement(setupScope);
     }
 
     setupFunction->addStatement(ReturnStatement::create(Constant(
+        tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))).createCopy()));
+
+
+    auto startFunction = FunctionDefinition::create("start")
+        ->addParameter(code->varDeclarationExecutionContext)
+        ->returns(tf->createDataType(DataTypeFactory::createUInt32()));
+
+    for(auto startScope: context->getStartScopes()){
+        startFunction->addStatement(startScope);
+    }
+
+    startFunction->addStatement(ReturnStatement::create(Constant(
         tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))).createCopy()));
 
 
@@ -1299,7 +1336,7 @@ BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(VariableDecl
     auto call = FunctionCallStatement(std::string("getWindowHandler<NES::Windowing::AggregationWindowHandler, ")
                                       + TO_CODE(keyType) + ", " + TO_CODE(inputType) + "," + TO_CODE(partialAggregateType) + ","
                                       + TO_CODE(finalAggregateType) + " >");
-    return VarRef(pipelineContextVariable).accessRef(call);
+    return VarRef(pipelineContextVariable).accessPtr(call);
 }
 
 BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType) {
@@ -1332,5 +1369,18 @@ TypeCastExprStatement CCodeGenerator::getTypedBuffer(VariableDeclaration tupleBu
                                                      StructDeclaration structDeclaraton) {
     auto tf = getTypeFactory();
     return TypeCast(getBuffer(tupleBufferVariable), tf->createPointer(tf->createUserDefinedType(structDeclaraton)));
+}
+VariableDeclaration CCodeGenerator::getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t windowOperatorIndex) {
+    auto tf = getTypeFactory();
+    auto executionContextRef= VarRefStatement(tupleBufferVariable);
+    auto windowOperatorHandlerDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::WindowOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+    auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
+        .assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+
+    return windowOperatorHandlerDeclaration;
 }
 }// namespace NES
