@@ -360,7 +360,7 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * @brief helper function of getAndFlattenAllChildren() function
      */
-    void getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludednode,
+    void getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludedNode,
                                         bool allowDuplicate);
 
     /**

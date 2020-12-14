@@ -43,15 +43,24 @@ typedef std::shared_ptr<Z3ExprAndFieldMap> Z3ExprAndFieldMapPtr;
 class Z3ExprAndFieldMap {
 
   public:
-    Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap);
-
     static Z3ExprAndFieldMapPtr create(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> constMap);
 
+    /**
+     * @brief Get the Z3 expression pointer
+     * @return the pointer to the z3 expression
+     */
     z3::ExprPtr getExpr();
 
+    /**
+     * @brief Get the filed map containing the map of filed name ot z3 expressions
+     * @return the field map
+     */
     std::map<std::string, z3::ExprPtr> getFieldMap();
 
   private:
+
+    Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap);
+    
     z3::ExprPtr expr;
     std::map<std::string, z3::ExprPtr> fieldMap;
 };
