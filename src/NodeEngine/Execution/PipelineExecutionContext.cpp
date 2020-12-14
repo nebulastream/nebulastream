@@ -44,6 +44,10 @@ void PipelineExecutionContext::dispatchBuffer(TupleBuffer& outputBuffer) {
     emitToQueryManagerFunctionHandler(outputBuffer);
 }
 
+std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() {
+    return operatorHandlers;
+}
+
 std::string PipelineExecutionContext::toString() { return "PipelineContext(queryID:" + std::to_string(queryId); }
 
 }// namespace NES::NodeEngine::Execution

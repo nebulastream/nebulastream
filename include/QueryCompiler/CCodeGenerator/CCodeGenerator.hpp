@@ -81,8 +81,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                       GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                       PipelineContextPtr context) override;
+                                       GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
+                                       uint64_t operatorHandlerIndex) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -104,7 +104,7 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
                                         GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                        PipelineContextPtr context) override;
+                                        PipelineContextPtr context,  uint64_t windowOperatorIndex) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -127,6 +127,7 @@ class CCodeGenerator : public CodeGenerator {
 
   private:
     BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
+    VariableDeclaration getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t index);
     BinaryOperatorStatement getWatermark(VariableDeclaration tupleBufferVariable);
     BinaryOperatorStatement getOriginId(VariableDeclaration tupleBufferVariable);
 

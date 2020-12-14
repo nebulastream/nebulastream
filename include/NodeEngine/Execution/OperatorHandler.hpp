@@ -25,6 +25,8 @@ namespace NES::NodeEngine::Execution {
 class OperatorHandler {
   public:
     OperatorHandler() = default;
+    virtual void start(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+    virtual void stop(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 };
 
 }// namespace NES::NodeEngine::Execution

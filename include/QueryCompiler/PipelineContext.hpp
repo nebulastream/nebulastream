@@ -49,6 +49,7 @@ class PipelineContext {
     static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);
     BlockScopeStatementPtr createSetupScope();
+    BlockScopeStatementPtr createStartScope();
     std::vector<DeclarationPtr> variable_declarations;
 
     SchemaPtr getInputSchema() const;
@@ -82,9 +83,11 @@ class PipelineContext {
     std::string pipelineName;
     bool isLeftSide;
     std::vector<BlockScopeStatementPtr> getSetupScopes();
+    std::vector<BlockScopeStatementPtr> getStartScopes();
   private:
     std::vector<PipelineContextPtr> nextPipelines;
     std::vector<BlockScopeStatementPtr> setupScopes;
+    std::vector<BlockScopeStatementPtr> startScopes;
     std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
     Windowing::AbstractWindowHandlerPtr windowHandler;
     Join::AbstractJoinHandlerPtr joinHandler;

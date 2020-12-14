@@ -20,6 +20,9 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler{
             windowHandler);
     }
 
+    void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+
     LogicalWindowDefinitionPtr getWindowDefinition();
 
     SchemaPtr getResultSchema();

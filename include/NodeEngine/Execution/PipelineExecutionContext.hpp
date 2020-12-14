@@ -32,7 +32,7 @@ namespace NES::NodeEngine::Execution {
  * @brief The PipelineExecutionContext is passed to a compiled pipeline and offers basic functionality to interact with the runtime.
  * Via the context, the compile code is able to allocate new TupleBuffers and to emit tuple buffers to the runtime.
  */
-class PipelineExecutionContext {
+class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExecutionContext> {
 
   public:
     /**
@@ -64,6 +64,8 @@ class PipelineExecutionContext {
     * @param workerContext the worker context
     */
     void dispatchBuffer(TupleBuffer& outputBuffer);
+
+    std::vector<OperatorHandlerPtr> getOperatorHandlers();
 
 
     template<class OperatorHandlerType>

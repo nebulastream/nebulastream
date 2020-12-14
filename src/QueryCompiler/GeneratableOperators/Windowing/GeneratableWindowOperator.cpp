@@ -83,12 +83,11 @@ uint64_t GeneratableWindowOperator::generateSetupCode(CodeGeneratorPtr codegen, 
     setupScope->addStatement(resultSchemaStatement.copy());
 
 
-    auto isKeyed = windowDefinition->isKeyed();
-    GeneratableDataTypePtr keyType;
-    if (isKeyed) {
-        auto logicalKeyType = windowDefinition->getOnKey()->getStamp();
-        keyType = tf->createDataType(logicalKeyType);
-    }
+    auto keyStamp = windowDefinition->isKeyed() ?
+                                                windowDefinition->getOnKey()->getStamp():
+                                                windowDefinition->getWindowAggregation()->on()->getStamp();
+    auto keyType = tf->createDataType(keyStamp);;
+
     auto aggregation = windowDefinition->getWindowAggregation();
     auto aggregationInputType = tf->createDataType(aggregation->getInputStamp());
     auto partialAggregateType = tf->createDataType(aggregation->getPartialAggregateStamp());
@@ -163,7 +162,19 @@ uint64_t GeneratableWindowOperator::generateSetupCode(CodeGeneratorPtr codegen, 
     auto setWindowHandlerStatement = VarRef(windowOperatorHandlerDeclaration).accessPtr(setWindowHandlerCall);
     setupScope->addStatement(setWindowHandlerStatement.copy());
 
+    // setup window handler
+    auto getSharedFromThis =  codegen->call("shared_from_this");
+    auto setUpWindowHandlerCall =  codegen->call("setup");
+    setUpWindowHandlerCall->addParameter(VarRef(context->code->varDeclarationExecutionContext).accessRef(getSharedFromThis));
+
+    auto setupWindowHandlerStatement = VarRef(windowHandler).accessPtr(setUpWindowHandlerCall);
+    setupScope->addStatement(setupWindowHandlerStatement.copy());
+
+
+
     return windowOperatorIndex;
 }
+
+
 
 }// namespace NES
