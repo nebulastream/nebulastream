@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
@@ -59,7 +60,6 @@ TranslateToGeneratableOperatorPhase::TranslateToGeneratableOperatorPhase() = def
 
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator(OperatorNodePtr operatorNode,
                                                                                  OperatorNodePtr generatableParentOperator) {
-
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.
         auto scanOperator = operatorNode->as<SourceLogicalOperatorNode>();
@@ -81,7 +81,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
+        return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>(), operatorNode->getOutputSchema());
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(),
                                                                             generatableParentOperator);
@@ -96,6 +96,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
             GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
         generatableParentOperator->addChild(watermarkAssignerOperator);
         return watermarkAssignerOperator;
+    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        return generatableParentOperator;
     } else {
         NES_FATAL_ERROR(
             "TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);

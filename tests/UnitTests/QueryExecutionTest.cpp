@@ -334,6 +334,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
 
+    std::cout << "plan=" << queryPlan->toString() << std::endl;
     auto plan = GeneratedQueryExecutionPlanBuilder::create()
         .addSink(testSink)
         .addSource(testSource)

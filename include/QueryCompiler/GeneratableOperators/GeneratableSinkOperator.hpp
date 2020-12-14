@@ -30,7 +30,7 @@ class GeneratableSinkOperator : public SinkLogicalOperatorNode, public Generatab
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableSinkOperator
      */
-    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr sinkLogicalOperator,
+    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr sinkLogicalOperator, SchemaPtr outputSchema,
                                              OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
@@ -54,7 +54,7 @@ class GeneratableSinkOperator : public SinkLogicalOperatorNode, public Generatab
     const std::string toString() const override;
 
   private:
-    explicit GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor, OperatorId id);
+    explicit GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor, SchemaPtr outputSchema, OperatorId id);
 };
 
 }// namespace NES

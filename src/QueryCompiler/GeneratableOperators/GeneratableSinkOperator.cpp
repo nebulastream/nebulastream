@@ -26,15 +26,17 @@ void GeneratableSinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 void GeneratableSinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForEmit(context->getResultSchema(), context);
+    codegen->generateCodeForEmit(outputSchema, context);
 }
 
-GeneratableSinkOperatorPtr GeneratableSinkOperator::create(SinkLogicalOperatorNodePtr sinkLogicalOperator, OperatorId id) {
-    return std::make_shared<GeneratableSinkOperator>(GeneratableSinkOperator(sinkLogicalOperator->getSinkDescriptor(), id));
+GeneratableSinkOperatorPtr GeneratableSinkOperator::create(SinkLogicalOperatorNodePtr sinkLogicalOperator, SchemaPtr outputSchema, OperatorId id) {
+    return std::make_shared<GeneratableSinkOperator>(GeneratableSinkOperator(sinkLogicalOperator->getSinkDescriptor(), outputSchema, id));
 }
 
-GeneratableSinkOperator::GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor, OperatorId id)
-    : SinkLogicalOperatorNode(std::move(sinkDescriptor), id) {}
+GeneratableSinkOperator::GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor, SchemaPtr outputSchema, OperatorId id)
+    : SinkLogicalOperatorNode(std::move(sinkDescriptor), id) {
+    this->outputSchema = outputSchema;
+}
 
 const std::string GeneratableSinkOperator::toString() const {
     std::stringstream ss;

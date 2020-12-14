@@ -148,13 +148,20 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
 
 uint64_t Schema::getIndex(const std::string& fieldName) {
     int i = 0;//TODO: this does not work for the first item
+    bool found = false;
     for (const auto& field : this->fields) {
         if (UtilityFunctions::startsWith(field->name, fieldName)) {
+            found = true;
             break;
         }
         i++;
     }
-    return i;
+    if(found)
+    {
+        return i;
+    } else{
+        return -1;
+    }
 }
 
 }// namespace NES
