@@ -44,21 +44,9 @@ const std::string SourceLogicalOperatorNode::toString() const {
 
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() { return sourceDescriptor; }
 bool SourceLogicalOperatorNode::inferSchema() {
-    inputSchema = sourceDescriptor->getSchema()->copy();
-    if (!projectSchema || projectSchema->getSize() == 0) {
-        outputSchema = sourceDescriptor->getSchema();
-    } else {
-        outputSchema = sourceDescriptor->getSchema()->copy();
-        std::vector<AttributeFieldPtr> fields = outputSchema->fields;
-        for(auto& field: fields)
-        {
-            if(!projectSchema->has(field->name))
-            {
-                NES_DEBUG("SourceLogicalOperatorNode::inferSchema: remove field for projection=" << field->name);
-                outputSchema->removeField(field);
-            }
-        }
-    }
+    inputSchema = sourceDescriptor->getSchema();
+    outputSchema = sourceDescriptor->getSchema();
+
     return true;
 }
 

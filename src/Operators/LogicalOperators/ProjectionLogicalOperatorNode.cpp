@@ -48,12 +48,12 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
     outputSchema = Schema::create();
     for(auto& exp : expressions)
     {
-        auto keyExpression = exp.getExpressionNode();
-        if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-            NES_ERROR("Query: stream has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+        auto expression = exp.getExpressionNode();
+        if (!expression->instanceOf<FieldAccessExpressionNode>()) {
+            NES_ERROR("Query: stream has to be an FieldAccessExpression but it was a " + expression->toString());
         }
-        auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-        if(inputSchema->getIndex(fieldAccess->getFieldName()) != -1)
+        auto fieldAccess = expression->as<FieldAccessExpressionNode>();
+        if(inputSchema->contains(fieldAccess->getFieldName()))
         {
             outputSchema->addField(inputSchema->get(fieldAccess->getFieldName()));
         }

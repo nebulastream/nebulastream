@@ -31,7 +31,7 @@ class ProjectionLogicalOperatorNode;
 typedef std::shared_ptr<ProjectionLogicalOperatorNode> LogicalProjectionOperatorPtr;
 
 /**
- * @brief Filter operator, which contains an expression as a predicate.
+ * @brief projection operator, which contains an resets the output schema
  */
 class ProjectionLogicalOperatorNode : public LogicalOperatorNode {
   public:
@@ -39,13 +39,7 @@ class ProjectionLogicalOperatorNode : public LogicalOperatorNode {
     ~ProjectionLogicalOperatorNode() = default;
 
     /**
-     * @brief get the filter predicate.
-     * @return PredicatePtr
-     */
-    ExpressionNodePtr getPredicate();
-
-    /**
-     * @brief check if two operators have the same projection predicate.
+     * @brief check if two operators have the same output schema
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
@@ -55,7 +49,6 @@ class ProjectionLogicalOperatorNode : public LogicalOperatorNode {
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
-    * @throws Exception the predicate expression has to return a boolean.
     * @return true if schema was correctly inferred
     */
     bool inferSchema() override;
