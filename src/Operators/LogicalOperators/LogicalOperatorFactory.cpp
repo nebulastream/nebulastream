@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -31,7 +32,6 @@
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
-#include <API/Expressions/Expressions.hpp>
 
 namespace NES {
 

@@ -97,9 +97,9 @@ TEST_F(QueryTest, testQueryProjection) {
 
     PhysicalStreamConfigPtr conf =
         PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-            /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-            /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-            /**Logical Stream Name**/ "test_stream");
+                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
+                                     /**Logical Stream Name**/ "test_stream");
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 

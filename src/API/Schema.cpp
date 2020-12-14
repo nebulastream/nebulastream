@@ -165,10 +165,9 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
         }
         i++;
     }
-    if(found)
-    {
+    if (found) {
         return i;
-    } else{
+    } else {
         return -1;
     }
 }

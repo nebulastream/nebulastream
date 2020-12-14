@@ -47,8 +47,7 @@ class LogicalOperatorFactory {
     * @return LogicalOperatorNodePtr
     */
     static LogicalOperatorNodePtr createProjectionOperator(std::vector<ExpressionItem> expressions,
-                                                       OperatorId id = UtilityFunctions::getNextOperatorId());
-
+                                                           OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.

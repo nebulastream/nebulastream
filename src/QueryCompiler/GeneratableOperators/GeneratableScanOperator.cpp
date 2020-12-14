@@ -38,10 +38,8 @@ GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr inputSchema
     return std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(inputSchema, outputSchema, id));
 }
 
-GeneratableScanOperator::GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema,  OperatorId id) :
-                                                                                                                 inputSchema(inputSchema->copy()),
-                                                                                                                 outputSchema(outputSchema->copy()),
-                                                                                                                 OperatorNode(id) {}
+GeneratableScanOperator::GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id)
+    : inputSchema(inputSchema->copy()), outputSchema(outputSchema->copy()), OperatorNode(id) {}
 
 const std::string GeneratableScanOperator::toString() const {
     std::stringstream ss;

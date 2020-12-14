@@ -23,12 +23,12 @@
 #include <API/Schema.hpp>
 #include <API/Windowing.hpp>
 
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Sources/DataSource.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Sources/DataSource.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
