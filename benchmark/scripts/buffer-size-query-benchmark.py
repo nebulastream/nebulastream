@@ -63,20 +63,20 @@ groups = fileDataFrame.groupby(by=["Ingestionrate", "WorkerThreads", "BufferSize
 allDataPoints = []
 
 for i, ((ingestionRate, workerThreads, bufferSize), gbf) in enumerate(groups):
-	print("Ingestionrate {:e} has throughput of {:e} tup/s with {} workerThreads".format(float(ingestionRate), gbf["TuplesPerSecond"].mean(), workerThreads))
-	dataPoint = CustomSimpleDataPoint(ingestionRate, workerThreads, bufferSize, gbf["TuplesPerSecond"].mean(), gbf["TuplesPerSecond"].std())
+	print("Ingestionrate {:e} has throughput of {:e} B/s with {} workerThreads".format(float(ingestionRate), gbf["BytesPerSecond"].mean(), workerThreads))
+	dataPoint = CustomSimpleDataPoint(ingestionRate, workerThreads, bufferSize, gbf["BytesPerSecond"].mean(), gbf["BytesPerSecond"].std())
 	allDataPoints.append(dataPoint)
 
 
-highestTuplesPerSecondIngestrate = groups["TuplesPerSecond"].mean().keys().to_list()[groups["TuplesPerSecond"].mean().argmax()]
-highestAvgThrougput = groups["TuplesPerSecond"].mean().max()
-avgHighestThroughputStr = f"Highest avg throughput of {highestAvgThrougput:e} tup/s was achieved with (ingestionrate,workerThreads) of {highestTuplesPerSecondIngestrate}"
+highestBytesPerSecondIngestrate = groups["BytesPerSecond"].mean().keys().to_list()[groups["BytesPerSecond"].mean().argmax()]
+highestAvgThrougput = groups["BytesPerSecond"].mean().max()
+avgHighestThroughputStr = f"Highest avg throughput of {highestAvgThrougput:e} B/s was achieved with (ingestionrate,workerThreads) of {highestBytesPerSecondIngestrate}"
 print2Log(avgHighestThroughputStr)
 
 # Get maximum throughput
-overallHighestThroughput = fileDataFrame["TuplesPerSecond"].max()
-overallHighestThroughputRow = str(fileDataFrame.iloc[fileDataFrame["TuplesPerSecond"].argmax()].drop("BM_Name").to_dict())
-overallHighestThroughputStr = "Overall highest throughput of {:e} tup/s was achieved with {}".format(overallHighestThroughput, overallHighestThroughputRow)
+overallHighestThroughput = fileDataFrame["BytesPerSecond"].max()
+overallHighestThroughputRow = str(fileDataFrame.iloc[fileDataFrame["BytesPerSecond"].argmax()].drop("BM_Name").to_dict())
+overallHighestThroughputStr = "Overall highest throughput of {:e} B/s was achieved with {}".format(overallHighestThroughput, overallHighestThroughputRow)
 print2Log(overallHighestThroughputStr)
 
 allWorkerThreads 	= set([dataPoint.workerThreads for dataPoint in allDataPoints])
@@ -99,9 +99,9 @@ for workerThreads in allWorkerThreads:
 	ax.set_xticks(np.arange(0, len(allIngestionRate[workerThreads])))
 	ax.set_xticklabels([f"{millify(x)} / {millify(y)}" for x,y in zip(allIngestionRate[workerThreads], allBufferSizes[workerThreads])], rotation=45, ha="right")
 	ax.set_xlabel("Ingestionrate / BufferSize [B]")
-	ax.set_ylabel("Throughput [tup/s]")
+	ax.set_ylabel("Throughput [B/s]")
 	autolabel(rects, ax)
 
 	plt.title(f"WorkerThreads: {workerThreads}")
-	plt.savefig(os.path.join(folder, os.path.join(fileName, f"avg_througput_buffer_size_query_{workerThreads}.png")))
+	plt.savefig(os.path.join(folder, os.path.join(fileName, f"avg_througput_buffer_size_query_{workerThreads}_{fileName}.png")))
 	plt.close(fig)
