@@ -86,6 +86,7 @@ class QuerySignature {
     QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> cols);
     z3::ExprPtr conditions;
     std::map<std::string, std::vector<z3::ExprPtr>> columns;
+    std::map<std::string, std::vector<z3::ExprPtr>> winds;
 };
 }// namespace NES::Optimizer
 

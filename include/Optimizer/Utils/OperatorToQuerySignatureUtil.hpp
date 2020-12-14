@@ -27,6 +27,16 @@ typedef std::shared_ptr<context> ContextPtr;
 namespace NES {
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
+class FilterLogicalOperatorNode;
+typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
+
+class MapLogicalOperatorNode;
+typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
+
+class WindowLogicalOperatorNode;
+typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -59,6 +69,39 @@ class OperatorToQuerySignatureUtil {
      */
     static QuerySignaturePtr buildFromChildrenSignatures(z3::ContextPtr context,
                                                          std::vector<QuerySignaturePtr> childrenQuerySignatures);
+
+    /**
+     * @brief Compute query signature for Map operator
+     * @param context: z3 context
+     * @param childrenQuerySignatures: signatures of immediate children
+     * @param mapOperator: the map operator
+     * @return Signature based on window operator and its children signatures
+     */
+    static QuerySignaturePtr createForMap(z3::ContextPtr context,
+                                                                        std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                                        MapLogicalOperatorNodePtr mapOperator);
+
+    /**
+     * @brief Compute query signature for Filter operator
+     * @param context: z3 context
+     * @param childrenQuerySignatures: signatures of immediate children
+     * @param filterOperator: the Filter operator
+     * @return Signature based on window operator and its children signatures
+     */
+    static QuerySignaturePtr createForFilter(z3::ContextPtr context,
+                                                                           std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                                           FilterLogicalOperatorNodePtr filterOperator);
+
+    /**
+     * @brief Compute query signature for window operator
+     * @param context: z3 context
+     * @param childrenQuerySignatures: signatures of immediate children
+     * @param windowOperator: the window operator
+     * @return Signature based on window operator and its children signatures
+     */
+    static QuerySignaturePtr createForWindow(z3::ContextPtr context,
+                                                                           std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                                           WindowLogicalOperatorNodePtr windowOperator);
 };
 }// namespace NES::Optimizer
 
