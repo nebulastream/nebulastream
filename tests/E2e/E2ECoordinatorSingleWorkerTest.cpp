@@ -86,7 +86,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     uint64_t workerPid = workerProc.id();
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
-
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << "\"Query::from(\\\"default_logical\\\").sink(PrintSinkDescriptor::create());\"";
