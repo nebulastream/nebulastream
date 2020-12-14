@@ -138,6 +138,13 @@ class Schema {
      */
     bool equals(SchemaPtr schema, bool considerOrder = true);
 
+    /**
+     * @brief Checks if the field exists in the schema
+     * @param schema
+     * @return boolean
+    */
+    bool contains(const std::string& fieldName);
+
     const std::string toString() const;
 
     std::vector<AttributeFieldPtr> fields;

@@ -190,6 +190,8 @@ message SerializableOperator{
   Projection Details contains properties for the projection operator, i.e., the output schema
   */
   message ProjectionDetails {
+    repeated SerializableExpression expression = 1;
+
   }
   /**
    Merge Details contains properties for the merge operator, which is empty currently.

@@ -890,7 +890,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTime) {
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
@@ -958,7 +958,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
 
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
@@ -975,7 +975,7 @@ TEST_F(CodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     auto stage1 = codeGenerator->compile(context1->code);
 
     auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()
@@ -1043,7 +1043,7 @@ TEST_F(CodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stage1 = codeGenerator->compile(context1->code);
 
     auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), context2);
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
 
     auto windowOutputSchema = Schema::create()

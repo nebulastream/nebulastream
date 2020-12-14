@@ -146,8 +146,17 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };
 
+bool Schema::contains(const std::string& fieldName) {
+    for (const auto& field : this->fields) {
+        if (UtilityFunctions::startsWith(field->name, fieldName)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 uint64_t Schema::getIndex(const std::string& fieldName) {
-    int i = 0;//TODO: this does not work for the first item
+    int i = 0;
     bool found = false;
     for (const auto& field : this->fields) {
         if (UtilityFunctions::startsWith(field->name, fieldName)) {
