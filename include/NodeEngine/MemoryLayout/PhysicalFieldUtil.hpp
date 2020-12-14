@@ -17,22 +17,9 @@
 #ifndef NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELDUTIL_HPP_
 #define NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELDUTIL_HPP_
 #include <memory>
-
-namespace NES{
-
-class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
-
-class PhysicalType;
-typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
-
-}
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES::NodeEngine {
-
-class PhysicalField;
-typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
-
 
 /**
  * @brief Util class to create a PhysicalField for a specific data type and a offset in a buffer.

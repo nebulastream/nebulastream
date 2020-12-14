@@ -20,7 +20,27 @@
 
 namespace NES{
 
+class PhysicalType;
+typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 namespace NodeEngine{
+
+class TupleBuffer;
+class PhysicalField;
+typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
+template<class ValueType>
+class BasicPhysicalField;
+class ArrayPhysicalField;
+
+class PhysicalSchema;
+typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
+
+class MemoryLayout;
+typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
+
 class TupleBuffer;
 
 class BufferManager;

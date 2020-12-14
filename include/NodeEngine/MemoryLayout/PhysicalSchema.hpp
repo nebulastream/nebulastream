@@ -17,23 +17,11 @@
 #ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
 #include <Common/DataTypes/DataType.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
 #include <vector>
 
-namespace NES{
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
-}
 namespace NES::NodeEngine {
-
-template<class ValueType>
-class BasicPhysicalField;
-
-class PhysicalField;
-typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
-
-class PhysicalSchema;
-typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
 
 /**
  * @brief the physical schema which maps a logical schema do physical fields, which can be accessed dynamically.
