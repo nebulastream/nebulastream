@@ -20,31 +20,29 @@
 namespace NES {
 
 AdaptiveKFSourceDescriptor::AdaptiveKFSourceDescriptor(SchemaPtr schema, uint64_t numberOfTuplesToProducePerBuffer,
-                                                       uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat,
-                                                       OperatorId operatorId)
+                                                       uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId)
     : SourceDescriptor(std::move(schema), operatorId), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      numBuffersToProcess(numBuffersToProcess), frequency(frequency), endlessRepeat(endlessRepeat){};
+      numBuffersToProcess(numBuffersToProcess), frequency(frequency){};
 
 AdaptiveKFSourceDescriptor::AdaptiveKFSourceDescriptor(SchemaPtr schema, std::string streamName,
                                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                       uint64_t frequency, bool endlessRepeat, OperatorId operatorId)
+                                                       uint64_t frequency, OperatorId operatorId)
     : SourceDescriptor(std::move(schema), std::move(streamName), operatorId),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numBuffersToProcess(numBuffersToProcess),
-      frequency(frequency), endlessRepeat(endlessRepeat){};
+      frequency(frequency){};
 
 SourceDescriptorPtr AdaptiveKFSourceDescriptor::create(SchemaPtr schema, uint64_t numberOfTuplesToProducePerBuffer,
-                                                       uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat,
-                                                       OperatorId operatorId) {
+                                                       uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId) {
     return std::make_shared<AdaptiveKFSourceDescriptor>(AdaptiveKFSourceDescriptor(
-        std::move(schema), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, endlessRepeat, operatorId));
+        std::move(schema), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, operatorId));
 }
 
 SourceDescriptorPtr AdaptiveKFSourceDescriptor::create(SchemaPtr schema, std::string streamName,
                                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                       uint64_t frequency, bool endlessRepeat, OperatorId operatorId) {
+                                                       uint64_t frequency, OperatorId operatorId) {
     return std::make_shared<AdaptiveKFSourceDescriptor>(
         AdaptiveKFSourceDescriptor(std::move(schema), std::move(streamName), numberOfTuplesToProducePerBuffer,
-                                   numBuffersToProcess, frequency, endlessRepeat, operatorId));
+                                   numBuffersToProcess, frequency, operatorId));
 }
 
 bool AdaptiveKFSourceDescriptor::equal(SourceDescriptorPtr other) {
@@ -54,13 +52,12 @@ bool AdaptiveKFSourceDescriptor::equal(SourceDescriptorPtr other) {
     auto otherSource = other->as<AdaptiveKFSourceDescriptor>();
     return getSchema()->equals(otherSource->getSchema()) && numBuffersToProcess == otherSource->getNumBuffersToProcess()
         && numberOfTuplesToProducePerBuffer == otherSource->getNumberOfTuplesToProducePerBuffer()
-        && frequency == otherSource->getFrequency() && endlessRepeat == otherSource->isEndlessRepeat();
+        && frequency == otherSource->getFrequency();
 }
 
 uint64_t AdaptiveKFSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 uint64_t AdaptiveKFSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 uint64_t AdaptiveKFSourceDescriptor::getFrequency() const { return frequency; }
-bool AdaptiveKFSourceDescriptor::isEndlessRepeat() const { return endlessRepeat; }
 std::string AdaptiveKFSourceDescriptor::toString() { return "AdaptiveKFSourceDescriptor()"; }
 
 }// namespace NES
