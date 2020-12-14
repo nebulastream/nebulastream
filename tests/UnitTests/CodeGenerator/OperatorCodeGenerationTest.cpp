@@ -36,7 +36,6 @@
 #include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
@@ -89,16 +88,18 @@ class OperatorCodeGenerationTest : public testing::Test {
 
 class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, AbstractWindowHandlerPtr windowHandler,
-                                 Join::AbstractJoinHandlerPtr joinHandler)
+    TestPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
-            0, std::move(bufferManager),
-            [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            std::move(windowHandler), std::move(joinHandler)){
-            // nop
-        };
+        0, std::move(bufferManager),
+        [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
+          this->buffers.emplace_back(std::move(buffer));
+        },
+        [this](TupleBuffer& buffer) {
+          this->buffers.emplace_back(std::move(buffer));
+        },
+        std::move(operatorHandlers)){
+        // nop
+    };
 
     std::vector<TupleBuffer> buffers;
 };
@@ -320,7 +321,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
 
     /* execute Stage */
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
-    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), nullptr, nullptr);
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     NodeEngine::WorkerContext wctx{0};
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());

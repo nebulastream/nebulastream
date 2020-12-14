@@ -24,6 +24,11 @@
 
 namespace NES::NodeEngine::Execution {
 
+/**
+ * @brief An ExecutablePipeline represents a fragment of an overall query.
+ * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
+ * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
+ */
 class ExecutablePipeline {
   public:
     ExecutablePipeline(uint32_t pipelineStageId,
@@ -70,6 +75,10 @@ class ExecutablePipeline {
     */
     uint32_t getPipeStageId();
 
+    /**
+     * @brief Get the parent query id.
+     * @return query id.
+     */
     QuerySubPlanId getQepParentId() const;
 
     ~ExecutablePipeline() = default;
@@ -91,10 +100,6 @@ class ExecutablePipeline {
     ExecutablePipelinePtr nextPipeline;
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
-
-  public:
-    bool hasWindowHandler();
-    bool hasJoinHandler();
 };
 
 }// namespace NES

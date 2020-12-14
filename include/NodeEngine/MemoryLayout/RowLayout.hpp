@@ -18,6 +18,7 @@
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
 
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 namespace NES::NodeEngine {
 
 /**

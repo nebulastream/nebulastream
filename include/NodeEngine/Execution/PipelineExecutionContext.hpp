@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
+#include <Util/Logger.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
@@ -24,9 +25,6 @@
 #include <memory>
 
 namespace NES::NodeEngine::Execution {
-
-// TODO Philipp, please clarify if we should introduce WindowManager, StateVars, etc... here
-// TODO so that we have one central point that the compiled code uses to access runtime
 
 /**
  * @brief The PipelineExecutionContext is passed to a compiled pipeline and offers basic functionality to interact with the runtime.
@@ -60,16 +58,30 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
 
     /**
     * @brief Dispatch a buffer as a new task to the query manager.
+    * Consequently, a new task is created and the call returns directly.
     * @param outputBuffer the output tuple buffer that is passed to the runtime
     * @param workerContext the worker context
     */
     void dispatchBuffer(TupleBuffer& outputBuffer);
 
+    /**
+     * @brief Retrieve all registered operator handlers.
+     * @return  std::vector<OperatorHandlerPtr>
+     */
     std::vector<OperatorHandlerPtr> getOperatorHandlers();
 
 
+    /**
+     * @brief Retrieves a Operator Handler at a specific index and cast its to an OperatorHandlerType.
+     * @tparam OperatorHandlerType
+     * @param index of the operator handler.
+     * @return
+     */
     template<class OperatorHandlerType>
     auto getOperatorHandler(int index) {
+        if(index >= operatorHandlers.size()){
+           NES_THROW_RUNTIME_ERROR("PipelineExecutionContext: operator handler at index " + std::to_string(index) + " is not registered");
+        }
         return std::static_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }
 
@@ -96,6 +108,9 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
     */
     std::function<void(TupleBuffer&)> emitToQueryManagerFunctionHandler;
 
+    /**
+     * @brief List of registered operator handlers.
+     */
     const std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
 };
 

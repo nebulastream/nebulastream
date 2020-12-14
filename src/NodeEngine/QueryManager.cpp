@@ -95,11 +95,6 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     std::scoped_lock lock(queryMutex, statisticsMutex);
 
     bool isBinaryOperator = false;
-    for (auto& pipe : qep->getPipelines()) {
-        if (pipe->hasJoinHandler()) {
-            isBinaryOperator = true;
-        }
-    }
 
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);

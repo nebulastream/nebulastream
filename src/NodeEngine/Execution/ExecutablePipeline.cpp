@@ -19,8 +19,6 @@
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
@@ -68,10 +66,6 @@ ExecutablePipelinePtr ExecutablePipeline::getNextPipeline() { return nextPipelin
 uint32_t ExecutablePipeline::getPipeStageId() { return pipelineStageId; }
 
 QuerySubPlanId ExecutablePipeline::getQepParentId() const { return qepId; }
-
-bool ExecutablePipeline::hasWindowHandler() { return false; }
-
-bool ExecutablePipeline::hasJoinHandler() { return false; }
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 

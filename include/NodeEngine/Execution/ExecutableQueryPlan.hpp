@@ -29,7 +29,8 @@
 namespace NES::NodeEngine::Execution {
 
 /**
- * @brief A running execution plan on a node engine.
+ * @brief Represents an executable plan of an particular query.
+ * Each executable query plan contains of at least one pipeline.
  * This class is thread-safe.
  */
 class ExecutableQueryPlan {

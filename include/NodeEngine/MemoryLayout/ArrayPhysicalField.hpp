@@ -17,11 +17,8 @@
 #ifndef NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_ARRAYPHYSICALFIELD_HPP_
 #define NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_ARRAYPHYSICALFIELD_HPP_
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
-namespace NES{
-class PhysicalType;
-typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
-}
 namespace NES::NodeEngine {
 
 /**

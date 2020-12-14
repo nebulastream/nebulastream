@@ -17,6 +17,9 @@
 #ifndef NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
 #define NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
 namespace NES::NodeEngine::Execution {
+/**
+ * @brief Represents the query status.
+ */
 enum ExecutableQueryPlanStatus {
     Created,
     Deployed,// Created->Deployed when calling setup()
