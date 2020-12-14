@@ -38,8 +38,6 @@ void LogicalOperatorNode::inferSignature(z3::ContextPtr context) {
     signature = Optimizer::OperatorToQuerySignatureUtil::createForOperator(operatorNode, subQuerySignatures, context);
 }
 
-void LogicalOperatorNode::setSignature(Optimizer::QuerySignaturePtr signature) {
-    this->signature = signature;
-}
+void LogicalOperatorNode::setSignature(Optimizer::QuerySignaturePtr signature) { this->signature = signature; }
 
 }// namespace NES

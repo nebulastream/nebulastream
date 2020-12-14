@@ -18,7 +18,8 @@
 
 namespace NES::Optimizer {
 
-Z3ExprAndFieldMap::Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap) : expr(expr), fieldMap(fieldMap) {}
+Z3ExprAndFieldMap::Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap)
+    : expr(expr), fieldMap(fieldMap) {}
 
 z3::ExprPtr Z3ExprAndFieldMap::getExpr() { return expr; }
 
