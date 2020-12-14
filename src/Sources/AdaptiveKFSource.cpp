@@ -20,7 +20,7 @@ namespace NES {
 
 AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                    const uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                   uint64_t initialFrequency, bool endlessRepeat, OperatorId operatorId)
+                                   uint64_t initialFrequency, OperatorId operatorId)
     : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency, operatorId), numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat),
       frequency(initialFrequency), freqLastReceived(initialFrequency), freqRange(2), kfErrorWindow(20) {

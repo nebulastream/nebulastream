@@ -226,7 +226,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         return createAdaptiveKFSource(adptvKFSourceDescriptor->getSchema(), bufferManager, queryManager,
                                       adptvKFSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
                                       adptvKFSourceDescriptor->getNumBuffersToProcess(), adptvKFSourceDescriptor->getFrequency(),
-                                      adptvKFSourceDescriptor->isEndlessRepeat(), sourceDescriptor->getOperatorId());
+                                      sourceDescriptor->getOperatorId());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

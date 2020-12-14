@@ -23,12 +23,10 @@ namespace NES {
 class AdaptiveKFSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess, uint64_t frequency,
-                                      bool endlessRepeat, OperatorId operatorId);
+                                      uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
 
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess, uint64_t frequency,
-                                      bool endlessRepeat, OperatorId operatorId);
+                                      uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
 
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;
@@ -36,20 +34,16 @@ class AdaptiveKFSourceDescriptor : public SourceDescriptor {
     uint64_t getNumBuffersToProcess() const;
     uint64_t getNumberOfTuplesToProducePerBuffer() const;
     uint64_t getFrequency() const;
-    bool isEndlessRepeat() const;
 
   private:
     explicit AdaptiveKFSourceDescriptor(SchemaPtr schema, uint64_t numberOfTuplesToProducePerBuffer,
-                                        uint64_t numBuffersToProcess, uint64_t frequency,
-                                        bool endlessRepeat, OperatorId operatorId);
+                                        uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
     explicit AdaptiveKFSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                        uint64_t numBuffersToProcess, uint64_t frequency,
-                                        bool endlessRepeat, OperatorId operatorId);
+                                        uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
 
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
     uint64_t frequency;
-    bool endlessRepeat;
 };
 
 typedef std::shared_ptr<AdaptiveKFSourceDescriptor> AdaptiveKFSourceDescriptorPtr;

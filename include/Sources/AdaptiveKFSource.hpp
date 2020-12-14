@@ -26,7 +26,7 @@ class AdaptiveKFSource : public AdaptiveSource {
   public:
     explicit AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                               const uint64_t numBuffersToProcess, uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency,
-                              bool endlessRepeat, OperatorId operatorId);
+                              OperatorId operatorId);
 
     const std::string toString() const override;
 
@@ -64,8 +64,6 @@ class AdaptiveKFSource : public AdaptiveSource {
      * calculated once.
      */
     float totalEstimationErrorDivider;
-
-    bool endlessRepeat;
 };
 
 typedef std::shared_ptr<AdaptiveKFSource> AdaptiveKFSourcePtr;
