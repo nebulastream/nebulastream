@@ -64,6 +64,7 @@ bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
     NES_TRACE("SharedQueryMetaData: Remove the Global Query Nodes with sink operators for query " << queryId);
     std::set<GlobalQueryNodePtr> querySinkGQNs = queryIdToSinkGQNMap[queryId];
 
+    // Iterate over all sink global query nodes for the input query and remove the corresponding exclusive upstream operator chains
     for (auto& querySinkGQN : querySinkGQNs) {
         auto found =
             std::find_if(sinkGlobalQueryNodes.begin(), sinkGlobalQueryNodes.end(), [querySinkGQN](GlobalQueryNodePtr sinkGQN) {
@@ -71,8 +72,10 @@ bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
             });
 
         if (found != sinkGlobalQueryNodes.end()) {
+            //Remove for the sink global query node the corresponding parent and children nodes
             (*found)->removeAllParent();
             removeExclusiveChildren(*found);
+            //Remove the sink global query node from the collection of sink global query nodes
             sinkGlobalQueryNodes.erase(found);
         } else {
             NES_ERROR("Unable to find query's sink global query node in the set of Sink global query nodes in the metadata");
