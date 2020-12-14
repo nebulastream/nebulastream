@@ -199,8 +199,8 @@ void SharedQueryMetaData::clear() {
 
 void SharedQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode) {
 
-    for(auto& child : globalQueryNode->getChildren()){
-        if(!child->getParents().empty() && child->getParents().size() == 1){
+    for (auto& child : globalQueryNode->getChildren()) {
+        if (!child->getParents().empty() && child->getParents().size() == 1) {
             removeExclusiveChildren(child->as<GlobalQueryNode>());
         }
     }
@@ -210,11 +210,11 @@ void SharedQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQuery
 bool SharedQueryMetaData::addSharedQueryMetaData(SharedQueryMetaDataPtr queryMetaData) {
 
     auto queryIdToSinkGqnMap = queryMetaData->getQueryIdToSinkGQNMap();
-    for(auto[queryId, sinkGQNs] : queryIdToSinkGqnMap){
-        if(!addSinkGlobalQueryNodes(queryId, sinkGQNs)){
-            NES_WARNING("Failed to insert Sink GQN for query "<< queryId << " in Global Query Meta Data.");
+    for (auto [queryId, sinkGQNs] : queryIdToSinkGqnMap) {
+        if (!addSinkGlobalQueryNodes(queryId, sinkGQNs)) {
+            NES_WARNING("Failed to insert Sink GQN for query " << queryId << " in Global Query Meta Data.");
             NES_DEBUG("Reverting all inserted Sink GQNs from global query metadata.");
-            for(auto[queryId, sinkGQNs] : queryIdToSinkGqnMap){
+            for (auto [queryId, sinkGQNs] : queryIdToSinkGqnMap) {
                 removeQueryId(queryId);
             }
             return false;

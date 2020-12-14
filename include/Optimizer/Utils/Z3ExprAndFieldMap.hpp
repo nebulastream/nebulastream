@@ -58,9 +58,8 @@ class Z3ExprAndFieldMap {
     std::map<std::string, z3::ExprPtr> getFieldMap();
 
   private:
-
     Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap);
-    
+
     z3::ExprPtr expr;
     std::map<std::string, z3::ExprPtr> fieldMap;
 };

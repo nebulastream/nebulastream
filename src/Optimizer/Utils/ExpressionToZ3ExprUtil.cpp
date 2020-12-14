@@ -61,7 +61,8 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(ExpressionNodeP
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the expression: " + expression->toString());
 }
 
-Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(ExpressionNodePtr expression, z3::ContextPtr context) {
+Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(ExpressionNodePtr expression,
+                                                                              z3::ContextPtr context) {
     NES_DEBUG("Create Z3 expression for arithmetical expression " << expression->toString());
     if (expression->instanceOf<AddExpressionNode>()) {
         auto addExpressionNode = expression->as<AddExpressionNode>();

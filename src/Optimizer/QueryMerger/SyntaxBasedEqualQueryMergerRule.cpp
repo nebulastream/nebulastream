@@ -27,7 +27,9 @@ namespace NES {
 
 SyntaxBasedEqualQueryMergerRule::SyntaxBasedEqualQueryMergerRule() : processedNodes() {}
 
-SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedEqualQueryMergerRule::create() { return std::make_shared<SyntaxBasedEqualQueryMergerRule>(SyntaxBasedEqualQueryMergerRule()); }
+SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedEqualQueryMergerRule::create() {
+    return std::make_shared<SyntaxBasedEqualQueryMergerRule>(SyntaxBasedEqualQueryMergerRule());
+}
 
 bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
@@ -99,14 +101,15 @@ bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQuer
 }
 
 bool SyntaxBasedEqualQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
-                                           std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
+                                                         std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     NES_DEBUG("SyntaxBasedEqualQueryMergerRule: check if the target and host query plans are syntactically equal or not");
     std::vector<OperatorNodePtr> targetSourceOperators = targetQueryPlan->getLeafOperators();
     std::vector<OperatorNodePtr> hostSourceOperators = hostQueryPlan->getLeafOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
-        NES_WARNING("SyntaxBasedEqualQueryMergerRule: Not matched as number of sources in target and host query plans are different.");
+        NES_WARNING(
+            "SyntaxBasedEqualQueryMergerRule: Not matched as number of sources in target and host query plans are different.");
         return false;
     }
 
@@ -122,7 +125,7 @@ bool SyntaxBasedEqualQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQuer
 }
 
 bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
-                                         std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
+                                                       std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     NES_TRACE("SyntaxBasedEqualQueryMergerRule: Check if the target and host operator are syntactically equal or not.");
     if (targetHostOperatorMap.find(targetOperator->getId()) != targetHostOperatorMap.end()) {
@@ -130,7 +133,8 @@ bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOpe
             NES_TRACE("SyntaxBasedEqualQueryMergerRule: Already matched so skipping rest of the check.");
             return true;
         } else {
-            NES_WARNING("SyntaxBasedEqualQueryMergerRule: Not matched as target operator was matched to another number of sources in target and host query plans are different.");
+            NES_WARNING("SyntaxBasedEqualQueryMergerRule: Not matched as target operator was matched to another number of "
+                        "sources in target and host query plans are different.");
             return false;
         }
     }

@@ -75,7 +75,8 @@ bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                     }
                 }
                 if (!areEqual) {
-                    NES_WARNING("SignatureBasedEqualQueryMergerRule: There are not equal Target sink for Host sink " << hostSink->toString());
+                    NES_WARNING("SignatureBasedEqualQueryMergerRule: There are not equal Target sink for Host sink "
+                                << hostSink->toString());
                     break;
                 }
             }

@@ -44,7 +44,7 @@ class SignatureBasedEqualQueryMergerRuleTest : public testing::Test {
     StreamCatalogPtr streamCatalog;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase(){
+    static void SetUpTestCase() {
         NES::setupLogging("SignatureBasedEqualQueryMergerRuleTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup SignatureBasedEqualQueryMergerRuleTest test case.");
     }
