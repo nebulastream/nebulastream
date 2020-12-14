@@ -223,10 +223,10 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * @brief return all children of current node
      *        Always excluding current node, no matter a cycle exists
-     * @param allowDuplicate: set true to allow to retrieve duplicate elements
+     * @param withDuplicateChildren: set true to allow to retrieve duplicate elements
      * @return allChildren a vector to store all children of current node
      */
-    std::vector<NodePtr> getAndFlattenAllChildren(bool allowDuplicate);
+    std::vector<NodePtr> getAndFlattenAllChildren(bool withDuplicateChildren);
 
     /**
      * @brief get direct children.

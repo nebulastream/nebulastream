@@ -75,7 +75,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         auto subQueryCols = childrenQuerySignatures[0]->getColumns();
 
         //Prepare a vector of conditions by substituting the field expressions in the predicate with col values from children signature
-        for (auto constPair : fieldMap) {
+        for (auto& constPair : fieldMap) {
             if (subQueryCols.find(constPair.first) != subQueryCols.end()) {
                 std::vector<z3::ExprPtr> vectorOfExprs = subQueryCols[constPair.first];
                 z3::expr_vector from(*context);

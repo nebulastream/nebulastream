@@ -92,7 +92,7 @@ class SharedQueryMetaData {
     bool addSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes);
 
     /**
-     * @brief Remove a Query Id and associated Global Query Node with sink operators
+     * @brief Remove a Query Id and associated Global Query Node with sink operators and clear the sink global query node lists
      * @param queryId : the original query Id
      * @return true if successful
      */

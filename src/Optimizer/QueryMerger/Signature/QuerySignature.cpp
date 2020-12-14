@@ -35,7 +35,7 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
     NES_TRACE("QuerySignature: Equating signatures");
 
-    if(!conditions || !columns || other->getConditions() || !other->getColumns()) {
+    if (!conditions || !other->getConditions()) {
         NES_WARNING("QuerySignature: Can't compare equality between null signatures");
         return false;
     }
@@ -66,7 +66,8 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
             //Create DNF for the other column expression
             z3::expr_vector columnEqualityConditions(context);
             for (auto& columnExpression : columnEntry.second) {
-                columnEqualityConditions.push_back(to_expr(context, Z3_mk_eq(context, *otherColumnExpression, *columnExpression)));
+                columnEqualityConditions.push_back(
+                    to_expr(context, Z3_mk_eq(context, *otherColumnExpression, *columnExpression)));
             }
             //Add the DNF to all conditions
             allConditions.push_back(z3::mk_or(columnEqualityConditions));
@@ -78,7 +79,7 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
     //Create a negation of CNF of all conditions collected till now
     solver.add(!z3::mk_and(allConditions));
-    NES_DEBUG("Solving: "<< solver);
+    NES_DEBUG("Solving: " << solver);
     return solver.check() == z3::unsat;
 }
 
