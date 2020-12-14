@@ -44,9 +44,7 @@ class SyntaxBasedEqualQueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp(){
-        schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    }
+    void SetUp() { schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64); }
 
     /* Will be called before a test is executed. */
     void TearDown() { NES_INFO("Setup SyntaxBasedEqualQueryMergerRuleTest test case."); }
