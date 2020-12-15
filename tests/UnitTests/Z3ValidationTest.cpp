@@ -36,16 +36,9 @@ using namespace z3;
 namespace NES {
 class Z3ValidationTest : public testing::Test {
   public:
-    SchemaPtr schema;
     void SetUp() {
         NES::setupLogging("Z3ValidationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup Z3ValidationTest test class.");
-        schema = Schema::create()
-                     ->addField("id", BasicType::UINT32)
-                     ->addField("f1", BasicType::UINT32)
-                     ->addField("f2", BasicType::UINT32)
-                     ->addField("f3", BasicType::UINT32)
-                     ->addField("value", BasicType::UINT64);
     }
 
     void TearDown() { NES_INFO("Tear down Z3ValidationTest test class."); }
@@ -81,132 +74,6 @@ TEST_F(Z3ValidationTest, deMorganDualityValidation) {
 
     NES_INFO("Content of the solver: " << s);
     NES_INFO("Statement folding inside z3 solver: " << s.to_smt2());
-    ASSERT_EQ(s.check(), unsat);
-}
-
-TEST_F(Z3ValidationTest, deMorganDualityValidationMyWay) {
-    NES_INFO("De-Morgan Example (my way)");
-
-    // create a context
-    std::shared_ptr<context> c = std::make_shared<context>();
-    //Create an instance of the solver
-    solver s(*c);
-
-    //Define boolean constants x and y
-    expr x = c->bool_const("x");
-    expr y = c->bool_const("y");
-
-    s.add(x && y);
-    s.add(!x || !y);
-
-    // These two can never be true together, since deMorgen states that:
-    // (!(x && y)) == (!x || !y) ALWAYS!
-
-    NES_INFO("Content of the solver: " << s);
-    NES_INFO("Statement folding inside z3 solver: " << s.to_smt2());
-
-    ASSERT_EQ(s.check(), unsat);
-}
-
-TEST_F(Z3ValidationTest, syntacticQueryValidator) {
-    NES_INFO("Syntactic Query Validator");
-
-    SyntacticQueryValidation syntacticQueryValidation;
-
-    // missing ; at line end
-    std::string multipleFilterQueryString =
-        "Query::from(\"default_logical\").filter(Attribute(\"f1\") > 10 && Attribute(\"f1\") < 10) "
-    ;
-
-    ASSERT_EQ(syntacticQueryValidation.isValid(multipleFilterQueryString), false);
-    
-}
-
-TEST_F(Z3ValidationTest, semanticQueryValidator) {
-    NES_INFO("Semantic Query Validator");
-
-    SemanticQueryValidation semanticQueryValidation(schema);
-
-    // std::string multipleFilterQueryString =
-    //     "Query::from(\"default_logical\").filter(Attribute(\"f1\") > 10 && Attribute(\"f1\") < 10); "
-    // ;
-
-    std::string multipleFilterQueryString =
-        "Query::from(\"default_logical\").filter(Attribute(\"f1\") > 10).filter(Attribute(\"f2\") < 10); "
-        ;
-    
-    QueryPtr multipleFilterQuery = UtilityFunctions::createQueryFromCodeString(multipleFilterQueryString);
-
-    // Add another predicate that makes the query unsatisfiable
-    multipleFilterQuery->filter(Attribute("f1") < 10);
-
-    ASSERT_EQ(semanticQueryValidation.isSatisfiable(multipleFilterQuery), false);
-}
-
-TEST_F(Z3ValidationTest, queryValidator) {
-    NES_INFO("Query Validator");
-
-    // create a context
-    std::shared_ptr<context> c = std::make_shared<context>();
-    //Create an instance of the solver
-    solver s(*c);
-
-    // auto stream = Query::from("StreamName");
-
-    // // How do we split this up to expressions??
-
-    // // use signatures (branch 1092)
-    // stream.filter(Attribute("f1") > 10);
-    // stream.map(Attribute("f1") = 100);
-    // stream.filter(Attribute("f1") < 10);
-
-    // std::string queryString =
-    //     "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); "
-    // ;
-
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42 && Attribute(\"value\") > "
-                              "42).sink(PrintSinkDescriptor::create()); ";
-
-    std::string multipleFilterQueryString =
-        "Query::from(\"default_logical\").filter(Attribute(\"f1\") > 10 && Attribute(\"f2\") < 10); ";
-
-    QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    QueryPtr multipleFilterQuery = UtilityFunctions::createQueryFromCodeString(multipleFilterQueryString);
-
-    multipleFilterQuery->filter(Attribute("f3") < 10);
-
-    auto filterOperators = query->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
-    auto multipleFilterOperators = multipleFilterQuery->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
-
-    std::cout << "num of filters: " << filterOperators.size() << "\n\n\n";
-    std::cout << "num of filters: " << multipleFilterOperators.size() << "\n\n\n";
-
-    std::cout << filterOperators[0]->toString() << "\n\n";
-    std::cout << filterOperators[0]->getPredicate()->toString() << "\n\n";
-    // std::cout << filterOperators[0]->getPredicate()-> << "\n\n";
-
-    filterOperators[0]->getPredicate()->inferStamp(schema);
-    filterOperators[0]->inferZ3Expression(c);
-
-    // this is called in inferT3expresison no need to call manually
-    // expr filtersAsExpression = OperatorToZ3ExprUtil::createForOperator(filterOperators[0], *c);
-
-    std::cout << filterOperators[0]->toString() << "\n\n";
-    std::cout << filterOperators[0]->getZ3Expression().to_string() << "\n\n";
-
-    // std::cout << filtersAsExpression.get_escaped_string() << "\n\n";
-
-    // from the slides check the optimization phases.
-
-    // Parse query ...
-
-    // result:
-
-    s.add(filterOperators[0]->getZ3Expression());
-
-    NES_INFO("Content of the solver: " << s);
-    NES_INFO("Statement folding inside z3 solver: " << s.to_smt2());
-
     ASSERT_EQ(s.check(), unsat);
 }
 
