@@ -140,6 +140,7 @@ class ExecutableCompleteAggregationTriggerAction
         //because we trigger each second, there could be multiple windows ready
         auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
 
+        uint64_t maxWrittenSliceId = 0;
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
@@ -159,7 +160,7 @@ class ExecutableCompleteAggregationTriggerAction
                               << " recCnt=" << slices[sliceId].getRecordsPerSlice());
                     partialFinalAggregates[windowId] =
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
-
+                    maxWrittenSliceId = std::max(maxWrittenSliceId, sliceId);
                     //we have to do this in order to prevent that we output a window that has no slice associated
                     recordsPerWindow[windowId] += slices[sliceId].getRecordsPerSlice();
                 } else {
@@ -209,8 +210,7 @@ class ExecutableCompleteAggregationTriggerAction
                 }
             }//end of for
             //erase partial aggregate and slices  as it was written
-            //TODO: enable later
-            //            store->removeSlicesUntil(partialFinalAggregates.size());
+            store->removeSlicesUntil(maxWrittenSliceId);
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
