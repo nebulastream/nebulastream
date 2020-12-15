@@ -18,7 +18,10 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sources/AdaptiveKFSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/KalmanFilter.hpp>
 #include <Util/Logger.hpp>
+
+#include <Eigen/Dense>
 
 #include <gtest/gtest.h>
 
@@ -54,14 +57,18 @@ class AdaptiveKFTest : public testing::Test {
         const DataSourcePtr source =
             createAdaptiveKFSource(schema, nodeEngine->getBufferManager(),
                                    nodeEngine->getQueryManager(), num_tuples_to_process,
-                                   num_of_buffers, 1, true, 1);
+                                   num_of_buffers, 1, 1);
     }
 
     void TearDown() override { NES_INFO("Tear down AdaptiveKFTest class."); }
 };
 
+// TODO: add test here
 TEST_F(AdaptiveKFTest, initialStateTest) {
     EXPECT_TRUE(true);
 }
 
+TEST_F(AdaptiveKFTest, kfTest) {
+    EXPECT_TRUE(true);
+}
 }// namespace NES
