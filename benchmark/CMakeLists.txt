@@ -62,6 +62,12 @@ if (NES_BUILD_BENCHMARKS)
     target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
 
+    ### Benchmark Uniform Data Benchmark ###
+    add_executable(uniformdata-benchmark "BenchmarkSuite/BenchmarkCreateUniformData.cpp")
+    target_link_libraries(uniformdata-benchmark nes ${GBENCHMARK_LIBRARIES})
+    target_sources(uniformdata-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME uniformdata-benchmark COMMAND uniformdata-benchmark --benchmark_out=uniformdata-benchmark.log --benchmark_out_format=json)
+
     ### Tuple Buffer Benchmark ###
     add_executable(tuplebuffer-benchmark "BenchmarkSuite/TupleBufferBenchmark.cpp")
     target_link_libraries(tuplebuffer-benchmark nes ${GBENCHMARK_LIBRARIES})

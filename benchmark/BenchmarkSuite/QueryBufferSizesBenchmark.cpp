@@ -30,10 +30,9 @@ using namespace NES::Benchmarking;
  * @brief This file/main shows how a benchmark can be created. The benchmark seen below is a map query that was implemented by using the BM_AddBenchmark macro from <util/BenchmarkUtils.hpp>.
  */
 int main() {
-
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 500 * 1000 * 1000, 510 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 600 * 1000 * 1000, 610 * 1000 * 1000, 10 * 1000 * 1000);
     //BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
@@ -49,7 +48,7 @@ int main() {
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     std::vector<uint64_t> allBufferSizes;
-    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4*1024, 128*1024, 4*1024);
+    BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 1*1024, 2*1024*1024);
 
 
 
@@ -74,7 +73,7 @@ int main() {
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
-    BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 700, 100);
+    BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 600, 100);
 
     for (auto bufferSize : allBufferSizes) {
         for (auto selectivity : allSelectivities) {
