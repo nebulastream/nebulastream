@@ -17,6 +17,10 @@
 
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>
@@ -24,11 +28,28 @@
 
 namespace NES {
 
-NES::SemanticQueryValidation::SemanticQueryValidation(SchemaPtr schema){
-    this->schema = schema;
-}
-
 bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
+
+    SchemaPtr schema;
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    auto sourceOperators = inputQuery->getQueryPlan()->getSourceOperators();
+
+    for (auto source : sourceOperators) {
+        auto sourceDescriptor = source->getSourceDescriptor();
+
+        // if the source descriptor is only a logical stream source we have to replace it with the correct
+        // source descriptor form the catalog.
+        if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
+            auto streamName = sourceDescriptor->getStreamName();
+            
+            try {
+                schema = streamCatalog->getSchemaForLogicalStream(streamName);
+            } catch (std::exception& e) {
+                NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: The logical stream " + streamName
+                                        + " could not be found in the StreamCatalog");
+            }
+        }
+    }
     
     std::shared_ptr<z3::context> c = std::make_shared<z3::context>();
     z3::solver s(*c);

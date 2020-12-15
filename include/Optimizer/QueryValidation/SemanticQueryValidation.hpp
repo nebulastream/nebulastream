@@ -27,10 +27,7 @@ namespace NES {
  * @brief This class is responsible for Semantic Query Validation
  */
 class SemanticQueryValidation {
-    private:
-        SchemaPtr schema;
     public:
-        SemanticQueryValidation(SchemaPtr schema);
         bool isSatisfiable(QueryPtr inputQuery);
 };
 
