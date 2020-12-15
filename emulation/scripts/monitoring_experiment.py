@@ -10,17 +10,19 @@ topology = "1Crd5Wrks"
 system = "NES"
 noIterations = 30
 noIterationsBeforeExecution = 0
+monitoring_frequency = 1
 
 description = "25Tup-30Buf"
 
-version = "1"
+version = "2"
 
 # types are None, "prometheus", "nes"
 types = [None, "nes", "prometheus"]
 monitoring_type = types[1]
 
 
-def readDockerStats(containerIters, influxTable, topology, system, version, runtime, iteration, description, monitoring):
+def readDockerStats(containerIters, influxTable, topology, system, version, runtime, iteration, description,
+                    monitoring, monitoring_frequency):
     msrmnts = []
     for cName, cIter in containerIters:
         msrmt = next(cIter)
@@ -40,7 +42,8 @@ def readDockerStats(containerIters, influxTable, topology, system, version, runt
                 "system": system,
                 "version": version,
                 "description": description,
-                "monitoring": str(monitoring)
+                "monitoring": str(monitoring),
+                "monitoring_frequency": monitoring_frequency
             },
             "time": msrmt["read"],
             "fields": {
@@ -57,6 +60,7 @@ def readDockerStats(containerIters, influxTable, topology, system, version, runt
         print(measurementDict)
         msrmnts.append(measurementDict)
     return msrmnts
+
 
 def make_request(request_type):
     if request_type == "ysb":
@@ -89,6 +93,7 @@ def request_monitoring_data(type):
     else:
         raise RuntimeError("Response with status code " + str(resp.status_code))
 
+
 print("Executing monitoring request experiment")
 # execute experiment
 msrmnt_batch = []
@@ -100,14 +105,16 @@ containerIters = [(c.name, c.stats(decode=True)) for c in containers]
 start = datetime.datetime.now()
 for i in range(1, noIterationsBeforeExecution):
     print("\nExecuting iteration " + str(i))
-    if monitoring_type:
+    if monitoring_type and (i % monitoring_frequency == 0):
         request_monitoring_data(monitoring_type)
 
     print("Reading docker stats " + str(i))
     end = datetime.datetime.now()
     delta = (end - start)
     runtimeInMs = int(delta.total_seconds() * 1000)  # milliseconds
-    msrmnt_batch.extend(readDockerStats(containerIters, experiment_table, topology, system, version, runtimeInMs, i, description, monitoring_type))
+    msrmnt_batch.extend(
+        readDockerStats(containerIters, experiment_table, topology, system, version, runtimeInMs, i, description,
+                        monitoring_type, monitoring_frequency))
     sleep(1)
 
 print("Executing query")
@@ -117,7 +124,7 @@ response = make_request("ysb")
 for i in range(noIterationsBeforeExecution, noIterationsBeforeExecution + noIterations + 1):
     print("\nExecuting iteration " + str(i))
 
-    if monitoring_type:
+    if monitoring_type and (i % monitoring_frequency == 0):
         request_monitoring_data(monitoring_type)
 
     print("Reading docker stats " + str(i))
@@ -127,7 +134,9 @@ for i in range(noIterationsBeforeExecution, noIterationsBeforeExecution + noIter
 
     if (response.status_code == 200):
         # print(response.json())
-        msrmnt_batch.extend(readDockerStats(containerIters, experiment_table, topology, system, version, runtimeInMs, i, description, monitoring_type))
+        msrmnt_batch.extend(
+            readDockerStats(containerIters, experiment_table, topology, system, version, runtimeInMs, i, description,
+                            monitoring_type, monitoring_frequency))
         sleep(1)
     else:
         raise RuntimeError("Response with status code " + str(response.status_code))
