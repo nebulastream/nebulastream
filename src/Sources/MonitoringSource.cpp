@@ -25,7 +25,6 @@
 #include <Util/Logger.hpp>
 
 #include <Util/UtilityFunctions.hpp>
-#include <stdint-gcc.h>
 
 namespace NES {
 
