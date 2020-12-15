@@ -33,8 +33,8 @@ int main() {
 
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 250 * 1000 * 1000, 550 * 1000 * 1000, 10 * 1000 * 1000);
-    //BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 200 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 350 * 1000 * 1000, 650 * 1000 * 1000, 10 * 1000 * 1000);
+//    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 200 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
     BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 60, 70, 10);
@@ -73,7 +73,7 @@ int main() {
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
-    BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 700, 100);
+    BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 600, 100);
 
     for (auto selectivity : allSelectivities) {
         auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);

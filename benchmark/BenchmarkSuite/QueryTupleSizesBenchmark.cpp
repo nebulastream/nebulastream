@@ -34,7 +34,7 @@ int main() {
 
     // All ingestion rates from 90M to 120M in a step range of 10M
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 500 * 1000 * 1000, 510 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 600 * 1000 * 1000, 610 * 1000 * 1000, 10 * 1000 * 1000);
     //BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 220 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
 
     std::vector<uint64_t> allExperimentsDuration;
@@ -74,7 +74,7 @@ int main() {
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
-    BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 700, 100);
+    BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 600, 100);
     for (auto benchmarkSchema : BenchmarkSchemas::getBenchmarkSchemas()) {
         for (auto selectivity : allSelectivities) {
             BM_AddBenchmark("BM_SimpleFilterQuery",
