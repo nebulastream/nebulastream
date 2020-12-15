@@ -48,7 +48,7 @@ std::optional<TupleBuffer> MonitoringSource::receiveData() {
     metricGroup->getSample(Schema::create(), buf);
 
     buf.setNumberOfTuples(1);
-    NES_DEBUG("MonitoringSource: Generated buffer with 1 tuple ans size " << schema->getSchemaSizeInBytes());
+    NES_DEBUG("MonitoringSource: Generated buffer with 1 tuple and size " << schema->getSchemaSizeInBytes());
 
     //update statistics
     generatedTuples++;
