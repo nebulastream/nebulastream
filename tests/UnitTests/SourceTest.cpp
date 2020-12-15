@@ -517,7 +517,7 @@ TEST_F(SourceTest, testMonitoringSource) {
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
 
-    auto source = std::make_shared<MonitoringSource>(plan, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 1, 1);
+    auto source = std::make_shared<MonitoringSource>(plan, MetricCatalog::NesMetrics(), nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 1, 1);
 
     SchemaPtr schema = source->getSchema();
 

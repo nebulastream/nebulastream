@@ -18,6 +18,7 @@
 
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
+#include <Monitoring/Metrics/MetricCatalog.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
@@ -27,13 +28,11 @@
 
 namespace NES {
 
-MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                   const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
+MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog, BufferManagerPtr bufferManager,
+                                   QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
     : DefaultSource(Schema::create(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
-      monitoringPlan(monitoringPlan) {
+      monitoringPlan(monitoringPlan), metricGroup(monitoringPlan->createMetricGroup(metricCatalog)) {
 
-    //TODO: An independent way of getting the schema for metrics is needed, currently this is a workaround
-    metricGroup = this->monitoringPlan->createMetricGroup(nullptr);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     metricGroup->getSample(schema, tupleBuffer);
     tupleBuffer.release();
