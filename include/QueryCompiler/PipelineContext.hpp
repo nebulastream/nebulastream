@@ -54,14 +54,6 @@ class PipelineContext {
 
     SchemaPtr getInputSchema() const;
     SchemaPtr getResultSchema() const;
-    Windowing::AbstractWindowHandlerPtr getWindow();
-    void setWindow(Windowing::AbstractWindowHandlerPtr window);
-    bool hasWindow() const;
-
-    bool hasJoin() const;
-    Join::AbstractJoinHandlerPtr getJoin();
-    void setJoin(Join::AbstractJoinHandlerPtr join);
-
     SchemaPtr inputSchema;
     SchemaPtr resultSchema;
     GeneratedCodePtr code;
@@ -89,8 +81,6 @@ class PipelineContext {
     std::vector<BlockScopeStatementPtr> setupScopes;
     std::vector<BlockScopeStatementPtr> startScopes;
     std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
-    Windowing::AbstractWindowHandlerPtr windowHandler;
-    Join::AbstractJoinHandlerPtr joinHandler;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_

@@ -28,17 +28,7 @@ void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable
 
 BlockScopeStatementPtr PipelineContext::createSetupScope() { return setupScopes.emplace_back(BlockScopeStatement::create()); }
 BlockScopeStatementPtr PipelineContext::createStartScope(){ return startScopes.emplace_back(BlockScopeStatement::create()); }
-void PipelineContext::setWindow(Windowing::AbstractWindowHandlerPtr window) { this->windowHandler = std::move(window); }
 
-void PipelineContext::setJoin(Join::AbstractJoinHandlerPtr join) { this->joinHandler = std::move(join); }
-
-Windowing::AbstractWindowHandlerPtr PipelineContext::getWindow() { return this->windowHandler; }
-
-Join::AbstractJoinHandlerPtr PipelineContext::getJoin() { return this->joinHandler; }
-
-bool PipelineContext::hasWindow() const { return this->windowHandler != nullptr; }
-
-bool PipelineContext::hasJoin() const { return this->joinHandler != nullptr; }
 bool PipelineContext::hasNextPipeline() const { return this->nextPipelines.size() != 0; }
 
 const std::vector<PipelineContextPtr>& PipelineContext::getNextPipelineContexts() const { return this->nextPipelines; }

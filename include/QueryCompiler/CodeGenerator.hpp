@@ -122,6 +122,15 @@ class CodeGenerator {
     * @brief Code generation for a central window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param context The context of the current pipeline.
+    * @return the operator id
+    */
+    virtual uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                 PipelineContextPtr context) = 0;
+
+    /**
+    * @brief Code generation for a central window operator, which depends on a particular window definition.
+    * @param window The window definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
