@@ -150,7 +150,7 @@ class ExecutableSliceAggregationTriggerAction
                     tupleBuffer.setOriginId(this->originId);
                     currentNumberOfTuples = 0;
                 }
-                store->removeSlicesUntil(sliceId);
+                store->removeSlicesUntil(currentWatermark);
             } else {
                 NES_DEBUG("ExecutableSliceAggregationTriggerAction SL: Dont write result because slices[sliceId].getEndTs()="
                           << slices[sliceId].getEndTs() << "<= currentWatermark=" << currentWatermark);

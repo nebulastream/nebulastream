@@ -408,4 +408,191 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     ASSERT_EQ(tuples[3], 1);
 }
 
+
+TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+
+    auto aggregation = Sum(Attribute("id", UINT64));
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        Attribute("key", UINT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction);
+    windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
+
+    auto windowOutputSchema = Schema::create()
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField("key", UINT64)
+        ->addField("value", UINT64);
+
+    auto exec = ExecutableSumAggregation<uint64_t>::create();
+    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
+        windowDef, exec, windowOutputSchema);
+    auto w = std::dynamic_pointer_cast<AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(wAbstr);
+
+    class MockedExecutablePipeline : public ExecutablePipeline {
+      public:
+        uint32_t execute(TupleBuffer&, QueryExecutionContextPtr, WorkerContextRef) override { return 0; }
+    };
+
+    class MockedPipelineExecutionContext : public PipelineExecutionContext {
+      public:
+        MockedPipelineExecutionContext()
+            : PipelineExecutionContext(
+            0, nullptr,
+            [](TupleBuffer&, WorkerContextRef) {
+            },
+            nullptr, nullptr) {
+            // nop
+        }
+    };
+    auto executable = std::make_shared<MockedExecutablePipeline>();
+    auto context = std::make_shared<MockedPipelineExecutionContext>();
+    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
+    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
+
+    auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(w)
+        ->getTypedWindowState();
+    auto keyRef = windowState->get(10);
+    keyRef.valueOrDefault(0);
+    auto store = keyRef.value();
+
+    uint64_t ts = 7;
+    w->updateMaxTs(ts, 0);
+    w->getWindowManager()->sliceStream(ts, store, 0);
+    auto sliceIndex = store->getSliceIndexByTs(ts);
+    auto& aggregates = store->getPartialAggregates();
+    aggregates[sliceIndex]++;
+    w->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
+    //    store->setLastWatermark(7);
+
+    ts = 14;
+    w->updateMaxTs(ts, 0);
+    w->getWindowManager()->sliceStream(ts, store, 0);
+    sliceIndex = store->getSliceIndexByTs(ts);
+    aggregates = store->getPartialAggregates();
+    aggregates[sliceIndex]++;
+    std::cout << aggregates[sliceIndex] << std::endl;
+
+    ASSERT_EQ(aggregates[sliceIndex], 1);
+    auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
+
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(
+        windowDef, exec, windowOutputSchema);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts);
+
+    uint64_t tupleCnt = buf.getNumberOfTuples();
+
+    ASSERT_NE(buf.getBuffer(), nullptr);
+    ASSERT_EQ(tupleCnt, 1);
+
+    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
+              << std::endl;
+    ASSERT_EQ(tuples[0], 0);
+    ASSERT_EQ(tuples[1], 10);
+    ASSERT_EQ(tuples[2], 10);
+    ASSERT_EQ(tuples[3], 1);
+
+    ASSERT_EQ(store->getSliceMetadata().size(), 1);
+    ASSERT_EQ(store->getPartialAggregates().size(), 1);
+}
+
+TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+
+    auto aggregation = Sum(Attribute("id", INT64));
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction);
+
+    auto windowOutputSchema = Schema::create()
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField("key", INT64)
+        ->addField("value", INT64);
+
+    auto exec = ExecutableSumAggregation<int64_t>::create();
+    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(
+        windowDef, exec, windowOutputSchema);
+    auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
+
+    class MockedExecutablePipeline : public ExecutablePipeline {
+      public:
+        uint32_t execute(TupleBuffer&, QueryExecutionContextPtr, WorkerContext&) override { return 0; }
+    };
+
+    class MockedPipelineExecutionContext : public PipelineExecutionContext {
+      public:
+        MockedPipelineExecutionContext()
+            : PipelineExecutionContext(
+            0, nullptr,
+            [](TupleBuffer&, WorkerContext&) {
+            },
+            nullptr, nullptr) {
+            // nop
+        }
+    };
+    auto executable = std::make_shared<MockedExecutablePipeline>();
+    auto context = std::make_shared<MockedPipelineExecutionContext>();
+    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
+    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
+
+    auto windowState = w->getTypedWindowState();
+    auto keyRef = windowState->get(10);
+    keyRef.valueOrDefault(0);
+    auto store = keyRef.value();
+
+    uint64_t ts = 7;
+    w->updateMaxTs(ts, 0);
+    w->getWindowManager()->sliceStream(ts, store, 0);
+    auto sliceIndex = store->getSliceIndexByTs(ts);
+    auto& aggregates = store->getPartialAggregates();
+    aggregates[sliceIndex]++;
+    w->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
+    //    store->setLastWatermark(7);
+
+    ts = 14;
+    w->updateMaxTs(ts, 0);
+    w->getWindowManager()->sliceStream(ts, store, 0);
+    sliceIndex = store->getSliceIndexByTs(ts);
+    aggregates = store->getPartialAggregates();
+    aggregates[sliceIndex]++;
+    std::cout << aggregates[sliceIndex] << std::endl;
+
+    ASSERT_EQ(aggregates[sliceIndex], 1);
+    auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(
+        windowDef, exec, windowOutputSchema);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
+    windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
+
+    uint64_t tupleCnt = buf.getNumberOfTuples();
+
+    ASSERT_NE(buf.getBuffer(), nullptr);
+    ASSERT_EQ(tupleCnt, 1);
+
+    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
+              << std::endl;
+    ASSERT_EQ(tuples[0], 0);
+    ASSERT_EQ(tuples[1], 10);
+    ASSERT_EQ(tuples[2], 10);
+    ASSERT_EQ(tuples[3], 1);
+
+    ASSERT_EQ(store->getSliceMetadata().size(), 1);
+    ASSERT_EQ(store->getPartialAggregates().size(), 1);
+}
+
+
 }// namespace NES

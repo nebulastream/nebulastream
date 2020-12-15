@@ -74,15 +74,25 @@ class WindowSliceStore {
      * @brief Remove slices between index 0 and pos.
      * @param pos the position till we want to remove slices.
      */
-    inline void removeSlicesUntil(uint64_t pos) {
-        NES_DEBUG("removeSlicesUntil: sliceMetaData up to pos=" << pos << " size=" << sliceMetaData.size());
-        sliceMetaData.erase(sliceMetaData.begin(),
-                            sliceMetaData.size() > pos ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
+    inline void removeSlicesUntil(uint64_t watermark) {
+        uint64_t pos = 0;
+        for (auto& elem : sliceMetaData) {
+            if (elem.getEndTs() < watermark) {
+                pos++;
+            } else {
+                break;
+            }
+        }
 
-        NES_DEBUG("removeSlicesUntil: partialAggregates up to pos=" << pos << " size=" << partialAggregates.size());
+        NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark="
+                  << watermark << " pos=" << pos << " sliceMetaData size=" << sliceMetaData.size()
+                  << " partialaggregate size=" << partialAggregates.size());
+
+        sliceMetaData.erase(sliceMetaData.begin(),
+                            sliceMetaData.size() > pos ? sliceMetaData.begin() + pos : sliceMetaData.end());
 
         partialAggregates.erase(partialAggregates.begin(),
-                                partialAggregates.size() > pos ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
+                                partialAggregates.size() > pos ? partialAggregates.begin() + pos: partialAggregates.end());
         NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
                                                                                   << " aggs=" << partialAggregates.size());
     }
