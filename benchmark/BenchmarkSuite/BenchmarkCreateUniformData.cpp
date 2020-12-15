@@ -14,57 +14,73 @@
     limitations under the License.
 */
 
-#include <benchmark/benchmark.h>
 #include <util/BenchmarkUtils.hpp>
 
 static std::string fileName = "create_uniform_data";
 
 using namespace NES::Benchmarking;
-static void BM_CreateUniformData(benchmark::State& state) {
+int main() {
 
-    uint64_t curNumberOfTuplesPerBuffer = state.range(0);
+    // Optimal mean would be 499.5 and optimal stddev would be 288.38
+    // These values result from the fact that BenchmarkUtils::createUniformData provides uniform distribution in the range [0, 999]
 
-    std::list<uint64_t> keyList;
-    BenchmarkUtils::createUniformData(keyList, curNumberOfTuplesPerBuffer);
-
-    uint64_t tmpSum = 0;
-    for (auto it : keyList) {
-        tmpSum += it;
-    }
-    double mean = (double)tmpSum / keyList.size();
-
-    tmpSum = 0;
-    for (auto it : keyList) {
-        tmpSum += std::pow(it - mean, 2);
-    }
-    double stddev = std::sqrt((double)tmpSum / keyList.size());
-
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
+    double optimalMean = (0 + 999)/2.0;
+    double optimalStddev = (0 + 999)/std::sqrt(12.0);
 
     std::ofstream file;
-    file.open((fileName) + "_results.csv", std::ios_base::app);
-    file << oss.str() << "," << mean << "," << stddev;
-    file.close();
-}
-
-// Register benchmark
-BENCHMARK(BM_CreateUniformData)
-    ->DenseRange(100, 10000, 100)
-    ->Repetitions(1e8);
-
-// A benchmark main is needed
-int main(int argc, char** argv) {
-
-    std::ofstream file;
-    file.open((fileName) + "_results.csv", std::ios_base::app);
-    file << "Time, NumberOfTuplesPerBuffer, Mean, Stddev\n";
+    file.open((fileName) + "_results.csv", std::ios_base::trunc);
+    file << "ID, ListSize, AbsErrorMean, AbsErrorStddev, MaxAbsErrorMean, MaxAbsErrorStddev\n";
     file.close();
 
-    benchmark::Initialize(&argc, argv);
-    benchmark::RunSpecifiedBenchmarks();
+    uint64_t cntListSize = 0;
+
+    constexpr uint64_t REPS = 1e3;
+    std::vector<uint64_t> allListSizes;
+    BenchmarkUtils::createRangeVector<uint64_t>(allListSizes, 100, 10000, 100);
+
+    for (auto listSize : allListSizes) {
+        
+        double absMeanError = 0;
+        double absStddev = 0;
+        double maxMeanErrorMean = 0;
+        double maxMeanErrorStddev = 0;
+
+        for (uint64_t i = 0; i < REPS; ++i) {
+            std::list<uint64_t> keyList;
+            BenchmarkUtils::createUniformData(keyList, listSize);
+
+            uint64_t tmpSum = 0;
+            for (auto it : keyList) {
+                tmpSum += it;
+            }
+            double mean = (double) tmpSum / keyList.size();
+
+            tmpSum = 0;
+            for (auto it : keyList) {
+                tmpSum += std::pow(it - mean, 2);
+            }
+
+            double stddev = std::sqrt((double) tmpSum / keyList.size());
+            double curErrMean = (optimalMean - mean);
+            double curErrStddev = (optimalStddev - stddev);
+
+            maxMeanErrorMean = (std::abs(maxMeanErrorMean) > std::abs(curErrMean)) ? maxMeanErrorMean : curErrMean;
+            maxMeanErrorStddev = (std::abs(maxMeanErrorStddev) > std::abs(curErrStddev)) ? maxMeanErrorStddev : curErrStddev;
+
+
+            absMeanError += curErrMean;
+            absStddev += curErrStddev;
+        }
+
+        file.open((fileName) + "_results.csv", std::ios_base::app);
+        file << cntListSize << "," << listSize << "," << (absMeanError/REPS) << "," << (absStddev/REPS) << "," << (maxMeanErrorMean) << "," << (maxMeanErrorStddev) << "\n";
+        file.close();
+
+        ++cntListSize;
+        std::cout << "\rListsize=" << listSize << " done [" << cntListSize << "/" << allListSizes.size() << "]";
+        fflush(stdout);
+    }
+
+
     return 0;
 }
