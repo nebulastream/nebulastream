@@ -34,18 +34,18 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class TupleBuffer;
 
 enum SourceType {
-    ADAPTIVE_SOURCE,
-    BINARY_SOURCE,
-    CSV_SOURCE,
-    DEFAULT_SOURCE,
-    KAFKA_SOURCE,
-    MONITORING_SOURCE,
-    NETWORK_SOURCE,
     OPC_SOURCE,
-    SENSE_SOURCE,
+    ZMQ_SOURCE,
+    CSV_SOURCE,
+    KAFKA_SOURCE,
     TEST_SOURCE,
-    YSB_SOURCE,
-    ZMQ_SOURCE
+    BINARY_SOURCE,
+    SENSE_SOURCE,
+    DEFAULT_SOURCE,
+    NETWORK_SOURCE,
+    ADAPTIVE_SOURCE,
+    MONITORING_SOURCE,
+    YSB_SOURCE
 };
 
 /**
