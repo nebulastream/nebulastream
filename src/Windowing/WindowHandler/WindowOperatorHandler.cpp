@@ -13,33 +13,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-namespace NES::Windowing{
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+namespace NES::Windowing {
 
-NodeEngine::Execution::OperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema) {
+WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
+                                                       AbstractWindowHandlerPtr windowHandler) {
+    return std::make_shared<WindowOperatorHandler>(windowDefinition, resultSchema, windowHandler);
+}
+
+WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema) {
     return std::make_shared<WindowOperatorHandler>(windowDefinition, resultSchema);
 }
 
-WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema): windowDefinition(windowDefinition), resultSchema(resultSchema) {
+WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema)
+    : windowDefinition(windowDefinition), resultSchema(resultSchema) {}
 
-}
+WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
+                                             AbstractWindowHandlerPtr windowHandler)
+    : windowDefinition(windowDefinition), windowHandler(windowHandler), resultSchema(resultSchema) {}
 
-LogicalWindowDefinitionPtr WindowOperatorHandler::getWindowDefinition() {
-    return windowDefinition;
-}
+LogicalWindowDefinitionPtr WindowOperatorHandler::getWindowDefinition() { return windowDefinition; }
 
-void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHandler) {
-    this->windowHandler = windowHandler;
-}
+void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHandler) { this->windowHandler = windowHandler; }
 
-SchemaPtr WindowOperatorHandler::getResultSchema() {
-    return resultSchema;
-}
-void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) {
-    windowHandler->start();
-}
-void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) {
-    windowHandler->stop();
-}
-}
+SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
+void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->start(); }
+void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
+}// namespace NES::Windowing

@@ -17,20 +17,15 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableJoinOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
 
 namespace NES {
 
 void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto joinHandler = Windowing::WindowHandlerFactory::createJoinWindowHandler(joinDefinition);
-
     auto newPipelineContext1 = PipelineContext::create();
-    newPipelineContext1->setJoin(joinHandler);
     newPipelineContext1->isLeftSide = true;
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
 
     auto newPipelineContext2 = PipelineContext::create();
-    newPipelineContext2->setJoin(joinHandler);
     newPipelineContext2->isLeftSide = false;
     getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2);
 

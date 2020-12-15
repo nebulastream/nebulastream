@@ -16,8 +16,6 @@
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
-#include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
 
 namespace NES::Windowing {
 

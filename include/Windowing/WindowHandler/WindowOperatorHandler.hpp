@@ -24,7 +24,9 @@ namespace NES::Windowing {
 class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler{
   public:
     WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
-    static NodeEngine::Execution::OperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
+    WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema, AbstractWindowHandlerPtr windowHandler);
+    static WindowOperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
+    static WindowOperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema, AbstractWindowHandlerPtr windowHandler);
 
     void setWindowHandler(AbstractWindowHandlerPtr windowHandler);
 

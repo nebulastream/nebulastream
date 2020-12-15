@@ -38,6 +38,10 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 }// namespace NES
 
 namespace NES::Windowing {
+
+class WindowOperatorHandler;
+typedef std::shared_ptr<WindowOperatorHandler> WindowOperatorHandlerPtr;
+
 class BaseExecutableWindowTriggerPolicy;
 typedef std::shared_ptr<BaseExecutableWindowTriggerPolicy> BaseExecutableWindowTriggerPolicyPtr;
 

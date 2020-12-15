@@ -89,17 +89,6 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
                 NES_ERROR("Cannot compile pipeline:" << currContext->code);
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
-            Windowing::AbstractWindowHandlerPtr windowHandlerPtr = nullptr;
-            Join::AbstractJoinHandlerPtr joinHandlerPtr = nullptr;
-            if (currContext->hasWindow()) {
-                NES_DEBUG("generateExecutablePipelines add window handler");
-                windowHandlerPtr = currContext->getWindow();
-            }
-            if (currContext->hasJoin()) {
-                NES_DEBUG("generateExecutablePipelines add join handler");
-                joinHandlerPtr = currContext->getJoin();
-            }
-
             accumulator[currentPipelineStateId] =
                 PipelineStageHolder(currentPipelineStateId, executablePipelineStage, currContext->getOperatorHandlers());
             if (consumerPipelineStateId >= 0) {
