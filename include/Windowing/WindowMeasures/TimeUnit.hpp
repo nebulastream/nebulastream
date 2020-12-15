@@ -28,7 +28,7 @@ class TimeUnit : public WindowMeasure {
     explicit TimeUnit(uint64_t multiplier);
 
     /**
-     * @brief gets the multiplier to concert this to milliseconds
+     * @brief gets the multiplier to convert this to milliseconds
      * @return uint64_t
      */
     [[nodiscard]] uint64_t getMultiplier() const;

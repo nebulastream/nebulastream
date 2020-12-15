@@ -185,7 +185,7 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     //x>y && x<y && x != y
 
     //We prove that equation (x>=y) != (y>=x) is satisfiable
-    s.add(!((x >= y) == (y >= x)));
+    s.add((x >= y) != (y >= x));
     ASSERT_EQ(s.check(), sat);
 
     //Two conditions are equal that can be proved by making sure

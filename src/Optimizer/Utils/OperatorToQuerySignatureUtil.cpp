@@ -17,13 +17,13 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
@@ -93,7 +93,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         NES_TRACE("OperatorToQueryPlanSignatureUtil: Computing Signature for window operator");
         auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
         return createForWindow(context, childrenQuerySignatures, windowOperator);
-    } else if(operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()){
+    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         //FIXME: as part of the issue 1351
         return childrenQuerySignatures[0];
     }
@@ -132,54 +132,70 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
     return QuerySignature::create(conditions, allColumns);
 }
 
-QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr,
-                                                                std::vector<QuerySignaturePtr>,
+QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr context,
+                                                                std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                                                 WindowLogicalOperatorNodePtr windowOperator) {
 
+    z3::expr_vector windowConditions(*context);
+
     auto windowDefinition = windowOperator->getWindowDefinition();
+    z3::expr windowKeyVal(*context);
     if (windowDefinition->isKeyed()) {
         FieldAccessExpressionNodePtr key = windowDefinition->getOnKey();
+        windowKeyVal = context->string_val(key->getFieldName());
+    } else {
+        windowKeyVal = context->constant(context->str_symbol("non-keyed"), context->string_sort());
     }
+    auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
+    windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal)));
 
     auto windowType = windowDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
+    z3::expr windowTimeKeyVal(*context);
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
-        timeCharacteristic->getField()->name;
+        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
     } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-
+        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
-    timeCharacteristic->getTimeUnit().getMultiplier();
+    auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
+    windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal)));
 
+    auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+
+    auto windowTimeLengthVar = context->int_const("window-length");
+    auto windowTimeSlideVar = context->int_const("window-slide");
+    auto windowCountLengthVar = context->int_const("window-count-length");
+    z3::expr windowTimeLengthVal(*context);
+    z3::expr windowTimeSlideVal(*context);
     if (windowType->isTumblingWindow()) {
         auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
-        tumblingWindow->getSize().getTime();
+        windowTimeLengthVal = context->int_val(tumblingWindow->getSize().getTime() * multiplier);
+        windowTimeSlideVal = context->int_val(tumblingWindow->getSize().getTime() * multiplier);
     } else if (windowType->isSlidingWindow()) {
         auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
-        slidingWindow->getSize().getTime();
-        slidingWindow->getSlide().getTime();
+        windowTimeLengthVal = context->int_val(slidingWindow->getSize().getTime() * multiplier);
+        windowTimeSlideVal = context->int_val(slidingWindow->getSlide().getTime() * multiplier);
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
     }
+    windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowTimeLengthVar, windowTimeLengthVal)));
+    windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal)));
 
     // serialize aggregation
     windowDefinition->getWindowAggregation()->as();
     windowDefinition->getWindowAggregation()->on();
 
     switch (windowDefinition->getWindowAggregation()->getType()) {
-        case Windowing::WindowAggregationDescriptor::Count:
-            break;
-        case Windowing::WindowAggregationDescriptor::Max:
-            break;
-        case Windowing::WindowAggregationDescriptor::Min:
-            break;
-        case Windowing::WindowAggregationDescriptor::Sum:
-            break;
+        case Windowing::WindowAggregationDescriptor::Count: break;
+        case Windowing::WindowAggregationDescriptor::Max: break;
+        case Windowing::WindowAggregationDescriptor::Min: break;
+        case Windowing::WindowAggregationDescriptor::Sum: break;
         default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
     }
 
-    return QuerySignature::create(nullptr, {});
+    return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), childrenQuerySignatures[0]->getColumns());
 }
 
 QuerySignaturePtr OperatorToQuerySignatureUtil::createForMap(z3::ContextPtr context,
