@@ -408,7 +408,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     ASSERT_EQ(tuples[3], 1);
 }
 
-
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
@@ -423,10 +422,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", UINT64)
-        ->addField("value", UINT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", UINT64)
+                                  ->addField("value", UINT64);
 
     auto exec = ExecutableSumAggregation<uint64_t>::create();
     auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
@@ -442,10 +441,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
       public:
         MockedPipelineExecutionContext()
             : PipelineExecutionContext(
-            0, nullptr,
-            [](TupleBuffer&, WorkerContextRef) {
-            },
-            nullptr, nullptr) {
+                0, nullptr,
+                [](TupleBuffer&, WorkerContextRef) {
+                },
+                nullptr, nullptr) {
             // nop
         }
     };
@@ -455,7 +454,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(w)
-        ->getTypedWindowState();
+                           ->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
@@ -516,10 +515,10 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
         DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", INT64)
-        ->addField("value", INT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", INT64)
+                                  ->addField("value", INT64);
 
     auto exec = ExecutableSumAggregation<int64_t>::create();
     auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(
@@ -535,10 +534,10 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
       public:
         MockedPipelineExecutionContext()
             : PipelineExecutionContext(
-            0, nullptr,
-            [](TupleBuffer&, WorkerContext&) {
-            },
-            nullptr, nullptr) {
+                0, nullptr,
+                [](TupleBuffer&, WorkerContext&) {
+                },
+                nullptr, nullptr) {
             // nop
         }
     };
@@ -593,6 +592,5 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     ASSERT_EQ(store->getSliceMetadata().size(), 1);
     ASSERT_EQ(store->getPartialAggregates().size(), 1);
 }
-
 
 }// namespace NES
