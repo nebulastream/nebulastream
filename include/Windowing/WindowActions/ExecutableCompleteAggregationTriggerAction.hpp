@@ -210,7 +210,7 @@ class ExecutableCompleteAggregationTriggerAction
                 }
             }//end of for
             //erase partial aggregate and slices  as it was written
-            store->removeSlicesUntil(maxWrittenSliceId);
+            store->removeSlicesUntil(currentWatermark);
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
