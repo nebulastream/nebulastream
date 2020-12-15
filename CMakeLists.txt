@@ -62,7 +62,7 @@ endif (NES_LOGGING_LEVEL)
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-march=x86-64" COMPILER_SUPPORTS_MARCH_NATIVE)
 if (COMPILER_SUPPORTS_MARCH_NATIVE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=intel")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
 endif ()
 
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
