@@ -13,17 +13,17 @@
 # limitations under the License.
 
 add_source_nes(
-        AdaptiveSource.cpp
-        BinarySource.cpp
-        CSVSource.cpp
         DataSource.cpp
-        DefaultSource.cpp
         GeneratorSource.cpp
-        MonitoringSource.cpp
-        SenseSource.cpp
-        SourceCreator.cpp
-        YSBSource.cpp
+        BinarySource.cpp
         ZmqSource.cpp
+        CSVSource.cpp
+        SourceCreator.cpp
+        DefaultSource.cpp
+        SenseSource.cpp
+        AdaptiveSource.cpp
+        YSBSource.cpp
+        MonitoringSource.cpp
 )
 
 if(NES_USE_KAFKA)
