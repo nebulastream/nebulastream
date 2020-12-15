@@ -22,7 +22,7 @@ AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferMana
                                    const uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
                                    uint64_t initialFrequency, OperatorId operatorId)
     : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency, operatorId), numBuffersToProcess(numBuffersToProcess),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
       frequency(initialFrequency), freqLastReceived(initialFrequency), freqRange(2), kfErrorWindow(20) {
     calculateTotalEstimationErrorDivider(20);
 }
