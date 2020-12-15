@@ -91,7 +91,7 @@ class WindowSliceStore {
                             sliceMetaData.size() > pos ? sliceMetaData.begin() + pos : sliceMetaData.end());
 
         partialAggregates.erase(partialAggregates.begin(),
-                                partialAggregates.size() > pos ? partialAggregates.begin() + pos: partialAggregates.end());
+                                partialAggregates.size() > pos ? partialAggregates.begin() + pos : partialAggregates.end());
         NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
                                                                                   << " aggs=" << partialAggregates.size());
     }
