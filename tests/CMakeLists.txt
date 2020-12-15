@@ -319,6 +319,16 @@ add_executable(z3-validation-tests "UnitTests/Z3ValidationTest.cpp")
 target_link_libraries(z3-validation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME z3-validation-tests COMMAND z3-validation-tests)
 
+### Syntactic Query Validation Test ###
+add_executable(syntactic-query-validation-test "UnitTests/Optimizer/QueryValidation/SyntacticQueryValidationTest.cpp")
+target_link_libraries(syntactic-query-validation-test nes ${GTEST_LIBRARIES})
+add_test(NAME syntactic-query-validation-test COMMAND syntactic-query-validation-test)
+
+### Semantic Query Validation Test ###
+add_executable(semantic-query-validation-test "UnitTests/Optimizer/QueryValidation/SemanticQueryValidationTest.cpp")
+target_link_libraries(semantic-query-validation-test nes ${GTEST_LIBRARIES})
+add_test(NAME semantic-query-validation-test COMMAND semantic-query-validation-test)
+
 ### Operator To FOL Util Test ###
 add_executable(query-signature-util-tests "UnitTests/Optimizer/Utils/QuerySignatureUtilTests.cpp")
 target_link_libraries(query-signature-util-tests nes ${GTEST_LIBRARIES})
