@@ -32,13 +32,13 @@ typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 
 class MonitoringSource : public DefaultSource {
   public:
-    MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog, BufferManagerPtr bufferManager,
-                     QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, uint64_t frequency,
+    MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog, NodeEngine::BufferManagerPtr bufferManager,
+                     NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, uint64_t frequency,
                      OperatorId operatorId);
 
     SourceType getType() const override;
 
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the binary source
