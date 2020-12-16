@@ -43,11 +43,11 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
     NES_DEBUG("Source:" << this << " got buffer");
     uint64_t tupleCnt = 10;
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
-
+    
+    auto value = 1;    
     auto fields = schema->fields;
     for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
         for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-            auto value = 1;
             auto dataType = fields[fieldIndex]->getDataType();
             auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
             if (physicalType->isBasicType()) {

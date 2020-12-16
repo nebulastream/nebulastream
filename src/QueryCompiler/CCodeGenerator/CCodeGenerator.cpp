@@ -246,8 +246,6 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     /**
      * @brief TODO the following code is black magic it need to be refactored in a larger issue.
      */
-    std::vector<VariableDeclaration> var_decls;
-    std::vector<StatementPtr> write_result_tuples;
     for (uint64_t i = 0; i < context->resultSchema->getSize(); ++i) {
         auto resultField = context->resultSchema->get(i);
         auto variableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, resultField);
@@ -669,13 +667,13 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     switch (window->getTriggerPolicy()->getPolicyType()) {
         case Windowing::triggerOnRecord: {
             auto trigger = FunctionCallStatement("trigger");
-            auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
+            call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
             context->code->currentCodeInsertionPoint->addStatement(call);
             break;
         }
         case Windowing::triggerOnBuffer: {
             auto trigger = FunctionCallStatement("trigger");
-            auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
+            call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
             context->code->cleanupStmts.push_back(call);
             break;
         }
@@ -842,7 +840,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     switch (joinDef->getTriggerPolicy()->getPolicyType()) {
         case Windowing::triggerOnBuffer: {
             auto trigger = FunctionCallStatement("trigger");
-            auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowJoinVariableDeclration).accessPtr(trigger));
+            call = std::make_shared<BinaryOperatorStatement>(VarRef(windowJoinVariableDeclration).accessPtr(trigger));
             context->code->cleanupStmts.push_back(call);
             break;
         }
@@ -1115,13 +1113,13 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     switch (window->getTriggerPolicy()->getPolicyType()) {
         case Windowing::triggerOnRecord: {
             auto trigger = FunctionCallStatement("trigger");
-            auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
+            call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
             context->code->currentCodeInsertionPoint->addStatement(call);
             break;
         }
         case Windowing::triggerOnBuffer: {
             auto trigger = FunctionCallStatement("trigger");
-            auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
+            call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
             context->code->cleanupStmts.push_back(call);
             break;
         }

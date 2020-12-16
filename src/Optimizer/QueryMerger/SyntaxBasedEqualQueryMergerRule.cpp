@@ -145,12 +145,14 @@ bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOpe
         return true;
     }
 
+    bool areParentsEqual;
+    bool areChildrenEqual;
+
     NES_TRACE("SyntaxBasedEqualQueryMergerRule: Compare host and target operators.");
     if (targetOperator->equal(hostOperator)) {
         targetHostOperatorMap[targetOperator->getId()] = hostOperator->getId();
 
         NES_TRACE("SyntaxBasedEqualQueryMergerRule: Check if parents of target and host operators are equal.");
-        bool areParentsEqual;
         for (auto& targetParent : targetOperator->getParents()) {
             areParentsEqual = false;
             for (auto& hostParent : hostOperator->getParents()) {
@@ -166,7 +168,6 @@ bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOpe
         }
 
         NES_TRACE("SyntaxBasedEqualQueryMergerRule: Check if children of target and host operators are equal.");
-        bool areChildrenEqual;
         for (auto& targetChild : targetOperator->getChildren()) {
             areChildrenEqual = false;
             for (auto& hostChild : hostOperator->getChildren()) {

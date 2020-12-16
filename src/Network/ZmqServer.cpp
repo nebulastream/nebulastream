@@ -67,7 +67,7 @@ ZmqServer::~ZmqServer() {
             future.get();
         } catch (std::exception& e) {
             NES_ERROR("ZmqServer: Server failed to start due to " << e.what());
-            throw e;
+            throw;
         }
     }
 }
@@ -232,7 +232,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
         } else {
             errorPromise.set_exception(std::current_exception());
             NES_ERROR("ZmqServer: event loop " << index << " got " << err.what());
-            throw err;
+            throw;
         }
     }
 }

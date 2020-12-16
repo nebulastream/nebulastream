@@ -44,7 +44,6 @@ GeneratableDataTypePtr CompilerTypesFactory::createDataType(DataTypePtr type) {
         auto arrayPhysicalType = std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType);
         return std::make_shared<ArrayGeneratableType>(arrayPhysicalType, componentDataType);
     } else if (type->isFixedChar()) {
-        auto charType = DataType::as<FixedChar>(type);
         auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(type);
         auto arrayPhysicalType = std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType);
         return std::make_shared<ArrayGeneratableType>(arrayPhysicalType, createDataType(DataTypeFactory::createChar()));

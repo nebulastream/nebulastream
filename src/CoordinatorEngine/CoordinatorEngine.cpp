@@ -71,8 +71,6 @@ uint64_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, 
                             + streamConf->getLogicalStreamName());
         }
 
-        SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf->getLogicalStreamName());
-
         std::string sourceType = streamConf->getSourceType();
         if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
             NES_ERROR("CoordinatorEngine::registerNode: error source type " << sourceType << " is not supported");

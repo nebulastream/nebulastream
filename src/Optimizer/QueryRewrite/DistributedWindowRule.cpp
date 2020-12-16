@@ -129,10 +129,7 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     if (windowComputationOperator->getChildren().size()
         >= CHILD_NODE_THRESHOLD_COMBINER) {//TODO change back to CHILD_NODE_THRESHOLD_COMBINER
         auto sliceCombinerWindowAggregation = windowAggregation->copy();
-        //        sliceCombinerWindowAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
-        auto triggerActionSlicing = Windowing::SliceCombinerTriggerActionDescriptor::create();
 
-        Windowing::LogicalWindowDefinitionPtr windowDef;
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 keyField, sliceCombinerWindowAggregation, windowType,
@@ -159,7 +156,6 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         //        sliceCreationWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");//TODO: I am not sure if this is correct
         auto triggerActionSlicing = Windowing::SliceAggregationTriggerActionDescriptor::create();
 
-        Windowing::LogicalWindowDefinitionPtr windowDef;
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 keyField, sliceCreationWindowAggregation, windowType,

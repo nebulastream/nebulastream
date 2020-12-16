@@ -51,7 +51,7 @@ bool KafkaSink::writeData(TupleBuffer& input_buffer) {
         producer->flush(kafkaProducerTimeout);
         NES_DEBUG("KAFKASINK " << this << ": send successfully");
     } catch (const cppkafka::HandleException& ex) {
-        throw ex;
+        throw;
     } catch (...) {
         NES_ERROR("KAFKASINK Unknown error occurs");
         return false;

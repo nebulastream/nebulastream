@@ -87,11 +87,11 @@ web::json::value PlanJsonGenerator::getExecutionPlanAsJson(GlobalExecutionPlanPt
             web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
 
         std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
-        const std::vector<QueryPlanPtr> querySubPlans;
+        std::vector<QueryPlanPtr> querySubPlans;
         if (queryId == INVALID_QUERY_ID) {
             queryToQuerySubPlansMap = executionNode->getAllQuerySubPlans();
         } else {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            querySubPlans = executionNode->getQuerySubPlans(queryId);
             if (!querySubPlans.empty()) {
                 queryToQuerySubPlansMap[queryId] = querySubPlans;
             }
@@ -196,7 +196,7 @@ void PlanJsonGenerator::getChildren(const OperatorNodePtr root, std::vector<web:
         std::string childOPeratorType = getOperatorType(childLogicalOperatorNode);
 
         // use the id of the current operator to fill the id field
-        node["id"] = node["id"] = web::json::value::string(std::to_string(childLogicalOperatorNode->getId()));
+        node["id"] = web::json::value::string(std::to_string(childLogicalOperatorNode->getId()));
         // use concatenation of <operator type>(OP-<operator id>) to fill name field
         // e.g. FILTER(OP-1)
         node["name"] =

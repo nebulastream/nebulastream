@@ -41,7 +41,6 @@ void GeneratableWatermarkAssignerOperator::produce(CodeGeneratorPtr codegen, Pip
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);
 }
 void GeneratableWatermarkAssignerOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto watermarkStrategyDescriptor = getWatermarkStrategyDescriptor();
     if (auto eventTimeWatermarkStrategyDescriptor =
             std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(getWatermarkStrategyDescriptor())) {
         auto keyExpression = eventTimeWatermarkStrategyDescriptor->getOnField().getExpressionNode();
