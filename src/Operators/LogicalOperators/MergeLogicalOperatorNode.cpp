@@ -52,7 +52,7 @@ bool MergeLogicalOperatorNode::inferSchema() {
 
     //test if all schemas are the same
     if (!all_of(schemas.begin(), schemas.end(), [&](SchemaPtr i) {
-            return i == schemas[0];
+            return i->equals(schemas[0]);
         })) {
         NES_ERROR("MergeLogicalOperator: the two input streams have different schema.");
         return false;
