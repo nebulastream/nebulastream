@@ -30,11 +30,11 @@ typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
 class MetricCatalog;
 typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 
-
 class MonitoringSource : public DefaultSource {
   public:
-    MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                     const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId);
+    MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog, BufferManagerPtr bufferManager,
+                     QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, uint64_t frequency,
+                     OperatorId operatorId);
 
     SourceType getType() const override;
 

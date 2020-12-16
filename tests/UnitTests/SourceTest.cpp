@@ -28,13 +28,12 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
+#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Monitoring/MetricValues/MetricValueType.hpp>
-#include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/MetricValues/GroupedValues.hpp>
 
 #include <Sources/MonitoringSource.hpp>
 #include <Sources/YSBSource.hpp>
@@ -517,7 +516,8 @@ TEST_F(SourceTest, testMonitoringSource) {
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
 
-    auto source = std::make_shared<MonitoringSource>(plan, MetricCatalog::NesMetrics(), nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 1, 1);
+    auto source = std::make_shared<MonitoringSource>(plan, MetricCatalog::NesMetrics(), nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(), numBuffers, 1, 1);
 
     SchemaPtr schema = source->getSchema();
 
