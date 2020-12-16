@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <sys/syscall.h>
 
 namespace NES::Benchmarking {
 /**

@@ -23,11 +23,11 @@ function plot_flamegraph()
 }
 
 
-usage="$(basename "$0") [-h] [-p <process id>] [-l <flamegraph git location>] [-d <record duration in seconds] [-g <class or function name>] [-f <freq>] [-n <name output svg>]
+usage="$(basename "$0") [-h] [-t <thread id>] [-l <flamegraph git location>] [-d <record duration in seconds] [-g <class or function name>] [-f <freq>] [-n <name output svg>]
 
 -- This script will create flamegraphs via arguments:
 	-h  show this help text
-	-p  id of process that will be recorded
+	-t  id of thread that will be recorded
 	-d  duration of perf record
 	-l  location of flamegraph git, if not set then flamegraph git will be downloaded
 	-g  flamegraph will be created for this function/class name
@@ -39,15 +39,17 @@ usage="$(basename "$0") [-h] [-p <process id>] [-l <flamegraph git location>] [-
 LOCATION_FLAMEGIT="/tmp";
 RECORD_DURATION=10;
 PROCESS_ID=-12;
+THREAD_ID=-13;
 GREP_NAME="NES";
 PERF_FREQ=5000;
 NAME_SVG="output";
 SKIP_RCD="false";
 
-while getopts 'p:d:l:g:f:n:sh' option
+while getopts 'p:t:d:l:g:f:n:sh' option
 do
 	case "${option}" in
 		p) 	PROCESS_ID=${OPTARG};;
+		t) 	THREAD_ID=${OPTARG};;
 		d) 	RECORD_DURATION=${OPTARG};;
 		l) 	LOCATION_FLAMEGIT="${OPTARG}";;
 		g) 	GREP_NAME="${OPTARG}";;
@@ -70,6 +72,7 @@ echo -e "Arguments after parsing:
 - LOCATION_FLAMEGIT=$LOCATION_FLAMEGIT
 - RECORD_DURATION=$RECORD_DURATION
 - PROCESS_ID=$PROCESS_ID
+- THREAD_ID=$THREAD_ID
 - GREP_NAME=$GREP_NAME
 - PERF_FREQ=$PERF_FREQ
 - NAME_SVG=$NAME_SVG.svg\n"
@@ -87,10 +90,29 @@ fi
 read -p "Process $PROCESS_ID will be recorded for $RECORD_DURATION seconds with a frequency of $PERF_FREQ Hz. Continue? [Y/n] " choice
 case "$choice" in 
   n|N ) echo -e "Exiting now..." && exit 1;;
-  * ) echo -e "Starting recording process "$PROCESS_ID"...";;
+  * ) echo -e "Starting recording...";;
 esac
 
-sudo perf record -F $PERF_FREQ -p $PROCESS_ID -g -- sleep $RECORD_DURATION
+
+if [[ $* == *-p* && $* == *-t* ]]; then
+
+	echo -e "Recording process "$PROCESS_ID" and thread "$THREAD_ID"..."
+	sudo perf record -F "$PERF_FREQ" -p "$PROCESS_ID" -t "$THREAD_ID" -g -i -- sleep "$RECORD_DURATION"
+	echo -e "Done recording process "$PROCESS_ID" and thread "$THREAD_ID"!"
+	
+elif [[ $* == *-p* ]]; then
+
+	echo -e "Recording process "$PROCESS_ID"..."
+	sudo perf record -F "$PERF_FREQ" -p "$PROCESS_ID" -g -i -- sleep "$RECORD_DURATION"
+	echo -e "Done recording process "$PROCESS_ID"!"	
+	
+elif [[ $* == *-t* ]]; then
+
+	echo -e "Recording thread "$THREAD_ID"..."
+	sudo perf record -F "$PERF_FREQ" -t "$THREAD_ID" -g -i -- sleep "$RECORD_DURATION"
+	echo -e "Done recording thread "$THREAD_ID"!"
+fi
+
 sudo chown $USER:$USER perf.data
 perf script > out.perf
 echo -e "Done recording!\n"
