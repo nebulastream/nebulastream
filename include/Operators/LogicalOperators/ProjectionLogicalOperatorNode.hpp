@@ -18,22 +18,15 @@
 #define PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 
 #include <API/UserAPIExpression.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
-
-class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
-
-class ExpressionItem;
-
-class ProjectionLogicalOperatorNode;
-typedef std::shared_ptr<ProjectionLogicalOperatorNode> LogicalProjectionOperatorPtr;
 
 /**
  * @brief projection operator, which contains an resets the output schema
  */
-class ProjectionLogicalOperatorNode : public LogicalOperatorNode {
+class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
   public:
     explicit ProjectionLogicalOperatorNode(std::vector<ExpressionItem> expressions, OperatorId id);
     ~ProjectionLogicalOperatorNode() = default;

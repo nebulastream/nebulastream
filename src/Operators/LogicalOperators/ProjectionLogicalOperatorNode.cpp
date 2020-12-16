@@ -23,7 +23,7 @@
 namespace NES {
 
 ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<ExpressionItem> expressions, uint64_t id)
-    : expressions(expressions), LogicalOperatorNode(id) {}
+    : expressions(expressions), UnaryOperatorNode(id) {}
 
 bool ProjectionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<ProjectionLogicalOperatorNode>()->getId() == id;
@@ -44,7 +44,7 @@ const std::string ProjectionLogicalOperatorNode::toString() const {
 }
 
 bool ProjectionLogicalOperatorNode::inferSchema() {
-    OperatorNode::inferSchema();
+    UnaryOperatorNode::inferSchema();
     outputSchema = Schema::create();
     for (auto& exp : expressions) {
         auto expression = exp.getExpressionNode();

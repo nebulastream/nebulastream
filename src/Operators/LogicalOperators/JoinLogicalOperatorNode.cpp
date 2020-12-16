@@ -25,7 +25,7 @@
 namespace NES {
 
 JoinLogicalOperatorNode::JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
-    : joinDefinition(joinDefinition), LogicalOperatorNode(id) {}
+    : joinDefinition(joinDefinition), BinaryOperatorNode(id) {}
 
 bool JoinLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<JoinLogicalOperatorNode>()->getId() == id;
@@ -40,7 +40,7 @@ const std::string JoinLogicalOperatorNode::toString() const {
 Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { return joinDefinition; }
 
 bool JoinLogicalOperatorNode::inferSchema() {
-    OperatorNode::inferSchema();
+    BinaryOperatorNode::inferSchema();
     if (getChildren().size() != 2) {
         NES_THROW_RUNTIME_ERROR("JoinLogicalOperator: Join need two child operators.");
     }
@@ -55,7 +55,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
     }
 
     // infer the data type of the key field.
-    joinDefinition->getJoinKey()->inferStamp(inputSchema);
+    //TODO: we have to also do it for the right input schema
+    joinDefinition->getJoinKey()->inferStamp(leftInputSchema);
 
     outputSchema = Schema::create()
                        ->addField(createField("start", UINT64))
@@ -68,7 +69,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
 OperatorNodePtr JoinLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createJoinOperator(joinDefinition, id);
-    copy->setInputSchema(inputSchema);
+    copy->setLeftInputSchema(leftInputSchema);
+    copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
 }

@@ -23,7 +23,7 @@
 namespace NES {
 
 MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id)
-    : mapExpression(mapExpression), LogicalOperatorNode(id) {}
+    : mapExpression(mapExpression), UnaryOperatorNode(id) {}
 
 bool MapLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<MapLogicalOperatorNode>()->getId() == id;
@@ -39,7 +39,7 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 bool MapLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
-    OperatorNode::inferSchema();
+    UnaryOperatorNode::inferSchema();
     // use the default input schema to calculate the out schema of this operator.
     mapExpression->inferStamp(getInputSchema());
     auto assignedField = mapExpression->getField();

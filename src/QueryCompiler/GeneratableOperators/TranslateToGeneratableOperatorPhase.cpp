@@ -75,18 +75,22 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        auto scanOperator = GeneratableScanOperator::create(operatorNode->getInputSchema(), operatorNode->getOutputSchema());
+        auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
+        auto scanOperator = GeneratableScanOperator::create(unaryOperator->getInputSchema(), unaryOperator->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableMergeOperator::create(operatorNode->as<MergeLogicalOperatorNode>());
         scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>(), operatorNode->getOutputSchema());
+        auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
+        return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>(), unaryOperator->getOutputSchema());
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(),
                                                                             generatableParentOperator);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-        auto scanOperator = GeneratableScanOperator::create(operatorNode->getInputSchema(), operatorNode->getOutputSchema());
+        auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
+        //TODO: we have to create two scan operators here
+        auto scanOperator = GeneratableScanOperator::create(binaryOperator->getLeftInputSchema(), binaryOperator->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableJoinOperator::create(operatorNode->as<JoinLogicalOperatorNode>());
         scanOperator->addChild(childOperator);

@@ -33,27 +33,6 @@ class OperatorNode : public Node {
     OperatorNode(OperatorId id);
 
     /**
-    * @brief get the input schema of this operator
-    * @return SchemaPtr
-    */
-    SchemaPtr getInputSchema() const;
-    void setInputSchema(SchemaPtr inputSchema);
-
-    /**
-    * @brief get the result schema of this operator
-    * @return SchemaPtr
-    */
-    SchemaPtr getOutputSchema() const;
-    void setOutputSchema(SchemaPtr outputSchema);
-
-    /**
-    * @brief infers the input and out schema of this operator depending on its child.
-    * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
-    * @return true if schema was correctly inferred
-    */
-    virtual bool inferSchema();
-
-    /**
      * @brief gets the operator id.
      * Unique Identifier of the operator within a query.
      * @return u_int64_t
@@ -97,6 +76,12 @@ class OperatorNode : public Node {
      */
     NodePtr getChildWithOperatorId(uint64_t operatorId);
 
+    virtual bool inferSchema() = 0;
+
+    virtual SchemaPtr getInputSchema() const = 0;
+    virtual SchemaPtr getOutputSchema() const = 0;
+    virtual void setInputSchema(SchemaPtr inputSchema) = 0;
+    virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
@@ -116,13 +101,6 @@ class OperatorNode : public Node {
      * @brief Unique Identifier of the operator within a query.
      */
     u_int64_t id;
-
-    /**
-     * @brief All operators maintain an input and output schema.
-     * To make sure that the schema is propagated correctly through the operator chain all inferSchema();
-     */
-    SchemaPtr inputSchema;
-    SchemaPtr outputSchema;
 };
 
 }// namespace NES

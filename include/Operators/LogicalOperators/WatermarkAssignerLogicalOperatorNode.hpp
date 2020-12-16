@@ -18,12 +18,12 @@
 #define NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
 
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES {
 
-class WatermarkAssignerLogicalOperatorNode : public LogicalOperatorNode {
+class WatermarkAssignerLogicalOperatorNode : public UnaryOperatorNode {
   public:
     WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
                                          OperatorId id);

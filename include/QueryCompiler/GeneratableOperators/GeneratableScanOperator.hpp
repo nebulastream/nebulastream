@@ -21,7 +21,7 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 namespace NES {
 
-class GeneratableScanOperator : public OperatorNode, public GeneratableOperator {
+class GeneratableScanOperator : public UnaryOperatorNode, public GeneratableOperator {
   public:
     /**
      * @brief Create sharable instance of GeneratableScanOperator

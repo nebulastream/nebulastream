@@ -21,7 +21,7 @@
 
 namespace NES {
 
-MergeLogicalOperatorNode::MergeLogicalOperatorNode(OperatorId id) : LogicalOperatorNode(id) {}
+MergeLogicalOperatorNode::MergeLogicalOperatorNode(OperatorId id) : UnaryOperatorNode(id) {}
 
 bool MergeLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<MergeLogicalOperatorNode>()->getId() == id;
@@ -34,24 +34,34 @@ const std::string MergeLogicalOperatorNode::toString() const {
 }
 
 bool MergeLogicalOperatorNode::inferSchema() {
-    if (!OperatorNode::inferSchema()) {
+    if (!UnaryOperatorNode::inferSchema()) {
         return false;
     }
     if (getChildren().size() != 2) {
         NES_THROW_RUNTIME_ERROR("MergeLogicalOperator: merge need two child operators.");
         return false;
     }
-    auto child1 = getChildren()[0]->as<LogicalOperatorNode>();
-    auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
 
-    auto schema1 = child1->getInputSchema();
-    auto schema2 = child2->getInputSchema();
+    std::vector<SchemaPtr> schemas;
+    for (auto& child : children) {
+        if (child->instanceOf<UnaryOperatorNode>()) {
+            auto op = child->as<UnaryOperatorNode>();
+            schemas.push_back(op->getOutputSchema());
+        }
+    }
 
-    if (!schema1->equals(schema2)) {
+    //test if all schemas are the same
+    if (!all_of(schemas.begin(), schemas.end(), [&](SchemaPtr i) {
+            return i == schemas[0];
+        })) {
         NES_ERROR("MergeLogicalOperator: the two input streams have different schema.");
         return false;
     }
-    return true;
+    else
+    {
+        return true;
+    }
+
 }
 
 OperatorNodePtr MergeLogicalOperatorNode::copy() {

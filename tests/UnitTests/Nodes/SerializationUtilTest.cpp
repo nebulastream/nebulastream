@@ -58,6 +58,20 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
+#include <API/Windowing.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Arity/ExchangeOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 using namespace NES;
 
 class SerializationUtilTest : public testing::Test {
@@ -458,6 +472,22 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto broadcastOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         ASSERT_TRUE(broadcast->equal(broadcastOperator));
     }
+
+    {
+        Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
+        auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
+        auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
+        Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
+            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+            Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)), distrType, triggerPolicy, triggerAction,
+            1, 1);
+
+        auto join = LogicalOperatorFactory::createJoinOperator(joinDef);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(join, new SerializableOperator());
+        auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        ASSERT_TRUE(join->equal(joinOperator));
+    }
+
 }
 
 TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {

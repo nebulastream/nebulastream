@@ -22,7 +22,7 @@
 namespace NES {
 
 FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr predicate, uint64_t id)
-    : predicate(predicate), LogicalOperatorNode(id) {}
+    : predicate(predicate), UnaryOperatorNode(id) {}
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
 
@@ -46,7 +46,7 @@ const std::string FilterLogicalOperatorNode::toString() const {
 }
 
 bool FilterLogicalOperatorNode::inferSchema() {
-    OperatorNode::inferSchema();
+    UnaryOperatorNode::inferSchema();
     predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
