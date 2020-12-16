@@ -61,6 +61,9 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowHandler/JoinHandler.hpp>
+#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
+#include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
 namespace NES {
 
 CCodeGenerator::CCodeGenerator() : CodeGenerator(), compiler(Compiler::create()) {}
@@ -712,34 +715,127 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
 
 bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                   GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                  PipelineContextPtr context) {
+                                                  PipelineContextPtr context,
+                                                  uint64_t windowOperatorId) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
-    return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, 0);
+    return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, windowOperatorId);
 }
 
-bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) {
+uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context) {
+    auto tf = getTypeFactory();
+
+    auto executionContextRef= VarRefStatement(context->code->varDeclarationExecutionContext);
+    auto joinOperatorHandler = Join::JoinOperatorHandler::create(join, context->getResultSchema());
+    auto joinOperatorHandlerIndex = context->registerOperatorHandler(joinOperatorHandler);
+
+
+    // create a new setup scope for this operator
+    auto setupScope = context->createSetupScope();
+
+    auto windowOperatorHandlerDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Join::JoinOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(joinOperatorHandlerIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
+        .assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    setupScope->addStatement(windowOperatorStatement.copy());
+
+    // getWindowDefinition
+    auto joinDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinDefinition");
+    auto getWindowDefinitionCall = call("getJoinDefinition");
+    auto windowDefinitionStatement = VarDeclStatement(joinDefDeclaration)
+        .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getWindowDefinitionCall));
+    setupScope->addStatement(windowDefinitionStatement.copy());
+
+
+    // getResultSchema
+    auto resultSchemaDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "resultSchema");
+    auto getResultSchemaCall = call("getResultSchema");
+    auto resultSchemaStatement = VarDeclStatement(resultSchemaDeclaration)
+        .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getResultSchemaCall));
+    setupScope->addStatement(resultSchemaStatement.copy());
+
+    auto keyType = tf->createDataType(join->getJoinKey()->getStamp());
+
+    auto policy = join->getTriggerPolicy();
+    auto executableTrigger = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "trigger");
+    if (policy->getPolicyType() == Windowing::triggerOnTime) {
+        auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
+        auto createTriggerCall = call("Windowing::ExecutableOnTimeTriggerPolicy::create");
+        auto constantTriggerTime =
+            Constant(tf->createValueType(DataTypeFactory::createBasicValue(triggerDesc->getTriggerTimeInMs())));
+        createTriggerCall->addParameter(constantTriggerTime);
+        auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
+        setupScope->addStatement(triggerStatement.copy());
+    } else {
+        NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+    }
+
+    auto action = join->getTriggerAction();
+    auto executableTriggerAction = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "triggerAction");
+    if (action->getActionType() == Join::JoinActionType::LazyNestedLoopJoin) {
+        auto createTriggerActionCall = call("Join::ExecutableNestedLoopJoinTriggerAction<" + keyType->getCode()->code_ +">::create");
+        createTriggerActionCall->addParameter(VarRef(joinDefDeclaration));
+        auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
+        setupScope->addStatement(triggerStatement.copy());
+    } else {
+        NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+    }
+
+
+    // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
+    //    windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
+    auto joinHandler = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinHandler");
+    auto createAggregationWindowHandlerCall = call("Join::JoinHandler<"
+                                                       + keyType->getCode()->code_ + ">::create");
+    createAggregationWindowHandlerCall->addParameter(VarRef(joinDefDeclaration));
+    createAggregationWindowHandlerCall->addParameter(VarRef(executableTrigger));
+    createAggregationWindowHandlerCall->addParameter(VarRef(executableTriggerAction));
+    auto windowHandlerStatement = VarDeclStatement(joinHandler).assign(createAggregationWindowHandlerCall);
+    setupScope->addStatement(windowHandlerStatement.copy());
+
+
+    // windowOperatorHandler->setWindowHandler(windowHandler);
+    auto setWindowHandlerCall = call("setJoinHandler");
+    setWindowHandlerCall->addParameter(VarRef(joinHandler));
+    auto setWindowHandlerStatement = VarRef(windowOperatorHandlerDeclaration).accessPtr(setWindowHandlerCall);
+    setupScope->addStatement(setWindowHandlerStatement.copy());
+
+    // setup window handler
+    auto getSharedFromThis = call("shared_from_this");
+    auto setUpWindowHandlerCall = call("setup");
+    setUpWindowHandlerCall->addParameter(VarRef(context->code->varDeclarationExecutionContext).accessRef(getSharedFromThis));
+
+    auto setupWindowHandlerStatement = VarRef(joinHandler).accessPtr(setUpWindowHandlerCall);
+    setupScope->addStatement(setupWindowHandlerStatement.copy());
+    return joinOperatorHandlerIndex;
+}
+
+bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context, uint64_t operatorHandlerIndex) {
     //    std::cout << joinDef << context << std::endl;
     auto tf = getTypeFactory();
     NES_ASSERT(joinDef, "invalid join definition");
     NES_DEBUG("CCodeGenerator: Generate code for join" << joinDef);
     auto code = context->code;
 
-    //-------------------------
-    //        NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>* state_variable = (NES::StateVariable<int64_t, NES::Windowing::WindowSliceStore<std::vector<InputTuple>>*>*) state_var;
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
-
     auto windowStateVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowStateVar");
-
-    auto windowJoinVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinHandler");
 
     NES_ASSERT(!joinDef->getJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
 
-    auto getJoinHandlerStatement =
-        getJoinWindowHandler(context->code->varDeclarationExecutionContext, joinDef->getJoinKey()->getStamp());
+    auto windowOperatorHandlerDeclaration = getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext,
+                                                                     operatorHandlerIndex);
+    auto windowJoinVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinHandler");
+    auto keyStamp = joinDef->getJoinKey()->getStamp();
+    auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration, keyStamp);
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
+
+
+    //-------------------------
 
     auto getWindowManagerStatement = getWindowManager(windowJoinVariableDeclration);
     context->code->variableInitStmts.emplace_back(
@@ -1474,7 +1570,7 @@ BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(VariableDecl
 BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType) {
     auto tf = getTypeFactory();
     auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(KeyType) + " >");
-    return VarRef(pipelineContextVariable).accessRef(call);
+    return VarRef(pipelineContextVariable).accessPtr(call);
 }
 
 BinaryOperatorStatement CCodeGenerator::getStateVariable(VariableDeclaration windowHandlerVariable) {
@@ -1508,6 +1604,20 @@ VariableDeclaration CCodeGenerator::getWindowOperatorHandler(PipelineContextPtr 
     auto windowOperatorHandlerDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
     auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::WindowOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+    auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
+        .assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+
+    return windowOperatorHandlerDeclaration;
+}
+
+VariableDeclaration CCodeGenerator::getJoinOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t joinOperatorIndex) {
+    auto tf = getTypeFactory();
+    auto executionContextRef= VarRefStatement(tupleBufferVariable);
+    auto windowOperatorHandlerDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Join::JoinOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(joinOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
         .assign(executionContextRef.accessRef(getOperatorHandlerCall));

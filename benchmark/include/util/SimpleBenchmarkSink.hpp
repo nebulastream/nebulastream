@@ -18,6 +18,7 @@
 #define NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
 
 #include <Sinks/Formats/NesFormat.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <future>
 
@@ -28,14 +29,14 @@ namespace NES::Benchmarking {
  */
 class SimpleBenchmarkSink : public SinkMedium {
   public:
-    SimpleBenchmarkSink(SchemaPtr schema, BufferManagerPtr bufferManager)
+    SimpleBenchmarkSink(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
 
-    static std::shared_ptr<SimpleBenchmarkSink> create(SchemaPtr schema, BufferManagerPtr bufferManager) {
+    static std::shared_ptr<SimpleBenchmarkSink> create(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) {
         return std::make_shared<SimpleBenchmarkSink>(schema, bufferManager);
     }
 
-    bool writeData(TupleBuffer& input_buffer, WorkerContext& workerContext) override {
+    bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContext& workerContext) override {
         std::unique_lock lock(m);
         NES_DEBUG("SimpleBenchmarkSink: got buffer with " << input_buffer.getNumberOfTuples() << " number of tuples!");
         NES_INFO("WorkerContextID=" << workerContext.getId());
@@ -49,7 +50,7 @@ class SimpleBenchmarkSink : public SinkMedium {
 
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-    TupleBuffer& get(uint64_t index) {
+    NodeEngine::TupleBuffer& get(uint64_t index) {
         std::unique_lock lock(m);
         return resultBuffers[index];
     }
@@ -84,7 +85,7 @@ class SimpleBenchmarkSink : public SinkMedium {
     }
 
     uint64_t currentTuples = 0;
-    std::vector<TupleBuffer> resultBuffers;
+    std::vector<NodeEngine::TupleBuffer> resultBuffers;
     std::mutex m;
 
   public:

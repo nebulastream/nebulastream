@@ -58,6 +58,8 @@
 #include <utility>
 
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
+#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
@@ -683,7 +685,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1);
+    codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1,0);
 
     /* compile code to pipeline stage */
     auto stage1 = codeGenerator->compile(context1);
@@ -982,8 +984,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 
     /* execute Stage */
     NodeEngine::WorkerContext wctx{0};
+
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(),
-                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+                                                            std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
     stage->execute(inputBuffer,  *queryContext.get(), wctx);
@@ -1004,18 +1008,18 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 /**
  * @brief This test generates a window slicer
  */
-TEST_F(OperatorCodeGenerationTest, DISABELED_codeGenerationJoin) {
+TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
-    auto context1 = PipelineContext::create();
-    context1->pipelineName ="1";
+    auto pipelineContext1 = PipelineContext::create();
+    pipelineContext1->pipelineName ="1";
     auto input_schema = source->getSchema();
 
-    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
+    codeGenerator->generateCodeForScan(source->getSchema(),source->getSchema(), pipelineContext1);
     WindowTriggerPolicyPtr triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
@@ -1024,23 +1028,22 @@ TEST_F(OperatorCodeGenerationTest, DISABELED_codeGenerationJoin) {
         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)), distrType, triggerPolicy, triggerAction,
         1, 1);
 
-    context1->isLeftSide = true;
-    codeGenerator->generateCodeForJoin(joinDef, context1);
+    pipelineContext1->isLeftSide = true;
+    auto index =  codeGenerator->generateJoinSetup(joinDef, pipelineContext1);
+    codeGenerator->generateCodeForJoin(joinDef, pipelineContext1, index);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1);
+    auto stage1 = codeGenerator->compile(pipelineContext1);
 
     auto context2 = PipelineContext::create();
     context2->pipelineName ="1";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2);
-    // init window handler
-    //auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDef);
+    auto joinHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(),
-                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+                                                                           joinHandler);
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr);
-  // joinHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
@@ -1053,9 +1056,11 @@ TEST_F(OperatorCodeGenerationTest, DISABELED_codeGenerationJoin) {
     stage1->execute(inputBuffer,  *executionContext.get(), wctx);
 
     //check partial aggregates in window state
-   // auto stateVar = queryContext->getJoinHandler<Join::JoinHandler, int64_t>()->getLeftJoinState();
-    /*
-    auto stateVar = nullptr;
+    auto stateVar = executionContext->
+                    getOperatorHandler<Join::JoinOperatorHandler>(0)->
+                        getJoinHandler<Join::JoinHandler, int64_t>()->
+                            getLeftJoinState();
+
     for (auto& it : stateVar->rangeAll()) {
         cout << "key=" << it.first << " value=" << it.second << endl;
     }
@@ -1076,6 +1081,6 @@ TEST_F(OperatorCodeGenerationTest, DISABELED_codeGenerationJoin) {
     cout << "results[1]=" << results[1] << endl;
     EXPECT_EQ(results[0], 5);
     EXPECT_EQ(results[1], 5);
-          */
+
 }
 }// namespace NES

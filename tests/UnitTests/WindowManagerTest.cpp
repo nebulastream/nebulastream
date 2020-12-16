@@ -47,11 +47,12 @@
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
 
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
 #include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
+#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
 #include <Windowing/WindowingForwardRefs.hpp>
 
@@ -86,15 +87,24 @@ class MockedExecutablePipelineStage : public NodeEngine::Execution::ExecutablePi
 
 class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext()
-        : PipelineExecutionContext(0, nullptr, [](TupleBuffer&, NodeEngine::WorkerContextRef) { },  nullptr, nullptr) {
+    MockedPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::Execution::OperatorHandlerPtr operatorHandler):
+        MockedPipelineExecutionContext(bufferManager, std::vector<NodeEngine::Execution::OperatorHandlerPtr>{operatorHandler}){}
+    MockedPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
+        : PipelineExecutionContext(
+        0, std::move(bufferManager),
+        [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
+          this->buffers.emplace_back(std::move(buffer));
+        },
+        [this](TupleBuffer& buffer) {
+          this->buffers.emplace_back(std::move(buffer));
+        },
+        std::move(operatorHandlers)){
         // nop
-    }
+    };
 
-    static NodeEngine::Execution::PipelineExecutionContextPtr create(){
-        return std::make_shared<MockedPipelineExecutionContext>();
-    }
+    std::vector<TupleBuffer> buffers;
 };
+
 
 TEST_F(WindowManagerTest, testSumAggregation) {
     auto aggregation = ExecutableSumAggregation<int64_t>::create();
@@ -159,6 +169,18 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     ASSERT_EQ(aggregates[sliceIndex], 2);
 }
 
+template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType, class sumType>
+std::shared_ptr<Windowing::AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>> createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema){
+
+    auto aggregation = sumType::create();
+    auto trigger = Windowing::ExecutableOnTimeTriggerPolicy::create(1000);
+    auto triggerAction =
+        Windowing::ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(
+            windowDefinition, aggregation, resultSchema);
+    return Windowing::AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(
+        windowDefinition, aggregation, trigger, triggerAction);
+}
+
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
@@ -178,34 +200,30 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
                                   ->addField("key", UINT64)
                                   ->addField("value", UINT64);
 
-    auto exec = ExecutableSumAggregation<uint64_t>::create();
-    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
-        windowDef, exec, windowOutputSchema);
-    auto w = std::dynamic_pointer_cast<AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(wAbstr);
-
-    auto context = std::make_shared<MockedPipelineExecutionContext>();
+    auto windowHandler = createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(windowDef, windowOutputSchema);
+    auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(0, 1, MockedExecutablePipelineStage::create(), context, nullptr);
-    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
+    windowHandler->setup(context);
 
-    auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(w)
-                           ->getTypedWindowState();
+    auto windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
 
     uint64_t ts = 7;
-    w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store, 0);
+    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    w->setLastWatermark(7);
+    windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
-    w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store, 0);
+    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
@@ -214,8 +232,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(
-        windowDef, exec, windowOutputSchema);
+
+
+    auto windowAction = std::dynamic_pointer_cast<
+        Windowing::ExecutableCompleteAggregationTriggerAction
+        <uint64_t, uint64_t, uint64_t, uint64_t>>(windowHandler->getWindowAction());
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts);
 
@@ -250,17 +271,16 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
                                   ->addField(createField("end", UINT64))
                                   ->addField("key", INT64)
                                   ->addField("value", INT64);
+    auto windowHandler = createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(windowDef, windowOutputSchema);
+    auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
-    auto exec = ExecutableSumAggregation<int64_t>::create();
-    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(
-        windowDef, exec, windowOutputSchema);
-    auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
                                               MockedExecutablePipelineStage::create(),
-                                              MockedPipelineExecutionContext::create(),
+                                              context,
                                               nullptr);
-    windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
+    windowHandler->setup(context);
 
     auto windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
@@ -287,8 +307,9 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(
-        windowDef, exec, windowOutputSchema);
+    auto windowAction = std::dynamic_pointer_cast<
+        Windowing::ExecutableCompleteAggregationTriggerAction
+            <int64_t, int64_t, int64_t, int64_t>>(windowHandler->getWindowAction());
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
 
@@ -324,15 +345,15 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
                                   ->addField("key", INT64)
                                   ->addField("value", INT64);
 
-    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(
-        windowDef, exec, windowOutputSchema);
-    auto windowHandler = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
+    auto windowHandler = createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(windowDef, windowOutputSchema);
+    auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
+   auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
                                                                  MockedExecutablePipelineStage::create(),
-                                                                 MockedPipelineExecutionContext::create(),
+                                                                 context,
                                                                  nullptr);
-    windowHandler->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
+    windowHandler->setup(context);
 
     auto windowState =
         std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(windowHandler)

@@ -34,14 +34,14 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, Buffe
 
 TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return bufferManager->getBufferBlocking(); }
 
-void PipelineExecutionContext::emitBuffer(TupleBuffer& outputBuffer, WorkerContextRef workerContext) {
+void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef workerContext) {
     // call the function handler
-    emitFunctionHandler(outputBuffer, workerContext);
+    emitFunctionHandler(buffer, workerContext);
 }
 
-void PipelineExecutionContext::dispatchBuffer(TupleBuffer& outputBuffer) {
+void PipelineExecutionContext::dispatchBuffer(TupleBuffer& buffer) {
     // call the function handler
-    emitToQueryManagerFunctionHandler(outputBuffer);
+    emitToQueryManagerFunctionHandler(buffer);
 }
 
 std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() {

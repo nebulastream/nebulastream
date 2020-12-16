@@ -34,7 +34,8 @@ void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 void GeneratableJoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForJoin(joinDefinition, context);
+    auto joinOperatorHandlerIndex = codegen->generateJoinSetup(joinDefinition, context);
+    codegen->generateCodeForJoin(joinDefinition, context, joinOperatorHandlerIndex);
 }
 
 GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNodePtr logicalJoinOperator, OperatorId id) {

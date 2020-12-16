@@ -53,7 +53,6 @@
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/WindowHandler/WindowHandlerFactoryDetails.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>

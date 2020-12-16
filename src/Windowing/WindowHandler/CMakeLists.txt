@@ -14,4 +14,5 @@
 
 add_source_nes(
         WindowOperatorHandler.cpp
+        JoinOperatorHandler.cpp
 )

@@ -41,5 +41,8 @@ using BaseExecutableJoinActionPtr = std::shared_ptr<BaseExecutableJoinAction<Key
 class BaseJoinActionDescriptor;
 typedef std::shared_ptr<BaseJoinActionDescriptor> BaseJoinActionDescriptorPtr;
 
+class JoinOperatorHandler;
+typedef std::shared_ptr<JoinOperatorHandler> JoinOperatorHandlerPtr;
+
 }// namespace NES::Join
 #endif//NES_INCLUDE_JOIN_JOINFORWARDREFS_HPP_

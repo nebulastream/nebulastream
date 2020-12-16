@@ -29,8 +29,8 @@ void GeneratableSlicingWindowOperator::produce(CodeGeneratorPtr codegen, Pipelin
 }
 
 void GeneratableSlicingWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateWindowSetup(windowDefinition, context);
-    codegen->generateCodeForSlicingWindow(windowDefinition, generatableWindowAggregation, context);
+    auto operatorIndex = codegen->generateWindowSetup(windowDefinition, context);
+    codegen->generateCodeForSlicingWindow(windowDefinition, generatableWindowAggregation, context, operatorIndex);
 }
 GeneratableDistributedlWindowSliceCreationOperatorPtr
 GeneratableSlicingWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition,

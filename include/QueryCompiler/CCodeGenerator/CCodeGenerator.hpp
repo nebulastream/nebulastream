@@ -102,7 +102,7 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
                                       GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                      PipelineContextPtr context) override;
+                                      PipelineContextPtr context,  uint64_t windowOperatorIndex) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -116,12 +116,22 @@ class CCodeGenerator : public CodeGenerator {
                                         PipelineContextPtr context,  uint64_t windowOperatorIndex) override;
 
     /**
+    * @brief Code generation the setup method for join operators, which depends on a particular join definition.
+    * @param join The join definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return the operator id
+    */
+    uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr join,
+                                       PipelineContextPtr context) override;
+
+
+    /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param The join definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context) override;
+    bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,  uint64_t operatorHandlerIndex) override;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.
@@ -171,6 +181,8 @@ class CCodeGenerator : public CodeGenerator {
 
     StructDeclaration getStructDeclarationFromWindow(std::string structName);
     CompilerPtr compiler;
+    VariableDeclaration getJoinOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable,
+                                               uint64_t joinOperatorIndex);
 };
 
 }// namespace NES

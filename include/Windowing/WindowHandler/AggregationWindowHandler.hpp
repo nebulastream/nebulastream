@@ -165,6 +165,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     auto getTypedWindowState() { return windowStateVariable; }
 
+    auto getWindowAction(){
+        return executableWindowAction;
+    }
+
   private:
     NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext;
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
