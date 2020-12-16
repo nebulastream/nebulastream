@@ -351,6 +351,7 @@ message SerializableOperator{
   google.protobuf.Any details = 1;
   repeated SerializableOperator children = 2;
   SerializableSchema inputSchema = 3;
-  SerializableSchema outputSchema = 4;
-  uint64 operatorId = 5;
+  SerializableSchema secondInputSchema = 4;
+  SerializableSchema outputSchema = 5;
+  uint64 operatorId = 6;
 }

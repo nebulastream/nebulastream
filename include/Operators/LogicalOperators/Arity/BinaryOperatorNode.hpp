@@ -57,7 +57,8 @@ class BinaryOperatorNode : public LogicalOperatorNode {
     SchemaPtr getRightInputSchema() const;
     void setRightInputSchema(SchemaPtr inputSchema);
 
-    SchemaPtr getInputSchema() const {return nullptr;};
+    //TODO: this is not nice lets try to find a better way such as a isBinaryOperator at the Operator node
+    SchemaPtr getInputSchema() const {return leftInputSchema;};
     void setInputSchema(SchemaPtr){};
 
     /**

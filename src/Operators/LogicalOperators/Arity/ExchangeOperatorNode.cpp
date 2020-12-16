@@ -43,6 +43,7 @@ SchemaPtr ExchangeOperatorNode::getInputSchema() const { return inputSchema; }
 
 SchemaPtr ExchangeOperatorNode::getOutputSchema() const { return outputSchema; }
 
+
 bool ExchangeOperatorNode::inferSchema() {
     // We assume that all children operators have the same output schema otherwise this plan is not valid
     for (const auto& child : children) {

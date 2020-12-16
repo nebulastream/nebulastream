@@ -78,10 +78,14 @@ class OperatorNode : public Node {
 
     virtual bool inferSchema() = 0;
 
-    virtual SchemaPtr getInputSchema() const = 0;
+//    virtual SchemaPtr getInputSchema() const = 0;
+//    virtual void setInputSchema(SchemaPtr inputSchema) = 0;
+
     virtual SchemaPtr getOutputSchema() const = 0;
-    virtual void setInputSchema(SchemaPtr inputSchema) = 0;
     virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
+    virtual bool isBinaryOperator() = 0;
+    virtual bool isExchangeOperator() = 0;
+
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
@@ -106,3 +110,4 @@ class OperatorNode : public Node {
 }// namespace NES
 
 #endif//NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_
+

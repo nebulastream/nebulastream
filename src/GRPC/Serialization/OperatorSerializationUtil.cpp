@@ -167,8 +167,22 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
     }
+
     // serialize input schema
-    SchemaSerializationUtil::serializeSchema(operatorNode->getInputSchema(), serializedOperator->mutable_inputschema());
+    if (!operatorNode->isBinaryOperator()) {
+        if (operatorNode->isExchangeOperator()) {
+            SchemaSerializationUtil::serializeSchema(operatorNode->as<ExchangeOperatorNode>()->getInputSchema(),
+                                                     serializedOperator->mutable_inputschema());
+        } else
+            SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperatorNode>()->getInputSchema(),
+                                                     serializedOperator->mutable_inputschema());
+    } else {
+        SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getLeftInputSchema(),
+                                                 serializedOperator->mutable_inputschema());
+        SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getRightInputSchema(),
+                                                 serializedOperator->mutable_secondinputschema());
+    }
+
     // serialize output schema
     SchemaSerializationUtil::serializeSchema(operatorNode->getOutputSchema(), serializedOperator->mutable_outputschema());
 
@@ -284,7 +298,23 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     // de-serialize operator output schema
     operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_outputschema()));
     // de-serialize operator input schema
-    operatorNode->setInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
+    if (!operatorNode->isBinaryOperator()) {
+        if (operatorNode->isExchangeOperator()) {
+            operatorNode->as<ExchangeOperatorNode>()->setInputSchema(
+                SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
+        }
+        else
+        {
+            operatorNode->as<UnaryOperatorNode>()->setInputSchema(
+                SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
+        }
+    } else {
+        operatorNode->as<BinaryOperatorNode>()->setLeftInputSchema(
+            SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
+        operatorNode->as<BinaryOperatorNode>()->setRightInputSchema(
+            SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_secondinputschema()));
+    }
+
     NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to "
                                                           << operatorNode->toString());
     return operatorNode;
