@@ -1282,7 +1282,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
 
     /* prepare input tuple buffer */
     auto optVal = source->receiveData();
-    assert(!!optVal);
+    NES_ASSERT(optVal.has_value(), "invalid buffer");
     auto inputBuffer = *optVal;
 
     /* execute Stage */

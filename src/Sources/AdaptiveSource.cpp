@@ -71,7 +71,7 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
             lastGatheringTimeStamp = currentTime;
             if (cnt < numBuffersToProcess) {
                 auto optBuf = this->receiveData();
-                if (!!optBuf) {
+                if (optBuf.has_value()) {
                     auto& buf = optBuf.value();
                     NES_DEBUG("AdaptiveSource " << this->operatorId << " string=" << this->toString()
                                                 << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
