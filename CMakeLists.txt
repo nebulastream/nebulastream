@@ -42,11 +42,18 @@ if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "-DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
 
-
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -Werror=unused-variable -Werror=unused-parameter -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK -DNES_DEBUG_MODE=1")
-set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-unused-variable -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-sign-compare -O3 -g -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-unused-variable -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-sign-compare -O3")
+
+# Set Flamegraph Flags
+if (NES_BUILD_BENCHMARKS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -fno-omit-frame-pointer")
+    message("---Flags needed for retrieving function names in flamegraphs have been added!")
+endif()
 
 # Set NES_LOGGING_LEVEL Flag
 if (NES_LOGGING_LEVEL)
