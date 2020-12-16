@@ -22,7 +22,7 @@
 
 namespace NES {
 SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id)
-    : sinkDescriptor(sinkDescriptor), LogicalOperatorNode(id) {}
+    : sinkDescriptor(sinkDescriptor), UnaryOperatorNode(id) {}
 
 SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() { return sinkDescriptor; }
 

@@ -41,6 +41,15 @@ namespace NES {
 class LogicalOperatorNode;
 typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
+class UnaryOperatorNode;
+typedef std::shared_ptr<UnaryOperatorNode> UnaryOperatorNodePtr;
+
+class BinaryOperatorNode;
+typedef std::shared_ptr<BinaryOperatorNode> BinaryOperatorNodePtr;
+
+class ExchangeOperatorNode;
+typedef std::shared_ptr<ExchangeOperatorNode> ExchangeOperatorNodePtr;
+
 class SourceLogicalOperatorNode;
 typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 
@@ -85,6 +94,10 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
+class BroadcastLogicalOperatorNode;
+typedef std::shared_ptr<BroadcastLogicalOperatorNode> BroadcastLogicalOperatorNodePtr;
+
 
 }// namespace NES
 

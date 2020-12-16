@@ -10,6 +10,7 @@ add_source_nes(
         WatermarkAssignerLogicalOperatorNode.cpp
 )
 
+add_subdirectory(Arity)
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Windowing)

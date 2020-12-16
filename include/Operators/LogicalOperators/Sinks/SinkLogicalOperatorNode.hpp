@@ -19,6 +19,7 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 
 namespace NES {
 
@@ -28,7 +29,7 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 /**
  * @brief Node representing logical sink operator
  */
-class SinkLogicalOperatorNode : public LogicalOperatorNode {
+class SinkLogicalOperatorNode : public UnaryOperatorNode {
   public:
     SinkLogicalOperatorNode(OperatorId id);
     SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id);

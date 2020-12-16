@@ -22,7 +22,7 @@
 namespace NES {
 
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor, OperatorId id)
-    : sourceDescriptor(sourceDescriptor), LogicalOperatorNode(id) {}
+    : sourceDescriptor(sourceDescriptor), UnaryOperatorNode(id) {}
 
 bool SourceLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<SourceLogicalOperatorNode>()->getId() == id;

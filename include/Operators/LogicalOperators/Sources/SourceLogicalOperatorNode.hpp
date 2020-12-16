@@ -17,14 +17,14 @@
 #ifndef SOURCE_LOGICAL_OPERATOR_NODE_HPP
 #define SOURCE_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 
 namespace NES {
 
 /**
  * @brief Node representing logical source operator
  */
-class SourceLogicalOperatorNode : public LogicalOperatorNode {
+class SourceLogicalOperatorNode : public UnaryOperatorNode {
   public:
     explicit SourceLogicalOperatorNode(SourceDescriptorPtr sourceDescriptor, OperatorId id);
 

@@ -21,6 +21,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -93,7 +95,7 @@ Query& Query::join(Query* subQuery, ExpressionItem onKey, const Windowing::Windo
         }
     }
 
-    OperatorNodePtr op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
+    auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;

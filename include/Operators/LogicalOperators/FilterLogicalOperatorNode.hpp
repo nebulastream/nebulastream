@@ -18,20 +18,14 @@
 #define FILTER_LOGICAL_OPERATOR_NODE_HPP
 
 #include <API/UserAPIExpression.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 namespace NES {
-
-class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
-
-class FilterLogicalOperatorNode;
-typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 
 /**
  * @brief Filter operator, which contains an expression as a predicate.
  */
-class FilterLogicalOperatorNode : public LogicalOperatorNode {
+class FilterLogicalOperatorNode : public UnaryOperatorNode {
   public:
     explicit FilterLogicalOperatorNode(const ExpressionNodePtr, OperatorId id);
     ~FilterLogicalOperatorNode() = default;

@@ -17,14 +17,15 @@
 #ifndef MAP_LOGICAL_OPERATOR_NODE_HPP
 #define MAP_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
 
 /**
  * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
  */
-class MapLogicalOperatorNode : public LogicalOperatorNode {
+class MapLogicalOperatorNode : public UnaryOperatorNode{
   public:
     MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id);
 

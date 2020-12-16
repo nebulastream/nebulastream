@@ -38,9 +38,9 @@ GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperato
     return std::make_shared<GeneratableMergeOperator>(GeneratableMergeOperator(logicalMergeOperator->getOutputSchema(), id));
 }
 
-GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schemaP, OperatorId id) : MergeLogicalOperatorNode(id) {
-    setInputSchema(schemaP);
-    setOutputSchema(schemaP);
+GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schema, OperatorId id) : MergeLogicalOperatorNode(id) {
+    setInputSchema(schema);
+    setOutputSchema(schema);
 }
 
 const std::string GeneratableMergeOperator::toString() const {

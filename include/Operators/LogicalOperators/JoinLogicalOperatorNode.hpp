@@ -17,19 +17,18 @@
 #ifndef Join_LOGICAL_OPERATOR_NODE_HPP
 #define Join_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <memory>
 #include <z3++.h>
 
 namespace NES {
 
-class JoinLogicalOperatorNode;
-typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
 
 /**
  * @brief Join operator, which contains an expression as a predicate.
  */
-class JoinLogicalOperatorNode : public LogicalOperatorNode {
+class JoinLogicalOperatorNode : public BinaryOperatorNode {
   public:
     explicit JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
     ~JoinLogicalOperatorNode() = default;
