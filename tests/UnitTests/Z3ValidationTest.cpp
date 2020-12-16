@@ -180,7 +180,23 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     context c;
     expr x = c.int_const("x");
     expr y = c.int_const("y");
+    sort input = c.int_sort();
     solver s(c);
+
+    func_decl maxFunc = function("max", input, input);
+    func_decl minFunc = function("min", input, input);
+
+    //window(Tumbling::create(20s), sum("agg"));
+    //window(Tumbling::create(10s), sum("agg")).window(Tumbling::create(10s), sum("agg"));
+
+    s.add(x==y);
+    s.add(maxFunc(x) != maxFunc(maxFunc(y)));
+    ASSERT_EQ(s.check(), unsat);
+    s.reset();
+
+    s.add(maxFunc(x) != minFunc(x));
+    ASSERT_EQ(s.check(), unsat);
+    s.reset();
 
     //x>y && x<y && x != y
 
