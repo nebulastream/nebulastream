@@ -139,7 +139,7 @@ TEST_F(SourceTest, testBinarySource) {
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
-        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
             ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
                       << std::endl;
@@ -178,7 +178,7 @@ TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
     uint64_t bufferCnt = 0;
     while (source->getNumberOfGeneratedBuffers() < 5) {
         auto optBuf = source->receiveData();
-        if (!!optBuf) {
+        if (optBuf.has_value()) {
             std::cout << "buffer no=" << bufferCnt << std::endl;
             for (uint64_t i = 0; i < optBuf->getNumberOfTuples(); i++) {
                 ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
@@ -267,7 +267,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
-        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
             ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
                       << std::endl;
@@ -312,7 +312,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
-        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
             everyIntTypeRecord record(*((everyIntTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.uint64_entry: " << record.uint64_entry
                       << ", record.int64_entry: " << record.int64_entry << ", record.uint32_entry: " << record.uint32_entry
@@ -386,7 +386,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
-        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
             everyFloatTypeRecord record(*((everyFloatTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.float64_entry: " << record.float64_entry
                       << ", record.float32_entry: " << record.float32_entry << std::endl;
@@ -432,7 +432,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
-        while (i * tuple_size < buffer_size - tuple_size && !!optBuf) {
+        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
             everyBooleanTypeRecord record(*((everyBooleanTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.false_entry: " << record.false_entry
                       << ", record.true_entry: " << record.true_entry << ", record.falsey_entry: " << record.falsey_entry

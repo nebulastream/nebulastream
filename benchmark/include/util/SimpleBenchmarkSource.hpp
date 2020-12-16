@@ -90,7 +90,7 @@ class SimpleBenchmarkSource : public DataSource {
 
                     // we are using always the same buffer, so no receiveData() call for every iteration
                     // auto optBuf = receiveData();
-                    if (!!optBuf) {
+                    if (optBuf.has_value()) {
                         // here we got a valid buffer
                         auto& buf = optBuf.value();
                         queryManager->addWork(this->operatorId, buf);

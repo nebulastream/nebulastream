@@ -183,7 +183,7 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
             auto optBuf = receiveData();
 
             //this checks we received a valid output buffer
-            if (!!optBuf) {
+            if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
                 NES_DEBUG("DataSource " << operatorId << " type=" << getType() << " string=" << toString()
                                         << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
