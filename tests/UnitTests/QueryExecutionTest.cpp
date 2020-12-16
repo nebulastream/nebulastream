@@ -321,8 +321,8 @@ TEST_F(QueryExecutionTest, filterQuery) {
 }
 
 TEST_F(QueryExecutionTest, projectionQuery) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -350,17 +350,17 @@ TEST_F(QueryExecutionTest, projectionQuery) {
                     .build();
 
     // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Created);
-    EXPECT_EQ(plan->numberOfPipelineStages(), 1);
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
+    EXPECT_EQ(plan->getNumberOfPipelines(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = createRowLayout(testSchema);
+    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
-    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Deployed);
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
     plan->start();
-    ASSERT_EQ(plan->getStatus(), QueryExecutionPlan::Running);
-    WorkerContext workerContext{1};
-    plan->getStage(0)->execute(buffer, workerContext);
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
+    NodeEngine::WorkerContext workerContext{1};
+    plan->getPipeline(0)->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
@@ -369,7 +369,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultLayout = createRowLayout(outputSchema);
+    auto resultLayout = NodeEngine::createRowLayout(outputSchema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), recordIndex);

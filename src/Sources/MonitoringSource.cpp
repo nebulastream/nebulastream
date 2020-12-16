@@ -29,7 +29,7 @@
 namespace NES {
 
 MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog,
-                                   BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                   NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                    const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
     : DefaultSource(Schema::create(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       monitoringPlan(monitoringPlan), metricGroup(monitoringPlan->createMetricGroup(metricCatalog)) {
@@ -40,7 +40,7 @@ MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatal
     NES_INFO("MonitoringSources: Created with schema:\n" << schema->toString());
 }
 
-std::optional<TupleBuffer> MonitoringSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> MonitoringSource::receiveData() {
     NES_DEBUG("MonitoringSource:" << this << " requesting buffer");
     auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("MonitoringSource:" << this << " got buffer");
