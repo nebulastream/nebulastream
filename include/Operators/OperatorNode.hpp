@@ -63,10 +63,20 @@ class OperatorNode : public Node {
      * @brief detect if this operator is a n-ary operator, i.e., it has multiple parent or children.
      * @return true if n-ary else false;
      */
-    bool isNAryOperator();
+    bool hasMultipleChildrenOrParents();
 
+    /**
+     * @brief method to add a child to this node
+     * @param newNode
+     * @return bool indicating success
+     */
     bool addChild(const NodePtr newNode) override;
 
+    /**
+    * @brief method to add a parent to this node
+    * @param newNode
+    * @return bool indicating success
+    */
     bool addParent(const NodePtr newNode) override;
 
     /**
@@ -76,14 +86,40 @@ class OperatorNode : public Node {
      */
     NodePtr getChildWithOperatorId(uint64_t operatorId);
 
+    /**
+     * @brief Method to infer the schema for this operator
+     * @return bool indicating success
+     */
     virtual bool inferSchema() = 0;
 
-//    virtual SchemaPtr getInputSchema() const = 0;
-//    virtual void setInputSchema(SchemaPtr inputSchema) = 0;
-
+    /**
+     * @brief Method to get the output schema of the operator
+     * @return output schema
+     */
     virtual SchemaPtr getOutputSchema() const = 0;
+
+    /**
+     * @brief Method to set the output schema
+     * @param outputSchema
+     */
     virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
+
+    /**
+     * @brief This methods return if the operator is a binary operator, i.e., as two input schemas
+     * @return bool
+     */
     virtual bool isBinaryOperator() = 0;
+
+    /**
+    * @brief This methods return if the operator is a unary operator, i.e., as oneinput schemas
+    * @return bool
+     */
+    virtual bool isUnaryOperator() = 0;
+
+    /**
+    * @brief This methods return if the operator is an exchange operator, i.e., it has potentially multiple output schemas
+    * @return bool
+    */
     virtual bool isExchangeOperator() = 0;
 
   protected:

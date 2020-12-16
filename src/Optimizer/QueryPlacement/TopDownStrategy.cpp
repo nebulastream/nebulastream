@@ -102,7 +102,7 @@ void TopDownStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
 void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNode, TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("TopDownStrategy: Place " << operatorNode);
-    if ((operatorNode->isNAryOperator() || operatorNode->instanceOf<SourceLogicalOperatorNode>())
+    if ((operatorNode->hasMultipleChildrenOrParents() || operatorNode->instanceOf<SourceLogicalOperatorNode>())
         && !operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
 
         NES_TRACE("TopDownStrategy: Received an NAry operator for placement.");

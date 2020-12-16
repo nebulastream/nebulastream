@@ -32,7 +32,7 @@ uint64_t OperatorNode::getId() const { return id; }
 
 void OperatorNode::setId(uint64_t id) { OperatorNode::id = id; }
 
-bool OperatorNode::isNAryOperator() {
+bool OperatorNode::hasMultipleChildrenOrParents() {
     //has multiple child operator
     bool hasMultipleChildren = (!getChildren().empty()) && getChildren().size() > 1;
     //has multiple parent operator
