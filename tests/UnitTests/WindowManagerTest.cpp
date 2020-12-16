@@ -421,51 +421,36 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
                                   ->addField("key", UINT64)
                                   ->addField("value", UINT64);
 
-    auto exec = ExecutableSumAggregation<uint64_t>::create();
-    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<uint64_t, uint64_t, uint64_t, uint64_t>(
-        windowDef, exec, windowOutputSchema);
-    auto w = std::dynamic_pointer_cast<AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(wAbstr);
+    auto windowHandler = createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(windowDef, windowOutputSchema);
+    auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
-    class MockedExecutablePipeline : public ExecutablePipeline {
-      public:
-        uint32_t execute(TupleBuffer&, QueryExecutionContextPtr, WorkerContextRef) override { return 0; }
-    };
 
-    class MockedPipelineExecutionContext : public PipelineExecutionContext {
-      public:
-        MockedPipelineExecutionContext()
-            : PipelineExecutionContext(
-                0, nullptr,
-                [](TupleBuffer&, WorkerContextRef) {
-                },
-                nullptr, nullptr) {
-            // nop
-        }
-    };
-    auto executable = std::make_shared<MockedExecutablePipeline>();
-    auto context = std::make_shared<MockedPipelineExecutionContext>();
-    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
-    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
-    auto windowState = std::dynamic_pointer_cast<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>(w)
-                           ->getTypedWindowState();
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
+                                                                                             MockedExecutablePipelineStage::create(),
+                                                                                             context,
+                                                                                             nullptr);
+
+    windowHandler->setup(context);
+    auto windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
 
     uint64_t ts = 7;
-    w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store, 0);
+    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    w->setLastWatermark(7);
+    windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
-    w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store, 0);
+    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
@@ -474,8 +459,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     ASSERT_EQ(aggregates[sliceIndex], 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    auto windowAction = ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(
-        windowDef, exec, windowOutputSchema);
+
+    auto windowAction = std::dynamic_pointer_cast<
+        Windowing::ExecutableCompleteAggregationTriggerAction
+            <uint64_t, uint64_t, uint64_t, uint64_t>>(windowHandler->getWindowAction());
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts);
 
@@ -514,50 +501,38 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
                                   ->addField("key", INT64)
                                   ->addField("value", INT64);
 
-    auto exec = ExecutableSumAggregation<int64_t>::create();
-    auto wAbstr = WindowHandlerFactoryDetails::createKeyedAggregationWindow<int64_t, int64_t, int64_t, int64_t>(
-        windowDef, exec, windowOutputSchema);
-    auto w = std::dynamic_pointer_cast<AggregationWindowHandler<int64_t, int64_t, int64_t, int64_t>>(wAbstr);
+    auto windowHandler = createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(windowDef, windowOutputSchema);
+    auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
-    class MockedExecutablePipeline : public ExecutablePipeline {
-      public:
-        uint32_t execute(TupleBuffer&, QueryExecutionContextPtr, WorkerContext&) override { return 0; }
-    };
 
-    class MockedPipelineExecutionContext : public PipelineExecutionContext {
-      public:
-        MockedPipelineExecutionContext()
-            : PipelineExecutionContext(
-                0, nullptr,
-                [](TupleBuffer&, WorkerContext&) {
-                },
-                nullptr, nullptr) {
-            // nop
-        }
-    };
-    auto executable = std::make_shared<MockedExecutablePipeline>();
-    auto context = std::make_shared<MockedPipelineExecutionContext>();
-    auto nextPipeline = PipelineStage::create(0, 1, executable, context, nullptr);
-    w->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), nextPipeline, 0, 1);
 
-    auto windowState = w->getTypedWindowState();
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(/*PipelineStageId*/0, /*QueryID*/1,
+                                                                                             MockedExecutablePipelineStage::create(),
+                                                                                             context,
+                                                                                             nullptr);
+
+
+    windowHandler->setup(context);
+
+    auto windowState = windowHandler->getTypedWindowState();
     auto keyRef = windowState->get(10);
     keyRef.valueOrDefault(0);
     auto store = keyRef.value();
 
     uint64_t ts = 7;
-    w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store, 0);
+    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    w->setLastWatermark(7);
+    windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
 
     ts = 14;
-    w->updateMaxTs(ts, 0);
-    w->getWindowManager()->sliceStream(ts, store, 0);
+    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
@@ -565,8 +540,9 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(
-        windowDef, exec, windowOutputSchema);
+    auto windowAction = std::dynamic_pointer_cast<
+        Windowing::ExecutableCompleteAggregationTriggerAction
+            <int64_t, int64_t, int64_t, int64_t>>(windowHandler->getWindowAction());
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
 
