@@ -127,7 +127,7 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferMana
  * @param kafkaConsumerTimeout  kafka consumer timeout
  * @return
  */
-const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                       std::string brokers, std::string topic, std::string groupId, bool autoCommit,
                                       uint64_t kafkaConsumerTimeout);
 #endif
@@ -143,7 +143,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManage
  * @param password for authentication if needed
  * @return
  */
-const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,NodeEngine::QueryManagerPtr queryManager,
                                     std::string url, UA_NodeId nodeId, std::string user, std::string password,
                                     OperatorId operatorId);
 #endif
