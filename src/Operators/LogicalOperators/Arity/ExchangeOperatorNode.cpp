@@ -16,9 +16,7 @@
  * limitations under the License.
  *
  */
-//
-// Created by zeuchste on 15.12.20.
-//
+
 #include <Operators/LogicalOperators/Arity/ExchangeOperatorNode.hpp>
 #include <API/Schema.hpp>
 

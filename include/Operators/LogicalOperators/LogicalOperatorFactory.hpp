@@ -35,7 +35,7 @@ class LogicalOperatorFactory {
      * @brief Create a new logical filter operator.
      * @param predicate: the filter predicate is represented as an expression node, which has to return true.
      * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
+     * @return UnaryOperatorNodePtr
      */
     static UnaryOperatorNodePtr createFilterOperator(const ExpressionNodePtr predicate,
                                                        OperatorId id = UtilityFunctions::getNextOperatorId());
@@ -62,7 +62,7 @@ class LogicalOperatorFactory {
      * @brief Create a new map operator with a field assignment expression as a map expression.
      * @param mapExpression the FieldAssignmentExpressionNode.
      * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
+     * @return UnaryOperatorNodePtr
      */
     static UnaryOperatorNodePtr createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression,
                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
@@ -71,81 +71,10 @@ class LogicalOperatorFactory {
      * @brief Create a new source operator with source descriptor.
      * @param sourceDescriptor the SourceDescriptorPtr.
      * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
+     * @return UnaryOperatorNodePtr
      */
     static UnaryOperatorNodePtr createSourceOperator(const SourceDescriptorPtr sourceDescriptor,
                                                        OperatorId id = UtilityFunctions::getNextOperatorId());
-
-    /**
-     * @brief Create a new window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
-     */
-    static UnaryOperatorNodePtr createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                                       OperatorId id = UtilityFunctions::getNextOperatorId());
-
-    /**
-     * @brief Create a specialized central window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
-     */
-    static UnaryOperatorNodePtr
-    createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                           OperatorId id = UtilityFunctions::getNextOperatorId());
-
-    /**
-     * @brief Create a specialized slice creation window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
-     */
-    static UnaryOperatorNodePtr
-    createSliceCreationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                           OperatorId id = UtilityFunctions::getNextOperatorId());
-
-    /**
-     * @brief Create a specialized slice merging window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
-     */
-    static UnaryOperatorNodePtr
-    createSliceMergingSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                          OperatorId id = UtilityFunctions::getNextOperatorId());
-
-    /**
-     * @brief Create a specialized window computation window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
-     */
-    static UnaryOperatorNodePtr
-    createWindowComputationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                               OperatorId id = UtilityFunctions::getNextOperatorId());
-
-    /**
-     * @brief Create a specialized merge operator.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
-     */
-    static UnaryOperatorNodePtr createMergeOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
-
-    /**
-    * @brief Create a specialized join operator.
-    * @param id: the id of the operator if not defined then next free operator id is used.
-    * @return LogicalOperatorNodePtr
-    */
-    static BinaryOperatorNodePtr createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition,
-                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
-
-    /**
-     * @brief Create a broadcast operator.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorNodePtr
-     */
-    static ExchangeOperatorNodePtr createBroadcastOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Create a specialized watermark assigner operator.
@@ -156,6 +85,77 @@ class LogicalOperatorFactory {
     static UnaryOperatorNodePtr
     createWatermarkAssignerOperator(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
                                     OperatorId id = UtilityFunctions::getNextOperatorId());
+    /**
+     * @brief Create a new window operator with window definition.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
+     * @param id: the id of the operator if not defined then next free operator id is used.
+     * @return UnaryOperatorNodePtr
+     */
+    static UnaryOperatorNodePtr createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                                       OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+     * @brief Create a specialized central window operator with window definition.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
+     * @param id: the id of the operator if not defined then next free operator id is used.
+     * @return UnaryOperatorNodePtr
+     */
+    static UnaryOperatorNodePtr
+    createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                           OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+     * @brief Create a specialized slice creation window operator with window definition.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
+     * @param id: the id of the operator if not defined then next free operator id is used.
+     * @return UnaryOperatorNodePtr
+     */
+    static UnaryOperatorNodePtr
+    createSliceCreationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                           OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+     * @brief Create a specialized slice merging window operator with window definition.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
+     * @param id: the id of the operator if not defined then next free operator id is used.
+     * @return UnaryOperatorNodePtr
+     */
+    static UnaryOperatorNodePtr
+    createSliceMergingSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                          OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+     * @brief Create a specialized window computation window operator with window definition.
+     * @param windowDefinition the LogicalWindowDefinitionPtr.
+     * @param id: the id of the operator if not defined then next free operator id is used.
+     * @return UnaryOperatorNodePtr
+     */
+    static UnaryOperatorNodePtr
+    createWindowComputationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                               OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+     * @brief Create a specialized merge operator.
+     * @param id: the id of the operator if not defined then next free operator id is used.
+     * @return UnaryOperatorNodePtr
+     */
+    static UnaryOperatorNodePtr createMergeOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+    * @brief Create a specialized join operator.
+    * @param id: the id of the operator if not defined then next free operator id is used.
+    * @return BinaryOperatorNodePtr
+    */
+    static BinaryOperatorNodePtr createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition,
+                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+     * @brief Create a broadcast operator.
+     * @param id: the id of the operator if not defined then next free operator id is used.
+     * @return ExchangeOperatorNodePtr
+     */
+    static ExchangeOperatorNodePtr createBroadcastOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
+
 };
 
 }// namespace NES

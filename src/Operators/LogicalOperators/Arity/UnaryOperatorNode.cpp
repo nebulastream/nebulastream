@@ -16,9 +16,6 @@
  * limitations under the License.
  *
  */
-//
-// Created by zeuchste on 15.12.20.
-//
 #include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <API/Schema.hpp>
 
