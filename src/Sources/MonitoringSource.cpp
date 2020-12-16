@@ -16,9 +16,9 @@
 
 #include <Sources/MonitoringSource.hpp>
 
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
+#include <Monitoring/Metrics/MetricGroup.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
@@ -28,8 +28,9 @@
 
 namespace NES {
 
-MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog, BufferManagerPtr bufferManager,
-                                   QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
+MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog,
+                                   BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                                   const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
     : DefaultSource(Schema::create(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       monitoringPlan(monitoringPlan), metricGroup(monitoringPlan->createMetricGroup(metricCatalog)) {
 
