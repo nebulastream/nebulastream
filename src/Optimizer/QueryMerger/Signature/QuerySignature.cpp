@@ -20,16 +20,20 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns) {
-    return std::make_shared<QuerySignature>(QuerySignature(conditions, columns));
+QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
+                                         std::map<std::string, z3::ExprPtr> windowsExpressions) {
+    return std::make_shared<QuerySignature>(QuerySignature(conditions, columns, windowsExpressions));
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> cols)
-    : conditions(conditions), columns(cols) {}
+QuerySignature::QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
+                               std::map<std::string, z3::ExprPtr> windowsExpressions)
+    : conditions(conditions), columns(columns), windowsExpressions(windowsExpressions) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
 std::map<std::string, std::vector<z3::ExprPtr>> QuerySignature::getColumns() { return columns; }
+
+std::map<std::string, z3::ExprPtr> QuerySignature::getWindowsExpressions() { return windowsExpressions; }
 
 bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
@@ -82,5 +86,4 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     NES_DEBUG("Solving: " << solver);
     return solver.check() == z3::unsat;
 }
-
 }// namespace NES::Optimizer

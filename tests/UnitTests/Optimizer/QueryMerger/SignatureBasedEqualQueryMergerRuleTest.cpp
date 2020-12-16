@@ -816,7 +816,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     queryPlan1->setQueryId(queryId1);
 
     auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("id"));
+    auto aggregation2 = Max(Attribute("value"));
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)

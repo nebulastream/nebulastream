@@ -57,11 +57,13 @@ class QuerySignature {
   public:
     /**
      * @brief Create instance of Query plan signature
-     * @param conditions : the predicates involved in the query
-     * @param columns : the predicates involving columns to be extracted
+     * @param conditions: the predicates involved in the query
+     * @param columns: the predicates involving columns to be extracted
+     * @param windowsExpressions: the map containing window expressions
      * @return Shared instance of the query plan signature.
      */
-    static QuerySignaturePtr create(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns);
+    static QuerySignaturePtr create(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
+                                    std::map<std::string, z3::ExprPtr> windowsExpressions);
 
     /**
      * @brief Get the conditions
@@ -76,6 +78,12 @@ class QuerySignature {
     std::map<std::string, std::vector<z3::ExprPtr>> getColumns();
 
     /**
+     * @brief Get the window definitions
+     * @return map of window definitions
+     */
+    std::map<std::string, z3::ExprPtr> getWindowsExpressions();
+
+    /**
      * @brief Validate if this signature is equal to input signature
      * @param other : the signature to be compared against
      * @return true if equal else false
@@ -83,10 +91,11 @@ class QuerySignature {
     bool isEqual(QuerySignaturePtr other);
 
   private:
-    QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> cols);
+    QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
+                   std::map<std::string, z3::ExprPtr> windowsExpressions);
     z3::ExprPtr conditions;
     std::map<std::string, std::vector<z3::ExprPtr>> columns;
-    std::map<std::string, std::vector<z3::ExprPtr>> winds;
+    std::map<std::string, z3::ExprPtr> windowsExpressions;
 };
 }// namespace NES::Optimizer
 
