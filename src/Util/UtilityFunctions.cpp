@@ -112,7 +112,6 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
             auto pos1 = queryCodeSnippet.find("join(");
             if (pos1 != std::string::npos) {
                 boost::replace_first(newQuery, "Query::from", "return Query::from");
-                auto pos1 = queryCodeSnippet.find("join(");
                 std::string tmp = queryCodeSnippet.substr(pos1);
                 auto pos2 = tmp.find("),");
                 //find the end bracket of merge query

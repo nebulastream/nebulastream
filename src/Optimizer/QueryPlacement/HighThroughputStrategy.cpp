@@ -33,8 +33,6 @@ namespace NES {
 
 HighThroughputStrategy::HighThroughputStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
 
-NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan,
-                                                                    StreamCatalogPtr streamCatalog) {
 
     NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery, StreamCatalogPtr streamCatalog) {
 

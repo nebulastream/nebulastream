@@ -41,7 +41,7 @@ MetricType getMetricType(const T&) {
  * @param the prefix as std::string
  */
 void serialize(uint64_t metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
-void serialize(std::string metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const std::string& metric, std::shared_ptr<Schema> schema, TupleBuffer& buf, const std::string& prefix);
 
 /**
  * @brief The metric class is a conceptual superclass that represents all metrics in NES.

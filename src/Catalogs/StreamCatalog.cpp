@@ -221,9 +221,9 @@ bool StreamCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
                                                                     << " physicalStream=" << entry->get()->getPhysicalName()
                                                                     << " logicalStream=" << logStream.first);
                 //TODO: fix this to return value of erase to update entry or if you use the foreach loop, collect the entries to remove, and remove them in a batch after
-                logicalToPhysicalStreamMapping[logStream.first].erase(entry);
                 NES_DEBUG("StreamCatalog: deleted physical stream with hashID"
-                          << hashId << "and name" << entry->get()->getPhysicalName() << " successfully");
+                          << hashId << "and name" << entry->get()->getPhysicalName());
+                logicalToPhysicalStreamMapping[logStream.first].erase(entry);
                 return true;
             }
         }

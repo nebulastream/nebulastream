@@ -56,7 +56,6 @@ void NodeStatsProvider::readCpuStats() {
 
     std::ifstream fileStat("/proc/stat");
     std::string line;
-    std::string token;
     auto numberOfPreccessors = 0;
     while (std::getline(fileStat, line)) {
         // line starts with "cpu"
@@ -217,7 +216,7 @@ void NodeStatsProvider::readMemStats() {
         memoryStats->set_loads_5min(sinfo->loads[1]);
         memoryStats->set_loads_15min(sinfo->loads[2]);
     }
-    delete sinfo;
+    delete[] sinfo;
 }
 #else
 void NodeStatsProvider::readMemStats() {}
@@ -240,7 +239,7 @@ void NodeStatsProvider::readDiskStats() {
         diskStates->set_f_bfree(svfs->f_bfree);
         diskStates->set_f_bavail(svfs->f_bavail);
     }
-    delete svfs;
+    delete[] svfs;
 }
 #else
 void NodeStatsProvider::readDiskStats() {}

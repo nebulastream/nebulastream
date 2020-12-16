@@ -119,13 +119,11 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         // serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: serialize to MergeLogicalOperatorNode");
         auto mergeDetails = SerializableOperator_MergeDetails();
-        auto mergeOperator = operatorNode->as<MergeLogicalOperatorNode>();
         serializedOperator->mutable_details()->PackFrom(mergeDetails);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         // serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: serialize to BroadcastLogicalOperatorNode");
         auto broadcastDetails = SerializableOperator_BroadcastDetails();
-        auto broadcastOperator = operatorNode->as<BroadcastLogicalOperatorNode>();
         serializedOperator->mutable_details()->PackFrom(broadcastDetails);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         // serialize map operator
@@ -396,7 +394,6 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         }
     }
 
-    auto distributionCharacteristics = SerializableOperator_WindowDetails_DistributionCharacteristic();
     if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
         windowDetails.mutable_distrchar()->set_distr(
             SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete);
@@ -486,7 +483,6 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
         }
     }
 
-    auto distributionCharacteristics = SerializableOperator_JoinDetails_DistributionCharacteristic();
     if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
         joinDetails.mutable_distrchar()->set_distr(
             SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Complete);
@@ -563,8 +559,6 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         auto serializedTimeCharacterisitc = serializedTumblingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
-            auto eventTimeField =
-                AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
             auto multiplier = serializedTimeCharacterisitc.multiplier();
             window = Windowing::TumblingWindow::of(
@@ -583,8 +577,6 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
         auto serializedTimeCharacterisitc = serializedSlidingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime) {
-            auto eventTimeField =
-                AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
             window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
@@ -704,8 +696,6 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         auto serializedTimeCharacterisitc = serializedTumblingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_JoinDetails_TimeCharacteristic_Type_EventTime) {
-            auto eventTimeField =
-                AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
                                                    Windowing::TimeMeasure(serializedTumblingWindow.size()));
@@ -722,8 +712,6 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
         auto serializedTimeCharacterisitc = serializedSlidingWindow.timecharacteristic();
         if (serializedTimeCharacterisitc.type() == SerializableOperator_JoinDetails_TimeCharacteristic_Type_EventTime) {
-            auto eventTimeField =
-                AttributeField::create(serializedTimeCharacterisitc.field(), DataTypeFactory::createUndefined());
             auto field = Attribute(serializedTimeCharacterisitc.field());
             window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
@@ -1195,8 +1183,7 @@ SerializableOperator_WatermarkStrategyDetails* OperatorSerializationUtil::serial
             eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime());
         serializedWatermarkStrategyDescriptor.set_multiplier(eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMultiplier());
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
-    } else if (auto ingestionTimeWatermarkStrategyDescriptor =
-                   std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
+    } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
         auto serializedWatermarkStrategyDescriptor =
             SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor();
         watermarkStrategyDetails->mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);

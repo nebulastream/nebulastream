@@ -60,7 +60,6 @@ bool CentralWindowOperator::inferSchema() {
     auto windowAggregation = windowDefinition->getWindowAggregation();
     windowAggregation->inferStamp(inputSchema);
 
-    auto windowType = windowDefinition->getWindowType();
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);

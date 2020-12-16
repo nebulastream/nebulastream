@@ -244,10 +244,11 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNod
 
     TopologyNodePtr foundNode = nullptr;
     for (auto& parent : parents) {
-        TopologyNodePtr found = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
-        if (found) {
+        TopologyNodePtr foundInParent = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
+        if (foundInParent) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
             if (!foundNode) {
+                //TODO: SZ I don't understand how we can end up here
                 if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
                     const TopologyNodePtr copyOfTestNode = testNode->copy();
                     uniqueNodes[testNode->getId()] = copyOfTestNode;
@@ -255,7 +256,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNod
                 foundNode = uniqueNodes[testNode->getId()];
             }
             NES_TRACE("Topology: Adding found node as parent to the copy of testNode.");
-            foundNode->addParent(found);
+            foundNode->addParent(foundInParent);
         }
     }
     return foundNode;
@@ -274,7 +275,6 @@ std::string Topology::toString() {
 
     // store pair of TopologyNodePtr and its depth in when printed
     std::deque<std::pair<TopologyNodePtr, uint64_t>> parentToPrint{std::make_pair(rootNode, 0)};
-    std::deque<std::pair<TopologyNodePtr, uint64_t>> childToPrint;
 
     // indent offset
     int indent = 2;

@@ -87,12 +87,9 @@ void Schema::replaceField(const std::string& name, DataTypePtr type) {
 }
 
 bool Schema::has(const std::string& fieldName) {
-    for (auto& field : fields) {
-        if (field->name == fieldName) {
-            return true;
-        }
-    }
-    return false;
+return std::any_of(fields.begin(), fields.end(), [&fieldName](const auto& field){
+                                                        return field->name == fieldName;
+                                                        });    
 }
 
 AttributeFieldPtr Schema::get(const std::string& fieldName) {

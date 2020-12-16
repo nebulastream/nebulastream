@@ -38,7 +38,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
     try {
         ChannelId channelId(nesPartition, NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
-        NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << linger << ", id=" << channelId);
+        NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
         zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
         zmqSocket.connect(socketAddr);
@@ -104,7 +104,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
             NES_DEBUG("OutputChannel: Zmq context closed!");
         } else {
             NES_ERROR("OutputChannel: Zmq error " << err.what());
-            throw err;
+            throw;
         }
     }
     return nullptr;

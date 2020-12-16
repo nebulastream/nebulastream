@@ -600,9 +600,9 @@ bool Node::isCyclic() {
     // test all sub-node in the DAG
     for (auto&& node : allChildren) {
         if (isCyclicHelper(*node)) {
-            for (auto&& node : allChildren) {
-                node->visited = false;
-                node->recStack = false;
+            for (auto&& innerNode : allChildren) {
+                innerNode->visited = false;
+                innerNode->recStack = false;
             }
             return true;
         }

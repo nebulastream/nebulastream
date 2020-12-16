@@ -29,7 +29,7 @@
 #include <Util/TimeMeasurement.hpp>
 
 constexpr char* KAFKA_BROKER = "localhost:9092";
-
+createDefaultDataSourceWithSchemaForOneBuffer
 namespace NES {
 
 class KafkaTest : public testing::Test {

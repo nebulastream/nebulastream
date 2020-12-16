@@ -44,7 +44,7 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
         return ZmqSinkDescriptor::create(zmqSink->getHost(), zmqSink->getPort());
     }
 #ifdef ENABLE_KAFKA_BUILD
-    case KAFKA_SINK: {
+    else if (sinkType == "KAFKA_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating Kafka sink");
         KafkaSinkPtr kafkaSink = std::dynamic_pointer_cast<KafkaSink>(dataSink);
         return KafkaSinkDescriptor::create(kafkaSink->getTopic(), kafkaSink->getBrokers(), kafkaSink->getKafkaProducerTimeout());

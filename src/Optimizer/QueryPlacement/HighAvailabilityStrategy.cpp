@@ -35,7 +35,6 @@ HighAvailabilityStrategy::HighAvailabilityStrategy(NESTopologyPlanPtr nesTopolog
 NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan,
                                                                       StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
-    const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.

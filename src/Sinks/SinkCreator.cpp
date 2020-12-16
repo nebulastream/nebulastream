@@ -33,11 +33,6 @@
 
 namespace NES {
 
-const DataSinkPtr createTestSink() {
-    NES_ERROR("Called unimplemented Function");
-    NES_NOT_IMPLEMENTED();
-}
-
 const DataSinkPtr createTextFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEnginePtr nodeEngine,
                                      const std::string& filePath, bool append) {
     //TODO: this is not nice and should be fixed such that we only provide the paramter once

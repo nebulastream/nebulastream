@@ -46,7 +46,6 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code) cons
             return BinaryOperatorStatement(*(left->generateCode(code)), op, *(right->generateCode(code)), BRACKETS).copy();
         return BinaryOperatorStatement(*(left->generateCode(code)), op, *(right->generateCode(code))).copy();
     } else {
-        std::stringstream str;
         FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
         expr.addParameter(left->generateCode(code));
         expr.addParameter(right->generateCode(code));

@@ -280,8 +280,7 @@ bool NesWorker::waitForConnect() {
     NES_DEBUG("NesWorker::waitForConnect()");
     auto timeoutInSec = std::chrono::seconds(3);
     auto start_timestamp = std::chrono::system_clock::now();
-    auto now = start_timestamp;
-    while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG("waitForConnect: check connect");
         if (!connected) {
             NES_DEBUG("waitForConnect: not connected, sleep");
