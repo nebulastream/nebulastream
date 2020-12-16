@@ -106,7 +106,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferM
 
 #ifdef ENABLE_OPC_BUILD
 
-const DataSourcePtr createOPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                     std::string url, UA_NodeId nodeId, std::string user, std::string password,
                                     OperatorId operatorId) {
     return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId);
