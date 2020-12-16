@@ -33,7 +33,7 @@ z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
 std::map<std::string, std::vector<z3::ExprPtr>> QuerySignature::getColumns() { return columns; }
 
-std::map<std::string, z3::ExprPtr> QuerySignature::getWindowsExpressions() { return windowsExpressions; }
+std::map<std::string, z3::ExprPtr>& QuerySignature::getWindowsExpressions() { return windowsExpressions; }
 
 bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
@@ -95,7 +95,7 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
         }
         //For each column expression of the column in other signature we try to create a DNF using
         // each column expression of the same column in this signature.
-        auto otherWindowExpression = otherWindowExpressions[windowExpression.first];
+        z3::ExprPtr otherWindowExpression = otherWindowExpressions[windowExpression.first];
         allConditions.push_back(to_expr(context, Z3_mk_eq(context, *otherWindowExpression, *windowExpression.second)));
     }
 
