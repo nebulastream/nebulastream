@@ -44,11 +44,12 @@ bool JoinLogicalOperatorNode::inferSchema() {
     if (getChildren().size() != 2) {
         NES_THROW_RUNTIME_ERROR("JoinLogicalOperator: Join need two child operators.");
     }
+
     auto child1 = getChildren()[0]->as<LogicalOperatorNode>();
     auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
 
-    auto schema1 = child1->getInputSchema();
-    auto schema2 = child2->getInputSchema();
+    auto schema1 = child1->getOutputSchema();
+    auto schema2 = child2->getOutputSchema();
 
     if (!schema1->equals(schema2)) {
         NES_THROW_RUNTIME_ERROR("JoinLogicalOperator: the two input streams have different schema.");

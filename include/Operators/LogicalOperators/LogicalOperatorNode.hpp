@@ -61,10 +61,11 @@ class LogicalOperatorNode : public OperatorNode {
     Optimizer::QuerySignaturePtr getSignature();
 
     virtual bool inferSchema() = 0;
-    virtual SchemaPtr getInputSchema() const = 0;
-    virtual SchemaPtr getOutputSchema() const = 0;
-    virtual void setInputSchema(SchemaPtr inputSchema) = 0;
+
     virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
+    virtual SchemaPtr getOutputSchema() const = 0;
+    virtual bool isBinaryOperator() = 0;
+    virtual bool isExchangeOperator() = 0;
 
   protected:
     Optimizer::QuerySignaturePtr signature;

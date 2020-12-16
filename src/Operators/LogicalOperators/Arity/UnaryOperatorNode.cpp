@@ -40,6 +40,7 @@ SchemaPtr UnaryOperatorNode::getInputSchema() const { return inputSchema; }
 
 SchemaPtr UnaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
+
 bool UnaryOperatorNode::inferSchema() {
     // We assume that all children operators have the same output schema otherwise this plan is not valid
     for (const auto& child : children) {
