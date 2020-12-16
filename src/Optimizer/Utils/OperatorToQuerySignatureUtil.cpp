@@ -131,6 +131,7 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
             for (auto [windowKey, windowExpression] : subQuerySignature->getWindowsExpressions()) {
                 if (allWindowExpressions.find(windowKey) != allWindowExpressions.end()) {
                     //FIXME: when we receive more than one window expressions for same window in issue #1272
+                    NES_THROW_RUNTIME_ERROR("Should not occur");
                 } else {
                     allWindowExpressions[windowKey] = windowExpression;
                 }
@@ -163,7 +164,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     }
     auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
     windowKeyVal = context->string_val(windowKey);
-    windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal)));
+    auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
 
     auto windowType = windowDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
@@ -176,7 +177,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
     auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
-    windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal)));
+    auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
 
     auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
 
@@ -202,8 +203,20 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     auto windowTimeSlideVar = context->int_const("window-slide");
     z3::expr windowTimeSlideVal = context->int_val(slide);
 
-    windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal)));
-    windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal)));
+    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
+    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+
+    Z3_ast expressionArray[] = {
+        windowKeyExpression,
+        windowTimeKeyExpression,
+        windowTimeSlideExpression,
+        windowTimeSizeExpression
+    };
+
+    auto windowExpressions = childrenQuerySignatures[0]->getWindowsExpressions();
+    if (windowExpressions.find(windowKey) == windowExpressions.end()) {
+        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
+    }
 
     // serialize aggregation
     auto onExpression =
@@ -238,12 +251,6 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     std::string asFieldName = windowDefinition->getWindowAggregation()->as()->as<FieldAccessExpressionNode>()->getFieldName();
     auto columns = childrenQuerySignatures[0]->getColumns();
     columns[asFieldName] = {std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*onExpression)))};
-
-    auto windowExpressions = childrenQuerySignatures[0]->getWindowsExpressions();
-
-    if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::mk_and(windowConditions));
-    }
 
     return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), columns, windowExpressions);
 }

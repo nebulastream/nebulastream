@@ -81,7 +81,7 @@ class QuerySignature {
      * @brief Get the window definitions
      * @return map of window definitions
      */
-    std::map<std::string, z3::ExprPtr> getWindowsExpressions();
+    std::map<std::string, z3::ExprPtr>& getWindowsExpressions();
 
     /**
      * @brief Validate if this signature is equal to input signature
