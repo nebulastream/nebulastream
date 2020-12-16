@@ -38,19 +38,19 @@ class SimpleBenchmarkSource : public DataSource {
     uint64_t ingestionRate;
     uint64_t keyPos = 0;
     uint64_t curNumberOfTuplesPerBuffer;
-    std::shared_ptr<MemoryLayout> rowLayout;
+    std::shared_ptr<NodeEngine::MemoryLayout> rowLayout;
 
   public:
     uint64_t numberOfTuplesPerBuffer;
 
-    SimpleBenchmarkSource(const SchemaPtr& schema, const BufferManagerPtr& bufferManager, const QueryManagerPtr& queryManager,
+    SimpleBenchmarkSource(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager, const NodeEngine::QueryManagerPtr& queryManager,
                           uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer, uint64_t operatorId)
 
         : DataSource(schema, bufferManager, queryManager, operatorId) {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
-        this->rowLayout = createRowLayout(schema);
+        this->rowLayout = NodeEngine::createRowLayout(schema);
         this->curNumberOfTuplesPerBuffer = this->numberOfTuplesPerBuffer;
         BenchmarkUtils::createUniformData(keyList, curNumberOfTuplesPerBuffer);
     }
@@ -58,7 +58,7 @@ class SimpleBenchmarkSource : public DataSource {
     /**
      * @brief this function is very similar to DataSource.cpp runningRoutine(). The difference is that the sleep is in ms
      */
-    void runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) override {
+    void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) override {
         if (!queryManager) {
             NES_ERROR("query Manager not set");
             throw std::logic_error("SimpleBenchmarkSource: QueryManager not set");
@@ -133,10 +133,10 @@ class SimpleBenchmarkSource : public DataSource {
         }//end of if source not empty
     }
 
-    std::optional<NES::TupleBuffer> receiveData() override {
+    std::optional<NodeEngine::TupleBuffer> receiveData() override {
         NES_DEBUG("SimpleBenchmarkSource: available buffer are " << bufferManager->getAvailableBuffers());
 
-        std::optional<TupleBuffer> optionalBuf;
+        std::optional<NodeEngine::TupleBuffer> optionalBuf;
         do {
             optionalBuf = bufferManager->getBufferNoBlocking();
         } while (!optionalBuf.has_value());
@@ -167,7 +167,7 @@ class SimpleBenchmarkSource : public DataSource {
 
     virtual ~SimpleBenchmarkSource() = default;
 
-    static std::shared_ptr<SimpleBenchmarkSource> create(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                                          SchemaPtr& benchmarkSchema, uint64_t ingestionRate,
                                                          uint64_t operatorId) {
 

@@ -16,9 +16,9 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES::Join {
 
@@ -38,17 +38,13 @@ class BaseExecutableJoinAction {
 
     virtual SchemaPtr getJoinSchema() = 0;
 
-    void setup(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline, uint64_t originId) {
-        this->queryManager = queryManager;
-        this->bufferManager = bufferManager;
-        this->nextPipeline = nextPipeline;
+    void setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
         this->originId = originId;
+        this->pipelineExecutionContext = pipelineExecutionContext;
     }
 
   protected:
-    NodeEngine::QueryManagerPtr queryManager;
-    NodeEngine::BufferManagerPtr bufferManager;
-    NodeEngine::Execution::ExecutablePipelinePtr nextPipeline;
+    NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext;
     uint64_t originId;
 };
 }// namespace NES::Join

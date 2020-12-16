@@ -45,6 +45,12 @@ class JoinHandler : public AbstractJoinHandler {
         lastWatermarkRight = 0;
     }
 
+    static AbstractJoinHandlerPtr create(Join::LogicalJoinDefinitionPtr joinDefinition,
+                                         Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
+                                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction){
+        return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction);
+    }
+
     ~JoinHandler() {
         NES_DEBUG("JoinHandler: calling destructor");
         stop();
@@ -70,7 +76,7 @@ class JoinHandler : public AbstractJoinHandler {
 
     std::string toString() override {
         std::stringstream ss;
-        ss << "AG:" << pipelineStageId << +"-" << nextPipeline->getQepParentId();
+        //ss << "AG:" << pipelineStageId << +"-" << nextPipeline->getQepParentId();
         return ss.str();
     }
 
@@ -140,12 +146,8 @@ class JoinHandler : public AbstractJoinHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::Execution::ExecutablePipelinePtr nextPipeline,
-               uint32_t pipelineStageId, uint64_t originId) override {
-        this->queryManager = queryManager;
-        this->bufferManager = bufferManager;
-        this->pipelineStageId = pipelineStageId;
-        this->originId = originId;
+    bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
+        this->originId = 0;
 
         // Initialize JoinHandler Manager
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
@@ -153,11 +155,9 @@ class JoinHandler : public AbstractJoinHandler {
         this->leftJoinState = &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("leftSide");
         this->rightJoinState =
             &StateManager::instance().registerState<KeyType, Windowing::WindowSliceStore<KeyType>*>("rightSide");
-        this->nextPipeline = nextPipeline;
 
-        executableJoinAction->setup(queryManager, bufferManager, nextPipeline, originId);
+        executableJoinAction->setup(pipelineExecutionContext, originId);
 
-        NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
         return true;
     }
 

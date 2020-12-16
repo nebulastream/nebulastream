@@ -66,13 +66,13 @@ class BenchmarkUtils {
      * @param statisticsVec
      * @param nodeEngine
      */
-    static void recordStatistics(std::vector<QueryStatistics*>& statisticsVec, NodeEnginePtr nodeEngine);
+    static void recordStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, NodeEngine::NodeEnginePtr nodeEngine);
 
     /**
      * @brief computes difference between each vector item of its predecessor. Also deletes statisticsVec[0]
      * @param statisticsVec
      */
-    static void computeDifferenceOfStatistics(std::vector<QueryStatistics*>& statisticsVec);
+    static void computeDifferenceOfStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec);
 
     /**
      * @return string with format {dateTime}_v{current NES_VERSION}
@@ -85,9 +85,9 @@ class BenchmarkUtils {
      * @param schema
      * @return comma seperated string {ProcessedBuffers},{ProcessedTasks},{ProcessedTuples},{ProcessedBytes}
      */
-    static std::string getStatisticsAsCSV(QueryStatistics* statistic, SchemaPtr schema);
+    static std::string getStatisticsAsCSV(NodeEngine::QueryStatistics* statistic, SchemaPtr schema);
 
-    static void printOutConsole(QueryStatistics* statistic, SchemaPtr schema);
+    static void printOutConsole(NodeEngine::QueryStatistics* statistic, SchemaPtr schema);
 
     /**
      * @brief runs a benchmark with the given ingestion rate, given query, and a benchmark schema. The statistics (processedTuples)
@@ -98,8 +98,8 @@ class BenchmarkUtils {
      * @param ingestionRate
      */
 
-    static void runBenchmark(std::vector<NES::QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
-                             NES::DataSinkPtr benchmarkSink, NES::NodeEnginePtr nodeEngine, NES::Query query);
+    static void runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
+                             NES::DataSinkPtr benchmarkSink, NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
 };
 
 /**
@@ -124,12 +124,12 @@ class BenchmarkUtils {
                         for (auto workerThreads : allWorkerThreads)                                                              \
                             for (auto sourceCnt : allDataSources) {                                                              \
                                 PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();                             \
-                                auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads);             \
+                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads);             \
                                                                                                                                  \
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
                                                                                                                                  \
-                                std::vector<QueryStatistics*> statisticsVec;                                                     \
+                                std::vector<NodeEngine::QueryStatistics*> statisticsVec;                                                     \
                                 NES_WARNING("Starting benchmark with ingestRate=" + std::to_string(ingestionRate) + ", "         \
                                             + "singleExpSec=" + std::to_string(BenchmarkUtils::runSingleExperimentSeconds)       \
                                             + ", " + "benchPeriod=" + std::to_string(BenchmarkUtils::periodLengthInSeconds)      \

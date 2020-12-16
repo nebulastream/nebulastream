@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction_HPP_
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
@@ -54,8 +55,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                   StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate, uint64_t currentWatermarkLeft,
                   uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
 
-        auto tupleBuffer = this->bufferManager->getBufferBlocking();
-        tupleBuffer.setOriginId(this->originId);
+        auto tupleBuffer = this->pipelineExecutionContext->allocateTupleBuffer();
+        //tupleBuffer.setOriginId(this->originId);
         // iterate over all keys in both window states and perform the join
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction doing the nested loop join");
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
@@ -83,7 +84,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
             //forward buffer to next  pipeline stage
-            this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
+            this->pipelineExecutionContext->dispatchBuffer(tupleBuffer);
         }
 
         return true;
@@ -218,11 +219,11 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
                     //forward buffer to next  pipeline stage
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
-                    this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
+                    this->pipelineExecutionContext->dispatchBuffer(tupleBuffer);
 
                     // request new buffer
-                    tupleBuffer = this->bufferManager->getBufferBlocking();
-                    tupleBuffer.setOriginId(this->originId);
+                    tupleBuffer = this->pipelineExecutionContext->allocateTupleBuffer();
+                    //tupleBuffer.setOriginId(this->originId);
                     currentNumberOfTuples = 0;
                 }
             }
