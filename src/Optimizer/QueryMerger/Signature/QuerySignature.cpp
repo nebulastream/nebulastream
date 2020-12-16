@@ -78,6 +78,27 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
         }
     }
 
+    //Check the number of window expressions extracted from both queries
+    auto otherWindowExpressions = other->windowsExpressions;
+    if (windowsExpressions.size() != otherWindowExpressions.size()) {
+        NES_WARNING("QuerySignature: Both signatures have different window expressions");
+        return false;
+    }
+
+    //Convert window definitions from both signature into equality conditions
+    //If window key from one signature doesn't exists in other signature then they are not equal.
+    for (auto windowExpression : windowsExpressions) {
+        if (otherWindowExpressions.find(windowExpression.first) == otherWindowExpressions.end()) {
+            NES_WARNING("Window expression with key " << windowExpression.first
+                                                      << " doesn't exists in window expressions of other signature");
+            return false;
+        }
+        //For each column expression of the column in other signature we try to create a DNF using
+        // each column expression of the same column in this signature.
+        auto otherWindowExpression = otherWindowExpressions[windowExpression.first];
+        allConditions.push_back(to_expr(context, Z3_mk_eq(context, *otherWindowExpression, *windowExpression.second)));
+    }
+
     //Add conditions from both signature into the collection of all conditions
     allConditions.push_back(to_expr(context, Z3_mk_eq(context, *conditions, *other->conditions)));
 

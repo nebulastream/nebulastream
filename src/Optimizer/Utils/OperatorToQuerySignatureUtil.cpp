@@ -107,6 +107,7 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
     NES_DEBUG("OperatorToQueryPlanSignatureUtil: Computing Signature from children signatures");
     z3::expr_vector allConditions(*context);
     std::map<std::string, std::vector<z3::ExprPtr>> allColumns;
+    std::map<std::string, z3::ExprPtr> allWindowExpressions;
 
     for (auto& subQuerySignature : childrenQuerySignatures) {
         //Merge the columns together from different children signatures
@@ -123,14 +124,26 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
                 }
             }
         }
+
+        if (allWindowExpressions.empty()) {
+            allWindowExpressions = subQuerySignature->getWindowsExpressions();
+        } else {
+            for (auto [windowKey, windowExpression] : subQuerySignature->getWindowsExpressions()) {
+                if (allWindowExpressions.find(windowKey) != allWindowExpressions.end()) {
+                    //FIXME: when we receive more than one window expressions for same window in issue #1272
+                } else {
+                    allWindowExpressions[windowKey] = windowExpression;
+                }
+            }
+        }
+
         //Add condition to the array
         allConditions.push_back(*subQuerySignature->getConditions());
     }
 
     //Create a CNF using all conditions from children signatures
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
-    //FIXME: the window conditions
-    return QuerySignature::create(conditions, allColumns, {});
+    return QuerySignature::create(conditions, allColumns, allWindowExpressions);
 }
 
 QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr context,
@@ -148,8 +161,8 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     } else {
         windowKey = "non-keyed";
     }
-    windowKeyVal = context->constant(context->str_symbol("non-keyed"), context->string_sort());
     auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
+    windowKeyVal = context->string_val(windowKey);
     windowConditions.push_back(to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal)));
 
     auto windowType = windowDefinition->getWindowType();
@@ -222,17 +235,15 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
         default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
     }
 
-    //    auto asExpression =
-    //        ExpressionToZ3ExprUtil::createForExpression(windowDefinition->getWindowAggregation()->as(), context)->getExpr();
-    //    z3::to_expr(*context, Z3_mk_eq(*context, *asExpression, aggregate));
     std::string asFieldName = windowDefinition->getWindowAggregation()->as()->as<FieldAccessExpressionNode>()->getFieldName();
     auto columns = childrenQuerySignatures[0]->getColumns();
     columns[asFieldName] = {std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*onExpression)))};
 
     auto windowExpressions = childrenQuerySignatures[0]->getWindowsExpressions();
 
-    //    if (windowExpressions.find()) {
-    //    }
+    if (windowExpressions.find(windowKey) == windowExpressions.end()) {
+        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::mk_and(windowConditions));
+    }
 
     return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), columns, windowExpressions);
 }
@@ -240,6 +251,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
 QuerySignaturePtr OperatorToQuerySignatureUtil::createForMap(z3::ContextPtr context,
                                                              std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                                              MapLogicalOperatorNodePtr mapOperator) {
+
     z3::ExprPtr expr = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context)->getExpr();
 
     //Fetch the signature of only children and get the column values
