@@ -1,6 +1,7 @@
 # IDE specific Files
 .idea
 .settings
+.vscode
 
 # Build files
 build
