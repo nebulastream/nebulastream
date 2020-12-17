@@ -19,20 +19,14 @@
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 

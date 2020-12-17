@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
+        AggregationWindowHandler.cpp
         WindowOperatorHandler.cpp
         JoinOperatorHandler.cpp
 )
