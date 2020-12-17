@@ -56,12 +56,9 @@ bool MergeLogicalOperatorNode::inferSchema() {
         })) {
         NES_ERROR("MergeLogicalOperator: the two input streams have different schema.");
         return false;
-    }
-    else
-    {
+    } else {
         return true;
     }
-
 }
 
 OperatorNodePtr MergeLogicalOperatorNode::copy() {

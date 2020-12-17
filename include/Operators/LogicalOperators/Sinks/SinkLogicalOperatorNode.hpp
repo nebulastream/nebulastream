@@ -17,9 +17,9 @@
 #ifndef SINK_LOGICAL_OPERATOR_NODE_HPP
 #define SINK_LOGICAL_OPERATOR_NODE_HPP
 
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 
 namespace NES {
 

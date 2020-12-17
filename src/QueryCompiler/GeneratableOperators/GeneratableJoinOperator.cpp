@@ -50,8 +50,7 @@ GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNo
 GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr schema, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
     : JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
 
-    if(!schema)
-    {
+    if (!schema) {
         NES_ERROR("GeneratableJoinOperator invalid schema");
     }
     setLeftInputSchema(schema);

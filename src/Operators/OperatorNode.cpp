@@ -24,9 +24,7 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode(uint64_t id) : id(id) {
-    NES_INFO("Creating Operator " << id);
-}
+OperatorNode::OperatorNode(uint64_t id) : id(id) { NES_INFO("Creating Operator " << id); }
 
 uint64_t OperatorNode::getId() const { return id; }
 
@@ -41,13 +39,9 @@ bool OperatorNode::hasMultipleChildrenOrParents() {
     return hasMultipleChildren || hasMultipleParent;
 }
 
-bool OperatorNode::hasMultipleChildren() {
-    return !getChildren().empty() && getChildren().size() > 1;
-}
+bool OperatorNode::hasMultipleChildren() { return !getChildren().empty() && getChildren().size() > 1; }
 
-bool OperatorNode::hasMultipleParents(){
-    return !getParents().empty() && getParents().size() > 1;
-}
+bool OperatorNode::hasMultipleParents() { return !getParents().empty() && getParents().size() > 1; }
 
 OperatorNodePtr OperatorNode::duplicate() {
     NES_INFO("OperatorNode: Create copy of the operator");

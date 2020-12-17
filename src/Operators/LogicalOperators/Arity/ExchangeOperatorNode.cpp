@@ -32,8 +32,7 @@ bool ExchangeOperatorNode::isUnaryOperator() const {
 bool ExchangeOperatorNode::isExchangeOperator() const { return true; }
 
 void ExchangeOperatorNode::setInputSchema(SchemaPtr inputSchema) {
-    if(inputSchema)
-    {
+    if (inputSchema) {
         this->inputSchema = std::move(inputSchema);
     }
 }

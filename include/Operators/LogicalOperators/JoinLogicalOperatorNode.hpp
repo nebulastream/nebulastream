@@ -24,7 +24,6 @@
 
 namespace NES {
 
-
 /**
  * @brief Join operator, which contains an expression as a predicate.
  */

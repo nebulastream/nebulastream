@@ -77,7 +77,6 @@ class OperatorNode : public Node {
     */
     bool hasMultipleParents();
 
-
     /**
      * @brief method to add a child to this node
      * @param newNode
@@ -159,4 +158,3 @@ class OperatorNode : public Node {
 }// namespace NES
 
 #endif//NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_
-

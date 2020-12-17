@@ -52,7 +52,7 @@ UnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(std::vecto
 }
 
 UnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression,
-                                                                 OperatorId id) {
+                                                               OperatorId id) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
 }
 
@@ -69,7 +69,7 @@ ExchangeOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(Operator
 }
 
 UnaryOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                                                    OperatorId id) {
+                                                                  OperatorId id) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinition, id);
 }
 

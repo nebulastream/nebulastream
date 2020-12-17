@@ -39,8 +39,7 @@ GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperato
 }
 
 GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schema, OperatorId id) : MergeLogicalOperatorNode(id) {
-    if(!schema)
-    {
+    if (!schema) {
         NES_ERROR("GeneratableMergeOperator invalid schema");
     }
     setInputSchema(schema);

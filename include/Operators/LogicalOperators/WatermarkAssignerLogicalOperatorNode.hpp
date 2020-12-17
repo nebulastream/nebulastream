@@ -17,8 +17,8 @@
 #ifndef NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
 #define NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
 
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES {

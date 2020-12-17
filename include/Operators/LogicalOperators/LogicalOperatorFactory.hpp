@@ -38,7 +38,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static UnaryOperatorNodePtr createFilterOperator(const ExpressionNodePtr predicate,
-                                                       OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Create a new logical projection operator.
@@ -47,7 +47,7 @@ class LogicalOperatorFactory {
     * @return LogicalOperatorNodePtr
     */
     static UnaryOperatorNodePtr createProjectionOperator(std::vector<ExpressionItem> expressions,
-                                                           OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                         OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.
@@ -56,7 +56,7 @@ class LogicalOperatorFactory {
      * @return LogicalOperatorNodePtr
      */
     static UnaryOperatorNodePtr createSinkOperator(const SinkDescriptorPtr sinkDescriptor,
-                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                   OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a new map operator with a field assignment expression as a map expression.
@@ -65,7 +65,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static UnaryOperatorNodePtr createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression,
-                                                    OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                  OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a new source operator with source descriptor.
@@ -74,7 +74,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static UnaryOperatorNodePtr createSourceOperator(const SourceDescriptorPtr sourceDescriptor,
-                                                       OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Create a specialized watermark assigner operator.
@@ -92,7 +92,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static UnaryOperatorNodePtr createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                                       OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a specialized central window operator with window definition.
@@ -147,7 +147,7 @@ class LogicalOperatorFactory {
     * @return BinaryOperatorNodePtr
     */
     static BinaryOperatorNodePtr createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition,
-                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                    OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a broadcast operator.
@@ -155,7 +155,6 @@ class LogicalOperatorFactory {
      * @return ExchangeOperatorNodePtr
      */
     static ExchangeOperatorNodePtr createBroadcastOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
-
 };
 
 }// namespace NES

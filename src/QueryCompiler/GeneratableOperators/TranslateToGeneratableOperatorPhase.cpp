@@ -90,7 +90,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         //TODO: we have to create two scan operators here
-        auto scanOperator = GeneratableScanOperator::create(binaryOperator->getLeftInputSchema(), binaryOperator->getOutputSchema());
+        auto scanOperator =
+            GeneratableScanOperator::create(binaryOperator->getLeftInputSchema(), binaryOperator->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableJoinOperator::create(operatorNode->as<JoinLogicalOperatorNode>());
         scanOperator->addChild(childOperator);
