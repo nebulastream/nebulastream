@@ -151,29 +151,25 @@ ExecutionPathPtr IFCOPStrategy::getOptimizedExecutionPath(TopologyPtr topology, 
 
 
     for (int i=0; i<maxIter; i++) {
-        ExecutionPathPtr candidateExecutionPath = generateRandomExecutionPath(topology, queryPlan);
+        std::vector<TopologyNodePtr> candidateExecutionPath = generateRandomExecutionPath(topology, queryPlan);
+
+        // TODO: compute cost
     }
-
-    // START WORKAROUND
-    // get source and sink
-//    const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
-//    TopologyNodePtr sinkNode = topology->getRoot();
-//
-//    std::vector<TopologyNodePtr> topoSubGraphSourceNodes = this->topology->findPathBetween(sourceNodes, {sinkNode});
-//    std::vector<TopologyNodePtr> mergedGraphSourceNodes = topology->mergeSubGraphs(allSourceNodes);
-
-    // END WORKAROUND
 
     return bestExecutionPathCandidate;
 }
-ExecutionPathPtr IFCOPStrategy::generateRandomExecutionPath(TopologyPtr topology, QueryPlanPtr queryPlan) {
-    ExecutionPathPtr executionPath = ExecutionPath::create();
+
+// TODO: Merge paths from multiple logical sources
+std::vector<TopologyNodePtr> IFCOPStrategy::generateRandomExecutionPath(TopologyPtr topology, QueryPlanPtr queryPlan) {
     TopologyNodePtr sinkNode = topology->getRoot();
 
     // a query can have multiple sources
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
     std::vector<std::string> checkedStreamName;
+
+    // store the resulting execution path from each logical source
+    std::vector<TopologyNodePtr> mergedNodeFromEachLogicalSource;
 
     for (auto& sourceOperator : sourceOperators) {
         const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
@@ -220,41 +216,72 @@ ExecutionPathPtr IFCOPStrategy::generateRandomExecutionPath(TopologyPtr topology
         TopologyNodePtr rootOfMergedPath = rootOfExtendingPaths.at(0);
         rootOfExtendingPaths.erase(rootOfExtendingPaths.begin());
 
-        TopologyNodePtr currentMergedNode = rootOfMergedPath;
+        // The following path merging algorithm assume that there will be no cycle
+        // TODO: check if there is a cycle and redraw random path
+
         // loop over all extending nodes
         for(TopologyNodePtr rootOfExtendingPath: rootOfExtendingPaths){
             // loop over all nodes in current rootOfExtendingPath
-            TopologyNodePtr currentNodeOfExtendingPath = rootOfMergedPath;
+            TopologyNodePtr currentNodeOfExtendingPath = rootOfExtendingPath;
+            TopologyNodePtr currentMergedNode = rootOfMergedPath;
+            TopologyNodePtr nextParent = currentMergedNode;
+
+            // book-keep added nodes
+            std::vector<uint64_t> added;
+            added.push_back(currentMergedNode->getId());
+            for (NodePtr childNode: currentMergedNode->getAndFlattenAllChildren(false)){
+                added.push_back(childNode->as<TopologyNode>()->getId());
+            }
+            std::vector<uint64_t> initialMergedNodes = added;
+
+            // loop over all nodes in the current extending path
             while(currentNodeOfExtendingPath) {
-                NSE_DEBUG("IFCOP: currentNodeOfExtendingPath: " <<);
+                // check if currentNodeOfExtendingPath is already added
+                if (std::find(added.begin(), added.end(), currentNodeOfExtendingPath->getId()) != added.end()) {
+                    // update currentMergedNode to its child that has the id equal to currentNodeOfExtendingPath
+                    for(NodePtr childOfMergedNode : currentMergedNode->getAndFlattenAllChildren(false)){
+                        if (childOfMergedNode->as<TopologyNode>()->getId() == currentNodeOfExtendingPath->getId()){
+                            NES_DEBUG("IFCOP: childOfMergedNode: " << childOfMergedNode << " id: "
+                                                                   << childOfMergedNode->as<TopologyNode>()->getId()
+                                                                   << " currentNodeOfExtendingPath: "
+                                                                   << currentNodeOfExtendingPath  << " id: "
+                                                                   << currentNodeOfExtendingPath->getId());
+                            currentMergedNode = childOfMergedNode->as<TopologyNode>();
+                            break;
+                        }
+                    }
 
+                    // check if we need to add a new edge to currentNodeOfExtendingPath
+                    if (std::find(initialMergedNodes.begin(), initialMergedNodes.end(), nextParent->getId())==initialMergedNodes.end()) {
+                        nextParent->removeChildren();
+                        nextParent->addChild(currentMergedNode);
+                        NES_DEBUG("IFCOP: Add parent: " <<  nextParent << " with a child(currentMergedNode): " << currentMergedNode);
+                    }
+                    nextParent = currentMergedNode;
 
-                if (currentNodeOfExtendingPath->getChildren().empty()){
-                    currentNodeOfExtendingPath = nullptr;
                 } else {
-                    currentNodeOfExtendingPath = currentNodeOfExtendingPath->getChildren().at(0)->as<TopologyNode>();
+                    // add an edge to currentNodeOfExtendingPath
+                    nextParent->addChild(currentNodeOfExtendingPath);
+                    NES_DEBUG("IFCOP: Add parent: " <<  nextParent << " with a child(currentNodeOfExtendingPath): " << currentNodeOfExtendingPath);
+
+                    // register currentNodeOfExtendingPath as added
+                    added.push_back(currentNodeOfExtendingPath->getId());
+                    nextParent = currentNodeOfExtendingPath;
+                }
+                // traverse to the next node
+                if (!currentNodeOfExtendingPath->getChildren().empty()){
+                    currentNodeOfExtendingPath = currentNodeOfExtendingPath->getChildren()[0]->as<TopologyNode>();
+                } else {
+                    currentNodeOfExtendingPath = nullptr;
                 }
             }
+            NES_DEBUG("IFCOP: Finished merging one source");
         }
-//        for (TopologyNodePtr rootOfPath: rootOfExtendingPaths) {
-//            TopologyNodePtr currentExtendingNode = rootOfPath;
-//
-//            while (currentExtendingNode) {
-//
-//                bool isAdded = false;
-//                TopologyNodePtr checkNode;
-//                while (checkNode) {
-//                    checkNode = checkNode->getChildren().at(0)->as<TopologyNode>();
-//                    if
-//                }
-//
-//                currentExtendingNode = currentExtendingNode->getChildren().at(0)->as<TopologyNode>();
-//            }
-//        }
         NES_DEBUG("IFCOP: Finished merging all sources");
+        mergedNodeFromEachLogicalSource.push_back(rootOfMergedPath);
     }
 
-    return NES::ExecutionPathPtr();
+    return mergedNodeFromEachLogicalSource;
 
 }
 

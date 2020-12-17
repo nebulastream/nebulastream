@@ -114,7 +114,7 @@ class IFCOPTest : public testing::Test {
     TopologyPtr topology;
 };
 
-/* Test query placement with bottom up strategy  */
+/* Test generating random execution path  */
 TEST_F(IFCOPTest, testGeneratingRandomExecutionPath) {
 
     setupTopologyAndStreamCatalog();
@@ -136,7 +136,15 @@ TEST_F(IFCOPTest, testGeneratingRandomExecutionPath) {
 
     auto randomExecutionPath = ifcop->generateRandomExecutionPath(topology, queryPlan);
 
-//    auto randomExecutionPath = ifcop->generateRandomExecutionPath(topology);
+    //check if the source nodes are in the execution path
+    bool isSourceOneFound = false;
+    bool isSourceTwoFound = false;
+    for (NodePtr child: randomExecutionPath.at(0)->getAndFlattenAllChildren(false)){
+        isSourceOneFound = isSourceOneFound || child->as<TopologyNode>()->getId() == 8;
+        isSourceTwoFound = isSourceTwoFound || child->as<TopologyNode>()->getId() == 9;
+    }
+    ASSERT_TRUE(isSourceOneFound);
+    ASSERT_TRUE(isSourceTwoFound);
 
 
 }
