@@ -25,7 +25,7 @@ namespace NES {
 /**
  * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
  */
-class MapLogicalOperatorNode : public UnaryOperatorNode{
+class MapLogicalOperatorNode : public UnaryOperatorNode {
   public:
     MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id);
 

@@ -98,7 +98,6 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class BroadcastLogicalOperatorNode;
 typedef std::shared_ptr<BroadcastLogicalOperatorNode> BroadcastLogicalOperatorNodePtr;
 
-
 }// namespace NES
 
 #endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_

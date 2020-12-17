@@ -40,13 +40,11 @@ GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr inputSchema
 
 GeneratableScanOperator::GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id)
     : UnaryOperatorNode(id) {
-    if(!inputSchema)
-    {
+    if (!inputSchema) {
         NES_ERROR("GeneratableScanOperator invalid input schema");
     }
     this->inputSchema = inputSchema->copy();
-    if(!outputSchema)
-    {
+    if (!outputSchema) {
         NES_ERROR("GeneratableScanOperator invalid output schema");
     }
     this->outputSchema = outputSchema->copy();

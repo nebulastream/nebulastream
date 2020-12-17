@@ -18,11 +18,11 @@
 #include <API/Query.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
