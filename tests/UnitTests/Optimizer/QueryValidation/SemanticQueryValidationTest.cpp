@@ -105,7 +105,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithMultipleFilters) {
 }
 
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
-    NES_INFO("Satisfiable Quer with later added filters");
+    NES_INFO("Satisfiable Query with later added filters");
 
     SemanticQueryValidation semanticQueryValidation;
 
@@ -122,7 +122,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
 }
 
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
-    NES_INFO("Unatisfiable Quer with later added filters");
+    NES_INFO("Unatisfiable Query with later added filters");
 
     SemanticQueryValidation semanticQueryValidation;
 
@@ -136,6 +136,52 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     filterQuery->filter(Attribute("value") < 42);
 
     ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), false);
+}
+
+
+TEST_F(SemanticQueryValidationTest, invalidLogicalStreamTest) {
+    NES_INFO("Invalid logical stream");
+
+    SemanticQueryValidation semanticQueryValidation;
+
+    std::string queryString =
+        "Query::from(\"nonexistent_logical\").filter(Attribute(\"id\") > 100).filter(Attribute(\"value\") < 10); "
+        ;
+    
+    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+
+    try {
+        semanticQueryValidation.isSatisfiable(filterQuery);
+    } catch(std::runtime_error& e) {
+        std::cout << e.what();
+        SUCCEED();
+        return;
+    }
+
+    FAIL();
+}
+
+TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
+    NES_INFO("Invalid attributes in logical stream");
+
+    SemanticQueryValidation semanticQueryValidation;
+
+    std::string queryString =
+        "Query::from(\"default_logical\").filter(Attribute(\"nonex_1\") > 100).filter(Attribute(\"nonex_2\") < 10); "
+        ;
+    
+    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+
+    try {
+        semanticQueryValidation.isSatisfiable(filterQuery);
+    } catch(std::runtime_error& e) {
+        std::cout << e.what();
+        SUCCEED();
+        return;
+    }
+
+    FAIL();
+
 }
 
 }// namespace NES
