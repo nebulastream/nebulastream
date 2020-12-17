@@ -39,7 +39,18 @@ GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr inputSchema
 }
 
 GeneratableScanOperator::GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id)
-    : inputSchema(inputSchema->copy()), outputSchema(outputSchema->copy()), UnaryOperatorNode(id) {}
+    : UnaryOperatorNode(id) {
+    if(!inputSchema)
+    {
+        NES_ERROR("GeneratableScanOperator invalid input schema");
+    }
+    this->inputSchema = inputSchema->copy();
+    if(!outputSchema)
+    {
+        NES_ERROR("GeneratableScanOperator invalid output schema");
+    }
+    this->outputSchema = outputSchema->copy();
+}
 
 const std::string GeneratableScanOperator::toString() const {
     std::stringstream ss;

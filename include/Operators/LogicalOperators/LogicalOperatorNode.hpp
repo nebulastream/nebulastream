@@ -63,9 +63,9 @@ class LogicalOperatorNode : public OperatorNode {
     virtual bool inferSchema() = 0;
     virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
     virtual SchemaPtr getOutputSchema() const = 0;
-    virtual bool isBinaryOperator() = 0;
-    virtual bool isExchangeOperator() = 0;
-    virtual bool isUnaryOperator() = 0;
+    virtual bool isBinaryOperator() const = 0;
+    virtual bool isExchangeOperator() const = 0;
+    virtual bool isUnaryOperator() const = 0;
 
   protected:
     Optimizer::QuerySignaturePtr signature;

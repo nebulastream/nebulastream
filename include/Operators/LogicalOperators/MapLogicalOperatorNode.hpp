@@ -52,8 +52,6 @@ class MapLogicalOperatorNode : public UnaryOperatorNode{
     FieldAssignmentExpressionNodePtr mapExpression;
 };
 
-typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
-
 }// namespace NES
 
 #endif// MAP_LOGICAL_OPERATOR_NODE_HPP
