@@ -178,9 +178,9 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
                                                      serializedOperator->mutable_inputschema());
     } else {
         SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getLeftInputSchema(),
-                                                 serializedOperator->mutable_inputschema());
+                                                 serializedOperator->mutable_leftinputschema());
         SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getRightInputSchema(),
-                                                 serializedOperator->mutable_secondinputschema());
+                                                 serializedOperator->mutable_rightinputschema());
     }
 
     // serialize output schema
@@ -302,17 +302,15 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         if (operatorNode->isExchangeOperator()) {
             operatorNode->as<ExchangeOperatorNode>()->setInputSchema(
                 SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
-        }
-        else
-        {
+        } else {
             operatorNode->as<UnaryOperatorNode>()->setInputSchema(
                 SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
         }
     } else {
         operatorNode->as<BinaryOperatorNode>()->setLeftInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_inputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_leftinputschema()));
         operatorNode->as<BinaryOperatorNode>()->setRightInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_secondinputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator->mutable_rightinputschema()));
     }
 
     NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator->DebugString() << " to "

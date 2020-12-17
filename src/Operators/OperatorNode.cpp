@@ -41,6 +41,14 @@ bool OperatorNode::hasMultipleChildrenOrParents() {
     return hasMultipleChildren || hasMultipleParent;
 }
 
+bool OperatorNode::hasMultipleChildren() {
+    return !getChildren().empty() && getChildren().size() > 1;
+}
+
+bool OperatorNode::hasMultipleParents(){
+    return !getParents().empty() && getParents().size() > 1;
+}
+
 OperatorNodePtr OperatorNode::duplicate() {
     NES_INFO("OperatorNode: Create copy of the operator");
     const OperatorNodePtr copyOperator = copy();

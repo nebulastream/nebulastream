@@ -66,6 +66,19 @@ class OperatorNode : public Node {
     bool hasMultipleChildrenOrParents();
 
     /**
+    * @brief return if the operator has multiple children
+    * @return bool
+    */
+    bool hasMultipleChildren();
+
+    /**
+    * @brief return if the operator has multiple children
+    * @return bool
+    */
+    bool hasMultipleParents();
+
+
+    /**
      * @brief method to add a child to this node
      * @param newNode
      * @return bool indicating success
@@ -108,19 +121,19 @@ class OperatorNode : public Node {
      * @brief This methods return if the operator is a binary operator, i.e., as two input schemas
      * @return bool
      */
-    virtual bool isBinaryOperator() = 0;
+    virtual bool isBinaryOperator() const = 0;
 
     /**
     * @brief This methods return if the operator is a unary operator, i.e., as oneinput schemas
     * @return bool
      */
-    virtual bool isUnaryOperator() = 0;
+    virtual bool isUnaryOperator() const = 0;
 
     /**
     * @brief This methods return if the operator is an exchange operator, i.e., it has potentially multiple output schemas
     * @return bool
     */
-    virtual bool isExchangeOperator() = 0;
+    virtual bool isExchangeOperator() const = 0;
 
   protected:
     /**

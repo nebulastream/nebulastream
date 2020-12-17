@@ -25,46 +25,57 @@ namespace NES {
 
 class ExchangeOperatorNode : public LogicalOperatorNode {
   public:
-    ExchangeOperatorNode(OperatorId id);
+    explicit ExchangeOperatorNode(OperatorId id);
 
     /**
        * @brief detect if this operator is a binary operator, i.e., it has two children
        * @return true if n-ary else false;
        */
-    bool isBinaryOperator();
+    bool isBinaryOperator() const override;
 
     /**
     * @brief detect if this operator is an uary operator, i.e., it has only one child
     * @return true if n-ary else false;
     */
-    bool isUnaryOperator();
+    bool isUnaryOperator() const override;
 
     /**
    * @brief detect if this operator is an exchange operator, i.e., it sends it output to multiple parents
    * @return true if n-ary else false;
    */
-    bool isExchangeOperator();
+    bool isExchangeOperator() const override;
 
     /**
    * @brief get the input schema of this operator
    * @return SchemaPtr
    */
     SchemaPtr getInputSchema() const;
+
+    /**
+     * @brief set the input schema of this operator
+     * @param inputSchema
+    */
     void setInputSchema(SchemaPtr inputSchema);
 
     /**
     * @brief get the result schema of this operator
     * @return SchemaPtr
     */
-    SchemaPtr getOutputSchema() const;
-    void setOutputSchema(SchemaPtr outputSchema);
+    SchemaPtr getOutputSchema() const override;
+
+    /**
+     * @brief set the result schema of this operator
+     * @param outputSchema
+    */
+
+    void setOutputSchema(SchemaPtr outputSchema) override;
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
     * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
     * @return true if schema was correctly inferred
     */
-    virtual bool inferSchema();
+    virtual bool inferSchema() override;
 
   protected:
     SchemaPtr inputSchema;

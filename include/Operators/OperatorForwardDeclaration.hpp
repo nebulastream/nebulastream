@@ -42,6 +42,8 @@ class ExpressionItem;
 class ProjectionLogicalOperatorNode;
 typedef std::shared_ptr<ProjectionLogicalOperatorNode> LogicalProjectionOperatorPtr;
 
+class MapLogicalOperatorNode;
+typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
 
 }
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_OPERATORFORWARDDECLARATION_HPP_

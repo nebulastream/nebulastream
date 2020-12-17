@@ -14,49 +14,60 @@
     limitations under the License.
 */
 
-
-#include <Operators/LogicalOperators/Arity/ExchangeOperatorNode.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Arity/ExchangeOperatorNode.hpp>
 
 namespace NES {
 
-ExchangeOperatorNode::ExchangeOperatorNode(OperatorId id) : LogicalOperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
+ExchangeOperatorNode::ExchangeOperatorNode(OperatorId id)
+    : LogicalOperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
 
-bool ExchangeOperatorNode::isBinaryOperator() { return false; }
+bool ExchangeOperatorNode::isBinaryOperator() const { return false; }
 
-bool ExchangeOperatorNode::isUnaryOperator() {
+bool ExchangeOperatorNode::isUnaryOperator() const {
     //TODO: check if this should also be true
     return false;
 }
 
-bool ExchangeOperatorNode::isExchangeOperator() { return true; }
+bool ExchangeOperatorNode::isExchangeOperator() const { return true; }
 
-void ExchangeOperatorNode::setInputSchema(SchemaPtr inputSchema) { this->inputSchema = std::move(inputSchema); }
+void ExchangeOperatorNode::setInputSchema(SchemaPtr inputSchema) {
+    if(inputSchema)
+    {
+        this->inputSchema = std::move(inputSchema);
+    }
+}
 
-void ExchangeOperatorNode::setOutputSchema(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
+void ExchangeOperatorNode::setOutputSchema(SchemaPtr outputSchema) {
+    if (outputSchema) {
+        this->outputSchema = std::move(outputSchema);
+    }
+}
 
 SchemaPtr ExchangeOperatorNode::getInputSchema() const { return inputSchema; }
 
 SchemaPtr ExchangeOperatorNode::getOutputSchema() const { return outputSchema; }
 
-
 bool ExchangeOperatorNode::inferSchema() {
     // We assume that all children operators have the same output schema otherwise this plan is not valid
+    if (children.empty()) {
+        NES_THROW_RUNTIME_ERROR("ExchangeOperatorNode: this node should have at least one child operator");
+    }
+
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->inferSchema()) {
             return false;
         }
     }
-    if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("OperatorNode: this node should have at least one child operator");
-    }
+
     auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("OperatorNode: infer schema failed. The schema has to be the same across all child operators.");
+            NES_ERROR("ExchangeOperatorNode: infer schema failed. The schema has to be the same across all child operators.");
             return false;
         }
     }
+
     inputSchema = childSchema->copy();
     outputSchema = childSchema->copy();
     return true;

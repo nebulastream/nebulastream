@@ -14,28 +14,39 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 
 namespace NES {
 
 BinaryOperatorNode::BinaryOperatorNode(OperatorId id)
-    : LogicalOperatorNode(id), leftInputSchema(Schema::create()), rightInputSchema(Schema::create()), outputSchema(Schema::create()) {
+    : LogicalOperatorNode(id), leftInputSchema(Schema::create()), rightInputSchema(Schema::create()),
+      outputSchema(Schema::create()) {
     //nop
 }
 
-bool BinaryOperatorNode::isBinaryOperator() { return true; }
+bool BinaryOperatorNode::isBinaryOperator() const { return true; }
 
-bool BinaryOperatorNode::isUnaryOperator() { return false; }
+bool BinaryOperatorNode::isUnaryOperator() const { return false; }
 
-bool BinaryOperatorNode::isExchangeOperator() { return false; }
+bool BinaryOperatorNode::isExchangeOperator() const { return false; }
 
-void BinaryOperatorNode::setLeftInputSchema(SchemaPtr inputSchema) { this->leftInputSchema = std::move(inputSchema); }
+void BinaryOperatorNode::setLeftInputSchema(SchemaPtr inputSchema) {
+    if (inputSchema) {
+        this->leftInputSchema = std::move(inputSchema);
+    }
+}
 
-void BinaryOperatorNode::setRightInputSchema(SchemaPtr inputSchema) { this->leftInputSchema = std::move(inputSchema); }
-
-void BinaryOperatorNode::setOutputSchema(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
-
+void BinaryOperatorNode::setRightInputSchema(SchemaPtr inputSchema) {
+    if (inputSchema) {
+        this->rightInputSchema = std::move(inputSchema);
+    }
+}
+void BinaryOperatorNode::setOutputSchema(SchemaPtr outputSchema) {
+    if (outputSchema) {
+        this->outputSchema = std::move(outputSchema);
+    }
+}
 SchemaPtr BinaryOperatorNode::getLeftInputSchema() const { return leftInputSchema; }
 
 SchemaPtr BinaryOperatorNode::getRightInputSchema() const { return rightInputSchema; }
@@ -50,19 +61,16 @@ bool BinaryOperatorNode::inferSchema() {
         }
     }
     if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("OperatorNode: this node should have at least one child operator");
+        NES_THROW_RUNTIME_ERROR("BinaryOperatorNode: this node should have at least one child operator");
     }
-    auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("OperatorNode: infer schema failed. The schema has to be the same across all child operators.");
-            return false;
-        }
-    }
+
+    NES_ASSERT(children.size() == 2, "We do not support more than two childs in a binary operator");
     //TODO: I am not sure if this is correct
-    leftInputSchema = childSchema->copy();
-    rightInputSchema = childSchema->copy();
-    outputSchema = childSchema->copy();
+    leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
+    rightInputSchema = children[1]->as<OperatorNode>()->getOutputSchema();
+
+    //TODO: this is only temporary and we need a solution to detect which schema is the final schema
+    outputSchema = leftInputSchema;
     return true;
 }
 
