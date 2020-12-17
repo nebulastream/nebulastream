@@ -48,9 +48,6 @@ sourceConfig: NoConfig
 # Set sampling frequency of source
 sourceFrequency: 0
 
-# Looping endlessly over the file
-endlessRepeat: off
-
 # Skip first line of the file
 skipHeader: false
 

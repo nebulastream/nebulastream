@@ -76,7 +76,6 @@ int main(int argc, char** argv) {
     std::string physicalStreamName;
     std::string logicalStreamName;
     std::string parentId = "-1";
-    std::string endlessRepeat = "";
     bool skipHeader = false;
 
     size_t numberOfTuplesToProducePerBuffer = 0;
@@ -94,7 +93,6 @@ int main(int argc, char** argv) {
         "sourceConfig", po::value<string>(&sourceConfig)->default_value(sourceConfig),
         "Set the config for the source e.g. the file name")(
         "sourceFrequency", po::value<size_t>(&sourceFrequency)->default_value(sourceFrequency), "Set the sampling frequency")(
-        "endlessRepeat", po::value<string>(&endlessRepeat)->default_value("off"), "Looping endless over the file")(
         "skipHeader", po::value<bool>(&skipHeader)->default_value(skipHeader), "Skip first line of the file (default=false)")(
         "physicalStreamName", po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
         "Set the physical name of the stream")(
@@ -158,7 +156,6 @@ int main(int argc, char** argv) {
         sourceType = config["sourceType"].As<string>();
         sourceConfig = config["sourceConfig"].As<string>();
         sourceFrequency = config["sourceFrequency"].As<uint16_t>();
-        endlessRepeat = config["endlessRepeat"].As<string>();
         skipHeader = config["skipHeader"].As<bool>();
         numberOfBuffersToProduce = config["numberOfBuffersToProduce"].As<uint16_t>();
         numberOfTuplesToProducePerBuffer = config["numberOfTuplesToProducePerBuffer"].As<uint32_t>();
@@ -189,12 +186,10 @@ int main(int argc, char** argv) {
 
     //register phy stream if necessary
     if (sourceType != "NoSource") {
-        bool endless = endlessRepeat == "on";
-        NES_INFO("start with dedicated source=" << sourceType << " endlessRepeat=" << endlessRepeat << " end=" << endless
-                                                << "\n");
+        NES_INFO("start with dedicated source=" << sourceType << "\n");
         PhysicalStreamConfigPtr conf =
             PhysicalStreamConfig::create(sourceType, sourceConfig, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                                         numberOfBuffersToProduce, physicalStreamName, logicalStreamName, endless, skipHeader);
+                                         numberOfBuffersToProduce, physicalStreamName, logicalStreamName, skipHeader);
 
         wrk->setWithRegister(conf);
     } else if (parentId != "-1") {
