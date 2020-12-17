@@ -97,8 +97,8 @@ int main(int argc, const char* argv[]) {
     }
 
     if (vm.count("help")) {
-        std::cout << "Basic Command Line Parameter " << std::endl;
-        std::cout << serverOptions << std::endl;
+        NES_INFO("Basic Command Line Parameter ");
+        NES_INFO(serverOptions);
         return 0;
     }
 
