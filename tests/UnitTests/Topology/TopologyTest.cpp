@@ -447,10 +447,6 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
 
-    topology->print();
-
-    const std::optional<TopologyNodePtr> allPathsBetween = topology->findAllPathBetween(topologyNodes.at(8), topologyNodes.at(0));
-
     std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(8), topologyNodes.at(9)};
     std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
 
