@@ -51,21 +51,20 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
     }
 #endif
 #ifdef ENABLE_OPC_BUILD
-        else if (sinkType == "OPC_SINK") {
-            NES_INFO("ConvertPhysicalToLogicalSink: Creating OPC sink");
-            OPCSinkPtr opcSink = std::dynamic_pointer_cast<OPCSink>(dataSink);
-            return OPCSinkDescriptor::create(opcSink->getUrl(), opcSink->getNodeId(), opcSink->getUser(), opcSink->getPassword());
-        }
+    else if (sinkType == "OPC_SINK") {
+        NES_INFO("ConvertPhysicalToLogicalSink: Creating OPC sink");
+        OPCSinkPtr opcSink = std::dynamic_pointer_cast<OPCSink>(dataSink);
+        return OPCSinkDescriptor::create(opcSink->getUrl(), opcSink->getNodeId(), opcSink->getUser(), opcSink->getPassword());
+    }
 #endif
-        else if (sinkType == "FILE_SINK") {
-            FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
-            NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode "
-                     << fileSink->getAppendAsBool() << " format " << fileSink->getSinkFormat());
-            return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getSinkFormat(), fileSink->getAppendAsString());
-        }
-        else {
-            NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");
-            throw std::invalid_argument("Unknown SinkMedium Type");
-        }
+    else if (sinkType == "FILE_SINK") {
+        FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
+        NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getAppendAsBool() << " format "
+                                                                                     << fileSink->getSinkFormat());
+        return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getSinkFormat(), fileSink->getAppendAsString());
+    } else {
+        NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");
+        throw std::invalid_argument("Unknown SinkMedium Type");
+    }
 }// namespace NES
 }// namespace NES
