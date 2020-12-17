@@ -34,6 +34,8 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto sourceOperators = inputQuery->getQueryPlan()->getSourceOperators();
 
+    auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
+
     for (auto source : sourceOperators) {
         auto sourceDescriptor = source->getSourceDescriptor();
 
@@ -41,13 +43,13 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
         // source descriptor form the catalog.
         if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
             auto streamName = sourceDescriptor->getStreamName();
-            
-            try {
-                schema = streamCatalog->getSchemaForLogicalStream(streamName);
-            } catch (std::exception& e) {
+
+            if(!isLogicalStreamInCatalog(streamName, allLogicalStreams)){
                 NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: The logical stream " + streamName
                                         + " could not be found in the StreamCatalog");
             }
+            
+            schema = streamCatalog->getSchemaForLogicalStream(streamName);
         }
     }
     
@@ -67,6 +69,15 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
     }
 
     return s.check() != z3::unsat;
+}
+
+bool NES::SemanticQueryValidation::isLogicalStreamInCatalog(std::string streamname, std::map<std::string, std::string> allLogicalStreams) {
+    for (auto logicalStream : allLogicalStreams){
+        if(logicalStream.first == streamname){
+            return true;
+        }
+    }
+    return false;
 }
 
 }// namespace NES
