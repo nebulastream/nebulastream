@@ -39,6 +39,10 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/JoinHandler.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>" << std::endl;
     return builder;
 }
 FileBuilder& FileBuilder::addDeclaration(DeclarationPtr declaration) {

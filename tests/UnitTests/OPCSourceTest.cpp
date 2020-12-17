@@ -129,8 +129,8 @@ class OPCSourceTest : public testing::Test {
 
     static void stopServer() { running = false; }
 
-    BufferManagerPtr bufferManager;
-    QueryManagerPtr queryManager;
+    NodeEngine::BufferManagerPtr bufferManager;
+    NodeEngine::QueryManagerPtr queryManager;
     SchemaPtr test_schema;
     uint64_t buffer_size;
 

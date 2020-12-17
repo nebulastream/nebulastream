@@ -124,7 +124,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    virtual uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,
+    virtual uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,SchemaPtr windowOutputSchema,
                                  PipelineContextPtr context) = 0;
 
     /**
