@@ -19,17 +19,12 @@
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
@@ -37,7 +32,6 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <boost/algorithm/string.hpp>
 #include <string>
 
 using namespace std;
@@ -472,7 +466,6 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     std::string conf = config->getSourceConfig();
     uint64_t frequency = config->getSourceFrequency();
     uint64_t numBuffers = config->getNumberOfBuffersToProduce();
-    bool endlessRepeat = config->isEndlessRepeat();
     bool skipHeader = config->getSkipHeader();
 
     uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
@@ -483,24 +476,13 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     } else if (type == "CSVSource") {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, endlessRepeat, skipHeader, sourceDescriptor->getOperatorId());
-    } else if (type == "NetworkSource") {
-        std::vector<std::string> results;
-        boost::split(results, conf, [](char c) {
-            char* helper = ";";
-            return c == *helper;
-        });
-        Network::NesPartition* nesPar =
-            new Network::NesPartition(stoi(results[0]), stoi(results[1]), stoi(results[2]), stoi(results[3]));
-        NES_DEBUG("TypeInferencePhase: create network source with QueryId: "
-                  << stoi(results[0]) << ", OperatorId: " << stoi(results[1]) << ", PartitionId: " << stoi(results[2])
-                  << ", SubpartitionId: " << stoi(results[3]) << ". ");
-        return Network::NetworkSourceDescriptor::create(schema, *nesPar);
+                                           numBuffers, frequency, skipHeader, sourceDescriptor->getOperatorId());
+    } else if (type == "SenseSource") {
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getOperatorId());
     } else if (type == "YSBSource") {
         NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
-        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency, endlessRepeat,
+        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency,
                                            sourceDescriptor->getOperatorId());
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
