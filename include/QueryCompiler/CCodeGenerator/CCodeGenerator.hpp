@@ -79,7 +79,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,
+    uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
                              PipelineContextPtr context) override;
 
     /**

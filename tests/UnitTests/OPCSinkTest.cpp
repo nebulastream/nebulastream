@@ -19,6 +19,7 @@
 #ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -167,8 +168,8 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
     auto test_schema = Schema::create()->addField("var", UINT32);
-    WorkerContext wctx(NesThread::getId());
-    TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    NodeEngine::WorkerContext wctx( NodeEngine::NesThread::getId());
+    NodeEngine::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     write_buffer.getBuffer<uint32_t>()[0] = 45;
     write_buffer.setNumberOfTuples(1);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);

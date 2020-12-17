@@ -943,7 +943,8 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     auto query = TestQuery::from(ysbSource->getSchema())
                      .filter(Attribute("event_type") > 1)
                      .windowByKey(Attribute("campaign_id", INT64),
-                                  TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(10)), Count())
+                                  TumblingWindow::of(EventTime(Attribute("current_ms")),
+                                                     Milliseconds(10)), Count())
                      .sink(DummySink::create());
 
     auto ysbResultSchema = Schema::create()
