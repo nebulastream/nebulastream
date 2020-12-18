@@ -35,14 +35,9 @@ using namespace std;
  */
 namespace NES {
 
-const uint64_t buffersManaged = 1024;
-const uint64_t bufferSize = 4 * 1024;
-
 class SinkTest : public testing::Test {
   public:
-    uint64_t tupleCnt;
     SchemaPtr test_schema;
-    uint64_t test_data_size;
     std::array<uint32_t, 8> test_data;
     bool write_result;
     std::string path_to_csv_file;
