@@ -1361,6 +1361,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
  * @brief This test generates a window slicer
  */
 TEST_F(CodeGenerationTest, codeGenerationJoin) {
+    NES_ASSERT(false, "we have to fix it");
     /* prepare objects for test */
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     NodeEnginePtr nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
@@ -1392,7 +1393,7 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2->code);
     // init window handler
-    auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t>(joinDef);
+    auto joinHandler = WindowHandlerFactoryDetails::createJoinHandler<int64_t, int64_t, int64_t>(joinDef);
 
     //auto context = PipelineContext::create();
     auto executionContext = std::make_shared<PipelineExecutionContext>(
@@ -1416,25 +1417,25 @@ TEST_F(CodeGenerationTest, codeGenerationJoin) {
     stage1->execute(inputBuffer, queryContext, wctx);
 
     //check partial aggregates in window state
-    auto stateVar = queryContext->getJoinHandler<Join::JoinHandler, int64_t>()->getLeftJoinState();
+    auto stateVar = queryContext->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()->getLeftJoinState();
     for (auto& it : stateVar->rangeAll()) {
         cout << "key=" << it.first << " value=" << it.second << endl;
     }
-    std::vector<int64_t> results;
-    for (auto& [key, val] : stateVar->rangeAll()) {
-        NES_DEBUG("Key: " << key << " Value: " << val);
-        for (auto& slice : val->getSliceMetadata()) {
-            std::cout << "start=" << slice.getStartTs() << " end=" << slice.getEndTs() << std::endl;
-        }
-        for (auto& agg : val->getPartialAggregates()) {
-            std::cout << "key=" << key << std::endl;
-            std::cout << "value=" << agg << std::endl;
-            results.push_back(agg);
-        }
-    }
-    cout << "results[0]=" << results[0] << endl;
-    cout << "results[1]=" << results[1] << endl;
-    EXPECT_EQ(results[0], 5);
-    EXPECT_EQ(results[1], 5);
+//    std::vector<int64_t> results;
+//    for (auto& [key, val] : stateVar->rangeAll()) {
+//        NES_DEBUG("Key: " << key << " Value: " << val);
+//        for (auto& slice : val->getSliceMetadata()) {
+//            std::cout << "start=" << slice.getStartTs() << " end=" << slice.getEndTs() << std::endl;
+//        }
+//        for (auto& agg : val->getPartialAggregates()) {
+//            std::cout << "key=" << key << std::endl;
+//            std::cout << "value=" << agg << std::endl;
+//            results.push_back(agg);
+//        }
+//    }    cout << "results[0]=" << results[0] << endl;
+    ////    cout << "results[1]=" << results[1] << endl;
+    ////    EXPECT_EQ(results[0], 5);
+    ////    EXPECT_EQ(results[1], 5);
+//
 }
 }// namespace NES

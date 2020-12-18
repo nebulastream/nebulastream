@@ -144,7 +144,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
 }
 
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator, OperatorNodePtr downstreamOperator) {
-    auto scanOperator = GeneratableScanOperator::create(joinOperator->getInputSchema(), joinOperator->getInputSchema());
+    //TODO: here we have to distinguish between left and right
+    auto scanOperator = GeneratableScanOperator::create(joinOperator->getLeftInputSchema(), joinOperator->getOutputSchema());
     auto generatedJoinOperator = GeneratableJoinOperator::create(joinOperator->as<JoinLogicalOperatorNode>());
     // JOIN -> SCAN -> DOWNSTREAM OPERATOR
     scanOperator->addChild(generatedJoinOperator);

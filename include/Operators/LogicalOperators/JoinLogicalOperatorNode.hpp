@@ -39,8 +39,6 @@ class JoinLogicalOperatorNode : public BinaryOperatorNode {
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
 
-
-
     Join::LogicalJoinDefinitionPtr getJoinDefinition();
 
   private:

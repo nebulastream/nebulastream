@@ -44,13 +44,14 @@ void GeneratableJoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextP
 
 GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNodePtr logicalJoinOperator, OperatorId id) {
     return std::make_shared<GeneratableJoinOperator>(
-        GeneratableJoinOperator(logicalJoinOperator->getInputSchema(), logicalJoinOperator->getOutputSchema(), logicalJoinOperator->getJoinDefinition(), id));
+        GeneratableJoinOperator(logicalJoinOperator->getLeftInputSchema(), logicalJoinOperator->getRightInputSchema(), logicalJoinOperator->getOutputSchema(), logicalJoinOperator->getJoinDefinition(), id));
 }
 
-GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr schema, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
+GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
     : JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
-    setInputSchema(schemaP);
-    setOutputSchema(schemaP);
+    this->setLeftInputSchema(leftSchema);
+    this->setRightInputSchema(rightSchema);
+    this->setOutputSchema(outputSchema);
 }
 
 const std::string GeneratableJoinOperator::toString() const {

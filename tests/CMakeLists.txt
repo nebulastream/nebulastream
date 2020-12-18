@@ -94,9 +94,9 @@ target_link_libraries(window-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)
 
 ### State Manager Test ###
-add_executable(state-manager-tests "UnitTests/StateTest.cpp")
-target_link_libraries(state-manager-tests nes ${GTEST_LIBRARIES})
-add_test(NAME state-manager-tests COMMAND state-manager-tests)
+#add_executable(state-manager-tests "UnitTests/StateTest.cpp")
+#target_link_libraries(state-manager-tests nes ${GTEST_LIBRARIES})
+#add_test(NAME state-manager-tests COMMAND state-manager-tests)
 
 ### ZMQ Data Source Sink Tests ###
 add_executable(zmq-tests "UnitTests/ZMQTest.cpp")

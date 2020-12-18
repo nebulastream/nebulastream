@@ -672,7 +672,6 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
 TEST_F(NetworkStackTest, testNetworkSourceSink) {
     std::promise<bool> completed;
     atomic<int> bufferCnt = 0;
-    atomic<int> eosCnt = 0;
     uint64_t totalNumBuffer = 100;
 
     static constexpr int numSendingThreads = 4;
