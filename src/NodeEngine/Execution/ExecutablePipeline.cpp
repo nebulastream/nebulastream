@@ -57,7 +57,7 @@ bool ExecutablePipeline::start() {
 
 bool ExecutablePipeline::stop() {
     for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
-        //operatorHandler->stop(pipelineContext);
+        operatorHandler->stop(pipelineContext);
     }
     executablePipelineStage->stop(*pipelineContext.get());
     return true;

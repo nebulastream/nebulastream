@@ -51,7 +51,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     ~AggregationWindowHandler() {
         NES_DEBUG("~AggregationWindowHandler(" << handlerType << "):  calling destructor");
-        stop();
+        NES_DEBUG("~AggregationWindowHandler(" << handlerType << "):  finished destructor");
     }
 
     /**
@@ -66,7 +66,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     bool stop() override {
         executablePolicyTrigger->stop();
-        StateManager::instance().unRegisterState("window");
+        //StateManager::instance().unRegisterState("window");
         return true;
     }
 

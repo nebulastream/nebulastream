@@ -248,6 +248,7 @@ bool QueryManager::deregisterQuery(Execution::ExecutableQueryPlanPtr qep) {
 
 bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::stopQuery: query" << qep);
+    bool ret = true;
     {
         std::unique_lock lock(queryMutex);
 
@@ -264,7 +265,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
                 bool success = source->stop();
                 if (!success) {
                     NES_ERROR("QueryManager: could not stop source " << source->toString());
-                    return false;
+                    ret = false;
                 } else {
                     NES_DEBUG("QueryManager: source " << source->toString() << " successfully stopped");
                 }
@@ -274,7 +275,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
     }
     if (!qep->stop()) {
         NES_FATAL_ERROR("QueryManager: QEP could not be stopped");
-        return false;
+        ret = false;
     };
 
     auto sinks = qep->getSinks();
@@ -284,7 +285,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
         sink->shutdown();
     }
     addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, this), true);
-    return true;
+    return ret;
 }
 
 bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask descriptor, bool blocking) {
