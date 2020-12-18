@@ -108,7 +108,7 @@ class BenchmarkUtils {
  */
 #define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
     {                                                                                                                            \
-        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);                                  \
+        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);                               \
                                                                                                                                  \
         try {                                                                                                                    \
             std::ofstream benchmarkFile;                                                                                         \
@@ -178,7 +178,8 @@ class BenchmarkUtils {
 
 #if __linux
 #define printPIDandParentID                                                                                                      \
-    (std::cout << __FUNCTION__ << " called by process " << ::getpid() << " and by thread id " << syscall(__NR_gettid) << " (parent: " << ::getppid() << ")" << std::endl)
+    (std::cout << __FUNCTION__ << " called by process " << ::getpid() << " and by thread id " << syscall(__NR_gettid)            \
+               << " (parent: " << ::getppid() << ")" << std::endl)
 #else
 #define printPIDandParentID                                                                                                      \
     (std::cout << __FUNCTION__ << " called by process " << ::getpid() << " (parent: " << ::getppid() << ")" << std::endl)
