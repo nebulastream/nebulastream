@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <atomic>
 
 namespace NES::Windowing {
 
@@ -44,7 +45,7 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
     bool stop() override;
 
   private:
-    bool running;
+    std::atomic<bool> running;
     std::shared_ptr<std::thread> thread;
     std::mutex runningTriggerMutex;
     uint64_t triggerTimeInMs;
