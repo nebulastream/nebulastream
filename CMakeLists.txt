@@ -266,8 +266,6 @@ add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
 add_definitions(-D '__STDC_CONSTANT_MACROS')
 add_definitions(-D '__STDC_LIMIT_MACROS')
 
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 # $ORIGIN is to read the shared object from the installation directory
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
