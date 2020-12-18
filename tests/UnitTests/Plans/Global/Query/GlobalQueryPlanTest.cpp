@@ -251,9 +251,9 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 }
 
 /**
- * @brief This test is for updating Meta Data information after applying L0 merging on 3 queries where 2 are identical
+ * @brief This test is for updating Meta Data information after applying Syntax Based Equal Query Merger merging on 3 queries where 2 are identical
  */
-TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMixedQueriesAfterL0Merge) {
+TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMixedQueriesAfterApplyingMergeRules) {
 
     NES_DEBUG("GlobalQueryPlanTest: creating an empty global query plan");
     GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
@@ -285,9 +285,9 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 3);
 
-    //Apply L0 query merger rule
-    SyntaxBasedEqualQueryMergerRulePtr l0MergerRule = SyntaxBasedEqualQueryMergerRule::create();
-    l0MergerRule->apply(globalQueryPlan);
+    //Apply Syntax Based Equal Query Merger rule
+    SyntaxBasedEqualQueryMergerRulePtr syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
     std::vector<SharedQueryMetaDataPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();

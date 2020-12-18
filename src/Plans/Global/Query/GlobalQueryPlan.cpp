@@ -140,11 +140,14 @@ bool GlobalQueryPlan::updateSharedQueryMetadata(SharedQueryMetaDataPtr sharedQue
 
 void GlobalQueryPlan::removeEmptySharedQueryMetaData() {
     NES_INFO("GlobalQueryPlan: remove empty metadata information.");
-    for (auto [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
+    //Following associative-container erase idiom
+    for (auto itr = sharedQueryIdToMetaDataMap.begin(); itr != sharedQueryIdToMetaDataMap.end();) {
+        auto sharedQueryMetaData = itr->second;
         if ((sharedQueryMetaData->isDeployed() || sharedQueryMetaData->isNew()) && sharedQueryMetaData->isEmpty()) {
             NES_TRACE("GlobalQueryPlan: Removing! found an empty query meta data.");
-            sharedQueryIdToMetaDataMap.erase(sharedQueryMetaData->getSharedQueryId());
+            sharedQueryIdToMetaDataMap.erase(itr++);
         }
+        ++itr;
     }
 }
 
