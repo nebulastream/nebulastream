@@ -16,8 +16,23 @@
 
 #include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES {
+
+DynamicColumnLayout::DynamicColumnLayout(uint64_t capacity, bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
+    this->capacity = capacity;
+    this->numberOfRecords = 0;
+    this->checkBoundaryFieldChecks = checkBoundaries;
+
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    for (auto const& field : schema->fields) {
+        auto curFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
+        this->fieldSizes.emplace_back(curFieldSize);
+        this->columnOffsets.emplace_back(curFieldSize * capacity);
+    }
+}
+
 /**
  *
  * @param schema
@@ -30,22 +45,6 @@ DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, uint64_t bu
     auto capacity = bufferSize / recordSize;
 
     return std::make_shared<DynamicColumnLayout>(capacity, checkBoundaries, schema);
-
-}
-
-DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
-
-
-DynamicColumnLayout::DynamicColumnLayout(uint64_t capacity, bool checkBoundaries, SchemaPtr schema) {
-    this->capacity = capacity;
-    this->numberOfRecords = 0;
-    this->checkBoundaryFieldChecks = checkBoundaries;
-
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto const& field : schema->fields) {
-        this->fieldSizes.emplace_back(physicalDataTypeFactory.getPhysicalType(field->getDataType())->size());
-        this->columnOffsets =
-    }
 }
 
 uint64_t DynamicColumnLayout::calcOffset(uint64_t ithRecord, uint64_t jthField) {
@@ -55,4 +54,5 @@ uint64_t DynamicColumnLayout::calcOffset(uint64_t ithRecord, uint64_t jthField) 
     return (ithRecord * fieldSizes[jthField]) + columnOffsets[jthField];
 }
 
+DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
 }

@@ -16,8 +16,22 @@
 
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES {
+
+DynamicRowLayout::DynamicRowLayout(uint64_t recordSize, uint64_t capacity, bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout(){
+    this->recordSize = recordSize;
+    this->numberOfRecords = 0;
+    this->capacity = capacity;
+    this->checkBoundaryFieldChecks = checkBoundaries;
+
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    for (auto const& field : schema->fields) {
+        fieldSizes.emplace_back(physicalDataTypeFactory.getPhysicalType(field->getDataType())->size());
+    }
+}
+
 /**
  *
  * @param schema
@@ -32,22 +46,12 @@ DynamicRowLayoutPtr DynamicRowLayout::create(SchemaPtr schema, uint64_t bufferSi
     return std::make_shared<DynamicRowLayout>(recordSize, capacity, checkBoundaries, schema);
 }
 
-DynamicMemoryLayoutPtr DynamicRowLayout::copy() const { return std::make_shared<DynamicRowLayout>(*this); }
-
-DynamicRowLayout::DynamicRowLayout(uint64_t recordSize, uint64_t capacity, bool checkBoundaries, SchemaPtr schema) {
-    this->recordSize = recordSize;
-    this->numberOfRecords = 0;
-    this->capacity = capacity;
-    this->checkBoundaryFieldChecks = checkBoundaries;
-
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto const& field : schema->fields) {
-        fieldSizes.emplace_back(physicalDataTypeFactory.getPhysicalType(field->getDataType())->size());
-    }
-}
 uint64_t DynamicRowLayout::calcOffset(uint64_t ithRecord, uint64_t jthField) {
     NES_VERIFY(jthField < fieldSizes.size(), "jthField" << jthField << " is larger than fieldSizes.size() " << fieldSizes.size());
 
     return (ithRecord * recordSize) + fieldSizes[jthField];
 }
+
+DynamicMemoryLayoutPtr DynamicRowLayout::copy() const { return std::make_shared<DynamicRowLayout>(*this); }
+
 }

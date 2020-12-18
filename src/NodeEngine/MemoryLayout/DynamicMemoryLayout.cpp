@@ -16,5 +16,5 @@
 
 #include "NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp"
 namespace NES {
-    DynamicMemoryLayout::DynamicMemoryLayout() {}
+DynamicMemoryLayout::DynamicMemoryLayout() {}
 }

@@ -20,7 +20,6 @@
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 
-
 namespace NES {
 
 typedef uint64_t FIELD_SIZE;
@@ -29,7 +28,7 @@ typedef uint64_t COL_OFFSET_SIZE;
 class DynamicColumnLayout;
 typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
 
-class DynamicColumnLayout : DynamicMemoryLayout{
+class DynamicColumnLayout : public DynamicMemoryLayout{
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
