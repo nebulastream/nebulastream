@@ -40,4 +40,5 @@ void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHand
 SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
 void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->start(); }
 void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
+
 }// namespace NES::Windowing

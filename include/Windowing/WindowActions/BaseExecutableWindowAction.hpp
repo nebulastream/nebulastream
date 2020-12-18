@@ -33,11 +33,11 @@ class BaseExecutableWindowAction {
     virtual std::string toString() = 0;
 
     void setup(NodeEngine::Execution::PipelineExecutionContextPtr executionContext) {
-        this->executionContext = executionContext;
+        this->weakExecutionContext = executionContext;
     }
 
   protected:
-    NodeEngine::Execution::PipelineExecutionContextPtr executionContext;
+    std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
     SchemaPtr windowSchema;
 };
 }// namespace NES::Windowing

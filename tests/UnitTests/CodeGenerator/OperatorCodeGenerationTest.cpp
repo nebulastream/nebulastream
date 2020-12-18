@@ -51,6 +51,8 @@
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>

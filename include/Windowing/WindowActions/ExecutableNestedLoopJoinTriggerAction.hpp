@@ -33,6 +33,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Join {
 template<class KeyType>

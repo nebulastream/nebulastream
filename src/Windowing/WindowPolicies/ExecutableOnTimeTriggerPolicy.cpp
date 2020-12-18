@@ -36,12 +36,15 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
     NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << windowHandler->toString()
                                                               << " with ms=" << triggerTimeInMs);
     std::string handlerName = windowHandler->toString();
-    thread = std::make_shared<std::thread>([handlerName, windowHandler, this]() {
+    std::weak_ptr<AbstractWindowHandler> weakWindowHandler = windowHandler;
+    thread = std::make_shared<std::thread>([handlerName, weakWindowHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
         while (running) {
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
-            windowHandler->trigger();
+            if(!weakWindowHandler.expired()){
+                weakWindowHandler.lock()->trigger();
+            }
         }
     });
     return true;

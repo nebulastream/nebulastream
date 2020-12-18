@@ -512,7 +512,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         // value
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
     }
-    nodeEngine->stopQuery(1);
+   // nodeEngine->stopQuery(1);
     nodeEngine->stop();
 }
 

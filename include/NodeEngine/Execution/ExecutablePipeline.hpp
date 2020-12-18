@@ -81,7 +81,7 @@ class ExecutablePipeline {
      */
     QuerySubPlanId getQepParentId() const;
 
-    ~ExecutablePipeline() = default;
+    ~ExecutablePipeline();
 
     /**
     * @return returns true if the pipeline contains a function pointer for a reconfiguration task

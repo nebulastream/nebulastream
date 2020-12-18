@@ -21,6 +21,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <Util/Logger.hpp>
 
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
@@ -68,7 +69,9 @@ struct StateVariableDestroyerHelper<Key, T*> {
 
 class Destroyable {
   public:
-    virtual ~Destroyable() {}
+    virtual ~Destroyable() {
+        NES_DEBUG("~Destroyable()");
+    }
 };
 }// namespace detail
 
@@ -229,7 +232,10 @@ class StateVariable : public detail::Destroyable {
 
     explicit StateVariable(StateVariable<Key, Value>&& other) { *this = std::move(other); }
 
-    virtual ~StateVariable() override { detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend); }
+    virtual ~StateVariable() override {
+        NES_DEBUG("~StateVariable()");
+        detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend);
+    }
 
     StateVariable& operator=(const StateVariable<Key, Value>& other) = delete;
 

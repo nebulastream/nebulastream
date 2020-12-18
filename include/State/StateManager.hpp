@@ -35,10 +35,12 @@ class StateManager {
     std::unordered_map<std::string, state_variable_base_type> state_variables;
 
     ~StateManager() {
+        NES_DEBUG("~StateManager()");
         std::unique_lock<std::mutex> lock(mutex);
         for (auto& it : state_variables) {
             delete it.second;
         }
+        state_variables.clear();
     }
 
   public:
@@ -55,6 +57,19 @@ class StateManager {
         auto state_var = new StateVariable<Key, Value>(variable_name);
         state_variables[variable_name] = state_var;
         return *state_var;
+    }
+
+    /**
+     * Register a new StateVariable object
+     * @tparam Key
+     * @tparam Value
+     * @param variable_name an unique identifier for the state variable
+     * @return the state variable as a reference
+     */
+    void unRegisterState(const std::string& variable_name) {
+        std::unique_lock<std::mutex> lock(mutex);
+        delete state_variables[variable_name];
+        state_variables.erase(variable_name);
     }
 
     /**

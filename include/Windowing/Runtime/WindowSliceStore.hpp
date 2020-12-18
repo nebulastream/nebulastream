@@ -31,6 +31,10 @@ class WindowSliceStore {
         : defaultValue(value), sliceMetaData(std::vector<SliceMetaData>()),
           partialAggregates(std::vector<PartialAggregateType>()) {}
 
+    ~WindowSliceStore(){
+        NES_DEBUG("~WindowSliceStore()");
+    }
+
     /**
     * @brief Get the corresponding slide index for a particular timestamp ts.
     * @param ts timestamp of the record.

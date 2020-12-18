@@ -29,6 +29,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <memory>
 
 namespace NES::Windowing {
 
@@ -62,7 +63,13 @@ class ExecutableCompleteAggregationTriggerAction
                                                                  << "): doAction for currentWatermark=" << currentWatermark
                                                                  << " lastWatermark=" << lastWatermark);
 
-        auto tupleBuffer = this->executionContext->allocateTupleBuffer();
+        // get the reference to the shared ptr.
+        if(this->weakExecutionContext.expired()){
+            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
+            return false;
+        }
+        auto executionContext = this->weakExecutionContext.lock();
+        auto tupleBuffer = executionContext->allocateTupleBuffer();
 
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
@@ -84,7 +91,7 @@ class ExecutableCompleteAggregationTriggerAction
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
             //forward buffer to next  pipeline stage
-            this->executionContext->dispatchBuffer(tupleBuffer);
+            executionContext->dispatchBuffer(tupleBuffer);
         }
         return true;
     }
@@ -104,6 +111,11 @@ class ExecutableCompleteAggregationTriggerAction
         // For processing time we use the current wall clock as watermark.
         // create result vector of windows
         auto windows = std::vector<WindowState>();
+
+        if(this->weakExecutionContext.expired()){
+            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
+        }
+        auto executionContext = this->weakExecutionContext.lock();
 
         //TODO this will be replaced by the the watermark operator
         // iterate over all slices and update the partial final aggregates
@@ -194,9 +206,9 @@ class ExecutableCompleteAggregationTriggerAction
                               << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
                     //forward buffer to next  pipeline stage
-                    this->executionContext->dispatchBuffer(tupleBuffer);
+                    executionContext->dispatchBuffer(tupleBuffer);
                     // request new buffer
-                    tupleBuffer = this->executionContext->allocateTupleBuffer();
+                    tupleBuffer = executionContext->allocateTupleBuffer();
                     currentNumberOfTuples = 0;
                 }
             }//end of for
