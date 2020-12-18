@@ -71,8 +71,8 @@ class JoinHandler : public AbstractJoinHandler {
     bool stop() override {
         NES_DEBUG("JoinHandler stop");
         executablePolicyTrigger->stop();
-        StateManager::instance().unRegisterState("leftSide");
-        StateManager::instance().unRegisterState("rightSide");
+        //StateManager::instance().unRegisterState("leftSide");
+        //StateManager::instance().unRegisterState("rightSide");
         return true;
     }
 
