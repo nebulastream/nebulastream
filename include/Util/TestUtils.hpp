@@ -62,8 +62,7 @@ class TestUtils {
         }
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        auto now = start_timestamp;
-        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
             //FIXME: handle vector of statistics properly in #977
             if (ptr->getQueryStatistics(queryId)[0]->getProcessedBuffers() == expectedResult
