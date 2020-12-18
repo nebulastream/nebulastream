@@ -1041,6 +1041,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     stage1->setup(*executionContext.get());
     stage1->start(*executionContext.get());
+    executionContext->
+        getOperatorHandler<Join::JoinOperatorHandler>(0)->
+        getJoinHandler<Join::JoinHandler, int64_t>()->start();
     stage1->execute(inputBuffer,  *executionContext.get(), wctx);
 
     //check partial aggregates in window state
@@ -1069,6 +1072,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     cout << "results[1]=" << results[1] << endl;
     EXPECT_EQ(results[0], 5);
     EXPECT_EQ(results[1], 5);
+    joinHandler->stop(executionContext);
 
 }
 }// namespace NES
