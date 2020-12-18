@@ -176,8 +176,13 @@ class BenchmarkUtils {
         NES::NESLogger->removeAllAppenders();                                                                                    \
     }
 
+#if __linux
 #define printPIDandParentID                                                                                                      \
     (std::cout << __FUNCTION__ << " called by process " << ::getpid() << " and by thread id " << syscall(__NR_gettid) << " (parent: " << ::getppid() << ")" << std::endl)
+#else
+#define printPIDandParentID                                                                                                      \
+    (std::cout << __FUNCTION__ << " called by process " << ::getpid() << " (parent: " << ::getppid() << ")" << std::endl)
+#endif
 }// namespace NES::Benchmarking
 
 #endif//NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
