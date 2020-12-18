@@ -40,11 +40,11 @@ class BaseExecutableJoinAction {
 
     void setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
         this->originId = originId;
-        this->pipelineExecutionContext = pipelineExecutionContext;
+        this->weakExecutionContext = pipelineExecutionContext;
     }
 
   protected:
-    NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext;
+    std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
     uint64_t originId;
 };
 }// namespace NES::Join

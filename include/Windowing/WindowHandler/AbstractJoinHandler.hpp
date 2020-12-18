@@ -48,6 +48,10 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
         // nop
     }
 
+    virtual ~AbstractJoinHandler(){
+        NES_DEBUG("~AbstractJoinHandler()");
+    }
+
     template<class Type>
     auto as() {
         return std::dynamic_pointer_cast<Type>(shared_from_this());

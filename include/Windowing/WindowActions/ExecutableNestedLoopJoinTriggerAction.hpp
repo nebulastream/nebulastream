@@ -52,11 +52,21 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
     }
 
-    bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
-                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate, uint64_t currentWatermarkLeft,
-                  uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
+    ~ExecutableNestedLoopJoinTriggerAction(){
+        NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction()");
+    }
 
-        auto tupleBuffer = this->pipelineExecutionContext->allocateTupleBuffer();
+    bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
+                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
+                  uint64_t currentWatermarkLeft,
+                  uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
+        // get the reference to the shared ptr.
+        if(this->weakExecutionContext.expired()){
+            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
+            return false;
+        }
+        auto executionContext = this->weakExecutionContext.lock();
+        auto tupleBuffer = executionContext->allocateTupleBuffer();
         //tupleBuffer.setOriginId(this->originId);
         // iterate over all keys in both window states and perform the join
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction doing the nested loop join");
@@ -85,7 +95,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
             //forward buffer to next  pipeline stage
-            this->pipelineExecutionContext->dispatchBuffer(tupleBuffer);
+            executionContext->dispatchBuffer(tupleBuffer);
         }
 
         return true;
@@ -143,6 +153,12 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         // create result vector of windows, note that both sides will have the same windows
         auto windows = std::vector<Windowing::WindowState>();
 
+        // get the reference to the shared ptr.
+        if(this->weakExecutionContext.expired()){
+            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
+            return;
+        }
+        auto executionContext = this->weakExecutionContext.lock();
         //do the partial aggregation on the left side
         auto slicesLeft = leftStore->getSliceMetadata();
         auto partialAggregatesLeft = leftStore->getPartialAggregates();
@@ -220,10 +236,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
                     //forward buffer to next  pipeline stage
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
-                    this->pipelineExecutionContext->dispatchBuffer(tupleBuffer);
+                    executionContext->dispatchBuffer(tupleBuffer);
 
                     // request new buffer
-                    tupleBuffer = this->pipelineExecutionContext->allocateTupleBuffer();
+                    tupleBuffer = executionContext->allocateTupleBuffer();
                     //tupleBuffer.setOriginId(this->originId);
                     currentNumberOfTuples = 0;
                 }
