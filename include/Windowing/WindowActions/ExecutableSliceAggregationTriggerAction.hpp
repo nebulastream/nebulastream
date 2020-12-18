@@ -64,7 +64,12 @@ class ExecutableSliceAggregationTriggerAction
         NES_DEBUG("ExecutableSliceAggregationTriggerAction: doAction for currentWatermark="
                   << currentWatermark << " lastWatermark=" << lastWatermark);
 
-        auto tupleBuffer = this->executionContext->allocateTupleBuffer();
+        if(this->weakExecutionContext.expired()){
+            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
+            return false;
+        }
+        auto executionContext = this->weakExecutionContext.lock();
+        auto tupleBuffer = executionContext->allocateTupleBuffer();
         //tupleBuffer.setOriginId(this->originId);
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
@@ -82,9 +87,9 @@ class ExecutableSliceAggregationTriggerAction
                       << " lastWatermark=" << lastWatermark
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
-                      << " this->nextPipeline=" << this->executionContext->toString() << std::endl);
+                      << " this->nextPipeline=" << executionContext->toString() << std::endl);
             //forward buffer to next  pipeline stage
-            this->executionContext->dispatchBuffer(tupleBuffer);
+            executionContext->dispatchBuffer(tupleBuffer);
         }
         return true;
     }
@@ -103,6 +108,12 @@ class ExecutableSliceAggregationTriggerAction
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
         // TODO we should add a allowed lateness to support out of order events
+
+        if(this->weakExecutionContext.expired()){
+            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
+            return;
+        }
+        auto executionContext = this->weakExecutionContext.lock();
 
         // create result vector of windows
         // iterate over all slices and update the partial final aggregates
@@ -144,10 +155,10 @@ class ExecutableSliceAggregationTriggerAction
                               << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
 
                     //forward buffer to next  pipeline stage
-                    this->executionContext->dispatchBuffer(tupleBuffer);
+                    executionContext->dispatchBuffer(tupleBuffer);
 
                     // request new buffer
-                    tupleBuffer = this->executionContext->allocateTupleBuffer();
+                    tupleBuffer = executionContext->allocateTupleBuffer();
                     //tupleBuffer.setOriginId(this->originId);
                     currentNumberOfTuples = 0;
                 }
