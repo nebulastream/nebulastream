@@ -36,6 +36,10 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler{
 
     void setJoinHandler(AbstractJoinHandlerPtr joinHandler);
 
+    virtual ~JoinOperatorHandler(){
+        NES_DEBUG("~JoinOperatorHandler()");
+    }
+
     template<template<class> class JoinHandlerType, class KeyType>
     auto getJoinHandler() {
         return std::dynamic_pointer_cast<JoinHandlerType<KeyType>>(joinHandler);

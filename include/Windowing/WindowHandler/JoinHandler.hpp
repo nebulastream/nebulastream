@@ -71,7 +71,10 @@ class JoinHandler : public AbstractJoinHandler {
      */
     bool stop() override {
         NES_DEBUG("JoinHandler stop");
-        return executablePolicyTrigger->stop();
+        executablePolicyTrigger->stop();
+        StateManager::instance().unRegisterState("leftSide");
+        StateManager::instance().unRegisterState("rightSide");
+        return true;
     }
 
     std::string toString() override {
