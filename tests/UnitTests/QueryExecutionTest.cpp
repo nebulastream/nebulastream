@@ -62,15 +62,18 @@ using NodeEngine::MemoryLayoutPtr;
 
 class QueryExecutionTest : public testing::Test {
   public:
-    /* Will be called before a test is executed. */
-    void SetUp() {
+    static void SetUpTestCase(){
         NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
         NES_DEBUG("QueryExecutionTest: Setup QueryCatalogTest test class.");
+
+    }
+    /* Will be called before a test is executed. */
+    void SetUp() {
         // create test input buffer
         testSchema = Schema::create()
-                         ->addField("id", BasicType::INT64)
-                         ->addField("one", BasicType::INT64)
-                         ->addField("value", BasicType::INT64);
+            ->addField("id", BasicType::INT64)
+            ->addField("one", BasicType::INT64)
+            ->addField("value", BasicType::INT64);
     }
 
     /* Will be called before a test is executed. */
