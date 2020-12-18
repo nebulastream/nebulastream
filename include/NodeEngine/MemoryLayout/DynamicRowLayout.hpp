@@ -23,12 +23,15 @@
 
 namespace NES {
 
+class ArrayPhysicalField;
+typedef std::shared_ptr<ArrayPhysicalField> ArrayPhysicalFieldPtr;
+
 typedef uint64_t FIELD_SIZE;
 
 class DynamicRowLayout;
 typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
 
-class DynamicRowLayout : DynamicMemoryLayout{
+class DynamicRowLayout : public DynamicMemoryLayout{
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
