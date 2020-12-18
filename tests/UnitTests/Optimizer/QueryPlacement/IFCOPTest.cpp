@@ -65,7 +65,7 @@ class IFCOPTest : public testing::Test {
         // creater workers
         std::vector<TopologyNodePtr> topologyNodes;
         int resource = 4;
-        for (uint32_t i = 0; i < 10; ++i) {
+        for (uint32_t i = 0; i < 11; ++i) {
             topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
             grpcPort = grpcPort + 2;
             dataPort = dataPort + 2;
@@ -89,25 +89,41 @@ class IFCOPTest : public testing::Test {
         topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
         topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
 
+        topology->addNewPhysicalNodeAsChild(topologyNodes.at(6), topologyNodes.at(10));
 
-        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+
+        std::string carSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
-        const std::string streamName = "car";
+        const std::string carStreamName = "car";
+
+        std::string truckSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string truckStreamName = "truck";
 
         streamCatalog = std::make_shared<StreamCatalog>();
-        streamCatalog->addLogicalStream(streamName, schema);
+        streamCatalog->addLogicalStream(carStreamName, carSchema);
+        streamCatalog->addLogicalStream(truckStreamName, truckSchema);
 
-        PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfigPtr confCar =
             PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
                 /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
                 /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
                 /**Logical Stream Name**/ "car");
 
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, topologyNodes.at(8));
-        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, topologyNodes.at(9));
+        PhysicalStreamConfigPtr confTruck =
+            PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
+                /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
+                /**Logical Stream Name**/ "truck");
+
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(8));
+//        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(9));
+        StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(confTruck, topologyNodes.at(10));
+
 
         streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
-        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+//        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+        streamCatalog->addPhysicalStream("truck", streamCatalogEntry3);
     }
 
     StreamCatalogPtr streamCatalog;
@@ -121,8 +137,8 @@ TEST_F(IFCOPTest, testGeneratingRandomExecutionPath) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-
-    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    auto subQuery = Query::from("truck");
+    Query query = Query::from("car").filter(Attribute("id") > 1).merge(&subQuery).sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -139,9 +155,9 @@ TEST_F(IFCOPTest, testGeneratingRandomExecutionPath) {
     //check if the source nodes are in the execution path
     bool isSourceOneFound = false;
     bool isSourceTwoFound = false;
-    for (NodePtr child: randomExecutionPath.at(0)->getAndFlattenAllChildren(false)){
+    for (NodePtr child: randomExecutionPath->getAndFlattenAllChildren(false)){
         isSourceOneFound = isSourceOneFound || child->as<TopologyNode>()->getId() == 8;
-        isSourceTwoFound = isSourceTwoFound || child->as<TopologyNode>()->getId() == 9;
+        isSourceTwoFound = isSourceTwoFound || child->as<TopologyNode>()->getId() == 10;
     }
     ASSERT_TRUE(isSourceOneFound);
     ASSERT_TRUE(isSourceTwoFound);

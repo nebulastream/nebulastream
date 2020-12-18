@@ -39,7 +39,7 @@ class IFCOPStrategy : public BasePlacementStrategy {
                                                     TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
     // TODO: This should be private
-    std::vector<TopologyNodePtr> generateRandomExecutionPath(TopologyPtr topology, QueryPlanPtr queryPlan);
+    TopologyNodePtr generateRandomExecutionPath(TopologyPtr topology, QueryPlanPtr queryPlan);
 
   private:
     explicit IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
