@@ -27,9 +27,11 @@ namespace NES::NodeEngine::Execution {
 
 ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId qepId,
                                        ExecutablePipelineStagePtr executablePipelineStage,
-                                       PipelineExecutionContextPtr pipelineExecutionContext, ExecutablePipelinePtr nextPipeline)
+                                       PipelineExecutionContextPtr pipelineExecutionContext,
+                                       ExecutablePipelinePtr nextPipeline,
+                                       bool reconfiguration)
     : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
-      nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)) {
+      nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
@@ -69,12 +71,13 @@ QuerySubPlanId ExecutablePipeline::getQepParentId() const { return qepId; }
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
+
 ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
                                                  ExecutablePipelineStagePtr executablePipelineStage,
                                                  PipelineExecutionContextPtr pipelineContext,
-                                                 ExecutablePipelinePtr nextPipeline) {
+                                                 ExecutablePipelinePtr nextPipeline, bool reconfiguration) {
     return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
-                                                nextPipeline);
+                                                nextPipeline,reconfiguration);
 }
 
 ExecutablePipeline::~ExecutablePipeline() {

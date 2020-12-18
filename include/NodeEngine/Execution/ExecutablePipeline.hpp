@@ -35,7 +35,8 @@ class ExecutablePipeline {
                        QuerySubPlanId qepId,
                        ExecutablePipelineStagePtr  executablePipelineStage,
                        PipelineExecutionContextPtr pipelineContext,
-                       ExecutablePipelinePtr nextPipeline);
+                       ExecutablePipelinePtr nextPipeline,
+                       bool reconfiguration);
 
     /**
      * @brief Execute a pipeline stage
@@ -91,7 +92,7 @@ class ExecutablePipeline {
 
    static ExecutablePipelinePtr create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
                                    ExecutablePipelineStagePtr executablePipelineStage, PipelineExecutionContextPtr pipelineContext,
-                                   const ExecutablePipelinePtr nextPipelineStage);
+                                   const ExecutablePipelinePtr nextPipelineStage, bool reconfiguration = false);
 
   private:
     uint32_t pipelineStageId;
