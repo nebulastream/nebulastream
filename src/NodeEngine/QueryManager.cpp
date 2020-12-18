@@ -301,7 +301,7 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
         [](TupleBuffer&) {
         },
         std::vector<Execution::OperatorHandlerPtr>());
-    auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr);
+    auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr, true);
     {
         std::unique_lock lock(workMutex);
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
