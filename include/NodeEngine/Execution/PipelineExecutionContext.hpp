@@ -42,7 +42,9 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                       std::vector<OperatorHandlerPtr> operatorHandlers);
-
+    ~PipelineExecutionContext(){
+      NES_DEBUG("~PipelineExecutionContext()");
+    }
     /**
      * @brief Allocates a new tuple buffer.
      * @return TupleBuffer

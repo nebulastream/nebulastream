@@ -120,6 +120,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
         NES_ERROR("compilePipelineStages failure: no pipelines to generate");
         NES_THROW_RUNTIME_ERROR("No pipelines generated");
     }
+    auto queryManager = builder.getQueryManager();
     auto originId = builder.getQueryManager()->getNodeId();
     std::map<uint32_t, NodeEngine::Execution::ExecutablePipelinePtr> pipelines;
     for (auto it = executableStages.rbegin(), last = executableStages.rend(); it != last; ++it) {
@@ -133,15 +134,14 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [childPipelines, builder, originId](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
+                [childPipelines, originId](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     buffer.setOriginId(originId);
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
                     }
                 },
-                [childPipelines, builder, originId](NodeEngine::TupleBuffer& buffer) {
+                [childPipelines, queryManager, originId](NodeEngine::TupleBuffer& buffer) {
                     buffer.setOriginId(originId);
-                    auto queryManager = builder.getQueryManager();
                     for (auto& childPipeline : childPipelines) {
                         queryManager->addWorkForNextPipeline(buffer, childPipeline);
                     }

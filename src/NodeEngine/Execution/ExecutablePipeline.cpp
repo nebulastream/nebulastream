@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Execution/OperatorHandler.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/OperatorHandler.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
@@ -42,11 +42,11 @@ bool ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef work
 }
 
 bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
-    return executablePipelineStage->setup(*pipelineContext.get())==0;
+    return executablePipelineStage->setup(*pipelineContext.get()) == 0;
 }
 
 bool ExecutablePipeline::start() {
-    for(auto operatorHandler: pipelineContext->getOperatorHandlers()){
+    for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
         operatorHandler->start(pipelineContext);
     }
     executablePipelineStage->start(*pipelineContext.get());
@@ -54,8 +54,8 @@ bool ExecutablePipeline::start() {
 }
 
 bool ExecutablePipeline::stop() {
-    for(auto operatorHandler: pipelineContext->getOperatorHandlers()){
-        operatorHandler->stop(pipelineContext);
+    for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+        //operatorHandler->stop(pipelineContext);
     }
     executablePipelineStage->stop(*pipelineContext.get());
     return true;
@@ -70,11 +70,15 @@ QuerySubPlanId ExecutablePipeline::getQepParentId() const { return qepId; }
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
 ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
-                                            ExecutablePipelineStagePtr executablePipelineStage,
-                                              PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline) {
+                                                 ExecutablePipelineStagePtr executablePipelineStage,
+                                                 PipelineExecutionContextPtr pipelineContext,
+                                                 ExecutablePipelinePtr nextPipeline) {
     return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
                                                 nextPipeline);
 }
 
+ExecutablePipeline::~ExecutablePipeline() {
+    NES_DEBUG("~ExecutablePipeline("+std::to_string(pipelineStageId)+")");
+}
 
 }// namespace NES::NodeEngine::Execution

@@ -50,7 +50,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     ~AggregationWindowHandler() {
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  calling destructor");
+        NES_DEBUG("~AggregationWindowHandler(" << handlerType << "):  calling destructor");
         stop();
     }
 
@@ -64,11 +64,15 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @brief Stops the window thread.
      * @return
      */
-    bool stop() override { return executablePolicyTrigger->stop(); }
+    bool stop() override {
+        executablePolicyTrigger->stop();
+        StateManager::instance().unRegisterState("window");
+        return true;
+    }
 
     std::string toString() override {
         std::stringstream ss;
-        ss << "AG:" << this->pipelineExecutionContext->toString();
+        ss << "AG:";
         std::string triggerType;
         if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
             triggerType = "Combining";
@@ -88,8 +92,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     void trigger() override {
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  run window action " << executableWindowAction->toString()
-                                              << " distribution type=" << windowDefinition->getDistributionType()->toString()
-                                              << " pipeline =" << pipelineExecutionContext->toString());
+                                              << " distribution type=" << windowDefinition->getDistributionType()->toString());
 
         if (originIdToMaxTsMap.size() != numberOfInputEdges) {
             NES_DEBUG("AggregationWindowHandler("
@@ -135,7 +138,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     * @brief Initialises the state of this window depending on the window definition.
     */
     bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
-        this->pipelineExecutionContext = pipelineExecutionContext;
+
         // Initialize AggregationWindowHandler Manager
         this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType());
         // Initialize StateVariable
@@ -157,8 +160,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return executableWindowAction;
     }
 
+
   private:
-    NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext;
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;

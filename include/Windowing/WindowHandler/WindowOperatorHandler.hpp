@@ -40,6 +40,9 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler{
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
     void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    ~WindowOperatorHandler() override{
+        NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count()));
+    }
     LogicalWindowDefinitionPtr getWindowDefinition();
 
     SchemaPtr getResultSchema();

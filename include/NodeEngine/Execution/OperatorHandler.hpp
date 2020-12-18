@@ -17,6 +17,8 @@
 #ifndef NES_INCLUDE_NODEENGINE_EXECUTION_OPERATORHANDLER_HPP_
 #define NES_INCLUDE_NODEENGINE_EXECUTION_OPERATORHANDLER_HPP_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Util/Logger.hpp>
+
 namespace NES::NodeEngine::Execution {
 
 /**
@@ -25,6 +27,10 @@ namespace NES::NodeEngine::Execution {
 class OperatorHandler {
   public:
     OperatorHandler() = default;
+    virtual ~OperatorHandler(){
+        NES_DEBUG("~OperatorHandler()");
+    }
+
     virtual void start(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
     virtual void stop(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 };
