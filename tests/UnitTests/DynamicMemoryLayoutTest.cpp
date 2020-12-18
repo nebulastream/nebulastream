@@ -49,7 +49,7 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutCreateTest) {
     auto bufferSize = bufferManager->getBufferSize();
     DynamicRowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = DynamicRowLayout::create(schema, bufferSize, true));
-    ASSERT_EQ(rowLayout, nullptr);
+    ASSERT_NE(rowLayout, nullptr);
 }
 
 TEST_F(DynamicMemoryLayoutTest, columnLayoutCreateTest) {
@@ -59,7 +59,7 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutCreateTest) {
     auto bufferSize = bufferManager->getBufferSize();
     DynamicColumnLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = DynamicColumnLayout::create(schema, bufferSize, true));
-    ASSERT_EQ(rowLayout, nullptr);
+    ASSERT_NE(rowLayout, nullptr);
 }
 
 }// namespace NES
