@@ -131,6 +131,7 @@ class CodeGenerator {
     * @brief Code generation for a central window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
@@ -141,6 +142,7 @@ class CodeGenerator {
    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
    * @param window The window definition, which contains all properties of the window.
    * @param context The context of the current pipeline.
+   * @param operatorHandlerIndex index for the operator handler.
    * @return flag if the generation was successful.
    */
     virtual bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
@@ -151,6 +153,7 @@ class CodeGenerator {
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
     * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
@@ -170,6 +173,7 @@ class CodeGenerator {
     * @brief Code generation for a join operator, which depends on a particular join definition
     * @param window The join definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context, uint64_t operatorHandlerIndex) = 0;

@@ -22,6 +22,9 @@
 #include <vector>
 namespace NES {
 
+/**
+ * @brief Declaration for a class in the generated code.
+ */
 class ClassDeclaration : public Declaration {
 
   public:

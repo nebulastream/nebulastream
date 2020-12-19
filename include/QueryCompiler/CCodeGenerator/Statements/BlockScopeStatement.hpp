@@ -23,6 +23,12 @@ namespace NES{
 class BlockScopeStatement;
 typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
 
+/**
+ * @brief A block scope statement
+ * {
+ * ....
+ * }
+ */
 class BlockScopeStatement : public CompoundStatement {
   public:
     static BlockScopeStatementPtr create();

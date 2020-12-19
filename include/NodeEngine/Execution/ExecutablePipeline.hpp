@@ -31,12 +31,26 @@ namespace NES::NodeEngine::Execution {
  */
 class ExecutablePipeline {
   public:
-    ExecutablePipeline(uint32_t pipelineStageId,
+    ExecutablePipeline(uint32_t pipelineId,
                        QuerySubPlanId qepId,
                        ExecutablePipelineStagePtr  executablePipelineStage,
                        PipelineExecutionContextPtr pipelineContext,
                        ExecutablePipelinePtr nextPipeline,
                        bool reconfiguration);
+
+    /**
+     * @brief Factory method to create a new executable pipeline.
+     * @param pipelineId The Id of this pipeline
+     * @param querySubPlanId the id of the query sub plan
+     * @param executablePipelineStage the executable pipeline stage
+     * @param pipelineContext the pipeline context
+     * @param nextPipelineStage a pointer to the next pipeline
+     * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
+     * @return ExecutablePipelinePtr
+     */
+    static ExecutablePipelinePtr create(uint32_t pipelineId, const QuerySubPlanId querySubPlanId,
+                                        ExecutablePipelineStagePtr executablePipelineStage, PipelineExecutionContextPtr pipelineContext,
+                                        const ExecutablePipelinePtr nextPipelineStage, bool reconfiguration = false);
 
     /**
      * @brief Execute a pipeline stage
@@ -88,11 +102,6 @@ class ExecutablePipeline {
     * @return returns true if the pipeline contains a function pointer for a reconfiguration task
     */
     bool isReconfiguration() const;
-
-
-   static ExecutablePipelinePtr create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
-                                   ExecutablePipelineStagePtr executablePipelineStage, PipelineExecutionContextPtr pipelineContext,
-                                   const ExecutablePipelinePtr nextPipelineStage, bool reconfiguration = false);
 
   private:
     uint32_t pipelineStageId;

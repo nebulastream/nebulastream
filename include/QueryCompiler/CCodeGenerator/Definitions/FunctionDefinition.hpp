@@ -26,16 +26,53 @@
 
 namespace NES {
 
+/**
+ * @brief Definition for a function in the generated code.
+ */
 class FunctionDefinition : public std::enable_shared_from_this<FunctionDefinition>{
 
   public:
-    static FunctionDefinitionPtr create(const std::string& functionName);
     FunctionDefinition(const std::string& functionName);
 
+    /**
+     * @brief Factory to create the function definition.
+     * @param functionName name of the function.
+     * @return FunctionDefinitionPtr
+     */
+    static FunctionDefinitionPtr create(const std::string& functionName);
+
+    /**
+     * @brief Sets the return type of this function.
+     * @param returnType GeneratableDataTypePtr
+     * @return FunctionDefinitionPtr
+     */
     FunctionDefinitionPtr returns(GeneratableDataTypePtr returnType);
+
+    /**
+     * @brief Adds a parameter to the function
+     * @param variableDeclaration VariableDeclaration
+     * @return FunctionDefinitionPtr
+     */
     FunctionDefinitionPtr addParameter(VariableDeclaration variableDeclaration);
+
+    /**
+     * @brief Adds a statement to the function body.
+     * @param statement StatementPtr
+     * @return FunctionDefinitionPtr
+     */
     FunctionDefinitionPtr addStatement(StatementPtr statement);
+
+    /**
+     * @brief Adds a variable declaration to this function.
+     * @param variableDeclaration VariableDeclaration
+     * @return FunctionDefinitionPtr
+     */
     FunctionDefinitionPtr addVariableDeclaration(VariableDeclaration variableDeclaration);
+
+    /**
+     * @brief Creates the declaration of this function.
+     * @return DeclarationPtr
+     */
     DeclarationPtr getDeclaration();
 
   private:

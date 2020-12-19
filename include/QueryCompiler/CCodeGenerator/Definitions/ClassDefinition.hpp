@@ -24,18 +24,49 @@
 namespace NES {
 
 /**
- * @brief Defines a class
+ * @brief Definition for a class in the generated code.
+ * class NAME {
+ *
+ * ..... all declarations added to this namespaces.
+ *
+ * }
  */
 class ClassDefinition : public std::enable_shared_from_this<ClassDefinition> {
   public:
+    /**
+     * @brief Visibility for class members
+     */
     enum Visibility {
         Public,
         Private
     };
-    static ClassDefinitionPtr create(std::string name);
+
     explicit ClassDefinition(std::string name);
+
+    /**
+     * @brief Factory to create the class definition.
+     * @param name class name
+     * @return ClassDefinitionPtr
+     */
+    static ClassDefinitionPtr create(std::string name);
+
+    /**
+     * @brief Adds a base class to the class definition.
+     * @param baseClassName
+     */
     void addBaseClass(std::string baseClassName);
+
+    /**
+     * @brief Adds a method to the class definition.
+     * @param visibility Visibility of the method (Public, Private)
+     * @param function the function definition.
+     */
     void addMethod(Visibility visibility, FunctionDefinitionPtr function);
+
+    /**
+     * @brief creates the declaration of this class.
+     * @return DeclarationPtr
+     */
     DeclarationPtr getDeclaration();
 
   private:

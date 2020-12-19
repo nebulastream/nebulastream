@@ -31,7 +31,16 @@ class OperatorHandler {
         NES_DEBUG("~OperatorHandler()");
     }
 
+    /**
+     * @brief Starts the operator handler.
+     * @param pipelineExecutionContext
+     */
     virtual void start(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+    
+    /**
+     * @brief Stops the operator handler.
+     * @param pipelineExecutionContext
+     */
     virtual void stop(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 };
 
