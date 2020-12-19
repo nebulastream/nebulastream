@@ -84,7 +84,7 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
         if(index >= operatorHandlers.size()){
            NES_THROW_RUNTIME_ERROR("PipelineExecutionContext: operator handler at index " + std::to_string(index) + " is not registered");
         }
-        return std::static_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
+        return std::dynamic_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }
 
     std::string toString();

@@ -25,6 +25,10 @@
 
 namespace NES::Windowing {
 
+ExecutableOnTimeTriggerPolicy::~ExecutableOnTimeTriggerPolicy(){
+    NES_WARNING("~ExecutableOnTimeTriggerPolicy()");
+}
+
 bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler) {
     std::unique_lock lock(runningTriggerMutex);
     if (this->running) {

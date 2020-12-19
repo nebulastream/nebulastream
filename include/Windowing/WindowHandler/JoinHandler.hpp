@@ -52,7 +52,7 @@ class JoinHandler : public AbstractJoinHandler {
     }
 
     ~JoinHandler() {
-        NES_DEBUG("JoinHandler: calling destructor");
+        NES_DEBUG("~JoinHandler()");
     }
 
     /**

@@ -1027,10 +1027,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     context2->pipelineName ="1";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
     auto stage2 = codeGenerator->compile(context2);
-    auto joinHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
+    auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(),
-                                                                           joinHandler);
+                                                                           joinOperatorHandler);
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr);
 
     /* prepare input tuple buffer */
@@ -1041,14 +1041,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     stage1->setup(*executionContext.get());
     stage1->start(*executionContext.get());
+    executionContext->getOperatorHandlers()[0]->start(executionContext);
     executionContext->
         getOperatorHandler<Join::JoinOperatorHandler>(0)->
         getJoinHandler<Join::JoinHandler, int64_t>()->start();
     stage1->execute(inputBuffer,  *executionContext.get(), wctx);
 
     //check partial aggregates in window state
-    auto stateVar = executionContext->
-                    getOperatorHandler<Join::JoinOperatorHandler>(0)->
+    auto stateVar = joinOperatorHandler->
                         getJoinHandler<Join::JoinHandler, int64_t>()->
                             getLeftJoinState();
 
@@ -1072,7 +1072,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     cout << "results[1]=" << results[1] << endl;
     EXPECT_EQ(results[0], 5);
     EXPECT_EQ(results[1], 5);
-    joinHandler->stop(executionContext);
 
 }
 }// namespace NES
