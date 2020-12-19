@@ -17,8 +17,8 @@
 #ifndef _NODEENGINE_NODESTATSPROVIDER_HPP
 #define _NODEENGINE_NODESTATSPROVIDER_HPP
 
-#include <NodeStats.pb.h>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeStats.pb.h>
 #include <memory>
 
 namespace NES::NodeEngine {
@@ -109,5 +109,5 @@ class NodeStatsProvider {
 
 typedef std::shared_ptr<NodeStatsProvider> NodeStatsProviderPtr;
 
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif

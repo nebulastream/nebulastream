@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_NAMESPACEDEFINITION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_NAMESPACEDEFINITION_HPP_
 
+#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <string>
 #include <vector>
-#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 
 namespace NES {
 
@@ -43,10 +43,11 @@ class NamespaceDefinition {
     void addDeclaration(DeclarationPtr declaration);
 
     DeclarationPtr getDeclaration();
+
   private:
     std::string name;
     std::vector<DeclarationPtr> declarations;
 };
 
 }// namespace NES
-#endif // NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_NAMESPACEDEFINITION_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_NAMESPACEDEFINITION_HPP_

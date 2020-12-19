@@ -15,9 +15,9 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -43,8 +43,8 @@ NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamC
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
-NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
-                                               uint16_t numThreads, uint64_t bufferSize, uint64_t numBuffers) {
+NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads,
+                                 uint64_t bufferSize, uint64_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
@@ -495,4 +495,4 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 
 void NodeEngine::setConfig(PhysicalStreamConfigPtr config) { this->config = config; }
 
-}// namespace NES
+}// namespace NES::NodeEngine

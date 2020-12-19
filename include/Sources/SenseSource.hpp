@@ -31,8 +31,8 @@ class SenseSource : public DataSource {
    * @param schema of the source
    * @param udfs to apply
    */
-    explicit SenseSource(SchemaPtr schema,  NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const std::string& udfs,
-                         OperatorId operatorId);
+    explicit SenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                         const std::string& udfs, OperatorId operatorId);
 
     /**
    * @brief override the receiveData method for the source

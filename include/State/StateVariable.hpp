@@ -17,11 +17,11 @@
 #ifndef STATEVARIABLE_HPP
 #define STATEVARIABLE_HPP
 
+#include <Util/Logger.hpp>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
-#include <Util/Logger.hpp>
 
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
@@ -69,9 +69,7 @@ struct StateVariableDestroyerHelper<Key, T*> {
 
 class Destroyable {
   public:
-    virtual ~Destroyable() {
-        NES_DEBUG("~Destroyable()");
-    }
+    virtual ~Destroyable() { NES_DEBUG("~Destroyable()"); }
 };
 }// namespace detail
 

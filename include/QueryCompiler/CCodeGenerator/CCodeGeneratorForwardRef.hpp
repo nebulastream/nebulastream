@@ -14,12 +14,10 @@
     limitations under the License.
 */
 
-
-
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATORFORWARDREF_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATORFORWARDREF_HPP_
 #include <memory>
-namespace NES{
+namespace NES {
 
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
@@ -54,6 +52,6 @@ typedef std::shared_ptr<Statement> StatementPtr;
 class FunctionCallStatement;
 typedef std::shared_ptr<FunctionCallStatement> FunctionCallStatementPtr;
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATORFORWARDREF_HPP_

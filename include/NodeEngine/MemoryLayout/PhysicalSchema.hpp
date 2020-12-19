@@ -63,6 +63,6 @@ class PhysicalSchema {
     bool validFieldIndex(uint64_t fieldIndex);
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_

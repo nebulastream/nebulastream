@@ -168,7 +168,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
     auto test_schema = Schema::create()->addField("var", UINT32);
-    NodeEngine::WorkerContext wctx( NodeEngine::NesThread::getId());
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     NodeEngine::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     write_buffer.getBuffer<uint32_t>()[0] = 45;
     write_buffer.setNumberOfTuples(1);

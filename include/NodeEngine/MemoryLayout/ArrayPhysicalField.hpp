@@ -43,6 +43,6 @@ class ArrayPhysicalField : public PhysicalField {
   private:
     PhysicalTypePtr componentField;
 };
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_ARRAYPHYSICALFIELD_HPP_

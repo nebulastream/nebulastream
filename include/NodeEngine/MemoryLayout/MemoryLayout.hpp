@@ -16,13 +16,12 @@
 
 #ifndef INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
 #define INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
-
 
 namespace NES::NodeEngine {
 
@@ -98,6 +97,6 @@ class MemoryLayout {
  */
 MemoryLayoutPtr createRowLayout(SchemaPtr schema);
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_

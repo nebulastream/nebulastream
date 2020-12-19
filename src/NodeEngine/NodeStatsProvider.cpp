@@ -247,4 +247,4 @@ void NodeStatsProvider::readDiskStats() {}
 
 NodeStats NodeStatsProvider::getNodeStats() { return nodeStats; }
 
-}// namespace NES
+}// namespace NES::NodeEngine

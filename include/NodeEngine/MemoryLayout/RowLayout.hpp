@@ -33,6 +33,6 @@ class RowLayout : public MemoryLayout {
     MemoryLayoutPtr copy() const override;
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_

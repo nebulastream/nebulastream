@@ -21,8 +21,9 @@
 namespace NES {
 namespace Network {
 
-NetworkSource::NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                             NetworkManagerPtr networkManager, NesPartition nesPartition)
+NetworkSource::NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                             NodeEngine::QueryManagerPtr queryManager, NetworkManagerPtr networkManager,
+                             NesPartition nesPartition)
     : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId()), networkManager(networkManager),
       nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());

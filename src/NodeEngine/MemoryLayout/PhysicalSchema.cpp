@@ -58,4 +58,4 @@ bool PhysicalSchema::validFieldIndex(uint64_t fieldIndex) {
 }
 
 uint64_t PhysicalSchema::getRecordSize() { return this->schema->getSchemaSizeInBytes(); }
-}// namespace NES
+}// namespace NES::NodeEngine

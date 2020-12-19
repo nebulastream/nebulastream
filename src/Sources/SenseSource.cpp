@@ -28,8 +28,8 @@ using namespace std;
 
 namespace NES {
 
-SenseSource::SenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const std::string& udsf,
-                         OperatorId operatorId)
+SenseSource::SenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                         const std::string& udsf, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), udsf(udsf) {}
 
 std::optional<NodeEngine::TupleBuffer> SenseSource::receiveData() {

@@ -42,11 +42,13 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         handlerType = this->windowDefinition->getDistributionType()->toString();
     }
 
-    static auto create(LogicalWindowDefinitionPtr windowDefinition,
-                       std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
-                       BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                       BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction){
-       return std::make_shared<AggregationWindowHandler>(windowDefinition, windowAggregation, executablePolicyTrigger, executableWindowAction);
+    static auto
+    create(LogicalWindowDefinitionPtr windowDefinition,
+           std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
+           BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
+           BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction) {
+        return std::make_shared<AggregationWindowHandler>(windowDefinition, windowAggregation, executablePolicyTrigger,
+                                                          executableWindowAction);
     }
 
     ~AggregationWindowHandler() {
@@ -156,10 +158,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     auto getTypedWindowState() { return windowStateVariable; }
 
-    auto getWindowAction(){
-        return executableWindowAction;
-    }
-
+    auto getWindowAction() { return executableWindowAction; }
 
   private:
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;

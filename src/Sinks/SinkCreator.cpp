@@ -82,14 +82,15 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
     return std::make_shared<PrintSink>(format, parentPlanId, out);
 }
 
-const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::ostream& out) {
+const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                     std::ostream& out) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format, parentPlanId, out);
 }
 
 const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, Network::NodeLocation nodeLocation,
-                                    Network::NesPartition nesPartition, NodeEngine::NodeEnginePtr nodeEngine, std::chrono::seconds waitTime,
-                                    uint8_t retryTimes) {
+                                    Network::NesPartition nesPartition, NodeEngine::NodeEnginePtr nodeEngine,
+                                    std::chrono::seconds waitTime, uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema, parentPlanId, nodeEngine->getNetworkManager(), nodeLocation,
                                                   nesPartition, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                   waitTime, retryTimes);
@@ -103,8 +104,8 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
 #endif
 
 #ifdef ENABLE_OPC_BUILD
-const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::string url,
-                                UA_NodeId nodeId, std::string user, std::string password) {
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                std::string url, UA_NodeId nodeId, std::string user, std::string password) {
     NES_DEBUG("plz fix me" << parentPlanId);
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<OPCSink>(format, url, nodeId, user, password);

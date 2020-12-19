@@ -61,7 +61,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    virtual bool writeData(NodeEngine::TupleBuffer& inputBuffer,  NodeEngine::WorkerContext& workerContext) = 0;
+    virtual bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) = 0;
 
     /**
      * @brief get the id of the owning plan

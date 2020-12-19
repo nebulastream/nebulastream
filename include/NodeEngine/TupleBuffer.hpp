@@ -139,5 +139,5 @@ class TupleBuffer {
     uint32_t size;
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

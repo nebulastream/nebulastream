@@ -96,6 +96,6 @@ class QueryStatistics {
     std::atomic<uint64_t> processedWatermarks;
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_

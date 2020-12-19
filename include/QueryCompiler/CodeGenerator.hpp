@@ -124,8 +124,8 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    virtual uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,SchemaPtr windowOutputSchema,
-                                 PipelineContextPtr context) = 0;
+    virtual uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
+                                         PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -158,7 +158,7 @@ class CodeGenerator {
     */
     virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                 GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                PipelineContextPtr context,  uint64_t windowOperatorIndex) = 0;
+                                                PipelineContextPtr context, uint64_t windowOperatorIndex) = 0;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
@@ -166,8 +166,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    virtual uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr window,
-                                         PipelineContextPtr context) = 0;
+    virtual uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr window, PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a join operator, which depends on a particular join definition
@@ -176,7 +175,8 @@ class CodeGenerator {
     * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context, uint64_t operatorHandlerIndex) = 0;
+    virtual bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
+                                     uint64_t operatorHandlerIndex) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

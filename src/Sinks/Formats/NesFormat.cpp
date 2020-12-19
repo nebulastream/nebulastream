@@ -17,8 +17,8 @@
 #include "SerializableOperator.pb.h"
 #include <API/Schema.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>

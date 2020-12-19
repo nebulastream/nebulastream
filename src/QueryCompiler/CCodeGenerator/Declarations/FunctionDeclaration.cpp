@@ -21,9 +21,7 @@ namespace NES {
 
 FunctionDeclaration::FunctionDeclaration(Code code) : functionCode(code) {}
 
-FunctionDeclarationPtr FunctionDeclaration::create(Code code) {
-    return std::make_shared<FunctionDeclaration>(code);
-}
+FunctionDeclarationPtr FunctionDeclaration::create(Code code) { return std::make_shared<FunctionDeclaration>(code); }
 
 const GeneratableDataTypePtr FunctionDeclaration::getType() const { return GeneratableDataTypePtr(); }
 const std::string FunctionDeclaration::getIdentifierName() const { return ""; }

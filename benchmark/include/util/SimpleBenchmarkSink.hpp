@@ -17,8 +17,8 @@
 #ifndef NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
 #define NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
 
-#include <Sinks/Formats/NesFormat.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <future>
 

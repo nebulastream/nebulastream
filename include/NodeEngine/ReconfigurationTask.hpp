@@ -140,5 +140,5 @@ class ReconfigurationTask {
     /// owning plan id
     const QuerySubPlanId parentPlanId;
 };
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif//NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_

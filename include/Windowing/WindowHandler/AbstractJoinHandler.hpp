@@ -17,6 +17,7 @@
 #ifndef INCLUDE_JOIN_WINDOW_HPP_
 #define INCLUDE_JOIN_WINDOW_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -25,7 +26,6 @@
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <algorithm>
 #include <atomic>
 #include <iostream>
@@ -48,9 +48,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
         // nop
     }
 
-    virtual ~AbstractJoinHandler(){
-        NES_DEBUG("~AbstractJoinHandler()");
-    }
+    virtual ~AbstractJoinHandler() { NES_DEBUG("~AbstractJoinHandler()"); }
 
     template<class Type>
     auto as() {

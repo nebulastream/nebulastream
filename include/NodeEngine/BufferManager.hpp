@@ -163,8 +163,7 @@ class BufferManager {
 
     std::atomic<bool> isConfigured;
 };
-}
-
+}// namespace NodeEngine
 
 }// namespace NES
 #endif

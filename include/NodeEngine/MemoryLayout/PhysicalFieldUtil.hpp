@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELDUTIL_HPP_
 #define NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELDUTIL_HPP_
-#include <memory>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <memory>
 
 namespace NES::NodeEngine {
 
@@ -33,6 +33,6 @@ class PhysicalFieldUtil {
      */
     static PhysicalFieldPtr createPhysicalField(const PhysicalTypePtr dataType, uint64_t bufferOffset);
 };
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELDUTIL_HPP_

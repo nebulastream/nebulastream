@@ -43,8 +43,9 @@ class SimpleBenchmarkSource : public DataSource {
   public:
     uint64_t numberOfTuplesPerBuffer;
 
-    SimpleBenchmarkSource(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager, const NodeEngine::QueryManagerPtr& queryManager,
-                          uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer, uint64_t operatorId)
+    SimpleBenchmarkSource(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager,
+                          const NodeEngine::QueryManagerPtr& queryManager, uint64_t ingestionRate,
+                          uint64_t numberOfTuplesPerBuffer, uint64_t operatorId)
 
         : DataSource(schema, bufferManager, queryManager, operatorId) {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
@@ -167,9 +168,9 @@ class SimpleBenchmarkSource : public DataSource {
 
     virtual ~SimpleBenchmarkSource() = default;
 
-    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate,
-                                                         uint64_t operatorId) {
+    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
+                                                         NodeEngine::QueryManagerPtr queryManager, SchemaPtr& benchmarkSchema,
+                                                         uint64_t ingestionRate, uint64_t operatorId) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
         maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)

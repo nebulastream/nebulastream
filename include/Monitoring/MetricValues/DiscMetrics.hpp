@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_DISCMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_DISCMETRICS_HPP_
 
+#include <NodeEngine/TupleBuffer.hpp>
 #include <cstdint>
 #include <memory>
-#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 class Schema;

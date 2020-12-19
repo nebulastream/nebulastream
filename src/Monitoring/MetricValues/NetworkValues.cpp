@@ -61,7 +61,7 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 
-    auto layout =  NodeEngine::createRowLayout(schema);
+    auto layout = NodeEngine::createRowLayout(schema);
 
     output.rBytes = layout->getValueField<uint64_t>(0, i++)->read(buf);
     output.rPackets = layout->getValueField<uint64_t>(0, i++)->read(buf);

@@ -16,11 +16,11 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_
-#include <Util/Logger.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <functional>
 #include <memory>
 
@@ -30,7 +30,7 @@ namespace NES::NodeEngine::Execution {
  * @brief The PipelineExecutionContext is passed to a compiled pipeline and offers basic functionality to interact with the runtime.
  * Via the context, the compile code is able to allocate new TupleBuffers and to emit tuple buffers to the runtime.
  */
-class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExecutionContext> {
+class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExecutionContext> {
 
   public:
     /**
@@ -44,9 +44,7 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                       std::vector<OperatorHandlerPtr> operatorHandlers);
-    ~PipelineExecutionContext(){
-      NES_DEBUG("~PipelineExecutionContext()");
-    }
+    ~PipelineExecutionContext() { NES_DEBUG("~PipelineExecutionContext()"); }
     /**
      * @brief Allocates a new tuple buffer.
      * @return TupleBuffer
@@ -74,7 +72,6 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
      */
     std::vector<OperatorHandlerPtr> getOperatorHandlers();
 
-
     /**
      * @brief Retrieves a Operator Handler at a specific index and cast its to an OperatorHandlerType.
      * @tparam OperatorHandlerType
@@ -83,14 +80,14 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
      */
     template<class OperatorHandlerType>
     auto getOperatorHandler(int index) {
-        if(index >= operatorHandlers.size()){
-           NES_THROW_RUNTIME_ERROR("PipelineExecutionContext: operator handler at index " + std::to_string(index) + " is not registered");
+        if (index >= operatorHandlers.size()) {
+            NES_THROW_RUNTIME_ERROR("PipelineExecutionContext: operator handler at index " + std::to_string(index)
+                                    + " is not registered");
         }
         return std::dynamic_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }
 
     std::string toString();
-
 
   private:
     /**
@@ -118,5 +115,5 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
     const std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine::Execution
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINEEXECUTIONCONTEXT_HPP_

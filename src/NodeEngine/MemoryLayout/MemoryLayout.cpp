@@ -19,4 +19,4 @@
 
 namespace NES::NodeEngine {
 MemoryLayout::MemoryLayout(PhysicalSchemaPtr physicalSchema) : physicalSchema(std::move(physicalSchema)) {}
-}// namespace NES
+}// namespace NES::NodeEngine

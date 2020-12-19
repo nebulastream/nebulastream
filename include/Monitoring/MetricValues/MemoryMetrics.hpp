@@ -17,10 +17,10 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 class Schema;

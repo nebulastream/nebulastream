@@ -29,4 +29,4 @@ std::shared_ptr<ArrayPhysicalField> PhysicalField::asArrayField() {
     NES_FATAL_ERROR("This field is not an array field");
     throw IllegalArgumentException("This field is not an array field");
 }
-}// namespace NES
+}// namespace NES::NodeEngine

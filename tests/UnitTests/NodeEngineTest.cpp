@@ -16,10 +16,10 @@
 
 #include <gtest/gtest.h>
 
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -108,9 +108,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
     std::atomic<uint64_t> sum = 0;
     std::promise<bool> completedPromise;
 
-    uint32_t execute(TupleBuffer& inputTupleBuffer,
-                     PipelineExecutionContext& pipelineExecutionContext,
-                     WorkerContext&) override {
+    uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext&) override {
         auto tuples = inputTupleBuffer.getBufferAs<uint64_t>();
 
         NES_INFO("Test: Start execution");
@@ -122,8 +120,8 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
         count += inputTupleBuffer.getNumberOfTuples();
         sum += psum;
 
-        NES_INFO("Test: query result = Processed Block:" << inputTupleBuffer.getNumberOfTuples() << " count: " << count << " psum: " << psum
-                                                         << " sum: " << sum);
+        NES_INFO("Test: query result = Processed Block:" << inputTupleBuffer.getNumberOfTuples() << " count: " << count
+                                                         << " psum: " << psum << " sum: " << sum);
 
         if (sum == 10) {
             NES_DEBUG("TEST: result correct");
@@ -211,17 +209,17 @@ void testOutput(std::string path, std::string expectedOutput) {
 
 class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager,  DataSinkPtr sink)
+    MockedPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, DataSinkPtr sink)
         : PipelineExecutionContext(
-        0, std::move(bufferManager),
-        [sink](TupleBuffer& buffer, NodeEngine::WorkerContextRef worker) {
-          sink->writeData(buffer, worker);
-        },
-        [sink](TupleBuffer&) {
-        },
-        std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>())){
-        // nop
-    };
+            0, std::move(bufferManager),
+            [sink](TupleBuffer& buffer, NodeEngine::WorkerContextRef worker) {
+                sink->writeData(buffer, worker);
+            },
+            [sink](TupleBuffer&) {
+            },
+            std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>())){
+            // nop
+        };
 };
 
 auto setupQEP(NodeEnginePtr engine, QueryId queryId) {

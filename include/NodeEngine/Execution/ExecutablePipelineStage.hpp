@@ -80,6 +80,6 @@ class ExecutablePipelineStage {
     virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine::Execution
 
 #endif//NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_

@@ -17,9 +17,9 @@
 #ifndef INCLUDE_QUERY_MANAGER__H_
 #define INCLUDE_QUERY_MANAGER__H_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/QueryStatistics.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationTask.hpp>
@@ -189,7 +189,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      */
     void completedWork(Task& task, WorkerContext& workerContext);
 
-
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 
     std::deque<Task> taskQueue;
@@ -221,6 +220,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif /* INCLUDE_query manager_H_ */

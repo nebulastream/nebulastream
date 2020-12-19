@@ -33,12 +33,14 @@ namespace NES::Benchmarking {
  */
 class YSBBenchmarkSource : public SimpleBenchmarkSource {
   public:
-    YSBBenchmarkSource(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager, const NodeEngine::QueryManagerPtr& queryManager,
-                       uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer, uint64_t operatorId)
+    YSBBenchmarkSource(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager,
+                       const NodeEngine::QueryManagerPtr& queryManager, uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer,
+                       uint64_t operatorId)
         : SimpleBenchmarkSource(schema, bufferManager, queryManager, ingestionRate, numberOfTuplesPerBuffer, operatorId) {}
 
-    static std::shared_ptr<YSBBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                                      SchemaPtr& benchmarkSchema, uint64_t ingestionRate, uint64_t operatorId) {
+    static std::shared_ptr<YSBBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
+                                                      NodeEngine::QueryManagerPtr queryManager, SchemaPtr& benchmarkSchema,
+                                                      uint64_t ingestionRate, uint64_t operatorId) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
         //        maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)

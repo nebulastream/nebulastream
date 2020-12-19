@@ -17,13 +17,13 @@
 #ifndef INCLUDE_WINDOWS_WINDOW_HPP_
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <algorithm>
 #include <atomic>
 #include <iostream>

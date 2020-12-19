@@ -27,7 +27,7 @@ PipelineContext::PipelineContext() { this->code = std::make_shared<GeneratedCode
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
 BlockScopeStatementPtr PipelineContext::createSetupScope() { return setupScopes.emplace_back(BlockScopeStatement::create()); }
-BlockScopeStatementPtr PipelineContext::createStartScope(){ return startScopes.emplace_back(BlockScopeStatement::create()); }
+BlockScopeStatementPtr PipelineContext::createStartScope() { return startScopes.emplace_back(BlockScopeStatement::create()); }
 
 bool PipelineContext::hasNextPipeline() const { return this->nextPipelines.size() != 0; }
 
@@ -43,9 +43,7 @@ PipelineContextPtr PipelineContext::create() { return std::make_shared<PipelineC
 
 std::vector<BlockScopeStatementPtr> PipelineContext::getSetupScopes() { return setupScopes; }
 
-std::vector<BlockScopeStatementPtr> PipelineContext::getStartScopes() {
-    return startScopes;
-}
+std::vector<BlockScopeStatementPtr> PipelineContext::getStartScopes() { return startScopes; }
 
 int64_t PipelineContext::registerOperatorHandler(NodeEngine::Execution::OperatorHandlerPtr operatorHandler) {
     operatorHandlers.emplace_back(operatorHandler);

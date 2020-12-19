@@ -17,8 +17,8 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
 #include <iostream>

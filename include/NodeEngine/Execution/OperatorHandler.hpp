@@ -27,16 +27,14 @@ namespace NES::NodeEngine::Execution {
 class OperatorHandler {
   public:
     OperatorHandler() = default;
-    virtual ~OperatorHandler(){
-        NES_DEBUG("~OperatorHandler()");
-    }
+    virtual ~OperatorHandler() { NES_DEBUG("~OperatorHandler()"); }
 
     /**
      * @brief Starts the operator handler.
      * @param pipelineExecutionContext
      */
     virtual void start(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
-    
+
     /**
      * @brief Stops the operator handler.
      * @param pipelineExecutionContext

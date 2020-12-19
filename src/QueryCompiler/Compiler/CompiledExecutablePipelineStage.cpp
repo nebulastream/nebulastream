@@ -68,11 +68,13 @@ uint32_t CompiledExecutablePipelineStage::start(NodeEngine::Execution::PipelineE
     return executablePipelineStage->start(pipelineExecutionContext);
 }
 
-uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext, NodeEngine::WorkerContext& workerContext) {
+uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
+                                               NodeEngine::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Running) {
-        NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
-                        "call setup and start.");
+        NES_FATAL_ERROR(
+            "CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
+            "call setup and start.");
         return -1;
     }
     return executablePipelineStage->open(pipelineExecutionContext, workerContext);
@@ -84,31 +86,32 @@ uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
     // we dont get the lock here as we dont was to serialize the execution.
     // currentExecutionStage is an atomic so its still save to read it
     if (currentExecutionStage != Running) {
-        NES_ERROR("CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
-                        "call setup and start.");
+        NES_ERROR(
+            "CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
+            "call setup and start.");
         // TODO we have to assure that execute is never called after stop.
         // This is somehow not working currently.
-       // return -1;
+        // return -1;
     }
     return executablePipelineStage->execute(inputTupleBuffer, pipelineExecutionContext, workerContext);
 }
-
-
 
 uint32_t CompiledExecutablePipelineStage::close(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
                                                 NodeEngine::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Running) {
-        NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
-                        "call setup and start.");
+        NES_FATAL_ERROR(
+            "CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
+            "call setup and start.");
         return -1;
     }
     return this->executablePipelineStage->close(pipelineExecutionContext, workerContext);
 }
 uint32_t CompiledExecutablePipelineStage::stop(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     if (currentExecutionStage != Running) {
-        NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
-                        "call setup and start.");
+        NES_FATAL_ERROR(
+            "CompiledExecutablePipelineStage: The pipeline stage, was not correctly initialized and started. You must first "
+            "call setup and start.");
         return -1;
     }
     NES_DEBUG("CompiledExecutablePipelineStage: Stop compiled executable pipeline stage");

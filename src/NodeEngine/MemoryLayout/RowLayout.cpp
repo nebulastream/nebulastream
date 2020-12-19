@@ -33,4 +33,4 @@ MemoryLayoutPtr createRowLayout(SchemaPtr schema) {
     return std::make_shared<RowLayout>(physicalSchema);
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine

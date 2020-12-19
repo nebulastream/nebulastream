@@ -24,10 +24,11 @@ namespace NES::Windowing {
 /**
  * @brief Operator handler for window aggregations.
  */
-class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler{
+class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
   public:
     WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
-    WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema, AbstractWindowHandlerPtr windowHandler);
+    WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
+                          AbstractWindowHandlerPtr windowHandler);
 
     /**
      * @brief Factory to create new WindowOperatorHandler
@@ -44,7 +45,8 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler{
     * @param windowHandler pre initialized window handler
     * @return WindowOperatorHandlerPtr
     */
-    static WindowOperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema, AbstractWindowHandlerPtr windowHandler);
+    static WindowOperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
+                                           AbstractWindowHandlerPtr windowHandler);
 
     /**
      * @brief Sets the window handler
@@ -62,7 +64,7 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler{
      * @return WindowHandlerType
      */
     template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType,
-        class PartialAggregateType, class FinalAggregateType>
+             class PartialAggregateType, class FinalAggregateType>
     auto getWindowHandler() {
         return std::static_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
             windowHandler);
@@ -71,19 +73,17 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler{
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
     void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
-    ~WindowOperatorHandler() override{
-        NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count()));
-    }
+    ~WindowOperatorHandler() override { NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count())); }
     LogicalWindowDefinitionPtr getWindowDefinition();
 
     SchemaPtr getResultSchema();
+
   private:
     LogicalWindowDefinitionPtr windowDefinition;
     AbstractWindowHandlerPtr windowHandler;
     SchemaPtr resultSchema;
 };
 
-
-}
+}// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_

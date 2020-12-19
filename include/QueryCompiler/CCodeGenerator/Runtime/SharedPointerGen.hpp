@@ -16,12 +16,12 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RUNTIME_SHAREDPOINTERGENERATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RUNTIME_SHAREDPOINTERGENERATION_HPP_
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
-namespace NES{
+namespace NES {
 
 /**
  * @brief Utility to generate runtime calls for shared pointers.
  */
-class SharedPointerGen{
+class SharedPointerGen {
   public:
     /**
      * @brief Create a shared pointer type
@@ -38,6 +38,6 @@ class SharedPointerGen{
     StatementPtr static makeShared(GeneratableDataTypePtr type);
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RUNTIME_SHAREDPOINTERGENERATION_HPP_

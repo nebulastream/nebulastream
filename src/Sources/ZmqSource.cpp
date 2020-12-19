@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <Sources/ZmqSource.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <Sources/ZmqSource.hpp>
 #include <Util/Logger.hpp>
 #include <cassert>
 #include <cstdint>
@@ -27,8 +27,8 @@
 
 namespace NES {
 
-ZmqSource::ZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const std::string& host,
-                     const uint16_t port, OperatorId operatorId)
+ZmqSource::ZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                     const std::string& host, const uint16_t port, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), host(host.substr(0, host.find(":"))), port(port),
       connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");

@@ -104,8 +104,8 @@ const DataSinkPtr createTextZmqSink(SchemaPtr schema, QuerySubPlanId parentPlanI
  * @param password as string to log in to the OPC server
  * @return a data sink pointer
  */
-const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::string url,
-                                UA_NodeId nodeId, std::string user, std::string password);
+const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                std::string url, UA_NodeId nodeId, std::string user, std::string password);
 #endif
 /**
  * @brief create a ZMQ test sink with a schema and CSV format output
@@ -136,7 +136,8 @@ const DataSinkPtr createBinaryZmqSink(SchemaPtr schema, QuerySubPlanId parentPla
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::ostream& out);
+const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                      std::ostream& out);
 
 /**
  * @brief create a print test sink with a schema
@@ -146,7 +147,8 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::ostream& out);
+const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                     std::ostream& out);
 
 /**
  * @brief create a network data sink

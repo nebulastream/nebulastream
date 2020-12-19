@@ -19,10 +19,10 @@
 #include <API/UserAPIExpression.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
@@ -89,14 +89,15 @@ class CodeGenerationTest : public testing::Test {
 
 class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
+    TestPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager,
+                                 std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
             0, std::move(bufferManager),
             [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             [this](TupleBuffer& buffer) {
-              this->buffers.emplace_back(std::move(buffer));
+                this->buffers.emplace_back(std::move(buffer));
             },
             std::move(operatorHandlers)){
             // nop
@@ -461,8 +462,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto returnStatement = ReturnStatement::create(SharedPointerGen::makeShared(executablePipelineDeclaration->getType()));
     createFunction->addStatement(returnStatement);
     ;
-    createFunction->returns(
-        SharedPointerGen::createSharedPtrType(CompilerTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
+    createFunction->returns(SharedPointerGen::createSharedPtrType(
+        CompilerTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 
@@ -481,7 +482,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* execute code */
     auto wctx = NodeEngine::WorkerContext{0};
-    auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+    auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(),
+                                                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     stage->setup(*context.get());
     stage->start(*context.get());
     ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), 0u);

@@ -18,9 +18,9 @@
 
 #include "../../../tests/util/DummySink.hpp"
 #include <Phases/TypeInferencePhase.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Version/version.hpp>
 #include <cstdint>
 #include <list>
@@ -61,7 +61,8 @@ uint64_t BenchmarkUtils::calcExpectedTuplesSelectivity(std::list<uint64_t> list,
     return countExpectedTuples;
 }
 
-void BenchmarkUtils::recordStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, NodeEngine::NodeEnginePtr nodeEngine) {
+void BenchmarkUtils::recordStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
+                                      NodeEngine::NodeEnginePtr nodeEngine) {
     for (uint64_t i = 0; i < BenchmarkUtils::runSingleExperimentSeconds + 1; ++i) {
         int64_t nextPeriodStartTime = BenchmarkUtils::periodLengthInSeconds * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -117,8 +118,9 @@ void BenchmarkUtils::printOutConsole(NodeEngine::QueryStatistics* statistic, Sch
     std::cout << "numberOfTuples/sec=" << statistic << schema;
 }
 
-void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
-                                  DataSinkPtr benchmarkSink, NodeEngine::NodeEnginePtr nodeEngine, Query query) {
+void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
+                                  std::vector<DataSourcePtr> benchmarkSource, DataSinkPtr benchmarkSink,
+                                  NodeEngine::NodeEnginePtr nodeEngine, Query query) {
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());

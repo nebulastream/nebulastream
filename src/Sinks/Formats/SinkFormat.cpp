@@ -22,7 +22,8 @@
 
 namespace NES {
 
-SinkFormat::SinkFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : schema(schema), bufferManager(bufferManager) {}
+SinkFormat::SinkFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
+    : schema(schema), bufferManager(bufferManager) {}
 
 SchemaPtr SinkFormat::getSchemaPtr() { return schema; }
 

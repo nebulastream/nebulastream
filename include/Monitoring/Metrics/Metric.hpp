@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 
@@ -41,7 +41,8 @@ MetricType getMetricType(const T&) {
  * @param the prefix as std::string
  */
 void serialize(uint64_t metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
-void serialize(const std::string& metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void serialize(const std::string& metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf,
+               const std::string& prefix);
 
 /**
  * @brief The metric class is a conceptual superclass that represents all metrics in NES.
@@ -93,7 +94,8 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend void serialize(const Metric& x, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+    friend void serialize(const Metric& x, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf,
+                          const std::string& prefix) {
         x.self->serializeC(schema, buf, prefix);
     }
 

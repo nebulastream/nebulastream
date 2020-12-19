@@ -16,11 +16,11 @@
 #ifndef NES_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
 #define NES_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
 #include <memory>
-namespace NES{
+namespace NES {
 
 class SinkMedium;
 typedef std::shared_ptr<SinkMedium> DataSinkPtr;
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_

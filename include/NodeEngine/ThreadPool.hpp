@@ -113,6 +113,6 @@ class ThreadPool {
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif /* THREADPOOL_H_ */

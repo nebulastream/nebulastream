@@ -47,4 +47,4 @@ struct ErrorHandlerLoader {
 static ErrorHandlerLoader loader;
 
 }// namespace detail
-}// namespace NES
+}// namespace NES::NodeEngine

@@ -22,12 +22,9 @@ namespace NES {
 
 ClassDefinition::ClassDefinition(std::string name) : name(std::move(name)) {}
 
-ClassDefinitionPtr ClassDefinition::create(std::string name) {
-    return std::make_shared<ClassDefinition>(std::move(name));
-}
+ClassDefinitionPtr ClassDefinition::create(std::string name) { return std::make_shared<ClassDefinition>(std::move(name)); }
 
-void ClassDefinition::addMethod(Visibility visibility,
-                                FunctionDefinitionPtr function) {
+void ClassDefinition::addMethod(Visibility visibility, FunctionDefinitionPtr function) {
     if (visibility == Public) {
         publicFunctions.emplace_back(function);
     } else {
@@ -35,13 +32,8 @@ void ClassDefinition::addMethod(Visibility visibility,
     }
 }
 
-DeclarationPtr ClassDefinition::getDeclaration() {
-    return ClassDeclaration::create(shared_from_this());
-}
+DeclarationPtr ClassDefinition::getDeclaration() { return ClassDeclaration::create(shared_from_this()); }
 
-
-void ClassDefinition::addBaseClass(std::string baseClassName) {
-    baseClasses.emplace_back(baseClassName);
-}
+void ClassDefinition::addBaseClass(std::string baseClassName) { baseClasses.emplace_back(baseClassName); }
 
 }// namespace NES

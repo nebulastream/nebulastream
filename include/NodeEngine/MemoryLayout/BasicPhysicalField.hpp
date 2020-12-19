@@ -56,6 +56,6 @@ template<class ValueType>
 PhysicalFieldPtr createBasicPhysicalField(uint64_t bufferOffset) {
     return std::make_shared<BasicPhysicalField<ValueType>>(bufferOffset);
 }
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_

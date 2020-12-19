@@ -14,25 +14,20 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
 
-namespace NES::NodeEngine::Execution{
+namespace NES::NodeEngine::Execution {
 
-ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
-                                         QuerySubPlanId querySubPlanId,
-                                         std::vector<DataSourcePtr>&& sources,
-                                         std::vector<DataSinkPtr>&& sinks,
-                                         std::vector<ExecutablePipelinePtr>&& pipelines,
-                                         QueryManagerPtr&& queryManager,
-                                         BufferManagerPtr&& bufferManager)
+ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
+                                         std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& pipelines,
+                                         QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Created) {}
-
 
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 
@@ -105,9 +100,7 @@ bool ExecutableQueryPlan::start() {
     return true;
 }
 
-uint32_t ExecutableQueryPlan::getNumberOfPipelines() {
-    return pipelines.size();
-}
+uint32_t ExecutableQueryPlan::getNumberOfPipelines() { return pipelines.size(); }
 
 QueryManagerPtr ExecutableQueryPlan::getQueryManager() { return queryManager; }
 
@@ -119,4 +112,4 @@ std::vector<DataSinkPtr> ExecutableQueryPlan::getSinks() const { return sinks; }
 
 ExecutablePipelinePtr ExecutableQueryPlan::getPipeline(uint64_t index) const { return pipelines[index]; }
 
-}// namespace NES
+}// namespace NES::NodeEngine::Execution

@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
-#include <Windowing/WindowingForwardRefs.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>

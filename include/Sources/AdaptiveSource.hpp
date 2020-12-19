@@ -32,7 +32,7 @@ class AdaptiveSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    AdaptiveSource(SchemaPtr schema,  NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    AdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                    uint64_t initialGatheringInterval, OperatorId operatorId);
 
     /**

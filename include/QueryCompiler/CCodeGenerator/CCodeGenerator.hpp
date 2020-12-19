@@ -80,7 +80,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return the operator id
     */
     uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                             PipelineContextPtr context) override;
+                                 PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -103,8 +103,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                      GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                      PipelineContextPtr context,  uint64_t windowOperatorIndex) override;
+                                      GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
+                                      uint64_t windowOperatorIndex) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -115,8 +115,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                        GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                        PipelineContextPtr context,  uint64_t windowOperatorIndex) override;
+                                        GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
+                                        uint64_t windowOperatorIndex) override;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
@@ -124,9 +124,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr join,
-                                       PipelineContextPtr context) override;
-
+    uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -135,7 +133,8 @@ class CCodeGenerator : public CodeGenerator {
     * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,  uint64_t operatorHandlerIndex) override;
+    bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
+                             uint64_t operatorHandlerIndex) override;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.
@@ -150,7 +149,8 @@ class CCodeGenerator : public CodeGenerator {
 
   private:
     BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
-    VariableDeclaration getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t index);
+    VariableDeclaration getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable,
+                                                 uint64_t index);
     BinaryOperatorStatement getWatermark(VariableDeclaration tupleBufferVariable);
     BinaryOperatorStatement getOriginId(VariableDeclaration tupleBufferVariable);
 

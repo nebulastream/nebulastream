@@ -27,11 +27,11 @@ namespace NES::NodeEngine::Execution {
 
 ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId qepId,
                                        ExecutablePipelineStagePtr executablePipelineStage,
-                                       PipelineExecutionContextPtr pipelineExecutionContext,
-                                       ExecutablePipelinePtr nextPipeline,
+                                       PipelineExecutionContextPtr pipelineExecutionContext, ExecutablePipelinePtr nextPipeline,
                                        bool reconfiguration)
     : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
-      nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration) {
+      nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)),
+      reconfiguration(reconfiguration) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
@@ -57,7 +57,7 @@ bool ExecutablePipeline::start() {
 
 bool ExecutablePipeline::stop() {
     for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
-         operatorHandler->stop(pipelineContext);
+        operatorHandler->stop(pipelineContext);
     }
     return executablePipelineStage->stop(*pipelineContext.get()) == 0;
 }
@@ -70,17 +70,14 @@ QuerySubPlanId ExecutablePipeline::getQepParentId() const { return qepId; }
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
-
 ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
                                                  ExecutablePipelineStagePtr executablePipelineStage,
-                                                 PipelineExecutionContextPtr pipelineContext,
-                                                 ExecutablePipelinePtr nextPipeline, bool reconfiguration) {
+                                                 PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline,
+                                                 bool reconfiguration) {
     return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
-                                                nextPipeline,reconfiguration);
+                                                nextPipeline, reconfiguration);
 }
 
-ExecutablePipeline::~ExecutablePipeline() {
-    NES_DEBUG("~ExecutablePipeline("+std::to_string(pipelineStageId)+")");
-}
+ExecutablePipeline::~ExecutablePipeline() { NES_DEBUG("~ExecutablePipeline(" + std::to_string(pipelineStageId) + ")"); }
 
 }// namespace NES::NodeEngine::Execution

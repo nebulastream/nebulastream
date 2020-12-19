@@ -1313,17 +1313,17 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     auto finalAggregateType = tf->createDataType(aggregation->getFinalAggregateStamp());
     auto executableAggregation = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "aggregation");
     FunctionCallStatementPtr createAggregateCall;
-    if(aggregation->getType() == Windowing::WindowAggregationDescriptor::Sum) {
+    if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Sum) {
         createAggregateCall = call("Windowing::ExecutableSumAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-    }else if(aggregation->getType() == Windowing::WindowAggregationDescriptor::Count) {
+    } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Count) {
         createAggregateCall =
             call("Windowing::ExecutableCountAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-    }else if(aggregation->getType() == Windowing::WindowAggregationDescriptor::Min) {
+    } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Min) {
 
         createAggregateCall = call("Windowing::ExecutableMinAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-    } else if(aggregation->getType() == Windowing::WindowAggregationDescriptor::Max) {
+    } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Max) {
         createAggregateCall = call("Windowing::ExecutableManAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-    }else {
+    } else {
         NES_FATAL_ERROR("Aggregation Handler: aggregation=" << aggregation->getType() << " not implemented");
     }
 
