@@ -78,7 +78,7 @@ class ExecutableQueryPlan {
      * @brief Get pipelines.
      * @return
      */
-    std::vector<ExecutablePipelinePtr>& getPipelines();
+    std::vector<ExecutablePipelinePtr> getPipelines();
 
     /**
      * @brief Gets number of pipeline stages.
