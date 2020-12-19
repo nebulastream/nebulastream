@@ -36,7 +36,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
 
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 
-std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getPipelines() { return pipelines; }
+std::vector<ExecutablePipelinePtr> ExecutableQueryPlan::getPipelines() { return pipelines; }
 
 QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
