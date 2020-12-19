@@ -40,6 +40,7 @@ NodeEngine::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStag
 
 CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage() {
     // First we have to destroy the pipeline stage only afterwards we can remove the associated code.
+    NES_DEBUG("~CompiledExecutablePipelineStage()");
     this->executablePipelineStage.reset();
     this->compiledCode.reset();
 }
