@@ -20,9 +20,7 @@
 
 namespace NES {
 
-BlockScopeStatementPtr BlockScopeStatement::create() {
-    return std::make_shared<BlockScopeStatement>();
-}
+BlockScopeStatementPtr BlockScopeStatement::create() { return std::make_shared<BlockScopeStatement>(); }
 
 const CodeExpressionPtr BlockScopeStatement::getCode() const {
     return std::make_shared<CodeExpression>("{" + CompoundStatement::getCode()->code_ + "}");

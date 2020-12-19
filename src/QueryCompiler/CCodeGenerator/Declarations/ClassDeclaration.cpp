@@ -17,10 +17,10 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/ClassDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
-#include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -33,7 +33,9 @@ ClassDeclarationPtr ClassDeclaration::create(ClassDefinitionPtr classDefinition)
     return std::make_shared<ClassDeclaration>(classDefinition);
 }
 
-const GeneratableDataTypePtr ClassDeclaration::getType() const { return CompilerTypesFactory().createAnonymusDataType(classDefinition->name); }
+const GeneratableDataTypePtr ClassDeclaration::getType() const {
+    return CompilerTypesFactory().createAnonymusDataType(classDefinition->name);
+}
 const std::string ClassDeclaration::getIdentifierName() const { return ""; }
 
 const Code ClassDeclaration::getTypeDefinitionCode() const { return Code(); }
@@ -56,7 +58,6 @@ const Code ClassDeclaration::getCode() const {
     classCode << "};";
     return classCode.str();
 }
-
 
 std::string ClassDeclaration::generateFunctions(std::vector<FunctionDefinitionPtr>& functions) const {
     std::stringstream classCode;

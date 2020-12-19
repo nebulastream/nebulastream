@@ -235,7 +235,7 @@ class MemorySegment {
 void zmqBufferRecyclingCallback(void* ptr, void* hint);
 
 }// namespace detail
-}
+}// namespace NodeEngine
 }// namespace NES
 
 #endif//NES_INCLUDE_NODEENGINE_DETAIL_TUPLEBUFFERIMPL_HPP_

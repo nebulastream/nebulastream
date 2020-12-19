@@ -14,5 +14,4 @@
     limitations under the License.
 */
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
-namespace NES::Windowing{
-}
+namespace NES::Windowing {}

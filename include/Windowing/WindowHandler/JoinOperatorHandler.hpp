@@ -19,18 +19,15 @@
 #include <NodeEngine/Execution/OperatorHandler.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
-namespace NES::Join{
+namespace NES::Join {
 
 /**
  * @brief Operator handler for join.
  */
-class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler{
+class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
   public:
-    JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition,
-                        SchemaPtr resultSchema);
-    JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition,
-                        SchemaPtr resultSchema,
-                        AbstractJoinHandlerPtr joinHandler);
+    JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema);
+    JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr joinHandler);
 
     /**
     * @brief Factory to create new JoinOperatorHandler
@@ -38,8 +35,7 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler{
     * @param resultSchema window result schema
     * @return JoinOperatorHandlerPtr
     */
-    static JoinOperatorHandlerPtr create(LogicalJoinDefinitionPtr joinDefinition,
-                                         SchemaPtr resultSchema);
+    static JoinOperatorHandlerPtr create(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema);
 
     /**
     * @brief Factory to create new JoinOperatorHandler
@@ -47,8 +43,7 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler{
     * @param resultSchema window result schema
     * @return JoinOperatorHandlerPtr
     */
-    static JoinOperatorHandlerPtr create(LogicalJoinDefinitionPtr joinDefinition,
-                                         SchemaPtr resultSchema,
+    static JoinOperatorHandlerPtr create(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema,
                                          AbstractJoinHandlerPtr joinHandler);
     /**
      * @brief Sets the join handler
@@ -56,9 +51,7 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler{
      */
     void setJoinHandler(AbstractJoinHandlerPtr joinHandler);
 
-    virtual ~JoinOperatorHandler(){
-        NES_DEBUG("~JoinOperatorHandler()");
-    }
+    virtual ~JoinOperatorHandler() { NES_DEBUG("~JoinOperatorHandler()"); }
 
     /**
      * @brief Returns a casted join handler
@@ -77,13 +70,13 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler{
     LogicalJoinDefinitionPtr getJoinDefinition();
 
     SchemaPtr getResultSchema();
+
   private:
     LogicalJoinDefinitionPtr joinDefinition;
     AbstractJoinHandlerPtr joinHandler;
     SchemaPtr resultSchema;
 };
 
-
-}
+}// namespace NES::Join
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINOPERATORHANDLER_HPP_

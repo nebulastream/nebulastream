@@ -67,5 +67,5 @@ class WorkerContext {
      */
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
 };
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif//NES_WORKERCONTEXT_HPP_

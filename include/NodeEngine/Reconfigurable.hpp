@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_
 #define NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_
 
-#include <NodeEngine/ReconfigurationType.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/ReconfigurationType.hpp>
 
 namespace NES::NodeEngine {
 
@@ -50,6 +50,6 @@ class Reconfigurable {
     }
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_

@@ -53,4 +53,4 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedWatermarks=" << processedWatermarks;
     return ss.str();
 }
-}// namespace NES
+}// namespace NES::NodeEngine

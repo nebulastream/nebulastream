@@ -298,4 +298,4 @@ void zmqBufferRecyclingCallback(void* ptr, void* hint) {
 
 }// namespace detail
 
-}// namespace NES
+}// namespace NES::NodeEngine

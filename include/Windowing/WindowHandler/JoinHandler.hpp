@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -26,7 +27,6 @@
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 
 namespace NES::Join {
 template<class KeyType>
@@ -47,13 +47,11 @@ class JoinHandler : public AbstractJoinHandler {
 
     static AbstractJoinHandlerPtr create(Join::LogicalJoinDefinitionPtr joinDefinition,
                                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction){
+                                         BaseExecutableJoinActionPtr<KeyType> executableJoinAction) {
         return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction);
     }
 
-    ~JoinHandler() {
-        NES_DEBUG("~JoinHandler()");
-    }
+    ~JoinHandler() { NES_DEBUG("~JoinHandler()"); }
 
     /**
    * @brief Starts thread to check if the window should be triggered.

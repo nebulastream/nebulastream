@@ -182,7 +182,8 @@ bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
     }
 }
 
-SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, NodeEngine::TupleBuffer& buf) {
+SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPlanPtr plan,
+                                                 NodeEngine::TupleBuffer& buf) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
     MonitoringRequest request;

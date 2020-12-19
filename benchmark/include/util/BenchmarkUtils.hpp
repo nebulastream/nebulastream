@@ -124,12 +124,12 @@ class BenchmarkUtils {
                         for (auto workerThreads : allWorkerThreads)                                                              \
                             for (auto sourceCnt : allDataSources) {                                                              \
                                 PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();                             \
-                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads);             \
+                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads); \
                                                                                                                                  \
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
                                                                                                                                  \
-                                std::vector<NodeEngine::QueryStatistics*> statisticsVec;                                                     \
+                                std::vector<NodeEngine::QueryStatistics*> statisticsVec;                                         \
                                 NES_WARNING("Starting benchmark with ingestRate=" + std::to_string(ingestionRate) + ", "         \
                                             + "singleExpSec=" + std::to_string(BenchmarkUtils::runSingleExperimentSeconds)       \
                                             + ", " + "benchPeriod=" + std::to_string(BenchmarkUtils::periodLengthInSeconds)      \

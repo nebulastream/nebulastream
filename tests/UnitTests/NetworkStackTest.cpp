@@ -43,8 +43,8 @@
 using namespace std;
 
 namespace NES {
-using NodeEngine::TupleBuffer;
 using NodeEngine::MemoryLayoutPtr;
+using NodeEngine::TupleBuffer;
 
 const uint64_t buffersManaged = 8 * 1024;
 const uint64_t bufferSize = 4 * 1024;
@@ -587,7 +587,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
-              NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
+                NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
                 auto rt = NodeEngine::ReconfigurationTask(0, NodeEngine::Initialize, &networkSink);
                 networkSink.reconfigure(rt, workerContext);
                 std::mt19937 rnd;
@@ -693,11 +693,12 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         atomic<int> eosCnt = 0;
         atomic<int>& bufferCnt;
 
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf, NES::NodeEngine::BufferManagerPtr&& bufferManager,
-                                  NES::NodeEngine::QueryManagerPtr&& queryManager,
-                                  std::function<Network::NetworkManagerPtr(NES::NodeEngine::NodeEnginePtr)>&& networkManagerCreator,
-                                  Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler,
-                                  std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)
+        explicit MockedNodeEngine(
+            PhysicalStreamConfigPtr streamConf, NES::NodeEngine::BufferManagerPtr&& bufferManager,
+            NES::NodeEngine::QueryManagerPtr&& queryManager,
+            std::function<Network::NetworkManagerPtr(NES::NodeEngine::NodeEnginePtr)>&& networkManagerCreator,
+            Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, std::promise<bool>& completed,
+            NesPartition nesPartition, std::atomic<int>& bufferCnt)
             : NodeEngine(std::move(streamConf), std::move(bufferManager), std::move(queryManager),
                          std::move(networkManagerCreator), std::move(partitionManager), std::move(queryCompiler), 0),
               completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt) {}

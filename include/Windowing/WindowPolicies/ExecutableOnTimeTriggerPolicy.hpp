@@ -17,10 +17,10 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <atomic>
 
 namespace NES::Windowing {
 

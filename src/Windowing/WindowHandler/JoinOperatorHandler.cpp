@@ -17,9 +17,8 @@
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 namespace NES::Join {
 
-
 JoinOperatorHandlerPtr JoinOperatorHandler::create(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema,
-                                                       AbstractJoinHandlerPtr joinHandler) {
+                                                   AbstractJoinHandlerPtr joinHandler) {
     return std::make_shared<JoinOperatorHandler>(joinDefinition, resultSchema, joinHandler);
 }
 
@@ -31,14 +30,14 @@ JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition
     : joinDefinition(joinDefinition), resultSchema(resultSchema) {}
 
 JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema,
-                                             AbstractJoinHandlerPtr joinHandler)
+                                         AbstractJoinHandlerPtr joinHandler)
     : joinDefinition(joinDefinition), joinHandler(joinHandler), resultSchema(resultSchema) {}
 
 LogicalJoinDefinitionPtr JoinOperatorHandler::getJoinDefinition() { return joinDefinition; }
 
-void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler){ this->joinHandler = joinHandler; }
+void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler) { this->joinHandler = joinHandler; }
 
 SchemaPtr JoinOperatorHandler::getResultSchema() { return resultSchema; }
 void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) { joinHandler->start(); }
 void JoinOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { joinHandler->stop(); }
-}// namespace NES::Windowing
+}// namespace NES::Join

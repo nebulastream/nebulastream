@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <cpprest/json.h>
 #include <memory>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -34,7 +34,6 @@ typedef std::shared_ptr<Topology> TopologyPtr;
 
 class MonitoringPlan;
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
-
 
 class MonitoringService {
   public:
@@ -51,7 +50,7 @@ class MonitoringService {
      * @return a tuple with the schema and tuplebuffer
      */
     std::tuple<SchemaPtr, NodeEngine::TupleBuffer> requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
-                                                             MonitoringPlanPtr plan);
+                                                                         MonitoringPlanPtr plan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.

@@ -16,9 +16,9 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -64,7 +64,7 @@ class ExecutableSliceAggregationTriggerAction
         NES_DEBUG("ExecutableSliceAggregationTriggerAction: doAction for currentWatermark="
                   << currentWatermark << " lastWatermark=" << lastWatermark);
 
-        if(this->weakExecutionContext.expired()){
+        if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
             return false;
         }
@@ -109,7 +109,7 @@ class ExecutableSliceAggregationTriggerAction
         // For processing time we use the current wall clock as watermark.
         // TODO we should add a allowed lateness to support out of order events
 
-        if(this->weakExecutionContext.expired()){
+        if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
             return;
         }

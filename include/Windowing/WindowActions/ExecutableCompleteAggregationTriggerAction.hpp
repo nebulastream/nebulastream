@@ -16,9 +16,9 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -64,7 +64,7 @@ class ExecutableCompleteAggregationTriggerAction
                                                                  << " lastWatermark=" << lastWatermark);
 
         // get the reference to the shared ptr.
-        if(this->weakExecutionContext.expired()){
+        if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
             return false;
         }
@@ -112,7 +112,7 @@ class ExecutableCompleteAggregationTriggerAction
         // create result vector of windows
         auto windows = std::vector<WindowState>();
 
-        if(this->weakExecutionContext.expired()){
+        if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
         }
         auto executionContext = this->weakExecutionContext.lock();

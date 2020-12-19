@@ -109,4 +109,4 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
     std::swap(lhs.controlBlock, rhs.controlBlock);
 }
 
-}// namespace NES
+}// namespace NES::NodeEngine

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
@@ -35,17 +35,20 @@ NodeEngine::BufferManagerPtr GeneratedQueryExecutionPlanBuilder::getBufferManage
 
 QueryId GeneratedQueryExecutionPlanBuilder::getQueryId() const { return queryId; }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addPipeline(NodeEngine::Execution::ExecutablePipelinePtr pipeline) {
+GeneratedQueryExecutionPlanBuilder&
+GeneratedQueryExecutionPlanBuilder::addPipeline(NodeEngine::Execution::ExecutablePipelinePtr pipeline) {
     pipelines.push_back(pipeline);
     return *this;
 }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setBufferManager(NodeEngine::BufferManagerPtr bufferManager) {
+GeneratedQueryExecutionPlanBuilder&
+GeneratedQueryExecutionPlanBuilder::setBufferManager(NodeEngine::BufferManagerPtr bufferManager) {
     this->bufferManager = std::move(bufferManager);
     return *this;
 }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQueryManager(NodeEngine::QueryManagerPtr queryManager) {
+GeneratedQueryExecutionPlanBuilder&
+GeneratedQueryExecutionPlanBuilder::setQueryManager(NodeEngine::QueryManagerPtr queryManager) {
     this->queryManager = std::move(queryManager);
     return *this;
 }
@@ -69,8 +72,9 @@ NodeEngine::Execution::ExecutableQueryPlanPtr GeneratedQueryExecutionPlanBuilder
         std::reverse(pipelines.begin(), pipelines.end());// this is necessary, check plan generator documentation
     }
 
-    return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks),
-                                                         std::move(pipelines), std::move(queryManager), std::move(bufferManager));
+    return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources),
+                                                                        std::move(sinks), std::move(pipelines),
+                                                                        std::move(queryManager), std::move(bufferManager));
 }
 
 std::vector<DataSinkPtr>& GeneratedQueryExecutionPlanBuilder::getSinks() { return sinks; }

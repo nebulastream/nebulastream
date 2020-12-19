@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
-#include <memory>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <memory>
 namespace NES {
 class Schema;
 class MonitoringPlan;

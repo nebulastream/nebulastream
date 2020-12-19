@@ -44,9 +44,7 @@ void PipelineExecutionContext::dispatchBuffer(TupleBuffer& buffer) {
     emitToQueryManagerFunctionHandler(buffer);
 }
 
-std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() {
-    return operatorHandlers;
-}
+std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() { return operatorHandlers; }
 
 std::string PipelineExecutionContext::toString() { return "PipelineContext(queryID:" + std::to_string(queryId); }
 

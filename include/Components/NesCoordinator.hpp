@@ -17,8 +17,8 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <future>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>

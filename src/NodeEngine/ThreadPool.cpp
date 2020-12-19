@@ -122,4 +122,4 @@ void ThreadPool::setNumberOfThreadsWithRestart(uint16_t size) {
 
 uint16_t ThreadPool::getNumberOfThreads() { return numThreads; }
 
-}// namespace NES
+}// namespace NES::NodeEngine

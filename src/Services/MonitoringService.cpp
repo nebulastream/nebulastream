@@ -29,7 +29,8 @@
 
 namespace NES {
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager)
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology,
+                                     NodeEngine::BufferManagerPtr bufferManager)
     : workerClient(workerClient), topology(topology), bufferManager(bufferManager) {
     NES_DEBUG("MonitoringService: Initializing");
 }
@@ -40,8 +41,8 @@ MonitoringService::~MonitoringService() {
     topology.reset();
 }
 
-std::tuple<SchemaPtr, NodeEngine::TupleBuffer> MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
-                                                                            MonitoringPlanPtr plan) {
+std::tuple<SchemaPtr, NodeEngine::TupleBuffer>
+MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan) {
     if (!plan) {
         auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
         plan = MonitoringPlan::create(metrics);

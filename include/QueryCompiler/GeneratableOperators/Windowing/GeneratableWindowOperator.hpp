@@ -55,8 +55,6 @@ class GeneratableWindowOperator : public WindowLogicalOperatorNode, public Gener
     explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                        GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);
     GeneratableWindowAggregationPtr generatableWindowAggregation;
-
-
 };
 
 }// namespace NES

@@ -17,8 +17,8 @@
 #ifndef UTILITY_FUNCTIONS_HPP
 #define UTILITY_FUNCTIONS_HPP
 
-#include <Operators/OperatorId.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Operators/OperatorId.hpp>
 #include <cpprest/json.h>
 #include <string>
 /*

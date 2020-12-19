@@ -14,13 +14,13 @@
     limitations under the License.
 */
 
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
-#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
-#include <NodeEngine/WorkerContext.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/WorkerContext.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
@@ -30,23 +30,24 @@ namespace NES::NodeEngine {
 using std::string;
 namespace detail {
 
-class ReconfigurationTaskEntryPointPipelineStage: public Execution::ExecutablePipelineStage{
+class ReconfigurationTaskEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
   public:
     uint32_t execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext) {
         NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread "
-              << workerContext.getId());
+                  << workerContext.getId());
         auto* task = buffer.getBufferAs<ReconfigurationTask>();
         NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to wait on thread "
-              << workerContext.getId());
+                  << workerContext.getId());
         task->wait();
-        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to reconfigure on thread "
-              << workerContext.getId());
+        NES_TRACE(
+            "QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to reconfigure on thread "
+            << workerContext.getId());
         task->getInstance()->reconfigure(*task, workerContext);
         NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint post callback on thread "
-              << workerContext.getId());
+                  << workerContext.getId());
         task->postReconfiguration();
         NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint completed on thread "
-              << workerContext.getId());
+                  << workerContext.getId());
         task->postWait();
         return 0;
     }
@@ -302,7 +303,8 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
         [](TupleBuffer&) {
         },
         std::vector<Execution::OperatorHandlerPtr>());
-    auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, nullptr, true);
+    auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
+                                                          nullptr, true);
     {
         std::unique_lock lock(workMutex);
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
@@ -465,7 +467,8 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
         case Destroy: {
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
-            NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped || status == Execution::ExecutableQueryPlanStatus::ErrorState,
+            NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped
+                           || status == Execution::ExecutableQueryPlanStatus::ErrorState,
                        "query plan is not in valid state " << status);
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
@@ -478,8 +481,6 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
     }
 }
 
-uint64_t QueryManager::getNodeId() const {
-    return nodeEngineId;
-}
+uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 
-}// namespace NES
+}// namespace NES::NodeEngine

@@ -65,7 +65,7 @@ class PipelineStageHolder {
     PipelineStageHolder(uint32_t currentStageId, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                         const std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : currentStageId(currentStageId), executablePipelineStage(std::move(executablePipelineStage)),
-          operatorHandlers(std::move(operatorHandlers)){
+          operatorHandlers(std::move(operatorHandlers)) {
         // nop
     }
 };

@@ -274,7 +274,9 @@ bool NesWorker::removeParent(uint64_t parentId) {
     return success;
 }
 
-std::vector<NodeEngine::QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryId queryId) { return nodeEngine->getQueryStatistics(queryId); }
+std::vector<NodeEngine::QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryId queryId) {
+    return nodeEngine->getQueryStatistics(queryId);
+}
 
 bool NesWorker::waitForConnect() {
     NES_DEBUG("NesWorker::waitForConnect()");

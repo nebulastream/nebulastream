@@ -16,9 +16,10 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction_HPP_
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>
@@ -33,7 +34,6 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Join {
 template<class KeyType>
@@ -52,16 +52,13 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
     }
 
-    ~ExecutableNestedLoopJoinTriggerAction(){
-        NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction()");
-    }
+    ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction()"); }
 
     bool doAction(StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* leftJoinState,
-                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate,
-                  uint64_t currentWatermarkLeft,
+                  StateVariable<KeyType, Windowing::WindowSliceStore<KeyType>*>* rightJoinSate, uint64_t currentWatermarkLeft,
                   uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
         // get the reference to the shared ptr.
-        if(this->weakExecutionContext.expired()){
+        if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
             return false;
         }
@@ -143,8 +140,9 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   * @param tupleBuffer
   */
     void joinWindows(KeyType key, Windowing::WindowSliceStore<KeyType>* leftStore,
-                     Windowing::WindowSliceStore<KeyType>* rightStore, NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermarkLeft,
-                     uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
+                     Windowing::WindowSliceStore<KeyType>* rightStore, NodeEngine::TupleBuffer& tupleBuffer,
+                     uint64_t currentWatermarkLeft, uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft,
+                     uint64_t lastWatermarkRight) {
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore  watermark is="
                   << currentWatermarkLeft << " lastwatermark=" << lastWatermarkLeft);
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:rightStore  watermark is="
@@ -154,7 +152,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto windows = std::vector<Windowing::WindowState>();
 
         // get the reference to the shared ptr.
-        if(this->weakExecutionContext.expired()){
+        if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
             return;
         }

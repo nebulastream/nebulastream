@@ -229,4 +229,4 @@ BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail
 
 void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
 
-}// namespace NES
+}// namespace NES::NodeEngine

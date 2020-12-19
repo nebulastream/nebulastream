@@ -15,8 +15,8 @@
 */
 
 #include <API/Schema.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

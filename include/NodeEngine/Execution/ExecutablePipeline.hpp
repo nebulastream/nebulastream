@@ -31,12 +31,8 @@ namespace NES::NodeEngine::Execution {
  */
 class ExecutablePipeline {
   public:
-    ExecutablePipeline(uint32_t pipelineId,
-                       QuerySubPlanId qepId,
-                       ExecutablePipelineStagePtr  executablePipelineStage,
-                       PipelineExecutionContextPtr pipelineContext,
-                       ExecutablePipelinePtr nextPipeline,
-                       bool reconfiguration);
+    ExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
+                       PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline, bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -49,7 +45,8 @@ class ExecutablePipeline {
      * @return ExecutablePipelinePtr
      */
     static ExecutablePipelinePtr create(uint32_t pipelineId, const QuerySubPlanId querySubPlanId,
-                                        ExecutablePipelineStagePtr executablePipelineStage, PipelineExecutionContextPtr pipelineContext,
+                                        ExecutablePipelineStagePtr executablePipelineStage,
+                                        PipelineExecutionContextPtr pipelineContext,
                                         const ExecutablePipelinePtr nextPipelineStage, bool reconfiguration = false);
 
     /**
@@ -112,6 +109,6 @@ class ExecutablePipeline {
     bool reconfiguration;
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine::Execution
 
 #endif /* INCLUDE_PIPELINESTAGE_H_ */

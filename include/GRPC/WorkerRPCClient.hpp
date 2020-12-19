@@ -17,10 +17,10 @@
 #ifndef NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
-#include <WorkerRPCService.grpc.pb.h>
-#include <WorkerRPCService.pb.h>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <WorkerRPCService.grpc.pb.h>
+#include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <string>
 

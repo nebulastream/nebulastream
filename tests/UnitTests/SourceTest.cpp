@@ -90,15 +90,15 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
     bool truthy_entry;
 };
 
-typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                                       const std::string&);
+typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
+                                                       NodeEngine::QueryManagerPtr queryManager, const std::string&);
 
-typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                                        const std::string&, uint64_t);
+typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
+                                                        NodeEngine::QueryManagerPtr queryManager, const std::string&, uint64_t);
 
 typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
-                                                      NodeEngine::QueryManagerPtr queryManager, const std::string&, const std::string&,
-                                                      uint64_t, uint64_t);
+                                                      NodeEngine::QueryManagerPtr queryManager, const std::string&,
+                                                      const std::string&, uint64_t, uint64_t);
 
 class SourceTest : public testing::Test {
   public:

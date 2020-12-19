@@ -18,10 +18,10 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
@@ -57,23 +57,22 @@
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
-using NodeEngine::TupleBuffer;
 using NodeEngine::MemoryLayoutPtr;
+using NodeEngine::TupleBuffer;
 
 class QueryExecutionTest : public testing::Test {
   public:
-    static void SetUpTestCase(){
+    static void SetUpTestCase() {
         NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
         NES_DEBUG("QueryExecutionTest: Setup QueryCatalogTest test class.");
-
     }
     /* Will be called before a test is executed. */
     void SetUp() {
         // create test input buffer
         testSchema = Schema::create()
-            ->addField("id", BasicType::INT64)
-            ->addField("one", BasicType::INT64)
-            ->addField("value", BasicType::INT64);
+                         ->addField("id", BasicType::INT64)
+                         ->addField("one", BasicType::INT64)
+                         ->addField("value", BasicType::INT64);
     }
 
     /* Will be called before a test is executed. */
@@ -190,7 +189,8 @@ class TestSink : public SinkMedium {
     TestSink(uint64_t expectedBuffer, SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
 
-    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) {
+    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema,
+                                            NodeEngine::BufferManagerPtr bufferManager) {
         return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
     }
 
@@ -515,7 +515,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         // value
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
     }
-   // nodeEngine->stopQuery(1);
+    // nodeEngine->stopQuery(1);
     nodeEngine->stop();
 }
 
@@ -946,8 +946,7 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     auto query = TestQuery::from(ysbSource->getSchema())
                      .filter(Attribute("event_type") > 1)
                      .windowByKey(Attribute("campaign_id", INT64),
-                                  TumblingWindow::of(EventTime(Attribute("current_ms")),
-                                                     Milliseconds(10)), Count())
+                                  TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(10)), Count())
                      .sink(DummySink::create());
 
     auto ysbResultSchema = Schema::create()

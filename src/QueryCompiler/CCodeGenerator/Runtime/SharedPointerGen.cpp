@@ -18,7 +18,6 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
-#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 namespace NES {
 
 GeneratableDataTypePtr SharedPointerGen::createSharedPtrType(GeneratableDataTypePtr type) {
@@ -26,7 +25,7 @@ GeneratableDataTypePtr SharedPointerGen::createSharedPtrType(GeneratableDataType
 }
 
 StatementPtr SharedPointerGen::makeShared(GeneratableDataTypePtr type) {
-    return FunctionCallStatement::create("std::make_shared<"+type->getTypeDefinitionCode()->code_+">");
+    return FunctionCallStatement::create("std::make_shared<" + type->getTypeDefinitionCode()->code_ + ">");
 }
 
 }// namespace NES

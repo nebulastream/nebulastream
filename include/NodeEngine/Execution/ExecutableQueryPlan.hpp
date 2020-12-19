@@ -16,14 +16,14 @@
 
 #ifndef INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwaredRefs.hpp>
-#include <map>
 #include <atomic>
+#include <map>
 #include <vector>
 
 namespace NES::NodeEngine::Execution {
@@ -112,6 +112,6 @@ class ExecutableQueryPlan {
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine::Execution
 
 #endif /* INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_ */

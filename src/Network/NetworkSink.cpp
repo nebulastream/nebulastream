@@ -48,12 +48,14 @@ bool NetworkSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Wo
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << parentPlanId);
     //    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Created, "Setup : parent plan not running on net sink " << nesPartition);
-    queryManager->addReconfigurationTask(parentPlanId, NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this));
+    queryManager->addReconfigurationTask(parentPlanId,
+                                         NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this));
 }
 
 void NetworkSink::shutdown() {
     NES_DEBUG("NetworkSink: shutdown() called " << nesPartition.toString() << " qep " << parentPlanId);
-    queryManager->addReconfigurationTask(parentPlanId, NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Destroy, this), true);
+    queryManager->addReconfigurationTask(parentPlanId, NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Destroy, this),
+                                         true);
 }
 
 const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }

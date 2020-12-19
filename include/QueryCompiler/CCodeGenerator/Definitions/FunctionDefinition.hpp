@@ -14,22 +14,21 @@
     limitations under the License.
 */
 
-
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDEFINITION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDEFINITION_HPP_
 
-#include <memory>
-#include <string>
+#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
+#include <memory>
+#include <string>
 
 namespace NES {
 
 /**
  * @brief Definition for a function in the generated code.
  */
-class FunctionDefinition : public std::enable_shared_from_this<FunctionDefinition>{
+class FunctionDefinition : public std::enable_shared_from_this<FunctionDefinition> {
 
   public:
     FunctionDefinition(const std::string& functionName);
@@ -81,8 +80,7 @@ class FunctionDefinition : public std::enable_shared_from_this<FunctionDefinitio
     std::vector<VariableDeclaration> parameters;
     std::vector<VariableDeclaration> variablDeclarations;
     std::vector<StatementPtr> statements;
-
 };
 
-}// namespace
-#endif  // NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDEFINITION_HPP_
+}// namespace NES
+#endif// NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDEFINITION_HPP_

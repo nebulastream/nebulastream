@@ -29,6 +29,6 @@ enum ExecutableQueryPlanStatus {
     ErrorState,
     Invalid
 };
-}
+}// namespace NES::NodeEngine::Execution
 
 #endif//NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_

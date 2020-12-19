@@ -16,8 +16,8 @@
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Sources/AdaptiveSource.hpp>
 
 #include <boost/algorithm/string.hpp>
@@ -99,8 +99,9 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     };
 };
 
-const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                                uint64_t initialGatheringInterval, std::string filePath) {
+const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                                NodeEngine::QueryManagerPtr queryManager, uint64_t initialGatheringInterval,
+                                                std::string filePath) {
     return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager, initialGatheringInterval, filePath);
 }
 

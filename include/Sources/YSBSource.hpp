@@ -23,8 +23,9 @@ namespace NES {
 
 class YSBSource : public DefaultSource {
   public:
-    explicit YSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
-                       uint64_t numberOfTuplesPerBuffer, uint64_t frequency, OperatorId operatorId);
+    explicit YSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                       const uint64_t numbersOfBufferToProduce, uint64_t numberOfTuplesPerBuffer, uint64_t frequency,
+                       OperatorId operatorId);
 
     SourceType getType() const override;
 

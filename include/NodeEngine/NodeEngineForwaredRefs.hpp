@@ -18,7 +18,7 @@
 #define NES_INCLUDE_NODEENGINE_NODEENGINEFORWAREDREFS_HPP_
 #include <memory>
 
-namespace NES{
+namespace NES {
 
 class PhysicalType;
 typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
@@ -26,7 +26,7 @@ typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-namespace NodeEngine{
+namespace NodeEngine {
 
 class TupleBuffer;
 class PhysicalField;
@@ -63,7 +63,7 @@ typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
 class ReconfigurationTask;
 
-namespace Execution{
+namespace Execution {
 
 class OperatorHandler;
 typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
@@ -80,10 +80,10 @@ typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 class PipelineExecutionContext;
 typedef std::shared_ptr<PipelineExecutionContext> PipelineExecutionContextPtr;
 
-}
+}// namespace Execution
 
-}
+}// namespace NodeEngine
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_NODEENGINE_NODEENGINEFORWAREDREFS_HPP_

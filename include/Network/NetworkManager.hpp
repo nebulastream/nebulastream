@@ -49,7 +49,8 @@ class NetworkManager {
      * @return the shared_ptr object
      */
     static std::shared_ptr<NetworkManager> create(const std::string& hostname, uint16_t port,
-                                                  Network::ExchangeProtocol&& exchangeProtocol, NodeEngine::BufferManagerPtr bufferManager,
+                                                  Network::ExchangeProtocol&& exchangeProtocol,
+                                                  NodeEngine::BufferManagerPtr bufferManager,
                                                   uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**

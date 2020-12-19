@@ -18,8 +18,8 @@
 #define NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
-#include <mutex>
 #include <atomic>
+#include <mutex>
 namespace NES {
 using NodeEngine::TupleBuffer;
 using NodeEngine::WorkerContext;
@@ -50,7 +50,6 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     std::mutex executionStageLock;
     std::atomic<ExecutionStage> currentExecutionStage;
 };
-
 
 }// namespace NES
 

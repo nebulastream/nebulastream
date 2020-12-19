@@ -46,9 +46,7 @@ typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
 class PipelineContext {
   public:
     PipelineContext();
-    ~PipelineContext(){
-        NES_DEBUG("~PipelineContext("+pipelineName+")");
-    }
+    ~PipelineContext() { NES_DEBUG("~PipelineContext(" + pipelineName + ")"); }
     static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);
     BlockScopeStatementPtr createSetupScope();
@@ -79,6 +77,7 @@ class PipelineContext {
     bool isLeftSide;
     std::vector<BlockScopeStatementPtr> getSetupScopes();
     std::vector<BlockScopeStatementPtr> getStartScopes();
+
   private:
     std::vector<PipelineContextPtr> nextPipelines;
     std::vector<BlockScopeStatementPtr> setupScopes;
