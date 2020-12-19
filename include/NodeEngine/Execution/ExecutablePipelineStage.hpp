@@ -31,7 +31,7 @@ class ExecutablePipelineStage {
     * @brief Must be called only once per executable pipeline and initializes the pipeline execution context.
     * e.g, creates the individual operator states -> window handler
     * @param pipelineExecutionContext
-    * @return 0 if and error occurred.
+    * @return 0 if no error occurred.
     */
     virtual uint32_t setup(PipelineExecutionContext& pipelineExecutionContext);
 
@@ -39,7 +39,7 @@ class ExecutablePipelineStage {
     * @brief Must be called only once per executable pipeline and starts the executable pipeline.
     * e.g. starts the threads for the window handler.
     * @param pipelineExecutionContext
-    * @return 0 if and error occurred.
+    * @return 0 if no error occurred.
     */
     virtual uint32_t start(PipelineExecutionContext& pipelineExecutionContext);
 
@@ -48,7 +48,7 @@ class ExecutablePipelineStage {
     * For instance a worker local aggregation state.
     * @param pipelineExecutionContext
     * @param workerContext
-    * @return 0 if and error occurred.
+    * @return 0 if no error occurred.
     */
     virtual uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext);
 
@@ -59,7 +59,7 @@ class ExecutablePipelineStage {
     * @param inputTupleBuffer
     * @param pipelineExecutionContext
     * @param workerContext
-    * @return 0 if and error occurred.
+    * @return 0 if an error occurred.
     */
     virtual uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
                              WorkerContext& workerContext) = 0;
@@ -68,14 +68,14 @@ class ExecutablePipelineStage {
      * @brief Must be called exactly once per worker thread to remove worker local state.
      * @param pipelineExecutionContext
      * @param workerContext
-     * @return 0 if and error occurred.
+     * @return 0 if no error occurred.
      */
     virtual uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext);
 
     /**
      * @brief Must be called exactly once per executable pipeline to remove operator state.
      * @param pipelineExecutionContext
-     * @return 0 if and error occurred.
+     * @return 0 if no error occurred.
      */
     virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
 };
