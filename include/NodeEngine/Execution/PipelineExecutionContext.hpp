@@ -55,10 +55,10 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
 
     /**
      * @brief Emits a output tuple buffer to the runtime. Internally we call the emit function which is a callback to the correct handler.
-     * @param outputBuffer the output tuple buffer that is passed to the runtime
+     * @param tupleBuffer the output tuple buffer that is passed to the runtime
      * @param workerContext the worker context
      */
-    void emitBuffer(TupleBuffer& outputBuffer, WorkerContext&);
+    void emitBuffer(TupleBuffer& tupleBuffer, WorkerContext&);
 
     /**
     * @brief Dispatch a buffer as a new task to the query manager.
@@ -66,7 +66,7 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
     * @param outputBuffer the output tuple buffer that is passed to the runtime
     * @param workerContext the worker context
     */
-    void dispatchBuffer(TupleBuffer& outputBuffer);
+    void dispatchBuffer(TupleBuffer& tupleBuffer);
 
     /**
      * @brief Retrieve all registered operator handlers.

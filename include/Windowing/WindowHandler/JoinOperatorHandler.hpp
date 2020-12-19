@@ -21,6 +21,9 @@
 #include <Windowing/JoinForwardRefs.hpp>
 namespace NES::Join{
 
+/**
+ * @brief Operator handler for join.
+ */
 class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler{
   public:
     JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition,
@@ -28,21 +31,44 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler{
     JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition,
                         SchemaPtr resultSchema,
                         AbstractJoinHandlerPtr joinHandler);
+
+    /**
+    * @brief Factory to create new JoinOperatorHandler
+    * @param joinDefinition logical join definition
+    * @param resultSchema window result schema
+    * @return JoinOperatorHandlerPtr
+    */
     static JoinOperatorHandlerPtr create(LogicalJoinDefinitionPtr joinDefinition,
                                          SchemaPtr resultSchema);
+
+    /**
+    * @brief Factory to create new JoinOperatorHandler
+    * @param joinDefinition logical join definition
+    * @param resultSchema window result schema
+    * @return JoinOperatorHandlerPtr
+    */
     static JoinOperatorHandlerPtr create(LogicalJoinDefinitionPtr joinDefinition,
                                          SchemaPtr resultSchema,
                                          AbstractJoinHandlerPtr joinHandler);
-
+    /**
+     * @brief Sets the join handler
+     * @param joinHandler AbstractJoinHandlerPtr
+     */
     void setJoinHandler(AbstractJoinHandlerPtr joinHandler);
 
     virtual ~JoinOperatorHandler(){
         NES_DEBUG("~JoinOperatorHandler()");
     }
 
+    /**
+     * @brief Returns a casted join handler
+     * @tparam JoinHandlerType
+     * @tparam KeyType
+     * @return JoinHandlerType
+     */
     template<template<class> class JoinHandlerType, class KeyType>
     auto getJoinHandler() {
-        return std::dynamic_pointer_cast<JoinHandlerType<KeyType>>(joinHandler);
+        return std::static_pointer_cast<JoinHandlerType<KeyType>>(joinHandler);
     }
 
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
