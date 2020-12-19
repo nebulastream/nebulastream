@@ -37,6 +37,8 @@ class PipelineExecutionContext: public std::enable_shared_from_this<PipelineExec
      * @brief The PipelineExecutionContext is passed to the compiled pipeline and enables interaction with the NES runtime.
      * @param bufferManager a reference to the buffer manager to enable allocation from within the pipeline
      * @param emitFunctionHandler an handler to receive the emitted buffers from the pipeline.
+     * @param emitToQueryManagerFunctionHandler an handler to receive emitted buffers, which are then dispatched to the query manager.
+     * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
     explicit PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,

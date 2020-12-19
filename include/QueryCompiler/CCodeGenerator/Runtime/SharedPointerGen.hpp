@@ -18,9 +18,23 @@
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 namespace NES{
 
+/**
+ * @brief Utility to generate runtime calls for shared pointers.
+ */
 class SharedPointerGen{
   public:
+    /**
+     * @brief Create a shared pointer type
+     * @param type GeneratableDataTypePtr
+     * @return GeneratableDataTypePtr
+     */
     GeneratableDataTypePtr static createSharedPtrType(GeneratableDataTypePtr type);
+
+    /**
+     * @brief Creates function call to make shared.
+     * @param type GeneratableDataTypePtr
+     * @return StatementPtr
+     */
     StatementPtr static makeShared(GeneratableDataTypePtr type);
 };
 

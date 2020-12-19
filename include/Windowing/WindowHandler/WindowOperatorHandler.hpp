@@ -21,15 +21,46 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
 
+/**
+ * @brief Operator handler for window aggregations.
+ */
 class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler{
   public:
     WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
     WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema, AbstractWindowHandlerPtr windowHandler);
+
+    /**
+     * @brief Factory to create new WindowOperatorHandler
+     * @param windowDefinition logical window definition
+     * @param resultSchema window result schema
+     * @return WindowOperatorHandlerPtr
+     */
     static WindowOperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
+
+    /**
+    * @brief Factory to create new WindowOperatorHandler
+    * @param windowDefinition logical window definition
+    * @param resultSchema window result schema
+    * @param windowHandler pre initialized window handler
+    * @return WindowOperatorHandlerPtr
+    */
     static WindowOperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema, AbstractWindowHandlerPtr windowHandler);
 
+    /**
+     * @brief Sets the window handler
+     * @param windowHandler AbstractWindowHandlerPtr
+     */
     void setWindowHandler(AbstractWindowHandlerPtr windowHandler);
 
+    /**
+     * @brief Returns a casted window handler
+     * @tparam WindowHandlerType
+     * @tparam KeyType
+     * @tparam InputType
+     * @tparam PartialAggregateType
+     * @tparam FinalAggregateType
+     * @return WindowHandlerType
+     */
     template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType,
         class PartialAggregateType, class FinalAggregateType>
     auto getWindowHandler() {

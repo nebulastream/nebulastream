@@ -21,7 +21,9 @@
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 
 namespace NES {
-
+/**
+ * @brief Declaration for a namespace in the generated code.
+ */
 class NamespaceDeclaration : public Declaration {
   private:
     Code namespaceCode;

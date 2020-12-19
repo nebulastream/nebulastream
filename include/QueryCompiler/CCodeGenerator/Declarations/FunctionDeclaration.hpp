@@ -22,6 +22,9 @@
 
 namespace NES {
 
+/**
+ * @brief Declaration for a function in the generated code.
+ */
 class FunctionDeclaration : public Declaration {
   private:
     Code functionCode;
