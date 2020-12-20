@@ -77,9 +77,8 @@ class OperatorToQuerySignatureUtil {
      * @param mapOperator: the map operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createForMap(z3::ContextPtr context,
-                                                                        std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                                        MapLogicalOperatorNodePtr mapOperator);
+    static QuerySignaturePtr createForMap(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                          MapLogicalOperatorNodePtr mapOperator);
 
     /**
      * @brief Compute query signature for Filter operator
@@ -88,9 +87,8 @@ class OperatorToQuerySignatureUtil {
      * @param filterOperator: the Filter operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createForFilter(z3::ContextPtr context,
-                                                                           std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                                           FilterLogicalOperatorNodePtr filterOperator);
+    static QuerySignaturePtr createForFilter(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                             FilterLogicalOperatorNodePtr filterOperator);
 
     /**
      * @brief Compute query signature for window operator
@@ -99,9 +97,19 @@ class OperatorToQuerySignatureUtil {
      * @param windowOperator: the window operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createForWindow(z3::ContextPtr context,
-                                                                           std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                                           WindowLogicalOperatorNodePtr windowOperator);
+    static QuerySignaturePtr createForWindow(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                             WindowLogicalOperatorNodePtr windowOperator);
+
+    /**
+     * @brief Update the column expressions based on the output schema of the operator
+     * @param context: z3 context
+     * @param outputSchema : the output schema
+     * @param oldColumnMap : the old column map
+     * @return map of column name to column expressions based on output schema
+     */
+    static std::map<std::string, std::vector<z3::ExprPtr>>
+    updateColumnsUsingSchema(z3::ContextPtr context, SchemaPtr outputSchema,
+                             std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap);
 };
 }// namespace NES::Optimizer
 
