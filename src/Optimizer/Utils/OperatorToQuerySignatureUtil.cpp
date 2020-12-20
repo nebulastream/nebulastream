@@ -49,8 +49,9 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
         auto var = context->constant(context->str_symbol("streamName"), context->string_sort());
         auto val = context->string_val(sourceOperator->getSourceDescriptor()->getStreamName());
-        auto conds = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, var, val)));
-        return QuerySignature::create(conds, {}, {});
+        auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, var, val)));
+        auto columns = updateColumnsUsingSchema(context, operatorNode->getOutputSchema(), {});
+        return QuerySignature::create(conditions, columns, {});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         if (childrenQuerySignatures.empty()) {
             NES_THROW_RUNTIME_ERROR("Sink operator can't have empty children set : " + operatorNode->toString());
@@ -206,12 +207,8 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
     auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
 
-    Z3_ast expressionArray[] = {
-        windowKeyExpression,
-        windowTimeKeyExpression,
-        windowTimeSlideExpression,
-        windowTimeSizeExpression
-    };
+    Z3_ast expressionArray[] = {windowKeyExpression, windowTimeKeyExpression, windowTimeSlideExpression,
+                                windowTimeSizeExpression};
 
     auto windowExpressions = childrenQuerySignatures[0]->getWindowsExpressions();
     if (windowExpressions.find(windowKey) == windowExpressions.end()) {
@@ -252,6 +249,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     auto columns = childrenQuerySignatures[0]->getColumns();
     columns[asFieldName] = {std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*onExpression)))};
 
+    columns = updateColumnsUsingSchema(context, windowOperator->getOutputSchema(), columns);
     return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), columns, windowExpressions);
 }
 
@@ -336,6 +334,31 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForFilter(z3::ContextPtr c
     Z3_ast array[] = {filterConditions, *childrenConditions};
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
     return QuerySignature::create(conditions, subQueryCols, childrenQuerySignatures[0]->getWindowsExpressions());
+}
+
+std::map<std::string, std::vector<z3::ExprPtr>>
+OperatorToQuerySignatureUtil::updateColumnsUsingSchema(z3::ContextPtr context, SchemaPtr outputSchema,
+                                                       std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap) {
+
+    NES_DEBUG("OperatorToQuerySignatureUtil: update columns based on output schema");
+
+    std::map<std::string, std::vector<z3::ExprPtr>> updatedColumnMap;
+
+    //Iterate over all output fields of the schema and check if the expression for the field exists in oldColumnMap
+    // if doesn't exists then create a new one else take the one from old column map
+    auto outputFields = outputSchema->fields;
+    for (auto& outputField : outputFields) {
+        auto fieldName = outputField->name;
+
+        if (oldColumnMap.find(fieldName) != oldColumnMap.end()) {
+            updatedColumnMap[fieldName] = oldColumnMap[fieldName];
+        } else {
+            auto expr = DataTypeToZ3ExprUtil::createForField(fieldName, outputField->getDataType(), context)->getExpr();
+            updatedColumnMap[fieldName] = {expr};
+        }
+    }
+
+    return updatedColumnMap;
 }
 
 }// namespace NES::Optimizer

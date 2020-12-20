@@ -180,21 +180,23 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     context c;
     expr x = c.int_const("x");
     expr y = c.int_const("y");
-    sort input = c.int_sort();
+    expr z = c.int_const("z");
+    //    sort input = c.int_sort();
     solver s(c);
 
-    func_decl maxFunc = function("max", input, input);
-    func_decl minFunc = function("min", input, input);
+    //    func_decl maxFunc = function("max", input, input);
+    //    func_decl minFunc = function("min", input, input);
+    //    NES_INFO(to_expr(c,Z3_mk_implies(c, minFunc, x)));
 
     //window(Tumbling::create(20s), sum("agg"));
     //window(Tumbling::create(10s), sum("agg")).window(Tumbling::create(10s), sum("agg"));
 
-    s.add(x==y);
-    s.add(maxFunc(x) != maxFunc(maxFunc(y)));
+    s.add(!((x == 10 && x == 12) == (x == 10 && x == 12)));
+    //    s.add(maxFunc(x) != maxFunc(maxFunc(y)));
     ASSERT_EQ(s.check(), unsat);
     s.reset();
 
-    s.add(maxFunc(x) != minFunc(x));
+    //    s.add(maxFunc(x) != minFunc(x));
     ASSERT_EQ(s.check(), unsat);
     s.reset();
 
@@ -234,7 +236,9 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     //
     //    //(and (< (* (* value 40) 40) 40) (< (* value 40) 40) (= streamName "car"))
     //
-    //
+    //    map(value = 40) .filter(value < 40)
+    //    map(value = 50).filter(value < 40)
+
     //    expr value = c.int_const("value");
     //
     //    s.reset();
