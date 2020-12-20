@@ -201,7 +201,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     }
     auto windowTimeSizeVar = context->int_const("window-time-size");
     z3::expr windowTimeSizeVal = context->int_val(length);
-    auto windowTimeSlideVar = context->int_const("window-slide");
+    auto windowTimeSlideVar = context->int_const("window-time-slide");
     z3::expr windowTimeSlideVal = context->int_val(slide);
     auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
     auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
