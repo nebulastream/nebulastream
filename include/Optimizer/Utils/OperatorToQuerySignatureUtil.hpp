@@ -20,6 +20,10 @@
 #include <memory>
 
 namespace z3 {
+
+class expr;
+typedef std::shared_ptr<expr> ExprPtr;
+
 class context;
 typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
@@ -36,6 +40,9 @@ typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
 
 class WindowLogicalOperatorNode;
 typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 }// namespace NES
 
