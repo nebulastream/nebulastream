@@ -152,9 +152,12 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
                                                                 std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                                                 WindowLogicalOperatorNodePtr windowOperator) {
 
+    NES_DEBUG("OperatorToQuerySignatureUtil: compute signature for window operator");
     z3::expr_vector windowConditions(*context);
 
     auto windowDefinition = windowOperator->getWindowDefinition();
+
+    //Compute the expression for window key
     z3::expr windowKeyVal(*context);
     std::string windowKey;
     if (windowDefinition->isKeyed()) {
@@ -167,6 +170,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     windowKeyVal = context->string_val(windowKey);
     auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
 
+    //Compute the expression for window time key
     auto windowType = windowDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
     z3::expr windowTimeKeyVal(*context);
@@ -180,10 +184,10 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
     auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
 
+    //Compute the expression for window size and slide
     auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
-
-    uint64_t length;
-    uint64_t slide;
+    uint64_t length = 0;
+    uint64_t slide = 0;
     if (windowType->isTumblingWindow()) {
         auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
         length = tumblingWindow->getSize().getTime() * multiplier;
@@ -195,30 +199,28 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
     }
-
-    //FIXME: when count based window is implemented
-    auto windowCountSizeVar = context->int_const("window-count-size");
-
     auto windowTimeSizeVar = context->int_const("window-time-size");
     z3::expr windowTimeSizeVal = context->int_val(length);
     auto windowTimeSlideVar = context->int_const("window-slide");
     z3::expr windowTimeSlideVal = context->int_val(slide);
-
     auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
     auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
 
+    //FIXME: when count based window is implemented
+    //    auto windowCountSizeVar = context->int_const("window-count-size");
+
+    //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
     Z3_ast expressionArray[] = {windowKeyExpression, windowTimeKeyExpression, windowTimeSlideExpression,
                                 windowTimeSizeExpression};
-
     auto windowExpressions = childrenQuerySignatures[0]->getWindowsExpressions();
     if (windowExpressions.find(windowKey) == windowExpressions.end()) {
         windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
+    } else {
+        //TODO: as part of #1377
     }
 
-    // serialize aggregation
-    auto onExpression =
-        ExpressionToZ3ExprUtil::createForExpression(windowDefinition->getWindowAggregation()->on(), context)->getExpr();
-
+    //FIXME: change the logic here as part of #1377
+    //Compute expression for aggregation method
     z3::func_decl aggregate(*context);
     z3::sort sort = context->int_sort();
     switch (windowDefinition->getWindowAggregation()->getType()) {
@@ -245,6 +247,9 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
         default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
     }
 
+    // Get the expression for on field and update the column values
+    auto onExpression =
+        ExpressionToZ3ExprUtil::createForExpression(windowDefinition->getWindowAggregation()->on(), context)->getExpr();
     std::string asFieldName = windowDefinition->getWindowAggregation()->as()->as<FieldAccessExpressionNode>()->getFieldName();
     auto columns = childrenQuerySignatures[0]->getColumns();
     columns[asFieldName] = {std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*onExpression)))};
@@ -329,7 +334,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForFilter(z3::ContextPtr c
     //Compute a DNF condition for all different conditions identified by substituting the col values
     auto filterConditions = z3::mk_or(allConditions);
 
-    //Compute a CNF condition using the children and filter conds
+    //Compute a CNF condition using the children and filter conditions
     auto childrenConditions = childrenQuerySignatures[0]->getConditions();
     Z3_ast array[] = {filterConditions, *childrenConditions};
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
@@ -341,7 +346,6 @@ OperatorToQuerySignatureUtil::updateColumnsUsingSchema(z3::ContextPtr context, S
                                                        std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap) {
 
     NES_DEBUG("OperatorToQuerySignatureUtil: update columns based on output schema");
-
     std::map<std::string, std::vector<z3::ExprPtr>> updatedColumnMap;
 
     //Iterate over all output fields of the schema and check if the expression for the field exists in oldColumnMap
@@ -357,7 +361,6 @@ OperatorToQuerySignatureUtil::updateColumnsUsingSchema(z3::ContextPtr context, S
             updatedColumnMap[fieldName] = {expr};
         }
     }
-
     return updatedColumnMap;
 }
 
