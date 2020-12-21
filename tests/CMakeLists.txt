@@ -69,7 +69,7 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}")
 #------------------------------- # Unit Test Suite --------------------------------
 
 ### Node Engine Tests ###
-add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
+add_executable(node-engine-test "UnitTests/NodeEngine/NodeEngineTest.cpp")
 target_link_libraries(node-engine-test nes ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
@@ -89,38 +89,38 @@ target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
 
 ### Buffer Manager Test ###
-add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/CoordinatorEngineTest.cpp)
+add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/Coordinator/CoordinatorEngineTest.cpp)
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
 ### AbstractWindowHandler Manager Test ###
-add_executable(window-manager-tests "UnitTests/WindowManagerTest.cpp")
+add_executable(window-manager-tests "UnitTests/Window/WindowManagerTest.cpp")
 target_link_libraries(window-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)
 
 ### State Manager Test ###
-add_executable(state-manager-tests "UnitTests/StateTest.cpp")
+add_executable(state-manager-tests "UnitTests/State/StateTest.cpp")
 target_link_libraries(state-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME state-manager-tests COMMAND state-manager-tests)
 
 ### ZMQ Data Source Sink Tests ###
-add_executable(zmq-tests "UnitTests/ZMQTest.cpp")
+add_executable(zmq-tests "UnitTests/Source/ZMQTest.cpp")
 target_link_libraries(zmq-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME zmq-tests COMMAND zmq-tests)
 
 ### Source Tests ###
-add_executable(source-tests "UnitTests/SourceTest.cpp")
+add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
 target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME source-tests COMMAND source-tests)
 
 ### Sink Tests ###
-add_executable(sink-tests "UnitTests/SinkTest.cpp" UnitTests/SinkTest.cpp)
+add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
 target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME sink-tests COMMAND sink-tests)
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
-    add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
+    add_executable(kafka-tests "UnitTests/Source/KafkaTest.cpp")
     message("libraies: ${LIBRARIES}")
     target_link_libraries(kafka-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME kafka-tests COMMAND kafka-tests)
@@ -128,16 +128,16 @@ endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
 if(NES_USE_OPC)
-    add_executable(opc-source-tests "UnitTests/OPCSourceTest.cpp" UnitTests/OPCSourceTest.cpp)
+    add_executable(opc-source-tests "UnitTests/Source/OPCSourceTest.cpp" UnitTests/Source/OPCSourceTest.cpp)
     target_link_libraries(opc-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-source-tests COMMAND opc-source-tests)
-    add_executable(opc-sink-tests "UnitTests/OPCSinkTest.cpp" UnitTests/OPCSinkTest.cpp)
+    add_executable(opc-sink-tests "UnitTests/Sink/OPCSinkTest.cpp" UnitTests/Sink/OPCSinkTest.cpp)
     target_link_libraries(opc-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
 endif(NES_USE_OPC)
 
 ### Memory Layout Tests ###
-add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
+add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
 target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
 
@@ -147,32 +147,32 @@ target_link_libraries(stream-catalog-test nes ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 
 ### QueryCatalog Tests ###
-add_executable(query-catalog-tests "UnitTests/QueryCatalogTest.cpp")
+add_executable(query-catalog-tests "UnitTests/Coordinator/QueryCatalogTest.cpp")
 target_link_libraries(query-catalog-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
 ### QueryCompilerTest ###
-add_executable(query-execution-test "UnitTests/QueryExecutionTest.cpp")
+add_executable(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
 target_link_libraries(query-execution-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-execution-test COMMAND query-execution-test)
 
 ### TupleBufferTest ###
-add_executable(tuple-buffer-test "UnitTests/TupleBufferTest.cpp")
+add_executable(tuple-buffer-test "UnitTests/NodeEngine/TupleBufferTest.cpp")
 target_link_libraries(tuple-buffer-test nes ${GTEST_LIBRARIES})
 add_test(NAME tuple-buffer-test COMMAND tuple-buffer-test)
 
 # LogicalOperatorPlanNodeTest
-add_executable(logical-operator-node-tests "UnitTests/LogicalOperatorNodeTest.cpp")
+add_executable(logical-operator-node-tests "UnitTests/Operators/LogicalOperatorNodeTest.cpp")
 target_link_libraries(logical-operator-node-tests nes ${GTEST_LIBRARIES})
 add_test(NAME logical-operator-node-tests COMMAND logical-operator-node-tests)
 
 # ExpressionNodeTest
-add_executable(predicate-node-tests "UnitTests/ExpressionNodeTest.cpp")
+add_executable(predicate-node-tests "UnitTests/Operators/ExpressionNodeTest.cpp")
 target_link_libraries(predicate-node-tests nes ${GTEST_LIBRARIES})
 add_test(NAME predicate-node-tests COMMAND predicate-node-tests)
 
 # QueryTest
-add_executable(query-tests "UnitTests/QueryTest.cpp")
+add_executable(query-tests "UnitTests/Query/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
 
@@ -182,12 +182,12 @@ target_link_libraries(translate-to-generatable-tests nes ${GTEST_LIBRARIES})
 add_test(NAME translate-to-generatable-tests COMMAND translate-to-generatable-tests)
 
 # ConvertLogicalToPhysicalSinkTest
-add_executable(convert-logical-to-physical-sink-tests "UnitTests/ConvertLogicalToPhysicalSinkTest.cpp")
+add_executable(convert-logical-to-physical-sink-tests "UnitTests/Operators/ConvertLogicalToPhysicalSinkTest.cpp")
 target_link_libraries(convert-logical-to-physical-sink-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-sink-tests COMMAND convert-logical-to-physical-sink-tests)
 
 # ConvertLogicalToPhysicalSourceTest
-add_executable(convert-logical-to-physical-source-tests "UnitTests/ConvertLogicalToPhysicalSourceTest.cpp")
+add_executable(convert-logical-to-physical-source-tests "UnitTests/Operators/ConvertLogicalToPhysicalSourceTest.cpp")
 target_link_libraries(convert-logical-to-physical-source-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
@@ -207,12 +207,12 @@ target_link_libraries(window-distr-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-distr-rule-test COMMAND window-distr-rule-test)
 
 # SerializationUtilTest
-add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
+add_executable(serialize-operator-test "UnitTests/Serialization/SerializationUtilTest.cpp")
 target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
 
 ### CoordinatorEngine Tests ###
-add_executable(coordinator-engine-tests "UnitTests/CoordinatorEngineTest.cpp")
+add_executable(coordinator-engine-tests "UnitTests/Coordinator/CoordinatorEngineTest.cpp")
 target_link_libraries(coordinator-engine-tests nes ${GTEST_LIBRARIES})
 add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
 
@@ -232,7 +232,7 @@ add_test(NAME simple-pattern-test COMMAND simple-pattern-test)
 #add_test(NAME sensor-bus-tests COMMAND sensor-bus-tests)
 
 ### Adaptive Source Tests ###
-add_executable(adaptive-source-tests "UnitTests/AdaptiveSourceTest.cpp")
+add_executable(adaptive-source-tests "UnitTests/Source/AdaptiveSourceTest.cpp")
 target_link_libraries(adaptive-source-tests nes ${GTEST_LIBRARIES})
 add_test(NAME adaptive-source-tests COMMAND adaptive-source-tests)
 
@@ -267,7 +267,7 @@ target_link_libraries(query-placement-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-placement-test COMMAND query-placement-test)
 
 ### Thread Naming Test ###
-add_executable(thread-naming-tests "UnitTests/ThreadNamingTest.cpp")
+add_executable(thread-naming-tests "UnitTests/NodeEngine/ThreadNamingTest.cpp")
 target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})
 add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 
@@ -277,7 +277,7 @@ target_link_libraries(global-execution-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-execution-plan-tests COMMAND global-execution-plan-tests)
 
 ### Z3 Validation Test ###
-add_executable(z3-validation-tests "UnitTests/Z3ValidationTest.cpp")
+add_executable(z3-validation-tests "UnitTests/Query/Z3ValidationTest.cpp")
 target_link_libraries(z3-validation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME z3-validation-tests COMMAND z3-validation-tests)
 
@@ -292,7 +292,7 @@ target_link_libraries(signature-inference-phase-test nes ${GTEST_LIBRARIES})
 add_test(NAME signature-inference-phase-test COMMAND signature-inference-phase-test)
 
 ### Circular Buffer Tests ###
-add_executable(circular-buffer-tests "UnitTests/CircularBufferTest.cpp")
+add_executable(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
 target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
 add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
 
@@ -349,12 +349,12 @@ target_link_libraries(update-topology-remote-test nes ${GTEST_LIBRARIES})
 add_test(NAME update-topology-remote-test COMMAND update-topology-remote-test)
 
 # NetworkStackTest
-add_executable(network-stack-test "UnitTests/NetworkStackTest.cpp")
+add_executable(network-stack-test "UnitTests/Network/NetworkStackTest.cpp")
 target_link_libraries(network-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME network-stack-test COMMAND network-stack-test)
 
 # MonitoringStackTest
-add_executable(monitoring-stack-test "UnitTests/MonitoringStackTest.cpp")
+add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.cpp")
 target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
 

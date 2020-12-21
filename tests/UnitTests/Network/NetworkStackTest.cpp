@@ -29,8 +29,8 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include "../util/DummySink.hpp"
-#include "../util/TestQuery.hpp"
+#include "../../util/DummySink.hpp"
+#include "../../util/TestQuery.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <Phases/TypeInferencePhase.hpp>

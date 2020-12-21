@@ -34,9 +34,9 @@
 #include <iostream>
 #include <utility>
 
-#include "../util/DummySink.hpp"
-#include "../util/SchemaSourceDescriptor.hpp"
-#include "../util/TestQuery.hpp"
+#include "../../util/DummySink.hpp"
+#include "../../util/SchemaSourceDescriptor.hpp"
+#include "../../util/TestQuery.hpp"
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
