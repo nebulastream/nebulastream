@@ -37,9 +37,9 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignatureUtil::createForOperator(OperatorNodePtr operatorNode,
-                                                        std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                        z3::ContextPtr context) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNodePtr operatorNode,
+                                                                      std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                                      z3::ContextPtr context) {
     NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         if (!childrenQuerySignatures.empty()) {
@@ -69,7 +69,7 @@ QuerySignaturePtr QuerySignatureUtil::createForOperator(OperatorNodePtr operator
 
         NES_TRACE("QuerySignatureUtil: Computing Z3Expression and filed map for filter predicate");
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
-        return createForFilter(context, childrenQuerySignatures, filterOperator);
+        return createQuerySignatureForFilter(context, childrenQuerySignatures, filterOperator);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         //TODO: Will be done in issue #1272
         NES_NOT_IMPLEMENTED();
@@ -89,7 +89,7 @@ QuerySignaturePtr QuerySignatureUtil::createForOperator(OperatorNodePtr operator
 
         // compute the expression for only the right side of the assignment operator
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
-        return createForMap(context, childrenQuerySignatures, mapOperator);
+        return createQuerySignatureForMap(context, childrenQuerySignatures, mapOperator);
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         //We do not expect a window operator to have no or more than 1 children
         if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
@@ -98,7 +98,7 @@ QuerySignaturePtr QuerySignatureUtil::createForOperator(OperatorNodePtr operator
         }
         NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
         auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
-        return createForWindow(context, childrenQuerySignatures, windowOperator);
+        return createQuerySignatureForWindow(context, childrenQuerySignatures, windowOperator);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         //FIXME: as part of the issue 1351
         return childrenQuerySignatures[0];
@@ -153,9 +153,9 @@ QuerySignaturePtr QuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr
     return QuerySignature::create(conditions, allColumns, allWindowExpressions);
 }
 
-QuerySignaturePtr QuerySignatureUtil::createForWindow(z3::ContextPtr context,
-                                                      std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                      WindowLogicalOperatorNodePtr windowOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextPtr context,
+                                                                    std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                                    WindowLogicalOperatorNodePtr windowOperator) {
 
     NES_DEBUG("QuerySignatureUtil: compute signature for window operator");
     z3::expr_vector windowConditions(*context);
@@ -263,8 +263,9 @@ QuerySignaturePtr QuerySignatureUtil::createForWindow(z3::ContextPtr context,
     return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), columns, windowExpressions);
 }
 
-QuerySignaturePtr QuerySignatureUtil::createForMap(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                   MapLogicalOperatorNodePtr mapOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr context,
+                                                                 std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                                 MapLogicalOperatorNodePtr mapOperator) {
 
     z3::ExprPtr expr = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context)->getExpr();
 
@@ -301,9 +302,9 @@ QuerySignaturePtr QuerySignatureUtil::createForMap(z3::ContextPtr context, std::
                                   childrenQuerySignatures[0]->getWindowsExpressions());
 }
 
-QuerySignaturePtr QuerySignatureUtil::createForFilter(z3::ContextPtr context,
-                                                      std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                      FilterLogicalOperatorNodePtr filterOperator) {
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextPtr context,
+                                                                    std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                                    FilterLogicalOperatorNodePtr filterOperator) {
 
     auto operatorCond = ExpressionToZ3ExprUtil::createForExpression(filterOperator->getPredicate(), context);
     auto fieldMap = operatorCond->getFieldMap();

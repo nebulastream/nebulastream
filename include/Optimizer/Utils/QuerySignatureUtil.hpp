@@ -64,7 +64,7 @@ class QuerySignatureUtil {
      * @param context: the context of Z3
      * @return the object representing signature created by the operator and its children
      */
-    static QuerySignaturePtr createForOperator(OperatorNodePtr operatorNode,
+    static QuerySignaturePtr createQuerySignatureForOperator(OperatorNodePtr operatorNode,
                                                std::vector<QuerySignaturePtr> childrenQuerySignatures, z3::ContextPtr context);
 
   private:
@@ -84,7 +84,7 @@ class QuerySignatureUtil {
      * @param mapOperator: the map operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createForMap(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
+    static QuerySignaturePtr createQuerySignatureForMap(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                           MapLogicalOperatorNodePtr mapOperator);
 
     /**
@@ -94,7 +94,7 @@ class QuerySignatureUtil {
      * @param filterOperator: the Filter operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createForFilter(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
+    static QuerySignaturePtr createQuerySignatureForFilter(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                              FilterLogicalOperatorNodePtr filterOperator);
 
     /**
@@ -104,7 +104,7 @@ class QuerySignatureUtil {
      * @param windowOperator: the window operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createForWindow(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
+    static QuerySignaturePtr createQuerySignatureForWindow(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                              WindowLogicalOperatorNodePtr windowOperator);
 
     /**
