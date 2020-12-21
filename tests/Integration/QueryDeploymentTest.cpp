@@ -815,7 +815,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     EXPECT_TRUE(response == 0);
 }
 
-
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     remove("test.out");
 
