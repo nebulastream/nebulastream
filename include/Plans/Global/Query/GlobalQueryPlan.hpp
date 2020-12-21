@@ -75,7 +75,7 @@ class GlobalQueryPlan {
     void removeEmptySharedQueryMetaData();
 
     /**
-     * @brief Get all Global Query Serialization with NodeType operators
+     * @brief Get all Global Query Nodes with NodeType operators
      * @tparam NodeType: type of logical operator
      * @return vector of global query nodes
      */

@@ -64,7 +64,7 @@ typedef std::shared_ptr<SharedQueryMetaData> SharedQueryMetaDataPtr;
  *  - Shared Query Id : this id is equivalent to the Query Id assigned to the user queryId. Since, there can be more than one query that can be merged
  *                      together we generate a unique Shared Query Id that can be associated to more than one Query Ids.
  *  - Query Ids : A vector of original Query Ids that shares a common Global Query Id.
- *  - Sink Global Query Serialization : The vector of Global Query Serialization that contains sink operators of all the Query Ids that share a common Global QueryId.
+ *  - Sink Global Query Nodes : The vector of Global Query Nodes that contains sink operators of all the Query Ids that share a common Global QueryId.
  *  - Deployed : A boolean flag indicating if the query plan is deployed or not.
  *  - NewMetaData : A boolean flag indicating if the meta data is a newly created one (i.e. it was never deployed before).
  *
@@ -144,8 +144,8 @@ class SharedQueryMetaData {
     bool isNew() const;
 
     /**
-     * @brief Get the set of Global Query Serialization with sink operators grouped together
-     * @return the set of Global Query Serialization with Sink Operators
+     * @brief Get the set of Global Query Nodes with sink operators grouped together
+     * @return the set of Global Query Nodes with Sink Operators
      */
     std::set<GlobalQueryNodePtr> getSinkGlobalQueryNodes();
 
