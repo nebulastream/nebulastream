@@ -15,7 +15,7 @@
 */
 
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToQuerySignatureUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
 
 namespace NES {

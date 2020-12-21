@@ -28,7 +28,7 @@
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/OperatorToQuerySignatureUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -37,34 +37,37 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePtr operatorNode,
-                                                                  std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                                  z3::ContextPtr context) {
-    NES_DEBUG("OperatorToQueryPlanSignatureUtil: Creating Z3 expression for operator " << operatorNode->toString());
+QuerySignaturePtr QuerySignatureUtil::createForOperator(OperatorNodePtr operatorNode,
+                                                        std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                        z3::ContextPtr context) {
+    NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         if (!childrenQuerySignatures.empty()) {
-            NES_THROW_RUNTIME_ERROR("Source operator can't have children : " + operatorNode->toString());
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source operator can't have children : " + operatorNode->toString());
         }
         //Will return a Z3 expression equivalent to: streamName = <logical stream name>
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
         auto var = context->constant(context->str_symbol("streamName"), context->string_sort());
         auto val = context->string_val(sourceOperator->getSourceDescriptor()->getStreamName());
+        //Create an equality expression for example: streamName == "<logical stream name>"
         auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, var, val)));
-        auto columns = updateColumnsUsingSchema(context, operatorNode->getOutputSchema(), {});
+        auto columns = updateQuerySignatureColumns(context, operatorNode->getOutputSchema(), {});
         return QuerySignature::create(conditions, columns, {});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         if (childrenQuerySignatures.empty()) {
-            NES_THROW_RUNTIME_ERROR("Sink operator can't have empty children set : " + operatorNode->toString());
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Sink operator can't have empty children set : "
+                                    + operatorNode->toString());
         }
         //Will return a z3 expression computed by CNF of children signatures
         return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         //We do not expect a filter to have no or more than 1 children
         if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("Filter operator can't have empty or more than one children : " + operatorNode->toString());
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Filter operator can't have empty or more than one children : "
+                                    + operatorNode->toString());
         }
 
-        NES_TRACE("OperatorToQueryPlanSignatureUtil: Computing Z3Expression and filed map for filter predicate");
+        NES_TRACE("QuerySignatureUtil: Computing Z3Expression and filed map for filter predicate");
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
         return createForFilter(context, childrenQuerySignatures, filterOperator);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
@@ -73,14 +76,15 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         //We do not expect a broadcast operator to have no or more than 1 children
         if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("Broadcast operator can't have empty or more than one children : "
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Broadcast operator can't have empty or more than one children : "
                                     + operatorNode->toString());
         }
         return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         //We do not expect a Map operator to have no or more than 1 children
         if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("Map operator can't have empty or more than one children : " + operatorNode->toString());
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Map operator can't have empty or more than one children : "
+                                    + operatorNode->toString());
         }
 
         // compute the expression for only the right side of the assignment operator
@@ -89,9 +93,10 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         //We do not expect a window operator to have no or more than 1 children
         if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("Window operator can't have empty or more than one children : " + operatorNode->toString());
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Window operator can't have empty or more than one children : "
+                                    + operatorNode->toString());
         }
-        NES_TRACE("OperatorToQueryPlanSignatureUtil: Computing Signature for window operator");
+        NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
         auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
         return createForWindow(context, childrenQuerySignatures, windowOperator);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
@@ -101,20 +106,20 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForOperator(OperatorNodePt
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
 }
 
-QuerySignaturePtr
-OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context,
-                                                          std::vector<QuerySignaturePtr> childrenQuerySignatures) {
+QuerySignaturePtr QuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context,
+                                                                  std::vector<QuerySignaturePtr> childrenQuerySignatures) {
 
-    NES_DEBUG("OperatorToQueryPlanSignatureUtil: Computing Signature from children signatures");
+    NES_DEBUG("QuerySignatureUtil: Computing Signature from children signatures");
     z3::expr_vector allConditions(*context);
     std::map<std::string, std::vector<z3::ExprPtr>> allColumns;
     std::map<std::string, z3::ExprPtr> allWindowExpressions;
 
+    //Iterate over all children query signatures for computing the column values
     for (auto& subQuerySignature : childrenQuerySignatures) {
-        //Merge the columns together from different children signatures
         if (allColumns.empty()) {
             allColumns = subQuerySignature->getColumns();
         } else {
+            //Merge the columns from different children signatures together
             for (auto [columnName, columnExprs] : subQuerySignature->getColumns()) {
                 if (allColumns.find(columnName) != allColumns.end()) {
                     std::vector<z3::ExprPtr> existingColExprs = allColumns[columnName];
@@ -148,11 +153,11 @@ OperatorToQuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr context
     return QuerySignature::create(conditions, allColumns, allWindowExpressions);
 }
 
-QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr context,
-                                                                std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                                WindowLogicalOperatorNodePtr windowOperator) {
+QuerySignaturePtr QuerySignatureUtil::createForWindow(z3::ContextPtr context,
+                                                      std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                      WindowLogicalOperatorNodePtr windowOperator) {
 
-    NES_DEBUG("OperatorToQuerySignatureUtil: compute signature for window operator");
+    NES_DEBUG("QuerySignatureUtil: compute signature for window operator");
     z3::expr_vector windowConditions(*context);
 
     auto windowDefinition = windowOperator->getWindowDefinition();
@@ -179,7 +184,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
     } else {
-        NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
+        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
     }
     auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
     auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
@@ -197,7 +202,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
         length = slidingWindow->getSize().getTime() * multiplier;
         slide = slidingWindow->getSlide().getTime() * multiplier;
     } else {
-        NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
+        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Type");
     }
     auto windowTimeSizeVar = context->int_const("window-time-size");
     z3::expr windowTimeSizeVal = context->int_val(length);
@@ -244,7 +249,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
             aggregate = z3::function("Avg", sort, sort);
             break;
         }
-        default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+        default: NES_FATAL_ERROR("QuerySignatureUtil: could not cast aggregation type");
     }
 
     // Get the expression for on field and update the column values
@@ -254,13 +259,12 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForWindow(z3::ContextPtr c
     auto columns = childrenQuerySignatures[0]->getColumns();
     columns[asFieldName] = {std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*onExpression)))};
 
-    columns = updateColumnsUsingSchema(context, windowOperator->getOutputSchema(), columns);
+    columns = updateQuerySignatureColumns(context, windowOperator->getOutputSchema(), columns);
     return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), columns, windowExpressions);
 }
 
-QuerySignaturePtr OperatorToQuerySignatureUtil::createForMap(z3::ContextPtr context,
-                                                             std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                             MapLogicalOperatorNodePtr mapOperator) {
+QuerySignaturePtr QuerySignatureUtil::createForMap(z3::ContextPtr context, std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                   MapLogicalOperatorNodePtr mapOperator) {
 
     z3::ExprPtr expr = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context)->getExpr();
 
@@ -297,9 +301,9 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForMap(z3::ContextPtr cont
                                   childrenQuerySignatures[0]->getWindowsExpressions());
 }
 
-QuerySignaturePtr OperatorToQuerySignatureUtil::createForFilter(z3::ContextPtr context,
-                                                                std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                                FilterLogicalOperatorNodePtr filterOperator) {
+QuerySignaturePtr QuerySignatureUtil::createForFilter(z3::ContextPtr context,
+                                                      std::vector<QuerySignaturePtr> childrenQuerySignatures,
+                                                      FilterLogicalOperatorNodePtr filterOperator) {
 
     auto operatorCond = ExpressionToZ3ExprUtil::createForExpression(filterOperator->getPredicate(), context);
     auto fieldMap = operatorCond->getFieldMap();
@@ -308,7 +312,7 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForFilter(z3::ContextPtr c
     z3::expr_vector allConditions(*context);
     allConditions.push_back(*z3Expr);
 
-    NES_TRACE("OperatorToQueryPlanSignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
+    NES_TRACE("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
               "children signatures");
     //As filter can't have more than 1 children so fetch the only child signature
     auto subQueryCols = childrenQuerySignatures[0]->getColumns();
@@ -342,10 +346,10 @@ QuerySignaturePtr OperatorToQuerySignatureUtil::createForFilter(z3::ContextPtr c
 }
 
 std::map<std::string, std::vector<z3::ExprPtr>>
-OperatorToQuerySignatureUtil::updateColumnsUsingSchema(z3::ContextPtr context, SchemaPtr outputSchema,
-                                                       std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap) {
+QuerySignatureUtil::updateQuerySignatureColumns(z3::ContextPtr context, SchemaPtr outputSchema,
+                                                std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap) {
 
-    NES_DEBUG("OperatorToQuerySignatureUtil: update columns based on output schema");
+    NES_DEBUG("QuerySignatureUtil: update columns based on output schema");
     std::map<std::string, std::vector<z3::ExprPtr>> updatedColumnMap;
 
     //Iterate over all output fields of the schema and check if the expression for the field exists in oldColumnMap

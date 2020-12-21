@@ -55,7 +55,7 @@ typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
  * @brief This class is responsible for creating the Query Plan Signature for the input operator.
  * The query plan is composed of the input operator and all its upstream child operators.
  */
-class OperatorToQuerySignatureUtil {
+class QuerySignatureUtil {
   public:
     /**
      * @brief Convert input operator into an equivalent logical expression
@@ -108,14 +108,17 @@ class OperatorToQuerySignatureUtil {
                                              WindowLogicalOperatorNodePtr windowOperator);
 
     /**
-     * @brief Update the column expressions based on the output schema of the operator
+     * @brief Update the column expressions based on the output schema of the operator. This method will:
+     * 1. remove the columns which are not part of the output schema
+     * 2. will add the columns which are not included in the old Column map
+     * 3. will copy the column expressions from the old column map
      * @param context: z3 context
      * @param outputSchema : the output schema
      * @param oldColumnMap : the old column map
      * @return map of column name to column expressions based on output schema
      */
     static std::map<std::string, std::vector<z3::ExprPtr>>
-    updateColumnsUsingSchema(z3::ContextPtr context, SchemaPtr outputSchema,
+    updateQuerySignatureColumns(z3::ContextPtr context, SchemaPtr outputSchema,
                              std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap);
 };
 }// namespace NES::Optimizer
