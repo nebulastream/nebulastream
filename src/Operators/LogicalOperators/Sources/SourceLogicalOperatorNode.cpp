@@ -16,7 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToQuerySignatureUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <z3++.h>
 
 namespace NES {

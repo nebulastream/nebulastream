@@ -282,9 +282,9 @@ target_link_libraries(z3-validation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME z3-validation-tests COMMAND z3-validation-tests)
 
 ### Operator To FOL Util Test ###
-add_executable(operator-to-FOL-util-tests "UnitTests/Optimizer/Utils/OperatorToQuerySignatureUtilTests.cpp")
-target_link_libraries(operator-to-FOL-util-tests nes ${GTEST_LIBRARIES})
-add_test(NAME operator-to-FOL-util-tests COMMAND operator-to-FOL-util-tests)
+add_executable(query-signature-util-tests "UnitTests/Optimizer/Utils/QuerySignatureUtilTests.cpp")
+target_link_libraries(query-signature-util-tests nes ${GTEST_LIBRARIES})
+add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
 ### Signature Inference Phase Test ###
 add_executable(signature-inference-phase-test "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp")

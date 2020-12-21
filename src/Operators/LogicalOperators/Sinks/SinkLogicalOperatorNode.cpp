@@ -16,7 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToQuerySignatureUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <utility>
 #include <z3++.h>
 
