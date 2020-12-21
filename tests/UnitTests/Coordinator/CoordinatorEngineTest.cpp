@@ -38,7 +38,7 @@ class CoordinatorEngineTest : public testing::Test {
     void SetUp() {
         std::cout << "Setup NES Coordinator test case." << std::endl;
         NES::setupLogging("CoordinatorEngineTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
+        NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
     }
 
     /* Will be called before a test is executed. */

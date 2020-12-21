@@ -37,7 +37,7 @@ class TopologyTest : public testing::Test {
     /* Will be called before a test is executed. */
     void TearDown() { std::cout << "Tear down NesTopologyManager test case." << std::endl; }
 };
-/* - Nodes ----------------------------------------------------------------- */
+/* - Serialization ----------------------------------------------------------------- */
 /**
  * Create a new node. 
  */

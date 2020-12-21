@@ -40,7 +40,7 @@ class QueryCatalogTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES::setupLogging("QueryCatalogTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("FINISHED ADDING 5 Nodes to topology");
+        NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         std::cout << "Setup QueryCatalogTest test case." << std::endl;
     }
 

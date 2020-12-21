@@ -499,7 +499,7 @@ namespace Yaml
 
         /**
         * @breif Get size of node.
-        *        Nodes of type None or Scalar will return 0.
+        *        Serialization of type None or Scalar will return 0.
         *
         */
         size_t Size() const;
