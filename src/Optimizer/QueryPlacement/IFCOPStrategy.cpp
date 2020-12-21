@@ -30,7 +30,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-
+#include <limits>
 namespace NES {
 
 std::unique_ptr<IFCOPStrategy> IFCOPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
@@ -75,7 +75,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     int maxIter = 5;
 
     // Step 4: Initiate global optimization
-    ExecutionPathPtr optimizedPlan = runGlobalOptimization(queryPlan, topology, streamCatalog, maxIter);
+    TopologyNodePtr optimizedPlan = runGlobalOptimization(queryPlan, topology, streamCatalog, maxIter);
 
 //    NES_DEBUG("BottomUpStrategy: Get all source operators");
 //    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
@@ -107,10 +107,10 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 //    NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
     return runTypeInferencePhase(queryId);
 }
-ExecutionPathPtr IFCOPStrategy::runGlobalOptimization(QueryPlanPtr queryPlan, TopologyPtr topology, StreamCatalogPtr streamCatalog, int maxIter) {
+TopologyNodePtr IFCOPStrategy::runGlobalOptimization(QueryPlanPtr queryPlan, TopologyPtr topology, StreamCatalogPtr streamCatalog, int maxIter) {
 
     // Initiate bestCandidate and bestCost variable
-    ExecutionPathPtr bestCandidate = nullptr;
+    TopologyNodePtr bestCandidate = nullptr;
     float bestCost = std::numeric_limits<float>::max();;
 
     // Define executionPathOptimizationMaxIter
@@ -121,10 +121,10 @@ ExecutionPathPtr IFCOPStrategy::runGlobalOptimization(QueryPlanPtr queryPlan, To
 
     for (int i=0; i<maxIter; i++) {
         // Step 1: Get an optimized execution path
-        ExecutionPathPtr optimizedExecutionPath = getOptimizedExecutionPath(topology, executionPathOptimizationMaxIter, queryPlan);
+        TopologyNodePtr optimizedExecutionPath = getOptimizedExecutionPath(topology, executionPathOptimizationMaxIter, queryPlan);
 
         // Step 2: Get an optimized assignment
-        ExecutionPathPtr optimizedExecutionPathWithAssignment = getRandomAssignment(optimizedExecutionPath, queryPlan);
+        TopologyNodePtr optimizedExecutionPathWithAssignment = getRandomAssignment(optimizedExecutionPath, queryPlan);
 
         // Step 3: Evaluate cost
         float cost = getTotalCost(optimizedExecutionPathWithAssignment);
@@ -133,33 +133,36 @@ ExecutionPathPtr IFCOPStrategy::runGlobalOptimization(QueryPlanPtr queryPlan, To
         }
     }
 
-    return NES::ExecutionPathPtr();
+    return bestCandidate;
 }
-float IFCOPStrategy::getTotalCost(ExecutionPathPtr executionPath) {
+float IFCOPStrategy::getTotalCost(TopologyNodePtr executionPath) {
     executionPath.get();
     // TODO: implement IFCOP cost
     return 0;
 }
-ExecutionPathPtr IFCOPStrategy::getRandomAssignment(ExecutionPathPtr executionPath, QueryPlanPtr queryPlan) {
+TopologyNodePtr IFCOPStrategy::getRandomAssignment(TopologyNodePtr executionPath, QueryPlanPtr queryPlan) {
     // TODO: implement IFCOP random assignment
     queryPlan.get();
     return executionPath;
 }
-ExecutionPathPtr IFCOPStrategy::getOptimizedExecutionPath(TopologyPtr topology, int maxIter, QueryPlanPtr queryPlan) {
+TopologyNodePtr IFCOPStrategy::getOptimizedExecutionPath(TopologyPtr topology, int maxIter, QueryPlanPtr queryPlan) {
     // TODO: implement IFCOP execution path optimization
-    ExecutionPathPtr bestExecutionPathCandidate = nullptr;
-
+    TopologyNodePtr bestExecutionPathCandidate = nullptr;
+    float bestCost = std::numeric_limits<float>::infinity();
 
     for (int i=0; i<maxIter; i++) {
         TopologyNodePtr candidateExecutionPath = generateRandomExecutionPath(topology, queryPlan);
-
-        // TODO: compute cost
+        float cost = getExecutionPathCost(candidateExecutionPath);
+        NES_DEBUG("IFCOP:Current cost= " << cost << " best cost= " << bestCost);
+        if (cost < bestCost){
+            bestCost = cost;
+            bestExecutionPathCandidate = candidateExecutionPath;
+        }
     }
 
     return bestExecutionPathCandidate;
 }
 
-// TODO: Merge paths from multiple logical sources
 TopologyNodePtr IFCOPStrategy::generateRandomExecutionPath(TopologyPtr topology, QueryPlanPtr queryPlan) {
     TopologyNodePtr sinkNode = topology->getRoot();
 
@@ -280,6 +283,15 @@ TopologyNodePtr IFCOPStrategy::generateRandomExecutionPath(TopologyPtr topology,
     }
     return rootOfMergedPath;
 
+}
+float IFCOPStrategy::getExecutionPathCost(TopologyNodePtr executionPath) {
+    uint16_t totalResources = executionPath->getAvailableResources();
+
+    for(NodePtr child: executionPath->getAndFlattenAllChildren(false)){
+        totalResources += child->as<TopologyNode>()->getAvailableResources();
+    }
+
+    return totalResources;
 }
 
 }// namespace NES
