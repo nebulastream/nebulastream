@@ -1050,10 +1050,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindows
     auto aggregation1 = Sum(Attribute("value"));
 
     Query query1 = Query::from("car")
-        .map(Attribute("value") = 40)
-        .filter(Attribute("type") < 40)
-        .windowByKey(Attribute("type"), windowType1, aggregation1)
-        .sink(printSinkDescriptor);
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("type") < 40)
+                       .windowByKey(Attribute("type"), windowType1, aggregation1)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -1062,10 +1062,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindows
     auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto aggregation2 = Sum(Attribute("value"));
     Query query2 = Query::from("car")
-        .map(Attribute("value") = 40)
-        .windowByKey(Attribute("type"), windowType2, aggregation2)
-        .filter(Attribute("type") < 40)
-        .sink(printSinkDescriptor);
+                       .map(Attribute("value") = 40)
+                       .windowByKey(Attribute("type"), windowType2, aggregation2)
+                       .filter(Attribute("type") < 40)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -1087,12 +1087,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindows
     std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
 
     auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-      return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
     });
     GlobalQueryNodePtr sinkOperator1GQN = *found;
 
     found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-      return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
     });
     GlobalQueryNodePtr sinkOperator2GQN = *found;
 
