@@ -35,7 +35,7 @@ void LogicalOperatorNode::inferSignature(z3::ContextPtr context) {
         childOperator->inferSignature(context);
         subQuerySignatures.emplace_back(childOperator->getSignature());
     }
-    signature = Optimizer::QuerySignatureUtil::createForOperator(operatorNode, subQuerySignatures, context);
+    signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(operatorNode, subQuerySignatures, context);
 }
 
 void LogicalOperatorNode::setSignature(Optimizer::QuerySignaturePtr signature) { this->signature = signature; }
