@@ -618,19 +618,9 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
     auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
-
-    bool success = false;
-    try{
-        auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    }
-    catch(...)
-    {
-        SUCCEED();
-        success = true;
-    }
-
-    EXPECT_TRUE(success);
+    EXPECT_EQ(queryPlan, nullptr);
 }
 
 
