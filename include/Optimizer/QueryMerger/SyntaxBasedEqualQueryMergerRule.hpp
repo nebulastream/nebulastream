@@ -42,7 +42,7 @@ class SyntaxBasedEqualQueryMergerRule;
 typedef std::shared_ptr<SyntaxBasedEqualQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
 
 /**
- * @brief SyntaxBasedEqualQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Serialization within the Global Query Plan such that, after running this rule
+ * @brief SyntaxBasedEqualQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule
  * all equivalent operator chains should be merged together and only a single representative operator chain should exists in the Global Query Plan for all of them.
  * Effectively this will prune the global query plan size.
  *

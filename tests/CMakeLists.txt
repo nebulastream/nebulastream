@@ -89,12 +89,12 @@ target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
 
 ### Buffer Manager Test ###
-add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/Coordinator/CoordinatorEngineTest.cpp)
+add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp)
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
 ### AbstractWindowHandler Manager Test ###
-add_executable(window-manager-tests "UnitTests/Window/WindowManagerTest.cpp")
+add_executable(window-manager-tests "UnitTests/Windowing/WindowManagerTest.cpp")
 target_link_libraries(window-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)
 
@@ -147,7 +147,7 @@ target_link_libraries(stream-catalog-test nes ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 
 ### QueryCatalog Tests ###
-add_executable(query-catalog-tests "UnitTests/Coordinator/QueryCatalogTest.cpp")
+add_executable(query-catalog-tests "UnitTests/CoordinatorEngine/QueryCatalogTest.cpp")
 target_link_libraries(query-catalog-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
@@ -177,7 +177,7 @@ target_link_libraries(predicate-node-tests nes ${GTEST_LIBRARIES})
 add_test(NAME predicate-node-tests COMMAND predicate-node-tests)
 
 # QueryTest
-add_executable(query-tests "UnitTests/Query/QueryTest.cpp")
+add_executable(query-tests "UnitTests/Catalogs/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
 
@@ -187,12 +187,12 @@ target_link_libraries(translate-to-generatable-tests nes ${GTEST_LIBRARIES})
 add_test(NAME translate-to-generatable-tests COMMAND translate-to-generatable-tests)
 
 # ConvertLogicalToPhysicalSinkTest
-add_executable(convert-logical-to-physical-sink-tests "UnitTests/Operators/ConvertLogicalToPhysicalSinkTest.cpp")
+add_executable(convert-logical-to-physical-sink-tests "UnitTests/Phases/ConvertLogicalToPhysicalSinkTest.cpp")
 target_link_libraries(convert-logical-to-physical-sink-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-sink-tests COMMAND convert-logical-to-physical-sink-tests)
 
 # ConvertLogicalToPhysicalSourceTest
-add_executable(convert-logical-to-physical-source-tests "UnitTests/Operators/ConvertLogicalToPhysicalSourceTest.cpp")
+add_executable(convert-logical-to-physical-source-tests "UnitTests/Phases/ConvertLogicalToPhysicalSourceTest.cpp")
 target_link_libraries(convert-logical-to-physical-source-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
@@ -217,7 +217,7 @@ target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
 
 ### CoordinatorEngine Tests ###
-add_executable(coordinator-engine-tests "UnitTests/Coordinator/CoordinatorEngineTest.cpp")
+add_executable(coordinator-engine-tests "UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp")
 target_link_libraries(coordinator-engine-tests nes ${GTEST_LIBRARIES})
 add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
 
@@ -272,7 +272,7 @@ target_link_libraries(query-placement-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-placement-test COMMAND query-placement-test)
 
 ### Thread Naming Test ###
-add_executable(thread-naming-tests "UnitTests/NodeEngine/ThreadNamingTest.cpp")
+add_executable(thread-naming-tests "UnitTests/Util/ThreadNamingTest.cpp")
 target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})
 add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 
