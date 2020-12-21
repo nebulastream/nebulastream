@@ -589,13 +589,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     workerProc.terminate();
     NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
 
-
     coordinatorProc.terminate();
-
-
 }
-
-
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     NES_INFO(" start coordinator");
@@ -607,14 +602,14 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
     sleep(1);
 
-
     std::stringstream schema;
     //std::string rating = R"(Schema::create()->addField("userId", BasicType::UINT64)->addField("movieId", BasicType::UINT64)->addField("rating", BasicType::UINT64)->addField("timestamp", UINT64)->addField("time1", UINT64))";
 
-  /*  schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->addField(\\\"userId\\\", UINT64)->addField(createField(\\\"movieId\\\", UINT64))->"
+    /*  schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->addField(\\\"userId\\\", UINT64)->addField(createField(\\\"movieId\\\", UINT64))->"
               "addField(createField(\\\"rating\\\", UINT64))->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"time1\\\", UINT64));\"}";
 */
-    schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->addField(\\\"userId\\\", UINT64)->addField(\\\"name\\\", DataTypeFactory::createFixedChar(32))->"
+    schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->addField(\\\"userId\\\", "
+              "UINT64)->addField(\\\"name\\\", DataTypeFactory::createFixedChar(32))->"
               "addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"time1\\\", UINT64));\"}";
 
     schema << endl;
@@ -623,20 +618,20 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
 
     web::json::value json_returnSchema;
 
-    web::http::client::http_client clientSchema(
-        "http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
-    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody).then([](const web::http::http_response& response) {
-      NES_INFO("get first then");
-      return response.extract_json();
-    })
+    web::http::client::http_client clientSchema("http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
+    clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemabody)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
         .then([&json_returnSchema](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_returnSchema = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
+            try {
+                NES_INFO("set return");
+                json_returnSchema = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("error while setting return");
+                NES_ERROR("error " << e.what());
+            }
         })
         .wait();
 
@@ -644,13 +639,14 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     bool success = json_returnSchema.at("Success").as_bool();
     NES_INFO("RegisteredStream: " << success);
     EXPECT_TRUE(success);
-    string path2 =
-        "../nesWorker --coordinatorPort=12346 --sourceType=NettySource --sourceConfig=../tests/test_data/ratings100k.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=Rating --endlessRepeat=off";
+    string path2 = "../nesWorker --coordinatorPort=12346 --sourceType=NettySource "
+                   "--sourceConfig=../tests/test_data/ratings100k.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 "
+                   "--physicalStreamName=test_stream --logicalStreamName=Rating --endlessRepeat=off";
 
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     size_t coordinatorPid = coordinatorProc.id();
-    //size_t workerPid = workerProc.id();
+    size_t workerPid = workerProc.id();
     sleep(2);
 
     std::stringstream ss;
@@ -661,29 +657,27 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
 
-
     //std::string query = R"(Query::from("Rating").sink(FileSinkDescriptor::create(")"+ outputFilePath + "\")); ";
-
 
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
     web::json::value json_return;
 
-    web::http::client::http_client client(
-        "http://127.0.0.1:8081/v1/nes/query/execute-query");
-    client.request(web::http::methods::POST, _XPLATSTR("/"), body).then([](const web::http::http_response& response) {
-      NES_INFO("get first then");
-      return response.extract_json();
-    })
+    web::http::client::http_client client("http://127.0.0.1:8081/v1/nes/query/execute-query");
+    client.request(web::http::methods::POST, _XPLATSTR("/"), body)
+        .then([](const web::http::http_response& response) {
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
         .then([&json_return](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("set return");
-              json_return = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("error while setting return");
-              NES_ERROR("error " << e.what());
-          }
+            try {
+                NES_INFO("set return");
+                json_return = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("error while setting return");
+                NES_ERROR("error " << e.what());
+            }
         })
         .wait();
 
@@ -700,10 +694,41 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     EXPECT_TRUE(testFileOutput.good());
 
     std::ifstream ifs(testFile.c_str());
-    std::string content((std::istreambuf_iterator<char>(ifs)),(std::istreambuf_iterator<char>()));
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
-        "id:INTEGER,metadata_generated:INTEGER,metadata_title:Char,metadata_id:Char,features_type:Char,features_properties_capacity:INTEGER,features_properties_efficiency:(Float),features_properties_mag:(Float),features_properties_time:INTEGER,features_properties_updated:INTEGER,features_properties_type:Char,features_geometry_type:Char,features_geometry_coordinates_longitude:(Float),features_geometry_coordinates_latitude:(Float),features_eventId :Char\n1,1262343610000,Wind Turbine Data Generated for Nebula Stream,b94c4bbf-6bab-47e3-b0f6-92acac066416,Features,736,0.363738,112464.007812,1262300400000,0,electricityGeneration,Point,8.221581,52.322945,982050ee-a8cb-4a7a-904c-a4c45e0c9f10\n2,1262343620010,Wind Turbine Data Generated for Nebula Stream,5a0aed66-c2b4-4817-883c-9e6401e821c5,Features,1348,0.508514,634415.062500,1262300400000,0,electricityGeneration,Point,13.759639,49.663155,a57b07e5-db32-479e-a273-690460f08b04\n3,1262343630020,Wind Turbine Data Generated for Nebula Stream,d3c88537-287c-4193-b971-d5ff913e07fe,Features,4575,0.163805,166353.078125,1262300400000,1262307581080,electricityGeneration,Point,7.799886,53.720783,049dc289-61cc-4b61-a2ab-27f59a7bfb4a\n4,1262343640030,Wind Turbine Data Generated for Nebula Stream,6649de13-b03d-43eb-83f3-6147b45c4808,Features,1358,0.584981,490703.968750,1262300400000,0,electricityGeneration,Point,7.109831,53.052448,4530ad62-d018-4017-a7ce-1243dbe01996\n5,1262343650040,Wind Turbine Data Generated for Nebula Stream,65460978-46d0-4b72-9a82-41d0bc280cf8,Features,1288,0.610928,141061.406250,1262300400000,1262311476342,electricityGeneration,Point,13.000446,48.636589,4a151bb1-6285-436f-acbd-0edee385300c\n6,1262343660050,Wind Turbine Data Generated for Nebula Stream,3724e073-7c9b-4bff-a1a8-375dd5266de5,Features,3458,0.684913,935073.625000,1262300400000,1262307294972,electricityGeneration,Point,10.876766,53.979465,e0769051-c3eb-4f14-af24-992f4edd2b26\n7,1262343670060,Wind Turbine Data Generated for Nebula Stream,413663f8-865f-4037-856c-45f6576f3147,Features,1128,0.312527,141904.984375,1262300400000,1262308626363,electricityGeneration,Point,13.480940,47.494038,5f374fac-94b3-437a-a795-830c2f1c7107\n8,1262343680070,Wind Turbine Data Generated for Nebula Stream,6a389efd-e7a4-44ff-be12-4544279d98ef,Features,1079,0.387814,15024.874023,1262300400000,1262312065773,electricityGeneration,Point,9.240296,52.196987,1fb1ade4-d091-4045-a8e6-254d26a1b1a2\n9,1262343690080,Wind Turbine Data Generated for Nebula Stream,93c78002-0997-4caf-81ef-64e5af550777,Features,2071,0.707438,70102.429688,1262300400000,0,electricityGeneration,Point,10.191643,51.904530,d2c6debb-c47f-4ca9-a0cc-ba1b192d3841\n10,1262343600100,Wind Turbine Data Generated for Nebula Stream,bef6b092-d1e7-4b93-b1b7-99f4d6b6a475,Features,2632,0.190165,66921.140625,1262300400000,0,electricityGeneration,Point,10.573558,52.531281,419bcfb4-b89b-4094-8990-e46a5ee533ff\n11,1262343600200,Wind Turbine Data Generated for Nebula Stream,6eaafae1-475c-48b7-854d-4434a2146eef,Features,4653,0.733402,758787.000000,1262300400000,0,electricityGeneration,Point,6.627055,48.164005,d8fe578e-1e92-40d2-83bf-6a72e024d55a\n";
+        "id:INTEGER,metadata_generated:INTEGER,metadata_title:Char,metadata_id:Char,features_type:Char,features_properties_"
+        "capacity:INTEGER,features_properties_efficiency:(Float),features_properties_mag:(Float),features_properties_time:"
+        "INTEGER,features_properties_updated:INTEGER,features_properties_type:Char,features_geometry_type:Char,features_geometry_"
+        "coordinates_longitude:(Float),features_geometry_coordinates_latitude:(Float),features_eventId "
+        ":Char\n1,1262343610000,Wind Turbine Data Generated for Nebula "
+        "Stream,b94c4bbf-6bab-47e3-b0f6-92acac066416,Features,736,0.363738,112464.007812,1262300400000,0,electricityGeneration,"
+        "Point,8.221581,52.322945,982050ee-a8cb-4a7a-904c-a4c45e0c9f10\n2,1262343620010,Wind Turbine Data Generated for Nebula "
+        "Stream,5a0aed66-c2b4-4817-883c-9e6401e821c5,Features,1348,0.508514,634415.062500,1262300400000,0,electricityGeneration,"
+        "Point,13.759639,49.663155,a57b07e5-db32-479e-a273-690460f08b04\n3,1262343630020,Wind Turbine Data Generated for Nebula "
+        "Stream,d3c88537-287c-4193-b971-d5ff913e07fe,Features,4575,0.163805,166353.078125,1262300400000,1262307581080,"
+        "electricityGeneration,Point,7.799886,53.720783,049dc289-61cc-4b61-a2ab-27f59a7bfb4a\n4,1262343640030,Wind Turbine Data "
+        "Generated for Nebula "
+        "Stream,6649de13-b03d-43eb-83f3-6147b45c4808,Features,1358,0.584981,490703.968750,1262300400000,0,electricityGeneration,"
+        "Point,7.109831,53.052448,4530ad62-d018-4017-a7ce-1243dbe01996\n5,1262343650040,Wind Turbine Data Generated for Nebula "
+        "Stream,65460978-46d0-4b72-9a82-41d0bc280cf8,Features,1288,0.610928,141061.406250,1262300400000,1262311476342,"
+        "electricityGeneration,Point,13.000446,48.636589,4a151bb1-6285-436f-acbd-0edee385300c\n6,1262343660050,Wind Turbine Data "
+        "Generated for Nebula "
+        "Stream,3724e073-7c9b-4bff-a1a8-375dd5266de5,Features,3458,0.684913,935073.625000,1262300400000,1262307294972,"
+        "electricityGeneration,Point,10.876766,53.979465,e0769051-c3eb-4f14-af24-992f4edd2b26\n7,1262343670060,Wind Turbine Data "
+        "Generated for Nebula "
+        "Stream,413663f8-865f-4037-856c-45f6576f3147,Features,1128,0.312527,141904.984375,1262300400000,1262308626363,"
+        "electricityGeneration,Point,13.480940,47.494038,5f374fac-94b3-437a-a795-830c2f1c7107\n8,1262343680070,Wind Turbine Data "
+        "Generated for Nebula "
+        "Stream,6a389efd-e7a4-44ff-be12-4544279d98ef,Features,1079,0.387814,15024.874023,1262300400000,1262312065773,"
+        "electricityGeneration,Point,9.240296,52.196987,1fb1ade4-d091-4045-a8e6-254d26a1b1a2\n9,1262343690080,Wind Turbine Data "
+        "Generated for Nebula "
+        "Stream,93c78002-0997-4caf-81ef-64e5af550777,Features,2071,0.707438,70102.429688,1262300400000,0,electricityGeneration,"
+        "Point,10.191643,51.904530,d2c6debb-c47f-4ca9-a0cc-ba1b192d3841\n10,1262343600100,Wind Turbine Data Generated for Nebula "
+        "Stream,bef6b092-d1e7-4b93-b1b7-99f4d6b6a475,Features,2632,0.190165,66921.140625,1262300400000,0,electricityGeneration,"
+        "Point,10.573558,52.531281,419bcfb4-b89b-4094-8990-e46a5ee533ff\n11,1262343600200,Wind Turbine Data Generated for Nebula "
+        "Stream,6eaafae1-475c-48b7-854d-4434a2146eef,Features,4653,0.733402,758787.000000,1262300400000,0,electricityGeneration,"
+        "Point,6.627055,48.164005,d8fe578e-1e92-40d2-83bf-6a72e024d55a\n";
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -711,10 +736,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     //int response = remove(testFile.c_str());
     //  EXPECT_TRUE(response == 0);
 
-    //sleep(2);
-   /* NES_INFO("Killing worker process->PID: " << workerPid);
-    workerProc.terminate();*/
-    //sleep(2);
+    sleep(2);
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc.terminate();
+    sleep(2);
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
     coordinatorProc.terminate();
 }

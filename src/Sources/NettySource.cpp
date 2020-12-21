@@ -38,14 +38,14 @@
 #define PORT 31000
 #define BUFFER_SIZE 1024
 
-
 using Clock = std::chrono::high_resolution_clock;
 
 namespace NES {
 
-NettySource::NettySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
-                     const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                     uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId)
+NettySource::NettySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+                         const std::string filePath, const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
+                         uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat, bool skipHeader,
+                         OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat), currentPosInFile(0),
       skipHeader(skipHeader) {
@@ -85,7 +85,7 @@ const std::string NettySource::toString() const {
     return ss.str();
 }
 
-void NettySource::fillSocket(TupleBuffer& buf){
+void NettySource::fillSocket(TupleBuffer& buf) {
 
     std::vector<PhysicalTypePtr> physicalTypes;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -94,16 +94,15 @@ void NettySource::fillSocket(TupleBuffer& buf){
         physicalTypes.push_back(physicalField);
     }
 
-
     int sock = 0, valread;
     struct sockaddr_in serv_addr;
-    char *hello = "0:persons\n";
+    char* hello = "0:persons\n";
     char buffer[1024] = {0};
     std::stringstream readStream;
     bool readData = true;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         printf("\n Socket creation error \n");
-        return ;
+        return;
     }
 
     serv_addr.sin_family = AF_INET;
@@ -112,25 +111,22 @@ void NettySource::fillSocket(TupleBuffer& buf){
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
         printf("\nInvalid address/ Address not supported \n");
-        return ;
+        return;
     }
 
-    if (connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        printf("\nConnection Failed \n");
-        return ;
+    if (connect(sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
+        NES_ERROR("Connection Failed");
+        return;
     }
     send(sock, hello, strlen(hello), 0);
-    printf(0 + "persons");
     uint64_t tupCnt = 0;
-    while(readData){
+    while (readData) {
 
         bzero(buffer, BUFFER_SIZE);
 
-
         valread = read(sock, buffer, BUFFER_SIZE);
 
-        if (valread <= 0)
-        {
+        if (valread <= 0) {
             break;
         }
 
@@ -141,13 +137,24 @@ void NettySource::fillSocket(TupleBuffer& buf){
         std::vector<std::string> parsed;
         boost::algorithm::split(parsed, buffer, boost::is_any_of("\n"));
 
+        bool clearedReadStream = false;
 
-        for(int i = 0 ; i < parsed.size(); i++ ){
+        for (int i = 0; i < parsed.size(); i++) {
             std::vector<std::string> tokens;
             boost::algorithm::split(tokens, parsed[i], boost::is_any_of(","));
 
-            if(tokens.size() > 2 && !tokens[2].empty()  && !tokens[0].empty()  && !tokens[1].empty() && atoi( tokens[2].c_str() ) > 0){
-                tokens.push_back(std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count()));
+            if ((tupCnt * schema->getSchemaSizeInBytes()) + schema->getSchemaSizeInBytes() > buf.getBufferSize()) {
+                buf.setNumberOfTuples(tupCnt);
+                NES_TRACE("NettySource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
+                queryManager->addWork(operatorId, buf);
+                buf = bufferManager->getBufferBlocking();
+                tupCnt = 0;
+            }
+
+            if (tokens.size() > 2 && !tokens[2].empty() && !tokens[0].empty() && !tokens[1].empty()
+                && std::stoull(tokens[2].c_str()) > 0) {
+                tokens.push_back(std::to_string(
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count()));
                 uint64_t offset = 0;
                 for (uint64_t j = 0; j < schema->getSize(); j++) {
                     auto field = physicalTypes[j];
@@ -205,27 +212,30 @@ void NettySource::fillSocket(TupleBuffer& buf){
                     offset += fieldSize;
                 }
                 tupCnt++;
-
+            } else {
+                NES_WARNING("Incomplete token received " << parsed[i]);
+                readStream.clear();
+                if (!parsed[i].empty()) {
+                    NES_WARNING("Appending incomplete token at the beginning of the readStream" << parsed[i]);
+                    readStream << parsed[i];
+                }
+                clearedReadStream=true;
             }
-
         }
-        //buf.setNumberOfTuples(tupCnt);
+
+        if(!clearedReadStream){
+            readStream.clear();
+        }
+
     }
-    //  currentPosInFile = input.tellg();
+
     buf.setNumberOfTuples(tupCnt);
-    //NES_DEBUG("CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile=" << currentPosInFile);
-    NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
+    NES_TRACE("NettySource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
     //update statistics
     generatedTuples += tupCnt;
     generatedBuffers++;
-
 }
-
-
-
-
-
 
 SourceType NettySource::getType() const { return CSV_SOURCE; }
 
