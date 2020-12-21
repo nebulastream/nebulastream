@@ -159,9 +159,30 @@ TEST_F(IFCOPTest, testGeneratingRandomExecutionPath) {
         isSourceOneFound = isSourceOneFound || child->as<TopologyNode>()->getId() == 8;
         isSourceTwoFound = isSourceTwoFound || child->as<TopologyNode>()->getId() == 10;
     }
+
     ASSERT_TRUE(isSourceOneFound);
     ASSERT_TRUE(isSourceTwoFound);
-
-
 }
 
+/* Test generating random execution path  */
+TEST_F(IFCOPTest, testSelectOptimizedExecutionPath) {
+
+    setupTopologyAndStreamCatalog();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto subQuery = Query::from("truck");
+    Query query = Query::from("car").filter(Attribute("id") > 1).merge(&subQuery).sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto ifcop = IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+
+    auto randomExecutionPath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
+}

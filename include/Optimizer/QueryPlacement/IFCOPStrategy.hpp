@@ -38,17 +38,18 @@ class IFCOPStrategy : public BasePlacementStrategy {
     static std::unique_ptr<IFCOPStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                                     TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
-    // TODO: This should be private
+    // TODO: These should be private
     TopologyNodePtr generateRandomExecutionPath(TopologyPtr topology, QueryPlanPtr queryPlan);
+    TopologyNodePtr getOptimizedExecutionPath(TopologyPtr topology, int maxIter, QueryPlanPtr queryPlan);
 
   private:
     explicit IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
         TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
-    ExecutionPathPtr runGlobalOptimization(QueryPlanPtr queryPlan, TopologyPtr topology, StreamCatalogPtr streamCatalog, int maxIter);
-    float getTotalCost(ExecutionPathPtr executionPath);
-    ExecutionPathPtr getRandomAssignment(ExecutionPathPtr executionPath, QueryPlanPtr queryPlan);
-    ExecutionPathPtr getOptimizedExecutionPath(TopologyPtr topology, int maxIter, QueryPlanPtr queryPlan);
+    TopologyNodePtr runGlobalOptimization(QueryPlanPtr queryPlan, TopologyPtr topology, StreamCatalogPtr streamCatalog, int maxIter);
+    float getTotalCost(TopologyNodePtr executionPath);
+    TopologyNodePtr getRandomAssignment(TopologyNodePtr executionPath, QueryPlanPtr queryPlan);
+    float getExecutionPathCost(TopologyNodePtr executionPath);
 };
 }// namespace NES
 
