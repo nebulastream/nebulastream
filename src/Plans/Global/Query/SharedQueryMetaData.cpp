@@ -38,7 +38,7 @@ SharedQueryMetaDataPtr SharedQueryMetaData::create(QueryId queryId, std::set<Glo
 
 bool SharedQueryMetaData::addSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes) {
 
-    NES_DEBUG("SharedQueryMetaData: Add " << globalQueryNodes.size() << "new Global Query Serialization with sink operators for query "
+    NES_DEBUG("SharedQueryMetaData: Add " << globalQueryNodes.size() << "new Global Query Nodes with sink operators for query "
                                           << queryId);
     if (queryIdToSinkGQNMap.find(queryId) != queryIdToSinkGQNMap.end()) {
         NES_ERROR("SharedQueryMetaData: query id " << queryId << " already present in metadata information.");
@@ -55,13 +55,13 @@ bool SharedQueryMetaData::addSinkGlobalQueryNodes(QueryId queryId, const std::se
 
 bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
     NES_DEBUG("SharedQueryMetaData: Remove the Query Id " << queryId
-                                                          << " and associated Global Query Serialization with sink operators.");
+                                                          << " and associated Global Query Nodes with sink operators.");
     if (queryIdToSinkGQNMap.find(queryId) == queryIdToSinkGQNMap.end()) {
         NES_ERROR("SharedQueryMetaData: query id " << queryId << " is not present in metadata information.");
         return false;
     }
 
-    NES_TRACE("SharedQueryMetaData: Remove the Global Query Serialization with sink operators for query " << queryId);
+    NES_TRACE("SharedQueryMetaData: Remove the Global Query Nodes with sink operators for query " << queryId);
     std::set<GlobalQueryNodePtr> querySinkGQNs = queryIdToSinkGQNMap[queryId];
 
     // Iterate over all sink global query nodes for the input query and remove the corresponding exclusive upstream operator chains
@@ -98,7 +98,7 @@ QueryPlanPtr SharedQueryMetaData::getQueryPlan() {
     // We push the children operators to the queue of operators to be processed.
     // Every time we encounter an operator, we check in the map if the operator with same id already exists.
     // We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
-    // We then check the parent operators of the current operator by looking into the parent Global Query Serialization of the current
+    // We then check the parent operators of the current operator by looking into the parent Global Query Nodes of the current
     // Global Query Node and add them as the parent of the current operator.
 
     std::deque<NodePtr> globalQueryNodesToProcess{sinkGlobalQueryNodes.begin(), sinkGlobalQueryNodes.end()};
@@ -182,7 +182,7 @@ void SharedQueryMetaData::setAsOld() {
 }
 
 std::set<GlobalQueryNodePtr> SharedQueryMetaData::getSinkGlobalQueryNodes() {
-    NES_TRACE("SharedQueryMetaData: Get all Global Query Serialization with sink operators for the current Metadata");
+    NES_TRACE("SharedQueryMetaData: Get all Global Query Nodes with sink operators for the current Metadata");
     return sinkGlobalQueryNodes;
 }
 

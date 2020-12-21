@@ -349,15 +349,15 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     std::cout << "plan=" << queryPlan->toString() << std::endl;
     auto plan = GeneratedQueryExecutionPlanBuilder::create()
-        .addSink(testSink)
-        .addSource(testSource)
-        .addOperatorQueryPlan(generatableOperators)
-        .setCompiler(nodeEngine->getCompiler())
-        .setBufferManager(nodeEngine->getBufferManager())
-        .setQueryManager(nodeEngine->getQueryManager())
-        .setQueryId(1)
-        .setQuerySubPlanId(1)
-        .build();
+                    .addSink(testSink)
+                    .addSource(testSource)
+                    .addOperatorQueryPlan(generatableOperators)
+                    .setCompiler(nodeEngine->getCompiler())
+                    .setBufferManager(nodeEngine->getBufferManager())
+                    .setQueryManager(nodeEngine->getQueryManager())
+                    .setQueryId(1)
+                    .setQuerySubPlanId(1)
+                    .build();
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
@@ -399,7 +399,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
 
-    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"),Attribute("value") ).sink(DummySink::create());
+    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"), Attribute("value")).sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -409,15 +409,15 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     std::cout << "plan=" << queryPlan->toString() << std::endl;
     auto plan = GeneratedQueryExecutionPlanBuilder::create()
-        .addSink(testSink)
-        .addSource(testSource)
-        .addOperatorQueryPlan(generatableOperators)
-        .setCompiler(nodeEngine->getCompiler())
-        .setBufferManager(nodeEngine->getBufferManager())
-        .setQueryManager(nodeEngine->getQueryManager())
-        .setQueryId(1)
-        .setQuerySubPlanId(1)
-        .build();
+                    .addSink(testSink)
+                    .addSource(testSource)
+                    .addOperatorQueryPlan(generatableOperators)
+                    .setCompiler(nodeEngine->getCompiler())
+                    .setBufferManager(nodeEngine->getBufferManager())
+                    .setQueryManager(nodeEngine->getQueryManager())
+                    .setQueryId(1)
+                    .setQuerySubPlanId(1)
+                    .build();
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
@@ -444,11 +444,24 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
         // id
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), recordIndex);
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 1)->read(resultBuffer), 8);
-
     }
     testSink->shutdown();
     plan->stop();
     nodeEngine->stop();
+}
+TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
+
+    // creating query plan
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+                                                                    nodeEngine->getQueryManager(), 1);
+
+    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"), Attribute("asd")).sink(DummySink::create());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    EXPECT_EQ(queryPlan, nullptr);
 }
 
 TEST_F(ProjectionTest, projectNotExistingField) {
@@ -459,13 +472,11 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager(), 1);
 
-
-    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"),Attribute("asd") ).sink(DummySink::create());
+    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("asd")).sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    EXPECT_EQ(translatePhase, nullptr);
+    EXPECT_EQ(queryPlan, nullptr);
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
@@ -549,7 +560,6 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     nodeEngine->stop();
 }
 
-
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
@@ -568,17 +578,18 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
-    auto windowResultSchema = Schema::create()        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField(createField("key", INT64))
-        ->addField("value", INT64);
+    auto windowResultSchema = Schema::create()
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField(createField("key", INT64))
+                                  ->addField("value", INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
     bool success = false;
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
-    try{
+    try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     } catch (...) {
         SUCCEED();
@@ -623,7 +634,6 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
     EXPECT_EQ(queryPlan, nullptr);
 }
 
-
 // P1 = Source1 -> filter1
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
@@ -661,15 +671,15 @@ TEST_F(ProjectionTest, mergeQuery) {
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
-        .setQueryManager(nodeEngine->getQueryManager())
-        .setBufferManager(nodeEngine->getBufferManager())
-        .setCompiler(nodeEngine->getCompiler())
-        .addOperatorQueryPlan(generatableOperators)
-        .setQueryId(1)
-        .setQuerySubPlanId(1)
-        .addSource(testSource1)
-        .addSource(testSource2)
-        .addSink(testSink);
+                       .setQueryManager(nodeEngine->getQueryManager())
+                       .setBufferManager(nodeEngine->getBufferManager())
+                       .setCompiler(nodeEngine->getCompiler())
+                       .addOperatorQueryPlan(generatableOperators)
+                       .setQueryId(1)
+                       .setQuerySubPlanId(1)
+                       .addSource(testSource1)
+                       .addSource(testSource2)
+                       .addSink(testSink);
 
     auto plan = builder.build();
     nodeEngine->getQueryManager()->registerQuery(plan);
