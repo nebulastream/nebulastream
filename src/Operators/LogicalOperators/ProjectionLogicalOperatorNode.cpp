@@ -56,6 +56,7 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
             outputSchema->addField(inputSchema->get(fieldAccess->getFieldName()));
         } else {
             NES_ERROR("ProjectionLogicalOperatorNode::inferSchema(): expression not found=" << fieldAccess->getFieldName());
+            return false;
         }
     }
     return true;

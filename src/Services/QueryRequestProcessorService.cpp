@@ -155,23 +155,23 @@ void QueryRequestProcessorService::start() {
                     }
 
                 } catch (QueryPlacementException& ex) {
-                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
                     queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (QueryDeploymentException& ex) {
-                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
                     queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (InvalidQueryStatusException& ex) {
-                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    NES_ERROR("QueryRequestProcessingService InvalidQueryStatusException: " << ex.what());
                     queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (QueryNotFoundException& ex) {
-                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    NES_ERROR("QueryRequestProcessingService QueryNotFoundException: " << ex.what());
                 } catch (QueryUndeploymentException& ex) {
-                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    NES_ERROR("QueryRequestProcessingService QueryUndeploymentException: " << ex.what());
                 } catch (Exception& ex) {
-                    NES_ERROR("QueryRequestProcessingService: " << ex.what());
+                    NES_ERROR("QueryRequestProcessingService Exception: " << ex.what());
                     queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 }

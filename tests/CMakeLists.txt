@@ -151,10 +151,15 @@ add_executable(query-catalog-tests "UnitTests/Coordinator/QueryCatalogTest.cpp")
 target_link_libraries(query-catalog-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
-### QueryCompilerTest ###
+### QueryExecutionTest ###
 add_executable(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
 target_link_libraries(query-execution-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-execution-test COMMAND query-execution-test)
+
+### ProjectionTest ###
+add_executable(projection-test "UnitTests/Query/ProjectionTest.cpp")
+target_link_libraries(projection-test nes ${GTEST_LIBRARIES})
+add_test(NAME projection-test COMMAND projection-test)
 
 ### TupleBufferTest ###
 add_executable(tuple-buffer-test "UnitTests/NodeEngine/TupleBufferTest.cpp")
