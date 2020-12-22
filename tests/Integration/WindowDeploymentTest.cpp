@@ -1464,9 +1464,7 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralTumblingWindow) {
 
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "1000,2000,1,12\n"
-                             "2000,3000,1,24\n"
-                             "3000,4000,1,22\n";
-
+                             "2000,3000,1,24\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Remove query");
@@ -1505,6 +1503,12 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedTumblingWindow) {
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
+    NES_INFO("WindowDeploymentTest: Start worker 3");
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    NES_INFO("WindowDeploymentTest: Worker 3 started successfully");
+
     std::string outputFilePath = "testWatermarkAssignmentDistributedTumblingWindow.out";
     remove(outputFilePath.c_str());
 
@@ -1514,11 +1518,11 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedTumblingWindow) {
     NES_INFO("WindowDeploymentTest: Submit query");
 
     //register logical stream
-    std::string testSchema =
-        R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    std::string testSchemaFileName = "testSchema.hpp";
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
     std::ofstream out(testSchemaFileName);
-    out << testSchema;
+    out << window;
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
@@ -1528,6 +1532,7 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedTumblingWindow) {
         PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3, 4, "test_stream", "window", false);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
+    wrk3->registerPhysicalStream(conf);
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1542,12 +1547,13 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedTumblingWindow) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
+    // The result value is 36 and 72 since we read from three workers
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "1000,2000,1,12\n"
-                             "2000,3000,1,24\n"
-                             "3000,4000,1,22\n";
+                             "1000,2000,1,36\n"
+                             "2000,3000,1,72\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -1623,7 +1629,7 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralSlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "2500,3500,1,21\n"
+                             "2500,3500,1,10\n"
                              "2000,3000,1,24\n"
                              "1500,2500,1,30\n"
                              "1000,2000,1,12\n"
@@ -1667,6 +1673,12 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
+    NES_INFO("WindowDeploymentTest: Start worker 3");
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    NES_INFO("WindowDeploymentTest: Worker 3 started successfully");
+
     std::string outputFilePath = "testWatermarkAssignmentDistributedSlidingWindow.out";
     remove(outputFilePath.c_str());
 
@@ -1676,11 +1688,11 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("WindowDeploymentTest: Submit query");
 
     //register logical stream
-    std::string testSchema =
-        R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    std::string testSchemaFileName = "testSchema.hpp";
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
     std::ofstream out(testSchemaFileName);
-    out << testSchema;
+    out << window;
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
@@ -1690,7 +1702,7 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
         PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3, 4, "test_stream", "window", false);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
-
+    wrk3->registerPhysicalStream(conf);
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("WindowDeploymentTest: Submit query");
     string query =
@@ -1704,14 +1716,14 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "2500,3500,1,21\n"
-                             "2000,3000,1,24\n"
-                             "1500,2500,1,30\n"
-                             "1000,2000,1,12\n"
-                             "500,1500,1,6\n";
+                             "2000,3000,1,72\n"
+                             "1500,2500,1,90\n"
+                             "1000,2000,1,36\n"
+                             "500,1500,1,18\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
