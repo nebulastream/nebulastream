@@ -478,18 +478,17 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 
     if (type == "DefaultSource") {
         NES_DEBUG("TypeInferencePhase: create default source for one buffer");
-        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency, sourceDescriptor->getOperatorId());
+        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency);
     } else if (type == "CSVSource") {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, skipHeader, sourceDescriptor->getOperatorId());
+                                           numBuffers, frequency, skipHeader);
     } else if (type == "SenseSource") {
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
-        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getOperatorId());
+        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else if (type == "YSBSource") {
         NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
-        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency,
-                                           sourceDescriptor->getOperatorId());
+        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency);
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
     }

@@ -32,8 +32,7 @@ Pattern::Pattern(QueryPlanPtr queryPlan) : Query(queryPlan) { NES_DEBUG("Pattern
 
 Pattern Pattern::from(const std::string sourceStreamName) {
     NES_DEBUG("Pattern: create query for input stream " << sourceStreamName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(
-        LogicalStreamSourceDescriptor::create(sourceStreamName, UtilityFunctions::getNextOperatorId()));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName));
     auto queryPlan = QueryPlan::create(sourceOperator);
     return Pattern(queryPlan);
 }

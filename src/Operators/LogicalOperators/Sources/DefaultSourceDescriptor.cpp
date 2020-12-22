@@ -31,16 +31,15 @@ uint64_t DefaultSourceDescriptor::getNumbersOfBufferToProduce() const { return n
 
 uint32_t DefaultSourceDescriptor::getFrequency() const { return frequency; }
 
-SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency,
-                                                    OperatorId operatorId) {
+SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency) {
     return std::make_shared<DefaultSourceDescriptor>(
-        DefaultSourceDescriptor(std::move(schema), numbersOfBufferToProduce, frequency, operatorId));
+        DefaultSourceDescriptor(std::move(schema), numbersOfBufferToProduce, frequency));
 }
 
 SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                                    uint32_t frequency, OperatorId operatorId) {
+                                                    uint32_t frequency) {
     return std::make_shared<DefaultSourceDescriptor>(
-        DefaultSourceDescriptor(std::move(schema), std::move(streamName), numbersOfBufferToProduce, frequency, operatorId));
+        DefaultSourceDescriptor(std::move(schema), std::move(streamName), numbersOfBufferToProduce, frequency));
 }
 bool DefaultSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<DefaultSourceDescriptor>())
