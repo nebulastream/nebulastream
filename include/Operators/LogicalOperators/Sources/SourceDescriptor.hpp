@@ -36,13 +36,13 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Creates a new source descriptor without a streamName.
      * @param schema the source schema
      */
-    explicit SourceDescriptor(SchemaPtr schema, OperatorId operatorId);
+    explicit SourceDescriptor(SchemaPtr schema);
 
     /**
     * @brief Creates a new source descriptor with a streamName.
     * @param schema the source schema
     */
-    SourceDescriptor(SchemaPtr schema, std::string streamName, OperatorId operatorId);
+    SourceDescriptor(SchemaPtr schema, std::string streamName);
 
     /**
      * @brief Returns the schema, which is produced by this source descriptor
@@ -114,12 +114,9 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      */
     virtual ~SourceDescriptor() = default;
 
-    OperatorId getOperatorId();
-
   private:
     SchemaPtr schema;
     std::string streamName;
-    OperatorId operatorId;
 };
 
 }// namespace NES

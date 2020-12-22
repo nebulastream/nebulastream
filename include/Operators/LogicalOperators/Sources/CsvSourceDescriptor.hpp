@@ -28,12 +28,11 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath, std::string delimiter, uint64_t numBuffersToProcess,
-                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency, bool skipHeader,
-                                      OperatorId operatorId);
+                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency, bool skipHeader);
 
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                       uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                      bool skipHeader, OperatorId operatorId);
+                                      bool skipHeader);
 
     /**
      * @brief get file path for reading the csv file
@@ -71,11 +70,11 @@ class CsvSourceDescriptor : public SourceDescriptor {
   private:
     explicit CsvSourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                 bool skipHeader, OperatorId operatorId);
+                                 bool skipHeader);
 
     explicit CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                 bool skipHeader, OperatorId operatorId);
+                                 bool skipHeader);
 
     std::string filePath;
     std::string delimiter;

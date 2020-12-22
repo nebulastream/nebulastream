@@ -27,8 +27,8 @@ namespace NES {
 class SenseSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string udfs, OperatorId operatorId);
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string udfs, OperatorId operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string udfs);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string udfs);
 
     /**
      * @brief Get the udf for the sense node
@@ -38,8 +38,8 @@ class SenseSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit SenseSourceDescriptor(SchemaPtr schema, std::string udfs, OperatorId operatorId);
-    explicit SenseSourceDescriptor(SchemaPtr schema, std::string streamName, std::string udfs, OperatorId operatorId);
+    explicit SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
+    explicit SenseSourceDescriptor(SchemaPtr schema, std::string streamName, std::string udfs);
 
     std::string udfs;
 };

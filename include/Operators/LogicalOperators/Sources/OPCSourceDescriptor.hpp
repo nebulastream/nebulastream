@@ -32,11 +32,11 @@ namespace NES {
 class OPCSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user, std::string password,
-                                      OperatorId operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user,
+                                      std::string password);
 
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string url, UA_NodeId nodeId,
-                                      std::string user, std::string password, OperatorId operatorId);
+                                      std::string user, std::string password);
 
     /**
      * @brief get OPC server url
@@ -63,11 +63,10 @@ class OPCSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit OPCSourceDescriptor(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user, std::string password,
-                                 OperatorId operatorId);
+    explicit OPCSourceDescriptor(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user, std::string password);
 
     explicit OPCSourceDescriptor(SchemaPtr schema, std::string streamName, std::string url, UA_NodeId nodeId, std::string user,
-                                 std::string password, OperatorId operatorId);
+                                 std::string password);
 
     const std::string url;
     UA_NodeId nodeId;
