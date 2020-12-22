@@ -18,18 +18,18 @@
 
 namespace NES {
 
-AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                   const uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                   uint64_t initialFrequency, OperatorId operatorId)
+AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                   NodeEngine::QueryManagerPtr queryManager, const uint64_t numberOfTuplesToProducePerBuffer,
+                                   uint64_t numBuffersToProcess, uint64_t initialFrequency, OperatorId operatorId)
     : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency, operatorId), numBuffersToProcess(numBuffersToProcess),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      frequency(initialFrequency), freqLastReceived(initialFrequency), freqRange(2), kfErrorWindow(20) {
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(initialFrequency),
+      freqLastReceived(initialFrequency), freqRange(2), kfErrorWindow(20) {
     calculateTotalEstimationErrorDivider(20);
 }
 
 const std::string AdaptiveKFSource::toString() const { return std::string(); }
 
-void AdaptiveKFSource::sampleSourceAndFillBuffer(TupleBuffer& buffer) {
+void AdaptiveKFSource::sampleSourceAndFillBuffer(NodeEngine::TupleBuffer& buffer) {
     buffer;
     return;
 }
@@ -45,7 +45,7 @@ bool AdaptiveKFSource::desiredFreqInRange() {
 }
 
 long AdaptiveKFSource::calculateTotalEstimationError() {
-    long j = 1; // eq. 9 iterator
+    long j = 1;// eq. 9 iterator
     long totalError = 0;
     for (auto errorValue : kfErrorWindow) {
         totalError += (errorValue / j);

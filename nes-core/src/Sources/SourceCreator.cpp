@@ -260,9 +260,9 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     successors);
 }
 
-const DataSourcePtr createAdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                           uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                           uint64_t frequency, OperatorId operatorId) {
+const DataSourcePtr createAdaptiveKFSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                           NodeEngine::QueryManagerPtr queryManager, uint64_t numberOfTuplesToProducePerBuffer,
+                                           uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId) {
     return std::make_shared<AdaptiveKFSource>(schema, bufferManager, queryManager, numBuffersToProcess,
                                               numberOfTuplesToProducePerBuffer, frequency, operatorId);
 }
