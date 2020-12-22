@@ -31,7 +31,7 @@ class AdaptiveKFTest : public testing::Test {
   public:
     SchemaPtr schema;
     PhysicalStreamConfigPtr streamConf;
-    NodeEnginePtr nodeEngine;
+    NodeEngine::NodeEnginePtr nodeEngine;
     uint64_t tuple_size;
     uint64_t buffer_size;
     uint64_t num_of_buffers;

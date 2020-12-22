@@ -24,19 +24,19 @@ namespace NES {
 
 class AdaptiveKFSource : public AdaptiveSource {
   public:
-    explicit AdaptiveKFSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                              const uint64_t numBuffersToProcess, uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency,
-                              OperatorId operatorId);
+    explicit AdaptiveKFSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                              NodeEngine::QueryManagerPtr queryManager, const uint64_t numBuffersToProcess,
+                              uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency, OperatorId operatorId);
 
     const std::string toString() const override;
 
   private:
-    void sampleSourceAndFillBuffer(TupleBuffer& buffer) override;
+    void sampleSourceAndFillBuffer(NodeEngine::TupleBuffer& buffer) override;
     void decideNewGatheringInterval() override;
 
     // paper equations as methods
-    bool desiredFreqInRange();// eq. 7
-    long calculateTotalEstimationError();// eq. 9
+    bool desiredFreqInRange();                          // eq. 7
+    long calculateTotalEstimationError();               // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider)
 
     uint64_t numBuffersToProcess;
