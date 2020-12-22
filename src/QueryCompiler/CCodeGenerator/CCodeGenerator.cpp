@@ -399,7 +399,6 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 }
 
 void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(PipelineContextPtr context, VariableDeclaration handler) {
-    // updateMaxTs(maxWaterMark, inputBuffer.getOriginId())
     auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
@@ -409,7 +408,6 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(PipelineContextPtr co
 }
 
 void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(PipelineContextPtr context, VariableDeclaration handler, bool leftSide) {
-    // updateMaxTs(maxWaterMark, inputBuffer.getOriginId())
     auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
@@ -761,17 +759,6 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     Join::JoinOperatorHandlerPtr joinOperatorHandler = std::dynamic_pointer_cast<Join::JoinOperatorHandler>(handlers[0]);
     NES_ASSERT(joinOperatorHandler != nullptr, "invalid join handler");
 
-//    if (handlers.empty()) {
-//        joinOperatorHandler = Join::JoinOperatorHandler::create(join, context->getResultSchema());
-//        joinOperatorHandlerIndex = context->registerOperatorHandler(joinOperatorHandler);
-//    } else {
-//        // TODO this is a hack!
-//        NES_ASSERT(handlers.size() == 1, "invalid size");
-//        joinOperatorHandler = std::dynamic_pointer_cast<Join::JoinOperatorHandler>(handlers[0]);
-//        NES_ASSERT(joinOperatorHandler == nullptr, "invalid join handler");
-//        joinOperatorHandlerIndex = 0;
-//    }
-
     // create a new setup scope for this operator
     auto setupScope = context->createSetupScope();
 
@@ -801,9 +788,6 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     setupScope->addStatement(resultSchemaStatement.copy());
 
     auto keyType = tf->createDataType(join->getLeftJoinKey()->getStamp());
-//    auto leftStreamType = tf->createDataType(join->getLeftStreamType()->getStamp());
-//    auto rightStreamType = tf->createDataType(join->getRightStreamType()->getStamp());
-
     auto policy = join->getTriggerPolicy();
     auto executableTrigger = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "trigger");
     if (policy->getPolicyType() == Windowing::triggerOnTime) {
@@ -972,6 +956,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
             std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
     }
 
+    // auto lock = std::unique_lock(stateVariable->mutex());
     auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
     auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
     auto stateMutex = FunctionCallStatement("mutex");
@@ -1524,6 +1509,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
         fileBuilder.addDeclaration(typeDeclaration.copy());
     }
 
+    // define param to use in the ctor of pipeline to determine its arity.
     ExpressionStatmentPtr arityStatement;
     switch (context->arity) {
         case PipelineContext::Unary: {

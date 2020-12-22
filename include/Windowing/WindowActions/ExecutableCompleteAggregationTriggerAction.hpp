@@ -57,10 +57,6 @@ class ExecutableCompleteAggregationTriggerAction
         windowTupleLayout = NodeEngine::createRowLayout(this->windowSchema);
     }
 
-    virtual ~ExecutableCompleteAggregationTriggerAction() {
-        // nop
-    }
-
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
                   uint64_t lastWatermark) {
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()

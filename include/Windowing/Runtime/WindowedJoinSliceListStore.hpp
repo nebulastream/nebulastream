@@ -39,6 +39,9 @@ class WindowedJoinSliceListStore {
         return sliceMetaData.empty(); }
 
 
+    /**
+     * @return most current slice'index.
+     */
     inline uint64_t getCurrentSliceIndex() {
         std::lock_guard lock(internalMutex);
         return sliceMetaData.size() - 1;
@@ -53,6 +56,9 @@ class WindowedJoinSliceListStore {
         return sliceMetaData;
     }
 
+    /**
+     * @return get slice index by timestamp or -1
+     */
     uint64_t getSliceIndexByTs(int64_t timestamp) {
         std::lock_guard lock(internalMutex);
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
@@ -64,33 +70,56 @@ class WindowedJoinSliceListStore {
         return -1;
     }
 
+    /**
+     * @return reference to internal mutex to create complex locking semantics
+     */
     std::recursive_mutex& mutex() const {
         return internalMutex;
     }
 
+    /**
+     * @return the internal append list
+     */
     inline auto& getAppendList() {
         std::lock_guard lock(internalMutex);
         return content;
     }
 
+    /**
+     * @brief Add a slice to the store
+     * @param slice the slice to add
+     */
     inline void appendSlice(SliceMetaData slice) {
         std::lock_guard lock(internalMutex);
         sliceMetaData.emplace_back(slice);
         content.emplace_back(std::vector<ValueType>());
     }
 
+    /**
+     * @brief Delete all content
+     */
     inline void clear() {
         std::lock_guard lock(internalMutex);
         sliceMetaData.clear();
         content.clear();
     }
 
+    /**
+     * @brief add a value for a slice
+     * @param index of the slice
+     * @param value to append
+     */
     inline void append(int64_t index, ValueType&& value) {
         std::lock_guard lock(internalMutex);
         NES_VERIFY(content.size() > index, "invalid index");
         content[index].emplace_back(std::move(value));
     }
 
+    /**
+    * @brief add a value for a slice
+    * @param index of the slice
+    * @param value to append
+    */
     inline void append(int64_t index, ValueType& value) {
         std::lock_guard lock(internalMutex);
         NES_VERIFY(content.size() > index, "invalid index");

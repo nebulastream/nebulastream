@@ -61,6 +61,7 @@ class JoinHandlerTest : public testing::Test {
 };
 
 TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
+    // create join definition and windowing variables
     auto store = std::make_unique<Windowing::WindowedJoinSliceListStore<int64_t>>();
     Windowing::WindowTriggerPolicyPtr triggerPolicy =  Windowing::OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
@@ -70,11 +71,10 @@ TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
         Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), NES::API::Milliseconds(10)), distrType, triggerPolicy, triggerAction,
         1, 1);
-
     auto windowManager = std::make_unique<Windowing::WindowManager>(joinDef->getWindowType());
+
+    // slice stream with a value 10 with key 0 arriving at ts 10
     uint64_t ts = 10;
-
-
     windowManager->sliceStream<int64_t, uint64_t>(ts, store.get(), 0UL);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     {
@@ -84,6 +84,7 @@ TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
         aggregates[sliceIndex].emplace_back(10);
     }
 
+    // slice stream with a value 11 with key 0 arriving at ts 10
     sliceIndex = store->getSliceIndexByTs(ts);
     {
         std::unique_lock lock(store->mutex());
@@ -92,6 +93,7 @@ TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
         aggregates[sliceIndex].emplace_back(11);
     }
 
+    // check if we have two values in the state 10 and 11 for key 0
     std::unique_lock lock(store->mutex());
     ASSERT_LT(sliceIndex, store->getAppendList().size());
     ASSERT_EQ(store->getAppendList()[sliceIndex].size(), 2);

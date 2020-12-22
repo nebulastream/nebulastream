@@ -40,19 +40,13 @@ class BaseExecutableJoinAction {
     virtual SchemaPtr getJoinSchema() = 0;
 
     void setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
-        NES_ASSERT(!!pipelineExecutionContext, "invalid pipelineExecutionContext");
-//        this->queryManager = queryManager;
-//        this->bufferManager = bufferManager;
-//        this->nextPipeline = nextPipeline;
+        NES_ASSERT(pipelineExecutionContext, "invalid pipelineExecutionContext");
         this->originId = originId;
         this->weakExecutionContext = pipelineExecutionContext;
     }
 
   protected:
     std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
-//    QueryManagerPtr queryManager;
-//    BufferManagerPtr bufferManager;
-//    PipelineStagePtr nextPipeline;
     uint64_t originId;
 };
 }// namespace NES::Join

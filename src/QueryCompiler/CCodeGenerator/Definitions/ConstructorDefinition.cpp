@@ -38,6 +38,15 @@ ConstructorDefinitionPtr ConstructorDefinition::create(const std::string& functi
     return std::make_shared<ConstructorDefinition>(functionName, isExplicit);
 }
 
+/// the following code creates a ctor like in the following
+/// [explicit] nameOfTheCtor(parameter0, parameter1, ..., parameterN) : field0(initializerStatement0), ..., fieldM(initializerStatementM) {
+///      variableDeclaration0
+///      ...
+///      variableDeclarationK
+///      statement0
+///      ..
+///      statementQ
+/// }
 DeclarationPtr ConstructorDefinition::getDeclaration() {
     std::stringstream function;
     if (isExplicit) {
