@@ -30,14 +30,15 @@ class KafkaSource : public DataSource {
 
   public:
     KafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                std::string brokers, std::string topic, std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout);
+                std::string brokers, std::string topic, std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout,
+                OperatorId operatorId);
 
     /**
      * @brief Get source type
      */
     SourceType getType() const override;
     ~KafkaSource() override;
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the kafka source
@@ -77,8 +78,6 @@ class KafkaSource : public DataSource {
     const std::unique_ptr<cppkafka::Consumer>& getConsumer() const;
 
   private:
-    KafkaSource() = default;
-
     void _connect();
 
     std::string brokers;

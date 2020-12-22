@@ -16,7 +16,7 @@
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <NodeEngine/QueryManager.hpp>
-#include <Sources/KafkaSink.hpp>
+#include <Sinks/Mediums/KafkaSink.hpp>
 #include <Util/Logger.hpp>
 #include <chrono>
 #include <sstream>
@@ -24,8 +24,6 @@
 using namespace std::chrono_literals;
 
 namespace NES {
-
-KafkaSink::KafkaSink() {}
 
 KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic, const uint64_t kafkaProducerTimeout)
     : DataSink(schema), brokers(brokers), topic(topic),
@@ -40,7 +38,7 @@ KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::st
 
 KafkaSink::~KafkaSink() {}
 
-bool KafkaSink::writeData(TupleBuffer& input_buffer) {
+bool KafkaSink::writeData(NodeEngine::TupleBuffer& input_buffer) {
     NES_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer);
     try {
         cppkafka::Buffer buffer(input_buffer.getBuffer(), input_buffer.getBufferSize());
@@ -63,7 +61,6 @@ bool KafkaSink::writeData(TupleBuffer& input_buffer) {
 const std::string KafkaSink::toString() const {
     std::stringstream ss;
     ss << "KAFKA_SINK(";
-    ss << "SCHEMA(" << schema->toString() << "), ";
     ss << "BROKER(" << brokers << "), ";
     ss << "TOPIC(" << topic << "), ";
     ss << "PARTITION(" << partition << ").";
@@ -89,10 +86,10 @@ void KafkaSink::_connect() {
     // }
 }
 
-SinkType KafkaSink::getType() const { return KAFKA_SINK; }
 const std::string KafkaSink::getBrokers() const { return brokers; }
 const std::string KafkaSink::getTopic() const { return topic; }
 const uint64_t KafkaSink::getKafkaProducerTimeout() const { return kafkaProducerTimeout.count(); }
+SinkMediumTypes KafkaSink::getSinkMediumType() { return KAFKA_SINK; }
 
 }// namespace NES
 #endif

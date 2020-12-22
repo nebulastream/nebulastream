@@ -130,11 +130,12 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferMana
  * @param groupId group id
  * @param autoCommit bool indicating if offset has to be committed automatically or not
  * @param kafkaConsumerTimeout  kafka consumer timeout
+ * @param operatorId: operator id
  * @return
  */
 const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                       NodeEngine::QueryManagerPtr queryManager, std::string brokers, std::string topic,
-                                      std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout);
+                                      std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout, OperatorId operatorId);
 #endif
 
 #ifdef ENABLE_OPC_BUILD

@@ -34,7 +34,7 @@
 
 namespace NES {
 
-DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorPtr sourceDescriptor,
+DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor,
                                                                NodeEngine::NodeEnginePtr nodeEngine) {
 
     NES_ASSERT(nodeEngine, "invalid engine");
@@ -46,19 +46,18 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ZMQ source");
         const ZmqSourceDescriptorPtr zmqSourceDescriptor = sourceDescriptor->as<ZmqSourceDescriptor>();
         return createZmqSource(zmqSourceDescriptor->getSchema(), bufferManager, queryManager, zmqSourceDescriptor->getHost(),
-                               zmqSourceDescriptor->getPort(), sourceDescriptor->getOperatorId());
+                               zmqSourceDescriptor->getPort(), operatorId);
     } else if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Default source");
         const DefaultSourceDescriptorPtr defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         return createDefaultDataSourceWithSchemaForVarBuffers(defaultSourceDescriptor->getSchema(), bufferManager, queryManager,
                                                               defaultSourceDescriptor->getNumbersOfBufferToProduce(),
-                                                              defaultSourceDescriptor->getFrequency(),
-                                                              sourceDescriptor->getOperatorId());
+                                                              defaultSourceDescriptor->getFrequency(), operatorId);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Binary File source");
         const BinarySourceDescriptorPtr binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
         return createBinaryFileSource(binarySourceDescriptor->getSchema(), bufferManager, queryManager,
-                                      binarySourceDescriptor->getFilePath(), sourceDescriptor->getOperatorId());
+                                      binarySourceDescriptor->getFilePath(), operatorId);
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
         const CsvSourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
@@ -66,7 +65,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
                                    csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
                                    csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
                                    csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
-                                   csvSourceDescriptor->getSkipHeader(), sourceDescriptor->getOperatorId());
+                                   csvSourceDescriptor->getSkipHeader(), operatorId);
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Kafka source");
@@ -82,13 +81,13 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         const OPCSourceDescriptorPtr opcSourceDescriptor = sourceDescriptor->as<OPCSourceDescriptor>();
         return createOPCSource(opcSourceDescriptor->getSchema(), bufferManager, queryManager, opcSourceDescriptor->getUrl(),
                                opcSourceDescriptor->getNodeId(), opcSourceDescriptor->getUser(),
-                               opcSourceDescriptor->getPassword(), sourceDescriptor->getOperatorId());
+                               opcSourceDescriptor->getPassword(), operatorId);
 #endif
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating sense source");
         const SenseSourceDescriptorPtr senseSourceDescriptor = sourceDescriptor->as<SenseSourceDescriptor>();
         return createSenseSource(senseSourceDescriptor->getSchema(), bufferManager, queryManager,
-                                 senseSourceDescriptor->getUdfs(), sourceDescriptor->getOperatorId());
+                                 senseSourceDescriptor->getUdfs(), operatorId);
     } else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating network source");
         const Network::networkSourceDescriptorPtr networkSourceDescriptor =
@@ -99,8 +98,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ysb source");
         const YSBSourceDescriptorPtr ysbSourceDescriptor = sourceDescriptor->as<YSBSourceDescriptor>();
         return createYSBSource(bufferManager, queryManager, ysbSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                               ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequency(),
-                               ysbSourceDescriptor->getOperatorId());
+                               ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequency(), operatorId);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

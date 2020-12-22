@@ -164,12 +164,14 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
 
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {
+            auto operatorId = sources->getId();
             auto sourceDescriptor = sources->getSourceDescriptor();
             //perform the operation only for Logical stream source descriptor
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
                 sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
             }
-            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, shared_from_this());
+            auto legacySource =
+                ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, shared_from_this());
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }

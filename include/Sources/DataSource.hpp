@@ -25,6 +25,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+
 namespace NES {
 
 enum SourceType {
