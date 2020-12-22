@@ -64,7 +64,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filtersr
 
@@ -94,7 +94,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
@@ -121,7 +121,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
@@ -150,7 +150,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
@@ -179,7 +179,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
@@ -208,7 +208,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
@@ -237,7 +237,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
@@ -262,7 +262,7 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
@@ -290,7 +290,7 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
@@ -318,7 +318,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create map
     LogicalOperatorNodePtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
@@ -350,7 +350,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create map
     LogicalOperatorNodePtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
@@ -382,7 +382,7 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
 
     //Create Source
     LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car", 1));
+        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
@@ -403,7 +403,7 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameStreamName) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
-    auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car", 1);
+    auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car");
 
     //Create source operator
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
@@ -422,8 +422,8 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car", 1);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck", 2);
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck");
 
     //Create source
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);

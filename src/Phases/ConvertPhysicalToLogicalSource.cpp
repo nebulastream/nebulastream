@@ -44,8 +44,8 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
 
             NES_INFO("ConvertPhysicalToLogicalSource: Creating ZMQ source");
             const ZmqSourcePtr zmqSourcePtr = std::dynamic_pointer_cast<ZmqSource>(dataSource);
-            SourceDescriptorPtr zmqSourceDescriptor = ZmqSourceDescriptor::create(
-                dataSource->getSchema(), zmqSourcePtr->getHost(), zmqSourcePtr->getPort(), dataSource->getOperatorId());
+            SourceDescriptorPtr zmqSourceDescriptor =
+                ZmqSourceDescriptor::create(dataSource->getSchema(), zmqSourcePtr->getHost(), zmqSourcePtr->getPort());
             return zmqSourceDescriptor;
         }
         case DEFAULT_SOURCE: {
@@ -53,14 +53,14 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const DefaultSourcePtr defaultSourcePtr = std::dynamic_pointer_cast<DefaultSource>(dataSource);
             const SourceDescriptorPtr defaultSourceDescriptor =
                 DefaultSourceDescriptor::create(defaultSourcePtr->getSchema(), defaultSourcePtr->getNumBuffersToProcess(),
-                                                defaultSourcePtr->getGatheringInterval(), dataSource->getOperatorId());
+                                                defaultSourcePtr->getGatheringInterval());
             return defaultSourceDescriptor;
         }
         case BINARY_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Binary File source");
             const BinarySourcePtr binarySourcePtr = std::dynamic_pointer_cast<BinarySource>(dataSource);
-            const SourceDescriptorPtr binarySourceDescriptor = BinarySourceDescriptor::create(
-                binarySourcePtr->getSchema(), binarySourcePtr->getFilePath(), dataSource->getOperatorId());
+            const SourceDescriptorPtr binarySourceDescriptor =
+                BinarySourceDescriptor::create(binarySourcePtr->getSchema(), binarySourcePtr->getFilePath());
             return binarySourceDescriptor;
         }
         case CSV_SOURCE: {
@@ -69,7 +69,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const SourceDescriptorPtr csvSourceDescriptor = CsvSourceDescriptor::create(
                 csvSourcePtr->getSchema(), csvSourcePtr->getFilePath(), csvSourcePtr->getDelimiter(),
                 csvSourcePtr->getNumberOfTuplesToProducePerBuffer(), csvSourcePtr->getNumBuffersToProcess(),
-                csvSourcePtr->getGatheringInterval(), csvSourcePtr->getSkipHeader(), dataSource->getOperatorId());
+                csvSourcePtr->getGatheringInterval(), csvSourcePtr->getSkipHeader());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD
@@ -88,15 +88,15 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const OPCSourcePtr opcSourcePtr = std::dynamic_pointer_cast<OPCSource>(dataSource);
             const SourceDescriptorPtr opcSourceDescriptor =
                 OPCSourceDescriptor::create(opcSourcePtr->getSchema(), opcSourcePtr->getUrl(), opcSourcePtr->getNodeId(),
-                                            opcSourcePtr->getUser(), opcSourcePtr->getPassword(), dataSource->getOperatorId());
+                                            opcSourcePtr->getUser(), opcSourcePtr->getPassword());
             return opcSourceDescriptor;
         }
 #endif
         case SENSE_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating sense source");
             const SenseSourcePtr senseSourcePtr = std::dynamic_pointer_cast<SenseSource>(dataSource);
-            const SourceDescriptorPtr senseSourceDescriptor = SenseSourceDescriptor::create(
-                senseSourcePtr->getSchema(), senseSourcePtr->getUdsf(), dataSource->getOperatorId());
+            const SourceDescriptorPtr senseSourceDescriptor =
+                SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdsf());
             return senseSourceDescriptor;
         }
         default: {
