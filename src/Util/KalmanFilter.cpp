@@ -19,9 +19,9 @@
 namespace NES {
 KalmanFilter::KalmanFilter(){};
 
-KalmanFilter::KalmanFilter(double timeStep, const Eigen::MatrixXd A, const Eigen::MatrixXd C, const Eigen::MatrixXd Q,
+KalmanFilter::KalmanFilter(double timeStep, const Eigen::MatrixXd F, const Eigen::MatrixXd H, const Eigen::MatrixXd Q,
                                                    const Eigen::MatrixXd R, const Eigen::MatrixXd P)
-    : A(A), C(C), Q(Q), R(R), P0(P), m(C.rows()), n(A.rows()), timeStep(timeStep), initialized(false),
+    : F(F), H(H), Q(Q), R(R), P0(P), m(H.rows()), n(F.rows()), timeStep(timeStep), initialized(false),
       I(n, n), x_hat(n), x_hat_new(n) { I.setIdentity(); }
 
 void KalmanFilter::init() {
@@ -45,18 +45,26 @@ void KalmanFilter::update(const Eigen::VectorXd& measuredValues) {
         this->init();
     }
 
-    x_hat_new = A * x_hat;
-    P = A * P * A.transpose() + Q;
-    K = P * C.transpose() * (C * P * C.transpose() + R).inverse();
-    x_hat_new += K * (measuredValues - C * x_hat_new);
-    P = (I - K * C) * P;
-    x_hat = x_hat_new;
+    // simplified prediction phase
+    x_hat_new = F * x_hat; // no control unit (B*u), predicted a-priori state estimate
+    P = F * P * F.transpose() + Q; // predicted a-priori estimate covariance
+
+    // simplified update phase
+    K = P * H.transpose() * (H * P * H.transpose() + R).inverse(); // kalman gain
+    x_hat_new += K * (measuredValues - H * x_hat_new);// updated a-posteriori state estimate
+    P = (I - K * H) * P; // updated a-posteriori estimate covariance
+    x_hat = x_hat_new; // updated x_hat
 
     currentTime += timeStep;
 }
 
-void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeStep, const Eigen::MatrixXd& A) {
-    this->A = A;
+void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeStep) {
+    timeStep = newTimeStep;
+    this->update(measuredValues);
+}
+
+void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeStep, const Eigen::MatrixXd& F) {
+    this->F = F;
     timeStep = newTimeStep;
     this->update(measuredValues);
 }
