@@ -124,14 +124,11 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
     const DataSourcePtr source = createMockCSVAdaptiveSource(
         schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file);
 
-    ASSERT_TRUE(source->start());
-
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
     }
 
     ASSERT_NE(initialGatheringInterval, source->getGatheringInterval());
-    ASSERT_TRUE(source->stop());
     ASSERT_TRUE(nodeEngine->stop());
 }
 
