@@ -124,7 +124,7 @@ class ExecutableCompleteAggregationTriggerAction
 
         //trigger a central window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                       << this->windowDefinition->getDistributionType()->toString() << "): trigger sliceid=" << sliceId
                       << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
@@ -137,7 +137,7 @@ class ExecutableCompleteAggregationTriggerAction
                       << this->windowDefinition->getDistributionType()->toString()
                       << "): trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
         } else {
-            NES_DEBUG("aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
+            NES_TRACE("aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
                                                                                   << " > lastWatermark=" << lastWatermark);
         }
 
@@ -159,7 +159,7 @@ class ExecutableCompleteAggregationTriggerAction
                           << " recCnt=" << slices[sliceId].getRecordsPerSlice());
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()
                     && slices[sliceId].getRecordsPerSlice() != 0) {
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                    NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                               << this->windowDefinition->getDistributionType()->toString()
                               << "): create partial agg windowId=" << windowId << " sliceId=" << sliceId << " key=" << key
                               << " partAgg=" << executableWindowAggregation->lower(partialAggregates[sliceId])
@@ -179,7 +179,7 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
                 auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                           << this->windowDefinition->getDistributionType()->toString() << "): write i=" << i << " key=" << key
                           << " value=" << value << " window.start()=" << window.getStartTs()
                           << " window.getEndTs()=" << window.getEndTs() << " recordsPerWindow[i]=" << recordsPerWindow[i]);
@@ -200,7 +200,7 @@ class ExecutableCompleteAggregationTriggerAction
                     && i + 1 < partialFinalAggregates.size()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                    NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                               << this->windowDefinition->getDistributionType()->toString()
                               << "): Dispatch intermediate output buffer with " << currentNumberOfTuples
                               << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
@@ -217,7 +217,7 @@ class ExecutableCompleteAggregationTriggerAction
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): aggregate: no window qualifies");
         }
     }
