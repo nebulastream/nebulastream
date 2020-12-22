@@ -26,10 +26,16 @@
 #include <iomanip>
 #include <iostream>
 #include <random>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
 #include <Util/Logger.hpp>
+#include <cstring>
 #include <filesystem>
 
 #pragma GCC diagnostic pop
@@ -69,7 +75,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     // init compilation flag dependent on compilation mode
     auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createDefaultCompilerFlags();
     flags->addFlag("--shared");
-    flags->addFlag("-xc++ ");
+//    flags->addFlag("-xc++ ");
     flags->addFlag("-I" + IncludePath);
     flags->addFlag("-o" + libraryName);
     flags->addFlag(filename);
@@ -84,17 +90,94 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
 void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     std::stringstream compilerCall;
     compilerCall << CLANG_EXECUTABLE << " ";
+#if 0
+// TODO the coded below does not work as it cannot find ld
+    pid_t compiler_pid;
+    int status;
+    int pipe_fd[2];
+    char** argv = new char*[flags->getFlags().size() + 2];
 
+    argv[0] = "clang++"; // new char[strlen(CLANG_EXECUTABLE)];
+//    strncpy(argv[0], CLANG_EXECUTABLE, strlen(CLANG_EXECUTABLE));
+//    argv[0][strlen(CLANG_EXECUTABLE)] = 0;
+    int argc = 1;
+    for (const auto& arg : flags->getFlags()) {
+        compilerCall << arg << " ";
+        argv[argc] = new char[arg.size() + 1];
+        strncpy(argv[argc], arg.c_str(), arg.size());
+        argv[argc][arg.size()] = '\0';
+        NES_DEBUG("Arg " << argv[argc]);
+        argc++;
+    }
+    argv[argc] = NULL;
+
+    NES_ASSERT(pipe(pipe_fd) != -1, "Cannot create pipe");
+
+    NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
+
+    char *envp[] = { NULL, NULL };
+    envp[0] = getenv("PATH");
+    if (0 == (compiler_pid = fork())) {
+        dup2(pipe_fd[1], STDOUT_FILENO);
+        close(pipe_fd[0]);
+        close(pipe_fd[1]);
+        for (int i = 0; i < argc; i++) {
+            fprintf(stderr, "%d=%s\n", i, argv[i]);
+        }
+        fprintf(stderr, "%s\n", envp[0]);
+        if (-1 == execve(CLANG_EXECUTABLE, argv, envp)) {
+            NES_ERROR("Compiler: compilation failed: " << strerror(errno));
+            for (int i = 0; i < argc; i++) {
+               delete argv[i];
+            }
+            delete[] argv;
+            throw "Compilation failed";
+        }
+    }
+
+    char temp[4096];
+    close(pipe_fd[1]);
+    size_t nbytes = 0;
+    size_t totalBytes = 0;
+    std::stringstream output;
+    while (0 != (nbytes = read(pipe_fd[0], temp, sizeof(temp)))) {
+        output << temp;
+        memset(temp, 0, sizeof(temp));
+        totalBytes += nbytes;
+    }
+
+    while (0 == waitpid(compiler_pid, &status, WNOHANG)) {
+        usleep(100'000);// 100ms
+    }
+
+    if (1 != WIFEXITED(status) || 0 != WEXITSTATUS(status)) {
+        NES_ERROR("Compiler: compilation failed: " << strerror(errno));
+        for (int i = 0; i < argc; i++) {
+            delete argv[i];
+        }
+        delete[] argv;
+        throw "Compilation failed";
+    }
+
+    for (int i = 0; i < argc; i++) {
+        delete argv[i];
+    }
+
+    delete[] argv;
+
+    NES_INFO("Compiler output(" << totalBytes << "):\n " << output.str());
+
+#else
     for (const auto& arg : flags->getFlags()) {
         compilerCall << arg << " ";
     }
-    NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
     auto ret = system(compilerCall.str().c_str());
-
     if (ret != 0) {
         NES_ERROR("Compiler: compilation failed");
         throw "Compilation failed";
     }
+#endif
+
 }
 
 std::string Compiler::formatAndPrintSource(const std::string& filename) {
