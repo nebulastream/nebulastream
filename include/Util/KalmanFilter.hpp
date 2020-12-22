@@ -24,34 +24,36 @@ namespace NES {
 class KalmanFilter {
 
   public:
-    KalmanFilter();
-    KalmanFilter(double timeStep, Eigen::MatrixXd A, Eigen::MatrixXd C, Eigen::MatrixXd Q,
+    explicit KalmanFilter(double timeStep, Eigen::MatrixXd F, Eigen::MatrixXd H, Eigen::MatrixXd Q,
                  Eigen::MatrixXd R, Eigen::MatrixXd P);
 
     void init(); // all zeroes
     void init(double firstTimestamp, const Eigen::VectorXd& initialState);
 
     void update(const Eigen::VectorXd& measuredValues); // same timestep
+    void update(const Eigen::VectorXd& measuredValues, double newTimeStep); // update with timestep
     void update(const Eigen::VectorXd& measuredValues, double newTimeStep,
                 const Eigen::MatrixXd& A); // update using new timestep and dynamics
 
     double getCurrentStep() { return currentTime; }
     Eigen::VectorXd getState() { return x_hat; }
+    Eigen::MatrixXd getError() { return P; }
 
   private:
     int m, n; // system model dimensions
+    KalmanFilter();
 
     /**
     * Process-specific matrices for a general KF.
     * These are using the names from the original paper.
-	*   A - System-dynamic matrix
-	*   C - Output matrix
+	*   F - System transition matrix / dynamics
+	*   H - Observation model matrix
 	*   Q - Process noise covariance
 	*   R - Measurement noise covariance
 	*   P - Estimate error covariance
     *   K - Kalman gain
 	*/
-    Eigen::MatrixXd A, C, Q, R, P, K, P0;
+    Eigen::MatrixXd F, H, Q, R, P, K, P0;
     Eigen::MatrixXd I; // identity matrix, on size n
 
     // estimated state, estimated state +1
