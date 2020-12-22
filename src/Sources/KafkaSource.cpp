@@ -15,8 +15,8 @@
 */
 
 #ifdef ENABLE_KAFKA_BUILD
-#include <Sources/KafkaSource.hpp>
 
+#include <Sources/KafkaSource.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
@@ -29,8 +29,8 @@ namespace NES {
 
 KafkaSource::KafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                          const std::string brokers, const std::string topic, const std::string groupId, bool autoCommit,
-                         uint64_t kafkaConsumerTimeout)
-    : DataSource(schema, bufferManager, queryManager), brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
+                         uint64_t kafkaConsumerTimeout, OperatorId operatorId)
+    : DataSource(schema, bufferManager, queryManager, operatorId), brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
       kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
 
     config = {{"metadata.broker.list", brokers.c_str()},
@@ -43,7 +43,7 @@ KafkaSource::KafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMa
 
 KafkaSource::~KafkaSource() {}
 
-std::optional<TupleBuffer> KafkaSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> KafkaSource::receiveData() {
     NES_DEBUG("KAFKASOURCE tries to receive data...");
 
     cppkafka::Message msg = consumer->poll(kafkaConsumerTimeout);
@@ -55,7 +55,7 @@ std::optional<TupleBuffer> KafkaSource::receiveData() {
             }
             return std::nullopt;
         } else {
-            TupleBuffer buffer = bufferManager->getBufferBlocking();
+            NodeEngine::TupleBuffer buffer = bufferManager->getBufferBlocking();
 
             const uint64_t tupleSize = schema->getSchemaSizeInBytes();
             const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;

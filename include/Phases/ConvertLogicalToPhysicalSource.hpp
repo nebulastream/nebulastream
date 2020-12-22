@@ -31,10 +31,12 @@ class ConvertLogicalToPhysicalSource {
   public:
     /**
      * @brief This method produces corresponding physical source for an input logical source descriptor
-     * @param sourceDescriptor : the logical source desciptor
+     * @param operator id: the operator id
+     * @param sourceDescriptor : the logical source descriptor
      * @return Data source pointer for the physical source
      */
-    static DataSourcePtr createDataSource(SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine);
+    static DataSourcePtr createDataSource(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor,
+                                          NodeEngine::NodeEnginePtr nodeEngine);
 
   private:
     ConvertLogicalToPhysicalSource() = default;
