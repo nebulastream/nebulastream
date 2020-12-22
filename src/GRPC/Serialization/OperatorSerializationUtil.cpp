@@ -786,12 +786,6 @@ OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperatorNodePtr 
     return sourceDetails;
 }
 
-//OperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(SerializableOperator_SourceDetails* serializedSourceDetails,
-//                                                                     OperatorId operatorId) {
-//    auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDetails);
-//    return LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-//}
-
 SerializableOperator_SinkDetails OperatorSerializationUtil::serializeSinkOperator(SinkLogicalOperatorNodePtr sinkOperator) {
     auto sinkDetails = SerializableOperator_SinkDetails();
     auto sinkDescriptor = sinkOperator->getSinkDescriptor();

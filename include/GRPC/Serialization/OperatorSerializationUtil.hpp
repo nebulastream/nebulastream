@@ -59,13 +59,6 @@ class OperatorSerializationUtil {
     */
     static SerializableOperator_SourceDetails serializeSourceOperator(SourceLogicalOperatorNodePtr sourceOperator);
 
-//    /**
-//     * @brief De-serializes the SerializableOperator_SourceDetails and all its properties back to a source operatorNodePtr
-//     * @param sourceDetails The serialized source operator details.
-//     * @return SourceLogicalOperatorNodePtr
-//     */
-//    static OperatorNodePtr deserializeSourceOperator(SerializableOperator_SourceDetails* sourceDetails, OperatorId operatorId);
-
     /**
      * @brief Serializes an sink operator and all its properties to a SerializableOperator_SinkDetails object.
      * @param sinkOperator The sink operator node.
