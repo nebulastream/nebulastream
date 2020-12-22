@@ -452,8 +452,6 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
 
     ExpressionSerializationUtil::serializeExpression(joinDefinition->getLeftJoinKey(), joinDetails.mutable_onleftkey());
     ExpressionSerializationUtil::serializeExpression(joinDefinition->getRightJoinKey(), joinDetails.mutable_onrightkey());
-//    ExpressionSerializationUtil::serializeExpression(joinDefinition->getLeftStreamType(), joinDetails.mutable_leftstreamtype());
-//    ExpressionSerializationUtil::serializeExpression(joinDefinition->getRightStreamType(), joinDetails.mutable_rightstreamtype());
 
     auto windowType = joinDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
@@ -772,10 +770,6 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
         ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onleftkey())->as<FieldAccessExpressionNode>();
     auto rightKeyAccessExpression =
         ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onrightkey())->as<FieldAccessExpressionNode>();
-//    auto leftStreamType =
-//        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_leftstreamtype())->as<FieldAccessExpressionNode>();
-//    auto rightStreamType =
-//        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_rightstreamtype())->as<FieldAccessExpressionNode>();
     auto joinDefinition =
         Join::LogicalJoinDefinition::create(leftKeyAccessExpression, rightKeyAccessExpression, window, distChar, trigger, action,
                                             joinDetails->numberofinputedgesleft(), joinDetails->numberofinputedgesright());

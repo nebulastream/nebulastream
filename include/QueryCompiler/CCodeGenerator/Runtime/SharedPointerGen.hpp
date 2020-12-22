@@ -39,13 +39,6 @@ class SharedPointerGen {
      */
     static StatementPtr makeShared(GeneratableDataTypePtr type);
 
-    /**
-    * @brief Creates function call to make shared.
-    * @param type GeneratableDataTypePt
-    * @param type VariableDeclaration
-    * @return StatementPtr
-    */
-    static StatementPtr makeShared1(GeneratableDataTypePtr type, ExpressionStatmentPtr param);
 };
 
 }// namespace NES

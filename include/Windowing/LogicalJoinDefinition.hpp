@@ -22,6 +22,10 @@
 
 namespace NES::Join {
 
+/**
+ * @brief Runtime definition of a join operator
+ * @experimental
+ */
 class LogicalJoinDefinition {
   public:
     static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr leftJoinKeyType, FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
@@ -77,13 +81,36 @@ class LogicalJoinDefinition {
     */
     Windowing::DistributionCharacteristicPtr getDistributionType() const;
 
+    /**
+     * @brief number of input edges. Need to define a clear concept for this
+     * @experimental This is experimental API
+     * @return
+     */
     uint64_t getNumberOfInputEdgesLeft();
+
+    /**
+     * @brief number of input edges. Need to define a clear concept for this
+     * @return
+     */
     uint64_t getNumberOfInputEdgesRight();
 
+    /**
+     * @brief Update the left and right stream types upon type inference
+     * @param leftStreamType the type of the left stream
+     * @param rightStreamType the type of the right stream
+     */
     void updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType);
 
+    /**
+     * @brief Update the output stream type upon type inference
+     * @param outputSchema the type of the output stream
+     */
     void updateOutputDefinition(SchemaPtr outputSchema);
 
+    /**
+     * @brief Getter of the output stream schema
+     * @return the output stream schema
+     */
     SchemaPtr getOutputSchema() const;
 
   private:

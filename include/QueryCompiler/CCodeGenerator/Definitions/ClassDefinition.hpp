@@ -62,7 +62,6 @@ class ClassDefinition : public std::enable_shared_from_this<ClassDefinition> {
 
     /**
      * @brief Adds a ctor to the class definition.
-     * @param visibility Visibility of the method (Public, Private)
      * @param function the function definition.
      */
     void addConstructor(ConstructorDefinitionPtr function);

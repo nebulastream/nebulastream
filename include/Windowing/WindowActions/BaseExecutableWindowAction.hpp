@@ -23,6 +23,11 @@ namespace NES::Windowing {
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class BaseExecutableWindowAction {
   public:
+
+    virtual ~BaseExecutableWindowAction() {
+        // nop
+    }
+
     /**
      * @brief This function does the action
      * @return bool indicating success

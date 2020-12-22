@@ -47,19 +47,11 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     }
 
     explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
-//        windowSchema = Schema::create()
-//                           ->addField(createField("start", UINT64))
-//                           ->addField(createField("end", UINT64))
-//                           ->addField("key", this->joinDefinition->getLeftJoinKey()->getStamp())
-//                           ->addField("valueLeft", this->joinDefinition->getLeftStreamType()->getStamp())
-//                           ->addField("valueRight", this->joinDefinition->getRightStreamType()->getStamp());
         windowSchema = joinDefinition->getOutputSchema();
         windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
     }
 
-    virtual ~ExecutableNestedLoopJoinTriggerAction() {
-        NES_TRACE("~ExecutableNestedLoopJoinTriggerAction()");
-    }
+    virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_TRACE("~ExecutableNestedLoopJoinTriggerAction()"); }
 
     bool doAction(StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
                   StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
@@ -73,7 +65,6 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         }
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = executionContext->allocateTupleBuffer();
-//        tupleBuffer.setOriginId(this->originId);
         // iterate over all keys in both window states and perform the join
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction doing the nested loop join");
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
@@ -101,7 +92,6 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
             //forward buffer to next  pipeline stage
-//            this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
             executionContext->dispatchBuffer(tupleBuffer);
         }
 
@@ -144,15 +134,20 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     }
 
     /**
-  * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
-  * which are written to the tuple buffer.
-  * @param store
-  * @param tupleBuffer
-  */
+     * @brief Execute the joining of all possible slices and join pairs for a given key
+     * @param key the target key of the join
+     * @param leftStore left content of the state
+     * @param rightStore right content of the state
+     * @param tupleBuffer the output buffer
+     * @param currentWatermarkLeft current watermark on the left side
+     * @param currentWatermarkRight current watermark on the right side
+     * @param lastWatermarkLeft last watermark on the left side
+     * @param lastWatermarkRight last watermark on the right side
+     */
     void joinWindows(KeyType key, Windowing::WindowedJoinSliceListStore<InputTypeLeft>* leftStore,
                      Windowing::WindowedJoinSliceListStore<InputTypeRight>* rightStore, NodeEngine::TupleBuffer& tupleBuffer,
-                     uint64_t currentWatermarkLeft,
-                     uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft, uint64_t lastWatermarkRight) {
+                     uint64_t currentWatermarkLeft, uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft,
+                     uint64_t lastWatermarkRight) {
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore  watermark is="
                   << currentWatermarkLeft << " lastwatermark=" << lastWatermarkLeft);
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:rightStore  watermark is="
@@ -214,18 +209,13 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                   << window.getEndTs() << " windowId=" << windowId << " sliceId=" << sliceId);
                         for (auto& left : listLeft[sliceId]) {
                             for (auto& right : listRight[sliceId]) {
-//                                NES_DEBUG("join sliceId=" << sliceId << " valueLeft=" << left << " valueRight=" << right
-//                                                          << " key=" << key << " sliceStart" << slicesLeft[sliceId].getStartTs()
-//                                                          << " sliceEnd=" << slicesLeft[sliceId].getEndTs());
                                 writeResultRecord(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(), key,
                                                   left, right);
                                 currentNumberOfTuples++;
                                 if (currentNumberOfTuples * windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
                                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                                     executionContext->dispatchBuffer(tupleBuffer);
-//                                    this->queryManager->addWorkForNextPipeline(tupleBuffer, this->nextPipeline);
                                     tupleBuffer = executionContext->allocateTupleBuffer();
-//                                    tupleBuffer.setOriginId(this->originId);
                                     currentNumberOfTuples = 0;
                                 }
                             }
@@ -236,6 +226,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 }
             }
         }
+        // we need to delete joined slices from right to left to avoid altering the indexing
+        // imagine we have 4 slices and we want to delete the 1-st (index 0) and the 4-th (index 3) ones.
+        // if we delete left to right, as soon as we delete index 0 then index 3 becomes invalid.
+        // if we delete right to left, deleting index 3 won't mess up with the item in position 0.
         std::sort(toDelete.begin(), toDelete.end(), std::greater<>());
         for (auto sliceId : toDelete) {
             listLeft.erase(listLeft.begin() + sliceId);
@@ -261,11 +255,14 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
         windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
-        auto sz = sizeof(uint64_t) + sizeof(uint64_t) + sizeof(KeyType);
-        memcpy(tupleBuffer.getBuffer() + index * (sz + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + sz, &leftValue, sizeof(InputTypeLeft));
-        memcpy(tupleBuffer.getBuffer() + index * (sz + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + sz + sizeof(InputTypeLeft), &rightValue, sizeof(InputTypeRight));
-//        windowTupleLayout->getValueField<InputTypeLeft>(index, 3)->write(tupleBuffer, leftValue);
-//        windowTupleLayout->getValueField<InputTypeRight>(index, 4)->write(tupleBuffer, rightValue);
+        constexpr auto headerSize = sizeof(uint64_t) + sizeof(uint64_t) + sizeof(KeyType);
+        // copy the left record at position at the index-th row with offset=headerSize
+        memcpy(tupleBuffer.getBuffer() + index * (headerSize + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + headerSize,
+               &leftValue, sizeof(InputTypeLeft));
+        // copy the right record at position at the index-th row with offset=headerSize+sizeof(InputTypeLeft)
+        memcpy(tupleBuffer.getBuffer() + index * (headerSize + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + headerSize
+                   + sizeof(InputTypeLeft),
+               &rightValue, sizeof(InputTypeRight));
     }
 
     SchemaPtr getJoinSchema() override { return windowSchema; }

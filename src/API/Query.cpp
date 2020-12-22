@@ -63,9 +63,9 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
                    const Windowing::WindowTypePtr windowType) {
     NES_DEBUG("Query: join the subQuery to current query");
 
-    auto leftLeyExpression = onLeftKey.getExpressionNode();
-    if (!leftLeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + leftLeyExpression->toString());
+    auto leftKeyExpression = onLeftKey.getExpressionNode();
+    if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + leftKeyExpression->toString());
         NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
     }
     auto rightKeyExpression = onRightKey.getExpressionNode();
@@ -73,7 +73,7 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + rightKeyExpression->toString());
         NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
     }
-    auto leftKeyFieldAccess = leftLeyExpression->as<FieldAccessExpressionNode>();
+    auto leftKeyFieldAccess = leftKeyExpression->as<FieldAccessExpressionNode>();
     auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
 
     //we use a on time trigger as default that triggers every 1 second
@@ -85,6 +85,7 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
+    NES_ASSERT(subQueryRhs && subQueryRhs->getQueryPlan() && subQueryRhs->getQueryPlan()->getRootOperators().size() > 0, "invalid right query plan");
     auto rootOperatorRhs = subQueryRhs->getQueryPlan()->getRootOperators()[0];
     auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
     auto rightJoinType = rootOperatorRhs->getOutputSchema();

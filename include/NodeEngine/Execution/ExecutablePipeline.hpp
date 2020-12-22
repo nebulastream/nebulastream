@@ -100,6 +100,11 @@ class ExecutablePipeline {
     */
     bool isReconfiguration() const;
 
+    /**
+     * @brief Get the arity (Unary/BinaryLeft/BinaryRight) of this pipeline
+     * This is necessary to figure out to which side of a binary operator the pipeline belongs
+     * @return the arity of this pipeline
+     */
     PipelineStageArity getArity();
 
   private:

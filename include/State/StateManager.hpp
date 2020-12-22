@@ -68,10 +68,10 @@ class StateManager {
      * @return the state variable as a reference
      */
     template<typename Key, typename Value>
-    StateVariable<Key, Value>* registerState(const std::string& variable_name) {
+    StateVariable<Key, Value>* registerState(const std::string& variableName) {
         std::unique_lock<std::mutex> lock(mutex);
-        auto state_var = new StateVariable<Key, Value>(variable_name);
-        state_variables[variable_name] = state_var;
+        auto state_var = new StateVariable<Key, Value>(variableName);
+        state_variables[variableName] = state_var;
         return state_var;
     }
 
@@ -82,10 +82,10 @@ class StateManager {
      * @param variable_name an unique identifier for the state variable
      * @return the state variable as a reference
      */
-    void unRegisterState(const std::string& variable_name) {
+    void unRegisterState(const std::string& variableName) {
         std::unique_lock<std::mutex> lock(mutex);
-        delete state_variables[variable_name];
-        state_variables.erase(variable_name);
+        delete state_variables[variableName];
+        state_variables.erase(variableName);
     }
 
     /**

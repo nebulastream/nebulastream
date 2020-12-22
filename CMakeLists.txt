@@ -314,7 +314,7 @@ enable_testing()
 add_subdirectory(tests)
 
 #Add benchmarks with command
-#add_subdirectory(benchmark)
+add_subdirectory(benchmark)
 
 install(TARGETS nesCoordinator nesWorker nes
         COMPONENT NebulaStream

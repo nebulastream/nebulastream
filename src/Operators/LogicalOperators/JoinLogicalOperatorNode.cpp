@@ -64,6 +64,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
                        ->addField(createField("start", UINT64))
                        ->addField(createField("end", UINT64))
                        ->addField(AttributeField::create("key", joinDefinition->getLeftJoinKey()->getStamp()));
+    // create dynamic fields to store all fields from left and right streams
     for (auto field : schema1->fields) {
         outputSchema = outputSchema->addField("left_" + field->name, field->getDataType());
     }

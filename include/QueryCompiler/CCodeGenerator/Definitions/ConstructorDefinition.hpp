@@ -30,13 +30,19 @@ namespace NES {
  * @brief Definition for a constructor in the generated code.
  */
 class ConstructorDefinition : public std::enable_shared_from_this<ConstructorDefinition> {
-
+    //TODO add support to destructors as a special type of a costructor maybe
   public:
+    /**
+     * @brief Ctor of a ConstructorDefinition
+     * @param functionName the name of the constructor/class
+     * @param isExplicit if the ctor must be marked as explicit
+     */
     ConstructorDefinition(const std::string& functionName, bool isExplicit);
 
     /**
      * @brief Factory to create the constructor definition.
      * @param functionName name of the constructor.
+     * @param isExplicit if the ctor must be marked as explicit
      * @return ConstructorDefinitionPtr
      */
     static ConstructorDefinitionPtr create(const std::string& functionName, bool isExplicit = false);
