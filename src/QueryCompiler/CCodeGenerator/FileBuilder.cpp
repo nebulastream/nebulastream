@@ -44,6 +44,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>" << std::endl;
     return builder;
 }
