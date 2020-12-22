@@ -189,7 +189,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     NES_TRACE(ss2.str());
     NES_TRACE(ss3.str());
 #endif
-    NES_VERIFY(!operatorIdToQueryMap[operatorId].empty(), "Operator id to query map for operator is empty");
+    NES_VERIFY(operatorIdToQueryMap[operatorId].size() > 0, "Operator id to query map for operator is empty");
     for (const auto& qep : operatorIdToQueryMap[operatorId]) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
