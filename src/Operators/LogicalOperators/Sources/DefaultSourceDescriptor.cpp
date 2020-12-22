@@ -19,13 +19,12 @@
 #include <utility>
 namespace NES {
 
-DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency,
-                                                 OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), operatorId), numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
+DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency)
+    : SourceDescriptor(std::move(schema)), numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
 
 DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                                 uint32_t frequency, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), std::move(streamName), operatorId), numbersOfBufferToProduce(numbersOfBufferToProduce),
+                                                 uint32_t frequency)
+    : SourceDescriptor(std::move(schema), std::move(streamName)), numbersOfBufferToProduce(numbersOfBufferToProduce),
       frequency(frequency) {}
 
 uint64_t DefaultSourceDescriptor::getNumbersOfBufferToProduce() const { return numbersOfBufferToProduce; }

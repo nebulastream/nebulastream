@@ -26,26 +26,25 @@
 namespace NES {
 
 SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user,
-                                                std::string password, OperatorId operatorId) {
+                                                std::string password) {
     return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(url), std::move(nodeId),
-                                                                     std::move(user), std::move(password), operatorId));
+                                                                     std::move(user), std::move(password)));
 }
 
 SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string url, UA_NodeId nodeId,
-                                                std::string user, std::string password, OperatorId operatorId) {
+                                                std::string user, std::string password) {
     return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(streamName), std::move(url),
-                                                                     std::move(nodeId), std::move(user), std::move(password),
-                                                                     operatorId));
+                                                                     std::move(nodeId), std::move(user), std::move(password)));
 }
 
 OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user,
-                                         std::string password, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), operatorId), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)),
+                                         std::string password)
+    : SourceDescriptor(std::move(schema)), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)),
       password(std::move(password)) {}
 
 OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema, std::string streamName, std::string url, UA_NodeId nodeId,
-                                         std::string user, std::string password, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), std::move(streamName), operatorId), url(std::move(url)), nodeId(std::move(nodeId)),
+                                         std::string user, std::string password)
+    : SourceDescriptor(std::move(schema), std::move(streamName)), url(std::move(url)), nodeId(std::move(nodeId)),
       user(std::move(user)), password(std::move(password)) {}
 
 const std::string OPCSourceDescriptor::getUrl() const { return url; }

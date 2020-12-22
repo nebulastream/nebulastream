@@ -27,11 +27,10 @@ namespace NES {
 class YSBSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                      OperatorId operatorId);
+    static SourceDescriptorPtr create(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency);
 
     static SourceDescriptorPtr create(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId);
+                                      uint64_t numBuffersToProcess, uint64_t frequency);
 
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;
@@ -41,11 +40,10 @@ class YSBSourceDescriptor : public SourceDescriptor {
     uint64_t getFrequency() const;
 
   private:
-    explicit YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                 OperatorId operatorId);
+    explicit YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency);
 
     explicit YSBSourceDescriptor(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                 uint64_t frequency, OperatorId operatorId);
+                                 uint64_t frequency);
 
   private:
     uint64_t numBuffersToProcess;

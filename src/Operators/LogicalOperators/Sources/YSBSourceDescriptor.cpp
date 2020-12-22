@@ -22,25 +22,25 @@
 namespace NES {
 
 SourceDescriptorPtr YSBSourceDescriptor::create(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                uint64_t frequency, OperatorId operatorId) {
+                                                uint64_t frequency) {
     return std::make_shared<YSBSourceDescriptor>(
-        YSBSourceDescriptor(numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, operatorId));
+        YSBSourceDescriptor(numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency));
 }
 
 SourceDescriptorPtr YSBSourceDescriptor::create(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                                uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId) {
+                                                uint64_t numBuffersToProcess, uint64_t frequency) {
     return std::make_shared<YSBSourceDescriptor>(
-        YSBSourceDescriptor(std::move(streamName), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, operatorId));
+        YSBSourceDescriptor(std::move(streamName), numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency));
 }
 
 YSBSourceDescriptor::YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                         uint64_t frequency, OperatorId operatorId)
-    : SourceDescriptor(YSBSource::YsbSchema(), operatorId), numBuffersToProcess(numBuffersToProcess),
+                                         uint64_t frequency)
+    : SourceDescriptor(YSBSource::YsbSchema()), numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency) {}
 
 YSBSourceDescriptor::YSBSourceDescriptor(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
-                                         uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId)
-    : SourceDescriptor(YSBSource::YsbSchema(), std::move(streamName), operatorId), numBuffersToProcess(numBuffersToProcess),
+                                         uint64_t numBuffersToProcess, uint64_t frequency)
+    : SourceDescriptor(YSBSource::YsbSchema(), std::move(streamName)), numBuffersToProcess(numBuffersToProcess),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), frequency(frequency) {}
 
 uint64_t YSBSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
