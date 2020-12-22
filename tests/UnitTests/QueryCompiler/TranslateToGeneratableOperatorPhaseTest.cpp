@@ -61,8 +61,8 @@ using namespace NES::API;
 class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("QueryDeploymentTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup QueryDeploymentTest test class.");
+        NES::setupLogging("TranslateToGeneratableOperatorPhaseTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup TranslateToGeneratableOperatorPhaseTest test class.");
     }
 
     void SetUp() {
@@ -72,7 +72,7 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
         SchemaPtr schema = sPtr->getSchema();
-        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0u, 1);
+        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0u);
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
@@ -105,7 +105,7 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         parents.clear();
     }
 
-    void TearDown() { NES_DEBUG("Tear down LogicalOperatorNode Test."); }
+    void TearDown() { NES_DEBUG("Tear down TranslateToGeneratableOperatorPhaseTest Test."); }
 
   protected:
     bool removed;
