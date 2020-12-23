@@ -29,9 +29,9 @@ CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string filePath,
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                          uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
                                          uint64_t frequency, bool skipHeader)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), filePath(std::move(filePath)),
-      delimiter(std::move(delimiter)), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      numBuffersToProcess(numBuffersToProcess), frequency(frequency), skipHeader(skipHeader) {}
+    : SourceDescriptor(std::move(schema), std::move(streamName)), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numBuffersToProcess(numBuffersToProcess),
+      frequency(frequency), skipHeader(skipHeader) {}
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, std::string filePath, std::string delimiter,
                                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,

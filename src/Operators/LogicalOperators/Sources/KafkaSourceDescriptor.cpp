@@ -22,13 +22,13 @@ namespace NES {
 
 KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema, std::string brokers, std::string topic, std::string groupId,
                                              bool autoCommit, uint64_t kafkaConnectTimeout)
-    : SourceDescriptor(std::move(schema)), brokers(std::move(brokers)), topic(std::move(topic)),
-      groupId(std::move(groupId)), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout) {}
+    : SourceDescriptor(std::move(schema)), brokers(std::move(brokers)), topic(std::move(topic)), groupId(std::move(groupId)),
+      autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout) {}
 
 KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema, std::string streamName, std::string brokers, std::string topic,
                                              std::string groupId, bool autoCommit, uint64_t kafkaConnectTimeout)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), brokers(std::move(brokers)),
-      topic(std::move(topic)), groupId(std::move(groupId)), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout) {}
+    : SourceDescriptor(std::move(schema), std::move(streamName)), brokers(std::move(brokers)), topic(std::move(topic)),
+      groupId(std::move(groupId)), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout) {}
 
 SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema, std::string brokers, std::string streamName,
                                                   std::string topic, std::string groupId, bool autoCommit,

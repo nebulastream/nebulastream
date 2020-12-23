@@ -27,8 +27,8 @@ namespace NES {
 
 SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user,
                                                 std::string password) {
-    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(url), std::move(nodeId),
-                                                                     std::move(user), std::move(password)));
+    return std::make_shared<OPCSourceDescriptor>(
+        OPCSourceDescriptor(std::move(schema), std::move(url), std::move(nodeId), std::move(user), std::move(password)));
 }
 
 SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string url, UA_NodeId nodeId,

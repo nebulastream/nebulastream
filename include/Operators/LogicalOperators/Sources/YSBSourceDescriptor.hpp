@@ -27,7 +27,8 @@ namespace NES {
 class YSBSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency);
+    static SourceDescriptorPtr create(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                      uint64_t frequency);
 
     static SourceDescriptorPtr create(std::string streamName, uint64_t numberOfTuplesToProducePerBuffer,
                                       uint64_t numBuffersToProcess, uint64_t frequency);
