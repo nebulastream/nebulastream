@@ -5,6 +5,7 @@ NebulaStream is the first general purpose, end-to-end data management system for
 NebulaStream is a joint research project between the DIMA group at TU Berlin and the DFKI IAM group.
 
 Learn more about Nebula Stream at https://www.nebula.stream/
+Visit our wiki at http://iotdb.dfki.de/doku.php
 
 ## Documentation
 - API:
