@@ -60,7 +60,6 @@ class NetworkSourceDescriptor : public SourceDescriptor {
   private:
     explicit NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition);
 
-    SchemaPtr schema;
     NesPartition nesPartition;
 };
 

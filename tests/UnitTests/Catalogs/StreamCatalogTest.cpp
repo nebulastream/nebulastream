@@ -115,7 +115,7 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
     EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
 
     std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream "
-                           "sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
+                           "sourceType=DefaultSource on node=1\n";
     cout << " string=" << streamCatalog->getPhysicalStreamAndSchemaAsString() << endl;
 
     EXPECT_EQ(expected, streamCatalog->getPhysicalStreamAndSchemaAsString());
@@ -159,7 +159,7 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
 
     std::string expected =
         "stream name=default_logical with 1 elements:physicalName=default_physical logicalStreamName=default_logical "
-        "sourceType=DefaultSource sourceConfig=1 sourceFrequency=1 numberOfBuffersToProduce=1 on node=1\n";
+        "sourceType=DefaultSource on node=1\n";
     EXPECT_EQ(expected, streamCatalog->getPhysicalStreamAndSchemaAsString());
 }
 //new from service

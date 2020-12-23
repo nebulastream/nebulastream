@@ -235,14 +235,15 @@ bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string ph
     return success;
 }
 
-bool NesWorker::registerPhysicalStream(PhysicalStreamConfigPtr conf) {
+bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
+    NES_ASSERT(conf, "invalid configuration");
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    assert(con);
+    NES_ASSERT(con, "cannot connect");
     bool success = coordinatorRpcClient->registerPhysicalStream(conf);
-    if (success) {
-        nodeEngine->setConfig(conf);
-    }
+    NES_ASSERT(success, "failed to register stream");
+    // TODO we need to get rid of this
+    nodeEngine->setConfig(conf);
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
     return success;
 }

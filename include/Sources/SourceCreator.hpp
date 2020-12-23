@@ -100,6 +100,20 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
                                         uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId);
 
 /**
+ * @brief create a memory source
+ * @param schema of the source
+ * @param bufferManager
+ * @param queryManager
+ * @param operatorId
+ * @param memoryArea the memory buffer to scan and create buffers out of
+ * @param memoryAreaSize the size of the memory buffer
+ * @return
+ */
+const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
+                                       std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize);
+
+/**
  * @brief function to create a ysb source
  * @param schema of data source
  * @return a const data source pointer

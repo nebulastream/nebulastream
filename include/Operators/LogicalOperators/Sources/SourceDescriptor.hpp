@@ -114,7 +114,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      */
     virtual ~SourceDescriptor() = default;
 
-  private:
+  protected:
     SchemaPtr schema;
     std::string streamName;
 };

@@ -18,6 +18,7 @@
 #define NODE_ENGINE_H
 
 #include <Common/ForwardDeclaration.hpp>
+#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
@@ -31,7 +32,6 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
-#include <zmq.hpp>
 
 namespace NES {
 
@@ -213,16 +213,17 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
+    // TODO we should get rid of the following method
     /**
      * @brief Set the physical stream config
      * @param config : configuration to be set
      */
-    void setConfig(PhysicalStreamConfigPtr config);
+    void setConfig(AbstractPhysicalStreamConfigPtr config);
 
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
-    PhysicalStreamConfigPtr config;
+    AbstractPhysicalStreamConfigPtr config;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;

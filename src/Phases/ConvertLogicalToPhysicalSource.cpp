@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
@@ -99,6 +100,10 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         const YSBSourceDescriptorPtr ysbSourceDescriptor = sourceDescriptor->as<YSBSourceDescriptor>();
         return createYSBSource(bufferManager, queryManager, ysbSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
                                ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequency(), operatorId);
+    } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
+        auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
+        return createMemorySource(memorySourceDescriptor->getSchema(), bufferManager, queryManager, operatorId, memorySourceDescriptor->getMemoryArea(), memorySourceDescriptor->getMemoryAreaSize());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
