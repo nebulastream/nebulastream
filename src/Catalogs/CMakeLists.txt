@@ -19,4 +19,5 @@ add_source_nes(
         PhysicalStreamConfig.cpp
         QueryCatalogEntry.cpp
         LogicalStream.cpp
+        MemorySourceStreamConfig.cpp
 )

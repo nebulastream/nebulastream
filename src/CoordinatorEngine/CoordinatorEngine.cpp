@@ -141,25 +141,19 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     return successCatalog && successTopology;
 }
 
-bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string sourceConf,
-                                               uint64_t sourceFrequency, uint64_t numberOfTuplesToProducePerBuffer,
-                                               uint64_t numberOfBuffersToProduce, std::string physicalStreamname,
-                                               std::string logicalStreamname) {
+bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string physicalStreamName,
+                                               std::string logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id "
-              << nodeId << " physical stream=" << physicalStreamname << " logical stream=" << logicalStreamname);
+              << nodeId << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
-    PhysicalStreamConfigPtr streamConf =
-        PhysicalStreamConfig::create(sourceType, sourceConf, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                                     numberOfBuffersToProduce, physicalStreamname, logicalStreamname);
-    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= "
-              << streamConf->toString() << " for workerId=" << nodeId);
+
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     if (!physicalNode) {
         NES_ERROR("CoordinatorEngine::RegisterPhysicalStream node not found");
         return false;
     }
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
+    bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
     return success;
 }
 

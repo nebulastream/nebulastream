@@ -109,7 +109,7 @@ class NesWorker {
      * @param config of the stream
      * @return bool indicating success
      */
-    bool registerPhysicalStream(PhysicalStreamConfigPtr conf);
+    bool registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf);
 
     /**
     * @brief method to deregister physical stream with the coordinator

@@ -464,36 +464,13 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     auto schema = sourceDescriptor->getSchema();
-    auto streamName = config->getLogicalStreamName();
-
-    // Pick the first element from the catalog entry and identify the type to create appropriate source type
-    // todo add handling for support of multiple physical streams.
-    std::string type = config->getSourceType();
-    std::string conf = config->getSourceConfig();
-    uint64_t frequency = config->getSourceFrequency();
-    uint64_t numBuffers = config->getNumberOfBuffersToProduce();
-    bool skipHeader = config->getSkipHeader();
-
-    uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
-
-    if (type == "DefaultSource") {
-        NES_DEBUG("TypeInferencePhase: create default source for one buffer");
-        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency);
-    } else if (type == "CSVSource") {
-        NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
-        return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, skipHeader);
-    } else if (type == "SenseSource") {
-        NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
-        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
-    } else if (type == "YSBSource") {
-        NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
-        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency);
-    } else {
-        NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
-    }
+    NES_ASSERT(config, "physical source config is not specified");
+    return config->build(sourceDescriptor->getSchema());
 }
 
-void NodeEngine::setConfig(PhysicalStreamConfigPtr config) { this->config = config; }
+void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
+    NES_ASSERT(config, "physical source config is not specified");
+    this->config = config;
+}
 
 }// namespace NES::NodeEngine

@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
@@ -32,6 +33,7 @@
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -39,9 +41,7 @@ namespace NES {
 SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataSourcePtr dataSource) {
     SourceType srcType = dataSource->getType();
     switch (srcType) {
-
         case ZMQ_SOURCE: {
-
             NES_INFO("ConvertPhysicalToLogicalSource: Creating ZMQ source");
             const ZmqSourcePtr zmqSourcePtr = std::dynamic_pointer_cast<ZmqSource>(dataSource);
             SourceDescriptorPtr zmqSourceDescriptor =
@@ -98,6 +98,9 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const SourceDescriptorPtr senseSourceDescriptor =
                 SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdsf());
             return senseSourceDescriptor;
+        }
+        case MEMORY_SOURCE: {
+           NES_ASSERT(false, "not supported");
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " << srcType);

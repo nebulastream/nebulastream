@@ -16,6 +16,7 @@
 
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <utility>
+#include <API/Schema.hpp>
 
 namespace NES {
 namespace Network {
@@ -32,7 +33,7 @@ bool NetworkSourceDescriptor::equal(SourceDescriptorPtr other) {
         return false;
     }
     auto otherNetworkSource = other->as<NetworkSourceDescriptor>();
-    return schema == otherNetworkSource->schema && nesPartition == otherNetworkSource->nesPartition;
+    return schema->equals(otherNetworkSource->schema) && nesPartition == otherNetworkSource->nesPartition;
 }
 
 std::string NetworkSourceDescriptor::toString() { return "NetworkSourceDescriptor()"; }

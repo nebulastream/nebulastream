@@ -40,7 +40,8 @@ enum SourceType {
     NETWORK_SOURCE,
     ADAPTIVE_SOURCE,
     MONITORING_SOURCE,
-    YSB_SOURCE
+    YSB_SOURCE,
+    MEMORY_SOURCE
 };
 
 /**

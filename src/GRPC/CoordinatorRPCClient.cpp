@@ -38,16 +38,12 @@ CoordinatorRPCClient::CoordinatorRPCClient(std::string address) : address(addres
 
 CoordinatorRPCClient::~CoordinatorRPCClient() { NES_DEBUG("~CoordinatorRPCClient()"); }
 
-bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfigPtr conf) {
+bool CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf->toString() << " workerID=" << workerId);
 
     RegisterPhysicalStreamRequest request;
     request.set_id(workerId);
     request.set_sourcetype(conf->getSourceType());
-    request.set_sourceconf(conf->getSourceConfig());
-    request.set_sourcefrequency(conf->getSourceFrequency());
-    request.set_numberoftuplestoproduceperbuffer(conf->getNumberOfTuplesToProducePerBuffer());
-    request.set_numberofbufferstoproduce(conf->getNumberOfBuffersToProduce());
     request.set_physicalstreamname(conf->getPhysicalStreamName());
     request.set_logicalstreamname(conf->getLogicalStreamName());
     NES_DEBUG("RegisterPhysicalStreamRequest::RegisterLogicalStreamRequest request=" << request.DebugString());
