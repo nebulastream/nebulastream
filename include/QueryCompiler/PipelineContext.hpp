@@ -45,11 +45,8 @@ typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
  */
 class PipelineContext {
   public:
-    enum PipelineContextArity {
-        Unary,
-        BinaryLeft,
-        BinaryRight
-    };
+    enum PipelineContextArity { Unary, BinaryLeft, BinaryRight };
+
   public:
     PipelineContext(PipelineContextArity arity = Unary);
     ~PipelineContext() { NES_DEBUG("~PipelineContext(" + pipelineName + ")"); }

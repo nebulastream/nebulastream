@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
-#include <State/StateVariable.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <State/StateVariable.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 

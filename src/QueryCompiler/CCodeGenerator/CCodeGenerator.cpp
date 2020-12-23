@@ -23,8 +23,8 @@
 #include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/NamespaceDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Runtime/SharedPointerGen.hpp>
@@ -120,7 +120,6 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             break;
         }
     }
-
 
     /** === set the result tuple depending on the input tuple===*/
     context->resultSchema = outputSchema;
@@ -749,7 +748,8 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     NES_ASSERT(join->getLeftJoinKey()->getStamp()->isEquals(join->getRightJoinKey()->getStamp()),
                "left join key is not the same type as right join key");
     NES_ASSERT(join->getLeftStreamType() != nullptr && !join->getLeftStreamType()->fields.empty(), "left join type is undefined");
-    NES_ASSERT(join->getRightStreamType() != nullptr && !join->getRightStreamType()->fields.empty(), "right join type is undefined");
+    NES_ASSERT(join->getRightStreamType() != nullptr && !join->getRightStreamType()->fields.empty(),
+               "right join type is undefined");
     NES_ASSERT(context->arity != PipelineContext::Unary, "unary operator detected but join codegen invoked");
 
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
@@ -805,8 +805,8 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     auto action = join->getTriggerAction();
     auto executableTriggerAction = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "triggerAction");
     if (action->getActionType() == Join::JoinActionType::LazyNestedLoopJoin) {
-        auto createTriggerActionCall =
-            call("Join::ExecutableNestedLoopJoinTriggerAction<" + keyType->getCode()->code_ + ", InputTupleLeft, InputTupleRight>::create");
+        auto createTriggerActionCall = call("Join::ExecutableNestedLoopJoinTriggerAction<" + keyType->getCode()->code_
+                                            + ", InputTupleLeft, InputTupleRight>::create");
         createTriggerActionCall->addParameter(VarRef(joinDefDeclaration));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
@@ -854,14 +854,15 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         context->code->structDeclaratonInputTuples.emplace_back(leftTypeStruct);
     }
 
-
     NES_ASSERT(joinDef, "invalid join definition");
     NES_ASSERT(!joinDef->getLeftJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
     NES_ASSERT(!joinDef->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
     NES_ASSERT(joinDef->getLeftJoinKey()->getStamp()->isEquals(joinDef->getRightJoinKey()->getStamp()),
                "left join key is not the same type as right join key");
-    NES_ASSERT(joinDef->getLeftStreamType() != nullptr && !joinDef->getLeftStreamType()->fields.empty(), "left join type is undefined");
-    NES_ASSERT(joinDef->getRightStreamType() != nullptr && !joinDef->getRightStreamType()->fields.empty(), "right join type is undefined");
+    NES_ASSERT(joinDef->getLeftStreamType() != nullptr && !joinDef->getLeftStreamType()->fields.empty(),
+               "left join type is undefined");
+    NES_ASSERT(joinDef->getRightStreamType() != nullptr && !joinDef->getRightStreamType()->fields.empty(),
+               "right join type is undefined");
     NES_ASSERT(context->arity != PipelineContext::Unary, "unary operator detected but join codegen invoked");
 
     auto code = context->code;
@@ -873,8 +874,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
-    auto getJoinHandlerStatement =
-        getJoinWindowHandler(windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp());
+    auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
 
@@ -990,7 +990,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // append to the join state
     auto joinStateCall = FunctionCallStatement("append");
     joinStateCall.addParameter(VarRef(currentSliceIndexVariableDeclaration));
-    joinStateCall.addParameter(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]);
+    joinStateCall.addParameter(
+        VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]);
     auto getJoinStateCall = VarRef(windowStateVariableDeclaration).accessPtr(joinStateCall);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getJoinStateCall));
 
@@ -1530,7 +1531,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     }
 
     auto ctorFunction = ConstructorDefinition::create("ExecutablePipelineStage" + context->pipelineName, true)
-        ->addInitializer("NodeEngine::Execution::ExecutablePipelineStage", arityStatement);
+                            ->addInitializer("NodeEngine::Execution::ExecutablePipelineStage", arityStatement);
 
     auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage" + context->pipelineName);
     executablePipeline->addBaseClass("NodeEngine::Execution::ExecutablePipelineStage");

@@ -85,7 +85,8 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
-    NES_ASSERT(subQueryRhs && subQueryRhs->getQueryPlan() && subQueryRhs->getQueryPlan()->getRootOperators().size() > 0, "invalid right query plan");
+    NES_ASSERT(subQueryRhs && subQueryRhs->getQueryPlan() && subQueryRhs->getQueryPlan()->getRootOperators().size() > 0,
+               "invalid right query plan");
     auto rootOperatorRhs = subQueryRhs->getQueryPlan()->getRootOperators()[0];
     auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
     auto rightJoinType = rootOperatorRhs->getOutputSchema();
@@ -118,8 +119,8 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess, rightKeyFieldAccess,
-                                                              windowType, distrType, triggerPolicy, triggerAction, 1, 1);
+    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess, rightKeyFieldAccess, windowType, distrType,
+                                                              triggerPolicy, triggerAction, 1, 1);
 
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rhsQueryPlan->getRootOperators()[0]);

@@ -28,16 +28,17 @@ namespace NES::Join {
  */
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr leftJoinKeyType, FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr leftJoinKeyType,
+                                           FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
                                            Windowing::DistributionCharacteristicPtr distributionType,
                                            Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                            BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight);
 
-    explicit LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType, FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
-                          Windowing::DistributionCharacteristicPtr distributionType,
-                          Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
-                          uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight);
+    explicit LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType, FieldAccessExpressionNodePtr rightJoinKeyType,
+                                   Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType,
+                                   Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
+                                   uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on left join key

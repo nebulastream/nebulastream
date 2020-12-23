@@ -22,9 +22,8 @@ namespace NES {
 GeneratedCode::GeneratedCode()
     : variableDeclarations(), variableInitStmts(), forLoopStmt(), currentCodeInsertionPoint(), cleanupStmts(), returnStmt(),
       varDeclarationRecordIndex(), varDeclarationReturnValue(),
-//      structDeclaratonInputTuple(StructDeclaration::create("InputTuple", "")),
-      structDeclaratonInputTuples(),
-      structDeclarationResultTuple(StructDeclaration::create("ResultTuple", "")),
+      //      structDeclaratonInputTuple(StructDeclaration::create("InputTuple", "")),
+      structDeclaratonInputTuples(), structDeclarationResultTuple(StructDeclaration::create("ResultTuple", "")),
       varDeclarationInputBuffer(VariableDeclaration::create(DataTypeFactory::createInt32(), "input_buffers")),
       varDeclarationResultBuffer(VariableDeclaration::create(DataTypeFactory::createInt32(), "output_buffer")),
       varDeclarationExecutionContext(VariableDeclaration::create(DataTypeFactory::createInt32(), "output_buffer")),

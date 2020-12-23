@@ -88,7 +88,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(),
                                                                             generatableParentOperator);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-        return TranslateToGeneratableOperatorPhase::transformJoinOperator(operatorNode->as<JoinLogicalOperatorNode>(), generatableParentOperator);
+        return TranslateToGeneratableOperatorPhase::transformJoinOperator(operatorNode->as<JoinLogicalOperatorNode>(),
+                                                                          generatableParentOperator);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator =
             GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
@@ -97,8 +98,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         return generatableParentOperator;
     } else {
-        NES_FATAL_ERROR(
-            "TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode->toString());
+        NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: "
+                        << operatorNode->toString());
         NES_NOT_IMPLEMENTED();
     }
 
@@ -136,7 +137,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
     NES_NOT_IMPLEMENTED();
 }
 
-OperatorNodePtr TranslateToGeneratableOperatorPhase::transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator, OperatorNodePtr downstreamOperator) {
+OperatorNodePtr TranslateToGeneratableOperatorPhase::transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator,
+                                                                           OperatorNodePtr downstreamOperator) {
     auto scanOperator = GeneratableScanOperator::create(joinOperator->getOutputSchema(), joinOperator->getOutputSchema());
     auto generatedJoinOperator = GeneratableJoinOperator::create(joinOperator->as<JoinLogicalOperatorNode>());
     // JOIN -> SCAN -> DOWNSTREAM OPERATOR

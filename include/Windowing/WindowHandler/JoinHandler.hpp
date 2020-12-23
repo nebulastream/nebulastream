@@ -85,8 +85,7 @@ class JoinHandler : public AbstractJoinHandler {
         std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler: run window action " << executableJoinAction->toString());
 
-        if (originIdToMaxTsMapLeft.size() < numberOfInputEdgesLeft
-            || originIdToMaxTsMapRight.size() < numberOfInputEdgesRight) {
+        if (originIdToMaxTsMapLeft.size() < numberOfInputEdgesLeft || originIdToMaxTsMapRight.size() < numberOfInputEdgesRight) {
             NES_DEBUG(
                 "JoinHandler: trigger cannot be applied as we did not get one buffer per edge yet, originIdToMaxTsMapLeft size="
                 << originIdToMaxTsMapLeft.size() << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft

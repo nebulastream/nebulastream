@@ -95,7 +95,6 @@ class WindowManager {
         }
     }
 
-
     /**
      * Creates slices for in the window slice store if needed.
      * @tparam PartialAggregateType
@@ -117,14 +116,14 @@ class WindowManager {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
                 NES_DEBUG("WindowManager: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
-                              << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge
-                              << " key=" << key);
+                          << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge
+                          << " key=" << key);
             } else if (windowType->isSlidingWindow()) {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
                 NES_DEBUG("WindowManager: for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
-                              << store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge
-                              << " key=" << key);
+                          << store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge
+                          << " key=" << key);
             } else {
                 NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }

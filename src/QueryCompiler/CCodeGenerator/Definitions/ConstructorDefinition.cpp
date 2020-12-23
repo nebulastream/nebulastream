@@ -19,20 +19,20 @@
 #include <utility>
 #include <vector>
 
-#include <Util/Logger.hpp>
 #include <API/AttributeField.hpp>
-#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/ConstructorDeclaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
-#include <sstream>
+#include <Util/Logger.hpp>
 #include <memory>
+#include <sstream>
 
 namespace NES {
 
-
-ConstructorDefinition::ConstructorDefinition(const std::string& functionName, bool isExplicit) : name(functionName), isExplicit(isExplicit) {}
+ConstructorDefinition::ConstructorDefinition(const std::string& functionName, bool isExplicit)
+    : name(functionName), isExplicit(isExplicit) {}
 
 ConstructorDefinitionPtr ConstructorDefinition::create(const std::string& functionName, bool isExplicit) {
     return std::make_shared<ConstructorDefinition>(functionName, isExplicit);
@@ -108,5 +108,4 @@ ConstructorDefinitionPtr ConstructorDefinition::addVariableDeclaration(VariableD
     return shared_from_this();
 }
 
-
-}
+}// namespace NES

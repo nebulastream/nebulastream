@@ -34,9 +34,7 @@ class ExecutablePipelineStage {
      * @brief Returns the arity of this pipeline
      * @return the arity of this pipeline
      */
-    PipelineStageArity getArity() const {
-        return arity;
-    }
+    PipelineStageArity getArity() const { return arity; }
     /**
     * @brief Must be called only once per executable pipeline and initializes the pipeline execution context.
     * e.g, creates the individual operator states -> window handler

@@ -31,7 +31,8 @@ typedef std::shared_ptr<AbstractJoinHandler> AbstractJoinHandlerPtr;
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class ExecutableNestedLoopJoinTriggerAction;
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
-using ExecutableNestedLoopJoinTriggerActionPtr = std::shared_ptr<ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>>;
+using ExecutableNestedLoopJoinTriggerActionPtr =
+    std::shared_ptr<ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>>;
 
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class BaseExecutableJoinAction;

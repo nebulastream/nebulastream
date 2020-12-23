@@ -30,6 +30,7 @@ using NodeEngine::Execution::PipelineExecutionContext;
  */
 class CompiledExecutablePipelineStage : public NodeEngine::Execution::ExecutablePipelineStage {
     typedef NodeEngine::Execution::ExecutablePipelineStage base;
+
   public:
     explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity);
     static NodeEngine::Execution::ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode, PipelineStageArity arity);

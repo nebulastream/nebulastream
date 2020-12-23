@@ -42,8 +42,9 @@ class ExecutableCompleteAggregationTriggerAction
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
                executableWindowAggregation,
            SchemaPtr outputSchema) {
-        return std::make_shared<ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(windowDefinition, executableWindowAggregation,
-                                                                            outputSchema);
+        return std::make_shared<
+            ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
+            windowDefinition, executableWindowAggregation, outputSchema);
     }
     explicit ExecutableCompleteAggregationTriggerAction(
         LogicalWindowDefinitionPtr windowDefinition,

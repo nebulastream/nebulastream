@@ -16,8 +16,8 @@
 
 #include <QueryCompiler/CCodeGenerator/Declarations/ClassDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 
 namespace NES {
 
@@ -33,9 +33,7 @@ void ClassDefinition::addMethod(Visibility visibility, FunctionDefinitionPtr fun
     }
 }
 
-void ClassDefinition::addConstructor(ConstructorDefinitionPtr function) {
-    publicConstructors.emplace_back(function);
-}
+void ClassDefinition::addConstructor(ConstructorDefinitionPtr function) { publicConstructors.emplace_back(function); }
 
 DeclarationPtr ClassDefinition::getDeclaration() { return ClassDeclaration::create(shared_from_this()); }
 
