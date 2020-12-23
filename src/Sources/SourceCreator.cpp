@@ -104,7 +104,8 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferMana
 #ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                       NodeEngine::QueryManagerPtr queryManager, std::string brokers, std::string topic,
-                                      std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout, OperatorId operatorId) {
+                                      std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout,
+                                      OperatorId operatorId) {
     return std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, groupId, autoCommit,
                                          kafkaConsumerTimeout, operatorId);
 }
