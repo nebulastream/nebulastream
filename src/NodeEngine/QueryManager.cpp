@@ -32,6 +32,7 @@ namespace detail {
 
 class ReconfigurationTaskEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
     typedef Execution::ExecutablePipelineStage base;
+
   public:
     explicit ReconfigurationTaskEntryPointPipelineStage() : base(Unary) {
         // nop

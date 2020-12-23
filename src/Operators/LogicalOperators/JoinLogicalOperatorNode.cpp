@@ -58,7 +58,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
     // infer the data type of the key field.
     joinDefinition->getLeftJoinKey()->inferStamp(leftInputSchema);
     joinDefinition->getRightJoinKey()->inferStamp(rightInputSchema);
-    NES_ASSERT(joinDefinition->getLeftJoinKey()->getStamp()->isEquals(joinDefinition->getRightJoinKey()->getStamp()), "left and right join key type dont match");
+    NES_ASSERT(joinDefinition->getLeftJoinKey()->getStamp()->isEquals(joinDefinition->getRightJoinKey()->getStamp()),
+               "left and right join key type dont match");
 
     outputSchema = Schema::create()
                        ->addField(createField("start", UINT64))

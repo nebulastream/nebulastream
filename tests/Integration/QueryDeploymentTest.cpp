@@ -1320,7 +1320,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_value:INTEGER,left_id:INTEGER,left_timestamp:INTEGER,right_value:INTEGER,right_id:INTEGER,right_timestamp:INTEGER\n"
+    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_value:INTEGER,left_id:INTEGER,left_timestamp:INTEGER,"
+                             "right_value:INTEGER,right_id:INTEGER,right_timestamp:INTEGER\n"
                              "1000,2000,4,1,4,1002,1,4,1002\n"
                              "1000,2000,12,1,12,1001,1,12,1001\n"
                              "2000,3000,1,2,1,2000,2,1,2000\n"

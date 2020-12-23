@@ -75,7 +75,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     // init compilation flag dependent on compilation mode
     auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createDefaultCompilerFlags();
     flags->addFlag("--shared");
-//    flags->addFlag("-xc++ ");
+    //    flags->addFlag("-xc++ ");
     flags->addFlag("-I" + IncludePath);
     flags->addFlag("-o" + libraryName);
     flags->addFlag(filename);
@@ -177,7 +177,6 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
         throw "Compilation failed";
     }
 #endif
-
 }
 
 std::string Compiler::formatAndPrintSource(const std::string& filename) {

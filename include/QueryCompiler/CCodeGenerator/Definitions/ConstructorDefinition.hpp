@@ -16,7 +16,6 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITIONS_CONSTRUCTORDEFINITION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITIONS_CONSTRUCTORDEFINITION_HPP_
 
-
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
@@ -92,6 +91,5 @@ class ConstructorDefinition : public std::enable_shared_from_this<ConstructorDef
 };
 
 }// namespace NES
-
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITIONS_CONSTRUCTORDEFINITION_HPP_

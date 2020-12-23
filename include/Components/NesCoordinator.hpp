@@ -72,7 +72,8 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     /**
      * @brief Constructor where ip = restIp and rpcIp
      */
-    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
+    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort,
+                   uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
 
     /**
      * @brief dtor

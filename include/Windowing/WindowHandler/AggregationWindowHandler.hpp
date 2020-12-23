@@ -98,8 +98,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         if (originIdToMaxTsMap.size() != numberOfInputEdges) {
             NES_DEBUG("AggregationWindowHandler("
-                          << handlerType << "): trigger cannot be applied as we did not get one buffer per edge yet, size="
-                          << originIdToMaxTsMap.size() << " numberOfInputEdges=" << numberOfInputEdges);
+                      << handlerType << "): trigger cannot be applied as we did not get one buffer per edge yet, size="
+                      << originIdToMaxTsMap.size() << " numberOfInputEdges=" << numberOfInputEdges);
             return;
         }
         auto watermark = getMinWatermark();
@@ -144,7 +144,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         // Initialize AggregationWindowHandler Manager
         this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType());
         // Initialize StateVariable
-        this->windowStateVariable = StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
+        this->windowStateVariable =
+            StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
         executableWindowAction->setup(pipelineExecutionContext);
         return true;
     }

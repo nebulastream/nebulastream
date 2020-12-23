@@ -36,8 +36,8 @@ class WindowedJoinSliceListStore {
         */
     inline uint64_t empty() {
         std::lock_guard lock(internalMutex);
-        return sliceMetaData.empty(); }
-
+        return sliceMetaData.empty();
+    }
 
     /**
      * @return most current slice'index.
@@ -73,9 +73,7 @@ class WindowedJoinSliceListStore {
     /**
      * @return reference to internal mutex to create complex locking semantics
      */
-    std::recursive_mutex& mutex() const {
-        return internalMutex;
-    }
+    std::recursive_mutex& mutex() const { return internalMutex; }
 
     /**
      * @return the internal append list

@@ -29,7 +29,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <Windowing/LogicalWindowDefinition.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>"<< std::endl;
+    builder.declations << "#include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>" << std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowManager.hpp>" << std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowSliceStore.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/TupleBuffer.hpp>" << std::endl;

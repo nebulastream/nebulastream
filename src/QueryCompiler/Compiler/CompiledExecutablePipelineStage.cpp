@@ -34,7 +34,8 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr
     this->executablePipelineStage = (*createFunction)();
 }
 
-NodeEngine::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(CompiledCodePtr compiledCode, PipelineStageArity arity) {
+NodeEngine::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(CompiledCodePtr compiledCode,
+                                                                                          PipelineStageArity arity) {
     return std::make_shared<CompiledExecutablePipelineStage>(compiledCode, arity);
 }
 

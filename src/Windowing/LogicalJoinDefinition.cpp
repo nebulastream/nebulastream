@@ -19,16 +19,14 @@
 namespace NES::Join {
 
 LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType,
-                                             FieldAccessExpressionNodePtr rightJoinKeyType,
-                                             Windowing::WindowTypePtr windowType,
+                                             FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
                                              Windowing::DistributionCharacteristicPtr distributionType,
                                              Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                              BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight)
-    : leftJoinKeyType(leftJoinKeyType), rightJoinKeyType(rightJoinKeyType), leftStreamType(nullptr),
-      rightStreamType(nullptr), windowType(windowType), distributionType(distributionType), triggerPolicy(triggerPolicy),
-      triggerAction(triggerAction), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
-      numberOfInputEdgesRight(numberOfInputEdgesRight), outputSchema(nullptr) {
+    : leftJoinKeyType(leftJoinKeyType), rightJoinKeyType(rightJoinKeyType), leftStreamType(nullptr), rightStreamType(nullptr),
+      windowType(windowType), distributionType(distributionType), triggerPolicy(triggerPolicy), triggerAction(triggerAction),
+      numberOfInputEdgesLeft(numberOfInputEdgesLeft), numberOfInputEdgesRight(numberOfInputEdgesRight), outputSchema(nullptr) {
 
     NES_ASSERT(this->leftJoinKeyType, "Invalid left join key type");
     NES_ASSERT(this->rightJoinKeyType, "Invalid right join key type");
@@ -45,9 +43,9 @@ LogicalJoinDefinition::create(FieldAccessExpressionNodePtr leftJoinKeyType, Fiel
                               Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType,
                               Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
                               uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight) {
-    return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType, rightJoinKeyType,
-                                                         windowType, distributionType, triggerPolicy, triggerAction,
-                                                         numberOfInputEdgesLeft, numberOfInputEdgesRight);
+    return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType, rightJoinKeyType, windowType, distributionType,
+                                                         triggerPolicy, triggerAction, numberOfInputEdgesLeft,
+                                                         numberOfInputEdgesRight);
 }
 
 FieldAccessExpressionNodePtr LogicalJoinDefinition::getLeftJoinKey() { return leftJoinKeyType; }
@@ -75,12 +73,8 @@ void LogicalJoinDefinition::updateStreamTypes(SchemaPtr leftStreamType, SchemaPt
     this->rightStreamType = rightStreamType;
 }
 
-void LogicalJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) {
-    this->outputSchema = outputSchema;
-}
+void LogicalJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = outputSchema; }
 
-SchemaPtr LogicalJoinDefinition::getOutputSchema() const {
-    return outputSchema;
-}
+SchemaPtr LogicalJoinDefinition::getOutputSchema() const { return outputSchema; }
 
 };// namespace NES::Join

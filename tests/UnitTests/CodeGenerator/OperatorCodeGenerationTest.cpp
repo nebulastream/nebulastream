@@ -1023,16 +1023,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)), distrType, triggerPolicy, triggerAction,
-        1,
-        1);
+        1, 1);
 
     joinDef->updateStreamTypes(input_schema, input_schema);
 
-
     auto outputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField(AttributeField::create("key", joinDef->getLeftJoinKey()->getStamp()));
+                            ->addField(createField("start", UINT64))
+                            ->addField(createField("end", UINT64))
+                            ->addField(AttributeField::create("key", joinDef->getLeftJoinKey()->getStamp()));
     for (auto field : input_schema->fields) {
         outputSchema = outputSchema->addField("left_" + field->name, field->getDataType());
     }
@@ -1076,12 +1074,18 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
     stage1->setup(*executionContext.get());
     stage1->start(*executionContext.get());
     executionContext->getOperatorHandlers()[0]->start(executionContext);
-    executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()->start();
+    executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
+        ->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()
+        ->start();
     stage1->execute(inputBuffer, *executionContext.get(), wctx);
     stage3->execute(inputBuffer, *executionContext.get(), wctx);
 
-    auto stateVarLeft = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()->getLeftJoinState();
-    auto stateVarRight = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()->getRightJoinState();
+    auto stateVarLeft = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
+                            ->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()
+                            ->getLeftJoinState();
+    auto stateVarRight = executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
+                             ->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()
+                             ->getRightJoinState();
     std::vector<int64_t> results;
     for (auto& [key, val] : stateVarLeft->rangeAll()) {
         NES_DEBUG("Key: " << key << " Value: " << val);

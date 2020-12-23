@@ -53,7 +53,8 @@ class StateManager {
      * @return the state variable as a reference
      */
     template<typename Key, typename Value>
-    StateVariable<Key, Value>* registerStateWithDefault(const std::string& variable_name, std::function<Value(const Key&)>&& defaultCallback) {
+    StateVariable<Key, Value>* registerStateWithDefault(const std::string& variable_name,
+                                                        std::function<Value(const Key&)>&& defaultCallback) {
         std::unique_lock<std::mutex> lock(mutex);
         auto state_var = new StateVariable<Key, Value>(variable_name, std::move(defaultCallback));
         state_variables[variable_name] = state_var;

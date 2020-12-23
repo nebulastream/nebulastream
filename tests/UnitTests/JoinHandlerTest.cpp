@@ -19,32 +19,30 @@
 #include <map>
 #include <vector>
 
+#include <API/Windowing.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Util/Logger.hpp>
-#include <API/Windowing.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
+#include <Util/Logger.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES {
 class JoinHandlerTest : public testing::Test {
@@ -63,14 +61,14 @@ class JoinHandlerTest : public testing::Test {
 TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
     // create join definition and windowing variables
     auto store = std::make_unique<Windowing::WindowedJoinSliceListStore<int64_t>>();
-    Windowing::WindowTriggerPolicyPtr triggerPolicy =  Windowing::OnTimeTriggerPolicyDescription::create(1000);
+    Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
-    auto distrType =  Windowing::DistributionCharacteristic::createCompleteWindowType();
+    auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
-        Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), NES::API::Milliseconds(10)), distrType, triggerPolicy, triggerAction,
-        1, 1);
+        Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), NES::API::Milliseconds(10)),
+        distrType, triggerPolicy, triggerAction, 1, 1);
     auto windowManager = std::make_unique<Windowing::WindowManager>(joinDef->getWindowType());
 
     // slice stream with a value 10 with key 0 arriving at ts 10
@@ -100,4 +98,4 @@ TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
     ASSERT_EQ(store->getAppendList()[sliceIndex][0], 10);
     ASSERT_EQ(store->getAppendList()[sliceIndex][1], 11);
 }
-}
+}// namespace NES

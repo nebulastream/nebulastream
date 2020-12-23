@@ -99,7 +99,8 @@ class StateVariable : public detail::Destroyable {
         std::function<Value(const Key&)> defaultCallback;
 
       private:
-        explicit KeyValueHandle(StateBackend& backend, Key key, std::function<Value(const Key&)> defaultCallback) : backend(backend), key(key), defaultCallback(defaultCallback) {
+        explicit KeyValueHandle(StateBackend& backend, Key key, std::function<Value(const Key&)> defaultCallback)
+            : backend(backend), key(key), defaultCallback(defaultCallback) {
             // nop
         }
 
@@ -246,7 +247,8 @@ class StateVariable : public detail::Destroyable {
      * @param name of the state variable
      * @param defaultCallback a function that gets called when retrieving a value not present in the state
      */
-    explicit StateVariable(std::string name, std::function<Value(const Key&)> defaultCallback) : name(std::move(name)), backend(), defaultCallback(defaultCallback) {
+    explicit StateVariable(std::string name, std::function<Value(const Key&)> defaultCallback)
+        : name(std::move(name)), backend(), defaultCallback(defaultCallback) {
         NES_ASSERT(this->defaultCallback, "invalid default callback");
     }
 
@@ -256,12 +258,12 @@ class StateVariable : public detail::Destroyable {
      */
     explicit StateVariable(std::string name) : name(std::move(name)), backend(), defaultCallback(nullptr) {}
 
-
     /**
      * @brief Copy Constructor of a state variable
      * @param other the param to copy
      */
-    StateVariable(const StateVariable<Key, Value>& other) : name(other.name), backend(other.backend), defaultCallback(other.defaultCallback){
+    StateVariable(const StateVariable<Key, Value>& other)
+        : name(other.name), backend(other.backend), defaultCallback(other.defaultCallback) {
         // nop
     }
 
@@ -289,7 +291,6 @@ class StateVariable : public detail::Destroyable {
         backend = other.backend;
         defaultCallback = other.defaultCallback;
     }
-
 
     // TODO reimplement this use copy-and-swap: https://stackoverflow.com/questions/3279543/what-is-the-copy-and-swap-idiom
     /**

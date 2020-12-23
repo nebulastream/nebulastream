@@ -38,7 +38,6 @@ class SharedPointerGen {
      * @return StatementPtr
      */
     static StatementPtr makeShared(GeneratableDataTypePtr type);
-
 };
 
 }// namespace NES

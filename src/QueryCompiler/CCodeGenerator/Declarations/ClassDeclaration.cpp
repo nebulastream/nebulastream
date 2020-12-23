@@ -16,8 +16,8 @@
 
 #include <QueryCompiler/CCodeGenerator/Declarations/ClassDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ClassDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
+#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>

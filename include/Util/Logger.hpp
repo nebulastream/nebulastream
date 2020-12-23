@@ -192,7 +192,6 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         }                                                                                                                        \
     } while (0)
 
-
 #define NES_THROW_RUNTIME_ERROR(TEXT)                                                                                            \
     do {                                                                                                                         \
         NES::collectAndPrintStacktrace();                                                                                        \

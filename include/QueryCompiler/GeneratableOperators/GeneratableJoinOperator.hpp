@@ -55,7 +55,8 @@ class GeneratableJoinOperator : public JoinLogicalOperatorNode, public Generatab
     const std::string toString() const override;
 
   private:
-    explicit GeneratableJoinOperator(SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
+    explicit GeneratableJoinOperator(SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema,
+                                     Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
 
   private:
     Join::LogicalJoinDefinitionPtr joinDefinition;

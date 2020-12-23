@@ -18,8 +18,8 @@
 #define NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
 
 #include <cstdint>
-#include <string.h>
 #include <memory>
+#include <string.h>
 
 namespace NES {
 
