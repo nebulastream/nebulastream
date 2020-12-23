@@ -47,11 +47,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         }
         //Will return a Z3 expression equivalent to: streamName = <logical stream name>
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
+        std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
+        auto columns = updateQuerySignatureColumns(context, operatorNode->getOutputSchema(), {});
         auto var = context->constant(context->str_symbol("streamName"), context->string_sort());
-        auto val = context->string_val(sourceOperator->getSourceDescriptor()->getStreamName());
+        auto val = context->string_val(streamName);
         //Create an equality expression for example: streamName == "<logical stream name>"
         auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, var, val)));
-        auto columns = updateQuerySignatureColumns(context, operatorNode->getOutputSchema(), {});
         return QuerySignature::create(conditions, columns, {});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         if (childrenQuerySignatures.empty()) {

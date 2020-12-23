@@ -282,7 +282,7 @@ target_link_libraries(global-execution-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-execution-plan-tests COMMAND global-execution-plan-tests)
 
 ### Z3 Validation Test ###
-add_executable(z3-validation-tests "UnitTests/Query/Z3ValidationTest.cpp")
+add_executable(z3-validation-tests "UnitTests/Z3ValidationTest.cpp")
 target_link_libraries(z3-validation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME z3-validation-tests COMMAND z3-validation-tests)
 
