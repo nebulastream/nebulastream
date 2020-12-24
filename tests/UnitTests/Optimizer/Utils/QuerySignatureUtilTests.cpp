@@ -63,18 +63,20 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     predicate->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
-    //Create Filtersr
-
+    //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -93,17 +95,20 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -120,17 +125,20 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     predicate1->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -149,17 +157,20 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -178,17 +189,20 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -207,17 +221,20 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -236,16 +253,19 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -261,17 +281,20 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     expression->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -284,22 +307,23 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
-    expression1->inferStamp(schema);
     FieldAssignmentExpressionNodePtr expression2 = Attribute("id") = 40;
-    expression2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -312,19 +336,19 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("id") = 40;
-    expression1->inferStamp(schema);
     FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = Attribute("id") + Attribute("value");
-    expression2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create map
     LogicalOperatorNodePtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator11->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator12->addChild(logicalOperator11);
+    logicalOperator12->inferSchema();
     logicalOperator12->inferSignature(context);
     auto sig1 = logicalOperator12->getSignature();
 
@@ -332,6 +356,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     logicalOperator21->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator22->addChild(logicalOperator21);
+    logicalOperator22->inferSchema();
     logicalOperator22->inferSignature(context);
     auto sig2 = logicalOperator22->getSignature();
 
@@ -349,14 +374,16 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     expression2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create map
     LogicalOperatorNodePtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator11->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator12->addChild(logicalOperator11);
+    logicalOperator12->inferSchema();
     logicalOperator12->inferSignature(context);
     auto sig1 = logicalOperator12->getSignature();
 
@@ -364,6 +391,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     logicalOperator21->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator22->addChild(logicalOperator21);
+    logicalOperator22->inferSchema();
     logicalOperator22->inferSignature(context);
     auto sig2 = logicalOperator22->getSignature();
 
@@ -381,17 +409,20 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     expression2->inferStamp(schema);
 
     //Create Source
-    LogicalOperatorNodePtr sourceOperator =
-        LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    descriptor->setSchema(schema);
+    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator1->addChild(sourceOperator);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator2->addChild(sourceOperator);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -404,13 +435,16 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameStreamName) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
     auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor->setSchema(schema);
 
     //Create source operator
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 
@@ -423,14 +457,18 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
     auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck");
+    sourceDescriptor2->setSchema(schema);
 
     //Create source
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    logicalOperator1->inferSchema();
     logicalOperator1->inferSignature(context);
     auto sig1 = logicalOperator1->getSignature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    logicalOperator2->inferSchema();
     logicalOperator2->inferSignature(context);
     auto sig2 = logicalOperator2->getSignature();
 

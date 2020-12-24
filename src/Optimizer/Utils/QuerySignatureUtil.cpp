@@ -58,7 +58,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
             auto derivedAttributeName = streamName + "." + attributeName;
             attributeMap[attributeName] = {derivedAttributeName};
             auto column = DataTypeToZ3ExprUtil::createForField(derivedAttributeName, field->getDataType(), context)->getExpr();
-            columns[attributeName] = column;
+            columns[derivedAttributeName] = column;
         }
 
         //Create an equality expression for example: streamName == "<logical stream name>"
@@ -390,7 +390,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
             auto rhsOperandExprName = rhsOperandExpr.to_string();
             auto derivedRHSOperandName = source + "." + rhsOperandExprName;
 
-            if (columns.find(derivedRHSOperandName) != columns.end()) {
+            if (columns.find(derivedRHSOperandName) == columns.end()) {
                 //TODO: open issue for this
                 NES_THROW_RUNTIME_ERROR("We can't assign attribute " + derivedRHSOperandName
                                         + " that doesn't exists in the source " + source);
