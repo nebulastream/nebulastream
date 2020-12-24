@@ -42,19 +42,19 @@ typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
  *      For a logical stream "cars" with schema "Id, Color, Speed".
  *
  *  1.) Given a query Q1: Query::from("cars").map(attr("speed") = 100).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and color=='RED'); columns:(Id, Color, Speed=100); windows:())
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.Speed=100); windows:())
  *
  *  2.) Given a query Q2: Query::from("cars").map(attr("speed") = attr("speed")*100).filter(attr("speed") > 100 ).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and speed*100>100 and color=='RED'); columns:(Id, Color, speed=speed*100); windows:())
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and cars.speed*100>100 and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.speed=speed*100); windows:())
  *
  *  3.) Given a query Q3: Query::from("cars").filter(attr("speed") > 100 ).map(attr("speed") = attr("speed")*100).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and speed>100 and color=='RED'); columns:(Id, Color, speed=speed*100); windows:())
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and cars.speed>100 and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.speed=speed*100); windows:())
  *
  *  4.) Given a query Q4: Query::from("cars").filter(attr("color") == 'RED').map(attr("speed") = attr("speed")*100).filter(attr("speed") +100 > 200 ).sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and color=='RED' and (speed*100)+100>200); columns:(Id, Color, speed=speed*100); windows:())
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and cars.color=='RED' and (cars.speed*100)+100>200); columns:(cars.Id, cars.Color, cars.speed=cars.speed*100); windows:())
  *
  *  5.) Given a query Q5: Query::from("cars").windowByKey("Color",SlidingWindow::of(EventTime("ts")),Seconds(10),Seconds(10)),Count().as("total")).sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars"); columns:(end, start, Color, Count()); windows:("type": window-key = 'type' and
+ *      The query plan signature (QPSig) is given by : (conditions:(stream="cars"); columns:(end, start, cars.Color, Count()); windows:("type": window-key = 'type' and
  *      window-time-key = 'ts' and window-time-size = 10000 and window-time-slide = 10000))
  */
 class QuerySignature {
@@ -64,10 +64,14 @@ class QuerySignature {
      * @param conditions: the predicates involved in the query
      * @param columns: the predicates involving columns to be extracted
      * @param windowsExpressions: the map containing window expressions
+     * @param attributeMap : the mapping between original to resolved attribute names
+     * @param sources: the set of sources used for building the query
      * @return Shared instance of the query plan signature.
      */
-    static QuerySignaturePtr create(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
-                                    std::map<std::string, z3::ExprPtr> windowsExpressions);
+    static QuerySignaturePtr create(z3::ExprPtr conditions, std::map<std::string, z3::ExprPtr> columns,
+                                    std::map<std::string, z3::ExprPtr> windowsExpressions,
+                                    std::map<std::string, std::vector<std::string>> attributeMap,
+                                    std::vector<std::string> sources);
 
     /**
      * @brief Get the conditions
@@ -79,13 +83,25 @@ class QuerySignature {
      * @brief Get the column predicates
      * @return map of column name to list of predicates
      */
-    std::map<std::string, std::vector<z3::ExprPtr>> getColumns();
+    std::map<std::string, z3::ExprPtr> getColumns();
 
     /**
      * @brief Get the window definitions
      * @return map of window definitions
      */
-    std::map<std::string, z3::ExprPtr>& getWindowsExpressions();
+    std::map<std::string, z3::ExprPtr> getWindowsExpressions();
+
+    /**
+     * @brief Get the sources that are used for computing the signature
+     * @return vector of sources
+     */
+    std::vector<std::string> getSources();
+
+    /**
+     * @brief get the map containing key as original attribute and value as a vector of resolved attributes
+     * @return original attribute to resolved attributes map
+     */
+    std::map<std::string, std::vector<std::string>> getAttributeMap();
 
     /**
      * @brief Validate if this signature is equal to input signature
@@ -95,11 +111,15 @@ class QuerySignature {
     bool isEqual(QuerySignaturePtr other);
 
   private:
-    QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
-                   std::map<std::string, z3::ExprPtr> windowsExpressions);
+    QuerySignature(z3::ExprPtr conditions, std::map<std::string, z3::ExprPtr> columns,
+                   std::map<std::string, z3::ExprPtr> windowsExpressions,
+                   std::map<std::string, std::vector<std::string>> attributeMap, std::vector<std::string> sources);
+
     z3::ExprPtr conditions;
-    std::map<std::string, std::vector<z3::ExprPtr>> columns;
+    std::map<std::string, z3::ExprPtr> columns;
     std::map<std::string, z3::ExprPtr> windowsExpressions;
+    std::map<std::string, std::vector<std::string>> attributeMap;
+    std::vector<std::string> sources;
 };
 }// namespace NES::Optimizer
 

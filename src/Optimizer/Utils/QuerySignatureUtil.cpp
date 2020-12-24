@@ -53,7 +53,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         auto val = context->string_val(streamName);
         //Create an equality expression for example: streamName == "<logical stream name>"
         auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, var, val)));
-        return QuerySignature::create(conditions, columns, {});
+        return QuerySignature::create(conditions, columns, {}, {streamName});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         if (childrenQuerySignatures.empty()) {
             NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Sink operator can't have empty children set : "
@@ -114,6 +114,7 @@ QuerySignaturePtr QuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr
     z3::expr_vector allConditions(*context);
     std::map<std::string, std::vector<z3::ExprPtr>> allColumns;
     std::map<std::string, z3::ExprPtr> allWindowExpressions;
+    std::vector<std::string> sources;
 
     //Iterate over all children query signatures for computing the column values
     for (auto& subQuerySignature : childrenQuerySignatures) {
@@ -147,11 +148,15 @@ QuerySignaturePtr QuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr
 
         //Add condition to the array
         allConditions.push_back(*subQuerySignature->getConditions());
+
+        //Add sources
+        auto subQuerySources = subQuerySignature->getSources();
+        sources.insert(sources.end(), subQuerySources.begin(), subQuerySources.end());
     }
 
     //Create a CNF using all conditions from children signatures
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
-    return QuerySignature::create(conditions, allColumns, allWindowExpressions);
+    return QuerySignature::create(conditions, allColumns, allWindowExpressions, sources);
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextPtr context,
@@ -261,7 +266,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
     columns[asFieldName] = {std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*onExpression)))};
 
     columns = updateQuerySignatureColumns(context, windowOperator->getOutputSchema(), columns);
-    return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), columns, windowExpressions);
+    return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), columns, windowExpressions,
+                                  childrenQuerySignatures[0]->getSources());
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr context,
@@ -298,9 +304,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
     std::string fieldName = mapOperator->getMapExpression()->getField()->getFieldName();
     columns[fieldName] = allColExprForMap;
 
-    //Fetch child cond
     return QuerySignature::create(childrenQuerySignatures[0]->getConditions(), columns,
-                                  childrenQuerySignatures[0]->getWindowsExpressions());
+                                  childrenQuerySignatures[0]->getWindowsExpressions(), childrenQuerySignatures[0]->getSources());
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextPtr context,
@@ -344,7 +349,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
     auto childrenConditions = childrenQuerySignatures[0]->getConditions();
     Z3_ast array[] = {filterConditions, *childrenConditions};
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
-    return QuerySignature::create(conditions, subQueryCols, childrenQuerySignatures[0]->getWindowsExpressions());
+    return QuerySignature::create(conditions, subQueryCols, childrenQuerySignatures[0]->getWindowsExpressions(),
+                                  childrenQuerySignatures[0]->getSources());
 }
 
 std::map<std::string, std::vector<z3::ExprPtr>>
