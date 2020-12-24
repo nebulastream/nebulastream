@@ -86,8 +86,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
         return createQuerySignatureForFilter(context, childrenQuerySignatures[0], filterOperator);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        //TODO: Will be done in issue #1272
-        NES_NOT_IMPLEMENTED();
+        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() == 1) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can't have empty or only one children : "
+                                    + operatorNode->toString());
+        }
+
+        //Will return a z3 expression computed by CNF of children signatures
+        return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         //We do not expect a broadcast operator to have no or more than 1 children
         if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {

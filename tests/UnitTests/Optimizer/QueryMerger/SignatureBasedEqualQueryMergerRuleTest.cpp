@@ -60,6 +60,7 @@ class SignatureBasedEqualQueryMergerRuleTest : public testing::Test {
                      ->addField("value1", BasicType::UINT64);
         streamCatalog = std::make_shared<StreamCatalog>();
         streamCatalog->addLogicalStream("car", schema);
+        streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);
     }
 
@@ -154,7 +155,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with multiple same source
  */
- //TODO: Speak to someone about it .... if you see this during review please remind me
+//TODO: Speak to someone about it .... if you see this during review please remind me
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingEqualQueriesWithMultipleSameSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -310,11 +311,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSo
     }
 }
 
-//FIXME: as part of issue #1272
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with merge operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperators) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
@@ -381,11 +381,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     }
 }
 
-//FIXME: as part of issue #1272
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with different order of merge operator children
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorChildrenOrder) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
@@ -455,11 +454,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     }
 }
 
-//FIXME: as part of issue #1272
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with merge operators but different children
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
