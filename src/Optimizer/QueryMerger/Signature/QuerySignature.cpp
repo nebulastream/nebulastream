@@ -69,17 +69,10 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
         }
         //For each column expression of the column in other signature we try to create a DNF using
         // each column expression of the same column in this signature.
-        auto otherColumnExpressions = otherColumns[columnEntry.first];
-        for (auto& otherColumnExpression : otherColumnExpressions) {
-            //Create DNF for the other column expression
-            z3::expr_vector columnEqualityConditions(context);
-            for (auto& columnExpression : columnEntry.second) {
-                columnEqualityConditions.push_back(
-                    to_expr(context, Z3_mk_eq(context, *otherColumnExpression, *columnExpression)));
-            }
-            //Add the DNF to all conditions
-            allConditions.push_back(z3::mk_or(columnEqualityConditions));
-        }
+        auto otherColumnExpression = otherColumns[columnEntry.first];
+        auto columnExpression = columnEntry.second;
+
+        allConditions.push_back(to_expr(context, Z3_mk_eq(context, *otherColumnExpression, *columnExpression)));
     }
 
     //Check the number of window expressions extracted from both queries

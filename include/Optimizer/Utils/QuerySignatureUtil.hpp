@@ -81,34 +81,31 @@ class QuerySignatureUtil {
     /**
      * @brief Compute query signature for Map operator
      * @param context: z3 context
-     * @param childrenQuerySignatures: signatures of immediate children
+     * @param childQuerySignature: signatures of immediate child
      * @param mapOperator: the map operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForMap(z3::ContextPtr context,
-                                                        std::vector<QuerySignaturePtr> childrenQuerySignatures,
+    static QuerySignaturePtr createQuerySignatureForMap(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
                                                         MapLogicalOperatorNodePtr mapOperator);
 
     /**
      * @brief Compute query signature for Filter operator
      * @param context: z3 context
-     * @param childrenQuerySignatures: signatures of immediate children
+     * @param childQuerySignature: signatures of immediate child
      * @param filterOperator: the Filter operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForFilter(z3::ContextPtr context,
-                                                           std::vector<QuerySignaturePtr> childrenQuerySignatures,
+    static QuerySignaturePtr createQuerySignatureForFilter(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
                                                            FilterLogicalOperatorNodePtr filterOperator);
 
     /**
      * @brief Compute query signature for window operator
      * @param context: z3 context
-     * @param childrenQuerySignatures: signatures of immediate children
+     * @param childQuerySignature: signatures of immediate children
      * @param windowOperator: the window operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForWindow(z3::ContextPtr context,
-                                                           std::vector<QuerySignaturePtr> childrenQuerySignatures,
+    static QuerySignaturePtr createQuerySignatureForWindow(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
                                                            WindowLogicalOperatorNodePtr windowOperator);
 
     /**
