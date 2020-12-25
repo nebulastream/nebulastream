@@ -351,7 +351,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
                                                                  MapLogicalOperatorNodePtr mapOperator) {
 
-    z3::ExprPtr expr = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context)->getExpr();
+    auto exprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context);
+    auto expr = exprAndFieldMap->getExpr();
+    auto rhsOperandFieldMap = exprAndFieldMap->getFieldMap();
 
     //Fetch the signature of only children and get the column values
     auto columns = childQuerySignature->getColumns();
@@ -390,9 +392,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
         }
         z3::ExprPtr exprCopy = expr;
 
-        for (unsigned i = 0; i < exprCopy->num_args(); i++) {
-            const auto& rhsOperandExpr = exprCopy->arg(i);
-            auto rhsOperandExprName = rhsOperandExpr.to_string();
+        for (auto [rhsOperandExprName, rhsOperandExpr ] : rhsOperandFieldMap) {
+
             auto derivedRHSOperandName = source + "." + rhsOperandExprName;
 
             if (columns.find(derivedRHSOperandName) == columns.end()) {
@@ -405,7 +406,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
 
             //Change from
             z3::expr_vector from(*context);
-            from.push_back(rhsOperandExpr);
+            from.push_back(*rhsOperandExpr);
 
             //Change to
             z3::expr_vector to(*context);
