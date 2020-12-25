@@ -390,33 +390,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
             // this attribute doesn't exists in the stream source and hence should not be created
             continue;
         }
-        z3::ExprPtr exprCopy = expr;
 
-        for (auto [rhsOperandExprName, rhsOperandExpr ] : rhsOperandFieldMap) {
-
-            auto derivedRHSOperandName = source + "." + rhsOperandExprName;
-
-            if (columns.find(derivedRHSOperandName) == columns.end()) {
-                //TODO: open issue for this
-                NES_THROW_RUNTIME_ERROR("We can't assign attribute " + derivedRHSOperandName
-                                        + " that doesn't exists in the source " + source);
-            }
-
-            auto derivedRHSOperandExpr = columns[derivedRHSOperandName];
-
-            //Change from
-            z3::expr_vector from(*context);
-            from.push_back(*rhsOperandExpr);
-
-            //Change to
-            z3::expr_vector to(*context);
-            to.push_back(*derivedRHSOperandExpr);
-
-            //Perform replacement
-            exprCopy = std::make_shared<z3::expr>(exprCopy->substitute(from, to));
-        }
-
-        columns[derivedAttributeName] = exprCopy;
+        z3::ExprPtr updatedExpr = substituteIntoInputExpression(context, expr, rhsOperandFieldMap, columns, source);
+        columns[derivedAttributeName] = updatedExpr;
     }
 
     //Prepare all combinations of col expression for the given map by substituting the previous col values in the assignment expression
@@ -441,29 +417,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
 
     z3::expr_vector filterExpressions(*context);
     for (auto source : sources) {
-
-        auto exprCopy = filterExpr;
-
-        for (auto [operandName, operandExpr] : filterFieldMap) {
-            auto derivedOperandName = source + "." + operandName;
-            if (columns.find(derivedOperandName) == columns.end()) {
-                NES_THROW_RUNTIME_ERROR("Can find derived attribute " + derivedOperandName + " for the source " + source);
-            }
-            auto derivedOperandExpression = columns[derivedOperandName];
-
-            //Change from
-            z3::expr_vector from(*context);
-            from.push_back(*operandExpr);
-
-            //Change to
-            z3::expr_vector to(*context);
-            to.push_back(*derivedOperandExpression);
-
-            //Perform replacement
-            exprCopy = std::make_shared<z3::expr>(exprCopy->substitute(from, to));
-        }
-
-        filterExpressions.push_back(*exprCopy);
+        auto updatedExpression = substituteIntoInputExpression(context, filterExpr, filterFieldMap, columns, source);
+        filterExpressions.push_back(*updatedExpression);
     }
 
     //Compute a DNF condition for all different conditions identified by substituting the col values
@@ -475,6 +430,37 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
     return QuerySignature::create(conditions, columns, childQuerySignature->getWindowsExpressions(),
                                   childQuerySignature->getAttributeMap(), sources);
+}
+
+z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr& context, const z3::ExprPtr& inputExpr,
+                                                              std::map<std::string, z3::ExprPtr>& operandFieldMap,
+                                                              std::map<std::string, z3::ExprPtr>& columns,
+                                                              const std::string& source) {
+    z3::ExprPtr updatedExpr = inputExpr;
+    for (auto [operandExprName, operandExpr] : operandFieldMap) {
+
+        auto derivedOperandName = source + "." + operandExprName;
+
+        if (columns.find(derivedOperandName) == columns.end()) {
+            //TODO: open issue for this
+            NES_THROW_RUNTIME_ERROR("We can't assign attribute " + derivedOperandName + " that doesn't exists in the source "
+                                    + source);
+        }
+
+        auto derivedOperandExpr = columns[derivedOperandName];
+
+        //Change from
+        z3::expr_vector from(*context);
+        from.push_back(*operandExpr);
+
+        //Change to
+        z3::expr_vector to(*context);
+        to.push_back(*derivedOperandExpr);
+
+        //Perform replacement
+        updatedExpr = std::make_shared<z3::expr>(updatedExpr->substitute(from, to));
+    }
+    return updatedExpr;
 }
 
 std::map<std::string, std::vector<z3::ExprPtr>>

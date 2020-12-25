@@ -121,6 +121,20 @@ class QuerySignatureUtil {
     static std::map<std::string, std::vector<z3::ExprPtr>>
     updateQuerySignatureColumns(z3::ContextPtr context, SchemaPtr outputSchema,
                                 std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap);
+
+    /**
+     * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
+     * operators and stored in column map of the child operator
+     * @param context: the z3 context
+     * @param inputExpr: the input expression
+     * @param operandFieldMap: the operand field map containing list of operands inside the input expression
+     * @param columns: the column map containing operand values used for substitution
+     * @param source: the source name used for deriving the operand name
+     * @return the updated expression with substituted operands
+     */
+    static z3::ExprPtr substituteIntoInputExpression(const z3::ContextPtr& context, const z3::ExprPtr& inputExpr,
+                                                     std::map<std::string, z3::ExprPtr>& operandFieldMap,
+                                                     std::map<std::string, z3::ExprPtr>& columns, const std::string& source);
 };
 }// namespace NES::Optimizer
 
