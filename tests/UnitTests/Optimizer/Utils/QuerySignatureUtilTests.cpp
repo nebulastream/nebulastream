@@ -476,6 +476,96 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
     ASSERT_FALSE(sig1->isEqual(sig2));
 }
 
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+
+    //Define Sources
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor2->setSchema(schema);
+
+    //Create projection operator
+    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
+    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
+
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    projectionOperator1->addChild(logicalOperator1);
+    projectionOperator1->inferSchema();
+    projectionOperator1->inferSignature(context);
+    auto sig1 = projectionOperator1->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    projectionOperator2->addChild(logicalOperator2);
+    projectionOperator2->inferSchema();
+    projectionOperator2->inferSignature(context);
+    auto sig2 = projectionOperator2->getSignature();
+
+    //Assert
+    ASSERT_TRUE(sig1->isEqual(sig2));
+}
+
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsButDifferentSources) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+
+    //Define Sources
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck");
+    sourceDescriptor2->setSchema(schema);
+
+    //Create projection operator
+    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
+    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
+
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    projectionOperator1->addChild(logicalOperator1);
+    projectionOperator1->inferSchema();
+    projectionOperator1->inferSignature(context);
+    auto sig1 = projectionOperator1->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    projectionOperator2->addChild(logicalOperator2);
+    projectionOperator2->inferSchema();
+    projectionOperator2->inferSignature(context);
+    auto sig2 = projectionOperator2->getSignature();
+
+    //Assert
+    ASSERT_FALSE(sig1->isEqual(sig2));
+}
+
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperators) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+
+    //Define Sources
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor2->setSchema(schema);
+
+    //Create projection operator
+    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
+    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator({Attribute("id")});
+
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    projectionOperator1->addChild(logicalOperator1);
+    projectionOperator1->inferSchema();
+    projectionOperator1->inferSignature(context);
+    auto sig1 = projectionOperator1->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    projectionOperator2->addChild(logicalOperator2);
+    projectionOperator2->inferSchema();
+    projectionOperator2->inferSignature(context);
+    auto sig2 = projectionOperator2->getSignature();
+
+    //Assert
+    ASSERT_FALSE(sig1->isEqual(sig2));
+}
+
 //FIXME: fix this test in the next issue
 //TEST_F(OperatorToQuerySignatureUtilTests, testEqualQueries) {
 //    // Prepare
