@@ -51,10 +51,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can't have empty or only one children : "
                                 + operatorNode->toString());
     } else if (operatorNode->isUnaryOperator() && !operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        if ((operatorNode->instanceOf<SourceLogicalOperatorNode>() || operatorNode->instanceOf<SinkLogicalOperatorNode>())
-            && !childrenQuerySignatures.empty()) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source or Sink operator can't have children : "
-                                    + operatorNode->toString());
+        if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !childrenQuerySignatures.empty()) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
+        } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>() && childrenQuerySignatures.empty()) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have empty children set : " + operatorNode->toString());
         } else if (!(operatorNode->instanceOf<SourceLogicalOperatorNode>() || operatorNode->instanceOf<SinkLogicalOperatorNode>())
                    && ((childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1))) {
             NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can't have empty or more than one children : "
