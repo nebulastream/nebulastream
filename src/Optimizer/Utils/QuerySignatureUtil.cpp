@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -40,11 +41,33 @@ namespace NES::Optimizer {
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNodePtr operatorNode,
                                                                       std::vector<QuerySignaturePtr> childrenQuerySignatures,
                                                                       z3::ContextPtr context) {
+
     NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
-    if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        if (!childrenQuerySignatures.empty()) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source operator can't have children : " + operatorNode->toString());
+
+    //Perform validation
+    //FIXME: @Steffen why did you defined merge operator as a unary operator? This is not causing problem here but will also cause problem during placement.
+    if (operatorNode->instanceOf<MergeLogicalOperatorNode>()
+        && ((childrenQuerySignatures.empty() || childrenQuerySignatures.size() == 1))) {
+        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can't have empty or only one children : "
+                                + operatorNode->toString());
+    } else if (operatorNode->isUnaryOperator() && !operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+        if ((operatorNode->instanceOf<SourceLogicalOperatorNode>() || operatorNode->instanceOf<SinkLogicalOperatorNode>())
+            && !childrenQuerySignatures.empty()) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source or Sink operator can't have children : "
+                                    + operatorNode->toString());
+        } else if (!(operatorNode->instanceOf<SourceLogicalOperatorNode>() || operatorNode->instanceOf<SinkLogicalOperatorNode>())
+                   && ((childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1))) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can't have empty or more than one children : "
+                                    + operatorNode->toString());
         }
+    } else if (operatorNode->isBinaryOperator() && (childrenQuerySignatures.empty() || childrenQuerySignatures.size() == 1)) {
+        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Binary operator can't have empty or only one children : "
+                                + operatorNode->toString());
+    }
+
+    SchemaPtr outputSchema = operatorNode->getOutputSchema();
+
+    if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         //Will return a Z3 expression equivalent to: streamName = <logical stream name>
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
         std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
@@ -52,7 +75,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         //Compute attribute mapping and columns based on output schema for source operator
         std::map<std::string, std::vector<std::string>> attributeMap;
         std::map<std::string, z3::ExprPtr> columns;
-        const SchemaPtr outputSchema = operatorNode->getOutputSchema();
         for (auto& field : outputSchema->fields) {
             auto attributeName = field->name;
             auto derivedAttributeName = streamName + "." + attributeName;
@@ -69,56 +91,54 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         //Compute signature
         return QuerySignature::create(conditions, columns, {}, attributeMap, {streamName});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        if (childrenQuerySignatures.empty()) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Sink operator can't have empty children set : "
-                                    + operatorNode->toString());
-        }
-        //Will return a z3 expression computed by CNF of children signatures
+        NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
         return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-        //We do not expect a filter to have no or more than 1 children
-        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Filter operator can't have empty or more than one children : "
-                                    + operatorNode->toString());
-        }
 
-        NES_TRACE("QuerySignatureUtil: Computing Z3Expression and filed map for filter predicate");
+        NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
         return createQuerySignatureForFilter(context, childrenQuerySignatures[0], filterOperator);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() == 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can't have empty or only one children : "
-                                    + operatorNode->toString());
-        }
-
-        //Will return a z3 expression computed by CNF of children signatures
+        NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
         return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
-        //We do not expect a broadcast operator to have no or more than 1 children
-        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Broadcast operator can't have empty or more than one children : "
-                                    + operatorNode->toString());
-        }
+        NES_TRACE("QuerySignatureUtil: Computing Signature for Broadcast operator");
         return buildFromChildrenSignatures(context, childrenQuerySignatures);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-        //We do not expect a Map operator to have no or more than 1 children
-        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Map operator can't have empty or more than one children : "
-                                    + operatorNode->toString());
-        }
-
-        // compute the expression for only the right side of the assignment operator
+        NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
         return createQuerySignatureForMap(context, childrenQuerySignatures[0], mapOperator);
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-        //We do not expect a window operator to have no or more than 1 children
-        if (childrenQuerySignatures.empty() || childrenQuerySignatures.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Window operator can't have empty or more than one children : "
-                                    + operatorNode->toString());
-        }
         NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
         auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
         return createQuerySignatureForWindow(context, childrenQuerySignatures[0], windowOperator);
+    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
+
+        auto childQuerySignature = childrenQuerySignatures[0];
+        auto sources = childQuerySignature->getSources();
+
+        auto columns = childQuerySignature->getColumns();
+        auto attributeMap = childQuerySignature->getAttributeMap();
+
+        std::map<std::string, z3::ExprPtr> updatedColumns;
+        std::map<std::string, std::vector<std::string>> updatedAttributeMap;
+
+        for (auto source : sources) {
+            for (auto& field : outputSchema->fields) {
+                auto attributeName = field->name;
+                auto derivedAttributeName = source + "." + attributeName;
+                if (columns.find(derivedAttributeName) == columns.end()) {
+                    NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unable to find projected attribute in children column set.");
+                }
+                updatedColumns[derivedAttributeName] = columns[derivedAttributeName];
+                updatedAttributeMap[attributeName] = attributeMap[attributeName];
+                attributeMap[attributeName] = {derivedAttributeName};
+            }
+        }
+        auto conditions = childQuerySignature->getConditions();
+        auto windowExpressions = childQuerySignature->getWindowsExpressions();
+        return QuerySignature::create(conditions, updatedColumns, windowExpressions, updatedAttributeMap, sources);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         //FIXME: as part of the issue 1351
         return childrenQuerySignatures[0];
