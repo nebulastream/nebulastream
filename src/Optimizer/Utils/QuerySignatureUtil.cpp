@@ -482,28 +482,4 @@ z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextP
     }
     return updatedExpr;
 }
-
-std::map<std::string, std::vector<z3::ExprPtr>>
-QuerySignatureUtil::updateQuerySignatureColumns(z3::ContextPtr context, SchemaPtr outputSchema,
-                                                std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap) {
-
-    NES_DEBUG("QuerySignatureUtil: update columns based on output schema");
-    std::map<std::string, std::vector<z3::ExprPtr>> updatedColumnMap;
-
-    //Iterate over all output fields of the schema and check if the expression for the field exists in oldColumnMap
-    // if doesn't exists then create a new one else take the one from old column map
-    auto outputFields = outputSchema->fields;
-    for (auto& outputField : outputFields) {
-        auto fieldName = outputField->name;
-
-        if (oldColumnMap.find(fieldName) != oldColumnMap.end()) {
-            updatedColumnMap[fieldName] = oldColumnMap[fieldName];
-        } else {
-            auto expr = DataTypeToZ3ExprUtil::createForField(fieldName, outputField->getDataType(), context)->getExpr();
-            updatedColumnMap[fieldName] = {expr};
-        }
-    }
-    return updatedColumnMap;
-}
-
 }// namespace NES::Optimizer

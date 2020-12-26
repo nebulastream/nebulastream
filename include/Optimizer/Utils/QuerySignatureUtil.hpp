@@ -109,20 +109,6 @@ class QuerySignatureUtil {
                                                            WindowLogicalOperatorNodePtr windowOperator);
 
     /**
-     * @brief Update the column expressions based on the output schema of the operator. This method will:
-     * 1. remove the columns which are not part of the output schema
-     * 2. will add the columns which are not included in the old Column map
-     * 3. will copy the column expressions from the old column map
-     * @param context: z3 context
-     * @param outputSchema : the output schema
-     * @param oldColumnMap : the old column map
-     * @return map of column name to column expressions based on output schema
-     */
-    static std::map<std::string, std::vector<z3::ExprPtr>>
-    updateQuerySignatureColumns(z3::ContextPtr context, SchemaPtr outputSchema,
-                                std::map<std::string, std::vector<z3::ExprPtr>> oldColumnMap);
-
-    /**
      * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
      * operators and stored in column map of the child operator
      * @param context: the z3 context
