@@ -1439,8 +1439,8 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralTumblingWindow) {
 
     // register physical stream with 4 buffers, each contains 3 tuples (12 tuples in total)
     // window-out-of-order.csv contains 12 rows
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3, 4, "test_stream", "window", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3,
+                                                                4, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -1449,11 +1449,13 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralTumblingWindow) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"window\")"
-        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), Milliseconds()))"
-        ".windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)), Sum(Attribute(\"value\")))"
-        ".sink(FileSinkDescriptor::create(\""+ outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"window\")"
+                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
+                   "Milliseconds()))"
+                   ".windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)), "
+                   "Sum(Attribute(\"value\")))"
+                   ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -1528,19 +1530,21 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedTumblingWindow) {
 
     // register physical stream with 4 buffers, each contains 3 tuples (12 tuples in total)
     // window-out-of-order.csv contains 12 rows
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3, 4, "test_stream", "window", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3,
+                                                                4, "test_stream", "window", false);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"window\")"
-        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), Milliseconds()))"
-        ".windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)), Sum(Attribute(\"value\")))"
-        ".sink(FileSinkDescriptor::create(\""+ outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"window\")"
+                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
+                   "Milliseconds()))"
+                   ".windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)), "
+                   "Sum(Attribute(\"value\")))"
+                   ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -1605,8 +1609,8 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralSlidingWindow) {
 
     // register physical stream with 4 buffers, each contains 3 tuples (12 tuples in total)
     // window-out-of-order.csv contains 12 rows
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3, 4, "test_stream", "window", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3,
+                                                                4, "test_stream", "window", false);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -1617,9 +1621,12 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralSlidingWindow) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query =
         "Query::from(\"window\")"
-        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), Milliseconds()))"
-        ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)), Sum(Attribute(\"value\")))"
-        ".sink(FileSinkDescriptor::create(\""+ outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
+        "Milliseconds()))"
+        ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)), "
+        "Sum(Attribute(\"value\")))"
+        ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -1698,8 +1705,8 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
 
     // register physical stream with 4 buffers, each contains 3 tuples (12 tuples in total)
     // window-out-of-order.csv contains 12 rows
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3, 4, "test_stream", "window", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window-out-of-order.csv", 1, 3,
+                                                                4, "test_stream", "window", false);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
@@ -1707,9 +1714,12 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query =
         "Query::from(\"window\")"
-        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), Milliseconds()))"
-        ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)), Sum(Attribute(\"value\")))"
-        ".sink(FileSinkDescriptor::create(\""+ outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
+        "Milliseconds()))"
+        ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)), "
+        "Sum(Attribute(\"value\")))"
+        ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
