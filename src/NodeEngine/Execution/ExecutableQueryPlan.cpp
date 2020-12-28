@@ -122,6 +122,8 @@ bool ExecutableQueryPlan::start() {
     return true;
 }
 
+void ExecutableQueryPlan::addSink(DataSinkPtr sink) { sinks.push_back(sink); }
+
 uint32_t ExecutableQueryPlan::getNumberOfPipelines() { return pipelines.size(); }
 
 QueryManagerPtr ExecutableQueryPlan::getQueryManager() { return queryManager; }

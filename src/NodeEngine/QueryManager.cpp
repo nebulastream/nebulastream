@@ -20,7 +20,10 @@
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <Sinks/Formats/TextFormat.hpp>
+#include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
@@ -560,7 +563,8 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
 void QueryManager::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
-        case Destroy: {
+        case Destroy:
+        case AddSink: {
             break;
         }
         default: {
@@ -581,6 +585,24 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
             NES_DEBUG("QueryManager: removed running QEP " << qepId);
+            break;
+        }
+        case AddSink: {
+            std::unique_lock lock(queryMutex);
+            auto id = task.getParentPlanId();
+            auto it = runningQEPs.find(id);
+            std::string filePath = "../nithishsink_tst.csv";
+            SchemaPtr test_schema = Schema::create()
+                                        ->addField("KEY", DataTypeFactory::createInt32())
+                                        ->addField("VALUE", DataTypeFactory::createUInt32());
+            SinkFormatPtr format = std::make_shared<TextFormat>(test_schema, bufferManager);
+            DataSinkPtr sink = std::make_shared<FileSink>(format, filePath, true, id);
+            sink->setup();
+            if (it != runningQEPs.end()) {
+                it->second->addSink(sink);
+                NES_DEBUG("Meh");
+            }
+            NES_DEBUG("Hello its me");
             break;
         }
         default: {
