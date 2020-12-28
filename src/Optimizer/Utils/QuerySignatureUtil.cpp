@@ -45,7 +45,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
     NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
 
     //Perform validation
-    //FIXME: @Steffen why did you defined merge operator as a unary operator? This is not causing problem here but will also cause problem during placement.
+    //FIXME: @Steffen why did you defined merge operator as a unary operator? This is not only causing problem here but will also cause problem during placement.
+    // 1410 is opened to resolve this issue.
     if (operatorNode->instanceOf<MergeLogicalOperatorNode>()
         && ((childrenQuerySignatures.empty() || childrenQuerySignatures.size() == 1))) {
         NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can't have empty or only one children : "
@@ -210,7 +211,7 @@ QuerySignaturePtr QuerySignatureUtil::buildFromChildrenSignatures(z3::ContextPtr
             for (auto [windowKey, windowExpression] : childSignature->getWindowsExpressions()) {
                 if (windowExpressions.find(windowKey) != windowExpressions.end()) {
                     //FIXME: when we receive more than one window expressions for same window in issue #1272
-                    NES_THROW_RUNTIME_ERROR("Should not occur");
+                    NES_NOT_IMPLEMENTED();
                 } else {
                     windowExpressions[windowKey] = windowExpression;
                 }
@@ -294,6 +295,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
         windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
     } else {
         //TODO: as part of #1377
+        NES_NOT_IMPLEMENTED();
     }
 
     //FIXME: change the logic here as part of #1377
@@ -393,9 +395,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
 
     //Substitute rhs operands with actual values computed previously
     for (auto source : sources) {
-        NES_INFO(expr->to_string());
+
+        //Compute the derived attribute name
         auto derivedAttributeName = source + "." + fieldName;
 
+        //Add the derived attribute to the attribute map
         if (isNewAttribute) {
             //Add the newly derived attribute to the attribute map
             if (attributeMap.find(fieldName) == attributeMap.end()) {
@@ -457,23 +461,23 @@ z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextP
                                                               std::map<std::string, z3::ExprPtr>& columns,
                                                               const std::string& source) {
     z3::ExprPtr updatedExpr = inputExpr;
+    //Loop over the Operand Fields contained in the input expression
     for (auto [operandExprName, operandExpr] : operandFieldMap) {
 
+        //Compute the derived operand name
         auto derivedOperandName = source + "." + operandExprName;
-
         if (columns.find(derivedOperandName) == columns.end()) {
-            //TODO: open issue for this
-            NES_THROW_RUNTIME_ERROR("We can't assign attribute " + derivedOperandName + " that doesn't exists in the source "
-                                    + source);
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + derivedOperandName
+                                    + " that doesn't exists in the source " + source);
         }
-
-        auto derivedOperandExpr = columns[derivedOperandName];
 
         //Change from
         z3::expr_vector from(*context);
         from.push_back(*operandExpr);
 
         //Change to
+        //Fetch the modified operand expression to be substituted
+        auto derivedOperandExpr = columns[derivedOperandName];
         z3::expr_vector to(*context);
         to.push_back(*derivedOperandExpr);
 
