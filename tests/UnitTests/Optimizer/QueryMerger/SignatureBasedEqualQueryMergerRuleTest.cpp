@@ -155,7 +155,9 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with multiple same source
  */
-//TODO: Speak to someone about it .... if you see this during review please remind me
+//FIXME: This required 1402 and 1378 to be fixed
+// We need to do the attribute name resolution just as done in SQL systems to identify or distinguish attribute names
+// coming from same streams (in case of a self join)
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingEqualQueriesWithMultipleSameSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
