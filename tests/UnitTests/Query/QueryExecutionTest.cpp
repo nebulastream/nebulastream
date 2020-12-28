@@ -53,6 +53,10 @@
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Sources/YSBSource.hpp>
 
+#include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/ReconfigurationTask.hpp>
+#include <NodeEngine/ReconfigurationType.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
@@ -453,6 +457,57 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     auto& resultBuffer = testSink->get(0);
 
     EXPECT_EQ(resultBuffer.getWatermark(), 15);
+    nodeEngine->stop();
+}
+
+TEST_F(QueryExecutionTest, playAround) {
+    uint64_t millisecondOfallowedLateness = 1; /*second of allowedLateness*/
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
+    // create a window source
+    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 10,
+                                             /*frequency*/ 1, /*varyWatermark*/ true);
+
+    auto query = TestQuery::from(windowSource->getSchema());
+
+    // add a watermark assigner operator with allowedLateness of 1 millisecond
+    query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(
+        Attribute("ts"), Milliseconds(millisecondOfallowedLateness), Milliseconds()));
+
+    // add a sink operator
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowSource->getSchema(), nodeEngine->getBufferManager());
+    query.sink(DummySink::create());
+
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    auto plan = GeneratedQueryExecutionPlanBuilder::create()
+                    .addSink(testSink)
+                    .addSource(windowSource)
+                    .addOperatorQueryPlan(generatableOperators)
+                    .setCompiler(nodeEngine->getCompiler())
+                    .setBufferManager(nodeEngine->getBufferManager())
+                    .setQueryManager(nodeEngine->getQueryManager())
+                    .setQueryId(1)
+                    .setQuerySubPlanId(1)
+                    .build();
+
+    nodeEngine->registerQueryInNodeEngine(plan);
+    nodeEngine->startQuery(1);
+
+    // wait till all buffers have been produced
+    testSink->completed.get_future().get();
+
+    auto& resultBuffer = testSink->get(0);
+
+    nodeEngine->getQueryManager()->addReconfigurationTask(
+        plan->getQuerySubPlanId(), NES::NodeEngine::ReconfigurationTask(plan->getQuerySubPlanId(), NES::NodeEngine::AddSink, &(*nodeEngine->getQueryManager())), true);
+
+    // 14 because we start at 5 (inclusive) and create 10 records
+    EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
+    sleep(6000);
     nodeEngine->stop();
 }
 

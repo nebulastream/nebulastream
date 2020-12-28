@@ -107,6 +107,11 @@ class ExecutableQueryPlan {
      */
     QuerySubPlanId getQuerySubPlanId() const;
 
+    /**
+     *
+     */
+     void addSink(DataSinkPtr sink);
+
   protected:
     const QueryId queryId;
     const QuerySubPlanId querySubPlanId;

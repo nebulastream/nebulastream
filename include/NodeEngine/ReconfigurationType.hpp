@@ -25,6 +25,8 @@ enum ReconfigurationType : uint8_t {
     Initialize,
     /// use Destroy for reconfiguration tasks that cleans up a reconfigurable instance
     Destroy,
+    /// use AddSink for reconfiguration tasks that adds a new sink to a query plan
+    AddSink,
 };
 }
 
