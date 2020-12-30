@@ -116,5 +116,7 @@ std::string LogicalWindowDefinition::toString() {
     ss << std::endl;
     return ss.str();
 }
+uint64_t LogicalWindowDefinition::getOriginId() const { return originId; }
+void LogicalWindowDefinition::setOriginId(uint64_t originId) { this->originId = originId; }
 
 }// namespace NES::Windowing

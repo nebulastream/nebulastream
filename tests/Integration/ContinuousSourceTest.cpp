@@ -513,7 +513,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     //register physical stream
     PhysicalStreamConfigPtr conf =
         PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
+                                     /**Source Frequency**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
                                      /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
                                      /**Logical Stream Name**/ "testStream", false);
     wrk1->registerPhysicalStream(conf);

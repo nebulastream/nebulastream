@@ -150,6 +150,11 @@ class LogicalWindowDefinition {
     FieldAccessExpressionNodePtr onKey;
     DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges;
+    uint64_t originId;
+
+  public:
+    uint64_t getOriginId() const;
+    void setOriginId(uint64_t originId);
 };
 
 }// namespace NES::Windowing

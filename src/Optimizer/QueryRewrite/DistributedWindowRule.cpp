@@ -115,6 +115,7 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     NES_DEBUG("DistributeWindowRule::apply: created logical window definition for computation operator" << windowDef->toString());
 
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef);
+    windowDef->setOriginId(windowComputationOperator->getId());
 
     //replace logical window op with window computation operator
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString()
@@ -127,7 +128,7 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
     //add merger
     if (windowComputationOperator->getChildren().size()
-        >= CHILD_NODE_THRESHOLD_COMBINER) {//TODO change back to CHILD_NODE_THRESHOLD_COMBINER
+        >= CHILD_NODE_THRESHOLD_COMBINER) {
         auto sliceCombinerWindowAggregation = windowAggregation->copy();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
@@ -144,10 +145,12 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice merger operator"
                   << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
+        windowDef->setOriginId(sliceOp->getId());
         windowComputationOperator->insertBetweenThisAndChildNodes(sliceOp);
         windowChildren = sliceOp->getChildren();
     }
 
+    //adding slicer
     for (auto& child : windowChildren) {
         NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
 
@@ -167,6 +170,7 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         }
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice operator" << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef);
+        windowDef->setOriginId(sliceOp->getId());
         child->insertBetweenThisAndParentNodes(sliceOp);
     }
 }

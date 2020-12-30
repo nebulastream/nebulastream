@@ -338,6 +338,11 @@ add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
 target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})
 add_test(NAME continious-source-test COMMAND continious-source-test)
 
+### HierarchyTest ###
+add_executable(hierarchy-test "Integration/HierarchyTest.cpp")
+target_link_libraries(hierarchy-test nes ${GTEST_LIBRARIES})
+add_test(NAME hierarchy-test COMMAND hierarchy-test)
+
 ### Catalog Remote Tests ###
 add_executable(stream-catalog-remote-test "Integration/StreamCatalogRemoteTest.cpp")
 target_link_libraries(stream-catalog-remote-test nes ${GTEST_LIBRARIES})

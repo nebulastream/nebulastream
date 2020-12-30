@@ -284,7 +284,6 @@ message SerializableOperator{
     uint64 numberOfInputEdges = 5;
     TriggerPolicy triggerPolicy = 6;
     TriggerAction action = 7;
-
   }
 
   /**
