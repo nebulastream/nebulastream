@@ -34,6 +34,9 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
@@ -141,8 +144,56 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         auto windowExpressions = childQuerySignature->getWindowsExpressions();
         return QuerySignature::create(conditions, updatedColumns, windowExpressions, updatedAttributeMap, sources);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-        //FIXME: as part of the issue 1351
-        return childrenQuerySignatures[0];
+
+        auto childQuerySignature = childrenQuerySignatures[0];
+        auto conditions = childQuerySignature->getConditions();
+
+        auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
+        auto watermarkDescriptor = watermarkAssignerOperator->getWatermarkStrategyDescriptor();
+
+        z3::expr watermarkDescriptorConditions(*context);
+        if (watermarkDescriptor->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+
+            auto eventTimeWatermarkStrategy = watermarkDescriptor->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+
+            //Compute equal condition for allowed lateness
+            auto allowedLatenessVar = context->int_const("allowedLateness");
+            auto allowedLateness = eventTimeWatermarkStrategy->getAllowedLateness().getTime();
+            auto allowedLatenessVal = context->int_val(allowedLateness);
+            auto allowedLatenessExpr = to_expr(*context, Z3_mk_eq(*context, allowedLatenessVar, allowedLatenessVal));
+
+            //Compute equality conditions for event time field
+            auto eventTimeFieldVar = context->constant(context->str_symbol("eventTimeField"), context->string_sort());
+            auto eventTimeFieldName =
+                eventTimeWatermarkStrategy->getOnField().getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
+            auto eventTimeFieldVal = context->string_val(eventTimeFieldName);
+            auto eventTimeFieldExpr = to_expr(*context, Z3_mk_eq(*context, eventTimeFieldVar, eventTimeFieldVal));
+
+            //CNF both conditions together to compute the descriptors condition
+            Z3_ast andConditions[] = {allowedLatenessExpr, eventTimeFieldExpr};
+            watermarkDescriptorConditions = to_expr(*context, Z3_mk_and(*context, 2, andConditions));
+
+        } else if (watermarkDescriptor->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
+
+            //Create an equality expression watermarkAssignerType == "IngestionTime"
+            auto var = context->constant(context->str_symbol("watermarkAssignerType"), context->string_sort());
+            auto val = context->constant(context->str_symbol("IngestionTime"), context->string_sort());
+            watermarkDescriptorConditions = to_expr(*context, Z3_mk_eq(*context, var, val));
+        } else {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unrecognized watermark descriptor found.");
+        }
+
+        //CNF the watermark conditions to the original condition
+        Z3_ast andConditions[] = {*conditions, watermarkDescriptorConditions};
+        conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
+
+        //Extract remaining signature attributes from child query signature
+        auto attributeMap = childQuerySignature->getAttributeMap();
+        auto windowExpressions = childQuerySignature->getWindowsExpressions();
+        auto columns = childQuerySignature->getColumns();
+        auto sources = childQuerySignature->getSources();
+
+        return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
 }
