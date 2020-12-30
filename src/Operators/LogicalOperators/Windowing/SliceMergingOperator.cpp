@@ -31,6 +31,7 @@ SliceMergingOperator::SliceMergingOperator(const Windowing::LogicalWindowDefinit
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
     this->windowDefinition->setWindowType(windowDefinition->getWindowType());
     this->windowDefinition->setOnKey(windowDefinition->getOnKey());
+    this->windowDefinition->setOriginId(id);
 }
 
 const std::string SliceMergingOperator::toString() const {

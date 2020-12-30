@@ -71,6 +71,7 @@ class ExecutableCompleteAggregationTriggerAction
         }
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = executionContext->allocateTupleBuffer();
+        tupleBuffer.setOriginId(windowDefinition->getOriginId());
 
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {

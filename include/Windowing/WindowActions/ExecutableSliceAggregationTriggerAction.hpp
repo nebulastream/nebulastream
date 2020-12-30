@@ -74,7 +74,7 @@ class ExecutableSliceAggregationTriggerAction
         }
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = executionContext->allocateTupleBuffer();
-        //tupleBuffer.setOriginId(this->originId);
+        tupleBuffer.setOriginId(windowDefinition->getOriginId());
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             NES_DEBUG("ExecutableSliceAgresultsgregationTriggerAction: " << toString() << " check key=" << it.first
@@ -163,7 +163,7 @@ class ExecutableSliceAggregationTriggerAction
 
                     // request new buffer
                     tupleBuffer = executionContext->allocateTupleBuffer();
-                    //tupleBuffer.setOriginId(this->originId);
+                    tupleBuffer.setOriginId(windowDefinition->getOriginId());
                     currentNumberOfTuples = 0;
                 }
                 store->removeSlicesUntil(currentWatermark);

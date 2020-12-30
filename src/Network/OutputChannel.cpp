@@ -126,9 +126,8 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
         zmqSocket.send(zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer),
                        zmq::send_flags::none);
     if (sentBytesOpt.has_value()) {
-        //NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
-        //                                               << inputBuffer.getNumberOfTuples() << "/"
-        //                                               << inputBuffer.getBufferSize());
+        NES_DEBUG("OutputChannel: Sending buffer with " << inputBuffer.getNumberOfTuples() << "/" << inputBuffer.getBufferSize()
+                                                        << "-" << inputBuffer.getOriginId());
         return true;
     }
     NES_ERROR("OutputChannel: Error sending buffer for " << channelId);

@@ -121,7 +121,6 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
         NES_THROW_RUNTIME_ERROR("No pipelines generated");
     }
     auto queryManager = builder.getQueryManager();
-    auto originId = builder.getQueryManager()->getNodeId();
     std::map<uint32_t, NodeEngine::Execution::ExecutablePipelinePtr> pipelines;
     for (auto it = executableStages.rbegin(), last = executableStages.rend(); it != last; ++it) {
         auto& [stageId, holder] = *it;
@@ -134,14 +133,12 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [childPipelines, originId](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
-                    buffer.setOriginId(originId);
+                [childPipelines](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
                     }
                 },
-                [childPipelines, queryManager, originId](NodeEngine::TupleBuffer& buffer) {
-                    buffer.setOriginId(originId);
+                [childPipelines, queryManager](NodeEngine::TupleBuffer& buffer) {
                     for (auto& childPipeline : childPipelines) {
                         queryManager->addWorkForNextPipeline(buffer, childPipeline);
                     }
@@ -156,8 +153,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
                 builder.getQuerySubPlanId(), builder.getBufferManager(),
-                [sinks, originId](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
-                    buffer.setOriginId(originId);
+                [sinks](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& sink : sinks) {
                         sink->writeData(buffer, workerContext);
                     }
