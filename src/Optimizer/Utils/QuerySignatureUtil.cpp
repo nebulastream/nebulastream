@@ -151,6 +151,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
         auto watermarkDescriptor = watermarkAssignerOperator->getWatermarkStrategyDescriptor();
 
+        //Compute conditions based on watermark descriptor
         z3::expr watermarkDescriptorConditions(*context);
         if (watermarkDescriptor->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
 
