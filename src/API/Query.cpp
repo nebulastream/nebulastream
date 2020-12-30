@@ -208,7 +208,6 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     return *this;
 }
 
-QueryPlanPtr Query::getQueryPlan() { return queryPlan; }
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
 
@@ -216,5 +215,7 @@ Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr wa
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
+
+QueryPlanPtr Query::getQueryPlan() { return queryPlan; }
 
 }// namespace NES
