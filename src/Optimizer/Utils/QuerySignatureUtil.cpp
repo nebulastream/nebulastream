@@ -87,10 +87,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
             columns[derivedAttributeName] = column;
         }
 
-        //Create an equality expression for example: streamName == "<logical stream name>"
-        auto var = context->constant(context->str_symbol("streamName"), context->string_sort());
-        auto val = context->string_val(streamName);
-        auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, var, val)));
+        //Create an equality expression for example: <logical stream name>.streamName == "<logical stream name>"
+        auto streamNameVarName = streamName + ".streamName";
+        auto streamNameVar = context->constant(context->str_symbol(streamNameVarName.c_str()), context->string_sort());
+        auto streamNameVal = context->string_val(streamName);
+        auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, streamNameVar, streamNameVal)));
 
         //Compute signature
         return QuerySignature::create(conditions, columns, {}, attributeMap, {streamName});
@@ -148,6 +149,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         auto childQuerySignature = childrenQuerySignatures[0];
         auto conditions = childQuerySignature->getConditions();
 
+        //Find the source name
+        auto sources = childQuerySignature->getSources();
+        if (sources.size() > 1) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Watermark assigner operator can't have more than 1 source");
+        }
+        auto source = sources[0];
+
         auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
         auto watermarkDescriptor = watermarkAssignerOperator->getWatermarkStrategyDescriptor();
 
@@ -158,15 +166,18 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
             auto eventTimeWatermarkStrategy = watermarkDescriptor->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
 
             //Compute equal condition for allowed lateness
-            auto allowedLatenessVar = context->int_const("allowedLateness");
+            auto allowedLatenessVarName = source + ".allowedLateness";
+            auto allowedLatenessVar = context->int_const(allowedLatenessVarName.c_str());
             auto allowedLateness = eventTimeWatermarkStrategy->getAllowedLateness().getTime();
             auto allowedLatenessVal = context->int_val(allowedLateness);
             auto allowedLatenessExpr = to_expr(*context, Z3_mk_eq(*context, allowedLatenessVar, allowedLatenessVal));
 
             //Compute equality conditions for event time field
-            auto eventTimeFieldVar = context->constant(context->str_symbol("eventTimeField"), context->string_sort());
-            auto eventTimeFieldName =
-                eventTimeWatermarkStrategy->getOnField().getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
+            auto eventTimeFieldVarName = source + ".eventTimeField";
+            auto eventTimeFieldVar =
+                context->constant(context->str_symbol(eventTimeFieldVarName.c_str()), context->string_sort());
+            auto eventTimeFieldName = source + "."
+                + eventTimeWatermarkStrategy->getOnField().getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
             auto eventTimeFieldVal = context->string_val(eventTimeFieldName);
             auto eventTimeFieldExpr = to_expr(*context, Z3_mk_eq(*context, eventTimeFieldVar, eventTimeFieldVal));
 
@@ -176,8 +187,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
 
         } else if (watermarkDescriptor->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
 
-            //Create an equality expression watermarkAssignerType == "IngestionTime"
-            auto var = context->constant(context->str_symbol("watermarkAssignerType"), context->string_sort());
+            //Create an equality expression <source>.watermarkAssignerType == "IngestionTime"
+            auto varName = source + ".watermarkAssignerType";
+            auto var = context->constant(context->str_symbol(varName.c_str()), context->string_sort());
             auto val = context->constant(context->str_symbol("IngestionTime"), context->string_sort());
             watermarkDescriptorConditions = to_expr(*context, Z3_mk_eq(*context, var, val));
         } else {
@@ -192,7 +204,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         auto attributeMap = childQuerySignature->getAttributeMap();
         auto windowExpressions = childQuerySignature->getWindowsExpressions();
         auto columns = childQuerySignature->getColumns();
-        auto sources = childQuerySignature->getSources();
 
         return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);
     }
