@@ -33,6 +33,9 @@
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <z3++.h>
 #include <Phases/TypeInferencePhase.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <API/Windowing.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
 
@@ -561,6 +564,173 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
     projectionOperator2->inferSchema();
     projectionOperator2->inferSignature(context);
     auto sig2 = projectionOperator2->getSignature();
+
+    //Assert
+    ASSERT_FALSE(sig1->isEqual(sig2));
+}
+
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperator) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+
+    //Define Sources
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor2->setSchema(schema);
+
+    //Create projection operator
+    auto watermarkOperator1 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator2 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    watermarkOperator1->addChild(logicalOperator1);
+    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSignature(context);
+    auto sig1 = watermarkOperator1->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    watermarkOperator2->addChild(logicalOperator2);
+    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSignature(context);
+    auto sig2 = watermarkOperator2->getSignature();
+
+    //Assert
+    ASSERT_TRUE(sig1->isEqual(sig2));
+}
+
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermarkAssignerOperator) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+
+    //Define Sources
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor2->setSchema(schema);
+
+    //Create projection operator
+    auto watermarkOperator1 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+    auto watermarkOperator2 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    watermarkOperator1->addChild(logicalOperator1);
+    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSignature(context);
+    auto sig1 = watermarkOperator1->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    watermarkOperator2->addChild(logicalOperator2);
+    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSignature(context);
+    auto sig2 = watermarkOperator2->getSignature();
+
+    //Assert
+    ASSERT_TRUE(sig1->isEqual(sig2));
+}
+
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAssignerOperator) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+
+    //Define Sources
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor2->setSchema(schema);
+
+    //Create projection operator
+    auto watermarkOperator1 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator2 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    watermarkOperator1->addChild(logicalOperator1);
+    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSignature(context);
+    auto sig1 = watermarkOperator1->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    watermarkOperator2->addChild(logicalOperator2);
+    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSignature(context);
+    auto sig2 = watermarkOperator2->getSignature();
+
+    //Assert
+    ASSERT_FALSE(sig1->isEqual(sig2));
+}
+
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentLateness) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+
+    //Define Sources
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor2->setSchema(schema);
+
+    //Create projection operator
+    auto watermarkOperator1 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator2 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            Attribute("id"), NES::API::Milliseconds(9), NES::API::Milliseconds()));
+
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    watermarkOperator1->addChild(logicalOperator1);
+    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSignature(context);
+    auto sig1 = watermarkOperator1->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    watermarkOperator2->addChild(logicalOperator2);
+    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSignature(context);
+    auto sig2 = watermarkOperator2->getSignature();
+
+    //Assert
+    ASSERT_FALSE(sig1->isEqual(sig2));
+}
+
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentField) {
+
+    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+
+    //Define Sources
+    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor1->setSchema(schema);
+    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    sourceDescriptor2->setSchema(schema);
+
+    //Create projection operator
+    auto watermarkOperator1 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator2 =
+        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            Attribute("value"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+
+    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    watermarkOperator1->addChild(logicalOperator1);
+    watermarkOperator1->inferSchema();
+    watermarkOperator1->inferSignature(context);
+    auto sig1 = watermarkOperator1->getSignature();
+
+    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    watermarkOperator2->addChild(logicalOperator2);
+    watermarkOperator2->inferSchema();
+    watermarkOperator2->inferSignature(context);
+    auto sig2 = watermarkOperator2->getSignature();
 
     //Assert
     ASSERT_FALSE(sig1->isEqual(sig2));
