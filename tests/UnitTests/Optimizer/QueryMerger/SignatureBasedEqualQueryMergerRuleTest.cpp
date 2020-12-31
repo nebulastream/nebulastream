@@ -1461,7 +1461,8 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWaterma
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different watermark operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different watermark operators.
+ * One query with IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy.
  */
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
 
@@ -1544,7 +1545,8 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWa
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with merge operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queries with merge operators.
+ * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsAndTwoIdenticalWatermarkAssigner) {
     // Prepare
@@ -1622,7 +1624,9 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperat
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queries
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queries with merge operator.
+ * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
+ * with EventTimeWatermarkStrategy.
  */
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithMergeOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
@@ -1702,7 +1706,9 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithMergeO
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queries
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queries with merge operator.
+ * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
+ * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
  */
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingDistinctQueriesWithMergeOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare

@@ -480,9 +480,7 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
-
     //Define Sources
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -510,9 +508,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsButDifferentSources) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
-
     //Define Sources
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -540,9 +536,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperators) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
-
     //Define Sources
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -570,9 +564,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperator) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
-
     //Define Sources
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -604,9 +596,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermarkAssignerOperator) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
-
     //Define Sources
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -636,9 +626,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAssignerOperator) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
-
     //Define Sources
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -669,9 +657,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentLateness) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
-
     //Define Sources
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -703,9 +689,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentField) {
-
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
-
     //Define Sources
     auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
