@@ -591,10 +591,11 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
             std::unique_lock lock(queryMutex);
             auto id = task.getParentPlanId();
             auto it = runningQEPs.find(id);
-            std::string filePath = "../nithishsink_tst.csv";
+            std::string filePath = "/tmp/nithishsink_tst.csv";
             SchemaPtr test_schema = Schema::create()
-                                        ->addField("KEY", DataTypeFactory::createInt32())
-                                        ->addField("VALUE", DataTypeFactory::createUInt32());
+                                        ->addField("key", BasicType::INT64)
+                                        ->addField("value", BasicType::INT64)
+                                        ->addField("ts", BasicType::UINT64);
             SinkFormatPtr format = std::make_shared<TextFormat>(test_schema, bufferManager);
             DataSinkPtr sink = std::make_shared<FileSink>(format, filePath, true, id);
             sink->setup();

@@ -88,6 +88,8 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
         return std::dynamic_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }
 
+    void updateEmitFunctionHandler(std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction);
+
     std::string toString();
 
   private:

@@ -98,6 +98,7 @@ std::string ExecutablePipeline::getCodeAsString() {
 }
 
 ExecutablePipeline::~ExecutablePipeline() { NES_DEBUG("~ExecutablePipeline(" + std::to_string(pipelineStageId) + ")"); }
+PipelineExecutionContextPtr ExecutablePipeline::getPipelineContext() { return pipelineContext; }
 
 const SchemaPtr& ExecutablePipeline::getInputSchema() const { return inputSchema; }
 
