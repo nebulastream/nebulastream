@@ -17,13 +17,11 @@
 
 set -ex
 
-# create sysroot dir
-sudo mkdir -p /usr/local/toolchains/sysroots/ubuntu-arm && \
-
 # install llvm build dependencies
 sudo apt-get update -qq && sudo apt-get install -qq \
   build-essential \
-  subversion \
+  crossbuild-essential-arm64 \
+  libstdc++6-arm64-cross \
   cmake \
   git \
   python3-dev \
@@ -35,6 +33,22 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   graphviz \
   xz-utils \
   ninja-build && \
+
+# needed for copying libs to sysroot
+# https://github.com/plotfi/llvm-pi/blob/master/ubuntu-docker-presetup.sh
+GCC_VERSION=$(aarch64-linux-gnu-gcc -dumpversion) && \
+
+# create sysroot and toolchain
+sudo mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
+sudo mkdir -p /opt/toolchain && \
+
+# copy std libs from Ubuntu's multi-arch gcc (for clang)
+cd /opt/sysroots/aarch64-linux-gnu/usr && \
+sudo cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && cd lib && \
+sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/*gcc* . && \
+sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/*crt* . && \
+sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/libsupc++.a . && \
+sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/libstdc++*  . && cd && \
 
 # add sources for arm64 dependencies (from original amd64)
 sudo cp /etc/apt/sources.list /etc/apt/sources.list.bkp && \
@@ -55,7 +69,7 @@ git clone --branch llvmorg-10.0.0 --single-branch https://github.com/llvm/llvm-p
 mkdir -p llvm-project/build && cd llvm-project/build && \
 cmake -G Ninja \
 -DCMAKE_BUILD_TYPE=Release \
--DCMAKE_INSTALL_PREFIX=/usr/local/llvm \
+-DCMAKE_INSTALL_PREFIX=/opt/toolchain \
 -DCMAKE_CROSSCOMPILING=ON \
 -DLLVM_BUILD_DOCS=OFF \
 -DLLVM_DEFAULT_TARGET_TRIPLE=aarch64-linux-gnu \
@@ -64,7 +78,8 @@ cmake -G Ninja \
 -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;lld;polly;libcxx;libcxxabi;openmp" \
 ../llvm && \
 ninja -j 2 clang && ninja -j 2 cxx && sudo ninja install && \
-cd && rm -rf llvm-project && \
+cd && \
+sudo rm -rf llvm-project && \
 
 # LOCAL build needs a toolchain file
 cat > toolchain-aarch64-llvm.cmake <<'EOT' &&
@@ -74,14 +89,14 @@ set(CMAKE_TARGET_ABI linux-gnu)
 SET(CROSS_TARGET ${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_TARGET_ABI})
 
 # directory of custom-compiled llvm with cross-comp support
-set(CROSS_LLVM_PREFIX /usr/local/llvm)
+set(CROSS_LLVM_PREFIX /opt/toolchain)
 
 # specify the cross compiler
 set(CMAKE_C_COMPILER ${CROSS_LLVM_PREFIX}/bin/clang)
 set(CMAKE_CXX_COMPILER ${CROSS_LLVM_PREFIX}/bin/clang++)
 
 # specify sysroot (our default: ubuntu-arm)
-SET(CMAKE_SYSROOT /usr/local/toolchains/sysroots/ubuntu-arm)
+SET(CMAKE_SYSROOT /opt/sysroots/aarch64-linux-gnu)
 
 # base version of gcc to include from in the system
 SET(CROSS_GCC_BASEVER "9")
@@ -120,11 +135,11 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 EOT
 
-sudo cp toolchain-aarch64-llvm.cmake /usr/local/toolchains/toolchain-aarch64-llvm.cmake && \
+sudo cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
 
 # cross-compile NES dependencies
 cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build \
-  && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/usr/local/toolchains/toolchain-aarch64-llvm.cmake \
-  -DCMAKE_INSTALL_PREFIX=/usr/local/toolchains/sysroots/ubuntu-arm/grpc_install \
-  && make -j 2 install && cd ../.. && rm -rf grpc
+  && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
+  -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install \
+  && sudo make -j2 install && cd ../.. && sudo rm -rf grpc
