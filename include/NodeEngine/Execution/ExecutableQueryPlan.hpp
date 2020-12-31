@@ -25,6 +25,7 @@
 #include <atomic>
 #include <map>
 #include <vector>
+#include <mutex>
 
 namespace NES::NodeEngine::Execution {
 
@@ -110,7 +111,7 @@ class ExecutableQueryPlan {
     /**
      *
      */
-     void addSink(DataSinkPtr sink);
+    void addSinks(std::vector<DataSinkPtr> sinks);
 
   protected:
     const QueryId queryId;
@@ -121,6 +122,7 @@ class ExecutableQueryPlan {
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
+    std::mutex mutationMutex;
 };
 
 }// namespace NES::NodeEngine::Execution

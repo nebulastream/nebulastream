@@ -563,8 +563,7 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
 void QueryManager::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
-        case Destroy:
-        case AddSink: {
+        case Destroy: {
             break;
         }
         default: {
@@ -585,25 +584,6 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
             NES_DEBUG("QueryManager: removed running QEP " << qepId);
-            break;
-        }
-        case AddSink: {
-            std::unique_lock lock(queryMutex);
-            auto id = task.getParentPlanId();
-            auto it = runningQEPs.find(id);
-            std::string filePath = "/tmp/nithishsink_tst.csv";
-            SchemaPtr test_schema = Schema::create()
-                                        ->addField("key", BasicType::INT64)
-                                        ->addField("value", BasicType::INT64)
-                                        ->addField("ts", BasicType::UINT64);
-            SinkFormatPtr format = std::make_shared<TextFormat>(test_schema, bufferManager);
-            DataSinkPtr sink = std::make_shared<FileSink>(format, filePath, true, id);
-            sink->setup();
-            if (it != runningQEPs.end()) {
-                it->second->addSink(sink);
-                NES_DEBUG("Meh");
-            }
-            NES_DEBUG("Hello its me");
             break;
         }
         default: {
