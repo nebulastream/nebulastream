@@ -1713,7 +1713,7 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query =
         "Query::from(\"window\")"
-        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(500),Milliseconds()))"
+        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50),Milliseconds()))"
         ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)), "
         "Sum(Attribute(\"value\")))"
         ".sink(FileSinkDescriptor::create(\""
@@ -1728,9 +1728,10 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+                             "2500,3500,1,30\n"
                              "2000,3000,1,72\n"
-                             "1500,2500,1,117\n"
-                             "1000,2000,1,63\n"
+                             "1500,2500,1,90\n"
+                             "1000,2000,1,36\n"
                              "500,1500,1,18\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
