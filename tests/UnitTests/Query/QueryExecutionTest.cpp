@@ -382,7 +382,6 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     nodeEngine->stop();
 }
 
-
 /**
  * @brief This test verify that the watermark assigned correctly.
  * WindowSource -> WatermarkAssignerOperator -> TestSink
@@ -396,7 +395,7 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 1,
-        /*frequency*/ 1, /*varyWatermark*/ true);
+                                             /*frequency*/ 1, /*varyWatermark*/ true);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -411,10 +410,10 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField(createField("key", INT64))
-        ->addField("value", INT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField(createField("key", INT64))
+                                  ->addField("value", INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
@@ -435,14 +434,14 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
         queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
-        .setQueryManager(nodeEngine->getQueryManager())
-        .setBufferManager(nodeEngine->getBufferManager())
-        .setCompiler(nodeEngine->getCompiler())
-        .setQueryId(1)
-        .setQuerySubPlanId(1)
-        .addSource(windowSource)
-        .addSink(testSink)
-        .addOperatorQueryPlan(generatableOperators);
+                       .setQueryManager(nodeEngine->getQueryManager())
+                       .setBufferManager(nodeEngine->getBufferManager())
+                       .setCompiler(nodeEngine->getCompiler())
+                       .setQueryId(1)
+                       .setQuerySubPlanId(1)
+                       .addSource(windowSource)
+                       .addSink(testSink)
+                       .addOperatorQueryPlan(generatableOperators);
 
     auto plan = builder.build();
     nodeEngine->registerQueryInNodeEngine(plan);

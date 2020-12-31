@@ -76,8 +76,8 @@ class ExecutableCompleteAggregationTriggerAction
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
-            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark,
-                             lastWatermark, allowedLateness);//put key into this
+            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark, lastWatermark,
+                             allowedLateness);//put key into this
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
                                                                      << "nextEdge=" << it.second->nextEdge);
@@ -107,7 +107,8 @@ class ExecutableCompleteAggregationTriggerAction
   * @param tupleBuffer
   */
     void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
-                          NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark, uint64_t allowedLateness) {
+                          NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark,
+                          uint64_t allowedLateness) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -214,9 +215,8 @@ class ExecutableCompleteAggregationTriggerAction
                     currentNumberOfTuples = 0;
                 }
             }//end of for
-            NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
-                          << this->windowDefinition->getDistributionType()->toString()
-                          << "): remove slices until=" << currentWatermark);
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+                                                                     << "): remove slices until=" << currentWatermark);
             //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
             store->removeSlicesUntil(currentWatermark - allowedLateness);
 

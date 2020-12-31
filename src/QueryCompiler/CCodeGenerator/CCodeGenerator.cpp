@@ -372,8 +372,10 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         // set the watermark of input buffer based on maximum watermark
         // inputTupleBuffer.setWatermark(maxWatermark);
         auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
-        setWatermarkFunctionCall.addParameter(VarRef(maxWatermarkVariableDeclaration) + Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-            DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness())))));
+        setWatermarkFunctionCall.addParameter(
+            VarRef(maxWatermarkVariableDeclaration)
+            + Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+                DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness())))));
         auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
         context->code->cleanupStmts.push_back(setWatermarkStatement.createCopy());
     } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::IngestionTimeWatermark) {
@@ -662,7 +664,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     //        if (ts < (minWatermark - allowedLateness)
     //          {continue;}
     auto ifStatementAllowedLateness = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
-                                             - VarRef(latenessHandlerVariableDeclaration),
+                                                 - VarRef(latenessHandlerVariableDeclaration),
                                          Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
@@ -1142,7 +1144,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     //        if (ts < (minWatermark - allowedLateness)
     //          {continue;}
     auto ifStatementAllowedLateness = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
-                                             - VarRef(latenessHandlerVariableDeclaration),
+                                                 - VarRef(latenessHandlerVariableDeclaration),
                                          Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 

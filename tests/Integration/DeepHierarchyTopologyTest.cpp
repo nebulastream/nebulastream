@@ -370,7 +370,6 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
-
 /**
  * @brief  * @brief This tests just outputs the default stream for a hierarchy with one relay which does not produce data
  * Topology:
@@ -664,7 +663,6 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
-
 /**
  * @brief This tests just outputs the default stream for a hierarchy of three levels where only leaves produce data
  * Topology:
@@ -753,7 +751,6 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     EXPECT_TRUE(retStart9);
     wrk9->replaceParent(1, 3);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
-
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
     NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
@@ -903,7 +900,6 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
-
     //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"val1\", UINT64))->"
                              "addField(createField(\"val2\", UINT64))->"
@@ -916,9 +912,9 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
 
     PhysicalStreamConfigPtr conf =
         PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "../tests/test_data/testCSV.csv",
-            /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 3,
-            /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test_stream",
-            /**Logical Stream Name**/ "testStream", false);
+                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 3,
+                                     /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test_stream",
+                                     /**Logical Stream Name**/ "testStream", false);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
@@ -978,7 +974,6 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     wrk9->replaceParent(1, 3);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
-
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
     NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1000,8 +995,9 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"testStream\").filter(Attribute(\"val1\") < 3).project(Attribute(\"val3\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"testStream\").filter(Attribute(\"val1\") < "
+                   "3).project(Attribute(\"val3\")).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -1068,7 +1064,6 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     EXPECT_TRUE(retStopCord);
     NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
-
 
 /**
  * @brief This tests applies a window on a three level hierarchy
@@ -1168,7 +1163,6 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     wrk9->replaceParent(1, 3);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
-
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
     NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1176,7 +1170,8 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     wrk10->replaceParent(1, 4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
+    PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
     wrk7->registerPhysicalStream(conf);
     wrk8->registerPhysicalStream(conf);
     wrk9->registerPhysicalStream(conf);
@@ -1254,7 +1249,6 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     EXPECT_TRUE(retStopCord);
     NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
-
 
 /**
  * @brief This tests applies a merge on a three level hierarchy
@@ -1379,8 +1373,8 @@ TEST_F(DeepTopologyHierarchyTest, testMergeThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
+        + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
