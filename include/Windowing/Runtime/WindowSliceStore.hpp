@@ -80,8 +80,7 @@ class WindowSliceStore {
         uint64_t pos = 0;
         bool found = false;
         for (auto& slice : sliceMetaData) {
-            if (slice.getEndTs() >= watermark) {
-                pos++;
+            if (slice.getEndTs() > watermark) {
                 found = true;
                 break;
             }
@@ -98,10 +97,10 @@ class WindowSliceStore {
                   << " partialaggregate size=" << partialAggregates.size());
 
         sliceMetaData.erase(sliceMetaData.begin(),
-                            sliceMetaData.size() > pos ? sliceMetaData.begin() + pos : sliceMetaData.end());
+                            sliceMetaData.size() > pos + 1 ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
 
         partialAggregates.erase(partialAggregates.begin(),
-                                partialAggregates.size() > pos ? partialAggregates.begin() + pos : partialAggregates.end());
+                                partialAggregates.size() > pos + 1 ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
         NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
                                                                                   << " aggs=" << partialAggregates.size());
     }
