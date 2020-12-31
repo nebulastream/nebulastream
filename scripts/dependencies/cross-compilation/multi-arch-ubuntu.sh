@@ -18,7 +18,7 @@
 set -ex
 
 # create sysroot dir
-sudo mkdir -p /user/local/toolchains/sysroots/ubuntu-arm && \
+sudo mkdir -p /usr/local/toolchains/sysroots/ubuntu-arm && \
 
 # install llvm build dependencies
 sudo apt-get update -qq && sudo apt-get install -qq \
@@ -67,15 +67,14 @@ ninja -j 2 clang && ninja -j 2 cxx && sudo ninja install && \
 cd && rm -rf llvm-project && \
 
 # LOCAL build needs a toolchain file
-pushd
-cat > toolchain-aarch64-llvm.cmake <<'EOT'
+cat > toolchain-aarch64-llvm.cmake <<'EOT' &&
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 set(CMAKE_TARGET_ABI linux-gnu)
 SET(CROSS_TARGET ${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_TARGET_ABI})
 
 # directory of custom-compiled llvm with cross-comp support
-set(CROSS_LLVM_PREFIX /user/local/llvm)
+set(CROSS_LLVM_PREFIX /usr/local/llvm)
 
 # specify the cross compiler
 set(CMAKE_C_COMPILER ${CROSS_LLVM_PREFIX}/bin/clang)
@@ -85,7 +84,7 @@ set(CMAKE_CXX_COMPILER ${CROSS_LLVM_PREFIX}/bin/clang++)
 SET(CMAKE_SYSROOT /usr/local/toolchains/sysroots/ubuntu-arm)
 
 # base version of gcc to include from in the system
-SET(CROSS_GCC_BASEVER "9.3.0")
+SET(CROSS_GCC_BASEVER "9")
 
 # Here be dragons! This is boilerplate code for wrangling CMake into working with a standalone LLVM
 # installation and all of CMake's quirks. Side effect: Linker flags are no longer passed to ar (and
@@ -120,7 +119,7 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 EOT
-popd && \
+
 sudo cp toolchain-aarch64-llvm.cmake /usr/local/toolchains/toolchain-aarch64-llvm.cmake && \
 
 # cross-compile NES dependencies

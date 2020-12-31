@@ -4,7 +4,7 @@ set(CMAKE_TARGET_ABI linux-gnu)
 SET(CROSS_TARGET ${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_TARGET_ABI})
 
 # directory of custom-compiled llvm with cross-comp support
-set(CROSS_LLVM_PREFIX /user/local/llvm)
+set(CROSS_LLVM_PREFIX /usr/local/llvm)
 
 # specify the cross compiler
 set(CMAKE_C_COMPILER ${CROSS_LLVM_PREFIX}/bin/clang)
@@ -14,7 +14,7 @@ set(CMAKE_CXX_COMPILER ${CROSS_LLVM_PREFIX}/bin/clang++)
 SET(CMAKE_SYSROOT /usr/local/toolchains/sysroots/ubuntu-arm)
 
 # base version of gcc to include from in the system
-SET(CROSS_GCC_BASEVER "9.3.0")
+SET(CROSS_GCC_BASEVER "9")
 
 # Linker flags are no longer DIRECTLY passed to ar.
 # More: https://mologie.github.io/blog/programming/2017/12/25/cross-compiling-cpp-with-cmake-llvm.html
