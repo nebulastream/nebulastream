@@ -1146,7 +1146,6 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
                                          Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
-
     // Check and update max watermark if current watermark is greater than maximum watermark
     // if (currentWatermark > maxWatermark) {
     //     maxWatermark = currentWatermark;
