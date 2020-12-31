@@ -80,13 +80,13 @@ class WindowSliceStore {
         uint64_t pos = 0;
         bool found = false;
         for (auto& slice : sliceMetaData) {
-            if (slice.getStartTs() > watermark) {
+            if (slice.getEndTs() > watermark) {
                 found = true;
                 break;
             }
             pos++;
         }
-        if(!found)
+        if(!found && pos == 0)
         {
             NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark=" << watermark << ": no slice found");
             return;

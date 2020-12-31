@@ -332,7 +332,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
         ExpressionSerializationUtil::serializeExpression(windowDefinition->getOnKey(), windowDetails.mutable_onkey());
     }
     windowDetails.set_numberofinputedges(windowDefinition->getNumberOfInputEdges());
-
+    windowDetails.set_allowedlateness(windowDefinition->getAllowedLateness());
     auto windowType = windowDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_WindowDetails_TimeCharacteristic();
@@ -654,17 +654,17 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     LogicalOperatorNodePtr ptr;
     if (!windowDetails->has_onkey()) {
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, 1, trigger, action);
+            auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, 1, trigger, action, windowDetails->allowedlateness());
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
                 ->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining
                    || distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
             auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar,
-                                                                        windowDetails->numberofinputedges(), trigger, action);
+                                                                        windowDetails->numberofinputedges(), trigger, action, windowDetails->allowedlateness());
             return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
                 ->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-            auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, 1, trigger, action);
+            auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, 1, trigger, action, windowDetails->allowedlateness());
             return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef, operatorId)
                 ->as<SliceCreationOperator>();
         } else {
@@ -674,22 +674,20 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         auto keyAccessExpression =
             ExpressionSerializationUtil::deserializeExpression(windowDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(
-                       Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger,
-                                                                  action),
-                       operatorId)
+            auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1,
+                                                                        trigger, action, windowDetails->allowedlateness());
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
                 ->as<CentralWindowOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining
                    || distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
-            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(
-                       Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar,
-                                                                  windowDetails->numberofinputedges(), trigger, action),
-                       operatorId)
+            auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar,
+                                                                        windowDetails->numberofinputedges(), trigger, action, windowDetails->allowedlateness());
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
                 ->as<WindowComputationOperator>();
         } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
             return LogicalOperatorFactory::createSliceCreationSpecializedOperator(
                        Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, 1, trigger,
-                                                                  action),
+                                                                  action, windowDetails->allowedlateness()),
                        operatorId)
                 ->as<SliceCreationOperator>();
         } else {

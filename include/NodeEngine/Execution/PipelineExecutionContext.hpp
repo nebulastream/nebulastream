@@ -80,7 +80,8 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      */
     template<class OperatorHandlerType>
     auto getOperatorHandler(int index) {
-        if (index >= operatorHandlers.size()) {
+        auto size = operatorHandlers.size();
+        if (index >= size) {
             NES_THROW_RUNTIME_ERROR("PipelineExecutionContext: operator handler at index " + std::to_string(index)
                                     + " is not registered");
         }
@@ -112,7 +113,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     /**
      * @brief List of registered operator handlers.
      */
-    const std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
+    const std::vector<std::shared_ptr<NES::NodeEngine::Execution::OperatorHandler>> operatorHandlers;
 };
 
 }// namespace NES::NodeEngine::Execution

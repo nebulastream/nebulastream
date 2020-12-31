@@ -130,7 +130,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  run doing with watermark=" << watermark
                                               << " lastWatermark=" << lastWatermark);
-        executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
+        executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark, windowManager->getAllowedLateness());
         NES_DEBUG("AggregationWindowHandler(" << handlerType
                                               << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));
         lastWatermark = std::max(watermark, lastWatermark);
@@ -140,9 +140,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     * @brief Initialises the state of this window depending on the window definition.
     */
     bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
-
         // Initialize AggregationWindowHandler Manager
-        this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType());
+        this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness());
         // Initialize StateVariable
         this->windowStateVariable =
             StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");

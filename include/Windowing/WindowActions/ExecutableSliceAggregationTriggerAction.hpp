@@ -64,7 +64,7 @@ class ExecutableSliceAggregationTriggerAction
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
-                  uint64_t lastWatermark) {
+                  uint64_t lastWatermark, uint64_t allowedLateness) {
         NES_DEBUG("ExecutableSliceAggregationTriggerAction: doAction for currentWatermark="
                   << currentWatermark << " lastWatermark=" << lastWatermark);
 
@@ -81,7 +81,7 @@ class ExecutableSliceAggregationTriggerAction
                                                                          << "nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
-            aggregateWindows(it.first, it.second, tupleBuffer, currentWatermark, lastWatermark);
+            aggregateWindows(it.first, it.second, tupleBuffer, currentWatermark, lastWatermark, allowedLateness);
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
@@ -107,7 +107,7 @@ class ExecutableSliceAggregationTriggerAction
   * @param tupleBuffer
   */
     void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, NodeEngine::TupleBuffer& tupleBuffer,
-                          uint64_t currentWatermark, uint64_t lastWatermark) {
+                          uint64_t currentWatermark, uint64_t lastWatermark, uint64_t allowedLateness) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -166,7 +166,7 @@ class ExecutableSliceAggregationTriggerAction
                     tupleBuffer.setOriginId(windowDefinition->getOriginId());
                     currentNumberOfTuples = 0;
                 }
-                store->removeSlicesUntil(currentWatermark);
+                store->removeSlicesUntil(currentWatermark - allowedLateness);
             } else {
                 NES_DEBUG("ExecutableSliceAggregationTriggerAction SL: Dont write result because slices[sliceId].getEndTs()="
                           << slices[sliceId].getEndTs() << "<= currentWatermark=" << currentWatermark);

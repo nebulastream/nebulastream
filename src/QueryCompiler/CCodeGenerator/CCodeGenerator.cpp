@@ -343,10 +343,11 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 
         NES_ASSERT(context->code->structDeclaratonInputTuples.size() >= 1, "invalid size of struct input tuples");
         // get the value for current watermark
-        // auto currentWatermark = record[index].ts;
+        // uint64_t currentWatermark = record[index].ts;
         auto currentWatermarkVariableDeclaration =
             VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "currentWatermark");
         auto tsVariableDeclaration = context->code->structDeclaratonInputTuples[0].getVariableDeclaration(attribute->name);
+
         auto calculateMaxTupleStatement =
             VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                 VarRef(tsVariableDeclaration))
@@ -649,10 +650,17 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
 
-    //        if (ts < (minWatermark - allowedLatness)
+    //        if (ts < (minWatermark < allowedLateness)
+    //          minWatermark = 0;
     //{continue;}
+    auto setWatermarkToZero = IF(VarRef(minWatermarkVariableDeclaration) < VarRef(latenessHandlerVariableDeclaration),
+                                 VarRef(minWatermarkVariableDeclaration).assign(VarRef(latenessHandlerVariableDeclaration)));
+    context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
+
+    //        if (ts < (minWatermark - allowedLateness)
+    //          {continue;}
     auto ifStatementAllowedLateness = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
-                                                 - VarRef(latenessHandlerVariableDeclaration),
+                                             - VarRef(latenessHandlerVariableDeclaration),
                                          Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
@@ -1109,9 +1117,6 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto calculateMaxTupleStatement =
         VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
             VarRef(tsVariableDeclaration))
-            * ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(
-                BasicType::UINT64,
-                std::to_string(window->getWindowType()->getTimeCharacteristic()->getTimeUnit().getMultiplier()))))
         - Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0))));
     auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
@@ -1125,12 +1130,20 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
 
-    //        if (ts < (minWatermark - allowedLatness)
+    //        if (ts < (minWatermark < allowedLateness)
+    //          minWatermark = 0;
     //{continue;}
+    auto setWatermarkToZero = IF(VarRef(minWatermarkVariableDeclaration) < VarRef(latenessHandlerVariableDeclaration),
+                                 VarRef(minWatermarkVariableDeclaration).assign(VarRef(latenessHandlerVariableDeclaration)));
+    context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
+
+    //        if (ts < (minWatermark - allowedLateness)
+    //          {continue;}
     auto ifStatementAllowedLateness = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
-                                                 - VarRef(latenessHandlerVariableDeclaration),
+                                             - VarRef(latenessHandlerVariableDeclaration),
                                          Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
+
 
     // Check and update max watermark if current watermark is greater than maximum watermark
     // if (currentWatermark > maxWatermark) {
