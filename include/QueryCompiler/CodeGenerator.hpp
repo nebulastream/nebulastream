@@ -113,6 +113,7 @@ class CodeGenerator {
      * @brief Code generation for a watermark assigner operator.
      * @param watermarkStrategy strategy used for watermark assignment.
      * @param context The context of the current pipeline.
+     * @param withTimeUnitOffset, the offset has only be added for slicer not for combiner
      * @return flag if the generation was successful.
      */
     virtual bool generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy,

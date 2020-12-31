@@ -30,7 +30,7 @@ namespace NES::Windowing {
 class WindowManager {
 
   public:
-    explicit WindowManager(Windowing::WindowTypePtr windowType);
+    explicit WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness = 0);
 
     /**
      * @brief Get the window type for the window manager
@@ -60,7 +60,15 @@ class WindowManager {
         if (store->empty()) {
             // set last watermark to current ts for processing time
             //            store->setLastWatermark(ts - allowedLateness);//TODO dont know if we still need it
-            store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
+            if(ts < allowedLateness)
+            {
+                store->nextEdge = windowType->calculateNextWindowEnd(0);
+            }
+            else
+            {
+                store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
+            }
+
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));

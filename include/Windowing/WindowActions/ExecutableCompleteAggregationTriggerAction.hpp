@@ -59,7 +59,7 @@ class ExecutableCompleteAggregationTriggerAction
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
-                  uint64_t lastWatermark) {
+                  uint64_t lastWatermark, uint64_t allowedLateness) {
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                  << "): doAction for currentWatermark=" << currentWatermark
                                                                  << " lastWatermark=" << lastWatermark);
@@ -77,7 +77,7 @@ class ExecutableCompleteAggregationTriggerAction
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
             aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark,
-                             lastWatermark);//put key into this
+                             lastWatermark, allowedLateness);//put key into this
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
                                                                      << "nextEdge=" << it.second->nextEdge);
@@ -106,7 +106,7 @@ class ExecutableCompleteAggregationTriggerAction
   * @param tupleBuffer
   */
     void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
-                          NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark) {
+                          NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark, uint64_t allowedLateness) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -217,7 +217,7 @@ class ExecutableCompleteAggregationTriggerAction
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
                           << this->windowDefinition->getDistributionType()->toString()
                           << "): remove slices until=" << currentWatermark);
-            store->removeSlicesUntil(currentWatermark);
+            store->removeSlicesUntil(currentWatermark - allowedLateness);
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
