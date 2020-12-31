@@ -372,7 +372,8 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         // set the watermark of input buffer based on maximum watermark
         // inputTupleBuffer.setWatermark(maxWatermark);
         auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
-        setWatermarkFunctionCall.addParameter(VarRef(maxWatermarkVariableDeclaration));
+        setWatermarkFunctionCall.addParameter(VarRef(maxWatermarkVariableDeclaration) + Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness())))));
         auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
         context->code->cleanupStmts.push_back(setWatermarkStatement.createCopy());
     } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::IngestionTimeWatermark) {
@@ -387,6 +388,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         // set the watermark
         // inputTupleBuffer.setWatermark(watermark_ts);
         auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
+        //TODO currently we do not support allowed lateness for ingestion time windows
         setWatermarkFunctionCall.addParameter(VarRef(watermarkTsVariableDeclaration));
         auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
 
@@ -1142,7 +1144,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto ifStatementAllowedLateness = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
                                              - VarRef(latenessHandlerVariableDeclaration),
                                          Continue());
-    context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
+//    context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
 
     // Check and update max watermark if current watermark is greater than maximum watermark

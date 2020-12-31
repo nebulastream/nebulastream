@@ -96,11 +96,16 @@ class WindowSliceStore {
                   << watermark << " pos=" << pos << " sliceMetaData size=" << sliceMetaData.size()
                   << " partialaggregate size=" << partialAggregates.size());
 
+        uint64_t offsetForFirstIter = pos;
+        if(pos == 0)
+        {
+            offsetForFirstIter = 1;
+        }
         sliceMetaData.erase(sliceMetaData.begin(),
-                            sliceMetaData.size() > pos + 1 ? sliceMetaData.begin() + pos + 1 : sliceMetaData.end());
+                            sliceMetaData.size() > offsetForFirstIter ? sliceMetaData.begin() + offsetForFirstIter : sliceMetaData.end());
 
         partialAggregates.erase(partialAggregates.begin(),
-                                partialAggregates.size() > pos + 1 ? partialAggregates.begin() + pos + 1 : partialAggregates.end());
+                                partialAggregates.size() > offsetForFirstIter  ? partialAggregates.begin() + offsetForFirstIter  : partialAggregates.end());
         NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
                                                                                   << " aggs=" << partialAggregates.size());
     }
