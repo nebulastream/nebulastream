@@ -151,8 +151,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
 
         //Find the source name
         auto sources = childQuerySignature->getSources();
-        if (sources.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Watermark assigner operator can't have more than 1 source");
+        if (sources.empty() || sources.size() > 1) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Watermark assigner operator can't have none or more than 1 source");
         }
         auto source = sources[0];
 
@@ -162,7 +162,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         //Compute conditions based on watermark descriptor
         z3::expr watermarkDescriptorConditions(*context);
         if (watermarkDescriptor->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
-
             auto eventTimeWatermarkStrategy = watermarkDescriptor->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
 
             //Compute equal condition for allowed lateness
@@ -184,9 +183,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
             //CNF both conditions together to compute the descriptors condition
             Z3_ast andConditions[] = {allowedLatenessExpr, eventTimeFieldExpr};
             watermarkDescriptorConditions = to_expr(*context, Z3_mk_and(*context, 2, andConditions));
-
         } else if (watermarkDescriptor->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
-
             //Create an equality expression <source>.watermarkAssignerType == "IngestionTime"
             auto varName = source + ".watermarkAssignerType";
             auto var = context->constant(context->str_symbol(varName.c_str()), context->string_sort());
