@@ -210,25 +210,14 @@ bool NodeEngine::addSinks(std::vector<SinkLogicalOperatorNodePtr> sinkOperators,
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: addSinks=" << queryId);
     if (deployedQEPs.find(querySubPlanId) != deployedQEPs.end()) {
-        std::vector<DataSinkPtr> sinks(sinkOperators.size());
+        std::vector<DataSinkPtr> sinks;
+        sinks.reserve(sinkOperators.size());
         for (const auto& sinkOperator : sinkOperators) {
             const auto& sink = getPhysicalSink(querySubPlanId, sinkOperator);
             sink->setup();
-            NES_DEBUG("ExecutableTransferObject:: add source" << sink->toString());
+            sinks.push_back(sink);
+            NES_DEBUG("AddSinks:: add sink" << sink->toString());
         }
-        std::string filePath = "/tmp/nithishsink_tst.csv";
-        std::string filePath2 = "/tmp/nithishsink2_tst.csv";
-        SchemaPtr test_schema = Schema::create()
-                                    ->addField("key", BasicType::INT64)
-                                    ->addField("value", BasicType::INT64)
-                                    ->addField("ts", BasicType::UINT64);
-        SinkFormatPtr format = std::make_shared<TextFormat>(test_schema, bufferManager);
-        DataSinkPtr dummyFileSink = std::make_shared<FileSink>(format, filePath, true, queryId);
-        DataSinkPtr dummyFileSink2 = std::make_shared<FileSink>(format, filePath2, true, queryId);
-        dummyFileSink->setup();
-        dummyFileSink2->setup();
-        sinks.push_back(dummyFileSink);
-        sinks.push_back(dummyFileSink2);
         Execution::ExecutableQueryPlanPtr qep = deployedQEPs[querySubPlanId];
         std::unique_ptr<NES::NodeEngine::SinkReconfiguration> sinkReconfiguration =
             std::make_unique<NES::NodeEngine::SinkReconfiguration>(sinks, deployedQEPs[querySubPlanId]);

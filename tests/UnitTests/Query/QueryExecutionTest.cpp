@@ -49,16 +49,20 @@
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Sources/YSBSource.hpp>
 
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <NodeEngine/ReconfigurationTask.hpp>
 #include <NodeEngine/ReconfigurationType.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Sinks/Formats/TextFormat.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+
+#include <vector>
 
 using namespace NES;
 using NodeEngine::MemoryLayoutPtr;
@@ -188,7 +192,7 @@ class WindowSource : public NES::DefaultSource {
 
 typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
 
-class TestSink : public SinkMedium {
+class TestSink : public NES::SinkMedium {
   public:
     TestSink(uint64_t expectedBuffer, SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
@@ -501,8 +505,21 @@ TEST_F(QueryExecutionTest, playAround) {
     testSink->completed.get_future().get();
 
     auto& resultBuffer = testSink->get(0);
-
-    nodeEngine->addSinks({}, 1, 1);
+    std::vector<std::string> files = {"/tmp/nithishsink_tst.csv", "/tmp/nithishsink2_tst.csv", "/tmp/nithishsink3_tst.csv"};
+    std::vector<SinkLogicalOperatorNodePtr> sinkOperators;
+    SchemaPtr test_schema = Schema::create()
+                                ->addField("key", BasicType::INT64)
+                                ->addField("value", BasicType::INT64)
+                                ->addField("ts", BasicType::UINT64);
+    for (auto file : files) {
+        SinkFormatPtr format = std::make_shared<TextFormat>(test_schema, nodeEngine->getBufferManager());
+        const SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create(file, format->toString(), "OVERWRITE");
+        const auto sinkOperator =
+            LogicalOperatorFactory::createSinkOperator(std::move(sinkDescriptor))->as<SinkLogicalOperatorNode>();
+        sinkOperator->setOutputSchema(test_schema);
+        sinkOperators.push_back(std::move(sinkOperator));
+    };
+    nodeEngine->addSinks(sinkOperators, 1, 1);
 
     // 14 because we start at 5 (inclusive) and create 10 records
     EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
