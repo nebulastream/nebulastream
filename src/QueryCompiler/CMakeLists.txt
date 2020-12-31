@@ -20,6 +20,7 @@ add_source_nes(
         QueryCompiler.cpp
         PipelineContext.cpp
         CompilerTypeFactory.cpp
+        SinkReconfiguration.cpp
         RecordHandler.cpp
 )
 add_subdirectory(CCodeGenerator)

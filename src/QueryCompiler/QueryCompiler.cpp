@@ -25,6 +25,8 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <set>
 #include <utility>
+#include <QueryCompiler/SinkReconfiguration.hpp>
+
 namespace NES {
 
 QueryCompiler::QueryCompiler() {

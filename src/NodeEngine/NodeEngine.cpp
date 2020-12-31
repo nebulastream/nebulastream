@@ -32,6 +32,9 @@
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <QueryCompiler/SinkReconfiguration.hpp>
+#include <Sinks/Formats/TextFormat.hpp>
+#include <Sinks/Mediums/FileSink.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
@@ -183,10 +186,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
 
         for (const auto& sink : sinkOperators) {
             NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
-            auto sinkDescriptor = sink->getSinkDescriptor();
-            auto schema = sink->getOutputSchema();
-            // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, self, querySubPlanId);
+            DataSinkPtr legacySink = getPhysicalSink(querySubPlanId, sink);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
@@ -197,6 +197,45 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         NES_ASSERT(false, "Error while building query execution plan " << error.what());
         return false;
     }
+}
+DataSinkPtr NodeEngine::getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sink) {
+    auto sinkDescriptor = sink->getSinkDescriptor();
+    auto schema = sink->getOutputSchema();
+    // todo use the correct schema
+    auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId);
+    return legacySink;
+}
+
+bool NodeEngine::addSinks(std::vector<SinkLogicalOperatorNodePtr> sinkOperators, QueryId queryId, QuerySubPlanId querySubPlanId) {
+    std::unique_lock lock(engineMutex);
+    NES_DEBUG("NodeEngine: addSinks=" << queryId);
+    if (deployedQEPs.find(querySubPlanId) != deployedQEPs.end()) {
+        std::vector<DataSinkPtr> sinks(sinkOperators.size());
+        for (const auto& sinkOperator : sinkOperators) {
+            const auto& sink = getPhysicalSink(querySubPlanId, sinkOperator);
+            sink->setup();
+            NES_DEBUG("ExecutableTransferObject:: add source" << sink->toString());
+        }
+        std::string filePath = "/tmp/nithishsink_tst.csv";
+        std::string filePath2 = "/tmp/nithishsink2_tst.csv";
+        SchemaPtr test_schema = Schema::create()
+                                    ->addField("key", BasicType::INT64)
+                                    ->addField("value", BasicType::INT64)
+                                    ->addField("ts", BasicType::UINT64);
+        SinkFormatPtr format = std::make_shared<TextFormat>(test_schema, bufferManager);
+        DataSinkPtr dummyFileSink = std::make_shared<FileSink>(format, filePath, true, queryId);
+        DataSinkPtr dummyFileSink2 = std::make_shared<FileSink>(format, filePath2, true, queryId);
+        dummyFileSink->setup();
+        dummyFileSink2->setup();
+        sinks.push_back(dummyFileSink);
+        sinks.push_back(dummyFileSink2);
+        Execution::ExecutableQueryPlanPtr qep = deployedQEPs[querySubPlanId];
+        std::unique_ptr<NES::NodeEngine::SinkReconfiguration> sinkReconfiguration =
+            std::make_unique<NES::NodeEngine::SinkReconfiguration>(sinks, deployedQEPs[querySubPlanId]);
+        sinkReconfiguration->setup(queryManager, querySubPlanId);
+    }
+    NES_ERROR("NodeEngine: qep does not exists. addSinks failed" << queryId);
+    return false;
 }
 
 bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {

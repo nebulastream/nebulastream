@@ -171,6 +171,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool stop(bool withError = false);
 
     /**
+     * @brief add sinks to an existing query
+     * @param sinks vector of operators to add to query
+     * @param queryId to add sinks to
+     * @return bool indicating success
+     */
+    bool addSinks(std::vector<SinkLogicalOperatorNodePtr> sinks, QueryId queryId, QuerySubPlanId querySubPlanId);
+
+    /**
      * @brief gets the node properties.
      * @return NodePropertiesPtr
      */
@@ -259,6 +267,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool isReleased;
     std::recursive_mutex engineMutex;
     uint64_t nodeEngineId;
+    DataSinkPtr getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sink);
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

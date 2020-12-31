@@ -30,8 +30,8 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySu
                                          std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& pipelines,
                                          QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
-      pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created) {
+      pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), mutationMutex(),
+      bufferManager(std::move(bufferManager)), qepStatus(Created) {
     // nop
 }
 
@@ -123,8 +123,11 @@ bool ExecutableQueryPlan::start() {
     return true;
 }
 
-void ExecutableQueryPlan::addSink(DataSinkPtr sink) {
-    sinks.push_back(sink);
+void ExecutableQueryPlan::addSinks(std::vector<DataSinkPtr> newSinks) {
+    std::unique_lock lock(mutationMutex);
+    for (const auto& sink : newSinks) {
+        sinks.push_back(sink);
+    }
     std::shared_ptr<ExecutablePipeline>& sinkStage = pipelines.back();
     auto sinkContext = sinkStage->getPipelineContext();
     auto originId = queryManager->getNodeId();
