@@ -80,7 +80,8 @@ class WindowSliceStore {
         uint64_t pos = 0;
         bool found = false;
         for (auto& slice : sliceMetaData) {
-            if (slice.getEndTs() > watermark) {
+            if (slice.getEndTs() >= watermark) {
+                pos++;
                 found = true;
                 break;
             }
