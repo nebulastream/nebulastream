@@ -1144,7 +1144,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto ifStatementAllowedLateness = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
                                              - VarRef(latenessHandlerVariableDeclaration),
                                          Continue());
-//    context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
+    context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
 
     // Check and update max watermark if current watermark is greater than maximum watermark

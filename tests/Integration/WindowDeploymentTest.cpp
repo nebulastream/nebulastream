@@ -1411,7 +1411,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 /*
  * @brief test event time watermark for central tumbling window with 50 ms allowed lateness
  */
-TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralTumblingWindow) {
+TEST_F(WindowDeploymentTest, DISABLED_testWatermarkAssignmentCentralTumblingWindow) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1485,7 +1485,7 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralTumblingWindow) {
 /*
  * @brief test event time watermark for distributed tumbling window with 50 ms allowed lateness
  */
-TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedTumblingWindow) {
+TEST_F(WindowDeploymentTest, DISABLED_testWatermarkAssignmentDistributedTumblingWindow) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1581,7 +1581,7 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedTumblingWindow) {
 /*
  * @brief test event time watermark for central sliding window with 50 ms allowed lateness
  */
-TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralSlidingWindow) {
+TEST_F(WindowDeploymentTest, DISABLED_testWatermarkAssignmentCentralSlidingWindow) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1660,7 +1660,7 @@ TEST_F(WindowDeploymentTest, testWatermarkAssignmentCentralSlidingWindow) {
 /*
  * @brief test event time watermark for distributed sliding window with 50 ms allowed lateness
  */
-TEST_F(WindowDeploymentTest, testWatermarkAssignmentDistributedSlidingWindow) {
+TEST_F(WindowDeploymentTest, DISABLED_testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
