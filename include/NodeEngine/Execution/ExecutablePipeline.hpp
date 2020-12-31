@@ -109,6 +109,8 @@ class ExecutablePipeline {
      */
     PipelineStageArity getArity();
 
+    PipelineExecutionContextPtr getPipelineContext();
+
     /**
      * @brief Get input schema of the pipeline
      * @return pointer to the input schema

@@ -16,6 +16,10 @@
 
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/QueryManager.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
@@ -119,7 +123,20 @@ bool ExecutableQueryPlan::start() {
     return true;
 }
 
-void ExecutableQueryPlan::addSink(DataSinkPtr sink) { sinks.push_back(sink); }
+void ExecutableQueryPlan::addSink(DataSinkPtr sink) {
+    sinks.push_back(sink);
+    std::shared_ptr<ExecutablePipeline>& sinkStage = pipelines.back();
+    auto sinkContext = sinkStage->getPipelineContext();
+    auto originId = queryManager->getNodeId();
+    auto lambdaSinks = sinks;
+    sinkContext->updateEmitFunctionHandler(
+        [lambdaSinks, originId](NES::NodeEngine::TupleBuffer& buffer, NES::NodeEngine::WorkerContextRef workerContext) {
+            buffer.setOriginId(originId);
+            for (auto& sink : lambdaSinks) {
+                sink->writeData(buffer, workerContext);
+            }
+        });
+}
 
 uint32_t ExecutableQueryPlan::getNumberOfPipelines() { return pipelines.size(); }
 

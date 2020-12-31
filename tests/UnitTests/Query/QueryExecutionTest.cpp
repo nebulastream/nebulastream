@@ -204,7 +204,7 @@ class TestSink : public SinkMedium {
         NES_DEBUG("QueryExecutionTest: PrettyPrintTupleBuffer"
                   << UtilityFunctions::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 
-        resultBuffers.emplace_back(std::move(input_buffer));
+        resultBuffers.emplace_back(input_buffer);
         if (resultBuffers.size() == expectedBuffer) {
             completed.set_value(true);
         } else if (resultBuffers.size() > expectedBuffer) {
@@ -502,12 +502,15 @@ TEST_F(QueryExecutionTest, playAround) {
 
     auto& resultBuffer = testSink->get(0);
 
-    nodeEngine->getQueryManager()->addReconfigurationTask(
-        plan->getQuerySubPlanId(), NES::NodeEngine::ReconfigurationTask(plan->getQuerySubPlanId(), NES::NodeEngine::AddSink, &(*nodeEngine->getQueryManager())), true);
+    nodeEngine->getQueryManager()->addReconfigurationTask(plan->getQuerySubPlanId(),
+                                                          NES::NodeEngine::ReconfigurationTask(plan->getQuerySubPlanId(),
+                                                                                               NES::NodeEngine::AddSink,
+                                                                                               &(*nodeEngine->getQueryManager())),
+                                                          true);
 
     // 14 because we start at 5 (inclusive) and create 10 records
     EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
-    sleep(6000);
+    sleep(30);
     nodeEngine->stop();
 }
 
