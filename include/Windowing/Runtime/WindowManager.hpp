@@ -55,17 +55,12 @@ class WindowManager {
     inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store, int64_t key = 0) {
         NES_DEBUG("sliceStream for ts=" << ts << " key=" << key);
         // updates the maximal record ts
-        // store->updateMaxTs(ts);
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-            //            store->setLastWatermark(ts - allowedLateness);//TODO dont know if we still need it
-            if(ts < allowedLateness)
-            {
+            if (ts < allowedLateness) {
                 store->nextEdge = windowType->calculateNextWindowEnd(0);
-            }
-            else
-            {
+            } else {
                 store->nextEdge = windowType->calculateNextWindowEnd(ts - allowedLateness);
             }
 

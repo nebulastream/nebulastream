@@ -29,11 +29,11 @@ namespace NES::Windowing {
 
 LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
                                                  DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
-                                                 WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness)
+                                                 WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr triggerAction,
+                                                 uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(nullptr),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(triggerAction), allowedLateness(allowedLateness)
-{
+      triggerAction(triggerAction), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 

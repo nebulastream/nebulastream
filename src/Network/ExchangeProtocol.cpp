@@ -50,7 +50,7 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
         // send response back to the client based on the identity
         return Messages::ServerReadyMessage(msg.getChannelId());
     } else {
-        NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " NOT REGISTERED");
+        NES_WARNING("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " NOT REGISTERED");
         protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError));
         return Messages::ServerReadyMessage(msg.getChannelId(), Messages::kPartitionNotRegisteredError);
     }

@@ -147,14 +147,15 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
                                                              windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
+        //we have to extract the allowedLateness from the watermark strategy and put in the window definition
         auto assigner = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
         NES_ASSERT(assigner.size() == 1, "only one assigner is allowed");
-        if (auto eventTimeWatermarkStrategyDescriptor =
-            std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
-                assigner[0]->getWatermarkStrategyDescriptor())) {
+        if (assigner[0]->getWatermarkStrategyDescriptor()->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+            auto eventTimeWatermarkStrategyDescriptor =
+                std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+                    assigner[0]->getWatermarkStrategyDescriptor());
             allowedLateness = eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime();
-        } else if (auto ingestionTimeWatermarkDescriptior =
-            std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
+        } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
                 assigner[0]->getWatermarkStrategyDescriptor())) {
             NES_WARNING("Note: ingestion time does not support allowed lateness yet");
         } else {

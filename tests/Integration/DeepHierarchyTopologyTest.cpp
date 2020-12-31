@@ -31,11 +31,11 @@ namespace NES {
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
-class HierarchyTest : public testing::Test {
+class DeepTopologyHierarchyTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("HierarchyTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("Setup HierarchyTest test class.");
+        NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("Setup DeepTopologyHierarchyTest test class.");
     }
 
     void SetUp() {
@@ -43,7 +43,7 @@ class HierarchyTest : public testing::Test {
         restPort = restPort + 2;
     }
 
-    void TearDown() { std::cout << "Tear down HierarchyTest class." << std::endl; }
+    void TearDown() { std::cout << "Tear down DeepTopologyHierarchyTest class." << std::endl; }
     std::string ipAddress = "127.0.0.1";
 };
 
@@ -57,46 +57,46 @@ class HierarchyTest : public testing::Test {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(HierarchyTest, testOutputAndAllSensors) {
-    NES_DEBUG("HierarchyTest: Start coordinator");
+TEST_F(DeepTopologyHierarchyTest, testOutputAndAllSensors) {
+    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
-    NES_DEBUG("HierarchyTest: Coordinator started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("HierarchyTest: Worker 1 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 3 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
     wrk5->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
     remove(outputFilePath.c_str());
@@ -104,9 +104,9 @@ TEST_F(HierarchyTest, testOutputAndAllSensors) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
         + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -168,34 +168,34 @@ TEST_F(HierarchyTest, testOutputAndAllSensors) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("HierarchyTest: Remove query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("HierarchyTest: Stop worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("HierarchyTest: Stop worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("HierarchyTest: Stop worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG("HierarchyTest: Stop worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("HierarchyTest: Stop worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
     bool retStopWrk5 = wrk5->stop(true);
     EXPECT_TRUE(retStopWrk5);
 
-    NES_DEBUG("HierarchyTest: Stop Coordinator");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("HierarchyTest: Test finished");
+    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
 /**
@@ -209,52 +209,52 @@ TEST_F(HierarchyTest, testOutputAndAllSensors) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(HierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
-    NES_DEBUG("HierarchyTest: Start coordinator");
+TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
+    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
-    NES_DEBUG("HierarchyTest: Coordinator started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("HierarchyTest: Worker 1 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 3 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_DEBUG("HierarchyTest: Worker 4 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
     wrk5->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 5 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Sensor);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
     wrk6->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -262,9 +262,9 @@ TEST_F(HierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSens
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
         + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -336,38 +336,38 @@ TEST_F(HierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSens
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("HierarchyTest: Remove query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("HierarchyTest: Stop worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("HierarchyTest: Stop worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("HierarchyTest: Stop worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG("HierarchyTest: Stop worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("HierarchyTest: Stop worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
     bool retStopWrk5 = wrk5->stop(true);
     EXPECT_TRUE(retStopWrk5);
 
-    NES_DEBUG("HierarchyTest: Stop worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 6");
     bool retStopWrk6 = wrk6->stop(true);
     EXPECT_TRUE(retStopWrk6);
 
-    NES_DEBUG("HierarchyTest: Stop Coordinator");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("HierarchyTest: Test finished");
+    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
 
@@ -381,46 +381,46 @@ TEST_F(HierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSens
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(HierarchyTest, testOutputAndNoSensors) {
-    NES_DEBUG("HierarchyTest: Start coordinator");
+TEST_F(DeepTopologyHierarchyTest, testOutputAndNoSensors) {
+    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
-    NES_DEBUG("HierarchyTest: Coordinator started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("HierarchyTest: Worker 1 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 3 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
     wrk5->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
     remove(outputFilePath.c_str());
@@ -428,9 +428,9 @@ TEST_F(HierarchyTest, testOutputAndNoSensors) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
         + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -482,34 +482,34 @@ TEST_F(HierarchyTest, testOutputAndNoSensors) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("HierarchyTest: Remove query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("HierarchyTest: Stop worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("HierarchyTest: Stop worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("HierarchyTest: Stop worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG("HierarchyTest: Stop worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("HierarchyTest: Stop worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
     bool retStopWrk5 = wrk5->stop(true);
     EXPECT_TRUE(retStopWrk5);
 
-    NES_DEBUG("HierarchyTest: Stop Coordinator");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("HierarchyTest: Test finished");
+    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
 /**
@@ -523,52 +523,52 @@ TEST_F(HierarchyTest, testOutputAndNoSensors) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(HierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
-    NES_DEBUG("HierarchyTest: Start coordinator");
+TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
+    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
-    NES_DEBUG("HierarchyTest: Coordinator started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("HierarchyTest: Worker 1 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 3 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_DEBUG("HierarchyTest: Worker 4 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
     wrk5->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 5 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Sensor);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
     wrk6->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -576,9 +576,9 @@ TEST_F(HierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker)
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
         + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -630,38 +630,38 @@ TEST_F(HierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker)
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("HierarchyTest: Remove query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("HierarchyTest: Stop worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("HierarchyTest: Stop worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("HierarchyTest: Stop worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG("HierarchyTest: Stop worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("HierarchyTest: Stop worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
     bool retStopWrk5 = wrk5->stop(true);
     EXPECT_TRUE(retStopWrk5);
 
-    NES_DEBUG("HierarchyTest: Stop worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 6");
     bool retStopWrk6 = wrk6->stop(true);
     EXPECT_TRUE(retStopWrk6);
 
-    NES_DEBUG("HierarchyTest: Stop Coordinator");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("HierarchyTest: Test finished");
+    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
 
@@ -680,87 +680,87 @@ TEST_F(HierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker)
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(HierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
-    NES_DEBUG("HierarchyTest: Start coordinator");
+TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
+    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
-    NES_DEBUG("HierarchyTest: Coordinator started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
     /**
      * Worker
      */
-    NES_DEBUG("HierarchyTest: Start worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("HierarchyTest: Worker 1 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 3 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_DEBUG("HierarchyTest: Worker 4 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
     wrk5->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 5 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
     wrk6->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     /**
      * Sensors
      */
-    NES_DEBUG("HierarchyTest: Start worker 7");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
     NesWorkerPtr wrk7 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 80, port + 81, NodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
     wrk7->replaceParent(1, 6);
-    NES_DEBUG("HierarchyTest: Worker 7 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 8");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
     NesWorkerPtr wrk8 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 90, port + 91, NodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
     wrk8->replaceParent(1, 7);
-    NES_DEBUG("HierarchyTest: Worker 8 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 9");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
     NesWorkerPtr wrk9 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 100, port + 101, NodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
     wrk9->replaceParent(1, 3);
-    NES_DEBUG("HierarchyTest: Worker 9 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
 
-    NES_DEBUG("HierarchyTest: Start worker 10");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
     NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
     wrk10->replaceParent(1, 4);
-    NES_DEBUG("HierarchyTest: Worker 10 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -768,9 +768,9 @@ TEST_F(HierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorke
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
         + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -822,54 +822,54 @@ TEST_F(HierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorke
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("HierarchyTest: Remove query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("HierarchyTest: Stop worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("HierarchyTest: Stop worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("HierarchyTest: Stop worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG("HierarchyTest: Stop worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("HierarchyTest: Stop worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
     bool retStopWrk5 = wrk5->stop(true);
     EXPECT_TRUE(retStopWrk5);
 
-    NES_DEBUG("HierarchyTest: Stop worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 6");
     bool retStopWrk6 = wrk6->stop(true);
     EXPECT_TRUE(retStopWrk6);
 
-    NES_DEBUG("HierarchyTest: Stop worker 7");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 7");
     bool retStopWrk7 = wrk7->stop(true);
     EXPECT_TRUE(retStopWrk7);
 
-    NES_DEBUG("HierarchyTest: Stop worker 8");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 8");
     bool retStopWrk8 = wrk8->stop(true);
     EXPECT_TRUE(retStopWrk8);
 
-    NES_DEBUG("HierarchyTest: Stop worker 9");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 9");
     bool retStopWrk9 = wrk9->stop(true);
     EXPECT_TRUE(retStopWrk9);
 
-    NES_DEBUG("HierarchyTest: Stop worker 10");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 10");
     bool retStopWrk10 = wrk10->stop(true);
     EXPECT_TRUE(retStopWrk10);
 
-    NES_DEBUG("HierarchyTest: Stop Coordinator");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("HierarchyTest: Test finished");
+    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
 /**
@@ -887,21 +887,21 @@ TEST_F(HierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorke
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(HierarchyTest, testSelectProjectThreeLevel) {
-    NES_DEBUG("HierarchyTest: Start coordinator");
+TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
+    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
-    NES_DEBUG("HierarchyTest: Coordinator started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
     /**
      * Worker
      */
-    NES_DEBUG("HierarchyTest: Start worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("HierarchyTest: Worker 1 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
 
     //register logical stream
@@ -920,71 +920,71 @@ TEST_F(HierarchyTest, testSelectProjectThreeLevel) {
             /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test_stream",
             /**Logical Stream Name**/ "testStream", false);
 
-    NES_DEBUG("HierarchyTest: Start worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 3 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_DEBUG("HierarchyTest: Worker 4 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
     wrk5->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 5 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
     wrk6->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     /**
      * Sensors
      */
-    NES_DEBUG("HierarchyTest: Start worker 7");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
     NesWorkerPtr wrk7 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 80, port + 81, NodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
     wrk7->replaceParent(1, 6);
-    NES_DEBUG("HierarchyTest: Worker 7 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 8");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
     NesWorkerPtr wrk8 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 90, port + 91, NodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
     wrk8->replaceParent(1, 7);
-    NES_DEBUG("HierarchyTest: Worker 8 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 9");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
     NesWorkerPtr wrk9 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 100, port + 101, NodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
     wrk9->replaceParent(1, 3);
-    NES_DEBUG("HierarchyTest: Worker 9 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
 
-    NES_DEBUG("HierarchyTest: Start worker 10");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
     NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
     wrk10->replaceParent(1, 4);
-    NES_DEBUG("HierarchyTest: Worker 10 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
     wrk7->registerPhysicalStream(conf);
     wrk8->registerPhysicalStream(conf);
@@ -997,9 +997,9 @@ TEST_F(HierarchyTest, testSelectProjectThreeLevel) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"testStream\").filter(Attribute(\"val1\") < 3).project(Attribute(\"val3\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
         + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -1019,54 +1019,54 @@ TEST_F(HierarchyTest, testSelectProjectThreeLevel) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("HierarchyTest: Remove query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("HierarchyTest: Stop worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("HierarchyTest: Stop worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("HierarchyTest: Stop worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG("HierarchyTest: Stop worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("HierarchyTest: Stop worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
     bool retStopWrk5 = wrk5->stop(true);
     EXPECT_TRUE(retStopWrk5);
 
-    NES_DEBUG("HierarchyTest: Stop worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 6");
     bool retStopWrk6 = wrk6->stop(true);
     EXPECT_TRUE(retStopWrk6);
 
-    NES_DEBUG("HierarchyTest: Stop worker 7");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 7");
     bool retStopWrk7 = wrk7->stop(true);
     EXPECT_TRUE(retStopWrk7);
 
-    NES_DEBUG("HierarchyTest: Stop worker 8");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 8");
     bool retStopWrk8 = wrk8->stop(true);
     EXPECT_TRUE(retStopWrk8);
 
-    NES_DEBUG("HierarchyTest: Stop worker 9");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 9");
     bool retStopWrk9 = wrk9->stop(true);
     EXPECT_TRUE(retStopWrk9);
 
-    NES_DEBUG("HierarchyTest: Stop worker 10");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 10");
     bool retStopWrk10 = wrk10->stop(true);
     EXPECT_TRUE(retStopWrk10);
 
-    NES_DEBUG("HierarchyTest: Stop Coordinator");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("HierarchyTest: Test finished");
+    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
 
@@ -1085,21 +1085,21 @@ TEST_F(HierarchyTest, testSelectProjectThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(HierarchyTest, testWindowThreeLevel) {
-    NES_DEBUG("HierarchyTest: Start coordinator");
+TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
+    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
-    NES_DEBUG("HierarchyTest: Coordinator started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
     /**
      * Worker
      */
-    NES_DEBUG("HierarchyTest: Start worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("HierarchyTest: Worker 1 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
     //register logical stream
     std::string testSchema =
@@ -1110,71 +1110,71 @@ TEST_F(HierarchyTest, testWindowThreeLevel) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    NES_DEBUG("HierarchyTest: Start worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 3 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_DEBUG("HierarchyTest: Worker 4 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
     wrk5->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 5 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
     wrk6->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     /**
      * Sensors
      */
-    NES_DEBUG("HierarchyTest: Start worker 7");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
     NesWorkerPtr wrk7 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 80, port + 81, NodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
     wrk7->replaceParent(1, 6);
-    NES_DEBUG("HierarchyTest: Worker 7 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 8");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
     NesWorkerPtr wrk8 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 90, port + 91, NodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
     wrk8->replaceParent(1, 7);
-    NES_DEBUG("HierarchyTest: Worker 8 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 9");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
     NesWorkerPtr wrk9 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 100, port + 101, NodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
     wrk9->replaceParent(1, 3);
-    NES_DEBUG("HierarchyTest: Worker 9 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
 
-    NES_DEBUG("HierarchyTest: Start worker 10");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
     NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
     wrk10->replaceParent(1, 4);
-    NES_DEBUG("HierarchyTest: Worker 10 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
     wrk7->registerPhysicalStream(conf);
@@ -1188,9 +1188,9 @@ TEST_F(HierarchyTest, testWindowThreeLevel) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"ts\")), "
                    "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
@@ -1205,54 +1205,54 @@ TEST_F(HierarchyTest, testWindowThreeLevel) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("HierarchyTest: Remove query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("HierarchyTest: Stop worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("HierarchyTest: Stop worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("HierarchyTest: Stop worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG("HierarchyTest: Stop worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("HierarchyTest: Stop worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
     bool retStopWrk5 = wrk5->stop(true);
     EXPECT_TRUE(retStopWrk5);
 
-    NES_DEBUG("HierarchyTest: Stop worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 6");
     bool retStopWrk6 = wrk6->stop(true);
     EXPECT_TRUE(retStopWrk6);
 
-    NES_DEBUG("HierarchyTest: Stop worker 7");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 7");
     bool retStopWrk7 = wrk7->stop(true);
     EXPECT_TRUE(retStopWrk7);
 
-    NES_DEBUG("HierarchyTest: Stop worker 8");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 8");
     bool retStopWrk8 = wrk8->stop(true);
     EXPECT_TRUE(retStopWrk8);
 
-    NES_DEBUG("HierarchyTest: Stop worker 9");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 9");
     bool retStopWrk9 = wrk9->stop(true);
     EXPECT_TRUE(retStopWrk9);
 
-    NES_DEBUG("HierarchyTest: Stop worker 10");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 10");
     bool retStopWrk10 = wrk10->stop(true);
     EXPECT_TRUE(retStopWrk10);
 
-    NES_DEBUG("HierarchyTest: Stop Coordinator");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("HierarchyTest: Test finished");
+    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
 
@@ -1271,21 +1271,21 @@ TEST_F(HierarchyTest, testWindowThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(HierarchyTest, testMergeThreeLevel) {
-    NES_DEBUG("HierarchyTest: Start coordinator");
+TEST_F(DeepTopologyHierarchyTest, testMergeThreeLevel) {
+    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
-    NES_DEBUG("HierarchyTest: Coordinator started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
     /**
      * Worker
      */
-    NES_DEBUG("HierarchyTest: Start worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("HierarchyTest: Worker 1 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
     //register logical stream
     std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
@@ -1296,39 +1296,39 @@ TEST_F(HierarchyTest, testMergeThreeLevel) {
     wrk1->registerLogicalStream("car", testSchemaFileName);
     wrk1->registerLogicalStream("truck", testSchemaFileName);
 
-    NES_DEBUG("HierarchyTest: Start worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 2 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("HierarchyTest: Worker 3 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_DEBUG("HierarchyTest: Worker 4 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
     wrk5->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 5 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
-    NES_DEBUG("HierarchyTest: Start worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
     wrk6->replaceParent(1, 5);
-    NES_DEBUG("HierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     /**
      * Sensors
@@ -1338,36 +1338,36 @@ TEST_F(HierarchyTest, testMergeThreeLevel) {
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 1, "physical_car", "car");
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 1, "physical_truck", "truck");
 
-    NES_DEBUG("HierarchyTest: Start worker 7");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
     NesWorkerPtr wrk7 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 80, port + 81, NodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
     wrk7->replaceParent(1, 6);
-    NES_DEBUG("HierarchyTest: Worker 7 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
     wrk7->registerPhysicalStream(confCar);
 
-    NES_DEBUG("HierarchyTest: Start worker 8");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
     NesWorkerPtr wrk8 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 90, port + 91, NodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
     wrk8->replaceParent(1, 7);
-    NES_DEBUG("HierarchyTest: Worker 8 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
     wrk8->registerPhysicalStream(confTruck);
 
-    NES_DEBUG("HierarchyTest: Start worker 9");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
     NesWorkerPtr wrk9 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 100, port + 101, NodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
     wrk9->replaceParent(1, 3);
-    NES_DEBUG("HierarchyTest: Worker 9 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
     wrk9->registerPhysicalStream(confCar);
 
-    NES_DEBUG("HierarchyTest: Start worker 10");
+    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
     NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
     wrk10->replaceParent(1, 4);
-    NES_DEBUG("HierarchyTest: Worker 10 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
     wrk10->registerPhysicalStream(confTruck);
 
     std::string outputFilePath = "testOutput.out";
@@ -1376,9 +1376,9 @@ TEST_F(HierarchyTest, testMergeThreeLevel) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
-    NES_DEBUG("HierarchyTest: Submit query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -1430,54 +1430,54 @@ TEST_F(HierarchyTest, testMergeThreeLevel) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("HierarchyTest: Remove query");
+    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("HierarchyTest: Stop worker 1");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("HierarchyTest: Stop worker 2");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("HierarchyTest: Stop worker 3");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG("HierarchyTest: Stop worker 4");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("HierarchyTest: Stop worker 5");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
     bool retStopWrk5 = wrk5->stop(true);
     EXPECT_TRUE(retStopWrk5);
 
-    NES_DEBUG("HierarchyTest: Stop worker 6");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 6");
     bool retStopWrk6 = wrk6->stop(true);
     EXPECT_TRUE(retStopWrk6);
 
-    NES_DEBUG("HierarchyTest: Stop worker 7");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 7");
     bool retStopWrk7 = wrk7->stop(true);
     EXPECT_TRUE(retStopWrk7);
 
-    NES_DEBUG("HierarchyTest: Stop worker 8");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 8");
     bool retStopWrk8 = wrk8->stop(true);
     EXPECT_TRUE(retStopWrk8);
 
-    NES_DEBUG("HierarchyTest: Stop worker 9");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 9");
     bool retStopWrk9 = wrk9->stop(true);
     EXPECT_TRUE(retStopWrk9);
 
-    NES_DEBUG("HierarchyTest: Stop worker 10");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 10");
     bool retStopWrk10 = wrk10->stop(true);
     EXPECT_TRUE(retStopWrk10);
 
-    NES_DEBUG("HierarchyTest: Stop Coordinator");
+    NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("HierarchyTest: Test finished");
+    NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 //TODO:add join once it is implemented correctly
 }// namespace NES

@@ -338,8 +338,8 @@ add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
 target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})
 add_test(NAME continious-source-test COMMAND continious-source-test)
 
-### HierarchyTest ###
-add_executable(hierarchy-test "Integration/HierarchyTest.cpp")
+### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
+add_executable(hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")
 target_link_libraries(hierarchy-test nes ${GTEST_LIBRARIES})
 add_test(NAME hierarchy-test COMMAND hierarchy-test)
 
