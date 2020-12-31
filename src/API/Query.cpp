@@ -156,15 +156,16 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
                     assigner[0]->getWatermarkStrategyDescriptor());
             allowedLateness = eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime();
         } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
-                assigner[0]->getWatermarkStrategyDescriptor())) {
+                       assigner[0]->getWatermarkStrategyDescriptor())) {
             NES_WARNING("Note: ingestion time does not support allowed lateness yet");
         } else {
             NES_ERROR("cannot create watermark strategy from descriptor");
         }
     }
 
-    auto windowDefinition = LogicalWindowDefinition::create(
-        aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy, triggerAction, allowedLateness);
+    auto windowDefinition =
+        LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1,
+                                        triggerPolicy, triggerAction, allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);

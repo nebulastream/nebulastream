@@ -141,7 +141,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     */
     bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
         // Initialize AggregationWindowHandler Manager
-        this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness());
+        this->windowManager =
+            std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness());
         // Initialize StateVariable
         this->windowStateVariable =
             StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");

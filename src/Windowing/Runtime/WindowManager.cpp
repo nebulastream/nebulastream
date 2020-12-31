@@ -18,12 +18,14 @@
 
 namespace NES::Windowing {
 
-WindowManager::WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness) : windowType(std::move(windowType)), allowedLateness(allowedLateness) {}
+WindowManager::WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness)
+    : windowType(std::move(windowType)), allowedLateness(allowedLateness) {}
 
 Windowing::WindowTypePtr WindowManager::getWindowType() { return windowType; }
 
 uint64_t WindowManager::getAllowedLateness() const {
     NES_WARNING("getAllowedLateness=" << allowedLateness);
-    return allowedLateness; }
+    return allowedLateness;
+}
 
 }// namespace NES::Windowing
