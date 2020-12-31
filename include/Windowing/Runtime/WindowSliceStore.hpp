@@ -77,35 +77,36 @@ class WindowSliceStore {
      * @param pos the position till we want to remove slices.
      */
     inline void removeSlicesUntil(uint64_t watermark) {
-        uint64_t pos = 0;
-        bool found = false;
-        for (auto& slice : sliceMetaData) {
-            if (slice.getEndTs() > watermark) {
-                found = true;
+        std::vector<SliceMetaData>::iterator itSlice = sliceMetaData.begin();
+        auto itAggs = partialAggregates.begin();
+        for(; itSlice != sliceMetaData.end(); ++itSlice) {
+            if (itSlice->getEndTs() > watermark) {
                 break;
             }
-            pos++;
+            ++itAggs;
         }
-        if(!found && pos == 0)
-        {
-            NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark=" << watermark << ": no slice found");
-            return;
-        }
+//        uint64_t pos = 0;
+//        bool found = false;
+//        for (auto& slice : sliceMetaData) {
+//            if (slice.getEndTs() > watermark) {
+//                found = true;
+//                break;
+//            }
+//            pos++;
+//        }
+//        if(!found && pos == 0)
+//        {
+//            NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark=" << watermark << ": no slice found");
+//            return;
+//        }
 
         NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark="
-                  << watermark << " pos=" << pos << " sliceMetaData size=" << sliceMetaData.size()
+                  << watermark << " up to=" << itSlice->getEndTs() << " sliceMetaData size=" << sliceMetaData.size()
                   << " partialaggregate size=" << partialAggregates.size());
 
-        uint64_t offsetForFirstIter = pos;
-        if(pos == 0)
-        {
-            offsetForFirstIter = 1;
-        }
-        sliceMetaData.erase(sliceMetaData.begin(),
-                            sliceMetaData.size() > offsetForFirstIter ? sliceMetaData.begin() + offsetForFirstIter : sliceMetaData.end());
 
-        partialAggregates.erase(partialAggregates.begin(),
-                                partialAggregates.size() > offsetForFirstIter  ? partialAggregates.begin() + offsetForFirstIter  : partialAggregates.end());
+        sliceMetaData.erase(sliceMetaData.begin(), itSlice);
+        partialAggregates.erase(partialAggregates.begin(), itAggs);
         NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
                                                                                   << " aggs=" << partialAggregates.size());
     }

@@ -166,6 +166,7 @@ class ExecutableSliceAggregationTriggerAction
                     tupleBuffer.setOriginId(windowDefinition->getOriginId());
                     currentNumberOfTuples = 0;
                 }
+                //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
                 store->removeSlicesUntil(currentWatermark - allowedLateness);
             } else {
                 NES_DEBUG("ExecutableSliceAggregationTriggerAction SL: Dont write result because slices[sliceId].getEndTs()="

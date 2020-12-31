@@ -201,7 +201,7 @@ class ExecutableCompleteAggregationTriggerAction
                     && i + 1 < partialFinalAggregates.size()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
-                    NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+                    NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                               << this->windowDefinition->getDistributionType()->toString()
                               << "): Dispatch intermediate output buffer with " << currentNumberOfTuples
                               << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
@@ -213,10 +213,10 @@ class ExecutableCompleteAggregationTriggerAction
                     currentNumberOfTuples = 0;
                 }
             }//end of for
-            //erase partial aggregate and slices  as it was written
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                           << this->windowDefinition->getDistributionType()->toString()
                           << "): remove slices until=" << currentWatermark);
+            //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
             store->removeSlicesUntil(currentWatermark - allowedLateness);
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
