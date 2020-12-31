@@ -84,6 +84,7 @@ class ExecutableCompleteAggregationTriggerAction
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
+            tupleBuffer.setWatermark(currentWatermark);
             //write remaining buffer
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
                       << this->windowDefinition->getDistributionType()->toString()

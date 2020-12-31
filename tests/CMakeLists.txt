@@ -327,6 +327,11 @@ add_executable(window-deployment-test "Integration/WindowDeploymentTest.cpp")
 target_link_libraries(window-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-deployment-test COMMAND window-deployment-test)
 
+### AssignWatermarkTest ###
+#TODO: activate for testing
+#add_executable(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
+#target_link_libraries(assignment-watermark-test nes ${GTEST_LIBRARIES})
+#add_test(NAME assignment-watermark-test COMMAND assignment-watermark-test)
 
 ### mergeDeploymentTest ###
 add_executable(merge-deployment-test "Integration/MergeDeploymentTest.cpp")

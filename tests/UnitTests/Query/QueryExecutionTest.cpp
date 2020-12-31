@@ -382,44 +382,69 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     nodeEngine->stop();
 }
 
+
 /**
  * @brief This test verify that the watermark assigned correctly.
  * WindowSource -> WatermarkAssignerOperator -> TestSink
  */
-TEST_F(QueryExecutionTest, watermarkAssignerTest) {
-    uint64_t millisecondOfallowedLateness = 1; /*second of allowedLateness*/
+TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
+    uint64_t millisecondOfallowedLateness = 8; /*second of allowedLateness*/
+
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
-    // create a window source
+    // Create Operator Tree
+    // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 1,
-                                             /*frequency*/ 1, /*varyWatermark*/ true);
+        /*frequency*/ 1, /*varyWatermark*/ true);
 
     auto query = TestQuery::from(windowSource->getSchema());
-
-    // add a watermark assigner operator with allowedLateness of 1 millisecond
-    query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(
+    // 2. dd window operator:
+    // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
+    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(12));
+    query = query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(
         Attribute("ts"), Milliseconds(millisecondOfallowedLateness), Milliseconds()));
 
-    // add a sink operator
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowSource->getSchema(), nodeEngine->getBufferManager());
+    query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
+    // add a watermark assigner operator with allowedLateness of 1 millisecond
+
+    // 3. add sink. We expect that this sink will receive one buffer
+    //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
+    auto windowResultSchema = Schema::create()
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField(createField("key", INT64))
+        ->addField("value", INT64);
+
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    std::cout << " plan=" << queryPlan->toString() << std::endl;
+
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-    auto plan = GeneratedQueryExecutionPlanBuilder::create()
-                    .addSink(testSink)
-                    .addSource(windowSource)
-                    .addOperatorQueryPlan(generatableOperators)
-                    .setCompiler(nodeEngine->getCompiler())
-                    .setBufferManager(nodeEngine->getBufferManager())
-                    .setQueryManager(nodeEngine->getQueryManager())
-                    .setQueryId(1)
-                    .setQuerySubPlanId(1)
-                    .build();
 
+    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
+        generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
+    winOps[0]->setOutputSchema(windowResultSchema);
+    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
+        queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
+
+    auto builder = GeneratedQueryExecutionPlanBuilder::create()
+        .setQueryManager(nodeEngine->getQueryManager())
+        .setBufferManager(nodeEngine->getBufferManager())
+        .setCompiler(nodeEngine->getCompiler())
+        .setQueryId(1)
+        .setQuerySubPlanId(1)
+        .addSource(windowSource)
+        .addSink(testSink)
+        .addOperatorQueryPlan(generatableOperators);
+
+    auto plan = builder.build();
     nodeEngine->registerQueryInNodeEngine(plan);
     nodeEngine->startQuery(1);
 
@@ -428,8 +453,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
 
     auto& resultBuffer = testSink->get(0);
 
-    // 14 because we start at 5 (inclusive) and create 10 records
-    EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
+    EXPECT_EQ(resultBuffer.getWatermark(), 15);
     nodeEngine->stop();
 }
 
