@@ -31,4 +31,6 @@ add_source_nes(
         VarRefStatement.cpp
         VarDeclStatement.cpp
         ContinueStatement.cpp
+        CommentStatement.cpp
+        StdOutStatement.cpp
 )
