@@ -33,6 +33,8 @@
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ContinueStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/StdOutStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/CommentStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
@@ -352,9 +354,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
             VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                 VarRef(tsVariableDeclaration))
                 * ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(
-                    BasicType::UINT64, std::to_string(eventTimeWatermarkStrategy->getMultiplier()))))
-            - Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-                DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness()))));
+                    BasicType::UINT64, std::to_string(eventTimeWatermarkStrategy->getMultiplier()))));
         auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
         context->code->currentCodeInsertionPoint->addStatement(
             std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
@@ -373,9 +373,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         // inputTupleBuffer.setWatermark(maxWatermark);
         auto setWatermarkFunctionCall = FunctionCallStatement("setWatermark");
         setWatermarkFunctionCall.addParameter(
-            VarRef(maxWatermarkVariableDeclaration)
-            + Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-                DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness())))));
+            VarRef(maxWatermarkVariableDeclaration));
         auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
         context->code->cleanupStmts.push_back(setWatermarkStatement.createCopy());
     } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::IngestionTimeWatermark) {
@@ -654,21 +652,34 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
 
-    //        if (ts < (minWatermark < allowedLateness)
-    //          minWatermark = 0;
+//    if (minWatermark < allowedLateness) {
+//        minWatermark = allowedLateness;
+//    };
     //{continue;}
     auto setWatermarkToZero = IF(VarRef(minWatermarkVariableDeclaration) < VarRef(latenessHandlerVariableDeclaration),
                                  VarRef(minWatermarkVariableDeclaration).assign(VarRef(latenessHandlerVariableDeclaration)));
     context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
 
-    //        if (ts < (minWatermark - allowedLateness)
-    //          {continue;}
+    //TODO only for debugging
+    std::string msg = R"(" minWatermark=" << minWatermark << " currentWatermark=" << currentWatermark << " maxWatermark=" << maxWatermark << " allowedLateness=" << allowedLateness)";
+    auto out = StdOutStatement(msg);
+    context->code->currentCodeInsertionPoint->addStatement(out.createCopy());
+//    if (current_ts < minWatermark - allowedLateness) {
+//        continue;
+//        ;
+//    };
+
+    auto ifStatementAllowedLatenessSkip = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
+                                             - VarRef(latenessHandlerVariableDeclaration),
+                                         StdOutStatement("\"skipped\""));
+    context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLatenessSkip.createCopy());
+
+
     auto ifStatementAllowedLateness = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
                                                  - VarRef(latenessHandlerVariableDeclaration),
                                          Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
 
-    context->code->currentCodeInsertionPoint->addStatement(Continue().createCopy());
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
