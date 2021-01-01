@@ -109,7 +109,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
 
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "1000,2000,1,12\n"
-                             "2000,3000,1,24\n";
+                             "2000,3000,1,24\n"
+                             "3000,4000,1,22\n";
+
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("AssignWatermarkTest: Remove query");
@@ -200,7 +202,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     // The result value is 36 and 72 since we read from three workers
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "1000,2000,1,36\n"
-                             "2000,3000,1,72\n";
+                             "2000,3000,1,72\n"
+                             "3000,4000,1,88\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

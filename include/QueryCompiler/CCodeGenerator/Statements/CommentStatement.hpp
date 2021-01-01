@@ -40,7 +40,7 @@ class CommentStatement : public Statement {
     std::string comment;
 };
 
-typedef CommentStatement Continue;
+typedef CommentStatement Comment;
 
 }// namespace NES
 

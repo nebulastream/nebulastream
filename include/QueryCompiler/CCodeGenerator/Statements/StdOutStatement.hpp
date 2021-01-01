@@ -40,7 +40,7 @@ class StdOutStatement : public Statement {
     std::string message;
 };
 
-typedef StdOutStatement Continue;
+typedef StdOutStatement StdOut;
 
 }// namespace NES
 
