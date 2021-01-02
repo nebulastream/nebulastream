@@ -241,8 +241,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto windowAction =
         std::dynamic_pointer_cast<Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>>(
             windowHandler->getWindowAction());
-    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7, 0);
-    windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts, 0);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts);
 
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
@@ -312,8 +312,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto windowAction =
         std::dynamic_pointer_cast<Windowing::ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>>(
             windowHandler->getWindowAction());
-    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7, 0);
-    windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts, 0);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
+    windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
 
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
@@ -387,8 +387,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(
         windowDef, exec, windowOutputSchema);
-    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7, 0);
-    windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts, 0);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
+    windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
     ASSERT_NE(buf.getBuffer(), nullptr);
@@ -461,8 +461,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     auto windowAction =
         std::dynamic_pointer_cast<Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>>(
             windowHandler->getWindowAction());
-    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7, 0);
-    windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts, 0);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts);
 
     uint64_t tupleCnt = buf.getNumberOfTuples();
 
@@ -537,8 +537,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto windowAction =
         std::dynamic_pointer_cast<Windowing::ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>>(
             windowHandler->getWindowAction());
-    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7, 0);
-    windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts, 0);
+    windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
+    windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
 
     uint64_t tupleCnt = buf.getNumberOfTuples();
 

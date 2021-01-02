@@ -130,7 +130,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  run doing with watermark=" << watermark
                                               << " lastWatermark=" << lastWatermark);
-        executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark, windowManager->getAllowedLateness());
+        executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
         NES_DEBUG("AggregationWindowHandler(" << handlerType
                                               << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));
         lastWatermark = std::max(watermark, lastWatermark);

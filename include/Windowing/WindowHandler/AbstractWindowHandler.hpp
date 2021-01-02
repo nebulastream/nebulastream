@@ -20,6 +20,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
@@ -117,6 +118,19 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
             ss << " id=" << a.first << " val=" << a.second;
         }
         return ss.str();
+    }
+
+    /**
+    * @brief Calculate the min watermark and substract the allowed lateness
+    * @return MinAggregationDescriptor watermark
+    */
+    uint64_t getMinWatermarkAllowedLateness() {
+        auto watermark = getMinWatermark();
+        if (watermark < windowManager->getAllowedLateness()) {
+            return 0;
+        } else {
+            return watermark - windowManager->getAllowedLateness();
+        }
     }
 
     /**

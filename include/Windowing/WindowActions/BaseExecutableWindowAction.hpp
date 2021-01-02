@@ -32,11 +32,10 @@ class BaseExecutableWindowAction {
      * @param windowState
      * @param currentWatermark
      * @param lastWatermark
-     * @param allowedLateness
      * @return bool indicating success
      */
     virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
-                          uint64_t currentWatermark, uint64_t lastWatermark, uint64_t allowedLateness) = 0;
+                          uint64_t currentWatermark, uint64_t lastWatermark) = 0;
 
     virtual std::string toString() = 0;
 
