@@ -80,7 +80,7 @@ class WindowSliceStore {
         std::vector<SliceMetaData>::iterator itSlice = sliceMetaData.begin();
         auto itAggs = partialAggregates.begin();
         for (; itSlice != sliceMetaData.end(); ++itSlice) {
-            if (itSlice->getEndTs() >= watermark) {
+            if (itSlice->getEndTs() > watermark) {
                 break;
             }
             else
