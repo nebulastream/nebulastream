@@ -65,6 +65,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
 void DistributeWindowRule::createCentralWindowOperator(WindowOperatorNodePtr windowOp) {
     NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp
                                                                                                << " << windowOp->toString()");
+    windowOp->getWindowDefinition()->setOriginId(windowOp->getId());
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());

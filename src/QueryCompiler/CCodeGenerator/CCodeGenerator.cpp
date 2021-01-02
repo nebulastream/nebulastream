@@ -550,14 +550,6 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
 
-    // get allowed lateness
-    //    auto allowedLateness = windowManager->getAllowedLateness();
-    auto latenessHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "allowedLateness");
-    auto getAllowedLatenessStateVariable = FunctionCallStatement("getAllowedLateness");
-    auto allowedLatenessHandlerVariableStatement = VarRef(windowManagerVarDeclaration).accessPtr(getAllowedLatenessStateVariable);
-    context->code->variableInitStmts.emplace_back(
-        VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
-
     // Read key value from record
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     NES_ASSERT(context->code->structDeclaratonInputTuples.size() >= 1, "invalid number of input tuples");
@@ -645,40 +637,29 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     //within the loop
     //get min watermark
     auto minWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "minWatermark");
-    auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermark");
+    auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermarkAllowedLateness");
     auto minWatermarkHandlerVariableStatement =
         VarDeclStatement(minWatermarkVariableDeclaration)
             .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
 
-//    if (minWatermark < allowedLateness) {
-//        minWatermark = allowedLateness;
-//    };
-    //{continue;}
-    auto setWatermarkToZero = IF(VarRef(minWatermarkVariableDeclaration) < VarRef(latenessHandlerVariableDeclaration),
-                                 VarRef(minWatermarkVariableDeclaration).assign(VarRef(latenessHandlerVariableDeclaration)));
-    context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
-
     //TODO only for debugging
-    std::string msg = R"(" minWatermark=" << minWatermark << " currentWatermark=" << currentWatermark << " maxWatermark=" << maxWatermark << " allowedLateness=" << allowedLateness)";
+    std::string msg = R"(" minWatermark=" << minWatermark << " currentWatermark=" << currentWatermark << " maxWatermark=" << maxWatermark)";
     auto out = StdOutStatement(msg);
     context->code->currentCodeInsertionPoint->addStatement(out.createCopy());
-//    if (current_ts < minWatermark - allowedLateness) {
+//    if (current_ts < minWatermark) {
 //        continue;
 //        ;
 //    };
-
-    auto ifStatementAllowedLatenessSkip = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
-                                             - VarRef(latenessHandlerVariableDeclaration),
+    auto ifStatementSmallerMinWatermarkDBG = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
                                          StdOutStatement("\"skipped\""));
-    context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLatenessSkip.createCopy());
+    context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermarkDBG.createCopy());
 
 
-    auto ifStatementAllowedLateness = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
-                                                 - VarRef(latenessHandlerVariableDeclaration),
+    auto ifStatementSmallerMinWatermark = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
                                          Continue());
-    context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
+    context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
@@ -1105,14 +1086,6 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     // set result schema to context
     // generate result tuple struct
 
-    // get allowed lateness
-    //    auto allowedLateness = windowManager->getAllowedLateness();
-    auto latenessHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "allowedLateness");
-    auto getAllowedLatenessStateVariable = FunctionCallStatement("getAllowedLateness");
-    auto allowedLatenessHandlerVariableStatement = VarRef(windowManagerVarDeclaration).accessPtr(getAllowedLatenessStateVariable);
-    context->code->variableInitStmts.emplace_back(
-        VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
-
     // initiate maxWatermark variable
     // auto maxWatermark = 0;
     auto maxWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "maxWatermark");
@@ -1139,26 +1112,29 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 
     //get min watermark
     auto minWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "minWatermark");
-    auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermark");
+    auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermarkAllowedLateness");
     auto minWatermarkHandlerVariableStatement =
         VarDeclStatement(minWatermarkVariableDeclaration)
             .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
 
-    //        if (ts < (minWatermark < allowedLateness)
-    //          minWatermark = 0;
-    //{continue;}
-    auto setWatermarkToZero = IF(VarRef(minWatermarkVariableDeclaration) < VarRef(latenessHandlerVariableDeclaration),
-                                 VarRef(minWatermarkVariableDeclaration).assign(VarRef(latenessHandlerVariableDeclaration)));
-    context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
-
-    //        if (ts < (minWatermark - allowedLateness)
+    //TODO only for debugging
+    std::string msg = R"(" minWatermark=" << minWatermark << " currentWatermark=" << currentWatermark << " maxWatermark=" << maxWatermark)";
+    auto out = StdOutStatement(msg);
+    context->code->currentCodeInsertionPoint->addStatement(out.createCopy());
+    //    if (current_ts < minWatermark) {
+    //        continue;
+    //        ;
+    //    };
+    auto ifStatementSmallerMinWatermarkDBG = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
+                                                StdOutStatement("\"skipped combiner\""));
+    context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermarkDBG.createCopy());
+    //        if (ts < minWatermark)
     //          {continue;}
-    auto ifStatementAllowedLateness = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration)
-                                                 - VarRef(latenessHandlerVariableDeclaration),
+    auto ifStatementSmallerMinWatermark = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
                                          Continue());
-    context->code->currentCodeInsertionPoint->addStatement(ifStatementAllowedLateness.createCopy());
+    context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
     // Check and update max watermark if current watermark is greater than maximum watermark
     // if (currentWatermark > maxWatermark) {

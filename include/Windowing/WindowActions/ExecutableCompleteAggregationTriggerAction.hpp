@@ -30,6 +30,7 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
+#include <Windowing/Runtime/SliceMetaData.hpp>
 
 namespace NES::Windowing {
 
@@ -59,7 +60,7 @@ class ExecutableCompleteAggregationTriggerAction
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
-                  uint64_t lastWatermark, uint64_t allowedLateness) {
+                  uint64_t lastWatermark) {
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                  << "): doAction for currentWatermark=" << currentWatermark
                                                                  << " lastWatermark=" << lastWatermark);
@@ -76,8 +77,7 @@ class ExecutableCompleteAggregationTriggerAction
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
-            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark, lastWatermark,
-                             allowedLateness);//put key into this
+            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark, lastWatermark);//put key into this
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
                                                                      << "nextEdge=" << it.second->nextEdge);
@@ -107,8 +107,7 @@ class ExecutableCompleteAggregationTriggerAction
   * @param tupleBuffer
   */
     void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
-                          NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark,
-                          uint64_t allowedLateness) {
+                          NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -124,8 +123,13 @@ class ExecutableCompleteAggregationTriggerAction
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
+        uint64_t sliceSize = 0;
+        if(slices.size() != 0)
+        {
+            sliceSize = slices[0].getEndTs() - slices[0].getStartTs();
+        }
 
-        //trigger a central window operator
+        //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                       << this->windowDefinition->getDistributionType()->toString() << "): trigger sliceid=" << sliceId
@@ -218,8 +222,8 @@ class ExecutableCompleteAggregationTriggerAction
             NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): remove slices until=" << currentWatermark);
             //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
-            store->removeSlicesUntil(currentWatermark - allowedLateness);
-
+            //TODO: this is very ugly but we have to do it because we cannot delete on a slicing window based on the watermark because this call fall between two slices
+            store->removeSlicesUntil(currentWatermark - sliceSize);
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
             NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()

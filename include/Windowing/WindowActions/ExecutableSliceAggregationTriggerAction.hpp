@@ -64,7 +64,7 @@ class ExecutableSliceAggregationTriggerAction
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
-                  uint64_t lastWatermark, uint64_t allowedLateness) {
+                  uint64_t lastWatermark) {
         NES_DEBUG("ExecutableSliceAggregationTriggerAction: doAction for currentWatermark="
                   << currentWatermark << " lastWatermark=" << lastWatermark);
 
@@ -81,7 +81,7 @@ class ExecutableSliceAggregationTriggerAction
                                                                          << "nextEdge=" << it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
-            aggregateWindows(it.first, it.second, tupleBuffer, currentWatermark, lastWatermark, allowedLateness);
+            aggregateWindows(it.first, it.second, tupleBuffer, currentWatermark, lastWatermark);
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
@@ -107,7 +107,7 @@ class ExecutableSliceAggregationTriggerAction
   * @param tupleBuffer
   */
     void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, NodeEngine::TupleBuffer& tupleBuffer,
-                          uint64_t currentWatermark, uint64_t lastWatermark, uint64_t allowedLateness) {
+                          uint64_t currentWatermark, uint64_t lastWatermark) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -166,8 +166,9 @@ class ExecutableSliceAggregationTriggerAction
                     tupleBuffer.setOriginId(windowDefinition->getOriginId());
                     currentNumberOfTuples = 0;
                 }
-                //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
-                store->removeSlicesUntil(currentWatermark - allowedLateness);
+                //remove the old slices from current watermark
+                //TODO: check if we should move this after the for loop
+                store->removeSlicesUntil(currentWatermark);
             } else {
                 NES_DEBUG("ExecutableSliceAggregationTriggerAction SL: Dont write result because slices[sliceId].getEndTs()="
                           << slices[sliceId].getEndTs() << "<= currentWatermark=" << currentWatermark);
