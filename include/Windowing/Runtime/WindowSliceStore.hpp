@@ -80,34 +80,31 @@ class WindowSliceStore {
         std::vector<SliceMetaData>::iterator itSlice = sliceMetaData.begin();
         auto itAggs = partialAggregates.begin();
         for (; itSlice != sliceMetaData.end(); ++itSlice) {
-            if (itSlice->getEndTs() > watermark) {
+            if (itSlice->getEndTs() >= watermark) {
                 break;
             }
-            ++itAggs;
+            else
+            {
+                NES_DEBUG("WindowSliceStore removeSlicesUntil: watermark="
+                              << watermark << " from slice endts=" << itSlice->getEndTs() << " sliceMetaData size=" << sliceMetaData.size()
+                              << " partialaggregate size=" << partialAggregates.size());
+                sliceMetaData.erase(itSlice);
+                partialAggregates.erase(itAggs);
+            }
+            itAggs++;
         }
-        //        uint64_t pos = 0;
-        //        bool found = false;
-        //        for (auto& slice : sliceMetaData) {
-        //            if (slice.getEndTs() > watermark) {
-        //                found = true;
-        //                break;
-        //            }
-        //            pos++;
-        //        }
-        //        if(!found && pos == 0)
-        //        {
-        //            NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark=" << watermark << ": no slice found");
-        //            return;
-        //        }
-
-        NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark="
-                  << watermark << " up to=" << itSlice->getEndTs() << " sliceMetaData size=" << sliceMetaData.size()
-                  << " partialaggregate size=" << partialAggregates.size());
-
-        sliceMetaData.erase(sliceMetaData.begin(), itSlice);
-        partialAggregates.erase(partialAggregates.begin(), itAggs);
-        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
-                                                                                  << " aggs=" << partialAggregates.size());
+//
+//        NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark="
+//                  << watermark << " up to=" << itSlice->getEndTs() << " sliceMetaData size=" << sliceMetaData.size()
+//                  << " partialaggregate size=" << partialAggregates.size());
+//
+//
+//
+//
+//        sliceMetaData.erase(sliceMetaData.begin(), itSlice);
+//        partialAggregates.erase(partialAggregates.begin(), itAggs);
+//        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
+//                                                                                  << " aggs=" << partialAggregates.size());
     }
 
     /**
