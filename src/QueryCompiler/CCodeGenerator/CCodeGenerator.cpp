@@ -70,6 +70,7 @@
 
 namespace NES {
 
+
 CCodeGenerator::CCodeGenerator() : CodeGenerator(), compiler(Compiler::create()) {}
 
 StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string structName, SchemaPtr schema) {
@@ -644,18 +645,19 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
 
+#ifdef debug_out
     //TODO only for debugging
     std::string msg = R"(" minWatermark=" << minWatermark << " currentWatermark=" << currentWatermark << " maxWatermark=" << maxWatermark)";
     auto out = StdOutStatement(msg);
     context->code->currentCodeInsertionPoint->addStatement(out.createCopy());
 //    if (current_ts < minWatermark) {
-//        continue;
+//        cout << skipped << endl;;
 //        ;
 //    };
     auto ifStatementSmallerMinWatermarkDBG = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
                                          StdOutStatement("\"skipped\""));
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermarkDBG.createCopy());
-
+#endif
 
     auto ifStatementSmallerMinWatermark = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
                                          Continue());
@@ -1118,18 +1120,19 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
             .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
-
-    //TODO only for debugging
+#ifdef debug_out
+//    //TODO only for debugging
     std::string msg = R"(" minWatermark=" << minWatermark << " currentWatermark=" << currentWatermark << " maxWatermark=" << maxWatermark)";
     auto out = StdOutStatement(msg);
     context->code->currentCodeInsertionPoint->addStatement(out.createCopy());
     //    if (current_ts < minWatermark) {
-    //        continue;
+    //        cout << skipped << endl;
     //        ;
     //    };
     auto ifStatementSmallerMinWatermarkDBG = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
                                                 StdOutStatement("\"skipped combiner\""));
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermarkDBG.createCopy());
+#endif
     //        if (ts < minWatermark)
     //          {continue;}
     auto ifStatementSmallerMinWatermark = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
