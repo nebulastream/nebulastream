@@ -124,6 +124,15 @@ class ExecutableCompleteAggregationTriggerAction
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
         uint64_t largestClosedWindow = 0;
+        uint64_t slideSize = 0;
+        if(slices.size() != 0)
+        {
+            slideSize = slices[0].getEndTs() - slices[0].getStartTs();
+        }
+        else
+        {
+            return;
+        }
 
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
@@ -220,7 +229,7 @@ class ExecutableCompleteAggregationTriggerAction
                                                                      << "): remove slices until=" << currentWatermark);
             //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
             //TODO: this is very ugly but we have to do it because we cannot delete on a slicing window based on the watermark because this call fall between two slices
-            store->removeSlicesUntil(largestClosedWindow);
+            store->removeSlicesUntil(largestClosedWindow - slideSize);
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
             NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()

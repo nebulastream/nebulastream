@@ -477,8 +477,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     ASSERT_EQ(tuples[2], 10);
     ASSERT_EQ(tuples[3], 1);
 
-    ASSERT_EQ(store->getSliceMetadata().size(), 2);
-    ASSERT_EQ(store->getPartialAggregates().size(), 2);
+    ASSERT_EQ(store->getSliceMetadata().size(), 1);
+    ASSERT_EQ(store->getPartialAggregates().size(), 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
@@ -553,8 +553,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     ASSERT_EQ(tuples[2], 10);
     ASSERT_EQ(tuples[3], 1);
 
-    ASSERT_EQ(store->getSliceMetadata().size(), 2);
-    ASSERT_EQ(store->getPartialAggregates().size(), 2);
+    ASSERT_EQ(store->getSliceMetadata().size(), 1);
+    ASSERT_EQ(store->getPartialAggregates().size(), 1);
 }
 
 }// namespace NES

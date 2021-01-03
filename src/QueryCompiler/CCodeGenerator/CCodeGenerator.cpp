@@ -355,10 +355,18 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
             VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                 VarRef(tsVariableDeclaration))
                 * ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(
-                    BasicType::UINT64, std::to_string(eventTimeWatermarkStrategy->getMultiplier()))));
+                    BasicType::UINT64, std::to_string(eventTimeWatermarkStrategy->getMultiplier()))))
+                - Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+                    DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness()))));
         auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
         context->code->currentCodeInsertionPoint->addStatement(
             std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
+
+        auto zero = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "0");
+        auto setWatermarkToZero = IF(VarRef(currentWatermarkVariableDeclaration) < Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness())))),
+                                     VarRef(currentWatermarkVariableDeclaration).assign(VarRef(zero)));
+        context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
 
         // Check and update max watermark if current watermark is greater than maximum watermark
         // if (currentWatermark > maxWatermark) {
@@ -525,23 +533,6 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
-    /*
-    if (window->isKeyed()) {
-        auto getWindowHandlerStatement = getAggregationWindowHandler(
-            context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
-            window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
-            window->getWindowAggregation()->getFinalAggregateStamp());
-        context->code->variableInitStmts.emplace_back(
-            VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
-    } else {
-       auto getWindowHandlerStatement = getAggregationWindowHandler(
-            context->code->varDeclarationExecutionContext, window->getWindowAggregation()->on()->getStamp(),
-            window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
-            window->getWindowAggregation()->getFinalAggregateStamp());
-        context->code->variableInitStmts.emplace_back(
-            VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
-    }
-    */
 
     auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
     context->code->variableInitStmts.emplace_back(
@@ -550,6 +541,15 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     auto getWindowStateStatement = getStateVariable(windowHandlerVariableDeclration);
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
+
+    // get allowed lateness
+    //    auto allowedLateness = windowManager->getAllowedLateness();
+    auto latenessHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "allowedLateness");
+    auto getAllowedLatenessStateVariable = FunctionCallStatement("getAllowedLateness");
+    auto allowedLatenessHandlerVariableStatement = VarRef(windowManagerVarDeclaration).accessPtr(getAllowedLatenessStateVariable);
+    context->code->variableInitStmts.emplace_back(
+        VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
+
 
     // Read key value from record
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
@@ -638,7 +638,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     //within the loop
     //get min watermark
     auto minWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "minWatermark");
-    auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermarkAllowedLateness");
+    auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermark");
     auto minWatermarkHandlerVariableStatement =
         VarDeclStatement(minWatermarkVariableDeclaration)
             .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
@@ -1055,29 +1055,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         window->getWindowAggregation()->getPartialAggregateStamp(), window->getWindowAggregation()->getFinalAggregateStamp());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
-    /*
-    auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
 
-    NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
-    NES_ASSERT(!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined(), "window partial type is undefined");
-    NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
-
-    if (window->isKeyed()) {
-        auto getWindowHandlerStatement = getAggregationWindowHandler(
-            context->code->varDeclarationExecutionContext, window->getOnKey()->getStamp(),
-            window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
-            window->getWindowAggregation()->getFinalAggregateStamp());
-        context->code->variableInitStmts.emplace_back(
-            VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
-    } else {
-        auto getWindowHandlerStatement = getAggregationWindowHandler(
-            context->code->varDeclarationExecutionContext, window->getWindowAggregation()->on()->getStamp(),
-            window->getWindowAggregation()->getInputStamp(), window->getWindowAggregation()->getPartialAggregateStamp(),
-            window->getWindowAggregation()->getFinalAggregateStamp());
-        context->code->variableInitStmts.emplace_back(
-            VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
-    }
-*/
     auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
@@ -1087,6 +1065,15 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
     // set result schema to context
     // generate result tuple struct
+
+    // get allowed lateness
+    //    auto allowedLateness = windowManager->getAllowedLateness();
+    auto latenessHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "allowedLateness");
+    auto getAllowedLatenessStateVariable = FunctionCallStatement("getAllowedLateness");
+    auto allowedLatenessHandlerVariableStatement = VarRef(windowManagerVarDeclaration).accessPtr(getAllowedLatenessStateVariable);
+    context->code->variableInitStmts.emplace_back(
+        VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
+
 
     // initiate maxWatermark variable
     // auto maxWatermark = 0;
@@ -1108,13 +1095,29 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto calculateMaxTupleStatement =
         VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
             VarRef(tsVariableDeclaration))
-        - Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0))));
+        - VarRef(latenessHandlerVariableDeclaration);
     auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
 
+    auto zero = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "0");
+    auto setWatermarkToZero = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(latenessHandlerVariableDeclaration),
+                                 VarRef(currentWatermarkVariableDeclaration).assign(VarRef(zero)));
+    context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
+
+    // Check and update max watermark if current watermark is greater than maximum watermark
+    // if (currentWatermark > maxWatermark) {
+    //     maxWatermark = currentWatermark;
+    // };
+    auto updateMaxWatermarkStatement =
+        VarRef(maxWatermarkVariableDeclaration).assign(VarRef(currentWatermarkVariableDeclaration));
+    auto ifStatement =
+        IF(VarRef(currentWatermarkVariableDeclaration) > VarRef(maxWatermarkVariableDeclaration), updateMaxWatermarkStatement);
+    context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
+
+
     //get min watermark
     auto minWatermarkVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "minWatermark");
-    auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermarkAllowedLateness");
+    auto getMinWatermarkStateVariable = FunctionCallStatement("getMinWatermark");
     auto minWatermarkHandlerVariableStatement =
         VarDeclStatement(minWatermarkVariableDeclaration)
             .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
@@ -1133,21 +1136,9 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
                                                 StdOutStatement("\"skipped combiner\""));
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermarkDBG.createCopy());
 #endif
-    //        if (ts < minWatermark)
-    //          {continue;}
-    auto ifStatementSmallerMinWatermark = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
-                                         Continue());
-    context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
-
-    // Check and update max watermark if current watermark is greater than maximum watermark
-    // if (currentWatermark > maxWatermark) {
-    //     maxWatermark = currentWatermark;
-    // };
-    auto updateMaxWatermarkStatement =
-        VarRef(maxWatermarkVariableDeclaration).assign(VarRef(currentWatermarkVariableDeclaration));
-    auto ifStatement =
-        IF(VarRef(currentWatermarkVariableDeclaration) > VarRef(maxWatermarkVariableDeclaration), updateMaxWatermarkStatement);
-    context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
+    //        if (ts < (minWatermark < allowedLateness)
+    //          minWatermark = 0;
+    //{continue;}
 
     //        NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>* state_variable = (NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) state_var;
     auto stateVariableDeclaration = VariableDeclaration::create(
@@ -1229,6 +1220,14 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         context->code->currentCodeInsertionPoint->addStatement(
             std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
     }
+
+    //        if (ts < minWatermark)
+    //          {continue;}
+    auto ifStatementSmallerMinWatermark = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
+                                             Continue());
+    context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
+
+
     // get current timestamp
     // TODO add support for event time
 
