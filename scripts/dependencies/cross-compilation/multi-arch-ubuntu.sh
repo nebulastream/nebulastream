@@ -42,6 +42,33 @@ GCC_VERSION=$(aarch64-linux-gnu-gcc -dumpversion) && \
 sudo mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
 sudo mkdir -p /opt/toolchain && \
 
+# add sources for arm64 dependencies (from original amd64)
+sudo cp /etc/apt/sources.list /etc/apt/sources.list.bkp && \
+sudo sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \
+sudo cp /etc/apt/sources.list /etc/apt/sources.list.d/ports.list && \
+sudo sed -i -- 's|amd64|arm64|g' /etc/apt/sources.list.d/ports.list && \
+# packages from a different arch come from ports.ubuntu.com/ubuntu-ports
+sudo sed -i -E -- 's|http://.*archive\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports|g' /etc/apt/sources.list.d/ports.list && \
+sudo sed -i -E -- 's|http://.*security\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports|g' /etc/apt/sources.list.d/ports.list && \
+# actually add repo to the system db
+sudo dpkg --add-architecture arm64 && \
+sudo apt-get update && \
+
+# arm64 dependencies to build amd64-to-arm64 cross-compiling llvm
+sudo apt-get install -qq libpython3-dev:arm64 libncurses5-dev:arm64 libxml2-dev:arm64 libedit-dev:arm64 && \
+
+# minimal set of NES dependencies
+sudo apt-get install -qq \
+  libdwarf-dev:arm64 \
+  libdw-dev:arm64 \
+  liblog4cxx-dev:arm64 \
+  libcpprest-dev:arm64 \
+  libssl-dev:arm64 \
+  libeigen3-dev:arm64 \
+  libzmqpp-dev:arm64 \
+  z3:arm64 && \
+  sudo apt-get clean -qq && \
+
 # copy std libs from Ubuntu's multi-arch gcc (for clang)
 cd /opt/sysroots/aarch64-linux-gnu/usr && \
 sudo cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && cd lib && \
@@ -49,20 +76,6 @@ sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/*gcc* . && 
 sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/*crt* . && \
 sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/libsupc++.a . && \
 sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/libstdc++*  . && cd && \
-
-# add sources for arm64 dependencies (from original amd64)
-sudo cp /etc/apt/sources.list /etc/apt/sources.list.bkp && \
-sudo sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \
-sudo cp /etc/apt/sources.list /etc/apt/sources.list.d/ports.list && \
-sudo sed -i -- 's|amd64|arm64|g' /etc/apt/sources.list.d/ports.list && \
-
-# packages from a different arch come from ports.ubuntu.com/ubuntu-ports
-sudo sed -i -E -- 's|http://.*archive\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports|g' /etc/apt/sources.list.d/ports.list && \
-# actually ad repo to the system db
-sudo dpkg --add-architecture arm64 && \
-sudo apt-get update && \
-# arm64 dependencies to build amd64-to-arm64 cross-compiling llvm
-sudo apt-get install -qq libpython3-dev:arm64 libncurses5-dev:arm64 libxml2-dev:arm64 libedit-dev:arm64 && \
 
 # faster clone from github mirror instead of official site (v10 is default in ubuntu LTS)
 git clone --branch llvmorg-10.0.0 --single-branch https://github.com/llvm/llvm-project && \
