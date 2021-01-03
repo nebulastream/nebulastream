@@ -88,23 +88,14 @@ class WindowSliceStore {
                 NES_DEBUG("WindowSliceStore removeSlicesUntil: watermark="
                               << watermark << " from slice endts=" << itSlice->getEndTs() << " sliceMetaData size=" << sliceMetaData.size()
                               << " partialaggregate size=" << partialAggregates.size());
-                sliceMetaData.erase(itSlice);
-                partialAggregates.erase(itAggs);
             }
             itAggs++;
         }
-//
-//        NES_DEBUG("WindowSliceStore removeSlicesUntil: up to watermark="
-//                  << watermark << " up to=" << itSlice->getEndTs() << " sliceMetaData size=" << sliceMetaData.size()
-//                  << " partialaggregate size=" << partialAggregates.size());
-//
-//
-//
-//
-//        sliceMetaData.erase(sliceMetaData.begin(), itSlice);
-//        partialAggregates.erase(partialAggregates.begin(), itAggs);
-//        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
-//                                                                                  << " aggs=" << partialAggregates.size());
+
+        sliceMetaData.erase(sliceMetaData.begin(), itSlice);
+        partialAggregates.erase(partialAggregates.begin(), itAggs);
+        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
+                                                                                  << " aggs=" << partialAggregates.size());
     }
 
     /**

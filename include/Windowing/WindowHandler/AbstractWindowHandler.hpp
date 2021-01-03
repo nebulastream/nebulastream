@@ -121,19 +121,6 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     }
 
     /**
-    * @brief Calculate the min watermark and substract the allowed lateness
-    * @return MinAggregationDescriptor watermark
-    */
-    uint64_t getMinWatermarkAllowedLateness() {
-        auto watermark = getMinWatermark();
-        if (watermark < windowManager->getAllowedLateness()) {
-            return 0;
-        } else {
-            return watermark - windowManager->getAllowedLateness();
-        }
-    }
-
-    /**
      * @brief Calculate the min watermark
      * @return MinAggregationDescriptor watermark
      */

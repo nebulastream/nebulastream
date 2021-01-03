@@ -109,8 +109,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
 
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "1000,2000,1,12\n"
-                             "2000,3000,1,24\n"
-                             "3000,4000,1,22\n";
+                             "2000,3000,1,24\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -201,9 +200,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
 
     // The result value is 36 and 72 since we read from three workers
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "1000,2000,1,36\n"
-                             "2000,3000,1,72\n"
-                             "3000,4000,1,66\n";
+                             "1000,2000,1,36\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -375,7 +372,6 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "2500,3500,1,30\n"
                              "2000,3000,1,72\n"
                              "1500,2500,1,90\n"
                              "1000,2000,1,36\n"
