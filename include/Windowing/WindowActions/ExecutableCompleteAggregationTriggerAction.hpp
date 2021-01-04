@@ -23,6 +23,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/Runtime/SliceMetaData.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
@@ -30,7 +31,6 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
-#include <Windowing/Runtime/SliceMetaData.hpp>
 
 namespace NES::Windowing {
 
@@ -77,7 +77,8 @@ class ExecutableCompleteAggregationTriggerAction
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
-            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark, lastWatermark);//put key into this
+            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark,
+                             lastWatermark);//put key into this
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
                                                                      << "nextEdge=" << it.second->nextEdge);
@@ -123,10 +124,10 @@ class ExecutableCompleteAggregationTriggerAction
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
-        if(slices.size() == 0) {
+        if (slices.size() == 0) {
             return;
         }
-        uint64_t  slideSize = windowDefinition->getWindowType()->getSize().getTime();
+        uint64_t slideSize = windowDefinition->getWindowType()->getSize().getTime();
 
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {

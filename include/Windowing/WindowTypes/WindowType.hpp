@@ -50,7 +50,6 @@ class WindowType {
      */
     virtual bool isTumblingWindow();
 
-
     /**
      * @brief method to get the window size
      * @return size of window

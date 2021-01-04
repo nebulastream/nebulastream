@@ -48,7 +48,6 @@ typedef std::shared_ptr<Statement> StatementPtr;
 
 class Statement {
   public:
-
     /**
      * @brief method to get the statement type
      * @return StatementType

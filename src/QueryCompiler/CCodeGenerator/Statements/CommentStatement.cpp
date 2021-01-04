@@ -18,7 +18,7 @@
 #include <sstream>
 namespace NES {
 
-CommentStatement::CommentStatement(const std::string comment): comment(comment) {}
+CommentStatement::CommentStatement(const std::string comment) : comment(comment) {}
 
 StatementType CommentStatement::getStamentType() const { return RETURN_STMT; }
 
