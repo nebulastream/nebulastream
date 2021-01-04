@@ -145,190 +145,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         auto windowExpressions = childQuerySignature->getWindowsExpressions();
         return QuerySignature::create(conditions, updatedColumns, windowExpressions, updatedAttributeMap, sources);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-
-        auto childQuerySignature = childrenQuerySignatures[0];
-        auto conditions = childQuerySignature->getConditions();
-
-        //Find the source name
-        auto sources = childQuerySignature->getSources();
-        if (sources.empty() || sources.size() > 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Watermark assigner operator can't have none or more than 1 source");
-        }
-        auto source = sources[0];
-
+        NES_TRACE("QuerySignatureUtil: Computing Signature for watermark operator");
         auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
-        auto watermarkDescriptor = watermarkAssignerOperator->getWatermarkStrategyDescriptor();
-
-        //Compute conditions based on watermark descriptor
-        z3::expr watermarkDescriptorConditions(*context);
-        if (watermarkDescriptor->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
-            auto eventTimeWatermarkStrategy = watermarkDescriptor->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
-
-            //Compute equal condition for allowed lateness
-            auto allowedLatenessVarName = source + ".allowedLateness";
-            auto allowedLatenessVar = context->int_const(allowedLatenessVarName.c_str());
-            auto allowedLateness = eventTimeWatermarkStrategy->getAllowedLateness().getTime();
-            auto allowedLatenessVal = context->int_val(allowedLateness);
-            auto allowedLatenessExpr = to_expr(*context, Z3_mk_eq(*context, allowedLatenessVar, allowedLatenessVal));
-
-            //Compute equality conditions for event time field
-            auto eventTimeFieldVarName = source + ".eventTimeField";
-            auto eventTimeFieldVar =
-                context->constant(context->str_symbol(eventTimeFieldVarName.c_str()), context->string_sort());
-            auto eventTimeFieldName = source + "."
-                + eventTimeWatermarkStrategy->getOnField().getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
-            auto eventTimeFieldVal = context->string_val(eventTimeFieldName);
-            auto eventTimeFieldExpr = to_expr(*context, Z3_mk_eq(*context, eventTimeFieldVar, eventTimeFieldVal));
-
-            //CNF both conditions together to compute the descriptors condition
-            Z3_ast andConditions[] = {allowedLatenessExpr, eventTimeFieldExpr};
-            watermarkDescriptorConditions = to_expr(*context, Z3_mk_and(*context, 2, andConditions));
-        } else if (watermarkDescriptor->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
-            //Create an equality expression <source>.watermarkAssignerType == "IngestionTime"
-            auto varName = source + ".watermarkAssignerType";
-            auto var = context->constant(context->str_symbol(varName.c_str()), context->string_sort());
-            auto val = context->constant(context->str_symbol("IngestionTime"), context->string_sort());
-            watermarkDescriptorConditions = to_expr(*context, Z3_mk_eq(*context, var, val));
-        } else {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unrecognized watermark descriptor found.");
-        }
-
-        //CNF the watermark conditions to the original condition
-        Z3_ast andConditions[] = {*conditions, watermarkDescriptorConditions};
-        conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
-
-        //Extract remaining signature attributes from child query signature
-        auto attributeMap = childQuerySignature->getAttributeMap();
-        auto windowExpressions = childQuerySignature->getWindowsExpressions();
-        auto columns = childQuerySignature->getColumns();
-
-        return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);
+        return createQuerySignatureForWatermark(context, childrenQuerySignatures[0], watermarkAssignerOperator);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-
-        auto intermediateQuerySignature = buildFromChildrenSignatures(context, childrenQuerySignatures);
-        auto conditions = intermediateQuerySignature->getConditions();
-        auto attributeMap = intermediateQuerySignature->getAttributeMap();
-        auto columns = intermediateQuerySignature->getColumns();
-
+        NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
         auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-
-        std::vector<NodePtr> children = joinOperator->getChildren();
-
-        if (children.size() > 2) {
-            NES_THROW_RUNTIME_ERROR("Join operator can't have more than 2 child");
-        }
-
-        auto joinDefinition = joinOperator->getJoinDefinition();
-
-        auto leftChild = children[0]->as<LogicalOperatorNode>();
-        auto leftJoinKey = joinDefinition->getLeftJoinKey();
-        auto leftKeyName = leftJoinKey->getFieldName();
-
-        z3::ExprPtr leftKeyExpr;
-        for (auto source : leftChild->getSignature()->getSources()) {
-
-            if (attributeMap.find(leftKeyName) == attributeMap.end()) {
-                NES_THROW_RUNTIME_ERROR("");
-            }
-
-            auto derivedAttributes = attributeMap[leftKeyName];
-
-            auto expectedAttributeName = source + "." + leftKeyName;
-            auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
-
-            if (found != derivedAttributes.end()) {
-                if (columns.find(expectedAttributeName) == columns.end()) {
-                    leftKeyExpr = columns[expectedAttributeName];
-                    break;
-                }
-            }
-        }
-
-        auto rightChild = children[1]->as<LogicalOperatorNode>();
-        auto rightJoinKey = joinDefinition->getRightJoinKey();
-
-        z3::ExprPtr rightKeyExpr;
-        for (auto source : rightChild->getSignature()->getSources()) {
-
-            if (attributeMap.find(leftKeyName) == attributeMap.end()) {
-                NES_THROW_RUNTIME_ERROR("");
-            }
-
-            auto derivedAttributes = attributeMap[leftKeyName];
-
-            auto expectedAttributeName = source + "." + leftKeyName;
-            auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
-
-            if (found != derivedAttributes.end()) {
-                if (columns.find(expectedAttributeName) == columns.end()) {
-                    rightKeyExpr = columns[expectedAttributeName];
-                    break;
-                }
-            }
-        }
-
-        auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
-
-        //CNF the watermark conditions to the original condition
-        Z3_ast andConditions[] = {*conditions, joinCondition};
-        conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
-
-        //Compute the expression for window time key
-        auto windowType = joinDefinition->getWindowType();
-        auto timeCharacteristic = windowType->getTimeCharacteristic();
-        z3::expr windowTimeKeyVal(*context);
-        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
-            windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
-        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-            windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
-        } else {
-            NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
-        }
-        auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
-        auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
-
-        //Compute the expression for window size and slide
-        auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
-        uint64_t length = 0;
-        uint64_t slide = 0;
-        if (windowType->isTumblingWindow()) {
-            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
-            length = tumblingWindow->getSize().getTime() * multiplier;
-            slide = tumblingWindow->getSize().getTime() * multiplier;
-        } else if (windowType->isSlidingWindow()) {
-            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
-            length = slidingWindow->getSize().getTime() * multiplier;
-            slide = slidingWindow->getSlide().getTime() * multiplier;
-        } else {
-            NES_ERROR("QuerySignatureUtil: Cant serialize window Time Type");
-        }
-        auto windowTimeSizeVar = context->int_const("window-time-size");
-        z3::expr windowTimeSizeVal = context->int_val(length);
-        auto windowTimeSlideVar = context->int_const("window-time-slide");
-        z3::expr windowTimeSlideVal = context->int_val(slide);
-        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
-        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
-        auto windowExpressions = intermediateQuerySignature->getWindowsExpressions();
-
-        auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
-        std::string windowKey = "JoinWindow";
-        z3::expr windowKeyVal = context->string_val(windowKey);
-        auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
-
-        //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
-        Z3_ast expressionArray[] = {windowKeyExpression, windowTimeKeyExpression, windowTimeSlideExpression,
-                                    windowTimeSizeExpression};
-
-        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-            windowExpressions[windowKey] =
-                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
-        } else {
-            //TODO: as part of #1377
-            NES_NOT_IMPLEMENTED();
-        }
-
-        return QuerySignature::create(conditions, columns, windowExpressions, attributeMap,
-                                      intermediateQuerySignature->getSources());
+        return createQuerySignatureForJoin(context, childrenQuerySignatures, joinOperator);
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
 }
@@ -639,6 +462,190 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
     return QuerySignature::create(conditions, columns, childQuerySignature->getWindowsExpressions(),
                                   childQuerySignature->getAttributeMap(), sources);
+}
+
+QuerySignaturePtr
+QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context, std::shared_ptr<QuerySignature>& childQuerySignature,
+                                                     WatermarkAssignerLogicalOperatorNodePtr& watermarkAssignerOperator) {
+    auto conditions = childQuerySignature->getConditions();
+
+    //Find the source name
+    auto sources = childQuerySignature->getSources();
+    if (sources.empty() || sources.size() > 1) {
+        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Watermark assigner operator can't have none or more than 1 source");
+    }
+    auto source = sources[0];
+
+    auto watermarkDescriptor = watermarkAssignerOperator->getWatermarkStrategyDescriptor();
+
+    //Compute conditions based on watermark descriptor
+    z3::expr watermarkDescriptorConditions(*context);
+    if (watermarkDescriptor->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+        auto eventTimeWatermarkStrategy = watermarkDescriptor->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+
+        //Compute equal condition for allowed lateness
+        auto allowedLatenessVarName = source + ".allowedLateness";
+        auto allowedLatenessVar = context->int_const(allowedLatenessVarName.c_str());
+        auto allowedLateness = eventTimeWatermarkStrategy->getAllowedLateness().getTime();
+        auto allowedLatenessVal = context->int_val(allowedLateness);
+        auto allowedLatenessExpr = to_expr(*context, Z3_mk_eq(*context, allowedLatenessVar, allowedLatenessVal));
+
+        //Compute equality conditions for event time field
+        auto eventTimeFieldVarName = source + ".eventTimeField";
+        auto eventTimeFieldVar = context->constant(context->str_symbol(eventTimeFieldVarName.c_str()), context->string_sort());
+        auto eventTimeFieldName = source + "."
+            + eventTimeWatermarkStrategy->getOnField().getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
+        auto eventTimeFieldVal = context->string_val(eventTimeFieldName);
+        auto eventTimeFieldExpr = to_expr(*context, Z3_mk_eq(*context, eventTimeFieldVar, eventTimeFieldVal));
+
+        //CNF both conditions together to compute the descriptors condition
+        Z3_ast andConditions[] = {allowedLatenessExpr, eventTimeFieldExpr};
+        watermarkDescriptorConditions = to_expr(*context, Z3_mk_and(*context, 2, andConditions));
+    } else if (watermarkDescriptor->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
+        //Create an equality expression <source>.watermarkAssignerType == "IngestionTime"
+        auto varName = source + ".watermarkAssignerType";
+        auto var = context->constant(context->str_symbol(varName.c_str()), context->string_sort());
+        auto val = context->constant(context->str_symbol("IngestionTime"), context->string_sort());
+        watermarkDescriptorConditions = to_expr(*context, Z3_mk_eq(*context, var, val));
+    } else {
+        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unrecognized watermark descriptor found.");
+    }
+
+    //CNF the watermark conditions to the original condition
+    Z3_ast andConditions[] = {*conditions, watermarkDescriptorConditions};
+    conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
+
+    //Extract remaining signature attributes from child query signature
+    auto attributeMap = childQuerySignature->getAttributeMap();
+    auto windowExpressions = childQuerySignature->getWindowsExpressions();
+    auto columns = childQuerySignature->getColumns();
+
+    return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);
+}
+
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr context,
+                                                                  std::vector<QuerySignaturePtr>& childrenQuerySignatures,
+                                                                  JoinLogicalOperatorNodePtr joinOperator) {
+
+    auto intermediateQuerySignature = buildFromChildrenSignatures(context, childrenQuerySignatures);
+    auto conditions = intermediateQuerySignature->getConditions();
+    auto attributeMap = intermediateQuerySignature->getAttributeMap();
+    auto columns = intermediateQuerySignature->getColumns();
+
+    std::vector<NodePtr> children = joinOperator->getChildren();
+    if (children.size() > 2) {
+        NES_THROW_RUNTIME_ERROR("Join operator can't have more than 2 child");
+    }
+
+    auto joinDefinition = joinOperator->getJoinDefinition();
+
+    auto leftChild = children[0]->as<LogicalOperatorNode>();
+    auto leftJoinKey = joinDefinition->getLeftJoinKey();
+    auto leftKeyName = leftJoinKey->getFieldName();
+
+    z3::ExprPtr leftKeyExpr;
+    for (auto source : leftChild->getSignature()->getSources()) {
+
+        if (attributeMap.find(leftKeyName) == attributeMap.end()) {
+            NES_THROW_RUNTIME_ERROR("");
+        }
+
+        auto derivedAttributes = attributeMap[leftKeyName];
+
+        auto expectedAttributeName = source + "." + leftKeyName;
+        auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
+
+        if (found != derivedAttributes.end()) {
+            if (columns.find(expectedAttributeName) != columns.end()) {
+                leftKeyExpr = columns[expectedAttributeName];
+                break;
+            }
+        }
+    }
+
+    auto rightChild = children[1]->as<LogicalOperatorNode>();
+    auto rightJoinKey = joinDefinition->getRightJoinKey();
+
+    z3::ExprPtr rightKeyExpr;
+    for (auto source : rightChild->getSignature()->getSources()) {
+
+        if (attributeMap.find(leftKeyName) == attributeMap.end()) {
+            NES_THROW_RUNTIME_ERROR("");
+        }
+
+        auto derivedAttributes = attributeMap[leftKeyName];
+
+        auto expectedAttributeName = source + "." + leftKeyName;
+        auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
+
+        if (found != derivedAttributes.end()) {
+            if (columns.find(expectedAttributeName) != columns.end()) {
+                rightKeyExpr = columns[expectedAttributeName];
+                break;
+            }
+        }
+    }
+
+    auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
+
+    //CNF the watermark conditions to the original condition
+    Z3_ast andConditions[] = {*conditions, joinCondition};
+    conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
+
+    //Compute the expression for window time key
+    auto windowType = joinDefinition->getWindowType();
+    auto timeCharacteristic = windowType->getTimeCharacteristic();
+    z3::expr windowTimeKeyVal(*context);
+    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
+    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
+    } else {
+        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
+    }
+    auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
+    auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
+
+    //Compute the expression for window size and slide
+    auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+    uint64_t length = 0;
+    uint64_t slide = 0;
+    if (windowType->isTumblingWindow()) {
+        auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
+        length = tumblingWindow->getSize().getTime() * multiplier;
+        slide = tumblingWindow->getSize().getTime() * multiplier;
+    } else if (windowType->isSlidingWindow()) {
+        auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
+        length = slidingWindow->getSize().getTime() * multiplier;
+        slide = slidingWindow->getSlide().getTime() * multiplier;
+    } else {
+        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Type");
+    }
+    auto windowTimeSizeVar = context->int_const("window-time-size");
+    z3::expr windowTimeSizeVal = context->int_val(length);
+    auto windowTimeSlideVar = context->int_const("window-time-slide");
+    z3::expr windowTimeSlideVal = context->int_val(slide);
+    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
+    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+    auto windowExpressions = intermediateQuerySignature->getWindowsExpressions();
+
+    auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
+    std::string windowKey = "JoinWindow";
+    z3::expr windowKeyVal = context->string_val(windowKey);
+    auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
+
+    //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
+    Z3_ast expressionArray[] = {windowKeyExpression, windowTimeKeyExpression, windowTimeSlideExpression,
+                                windowTimeSizeExpression};
+
+    if (windowExpressions.find(windowKey) == windowExpressions.end()) {
+        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
+    } else {
+        //TODO: as part of #1377
+        NES_NOT_IMPLEMENTED();
+    }
+
+    return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, intermediateQuerySignature->getSources());
 }
 
 z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr& context, const z3::ExprPtr& inputExpr,

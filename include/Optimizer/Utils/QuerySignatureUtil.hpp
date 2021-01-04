@@ -109,6 +109,28 @@ class QuerySignatureUtil {
                                                            WindowLogicalOperatorNodePtr windowOperator);
 
     /**
+     * @brief
+     * @param joinOperator
+     * @param context
+     * @param childrenQuerySignatures
+     * @return
+     */
+    static QuerySignaturePtr createQuerySignatureForJoin(z3::ContextPtr context,
+                                                         std::vector<QuerySignaturePtr>& childrenQuerySignatures,
+                                                         JoinLogicalOperatorNodePtr joinOperator);
+
+    /**
+     * @brief
+     * @param operatorNode
+     * @param context
+     * @param childQuerySignature
+     * @return
+     */
+    static QuerySignaturePtr createQuerySignatureForWatermark(z3::ContextPtr context,
+                                                              std::shared_ptr<QuerySignature>& childQuerySignature,
+                                                              WatermarkAssignerLogicalOperatorNodePtr& operatorNode);
+
+    /**
      * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
      * operators and stored in column map of the child operator
      * @param context: the z3 context

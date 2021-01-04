@@ -1782,3 +1782,311 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingDistinctQueriesWithMer
         }
     }
 }
+
+/**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ */
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+
+    Query subQuery1 = Query::from("truck");
+    Query query1 =
+        Query::from("car").join(&subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+    auto aggregation2 = Sum(Attribute("value"));
+
+    Query subQuery2 = Query::from("truck");
+    Query query2 =
+        Query::from("car").join(&subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
+
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+
+    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
+    });
+    GlobalQueryNodePtr sinkOperator1GQN = *found;
+
+    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
+    });
+    GlobalQueryNodePtr sinkOperator2GQN = *found;
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+
+    sinkOperator2GQN->getChildren();
+
+    //execute
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+        }
+    }
+}
+
+/**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ */
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+
+    Query subQuery1 = Query::from("truck");
+    Query query1 =
+        Query::from("car").join(&subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+    auto aggregation2 = Sum(Attribute("value"));
+
+    Query subQuery2 = Query::from("car");
+    Query query2 =
+        Query::from("truck").join(&subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
+
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+
+    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
+    });
+    GlobalQueryNodePtr sinkOperator1GQN = *found;
+
+    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
+    });
+    GlobalQueryNodePtr sinkOperator2GQN = *found;
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+
+    sinkOperator2GQN->getChildren();
+
+    //execute
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+        }
+    }
+}
+
+/**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ */
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+
+    Query subQuery1 = Query::from("truck");
+    Query query1 =
+        Query::from("car").join(&subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    auto windowType2 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(4));
+    auto aggregation2 = Sum(Attribute("value"));
+
+    Query subQuery2 = Query::from("truck");
+    Query query2 =
+        Query::from("car").join(&subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
+
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+
+    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
+    });
+    GlobalQueryNodePtr sinkOperator1GQN = *found;
+
+    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
+    });
+    GlobalQueryNodePtr sinkOperator2GQN = *found;
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+
+    sinkOperator2GQN->getChildren();
+
+    //execute
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 1);
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+        }
+    }
+}
+
+/**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ */
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+
+    Query subQuery1 = Query::from("truck");
+    Query query1 =
+        Query::from("car").join(&subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    auto windowType2 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
+    auto aggregation2 = Sum(Attribute("value"));
+
+    Query subQuery2 = Query::from("truck");
+    Query query2 =
+        Query::from("car").join(&subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
+
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
+
+    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
+    });
+    GlobalQueryNodePtr sinkOperator1GQN = *found;
+
+    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
+      return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
+    });
+    GlobalQueryNodePtr sinkOperator2GQN = *found;
+
+    //assert
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+
+    sinkOperator2GQN->getChildren();
+
+    //execute
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    ASSERT_TRUE(updatedGQMToDeploy.size() == 2);
+    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+        }
+    }
+}
