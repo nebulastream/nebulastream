@@ -50,15 +50,27 @@ bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
     auto queryId = queryPlan->getQueryId();
     auto sinkTopologyNode = findSinkTopologyNode(queryPlan);
     auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    std::vector<OperatorId> querySinkOperatorIds;
+    for (auto sinkOperator : queryPlan->getSinkOperators()) {
+        querySinkOperatorIds.push_back(sinkOperator->getId());
+    }
+    bool successfulReconfiguration;
     for (auto executionNode : executionNodes) {
         if (executionNode->getTopologyNode()->getId() == sinkTopologyNode->getId()) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            for (auto plan : querySubPlans) {
-                NES_DEBUG("QueryPlan is: " + plan->toString());
+            for (auto querySubPlan : querySubPlans) {
+                for (auto x : querySubPlan->getSinkOperators()) {
+                    if (std::find(querySinkOperatorIds.begin(), querySinkOperatorIds.end(), x->getId())
+                        != querySinkOperatorIds.end()) {
+                        // Add new sinks to the querySubplan
+                        successfulReconfiguration = reconfigureQuery(executionNode, querySubPlan);
+                        break;
+                    }
+                }
             }
         }
     }
-    return false;
+    return successfulReconfiguration;
 }
 
 //Copied from BasePlacementStrategy::mapPinnedOperatorToTopologyNodes
@@ -108,35 +120,22 @@ TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr que
     return rootNodes[0]->as<TopologyNode>();
 }
 
-bool QueryReconfigurationPhase::reconfigureSinks(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
+bool QueryReconfigurationPhase::reconfigureQuery(ExecutionNodePtr executionNode, QueryPlanPtr querySubPlan) {
+    QueryId queryId = querySubPlan->getQueryId();
     NES_DEBUG("QueryReconfigurationPhase::reconfigure sinks queryId=" << queryId);
-
-    for (ExecutionNodePtr executionNode : executionNodes) {
-        NES_DEBUG("QueryReconfigurationPhase::reconfigureQuery serialize id=" << executionNode->getId());
-        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-        if (querySubPlans.empty()) {
-            NES_WARNING("QueryReconfigurationPhase : unable to find query sub plan with id " << queryId);
-            return false;
-        }
-
-        const auto& nesNode = executionNode->getTopologyNode();
-        auto ipAddress = nesNode->getIpAddress();
-        auto grpcPort = nesNode->getGrpcPort();
-        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress);
-
-        for (auto& querySubPlan : querySubPlans) {
-            bool success = workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
-            if (success) {
-                NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress << " successful");
-            } else {
-                NES_ERROR("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress << "  failed");
-                return false;
-            }
-        }
+    const auto& nesNode = executionNode->getTopologyNode();
+    auto ipAddress = nesNode->getIpAddress();
+    auto grpcPort = nesNode->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+    NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress);
+    bool success = workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
+    if (success) {
+        NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress << " successful");
+    } else {
+        NES_ERROR("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress << "  failed");
+        return false;
     }
     NES_INFO("QueryReconfigurationPhase: Finished reconfiguring sinks for query with Id " << queryId);
     return true;
 }
-
 }// namespace NES

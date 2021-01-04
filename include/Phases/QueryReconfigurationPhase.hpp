@@ -80,7 +80,7 @@ class QueryReconfigurationPhase {
      * @param queryId
      * @return bool indicating success
      */
-    bool reconfigureSinks(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+    bool reconfigureQuery(ExecutionNodePtr executionNode, QueryPlanPtr querySubPlan);
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
