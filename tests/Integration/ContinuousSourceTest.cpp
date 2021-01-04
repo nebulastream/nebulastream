@@ -1482,7 +1482,7 @@ TEST_F(ContinuousSourceTest, testMemorySource) {
     constexpr auto bufferSizeInNodeEngine = 4096; // TODO load this from config!
     constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
     auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
-    auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize)); // 128 MB
+    auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
     size_t numRecords = memAreaSize / recordSize;
@@ -1525,6 +1525,10 @@ TEST_F(ContinuousSourceTest, testMemorySource) {
     std::string line;
     std::size_t lineCnt = 0;
     while (std::getline(infile, line)) {
+        if (lineCnt > 0) {
+            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
+            ASSERT_EQ(line, expectedString);
+        }
         lineCnt++;
     }
 
