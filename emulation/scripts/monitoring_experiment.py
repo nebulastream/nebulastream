@@ -25,7 +25,7 @@ nes_log_level = LogLevel.NONE
 
 # experiment parameters
 # ---------------------------------------------------------------------
-version = "2"
+version = "4"
 iterations = 30
 iterations_before_execution = 0
 monitoring_frequency = 1
@@ -71,14 +71,22 @@ def execute_experiment(_nes_dir, _influx_storage, _nes_log_level, _number_worker
 
 # experiment the executable part
 # ---------------------------------------------------------------------
+i = 0
+run_cli = False
+sleep_time = 10
 for worker_producing in number_workers_producing:
     for worker_not_producing in number_workers_not_producing:
         for mt in monitoring_types:
-            info('*** Executing experiment with following parameters producers=' + str(
-                worker_producing) + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + mt.value + '\n')
+            info('*** Executing experiment with following parameters producers=' + str(worker_producing)
+                 + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + mt.value + '\n')
+
+            if i == len(number_workers_producing)*len(number_workers_not_producing)*len(monitoring_types)-1:
+                info('*** Experiment reached last iteration=' + str(i) + ". Activating CLI")
+                run_cli = True
 
             execute_experiment(nes_dir, influx_storage, nes_log_level, worker_producing,
                                worker_not_producing, num_tuples, num_buffers, mt, influx_db,
                                influx_table, iterations, iterations_before_execution, monitoring_frequency,
-                               no_coordinators, description, version, False, 10)
-            sleep(10)
+                               no_coordinators, description, version, run_cli, sleep_time)
+            sleep(sleep_time)
+            i = i + 1

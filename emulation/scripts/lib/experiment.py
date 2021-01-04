@@ -49,7 +49,7 @@ class Experiment:
             print("\nExecuting iteration " + str(i))
             if (not disable_monitoring) and (self.monitoring_type != MonitoringType.DISABLED) and (
                     (i % self.monitoring_frequency) == 0):
-                request_monitoring_data(self.monitoring_type.value)
+                request_monitoring_data(self.monitoring_type)
 
             print("Reading docker stats " + str(i))
             end = datetime.datetime.now()
