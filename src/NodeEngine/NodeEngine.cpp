@@ -206,6 +206,12 @@ DataSinkPtr NodeEngine::getPhysicalSink(QueryId querySubPlanId, const SinkLogica
     return legacySink;
 }
 
+bool NodeEngine::reconfigureQueryInNodeEngine(QueryPlanPtr queryPlan) {
+    undeployQuery(queryPlan->getQueryId());
+    registerQueryInNodeEngine(queryPlan);
+    return startQuery(queryPlan->getQueryId());
+}
+
 bool NodeEngine::addSinks(std::vector<SinkLogicalOperatorNodePtr> sinkOperators, QueryId queryId, QuerySubPlanId querySubPlanId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: addSinks=" << queryId);

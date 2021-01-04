@@ -22,6 +22,7 @@ add_source_nes(
         QueryPlacementPhase.cpp
         QueryRewritePhase.cpp
         QueryDeploymentPhase.cpp
+        QueryReconfigurationPhase.cpp
         QueryUndeploymentPhase.cpp
         QueryMergerPhase.cpp
         QueryPlacementRefinementPhase.cpp

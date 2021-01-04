@@ -141,6 +141,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return true if succeeded, else false
      */
     bool registerQueryInNodeEngine(QueryPlanPtr queryPlan);
+    /**
+     * @brief registers a query
+     * @param queryId: id of the query sub plan to be registered
+     * @param queryExecutionId: query execution plan id
+     * @param operatorTree: query sub plan to register
+     * @return true if succeeded, else false
+     */
+    bool reconfigureQueryInNodeEngine(QueryPlanPtr queryPlan);
 
     /**
      * @brief ungregisters a query

@@ -25,6 +25,7 @@ service WorkerRPCService {
 
   rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
   rpc UnregisterQuery (UnregisterQueryRequest) returns (UnregisterQueryReply) {}
+  rpc ReconfigureQuery (ReconfigureQueryRequest) returns (ReconfigureQueryReply) {}
 
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
@@ -49,6 +50,11 @@ message UndeployQueryReply {
 }
 
 message RegisterQueryRequest {
+  NES.SerializableQueryPlan queryPlan = 3;
+
+}
+
+message ReconfigureQueryRequest {
   NES.SerializableQueryPlan queryPlan = 3;
 
 }
@@ -78,6 +84,10 @@ message StopQueryRequest {
 }
 
 message StopQueryReply {
+  bool success = 1;
+}
+
+message ReconfigureQueryReply {
   bool success = 1;
 }
 

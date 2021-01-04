@@ -45,6 +45,9 @@ typedef std::shared_ptr<QueryPlacementRefinementPhase> QueryPlacementRefinementP
 class QueryDeploymentPhase;
 typedef std::shared_ptr<QueryDeploymentPhase> QueryDeploymentPhasePtr;
 
+class QueryReconfigurationPhase;
+typedef std::shared_ptr<QueryReconfigurationPhase> QueryReconfigurationPhasePtr;
+
 class QueryUndeploymentPhase;
 typedef std::shared_ptr<QueryUndeploymentPhase> QueryUndeploymentPhasePtr;
 
@@ -99,6 +102,7 @@ class QueryRequestProcessorService {
     QueryPlacementPhasePtr queryPlacementPhase;
     QueryPlacementRefinementPhasePtr queryPlacementRefinementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
+    QueryReconfigurationPhasePtr queryReconfigurationPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     QueryRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
