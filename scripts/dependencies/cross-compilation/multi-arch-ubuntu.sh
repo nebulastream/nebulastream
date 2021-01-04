@@ -25,6 +25,7 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   cmake \
   git \
   python3-dev \
+  python-dev \
   libncurses5-dev \
   libxml2-dev \
   libedit-dev \
@@ -34,13 +35,8 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   xz-utils \
   ninja-build && \
 
-# needed for copying libs to sysroot
-# https://github.com/plotfi/llvm-pi/blob/master/ubuntu-docker-presetup.sh
-GCC_VERSION=$(aarch64-linux-gnu-gcc -dumpversion) && \
-
-# create sysroot and toolchain
-sudo mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
-sudo mkdir -p /opt/toolchain && \
+sudo apt-get install -qq --no-install-recommends --reinstall \
+  ca-certificates && \
 
 # add sources for arm64 dependencies (from original amd64)
 sudo cp /etc/apt/sources.list /etc/apt/sources.list.bkp && \
@@ -55,10 +51,12 @@ sudo dpkg --add-architecture arm64 && \
 sudo apt-get update && \
 
 # arm64 dependencies to build amd64-to-arm64 cross-compiling llvm
-sudo apt-get install -qq libpython3-dev:arm64 libncurses5-dev:arm64 libxml2-dev:arm64 libedit-dev:arm64 && \
-
-# minimal set of NES dependencies
-sudo apt-get install -qq \
+# minimal set of NES dependencies in arm64 as well
+sudo apt-get install -qq --no-install-recommends \
+  libpython3-dev:arm64 \
+  libncurses5-dev:arm64 \
+  libxml2-dev:arm64 \
+  libedit-dev:arm64 \
   libdwarf-dev:arm64 \
   libdw-dev:arm64 \
   liblog4cxx-dev:arm64 \
@@ -68,6 +66,21 @@ sudo apt-get install -qq \
   libzmqpp-dev:arm64 \
   z3:arm64 && \
   sudo apt-get clean -qq && \
+
+# clone Ubuntu LTS version, build for arm64
+# libboost-all-dev cannot be installed due to python3.8-minimal:arm64
+git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost \
+git checkout boost-1.71.0 && ./bootstrap.sh && \
+sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
+./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost && cd && \
+
+# needed for copying libs to sysroot
+# https://github.com/plotfi/llvm-pi/blob/master/ubuntu-docker-presetup.sh
+GCC_VERSION=$(aarch64-linux-gnu-gcc -dumpversion) && \
+
+# create sysroot and toolchain
+sudo mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
+sudo mkdir -p /opt/toolchain && \
 
 # copy std libs from Ubuntu's multi-arch gcc (for clang)
 cd /opt/sysroots/aarch64-linux-gnu/usr && \
