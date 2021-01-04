@@ -362,6 +362,11 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         context->code->currentCodeInsertionPoint->addStatement(
             std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
 
+        /*
+         * //we have to have this case to make sure that we don't get negative here when allowed lateness is larger that minwatermark
+         * if(minWatermark < allowedLateness)
+         *      minWatermark = 0
+         */
         auto zero = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "0");
         auto setWatermarkToZero = IF(VarRef(currentWatermarkVariableDeclaration) < Constant(tf->createValueType(DataTypeFactory::createBasicValue(
             DataTypeFactory::createUInt64(), std::to_string(eventTimeWatermarkStrategy->getAllowedLateness())))),
@@ -550,7 +555,6 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
 
-
     // Read key value from record
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
     NES_ASSERT(context->code->structDeclaratonInputTuples.size() >= 1, "invalid number of input tuples");
@@ -644,20 +648,6 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
             .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
-
-#ifdef debug_out
-    //TODO only for debugging
-    std::string msg = R"(" minWatermark=" << minWatermark << " currentWatermark=" << currentWatermark << " maxWatermark=" << maxWatermark)";
-    auto out = StdOutStatement(msg);
-    context->code->currentCodeInsertionPoint->addStatement(out.createCopy());
-//    if (current_ts < minWatermark) {
-//        cout << skipped << endl;;
-//        ;
-//    };
-    auto ifStatementSmallerMinWatermarkDBG = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
-                                         StdOutStatement("\"skipped\""));
-    context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermarkDBG.createCopy());
-#endif
 
     auto ifStatementSmallerMinWatermark = IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
                                          Continue());
@@ -1099,6 +1089,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto currentWatermarkStatement = VarDeclStatement(currentWatermarkVariableDeclaration).assign(calculateMaxTupleStatement);
     context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(currentWatermarkStatement));
 
+    /*
+      * //we have to have this case to make sure that we don't get negative here when allowed lateness is larger that minwatermark
+      * if(minWatermark < allowedLateness)
+      *      minWatermark = 0
+      */
     auto zero = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "0");
     auto setWatermarkToZero = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(latenessHandlerVariableDeclaration),
                                  VarRef(currentWatermarkVariableDeclaration).assign(VarRef(zero)));
@@ -1123,22 +1118,6 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
             .assign(VarRef(windowHandlerVariableDeclration).accessPtr(getMinWatermarkStateVariable));
     context->code->currentCodeInsertionPoint->addStatement(
         std::make_shared<BinaryOperatorStatement>(minWatermarkHandlerVariableStatement));
-#ifdef debug_out
-//    //TODO only for debugging
-    std::string msg = R"(" minWatermark=" << minWatermark << " currentWatermark=" << currentWatermark << " maxWatermark=" << maxWatermark)";
-    auto out = StdOutStatement(msg);
-    context->code->currentCodeInsertionPoint->addStatement(out.createCopy());
-    //    if (current_ts < minWatermark) {
-    //        cout << skipped << endl;
-    //        ;
-    //    };
-    auto ifStatementSmallerMinWatermarkDBG = IF(VarRef(currentWatermarkVariableDeclaration) < VarRef(minWatermarkVariableDeclaration),
-                                                StdOutStatement("\"skipped combiner\""));
-    context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermarkDBG.createCopy());
-#endif
-    //        if (ts < (minWatermark < allowedLateness)
-    //          minWatermark = 0;
-    //{continue;}
 
     //        NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>* state_variable = (NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) state_var;
     auto stateVariableDeclaration = VariableDeclaration::create(
@@ -1227,10 +1206,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
                                              Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
-
     // get current timestamp
     // TODO add support for event time
-
     auto currentCntVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "cnt");
     auto getCurrentCntStatement =
         VarDeclStatement(currentCntVariable)

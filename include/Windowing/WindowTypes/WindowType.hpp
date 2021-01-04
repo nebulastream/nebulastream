@@ -50,6 +50,13 @@ class WindowType {
      */
     virtual bool isTumblingWindow();
 
+
+    /**
+     * @brief method to get the window size
+     * @return size of window
+     */
+    virtual TimeMeasure getSize() = 0;
+
     /**
     * @return true if this is a sliding window
     */
