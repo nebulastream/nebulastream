@@ -198,7 +198,6 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    // The result value is 36 and 72 since we read from three workers
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "1000,2000,1,36\n";
 

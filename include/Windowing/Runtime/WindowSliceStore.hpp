@@ -85,7 +85,7 @@ class WindowSliceStore {
             }
             else
             {
-                NES_DEBUG("WindowSliceStore removeSlicesUntil: watermark="
+                NES_TRACE("WindowSliceStore removeSlicesUntil: watermark="
                               << watermark << " from slice endts=" << itSlice->getEndTs() << " sliceMetaData size=" << sliceMetaData.size()
                               << " partialaggregate size=" << partialAggregates.size());
             }

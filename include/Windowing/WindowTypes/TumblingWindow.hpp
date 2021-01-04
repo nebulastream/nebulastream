@@ -64,7 +64,7 @@ class TumblingWindow : public WindowType {
     * @brief return size of the window
     * @return size of the window
     */
-    TimeMeasure getSize();
+    TimeMeasure getSize() override;
 
     std::string toString() override;
 

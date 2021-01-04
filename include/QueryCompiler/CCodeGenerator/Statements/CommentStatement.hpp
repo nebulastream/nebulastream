@@ -22,7 +22,7 @@
 namespace NES {
 
 /**
- * @brief this statements allows us to generate code for the "continue" instruction
+ * @brief this statements allows us to generate code comments
  */
 class CommentStatement : public Statement {
   public:

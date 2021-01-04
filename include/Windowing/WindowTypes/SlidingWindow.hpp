@@ -51,7 +51,7 @@ class SlidingWindow : public WindowType {
     * @brief return size of the window
     * @return size of the window
     */
-    TimeMeasure getSize();
+    TimeMeasure getSize() override;
 
     /**
     * @brief return size of the slide

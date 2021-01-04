@@ -123,16 +123,10 @@ class ExecutableCompleteAggregationTriggerAction
         // iterate over all slices and update the partial final aggregates
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
-        uint64_t largestClosedWindow = 0;
-        uint64_t slideSize = 0;
-        if(slices.size() != 0)
-        {
-            slideSize = slices[0].getEndTs() - slices[0].getStartTs();
-        }
-        else
-        {
+        if(slices.size() == 0) {
             return;
         }
+        uint64_t  slideSize = windowDefinition->getWindowType()->getSize().getTime();
 
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
@@ -188,6 +182,8 @@ class ExecutableCompleteAggregationTriggerAction
 
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
         if (windows.size() != 0) {
+            uint64_t largestClosedWindow = 0;
+
             for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
                 largestClosedWindow = std::max(window.getEndTs(), largestClosedWindow);
@@ -228,7 +224,6 @@ class ExecutableCompleteAggregationTriggerAction
             NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): remove slices until=" << currentWatermark);
             //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
-            //TODO: this is very ugly but we have to do it because we cannot delete on a slicing window based on the watermark because this call fall between two slices
             store->removeSlicesUntil(largestClosedWindow - slideSize);
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
