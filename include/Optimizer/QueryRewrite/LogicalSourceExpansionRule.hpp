@@ -54,6 +54,7 @@ typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePt
  *                                           |             |
  *                                      Source(Car1)    Source(Car2)
  *
+ *
  * Given that logical source car has two physical sources: i.e. car1 and car2
  *
  *                                                     or

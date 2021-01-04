@@ -18,11 +18,11 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
@@ -32,10 +32,10 @@
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <z3++.h>
 
@@ -203,6 +203,78 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         auto columns = childQuerySignature->getColumns();
 
         return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);
+    } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+
+        auto intermediateQuerySignature = buildFromChildrenSignatures(context, childrenQuerySignatures);
+        auto conditions = intermediateQuerySignature->getConditions();
+        auto attributeMap = intermediateQuerySignature->getAttributeMap();
+        auto columns = intermediateQuerySignature->getColumns();
+
+        auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
+
+        std::vector<NodePtr> children = joinOperator->getChildren();
+
+        if (children.size() > 2) {
+            NES_THROW_RUNTIME_ERROR("Join operator can't have more than 2 child");
+        }
+
+        auto joinDefinition = joinOperator->getJoinDefinition();
+
+        auto leftChild = children[0]->as<LogicalOperatorNode>();
+        auto leftJoinKey = joinDefinition->getLeftJoinKey();
+        auto leftKeyName = leftJoinKey->getFieldName();
+
+        z3::ExprPtr leftKeyExpr;
+        for (auto source : leftChild->getSignature()->getSources()) {
+
+            if (attributeMap.find(leftKeyName) == attributeMap.end()) {
+                NES_THROW_RUNTIME_ERROR("");
+            }
+
+            auto derivedAttributes = attributeMap[leftKeyName];
+
+            auto expectedAttributeName = source + "." + leftKeyName;
+            auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
+
+            if (found != derivedAttributes.end()) {
+                if (columns.find(expectedAttributeName) == columns.end()) {
+                    leftKeyExpr = columns[expectedAttributeName];
+                    break;
+                }
+            }
+        }
+
+        auto rightChild = children[1]->as<LogicalOperatorNode>();
+        auto rightJoinKey = joinDefinition->getRightJoinKey();
+
+        z3::ExprPtr rightKeyExpr;
+        for (auto source : rightChild->getSignature()->getSources()) {
+
+            if (attributeMap.find(leftKeyName) == attributeMap.end()) {
+                NES_THROW_RUNTIME_ERROR("");
+            }
+
+            auto derivedAttributes = attributeMap[leftKeyName];
+
+            auto expectedAttributeName = source + "." + leftKeyName;
+            auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
+
+            if (found != derivedAttributes.end()) {
+                if (columns.find(expectedAttributeName) == columns.end()) {
+                    rightKeyExpr = columns[expectedAttributeName];
+                    break;
+                }
+            }
+        }
+
+        auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
+
+        //CNF the watermark conditions to the original condition
+        Z3_ast andConditions[] = {*conditions, joinCondition};
+        conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
+
+        return QuerySignature::create(conditions, columns, intermediateQuerySignature->getWindowsExpressions(), attributeMap,
+                                      intermediateQuerySignature->getSources());
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
 }
