@@ -16,6 +16,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Phases/TypeInferencePhase.hpp>
@@ -26,6 +27,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <algorithm>
 
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/SliceCombinerTriggerActionDescriptor.hpp>
@@ -50,7 +52,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
             if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
                 createCentralWindowOperator(windowOp);
             } else {
-                createDistributedWindowOperator(windowOp);
+                createDistributedWindowOperator(windowOp, queryPlan);
             }
         }
     } else {
@@ -73,7 +75,7 @@ void DistributeWindowRule::createCentralWindowOperator(WindowOperatorNodePtr win
     windowOp->replace(newWindowOp);
 }
 
-void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperator) {
+void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperator, QueryPlanPtr queryPlan) {
     // To distribute the window operator we replace the current window operator with 1 WindowComputationOperator (performs the final aggregate)
     // and n SliceCreationOperators.
     // To this end, we have to a the window definitions in the following way:
@@ -97,22 +99,23 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     //    windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
     //TODO: @Ankit we have to change this depending on how you do the placement
-    uint64_t numberOfEdges = logicalWindowOperator->getChildren().size();
+    uint64_t numberOfEdgesForFinalComputation = logicalWindowOperator->getChildren().size();
     if (logicalWindowOperator->getChildren().size() >= CHILD_NODE_THRESHOLD_COMBINER) {
-        numberOfEdges = 1;
+        numberOfEdgesForFinalComputation = 1;
     }
+    uint64_t numberOfEdgesForMerger = logicalWindowOperator->getChildren().size();
 
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
         windowDef =
             Windowing::LogicalWindowDefinition::create(keyField, windowComputationAggregation, windowType,
                                                        Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                       numberOfEdges, triggerPolicy, triggerActionComplete, allowedLateness);
+                                                       numberOfEdgesForFinalComputation, triggerPolicy, triggerActionComplete, allowedLateness);
 
     } else {
         windowDef = Windowing::LogicalWindowDefinition::create(
             windowComputationAggregation, windowType, Windowing::DistributionCharacteristic::createCombiningWindowType(),
-            numberOfEdges, triggerPolicy, triggerActionComplete, allowedLateness);
+            numberOfEdgesForFinalComputation, triggerPolicy, triggerActionComplete, allowedLateness);
     }
     NES_DEBUG("DistributeWindowRule::apply: created logical window definition for computation operator" << windowDef->toString());
 
@@ -128,27 +131,50 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
     auto windowChildren = windowComputationOperator->getChildren();
 
+    auto assignerOp = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
+    UnaryOperatorNodePtr finalComputationAssigner;
+    NES_ASSERT(assignerOp.size() > 1, "at least one assigner has to be there");
+    if (auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+            assignerOp[0]->getWatermarkStrategyDescriptor())) {
+        finalComputationAssigner =
+            LogicalOperatorFactory::createWatermarkAssignerOperator(NES::Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                Attribute("end"), eventTimeWatermarkStrategyDescriptor->getAllowedLateness(),
+                eventTimeWatermarkStrategyDescriptor->getTimeUnit()));
+        windowComputationOperator->insertBetweenThisAndChildNodes(finalComputationAssigner);
+    }
+
     //add merger
-    if (windowComputationOperator->getChildren().size() >= CHILD_NODE_THRESHOLD_COMBINER) {
+    UnaryOperatorNodePtr mergerAssigner;
+    if (finalComputationAssigner->getChildren().size() >= CHILD_NODE_THRESHOLD_COMBINER) {
         auto sliceCombinerWindowAggregation = windowAggregation->copy();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 keyField, sliceCombinerWindowAggregation, windowType,
-                Windowing::DistributionCharacteristic::createMergingWindowType(), windowComputationOperator->getChildren().size(),
+                Windowing::DistributionCharacteristic::createMergingWindowType(), numberOfEdgesForMerger,
                 triggerPolicy, triggerActionComplete, allowedLateness);
 
         } else {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 sliceCombinerWindowAggregation, windowType, Windowing::DistributionCharacteristic::createMergingWindowType(),
-                windowComputationOperator->getChildren().size(), triggerPolicy, triggerActionComplete, allowedLateness);
+                numberOfEdgesForMerger, triggerPolicy, triggerActionComplete, allowedLateness);
         }
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice merger operator"
                   << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
         windowDef->setOriginId(sliceOp->getId());
-        windowComputationOperator->insertBetweenThisAndChildNodes(sliceOp);
-        windowChildren = sliceOp->getChildren();
+        finalComputationAssigner->insertBetweenThisAndChildNodes(sliceOp);
+
+        if (auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+            assignerOp[0]->getWatermarkStrategyDescriptor())) {
+            mergerAssigner =
+                LogicalOperatorFactory::createWatermarkAssignerOperator(NES::Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute("end"), eventTimeWatermarkStrategyDescriptor->getAllowedLateness(),
+                    eventTimeWatermarkStrategyDescriptor->getTimeUnit()));
+            sliceOp->insertBetweenThisAndChildNodes(mergerAssigner);
+        }
+
+        windowChildren = mergerAssigner->getChildren();
     }
 
     //adding slicer
@@ -157,7 +183,6 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
         // For the SliceCreation operator we have to change copy aggregation function and manipulate the fields we want to aggregate.
         auto sliceCreationWindowAggregation = windowAggregation->copy();
-        //        sliceCreationWindowAggregation->as()->as<FieldAccessExpressionNode>()->setFieldName("value");//TODO: I am not sure if this is correct
         auto triggerActionSlicing = Windowing::SliceAggregationTriggerActionDescriptor::create();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
