@@ -142,6 +142,10 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                 eventTimeWatermarkStrategyDescriptor->getTimeUnit()));
         windowComputationOperator->insertBetweenThisAndChildNodes(finalComputationAssigner);
     }
+    else
+    {
+        finalComputationAssigner = windowComputationOperator;
+    }
 
     //add merger
     UnaryOperatorNodePtr mergerAssigner;
@@ -172,6 +176,10 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                     Attribute("end"), eventTimeWatermarkStrategyDescriptor->getAllowedLateness(),
                     eventTimeWatermarkStrategyDescriptor->getTimeUnit()));
             sliceOp->insertBetweenThisAndChildNodes(mergerAssigner);
+        }
+        else
+        {
+            mergerAssigner = sliceOp;
         }
 
         windowChildren = mergerAssigner->getChildren();

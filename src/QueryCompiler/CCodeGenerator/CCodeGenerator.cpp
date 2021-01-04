@@ -1050,7 +1050,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto getWindowStateStatement = getStateVariable(windowHandlerVariableDeclration);
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
-    
+
     /**
    * within the loop
    */
