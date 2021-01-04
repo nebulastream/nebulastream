@@ -82,15 +82,14 @@ void QueryRequestProcessorService::start() {
                     SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
-                    if (!sharedQueryMetaData->isNew()) {
-                        NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
-                        bool successful = queryUndeploymentPhase->execute(sharedQueryId);
-                        if (!successful) {
-                            throw QueryUndeploymentException("Unable to stop Global QueryId " + std::to_string(sharedQueryId));
-                        }
-                    }
-
-                    if (!sharedQueryMetaData->isEmpty()) {
+                    if (sharedQueryMetaData->isEmpty() && !sharedQueryMetaData->isNew()) {
+                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                            bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+                            if (!successful) {
+                                throw QueryUndeploymentException("Unable to stop Global QueryId "
+                                                                 + std::to_string(sharedQueryId));
+                            }
+                        } else if (sharedQueryMetaData->isNew()) {
 
                         auto queryPlan = sharedQueryMetaData->getQueryPlan();
 
@@ -111,12 +110,38 @@ void QueryRequestProcessorService::start() {
                                 sharedQueryId,
                                 "QueryRequestProcessingService: Failed to deploy query with global query Id "
                                     + std::to_string(sharedQueryId));
+                            }
+                        } else {
+                            // Reconfigure here (for now undeploy and deploy in the same block
+                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                            bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+                            if (!successful) {
+                                throw QueryUndeploymentException("Unable to stop Global QueryId "
+                                                                 + std::to_string(sharedQueryId));
+                            }
+                            auto queryPlan = sharedQueryMetaData->getQueryPlan();
+
+                            NES_DEBUG(
+                                "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
+                                << sharedQueryId);
+                            std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
+                            bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                            if (!placementSuccessful) {
+                                throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for "
+                                                              "query plan with shared query id: "
+                                                              + std::to_string(sharedQueryId));
+                            }
+
+                            successful = queryDeploymentPhase->execute(sharedQueryId);
+                            if (!successful) {
+                                throw QueryDeploymentException(
+                                    "QueryRequestProcessingService: Failed to deploy query with global query Id "
+                                    + std::to_string(sharedQueryId));
+                            }
                         }
+                        //Mark the meta data as deployed
+                        sharedQueryMetaData->markAsDeployed();
                     }
-                    //Mark the meta data as deployed
-                    sharedQueryMetaData->markAsDeployed();
-                    sharedQueryMetaData->setAsOld();
-                }
 
                 for (auto queryRequest : queryRequests) {
                     auto queryId = queryRequest.getQueryId();
