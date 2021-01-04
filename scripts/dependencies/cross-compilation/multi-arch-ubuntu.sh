@@ -18,8 +18,9 @@
 set -ex
 
 # install llvm build dependencies
-sudo apt-get update -qq && sudo apt-get install -qq \
+sudo apt-get update -qq && sudo DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   build-essential \
+  ca-certificates \
   crossbuild-essential-arm64 \
   libstdc++6-arm64-cross \
   cmake \
@@ -67,10 +68,13 @@ sudo apt-get install -qq --no-install-recommends \
   z3:arm64 && \
   sudo apt-get clean -qq && \
 
+# git checkout later produces non-empty output
+git config --global advice.detachedHead false && \
+
 # clone Ubuntu LTS version, build for arm64
 # libboost-all-dev cannot be installed due to python3.8-minimal:arm64
 git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost \
-git checkout boost-1.71.0 && ./bootstrap.sh && \
+rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
 sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
 ./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost && cd && \
 
