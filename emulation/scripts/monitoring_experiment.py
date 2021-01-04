@@ -1,161 +1,84 @@
-import requests
-import datetime
-import docker
-from influxdb import InfluxDBClient
+from lib.topology import Topology, LogLevel
+from lib.experiment import Experiment
+from lib.util import MonitoringType
+
+from mininet.cli import CLI
+from mininet.log import info, setLogLevel
 from time import sleep
 
+setLogLevel('info')
+
+# repeatable parameters for each experiment
+# ---------------------------------------------------------------------
+number_workers_producing = [5]
+number_workers_not_producing = [0]
+monitoring_types = [MonitoringType.DISABLED, MonitoringType.NEMO_PULL, MonitoringType.PROMETHEUS]
+
+# topology parameters
+# ---------------------------------------------------------------------
+num_tuples = 25
+num_buffers = 30
+
+nes_dir = "/home/xenofon/git/nebulastream/"
+influx_storage = "/home/xenofon/experiments/influx/"
+nes_log_level = LogLevel.NONE
+
 # experiment parameters
-experiment_table = "experiment_monitoring_ysb"
-topology = "1Crd5Wrks"
-system = "NES"
-noIterations = 30
-noIterationsBeforeExecution = 0
-monitoring_frequency = 1
-
-description = "25Tup-30Buf"
-
+# ---------------------------------------------------------------------
 version = "2"
-
-# types are None, "prometheus", "nes"
-types = [None, "nes", "prometheus"]
-monitoring_type = types[1]
-
-
-def readDockerStats(containerIters, influxTable, topology, system, version, runtime, iteration, description,
-                    monitoring, monitoring_frequency):
-    msrmnts = []
-    for cName, cIter in containerIters:
-        msrmt = next(cIter)
-
-        if cName.startswith("mn.w"):
-            nes_type = "worker"
-        else:
-            nes_type = "coordinator"
-
-        # print(msrmt) #all metrics that can be collected
-        measurementDict = {
-            "measurement": influxTable,
-            "tags": {
-                "container": str(cName),
-                "type": nes_type,
-                "topology": topology,
-                "system": system,
-                "version": version,
-                "description": description,
-                "monitoring": str(monitoring),
-                "monitoring_frequency": monitoring_frequency
-            },
-            "time": msrmt["read"],
-            "fields": {
-                "cpuTotalUsage": msrmt["cpu_stats"]["cpu_usage"]["total_usage"],
-                "memoryUsage": msrmt["memory_stats"]["usage"],
-                "rxBytes": msrmt["networks"]["eth0"]["rx_bytes"],
-                "rxPackets": msrmt["networks"]["eth0"]["rx_packets"],
-                "txBytes": msrmt["networks"]["eth0"]["tx_bytes"],
-                "txPackets": msrmt["networks"]["eth0"]["tx_packets"],
-                "runtime_ms": runtime,
-                "iteration": iteration
-            }
-        }
-        print(measurementDict)
-        msrmnts.append(measurementDict)
-    return msrmnts
+iterations = 30
+iterations_before_execution = 0
+monitoring_frequency = 1
+no_coordinators = 1
+influx_db = "monitoring"
+influx_table = "monitoring_measurement_ysb"
+description = str(num_tuples) + "Tup-" + str(num_buffers) + "Buf"
 
 
-def make_request(request_type):
-    if request_type == "ysb":
-        nes_url = 'http://localhost:8081/v1/nes/query/execute-query'
-        data = '''{
-        \"userQuery\" : \"Query::from(\\\"ysb\\\").filter(Attribute(\\\"event_type\\\") < 3).windowByKey(Attribute(\\\"campaign_id\\\"), TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Milliseconds(100)), Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"ysbOut.csv\\\",\\\"CSV_FORMAT\\\",\\\"APPEND\\\"));\",
-        \"strategyName\" : \"BottomUp\"
-        }'''
-        return requests.post(nes_url, data=data)
-    elif request_type == "monitoring_prometheus":
-        nes_url = 'http://localhost:8081/v1/nes/monitoring/metrics/prometheus'
-        return requests.get(nes_url)
-    elif request_type == "monitoring_nes":
-        nes_url = 'http://localhost:8081/v1/nes/monitoring/metrics/'
-        return requests.get(nes_url)
+# experiment method definitions
+# ---------------------------------------------------------------------
+def execute_experiment(_nes_dir, _influx_storage, _nes_log_level, _number_workers_producing,
+                       _number_workers_not_producing, _num_tuples, _num_buffers, _monitoring_type, _influx_db,
+                       _influx_table, _iterations, _iterations_before_execution, _monitoring_frequency,
+                       _no_coordinators, _description, _version, run_cli, sleep_time):
+    topology = Topology(_nes_dir, _influx_storage, _nes_log_level, _number_workers_producing,
+                        _number_workers_not_producing, _num_tuples, _num_buffers, _monitoring_type)
+    net = topology.create_topology()
+
+    info('*** Starting network\n')
+    net.start()
+
+    info('*** Sleeping ' + str(sleep_time) + '\n')
+    sleep(sleep_time)
+
+    info('*** Executing experiment with following parameters producers=' + str(
+        worker_producing) + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + mt.value + '\n')
+    experiment = Experiment(_number_workers_producing, _number_workers_not_producing, _influx_db, _influx_table,
+                            _iterations,
+                            _iterations_before_execution, _monitoring_frequency, _no_coordinators, _monitoring_type,
+                            _description, _version)
+    experiment.start()
+
+    if run_cli:
+        info('*** Running CLI\n')
+        CLI(net)
     else:
-        raise RuntimeError("Unkown request " + request_type)
+        sleep(sleep_time)
+
+    info('*** Stopping network')
+    net.stop()
 
 
-def request_monitoring_data(type):
-    print("Executing monitoring call on " + type)
-    resp = None
-    if type == "prometheus":
-        resp = make_request("monitoring_prometheus")
-    elif type == "nes":
-        resp = make_request("monitoring_nes")
+# experiment the executable part
+# ---------------------------------------------------------------------
+for worker_producing in number_workers_producing:
+    for worker_not_producing in number_workers_not_producing:
+        for mt in monitoring_types:
+            info('*** Executing experiment with following parameters producers=' + str(
+                worker_producing) + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + mt.value + '\n')
 
-    if resp and resp.status_code == 200:
-        return True
-    else:
-        raise RuntimeError("Response with status code " + str(resp.status_code))
-
-
-print("Executing monitoring request experiment")
-# execute experiment
-msrmnt_batch = []
-docker_client = docker.DockerClient(base_url='unix://var/run/docker.sock')
-
-containers = filter(lambda c: c.name.startswith(("mn.crd", "mn.w")), docker_client.containers.list())
-containerIters = [(c.name, c.stats(decode=True)) for c in containers]
-
-start = datetime.datetime.now()
-for i in range(1, noIterationsBeforeExecution):
-    print("\nExecuting iteration " + str(i))
-    if monitoring_type and (i % monitoring_frequency == 0):
-        request_monitoring_data(monitoring_type)
-
-    print("Reading docker stats " + str(i))
-    end = datetime.datetime.now()
-    delta = (end - start)
-    runtimeInMs = int(delta.total_seconds() * 1000)  # milliseconds
-    msrmnt_batch.extend(
-        readDockerStats(containerIters, experiment_table, topology, system, version, runtimeInMs, i, description,
-                        monitoring_type, monitoring_frequency))
-    sleep(1)
-
-print("Executing query")
-start = datetime.datetime.now()
-response = make_request("ysb")
-
-for i in range(noIterationsBeforeExecution, noIterationsBeforeExecution + noIterations + 1):
-    print("\nExecuting iteration " + str(i))
-
-    if monitoring_type and (i % monitoring_frequency == 0):
-        request_monitoring_data(monitoring_type)
-
-    print("Reading docker stats " + str(i))
-    end = datetime.datetime.now()
-    delta = (end - start)
-    runtimeInMs = int(delta.total_seconds() * 1000)  # milliseconds
-
-    if (response.status_code == 200):
-        # print(response.json())
-        msrmnt_batch.extend(
-            readDockerStats(containerIters, experiment_table, topology, system, version, runtimeInMs, i, description,
-                            monitoring_type, monitoring_frequency))
-        sleep(1)
-    else:
-        raise RuntimeError("Response with status code " + str(response.status_code))
-
-# influx operations
-print("Experiment finished! Writing to Influx..")
-influx_client = InfluxDBClient(host='localhost', port=8086)
-
-try:
-    influx_client.create_database('monitoring')
-except:
-    print('Database monitoring already exists')
-
-influx_client.switch_database('monitoring')
-
-print(msrmnt_batch)
-res = influx_client.write_points(msrmnt_batch)
-print(res)
-
-print("Finished!")
-
-# TODO Test prometheus that is not working
+            execute_experiment(nes_dir, influx_storage, nes_log_level, worker_producing,
+                               worker_not_producing, num_tuples, num_buffers, mt, influx_db,
+                               influx_table, iterations, iterations_before_execution, monitoring_frequency,
+                               no_coordinators, description, version, False, 10)
+            sleep(10)
