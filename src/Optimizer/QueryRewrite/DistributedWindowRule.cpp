@@ -134,16 +134,21 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     auto assignerOp = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
     UnaryOperatorNodePtr finalComputationAssigner;
     NES_ASSERT(assignerOp.size() > 1, "at least one assigner has to be there");
-    if (auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+
+    //if event time we have to add a new window assigner for the final window computation, the ts field is then end as we send slices and no tuples
+    if (std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
             assignerOp[0]->getWatermarkStrategyDescriptor())) {
+        auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+            assignerOp[0]->getWatermarkStrategyDescriptor());
         finalComputationAssigner =
             LogicalOperatorFactory::createWatermarkAssignerOperator(NES::Windowing::EventTimeWatermarkStrategyDescriptor::create(
                 Attribute("end"), eventTimeWatermarkStrategyDescriptor->getAllowedLateness(),
                 eventTimeWatermarkStrategyDescriptor->getTimeUnit()));
         windowComputationOperator->insertBetweenThisAndChildNodes(finalComputationAssigner);
     }
-    else
+    else //if ingestion time, we do not have to add a new watermark assigner as the system clock is used
     {
+        // in this case no assigner is created
         finalComputationAssigner = windowComputationOperator;
     }
 
@@ -169,16 +174,20 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         windowDef->setOriginId(sliceOp->getId());
         finalComputationAssigner->insertBetweenThisAndChildNodes(sliceOp);
 
-        if (auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+        //if event time we have to add a new window assigner for the window merger, the ts field is then end as we send slices and no tuples
+        if (std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
             assignerOp[0]->getWatermarkStrategyDescriptor())) {
+            auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+                assignerOp[0]->getWatermarkStrategyDescriptor());
             mergerAssigner =
                 LogicalOperatorFactory::createWatermarkAssignerOperator(NES::Windowing::EventTimeWatermarkStrategyDescriptor::create(
                     Attribute("end"), eventTimeWatermarkStrategyDescriptor->getAllowedLateness(),
                     eventTimeWatermarkStrategyDescriptor->getTimeUnit()));
             sliceOp->insertBetweenThisAndChildNodes(mergerAssigner);
         }
-        else
+        else //if ingestion time, we do not have to add a new watermark assigner as the system clock is used
         {
+            // in this case no assigner is created
             mergerAssigner = sliceOp;
         }
 
