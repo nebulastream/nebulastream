@@ -36,9 +36,6 @@ sudo apt-get update -qq && sudo DEBIAN_FRONTEND="noninteractive" apt-get install
   xz-utils \
   ninja-build && \
 
-sudo apt-get install -qq --no-install-recommends --reinstall \
-  ca-certificates && \
-
 # add sources for arm64 dependencies (from original amd64)
 sudo cp /etc/apt/sources.list /etc/apt/sources.list.bkp && \
 sudo sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \

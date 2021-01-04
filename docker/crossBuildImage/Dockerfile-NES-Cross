@@ -1,0 +1,86 @@
+FROM ubuntu:20.04
+
+ADD ../../cmake/toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
+
+RUN apt-get update -qq && sudo DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
+      build-essential \
+      ca-certificates \
+      crossbuild-essential-arm64 \
+      libstdc++6-arm64-cross \
+      cmake \
+      git \
+      python3-dev \
+      python-dev \
+      libncurses5-dev \
+      libxml2-dev \
+      libedit-dev \
+      swig \
+      doxygen \
+      graphviz \
+      xz-utils \
+      ninja-build && \
+  && apt-get clean -qq && \
+
+cp /etc/apt/sources.list /etc/apt/sources.list.bkp && \
+sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \
+cp /etc/apt/sources.list /etc/apt/sources.list.d/ports.list && \
+sed -i -- 's|amd64|arm64|g' /etc/apt/sources.list.d/ports.list && \
+sed -i -E -- 's|http://.*archive\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports|g' /etc/apt/sources.list.d/ports.list && \
+sed -i -E -- 's|http://.*security\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports|g' /etc/apt/sources.list.d/ports.list && \
+
+dpkg --add-architecture arm64 && \
+apt-get update && \
+apt-get install -qq --no-install-recommends \
+  libpython3-dev:arm64 \
+  libncurses5-dev:arm64 \
+  libxml2-dev:arm64 \
+  libedit-dev:arm64 \
+  libdwarf-dev:arm64 \
+  libdw-dev:arm64 \
+  liblog4cxx-dev:arm64 \
+  libcpprest-dev:arm64 \
+  libssl-dev:arm64 \
+  libeigen3-dev:arm64 \
+  libzmqpp-dev:arm64 \
+  z3:arm64 && \
+  apt-get clean -qq && \
+git config --global advice.detachedHead false && \
+
+git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost \
+rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
+sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
+./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost && cd && \
+
+mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
+mkdir -p /opt/toolchain && \
+cd /opt/sysroots/aarch64-linux-gnu/usr && \
+cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && cd lib && \
+cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/*gcc* . && \
+cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/*crt* . && \
+cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libsupc++.a . && \
+cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libstdc++*  . && cd && \
+
+git clone --branch llvmorg-10.0.0 --single-branch https://github.com/llvm/llvm-project && \
+mkdir -p llvm-project/build && cd llvm-project/build && \
+cmake -G Ninja \
+-DCMAKE_BUILD_TYPE=Release \
+-DCMAKE_INSTALL_PREFIX=/opt/toolchain \
+-DCMAKE_CROSSCOMPILING=ON \
+-DLLVM_BUILD_DOCS=OFF \
+-DLLVM_DEFAULT_TARGET_TRIPLE=aarch64-linux-gnu \
+-DLLVM_TARGET_ARCH=AArch64 \
+-DLLVM_TARGETS_TO_BUILD=AArch64 \
+-DLLVM_ENABLE_PROJECTS="clang;compiler-rt;lld;polly;libcxx;libcxxabi;openmp" \
+../llvm && \
+ninja -j 2 clang && ninja -j 2 cxx && sudo ninja install && \
+cd && rm -rf llvm-project && \
+
+cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
+cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
+cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build \
+&& cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
+-DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install \
+&& sudo make -j2 install && cd ../.. && sudo rm -rf grpc
+
+ADD ./entrypoint-nes-cross.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
