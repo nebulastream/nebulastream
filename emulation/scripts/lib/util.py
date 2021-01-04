@@ -17,12 +17,10 @@ import requests
 from influxdb import InfluxDBClient
 from enum import Enum
 
-
 class MonitoringType(Enum):
     DISABLED = "disabled"
     NEMO_PULL = "nemo_pull"
     PROMETHEUS = "prometheus"
-
 
 def readDockerStats(containerIters, influxTable, version, runtime, iteration, description,
                     monitoring, monitoring_frequency, no_worker_producing, no_worker_not_producing, no_coordinator):
@@ -86,17 +84,15 @@ def make_request(request_type):
 
 
 def request_monitoring_data(type):
-    print("Executing monitoring call on " + type.value)
+    print("Executing monitoring call on " + type)
     resp = None
-    if type == MonitoringType.PROMETHEUS:
+    if type == "prometheus":
         resp = make_request("monitoring_prometheus")
-    elif type == MonitoringType.NEMO_PULL:
+    elif type == "nes":
         resp = make_request("monitoring_nes")
-    else:
-        raise RuntimeError("Monitoring request with type " + type.value + " not supported")
 
     if resp and resp.status_code == 200:
-        return resp
+        return True
     else:
         raise RuntimeError("Response with status code " + str(resp.status_code))
 
