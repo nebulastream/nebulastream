@@ -464,7 +464,7 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     nodeEngine->stop();
 }
 
-TEST_F(QueryExecutionTest, playAround) {
+TEST_F(QueryExecutionTest, DISABLED_PlayAround) {
     uint64_t millisecondOfallowedLateness = 1; /*second of allowedLateness*/
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
