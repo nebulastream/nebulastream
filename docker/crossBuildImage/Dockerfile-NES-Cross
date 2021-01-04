@@ -42,7 +42,7 @@ apt-get install -qq --no-install-recommends \
   z3:arm64 && \
   apt-get clean -qq && \
 git config --global advice.detachedHead false && \
-git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost \
+git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost && \
 rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
 sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
 ./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost && cd && \
@@ -70,10 +70,10 @@ ninja -j 2 clang && ninja -j 2 cxx && ninja install && \
 cd && rm -rf llvm-project && \
 cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
 cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
-cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build \
-&& cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
--DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install \
-&& make -j2 install && cd ../.. && rm -rf grpc
+cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && \
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
+-DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install && \
+make -j2 install && cd ../.. && rm -rf grpc
 
 ADD ./entrypoint-nes-cross.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
