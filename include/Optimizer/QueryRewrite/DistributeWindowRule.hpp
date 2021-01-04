@@ -65,7 +65,25 @@ typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
  *                                    WindowSlicer        WindowSlicer
  *                                           |             |
  *                                      Source(Car1)    Source(Car2)
-
+* ---------------------------------------------
+ * Example: a query :                       Sink
+*                                           |
+*                                           Window
+*                                           |
+*                                        Source(Car)
+*
+* will be expanded to:                        Sink
+*                                               |
+*                                          Window-Combiner
+*                                                |
+*                                          Watermark-Assigner
+*                                             /    \
+*                                           /       \
+*                            Window-SliceCreator Window-SliceCreator
+*                                      |               |
+*                             Watermark-Assigner   Watermark-Assigner
+*                                      |               |
+*                                   Source(Car1)    Source(Car2)
  */
 class DistributeWindowRule : public BaseRefinementRule {
   public:
@@ -87,7 +105,7 @@ class DistributeWindowRule : public BaseRefinementRule {
   private:
     explicit DistributeWindowRule();
     void createCentralWindowOperator(WindowOperatorNodePtr currentWindowOperator);
-    void createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperaotr);
+    void createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperaotr, QueryPlanPtr queryPlan);
 };
 }// namespace NES
 #endif//NES_DistributeWindowRule_HPP
