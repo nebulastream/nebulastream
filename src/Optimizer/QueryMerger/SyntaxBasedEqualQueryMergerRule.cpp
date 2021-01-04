@@ -44,9 +44,9 @@ bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQuer
     NES_DEBUG("SyntaxBasedEqualQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
     for (uint16_t i = 0; i < allSharedQueryMetaData.size() - 1; i++) {
         for (uint16_t j = i + 1; j < allSharedQueryMetaData.size(); j++) {
-
-            auto targetSharedQueryMetaData = allSharedQueryMetaData[i];
-            auto hostSharedQueryMetaData = allSharedQueryMetaData[j];
+            // Ordering is here important, always merge into Query with smaller ID, as it would already be deployed
+            auto targetSharedQueryMetaData = allSharedQueryMetaData[j];
+            auto hostSharedQueryMetaData = allSharedQueryMetaData[i];
 
             if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
                 continue;
