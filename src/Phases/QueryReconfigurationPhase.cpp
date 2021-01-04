@@ -14,55 +14,98 @@
     limitations under the License.
 */
 
+#include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/QueryReconfigurationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-QueryReconfigurationPhase::QueryReconfigurationPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                     WorkerRPCClientPtr workerRpcClient)
-    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient) {
+QueryReconfigurationPhase::QueryReconfigurationPhase(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
+                                                     WorkerRPCClientPtr workerRpcClient, StreamCatalogPtr streamCatalog)
+    : topology(topology), globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient),
+      streamCatalog(streamCatalog) {
     NES_DEBUG("QueryReconfigurationPhase()");
 }
 
-QueryReconfigurationPhasePtr QueryReconfigurationPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                               WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<QueryReconfigurationPhase>(QueryReconfigurationPhase(globalExecutionPlan, workerRpcClient));
+QueryReconfigurationPhasePtr QueryReconfigurationPhase::create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
+                                                               WorkerRPCClientPtr workerRpcClient,
+                                                               StreamCatalogPtr streamCatalog) {
+    return std::make_shared<QueryReconfigurationPhase>(
+        QueryReconfigurationPhase(topology, globalExecutionPlan, workerRpcClient, streamCatalog));
 }
 
 QueryReconfigurationPhase::~QueryReconfigurationPhase() { NES_DEBUG("~QueryReconfigurationPhase()"); }
 
-bool QueryReconfigurationPhase::execute(QueryId queryId) {
-
+bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryReconfigurationPhase: reconfigure the query");
-
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    if (executionNodes.empty()) {
-        NES_ERROR("QueryReconfigurationPhase: Unable to find ExecutionNodes to be reconfigured for query " << queryId);
-        throw QueryDeploymentException("QueryReconfigurationPhase: Unable to find ExecutionNodes to be reconfigure the query "
-                                       + std::to_string(queryId));
+    auto queryId = queryPlan->getQueryId();
+    auto sinkTopologyNode = findSinkTopologyNode(queryPlan);
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    for (auto executionNode : executionNodes) {
+        if (executionNode->getTopologyNode()->getId() == sinkTopologyNode->getId()) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            for (auto plan : querySubPlans) {
+                NES_DEBUG("QueryPlan is: " + plan->toString());
+            }
+        }
     }
-
-    bool successReconfiguration = reconfigureSinks(queryId, executionNodes);
-    if (successReconfiguration) {
-        NES_DEBUG("QueryReconfigurationPhase: reconfiguration for query " + std::to_string(queryId) + " successful");
-    } else {
-        NES_ERROR("QueryReconfigurationPhase: Failed to reconfigure query " << queryId);
-        throw QueryDeploymentException("QueryReconfigurationPhase: Failed to reconfigure query " + std::to_string(queryId));
-    }
-    return successReconfiguration;
+    return false;
 }
 
-bool QueryReconfigurationPhase::resetGlobalExecutionPlan(QueryId queryId) {
-    NES_DEBUG("QueryReconfigurationPhase: reset global execution plan " + std::to_string(queryId));
-    bool resetSuccessful = globalExecutionPlan->removeQuerySubPlans(queryId);
-    return resetSuccessful;
+//Copied from BasePlacementStrategy::mapPinnedOperatorToTopologyNodes
+TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr queryPlan) {
+    auto queryId = queryPlan->getQueryId();
+    TopologyNodePtr sinkNode = topology->getRoot();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
+    std::vector<TopologyNodePtr> allSourceNodes;
+    for (auto& sourceOperator : sourceOperators) {
+        if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
+            throw QueryDeploymentException("QueryReconfigurationPhase: Source Descriptor need stream name: "
+                                           + std::to_string(queryId));
+        }
+        const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
+        if (mapOfSourceToTopologyNodes.find(streamName) != mapOfSourceToTopologyNodes.end()) {
+            NES_TRACE("QueryReconfigurationPhase: Entry for the logical stream " << streamName << " already present.");
+            continue;
+        }
+        NES_TRACE("BasePlacementStrategy: Get all topology nodes for the logical source stream");
+        const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+        if (sourceNodes.empty()) {
+            NES_ERROR("BasePlacementStrategy: No source found in the topology for stream " << streamName
+                                                                                           << " for query with id : " << queryId);
+            throw QueryDeploymentException("QueryReconfigurationPhase: No source found in the topology for stream " + streamName
+                                           + " for query with id : " + std::to_string(queryId));
+        }
+        mapOfSourceToTopologyNodes[streamName] = sourceNodes;
+        NES_TRACE("QueryReconfigurationPhase: Find the topology sub graph for the source nodes.");
+        std::vector<TopologyNodePtr> topoSubGraphSourceNodes = this->topology->findPathBetween(sourceNodes, {sinkNode});
+        allSourceNodes.insert(allSourceNodes.end(), topoSubGraphSourceNodes.begin(), topoSubGraphSourceNodes.end());
+    }
+
+    NES_DEBUG("QueryReconfigurationPhase: Merge all the topology sub-graphs found using their source nodes");
+    std::vector<TopologyNodePtr> mergedGraphSourceNodes = topology->mergeSubGraphs(allSourceNodes);
+
+    NES_TRACE("QueryReconfigurationPhase: Locating sink node.");
+    //TODO: change here if the topology can have more than one root node
+    TopologyNodePtr sourceTopologyNode = mergedGraphSourceNodes[0];
+    std::vector<NodePtr> rootNodes = sourceTopologyNode->getAllRootNodes();
+
+    if (rootNodes.empty()) {
+        NES_ERROR("QueryReconfigurationPhase: Found no root nodes in the topology plan. Please check the topology graph.");
+        throw QueryDeploymentException(
+            "QueryReconfigurationPhase: Found no root nodes in the topology plan. Please check the topology graph.");
+    }
+    return rootNodes[0]->as<TopologyNode>();
 }
 
 bool QueryReconfigurationPhase::reconfigureSinks(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {

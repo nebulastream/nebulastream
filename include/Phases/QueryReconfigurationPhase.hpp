@@ -24,6 +24,9 @@
 
 namespace NES {
 
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
+
 class WorkerRPCClient;
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
@@ -35,6 +38,12 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class QueryReconfigurationPhase;
 typedef std::shared_ptr<QueryReconfigurationPhase> QueryReconfigurationPhasePtr;
+
+class TopologyNode;
+typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 /**
  * @brief The query reconfiguration phase is responsible for reconfiguring the query plan for a query to respective worker nodes.
@@ -48,24 +57,24 @@ class QueryReconfigurationPhase {
      * @param workerRpcClient : rpc client to communicate with workers
      * @return shared pointer to the instance of QueryReconfigurationPhase
      */
-    static QueryReconfigurationPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
+    static QueryReconfigurationPhasePtr create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
+                                               WorkerRPCClientPtr workerRpcClient, StreamCatalogPtr streamCatalog);
 
     /**
      * @brief method for reconfiguring a query, only sink reconfiguration supported now
      * @param queryId : the query Id of the query to be reconfigured
      * @return true if successful else false
      */
-    bool execute(QueryId queryId);
-    /**
-     * @brief method for resetting execution plan before reconfiguration can take place
-     * @param queryId : the query Id of the query to reset
-     * @return true if successful else false
-     */
-    bool resetGlobalExecutionPlan(QueryId queryId);
+    bool execute(QueryPlanPtr queryPlan);
+
     ~QueryReconfigurationPhase();
 
   private:
-    explicit QueryReconfigurationPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
+    explicit QueryReconfigurationPhase(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
+                                       WorkerRPCClientPtr workerRpcClient, StreamCatalogPtr streamCatalog);
+
+    TopologyNodePtr findSinkTopologyNode(QueryPlanPtr queryPlan);
+
     /**
      * @brief method send query to nodes for reconfiguring sinks
      * @param queryId
@@ -73,8 +82,10 @@ class QueryReconfigurationPhase {
      */
     bool reconfigureSinks(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
 
+    TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
     WorkerRPCClientPtr workerRPCClient;
+    StreamCatalogPtr streamCatalog;
 };
 }// namespace NES
 #endif//NES_QUERYRECONFIGURATIONPHASE_HPP
