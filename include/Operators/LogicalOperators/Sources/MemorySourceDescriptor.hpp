@@ -40,7 +40,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param memoryAreaSize the size of the area of memory
      * @return a correctly initialized shared ptr to MemorySourceDescriptor
      */
-    static std::shared_ptr<MemorySourceDescriptor> create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize);
+    static std::shared_ptr<MemorySourceDescriptor> create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea,
+                                                          size_t memoryAreaSize);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -71,6 +72,6 @@ class MemorySourceDescriptor : public SourceDescriptor {
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
 };
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_

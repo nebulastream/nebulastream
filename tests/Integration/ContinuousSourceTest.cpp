@@ -1467,8 +1467,8 @@ TEST_F(ContinuousSourceTest, testMemorySource) {
     static_assert(sizeof(Record) == 16);
 
     auto schema = Schema::create()
-                  ->addField("key", DataTypeFactory::createUInt64())
-                  ->addField("timestamp", DataTypeFactory::createUInt64());
+                      ->addField("key", DataTypeFactory::createUInt64())
+                      ->addField("timestamp", DataTypeFactory::createUInt64());
 
     streamCatalog->addLogicalStream("memory_stream", schema);
 
@@ -1478,8 +1478,8 @@ TEST_F(ContinuousSourceTest, testMemorySource) {
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    constexpr auto memAreaSize = 1 * 1024 * 1024; // 1 MB
-    constexpr auto bufferSizeInNodeEngine = 4096; // TODO load this from config!
+    constexpr auto memAreaSize = 1 * 1024 * 1024;// 1 MB
+    constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
     auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
@@ -1501,8 +1501,7 @@ TEST_F(ContinuousSourceTest, testMemorySource) {
 
     //register query
     std::string queryString =
-        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")"
-            + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();

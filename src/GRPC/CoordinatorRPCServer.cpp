@@ -56,9 +56,8 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*, const Regist
                                                     RegisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
 
-    bool success = coordinatorEngine->registerPhysicalStream(
-        request->id(), request->sourcetype(), request->physicalstreamname(),
-        request->logicalstreamname());
+    bool success = coordinatorEngine->registerPhysicalStream(request->id(), request->sourcetype(), request->physicalstreamname(),
+                                                             request->logicalstreamname());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream success");

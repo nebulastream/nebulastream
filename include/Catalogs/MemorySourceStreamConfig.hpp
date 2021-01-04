@@ -18,7 +18,6 @@
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 
-
 namespace NES {
 
 /**
@@ -34,8 +33,8 @@ class MemorySourceStreamConfig : public AbstractPhysicalStreamConfig {
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
      */
-    explicit MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName,
-                                      std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize);
+    explicit MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+                                      uint8_t* memoryArea, size_t memoryAreaSize);
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -77,10 +76,10 @@ class MemorySourceStreamConfig : public AbstractPhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      * @return a constructed MemorySourceStreamConfig
      */
-    static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize);
+    static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName,
+                                                  std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize);
 
   private:
-
     std::string sourceType;
     std::string physicalStreamName;
     std::string logicalStreamName;
@@ -88,6 +87,6 @@ class MemorySourceStreamConfig : public AbstractPhysicalStreamConfig {
     const size_t memoryAreaSize;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_CATALOGS_MEMORYSOURCESTREAMCONFIG_HPP_

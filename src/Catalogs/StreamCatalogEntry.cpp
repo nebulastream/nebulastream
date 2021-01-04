@@ -20,12 +20,13 @@
 
 namespace NES {
 
-StreamCatalogEntry::StreamCatalogEntry(std::string sourceType, std::string physicalStreamName,
-                                       std::string logicalStreamName, TopologyNodePtr node)
-    : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), node(node){}
+StreamCatalogEntry::StreamCatalogEntry(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+                                       TopologyNodePtr node)
+    : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), node(node) {}
 
 StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node)
-    : sourceType(config->getSourceType()), physicalStreamName(config->getPhysicalStreamName()), logicalStreamName(config->getLogicalStreamName()), node(node) {
+    : sourceType(config->getSourceType()), physicalStreamName(config->getPhysicalStreamName()),
+      logicalStreamName(config->getLogicalStreamName()), node(node) {
     // nop
 }
 
@@ -39,8 +40,7 @@ std::string StreamCatalogEntry::getLogicalName() { return logicalStreamName; }
 
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalName=" << physicalStreamName << " logicalStreamName=" << logicalStreamName
-       << " sourceType=" << sourceType
+    ss << "physicalName=" << physicalStreamName << " logicalStreamName=" << logicalStreamName << " sourceType=" << sourceType
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }
