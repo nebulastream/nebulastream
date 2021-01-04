@@ -18,26 +18,30 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/MemorySource.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <Util/Logger.hpp>
+#include <Util/ThreadNaming.hpp>
 
 namespace NES {
 
+MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
+                           NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                           OperatorId operatorId)
+    : DataSource(std::move(schema), std::move(bufferManager), std::move(queryManager), operatorId), memoryArea(memoryArea),
+      memoryAreaSize(memoryAreaSize) {
+    NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
+}
+
 std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     NES_ASSERT(false, "this must not be invoked");
+    return std::nullopt;
 }
 
-const std::string MemorySource::toString() const {
-    return "MemorySource";
-}
+const std::string MemorySource::toString() const { return "MemorySource"; }
 
-NES::SourceType MemorySource::getType() const {
-    return MEMORY_SOURCE;
-}
+NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
 void MemorySource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
-
 
     auto recordSize = schema->getSchemaSizeInBytes();
     auto bufferSize = bufferManager->getBufferSize();
@@ -55,7 +59,6 @@ void MemorySource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, No
         queryManager->addWork(operatorId, buffer);
         pointer += bufferSize;
     }
-
 }
 
 }// namespace NES

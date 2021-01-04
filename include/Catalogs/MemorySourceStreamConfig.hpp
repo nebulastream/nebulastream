@@ -21,17 +21,62 @@
 
 namespace NES {
 
+/**
+ * @brief A stream config for a memory source
+ */
 class MemorySourceStreamConfig : public AbstractPhysicalStreamConfig {
   public:
+    /**
+     * @brief Create a MemorySourceStreamConfig using a set of parameters
+     * @param sourceType the type of the source
+     * @param physicalStreamName the name of the physical stream
+     * @param logicalStreamName the name of the logical stream
+     * @param memoryArea the pointer to the memory area
+     * @param memoryAreaSize the size of the memory area
+     */
     explicit MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName,
                                       std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize);
 
+    /**
+     * @brief Creates the source descriptor for the underlying source
+     * @param ptr the schama to build the source with
+     * @return
+     */
     SourceDescriptorPtr build(SchemaPtr ptr) override;
-    const std::string toString() override;
-    const std::string getSourceType() override;
-    const std::string getPhysicalStreamName();
-    const std::string getLogicalStreamName();
 
+    /**
+     * @brief The string representation of the object
+     * @return the string representation of the object
+     */
+    const std::string toString() override;
+
+    /**
+    * @brief The source type as a string
+    * @return The source type as a string
+    */
+    const std::string getSourceType() override;
+
+    /**
+     * @brief Provides the physical stream name of the source
+     * @return the physical stream name of the source
+     */
+    const std::string getPhysicalStreamName() override;
+
+    /**
+     * @brief Provides the logical stream name of the source
+     * @return the logical stream name of the source
+     */
+    const std::string getLogicalStreamName() override;
+
+    /**
+     * @brief Factory method of MemorySourceStreamConfig
+      * @param sourceType the type of the source
+     * @param physicalStreamName the name of the physical stream
+     * @param logicalStreamName the name of the logical stream
+     * @param memoryArea the pointer to the memory area
+     * @param memoryAreaSize the size of the memory area
+     * @return a constructed MemorySourceStreamConfig
+     */
     static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize);
 
   private:

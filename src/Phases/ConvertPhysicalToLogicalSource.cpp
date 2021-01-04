@@ -100,7 +100,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             return senseSourceDescriptor;
         }
         case MEMORY_SOURCE: {
-           NES_ASSERT(false, "not supported");
+           NES_ASSERT(false, "not supported because MemorySouce must be used only for local development or testing");
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " << srcType);
