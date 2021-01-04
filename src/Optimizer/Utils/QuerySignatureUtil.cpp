@@ -273,7 +273,61 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(OperatorNo
         Z3_ast andConditions[] = {*conditions, joinCondition};
         conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
 
-        return QuerySignature::create(conditions, columns, intermediateQuerySignature->getWindowsExpressions(), attributeMap,
+        //Compute the expression for window time key
+        auto windowType = joinDefinition->getWindowType();
+        auto timeCharacteristic = windowType->getTimeCharacteristic();
+        z3::expr windowTimeKeyVal(*context);
+        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+            windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
+        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+            windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
+        } else {
+            NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
+        }
+        auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
+        auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
+
+        //Compute the expression for window size and slide
+        auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+        uint64_t length = 0;
+        uint64_t slide = 0;
+        if (windowType->isTumblingWindow()) {
+            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
+            length = tumblingWindow->getSize().getTime() * multiplier;
+            slide = tumblingWindow->getSize().getTime() * multiplier;
+        } else if (windowType->isSlidingWindow()) {
+            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
+            length = slidingWindow->getSize().getTime() * multiplier;
+            slide = slidingWindow->getSlide().getTime() * multiplier;
+        } else {
+            NES_ERROR("QuerySignatureUtil: Cant serialize window Time Type");
+        }
+        auto windowTimeSizeVar = context->int_const("window-time-size");
+        z3::expr windowTimeSizeVal = context->int_val(length);
+        auto windowTimeSlideVar = context->int_const("window-time-slide");
+        z3::expr windowTimeSlideVal = context->int_val(slide);
+        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
+        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+        auto windowExpressions = intermediateQuerySignature->getWindowsExpressions();
+
+        auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
+        std::string windowKey = "JoinWindow";
+        z3::expr windowKeyVal = context->string_val(windowKey);
+        auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
+
+        //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
+        Z3_ast expressionArray[] = {windowKeyExpression, windowTimeKeyExpression, windowTimeSlideExpression,
+                                    windowTimeSizeExpression};
+
+        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
+            windowExpressions[windowKey] =
+                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
+        } else {
+            //TODO: as part of #1377
+            NES_NOT_IMPLEMENTED();
+        }
+
+        return QuerySignature::create(conditions, columns, windowExpressions, attributeMap,
                                       intermediateQuerySignature->getSources());
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
@@ -368,7 +422,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
     auto windowDefinition = windowOperator->getWindowDefinition();
 
     //Compute the expression for window key
-    z3::expr windowKeyVal(*context);
     std::string windowKey;
     if (windowDefinition->isKeyed()) {
         FieldAccessExpressionNodePtr key = windowDefinition->getOnKey();
@@ -377,7 +430,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
         windowKey = "non-keyed";
     }
     auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
-    windowKeyVal = context->string_val(windowKey);
+    z3::expr windowKeyVal = context->string_val(windowKey);
     auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
 
     //Compute the expression for window time key
