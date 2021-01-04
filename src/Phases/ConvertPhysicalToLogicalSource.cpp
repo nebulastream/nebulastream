@@ -19,21 +19,21 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
+#include <Sources/MemorySource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/ZmqSource.hpp>
-#include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -100,7 +100,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             return senseSourceDescriptor;
         }
         case MEMORY_SOURCE: {
-           NES_ASSERT(false, "not supported because MemorySouce must be used only for local development or testing");
+            NES_ASSERT(false, "not supported because MemorySouce must be used only for local development or testing");
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " << srcType);

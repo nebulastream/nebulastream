@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <utility>
-#include <API/Schema.hpp>
 
 namespace NES {
 namespace Network {

@@ -17,8 +17,8 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
-#include <Common/ForwardDeclaration.hpp>
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
+#include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>

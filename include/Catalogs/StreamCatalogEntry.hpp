@@ -39,8 +39,8 @@ typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 class StreamCatalogEntry {
 
   public:
-    explicit StreamCatalogEntry(std::string sourceType, std::string physicalStreamName,
-                       std::string logicalStreamName, TopologyNodePtr node);
+    explicit StreamCatalogEntry(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+                                TopologyNodePtr node);
 
     explicit StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node);
 

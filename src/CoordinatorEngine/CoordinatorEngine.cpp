@@ -152,7 +152,8 @@ bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId, std::string sour
         NES_ERROR("CoordinatorEngine::RegisterPhysicalStream node not found");
         return false;
     }
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
+    StreamCatalogEntryPtr sce =
+        std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
     bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
     return success;
 }

@@ -94,7 +94,6 @@ struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
     SourceDescriptorPtr build(SchemaPtr) override;
 
-
   private:
     explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
                                   uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
