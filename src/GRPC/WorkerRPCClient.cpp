@@ -176,6 +176,37 @@ bool WorkerRPCClient::unregisterQueryAsync(std::string address, QueryId queryId,
     return true;
 }
 
+bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPlan) {
+    QueryId queryId = queryPlan->getQueryId();
+    QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
+    NES_DEBUG("WorkerRPCClient::reconfigureQuery address=" << address << " queryId=" << queryId
+                                                           << " querySubPlanId = " << querySubPlanId);
+
+    // wrap the query id and the query operators in the protobuf register query request object.
+    ReconfigureQueryRequest request;
+    // serialize query plan.
+    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    request.set_allocated_queryplan(serializedQueryPlan);
+
+    NES_TRACE("WorkerRPCClient:reconfigureQuery -> " << request.DebugString());
+    ReconfigureQueryReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->ReconfigureQuery(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::reconfigureQuery: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_DEBUG(" WorkerRPCClient::reconfigureQuery "
+                  "error="
+                  << status.error_code() << ": " << status.error_message());
+        throw Exception("Error while WorkerRPCClient::reconfigureQuery");
+    }
+}
+
 bool WorkerRPCClient::unregisterQuery(std::string address, QueryId queryId) {
     NES_DEBUG("WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
 

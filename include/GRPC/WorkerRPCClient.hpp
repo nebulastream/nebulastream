@@ -89,6 +89,14 @@ class WorkerRPCClient {
     bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueuePtr cq);
 
     /**
+    * @brief reconfigure a registered query
+    * @param address: address of node where query plan need to be registered
+    * @param query plan to reconfigure
+    * @return true if succeeded, else false
+    */
+    bool reconfigureQuery(std::string address, QueryPlanPtr queryPlan);
+
+    /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
