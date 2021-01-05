@@ -111,7 +111,7 @@ class ExecutableQueryPlan {
     /**
      *
      */
-    void addSinks(std::vector<DataSinkPtr> sinks);
+    void updateSinks(std::vector<DataSinkPtr> newSinks);
 
   protected:
     const QueryId queryId;

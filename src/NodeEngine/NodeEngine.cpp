@@ -214,7 +214,7 @@ bool NodeEngine::reconfigureQueryInNodeEngine(QueryPlanPtr queryPlan) {
 
 bool NodeEngine::addSinks(std::vector<SinkLogicalOperatorNodePtr> sinkOperators, QueryId queryId, QuerySubPlanId querySubPlanId) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("NodeEngine: addSinks=" << queryId);
+    NES_DEBUG("NodeEngine: updateSinks=" << queryId);
     if (deployedQEPs.find(querySubPlanId) != deployedQEPs.end()) {
         std::vector<DataSinkPtr> sinks;
         sinks.reserve(sinkOperators.size());
@@ -229,7 +229,7 @@ bool NodeEngine::addSinks(std::vector<SinkLogicalOperatorNodePtr> sinkOperators,
         sinkReconfiguration->setup(queryManager, querySubPlanId);
         return true;
     }
-    NES_ERROR("NodeEngine: qep does not exists. addSinks failed = " << queryId);
+    NES_ERROR("NodeEngine: qep does not exists. updateSinks failed = " << queryId);
     return false;
 }
 

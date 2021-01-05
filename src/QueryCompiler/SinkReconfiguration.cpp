@@ -44,13 +44,32 @@ void SinkReconfiguration::destroyCallback(ReconfigurationTask& task) {
     switch (task.getType()) {
         case Initialize: {
             auto existingSinks = qep->getSinks();
-            for (auto existingSink : existingSinks) {
-                existingSink->shutdown();
+            auto sinkComparator = [](DataSinkPtr aSink, DataSinkPtr bSink) {
+                return aSink->getOperatorId() < bSink->getOperatorId();
+            };
+            std::sort(existingSinks.begin(), existingSinks.begin(), sinkComparator);
+            std::sort(sinks.begin(), sinks.end(), sinkComparator);
+            std::vector<DataSinkPtr> sinksToBeAdded;
+            std::set_difference(sinks.begin(), sinks.end(), existingSinks.begin(), existingSinks.end(),
+                                std::back_inserter(sinksToBeAdded), sinkComparator);
+            std::vector<DataSinkPtr> sinksToBeDeleted;
+            std::set_difference(existingSinks.begin(), existingSinks.end(), sinks.begin(), sinks.end(),
+                                std::back_inserter(sinksToBeDeleted), sinkComparator);
+            std::vector<DataSinkPtr> finalSinks;
+            std::set_difference(existingSinks.begin(), existingSinks.end(), sinksToBeDeleted.begin(), sinksToBeDeleted.end(),
+                                std::back_inserter(finalSinks), sinkComparator);
+            for (const auto& sinkToAdd : sinksToBeAdded) {
+                NES_DEBUG("SinkReconfiguration::destroyCallback: set up sink " << sinkToAdd->toString() << " for QueryId "
+                                                                               << qep->getQueryId());
+                sinkToAdd->setup();
             }
-            for (auto newSink : sinks) {
-                newSink->setup();
+            finalSinks.insert(finalSinks.end(), sinksToBeAdded.begin(), sinksToBeAdded.end());
+            qep->updateSinks(finalSinks);
+            for (const auto& sinkToDelete : sinksToBeDeleted) {
+                NES_DEBUG("SinkReconfiguration::destroyCallback: shut down sink " << sinkToDelete->toString() << " for QueryId "
+                                                                                  << qep->getQueryId());
+                sinkToDelete->shutdown();
             }
-            qep->addSinks(sinks);
             break;
         }
         default: {

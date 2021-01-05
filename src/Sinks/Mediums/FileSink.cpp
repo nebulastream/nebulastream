@@ -27,7 +27,8 @@ std::string FileSink::toString() { return "FILE_SINK"; }
 
 SinkMediumTypes FileSink::getSinkMediumType() { return FILE_SINK; }
 
-FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append, QuerySubPlanId parentPlanId, OperatorId operatorId)
+FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append, QuerySubPlanId parentPlanId,
+                   OperatorId operatorId)
     : SinkMedium(std::move(format), parentPlanId, operatorId) {
     this->filePath = filePath;
     this->append = append;
