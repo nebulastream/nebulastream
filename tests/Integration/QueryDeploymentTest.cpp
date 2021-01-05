@@ -1287,9 +1287,11 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query1 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test1.out\"));";
+    string query1 =
+        "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test1.out\", \"TEXT_FORMAT\", \"APPEND\"));";
     QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
-    string query2 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test2.out\"));";
+    string query2 =
+        "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test2.out\", \"TEXT_FORMAT\", \"APPEND\"));";
     QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
