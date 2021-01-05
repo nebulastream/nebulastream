@@ -41,6 +41,12 @@ typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
 class WindowLogicalOperatorNode;
 typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
 
+class JoinLogicalOperatorNode;
+typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
+
+class WatermarkAssignerLogicalOperatorNode;
+typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
+
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
@@ -101,7 +107,7 @@ class QuerySignatureUtil {
     /**
      * @brief Compute query signature for window operator
      * @param context: z3 context
-     * @param childQuerySignature: signatures of immediate children
+     * @param childQuerySignature: signature of immediate child
      * @param windowOperator: the window operator
      * @return Signature based on window operator and its children signatures
      */
@@ -109,26 +115,25 @@ class QuerySignatureUtil {
                                                            WindowLogicalOperatorNodePtr windowOperator);
 
     /**
-     * @brief
-     * @param joinOperator
-     * @param context
-     * @param childrenQuerySignatures
-     * @return
+     * @brief compute signature for join operator
+     * @param context: z3 context
+     * @param childrenQuerySignatures: signatures of immediate children
+     * @param joinOperator: the join operator
+     * @return Signature based on join operator and its children signatures
      */
     static QuerySignaturePtr createQuerySignatureForJoin(z3::ContextPtr context,
                                                          std::vector<QuerySignaturePtr>& childrenQuerySignatures,
                                                          JoinLogicalOperatorNodePtr joinOperator);
 
     /**
-     * @brief
-     * @param operatorNode
-     * @param context
-     * @param childQuerySignature
-     * @return
+     * @brief compute signature for watermark operator
+     * @param context: z3 context
+     * @param childQuerySignature: signature of immediate child
+     * @param watermarkOperator: the watermark operator
+     * @return Signature based on watermark operator and its child signature
      */
-    static QuerySignaturePtr createQuerySignatureForWatermark(z3::ContextPtr context,
-                                                              std::shared_ptr<QuerySignature>& childQuerySignature,
-                                                              WatermarkAssignerLogicalOperatorNodePtr& operatorNode);
+    static QuerySignaturePtr createQuerySignatureForWatermark(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
+                                                              WatermarkAssignerLogicalOperatorNodePtr& watermarkOperator);
 
     /**
      * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
