@@ -18,6 +18,7 @@
 #define NES_DYNAMICROWLAYOUT_HPP
 
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 
 
@@ -37,7 +38,8 @@ class DynamicRowLayout : public DynamicMemoryLayout{
     DynamicMemoryLayoutPtr copy() const override;
     DynamicRowLayout(bool checkBoundaries, SchemaPtr schema);
     static DynamicRowLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
-    DynamicLayoutBuffer map(TupleBuffer tupleBuffer) override;
+    std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
+
 
   private:
     uint64_t recordSize;

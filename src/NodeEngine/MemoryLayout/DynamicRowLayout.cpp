@@ -42,11 +42,10 @@ DynamicRowLayoutPtr DynamicRowLayout::create(SchemaPtr schema, bool checkBoundar
     return std::make_shared<DynamicRowLayout>(checkBoundaries, schema);
 }
 
-DynamicLayoutBuffer DynamicRowLayout::map(TupleBuffer tupleBuffer) {
-    DynamicRowLayoutBuffer dynamicRowLayoutBuffer(recordSize, fieldSizes);
+std::unique_ptr<DynamicLayoutBuffer> DynamicRowLayout::map(TupleBuffer& tupleBuffer) {
 
-
-    return (DynamicLayoutBuffer) (dynamicRowLayoutBuffer);
+    uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
+    return std::make_unique<DynamicRowLayoutBuffer>(recordSize, fieldSizes, std::make_shared<TupleBuffer>(tupleBuffer), capacity, checkBoundaryFieldChecks);
 }
 
 
