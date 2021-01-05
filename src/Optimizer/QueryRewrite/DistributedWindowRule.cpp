@@ -107,10 +107,10 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef =
-            Windowing::LogicalWindowDefinition::create(keyField, windowComputationAggregation, windowType,
-                                                       Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                       numberOfEdgesForFinalComputation, triggerPolicy, triggerActionComplete, allowedLateness);
+        windowDef = Windowing::LogicalWindowDefinition::create(keyField, windowComputationAggregation, windowType,
+                                                               Windowing::DistributionCharacteristic::createCombiningWindowType(),
+                                                               numberOfEdgesForFinalComputation, triggerPolicy,
+                                                               triggerActionComplete, allowedLateness);
 
     } else {
         windowDef = Windowing::LogicalWindowDefinition::create(
@@ -145,8 +145,7 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
                 Attribute("end"), eventTimeWatermarkStrategyDescriptor->getAllowedLateness(),
                 eventTimeWatermarkStrategyDescriptor->getTimeUnit()));
         windowComputationOperator->insertBetweenThisAndChildNodes(finalComputationAssigner);
-    }
-    else //if ingestion time, we do not have to add a new watermark assigner as the system clock is used
+    } else//if ingestion time, we do not have to add a new watermark assigner as the system clock is used
     {
         // in this case no assigner is created
         finalComputationAssigner = windowComputationOperator;
@@ -160,8 +159,8 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 keyField, sliceCombinerWindowAggregation, windowType,
-                Windowing::DistributionCharacteristic::createMergingWindowType(), numberOfEdgesForMerger,
-                triggerPolicy, triggerActionComplete, allowedLateness);
+                Windowing::DistributionCharacteristic::createMergingWindowType(), numberOfEdgesForMerger, triggerPolicy,
+                triggerActionComplete, allowedLateness);
 
         } else {
             windowDef = Windowing::LogicalWindowDefinition::create(
@@ -176,16 +175,16 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
         //if event time we have to add a new window assigner for the window merger, the ts field is then end as we send slices and no tuples
         if (std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
-            assignerOp[0]->getWatermarkStrategyDescriptor())) {
-            auto eventTimeWatermarkStrategyDescriptor = std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
-                assignerOp[0]->getWatermarkStrategyDescriptor());
-            mergerAssigner =
-                LogicalOperatorFactory::createWatermarkAssignerOperator(NES::Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                assignerOp[0]->getWatermarkStrategyDescriptor())) {
+            auto eventTimeWatermarkStrategyDescriptor =
+                std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+                    assignerOp[0]->getWatermarkStrategyDescriptor());
+            mergerAssigner = LogicalOperatorFactory::createWatermarkAssignerOperator(
+                NES::Windowing::EventTimeWatermarkStrategyDescriptor::create(
                     Attribute("end"), eventTimeWatermarkStrategyDescriptor->getAllowedLateness(),
                     eventTimeWatermarkStrategyDescriptor->getTimeUnit()));
             sliceOp->insertBetweenThisAndChildNodes(mergerAssigner);
-        }
-        else //if ingestion time, we do not have to add a new watermark assigner as the system clock is used
+        } else//if ingestion time, we do not have to add a new watermark assigner as the system clock is used
         {
             // in this case no assigner is created
             mergerAssigner = sliceOp;
