@@ -22,9 +22,9 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId)
-    : sinkFormat(std::move(sinkFormat)), parentPlanId(parentPlanId), sentBuffer(0), sentTuples(0), schemaWritten(false),
-      append(false), writeMutex() {
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, OperatorId operatorId)
+    : sinkFormat(std::move(sinkFormat)), parentPlanId(parentPlanId), operatorId(operatorId), sentBuffer(0), sentTuples(0),
+      schemaWritten(false), append(false), writeMutex() {
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
@@ -40,6 +40,8 @@ uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
 SinkMedium::~SinkMedium() { NES_DEBUG("Destroy Data Sink  " << this); }
 
 SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); }
+
+OperatorId SinkMedium::getOperatorId() const { return operatorId; }
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 

@@ -77,7 +77,7 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
     TestSink(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0, 1){};
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override {
         std::unique_lock lock(m);
@@ -582,7 +582,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             ASSERT_FALSE(pManager->isRegistered(nesPartition));
         });
 
-        NetworkSink networkSink(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr);
+        NetworkSink networkSink(schema, 0, 1, netManager, nodeLocation, nesPartition, bMgr, nullptr);
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
@@ -649,7 +649,7 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
                                                          nodeEngine->getNetworkManager(), nesPartition);
     ASSERT_TRUE(networkSource->start());
 
-    auto networkSink = std::make_shared<NetworkSink>(schema, 0, nodeEngine->getNetworkManager(), nodeLocation, nesPartition,
+    auto networkSink = std::make_shared<NetworkSink>(schema, 0, 1, nodeEngine->getNetworkManager(), nodeLocation, nesPartition,
                                                      nodeEngine->getBufferManager(), nullptr);
 
     ASSERT_TRUE(networkSource->stop());
@@ -747,7 +747,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             ASSERT_TRUE(source.stop());
         });
 
-        NetworkSink networkSink(schema, 0, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nullptr);
+        NetworkSink networkSink(schema, 0, 1, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nullptr);
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
@@ -819,7 +819,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     // creating query plan
     auto testSource =
         createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), 1);
-    auto networkSink = std::make_shared<NetworkSink>(schema, 2, netManager, nodeLocation, nesPartition,
+    auto networkSink = std::make_shared<NetworkSink>(schema, 2, 10, netManager, nodeLocation, nesPartition,
                                                      nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
 
     auto query2 = TestQuery::from(schema).filter(Attribute("id") < 5).sink(DummySink::create());

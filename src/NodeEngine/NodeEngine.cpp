@@ -198,11 +198,13 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         return false;
     }
 }
-DataSinkPtr NodeEngine::getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sink) {
-    auto sinkDescriptor = sink->getSinkDescriptor();
-    auto schema = sink->getOutputSchema();
+DataSinkPtr NodeEngine::getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sinkOperator) {
+    auto sinkDescriptor = sinkOperator->getSinkDescriptor();
+    auto schema = sinkOperator->getOutputSchema();
+    auto operatorId = sinkOperator->getId();
     // todo use the correct schema
-    auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId);
+    auto legacySink =
+        ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId, operatorId);
     return legacySink;
 }
 

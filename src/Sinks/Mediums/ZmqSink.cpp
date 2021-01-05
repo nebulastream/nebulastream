@@ -32,9 +32,10 @@ std::string ZmqSink::toString() { return "ZMQ_SINK"; }
 
 SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
 
-ZmqSink::ZmqSink(SinkFormatPtr format, const std::string& host, const uint16_t port, bool internal, QuerySubPlanId parentPlanId)
-    : SinkMedium(format, parentPlanId), host(host.substr(0, host.find(":"))), port(port), connected(false), internal(internal),
-      context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
+ZmqSink::ZmqSink(SinkFormatPtr format, const std::string& host, const uint16_t port, bool internal, QuerySubPlanId parentPlanId,
+                 OperatorId operatorId)
+    : SinkMedium(format, parentPlanId, operatorId), host(host.substr(0, host.find(":"))), port(port), connected(false),
+      internal(internal), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }
 
