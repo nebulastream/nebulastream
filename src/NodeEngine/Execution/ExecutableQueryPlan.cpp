@@ -123,7 +123,7 @@ bool ExecutableQueryPlan::start() {
     return true;
 }
 
-void ExecutableQueryPlan::addSinks(std::vector<DataSinkPtr> newSinks) {
+void ExecutableQueryPlan::updateSinks(std::vector<DataSinkPtr> newSinks) {
     std::unique_lock lock(mutationMutex);
     sinks = newSinks;
     std::shared_ptr<ExecutablePipeline>& sinkStage = pipelines.back();
