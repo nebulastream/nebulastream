@@ -275,7 +275,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool isReleased;
     std::recursive_mutex engineMutex;
     uint64_t nodeEngineId;
-    DataSinkPtr getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sink);
+    DataSinkPtr getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sinkOperator);
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

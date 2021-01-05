@@ -25,7 +25,8 @@ using namespace std::chrono_literals;
 
 namespace NES {
 
-KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic, const uint64_t kafkaProducerTimeout)
+KafkaSink::KafkaSink(SchemaPtr schema, QuerySubPlanId parentPlanId, OperatorId operatorId, const std::string& brokers,
+                     const std::string& topic, const uint64_t kafkaProducerTimeout)
     : DataSink(schema), brokers(brokers), topic(topic),
       kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
 

@@ -19,6 +19,7 @@
 
 #include <API/Schema.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
+#include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <mutex>
@@ -36,7 +37,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId);
+    explicit SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, OperatorId operatorId);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -95,6 +96,12 @@ class SinkMedium : public NodeEngine::Reconfigurable {
     SchemaPtr getSchemaPtr() const;
 
     /**
+     * @brief method to return the operator ID of the sink
+     * @return operator Id of the sink
+     */
+    OperatorId getOperatorId() const;
+
+    /**
       * @brief method to return the type
       * @return type
       */
@@ -130,6 +137,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
     std::atomic_bool schemaWritten;
 
     QuerySubPlanId parentPlanId;
+    OperatorId operatorId;
 
     uint64_t sentBuffer;
     uint64_t sentTuples;

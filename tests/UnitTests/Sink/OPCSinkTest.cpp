@@ -141,7 +141,7 @@ class OPCSinkTest : public testing::Test {
  * Tests basic set up of OPC sink
  */
 TEST_F(OPCSinkTest, OPCSourceInit) {
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, 1, nodeEngine, url, nodeId, user, password);
     SUCCEED();
 }
 
@@ -149,7 +149,7 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
  * Test if schema, OPC server url, and node index are the same
  */
 TEST_F(OPCSinkTest, OPCSourcePrint) {
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, 1, nodeEngine, url, nodeId, user, password);
     std::string expected = "OPC_SINK";
     EXPECT_EQ(opcSink->toString(), expected);
     std::cout << opcSink->toString() << std::endl;
@@ -172,7 +172,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     NodeEngine::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     write_buffer.getBuffer<uint32_t>()[0] = 45;
     write_buffer.setNumberOfTuples(1);
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, 1, nodeEngine, url, nodeId, user, password);
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: "
               << UtilityFunctions::prettyPrintTupleBuffer(write_buffer, test_schema));
     opcSink->writeData(write_buffer, wctx);

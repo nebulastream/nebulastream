@@ -196,7 +196,7 @@ typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
 class TestSink : public SinkMedium {
   public:
     TestSink(uint64_t expectedBuffer, SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0, 1), expectedBuffer(expectedBuffer){};
 
     static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema,
                                             NodeEngine::BufferManagerPtr bufferManager) {

@@ -25,6 +25,7 @@
 
 namespace NES {
 
+
 class PhysicalStreamConfig;
 typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 

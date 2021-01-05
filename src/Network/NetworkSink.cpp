@@ -23,12 +23,12 @@ namespace NES {
 
 namespace Network {
 
-NetworkSink::NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkManagerPtr networkManager,
+NetworkSink::NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, OperatorId operatorId, NetworkManagerPtr networkManager,
                          const NodeLocation nodeLocation, NesPartition nesPartition, NodeEngine::BufferManagerPtr bufferManager,
                          NodeEngine::QueryManagerPtr queryManager, std::chrono::seconds waitTime, uint8_t retryTimes)
-    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
-      nodeLocation(nodeLocation), nesPartition(nesPartition), queryManager(queryManager), waitTime(waitTime),
-      retryTimes(retryTimes) {
+    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId, operatorId),
+      networkManager(std::move(networkManager)), nodeLocation(nodeLocation), nesPartition(nesPartition),
+      queryManager(queryManager), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());
 }

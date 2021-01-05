@@ -255,7 +255,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
     DataSourcePtr source =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
+    DataSinkPtr sink = createTextFileSink(sch, 0, 1, engine, filePath, true);
     builder.addSource(source);
     builder.addSink(sink);
     builder.setQueryId(queryId);
@@ -337,7 +337,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep1.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, 1, engine, "qep1.txt", true);
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
@@ -354,7 +354,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2);
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createTextFileSink(sch2, 0, engine, "qep2.txt", true);
+    DataSinkPtr sink2 = createTextFileSink(sch2, 0, 1, engine, "qep2.txt", true);
     builder2.addSource(source2);
     builder2.addSink(sink2);
     builder2.setQueryId(2);
@@ -402,7 +402,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep1.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, 1, engine, "qep1.txt", true);
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
@@ -419,7 +419,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2);
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createTextFileSink(sch2, 0, engine, "qep2.txt", true);
+    DataSinkPtr sink2 = createTextFileSink(sch2, 0, 1, engine, "qep2.txt", true);
     builder2.addSource(source2);
     builder2.addSink(sink2);
     builder2.setQueryId(2);
@@ -460,7 +460,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep12.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, 1, engine, "qep12.txt", true);
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
@@ -515,7 +515,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep3.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, 1, engine, "qep3.txt", true);
     builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
