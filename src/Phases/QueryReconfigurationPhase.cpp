@@ -50,22 +50,49 @@ bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
     auto queryId = queryPlan->getQueryId();
     auto sinkTopologyNode = findSinkTopologyNode(queryPlan);
     auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    std::vector<OperatorId> querySinkOperatorIds;
-    for (auto sinkOperator : queryPlan->getSinkOperators()) {
-        querySinkOperatorIds.push_back(sinkOperator->getId());
-    }
-    bool successfulReconfiguration;
+    auto planSinkOperators = queryPlan->getSinkOperators();
+    auto sinkComparator = [](SinkLogicalOperatorNodePtr aSink, SinkLogicalOperatorNodePtr bSink) {
+        return aSink->getId() < bSink->getId();
+    };
+    std::sort(planSinkOperators.begin(), planSinkOperators.end(), sinkComparator);
+    bool successfulReconfiguration = false;
     for (auto executionNode : executionNodes) {
         if (executionNode->getTopologyNode()->getId() == sinkTopologyNode->getId()) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             for (auto querySubPlan : querySubPlans) {
-                for (auto x : querySubPlan->getSinkOperators()) {
-                    if (std::find(querySinkOperatorIds.begin(), querySinkOperatorIds.end(), x->getId())
-                        != querySinkOperatorIds.end()) {
-                        // Add new sinks to the querySubplan
-                        successfulReconfiguration = reconfigureQuery(executionNode, querySubPlan);
-                        break;
+                auto found = std::find_if(planSinkOperators.begin(), planSinkOperators.end(),
+                                          [querySubPlan](SinkLogicalOperatorNodePtr sinkLogicalOperatorNode) {
+                                              return querySubPlan->hasOperatorWithId(sinkLogicalOperatorNode->getId());
+                                          });
+                if (found != planSinkOperators.end()) {
+                    auto subPlanSinks = querySubPlan->getSinkOperators();
+                    std::sort(subPlanSinks.begin(), subPlanSinks.end(), sinkComparator);
+                    std::vector<SinkLogicalOperatorNodePtr> sinksToBeAdded;
+                    std::set_difference(planSinkOperators.begin(), planSinkOperators.end(), subPlanSinks.begin(),
+                                        subPlanSinks.end(), std::back_inserter(sinksToBeAdded), sinkComparator);
+                    std::vector<SinkLogicalOperatorNodePtr> sinksToBeDeleted;
+                    std::set_difference(subPlanSinks.begin(), subPlanSinks.end(), planSinkOperators.begin(),
+                                        planSinkOperators.end(), std::back_inserter(sinksToBeDeleted), sinkComparator);
+                    for (auto a : sinksToBeAdded) {
+                        NES_DEBUG("QueryReconfigurationPhase:sinksToBeAdded = " + a->toString());
                     }
+                    for (auto a : sinksToBeDeleted) {
+                        NES_DEBUG("QueryReconfigurationPhase:sinksToBeDeleted = " + a->toString());
+                    }
+                    auto children = subPlanSinks[0]->getChildren();
+                    for (auto sinkToDelete : sinksToBeDeleted) {
+                        NES_DEBUG("QueryReconfigurationPhase:sinksToBeDeleted: deleting sink = " + sinkToDelete->toString());
+                        querySubPlan->removeAsRootOperator(sinkToDelete);
+                    }
+                    for (auto sinkToAdd : sinksToBeAdded) {
+                        auto newSink = sinkToAdd->copy();
+                        NES_DEBUG("QueryReconfigurationPhase:sinksToBeAdded: adding sink = " + newSink->toString());
+                        for (auto child : children) {
+                            newSink->addChild(child);
+                        }
+                        querySubPlan->addRootOperator(newSink);
+                    }
+                    successfulReconfiguration = reconfigureQuery(executionNode, querySubPlan);
                 }
             }
         }
