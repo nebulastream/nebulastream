@@ -32,16 +32,6 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     : SinkMedium(std::move(format), parentPlanId, operatorId) {
     this->filePath = filePath;
     this->append = append;
-    if (!append) {
-        int success = std::remove(filePath.c_str());
-        NES_DEBUG("FileSink: remove existing file=" << success);
-    }
-    NES_DEBUG("FileSink: open file=" << filePath);
-    if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
-    }
-    NES_ASSERT(outputFile.is_open(), "file is not open");
-    NES_ASSERT(outputFile.good(), "file not good");
 }
 
 FileSink::~FileSink() {
@@ -56,7 +46,18 @@ const std::string FileSink::toString() const {
     return ss.str();
 }
 
-void FileSink::setup() {}
+void FileSink::setup() {
+    if (!append) {
+        int success = std::remove(filePath.c_str());
+        NES_DEBUG("FileSink: remove existing file=" << success);
+    }
+    NES_DEBUG("FileSink: open file=" << filePath);
+    if (!outputFile.is_open()) {
+        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+    }
+    NES_ASSERT(outputFile.is_open(), "file is not open");
+    NES_ASSERT(outputFile.good(), "file not good");
+}
 
 void FileSink::shutdown() {}
 
