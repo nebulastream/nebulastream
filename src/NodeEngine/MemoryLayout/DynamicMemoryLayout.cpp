@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp"
-namespace NES {
+#include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
+namespace NES::NodeEngine {
 DynamicMemoryLayout::DynamicMemoryLayout() {}
 }

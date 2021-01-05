@@ -22,12 +22,10 @@
 #include <NodeEngine/NodeEngine.hpp>
 
 
-namespace NES {
+namespace NES::NodeEngine {
 
 class ArrayPhysicalField;
 typedef std::shared_ptr<ArrayPhysicalField> ArrayPhysicalFieldPtr;
-
-typedef uint64_t FIELD_SIZE;
 
 class DynamicRowLayout;
 typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
@@ -42,8 +40,6 @@ class DynamicRowLayout : public DynamicMemoryLayout{
 
 
   private:
-    uint64_t recordSize;
-    std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes;
 };
 
 

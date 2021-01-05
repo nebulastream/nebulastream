@@ -20,7 +20,7 @@
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 typedef uint64_t FIELD_SIZE;
 typedef uint64_t COL_OFFSET_SIZE;
@@ -34,11 +34,11 @@ class DynamicColumnLayout : public DynamicMemoryLayout{
     DynamicMemoryLayoutPtr copy() const override;
     DynamicColumnLayout(uint64_t capacity, bool checkBoundaries, SchemaPtr schema);
     static DynamicColumnLayoutPtr create(SchemaPtr schema, uint64_t bufferSize, bool checkBoundaries);
-    DynamicLayoutBuffer map(TupleBuffer tupleBuffer) override;
+    std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
 
   private:
-    std::vector<COL_OFFSET_SIZE> columnOffsets;
-    std::vector<FIELD_SIZE> fieldSizes;
+    std::shared_ptr<std::vector<COL_OFFSET_SIZE>> columnOffsets;
+    std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes;
 };
 
 }
