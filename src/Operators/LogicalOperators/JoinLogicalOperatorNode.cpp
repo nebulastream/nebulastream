@@ -51,10 +51,6 @@ bool JoinLogicalOperatorNode::inferSchema() {
     auto schema1 = child1->getOutputSchema();
     auto schema2 = child2->getOutputSchema();
 
-    if (!schema1->equals(schema2)) {
-        NES_THROW_RUNTIME_ERROR("JoinLogicalOperator: the two input streams have different schema.");
-    }
-
     // infer the data type of the key field.
     joinDefinition->getLeftJoinKey()->inferStamp(leftInputSchema);
     joinDefinition->getRightJoinKey()->inferStamp(rightInputSchema);
