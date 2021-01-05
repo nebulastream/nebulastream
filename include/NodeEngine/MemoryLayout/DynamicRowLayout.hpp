@@ -35,13 +35,13 @@ class DynamicRowLayout : public DynamicMemoryLayout{
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
-    DynamicRowLayout(uint64_t recordSize, uint64_t capacity, bool checkBoundaries, SchemaPtr schema);
-    static DynamicRowLayoutPtr create(SchemaPtr schema, uint64_t bufferSize, bool checkBoundaries);
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
+    DynamicRowLayout(bool checkBoundaries, SchemaPtr schema);
+    static DynamicRowLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
+    DynamicLayoutBuffer map(TupleBuffer tupleBuffer) override;
 
   private:
     uint64_t recordSize;
-    std::vector<FIELD_SIZE> fieldSizes;
+    std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes;
 };
 
 

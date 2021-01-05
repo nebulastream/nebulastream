@@ -17,18 +17,17 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include  <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 
 namespace NES {
 
-DynamicRowLayout::DynamicRowLayout(uint64_t recordSize, uint64_t capacity, bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout(){
-    this->recordSize = recordSize;
-    this->numberOfRecords = 0;
-    this->capacity = capacity;
+DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout(){
+    this->recordSize = schema->getSchemaSizeInBytes();
     this->checkBoundaryFieldChecks = checkBoundaries;
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : schema->fields) {
-        fieldSizes.emplace_back(physicalDataTypeFactory.getPhysicalType(field->getDataType())->size());
+        fieldSizes->emplace_back(physicalDataTypeFactory.getPhysicalType(field->getDataType())->size());
     }
 }
 
@@ -38,20 +37,18 @@ DynamicRowLayout::DynamicRowLayout(uint64_t recordSize, uint64_t capacity, bool 
  * @param bufferSize
  * @return
  */
-DynamicRowLayoutPtr DynamicRowLayout::create(SchemaPtr schema, uint64_t bufferSize, bool checkBoundaries) {
+DynamicRowLayoutPtr DynamicRowLayout::create(SchemaPtr schema, bool checkBoundaries) {
 
-    auto recordSize = schema->getSchemaSizeInBytes();
-    auto capacity = bufferSize / recordSize;
-
-    return std::make_shared<DynamicRowLayout>(recordSize, capacity, checkBoundaries, schema);
+    return std::make_shared<DynamicRowLayout>(checkBoundaries, schema);
 }
 
-uint64_t DynamicRowLayout::calcOffset(uint64_t ithRecord, uint64_t jthField) {
-    NES_VERIFY(jthField < fieldSizes.size(), "jthField" << jthField << " is larger than fieldSizes.size() " << fieldSizes.size());
+DynamicLayoutBuffer DynamicRowLayout::map(TupleBuffer tupleBuffer) {
+    DynamicRowLayoutBuffer dynamicRowLayoutBuffer(recordSize, fieldSizes);
 
-    return (ithRecord * recordSize) + fieldSizes[jthField];
+
+    return (DynamicLayoutBuffer) (dynamicRowLayoutBuffer);
 }
+
 
 DynamicMemoryLayoutPtr DynamicRowLayout::copy() const { return std::make_shared<DynamicRowLayout>(*this); }
-
 }

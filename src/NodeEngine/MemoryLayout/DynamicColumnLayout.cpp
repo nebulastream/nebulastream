@@ -21,8 +21,6 @@
 namespace NES {
 
 DynamicColumnLayout::DynamicColumnLayout(uint64_t capacity, bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
-    this->capacity = capacity;
-    this->numberOfRecords = 0;
     this->checkBoundaryFieldChecks = checkBoundaries;
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -47,12 +45,11 @@ DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, uint64_t bu
     return std::make_shared<DynamicColumnLayout>(capacity, checkBoundaries, schema);
 }
 
-uint64_t DynamicColumnLayout::calcOffset(uint64_t ithRecord, uint64_t jthField) {
-    NES_VERIFY(jthField < fieldSizes.size(), "jthField" << jthField << " is larger than fieldSizes.size() " << fieldSizes.size());
-    NES_VERIFY(jthField < columnOffsets.size(), "jthField" << jthField << " is larger than columnOffsets.size() " << columnOffsets.size());
-
-    return (ithRecord * fieldSizes[jthField]) + columnOffsets[jthField];
-}
 
 DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
+DynamicLayoutBuffer DynamicColumnLayout::map(TupleBuffer tupleBuffer) {
+
+
+}
+
 }
