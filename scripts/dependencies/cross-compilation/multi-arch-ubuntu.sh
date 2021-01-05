@@ -164,9 +164,13 @@ EOT
 
 sudo cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
 
-# cross-compile NES dependencies
+# build grpc for host architecture, necessary for crosscompiling later
+# more here: https://chromium.googlesource.com/external/github.com/grpc/grpc/+/HEAD/test/distrib/cpp/run_distrib_test_raspberry_pi.sh
+# and here: https://chromium.googlesource.com/external/github.com/grpc/grpc/+/HEAD/BUILDING.md
 cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
-  cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build \
+  cd grpc && git submodule update --init --recursive --jobs 1 && mkdir -p build && cd build \
+  && cmake .. -DCMAKE_BUILD_TYPE=Release -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_SSL_PROVIDER=package \
+  && make -j2 install && cd .. && rm -rf build && mkdir -p build && cd build \
   && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
   -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install \
   && sudo make -j2 install && cd ../.. && sudo rm -rf grpc
