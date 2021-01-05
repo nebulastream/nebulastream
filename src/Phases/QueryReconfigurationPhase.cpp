@@ -15,7 +15,7 @@
 */
 
 #include <Catalogs/StreamCatalog.hpp>
-#include <Exceptions/QueryDeploymentException.hpp>
+#include <Exceptions/QueryReconfigurationException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -46,15 +46,17 @@ QueryReconfigurationPhasePtr QueryReconfigurationPhase::create(TopologyPtr topol
 QueryReconfigurationPhase::~QueryReconfigurationPhase() { NES_DEBUG("~QueryReconfigurationPhase()"); }
 
 bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
-    NES_DEBUG("QueryReconfigurationPhase: reconfigure the query");
+    NES_DEBUG("QueryReconfigurationPhase: reconfigure queryId=" << queryPlan->getQueryId());
     auto queryId = queryPlan->getQueryId();
     auto sinkTopologyNode = findSinkTopologyNode(queryPlan);
+    NES_DEBUG("QueryReconfigurationPhase: reconfigure queryId=" << queryPlan->getQueryId() << " Sink Node "
+                                                                << sinkTopologyNode->toString());
     auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     auto planSinkOperators = queryPlan->getSinkOperators();
-    auto sinkComparator = [](SinkLogicalOperatorNodePtr aSink, SinkLogicalOperatorNodePtr bSink) {
+    auto sinkOperatorComparator = [](SinkLogicalOperatorNodePtr aSink, SinkLogicalOperatorNodePtr bSink) {
         return aSink->getId() < bSink->getId();
     };
-    std::sort(planSinkOperators.begin(), planSinkOperators.end(), sinkComparator);
+    std::sort(planSinkOperators.begin(), planSinkOperators.end(), sinkOperatorComparator);
     bool successfulReconfiguration = false;
     for (auto executionNode : executionNodes) {
         if (executionNode->getTopologyNode()->getId() == sinkTopologyNode->getId()) {
@@ -66,32 +68,32 @@ bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
                                           });
                 if (found != planSinkOperators.end()) {
                     auto subPlanSinks = querySubPlan->getSinkOperators();
-                    std::sort(subPlanSinks.begin(), subPlanSinks.end(), sinkComparator);
+                    std::sort(subPlanSinks.begin(), subPlanSinks.end(), sinkOperatorComparator);
                     std::vector<SinkLogicalOperatorNodePtr> sinksToBeAdded;
                     std::set_difference(planSinkOperators.begin(), planSinkOperators.end(), subPlanSinks.begin(),
-                                        subPlanSinks.end(), std::back_inserter(sinksToBeAdded), sinkComparator);
+                                        subPlanSinks.end(), std::back_inserter(sinksToBeAdded), sinkOperatorComparator);
                     std::vector<SinkLogicalOperatorNodePtr> sinksToBeDeleted;
                     std::set_difference(subPlanSinks.begin(), subPlanSinks.end(), planSinkOperators.begin(),
-                                        planSinkOperators.end(), std::back_inserter(sinksToBeDeleted), sinkComparator);
-                    for (auto a : sinksToBeAdded) {
-                        NES_DEBUG("QueryReconfigurationPhase:sinksToBeAdded = " + a->toString());
-                    }
-                    for (auto a : sinksToBeDeleted) {
-                        NES_DEBUG("QueryReconfigurationPhase:sinksToBeDeleted = " + a->toString());
-                    }
+                                        planSinkOperators.end(), std::back_inserter(sinksToBeDeleted), sinkOperatorComparator);
                     auto children = subPlanSinks[0]->getChildren();
                     for (auto sinkToDelete : sinksToBeDeleted) {
-                        NES_DEBUG("QueryReconfigurationPhase:sinksToBeDeleted: deleting sink = " + sinkToDelete->toString());
+                        NES_DEBUG("QueryReconfigurationPhase:execute: delete sink = "
+                                  << sinkToDelete->toString() << " for Query ID" << queryPlan->getQueryId() << " QuerySubPlanId "
+                                  << querySubPlan->getQueryId());
                         querySubPlan->removeAsRootOperator(sinkToDelete);
                     }
                     for (auto sinkToAdd : sinksToBeAdded) {
                         auto newSink = sinkToAdd->copy();
-                        NES_DEBUG("QueryReconfigurationPhase:sinksToBeAdded: adding sink = " + newSink->toString());
+                        NES_DEBUG("QueryReconfigurationPhase:execute: add sink = "
+                                  << newSink->toString() << " for Query ID" << queryPlan->getQueryId() << " QuerySubPlanId "
+                                  << querySubPlan->getQueryId());
                         for (auto child : children) {
                             newSink->addChild(child);
                         }
                         querySubPlan->addRootOperator(newSink);
                     }
+                    NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n"
+                              << globalExecutionPlan->getAsString());
                     successfulReconfiguration = reconfigureQuery(executionNode, querySubPlan);
                 }
             }
@@ -109,8 +111,8 @@ TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr que
     std::vector<TopologyNodePtr> allSourceNodes;
     for (auto& sourceOperator : sourceOperators) {
         if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
-            throw QueryDeploymentException("QueryReconfigurationPhase: Source Descriptor need stream name: "
-                                           + std::to_string(queryId));
+            throw QueryReconfigurationException("QueryReconfigurationPhase: Source Descriptor need stream name: "
+                                                + std::to_string(queryId));
         }
         const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
         if (mapOfSourceToTopologyNodes.find(streamName) != mapOfSourceToTopologyNodes.end()) {
@@ -122,8 +124,8 @@ TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr que
         if (sourceNodes.empty()) {
             NES_ERROR("BasePlacementStrategy: No source found in the topology for stream " << streamName
                                                                                            << " for query with id : " << queryId);
-            throw QueryDeploymentException("QueryReconfigurationPhase: No source found in the topology for stream " + streamName
-                                           + " for query with id : " + std::to_string(queryId));
+            throw QueryReconfigurationException("QueryReconfigurationPhase: No source found in the topology for stream "
+                                                + streamName + " for query with id : " + std::to_string(queryId));
         }
         mapOfSourceToTopologyNodes[streamName] = sourceNodes;
         NES_TRACE("QueryReconfigurationPhase: Find the topology sub graph for the source nodes.");
@@ -141,7 +143,7 @@ TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr que
 
     if (rootNodes.empty()) {
         NES_ERROR("QueryReconfigurationPhase: Found no root nodes in the topology plan. Please check the topology graph.");
-        throw QueryDeploymentException(
+        throw QueryReconfigurationException(
             "QueryReconfigurationPhase: Found no root nodes in the topology plan. Please check the topology graph.");
     }
     return rootNodes[0]->as<TopologyNode>();
@@ -149,20 +151,25 @@ TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr que
 
 bool QueryReconfigurationPhase::reconfigureQuery(ExecutionNodePtr executionNode, QueryPlanPtr querySubPlan) {
     QueryId queryId = querySubPlan->getQueryId();
-    NES_DEBUG("QueryReconfigurationPhase::reconfigure sinks queryId=" << queryId);
+    NES_DEBUG("QueryReconfigurationPhase::reconfigure query queryId=" << queryId
+                                                                      << " querySubPlanId=" << querySubPlan->getQueryId());
     const auto& nesNode = executionNode->getTopologyNode();
     auto ipAddress = nesNode->getIpAddress();
     auto grpcPort = nesNode->getGrpcPort();
     std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-    NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress);
+    NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: queryId=" << queryId << " querySubPlanId="
+                                                                     << querySubPlan->getQueryId() << " to " << rpcAddress);
     bool success = workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
     if (success) {
-        NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress << " successful");
+        NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: queryId="
+                  << queryId << " querySubPlanId=" << querySubPlan->getQueryId() << " to " << rpcAddress << " successful");
     } else {
-        NES_ERROR("QueryReconfigurationPhase:reconfigureQuery: " << queryId << " to " << rpcAddress << "  failed");
+        NES_ERROR("QueryReconfigurationPhase:reconfigureQuery: queryId="
+                  << queryId << " querySubPlanId=" << querySubPlan->getQueryId() << " to " << rpcAddress << "  failed");
         return false;
     }
-    NES_INFO("QueryReconfigurationPhase: Finished reconfiguring sinks for query with Id " << queryId);
+    NES_INFO("QueryReconfigurationPhase: Finished reconfiguring queryId=" << queryId
+                                                                          << " querySubPlanId=" << querySubPlan->getQueryId());
     return true;
 }
 }// namespace NES
