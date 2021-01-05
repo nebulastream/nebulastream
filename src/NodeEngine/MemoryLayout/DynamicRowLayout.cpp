@@ -17,9 +17,10 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include  <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout(){
     this->recordSize = schema->getSchemaSizeInBytes();

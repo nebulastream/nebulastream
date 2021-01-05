@@ -17,16 +17,17 @@
 #ifndef NES_DYNAMICMEMORYLAYOUT_HPP
 #define NES_DYNAMICMEMORYLAYOUT_HPP
 
-#include "DynamicLayoutBuffer.hpp"
+#include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 class DynamicMemoryLayout;
 typedef std::shared_ptr<DynamicMemoryLayout> DynamicMemoryLayoutPtr;
+typedef uint64_t FIELD_SIZE;
 
 
 class DynamicMemoryLayout {
@@ -38,6 +39,9 @@ class DynamicMemoryLayout {
   protected:
     explicit DynamicMemoryLayout();
     bool checkBoundaryFieldChecks;
+    uint64_t recordSize;
+    std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes;
+
 
 };
 

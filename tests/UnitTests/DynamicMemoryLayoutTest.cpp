@@ -29,7 +29,7 @@
 
 //#define DEBUG_OUTPUT
 
-namespace NES {
+namespace NES::NodeEngine {
 class DynamicMemoryLayoutTest : public testing::Test {
   public:
     BufferManagerPtr bufferManager;
@@ -46,9 +46,8 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutCreateTest) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
-    auto bufferSize = bufferManager->getBufferSize();
     DynamicRowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = DynamicRowLayout::create(schema, bufferSize, true));
+    ASSERT_NO_THROW(rowLayout = DynamicRowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 }
 
