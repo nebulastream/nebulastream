@@ -1133,8 +1133,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProject
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation1 = Sum(Attribute("value"));
 
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
@@ -1146,8 +1144,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProject
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
@@ -1217,8 +1213,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProject
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation1 = Sum(Attribute("value"));
 
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
@@ -1230,8 +1224,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProject
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .project(Attribute("value"), Attribute("type"))
@@ -1301,8 +1293,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentPr
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation1 = Sum(Attribute("value"));
 
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
@@ -1314,8 +1304,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentPr
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
@@ -1381,8 +1369,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWaterma
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation1 = Sum(Attribute("value"));
 
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
@@ -1395,8 +1381,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWaterma
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .map(Attribute("value") = 40)
@@ -1468,8 +1452,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWa
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation1 = Sum(Attribute("value"));
 
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
@@ -1482,8 +1464,6 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWa
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    auto aggregation2 = Sum(Attribute("value"));
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
                            Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()))
