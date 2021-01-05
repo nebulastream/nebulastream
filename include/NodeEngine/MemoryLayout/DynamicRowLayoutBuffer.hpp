@@ -14,7 +14,9 @@ typedef uint64_t FIELD_SIZE;
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
     uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
-    DynamicRowLayoutBuffer(uint64_t recordSize, std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes);
+    DynamicRowLayoutBuffer(uint64_t recordSize, std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes, std::shared_ptr<TupleBuffer> tupleBuffer, uint64_t capacity, bool checkBoundaryFieldChecks);
+    template<typename  T> std::tuple<T> readRecord(uint64_t recordIndex);
+    template<typename  T> void pushRecord(std::tuple<T> record);
 
   private:
     uint64_t recordSize;

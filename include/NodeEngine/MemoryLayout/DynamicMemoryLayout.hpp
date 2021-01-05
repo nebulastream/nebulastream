@@ -33,7 +33,7 @@ class DynamicMemoryLayout {
 
   public:
     virtual DynamicMemoryLayoutPtr copy() const = 0;
-    virtual DynamicLayoutBuffer map(TupleBuffer tupleBuffer) = 0;
+    virtual std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) = 0;
 
   protected:
     explicit DynamicMemoryLayout();

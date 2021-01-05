@@ -47,9 +47,5 @@ DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, uint64_t bu
 
 
 DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
-DynamicLayoutBuffer DynamicColumnLayout::map(TupleBuffer tupleBuffer) {
-
-
-}
 
 }
