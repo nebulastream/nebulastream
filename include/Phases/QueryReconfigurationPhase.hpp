@@ -62,7 +62,7 @@ class QueryReconfigurationPhase {
 
     /**
      * @brief method for reconfiguring a query, only sink reconfiguration supported now
-     * @param queryId : the query Id of the query to be reconfigured
+     * @param queryPlan : the query plan to be reconfigured
      * @return true if successful else false
      */
     bool execute(QueryPlanPtr queryPlan);
