@@ -546,36 +546,40 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
                                                                   JoinLogicalOperatorNodePtr joinOperator) {
 
     //Compute intermediate signature by performing CNFs of all child signatures
-    auto intermediateQuerySignature = buildQuerySignatureForChildren(context, joinOperator->getChildren());
+    std::vector<NodePtr> children = joinOperator->getChildren();
+    if (children.size() > 2) {
+        NES_THROW_RUNTIME_ERROR("Join operator can't have more than 2 child");
+    }
+    auto intermediateQuerySignature = buildQuerySignatureForChildren(context, children);
 
     auto conditions = intermediateQuerySignature->getConditions();
     auto attributeMap = intermediateQuerySignature->getAttributeMap();
     auto columns = intermediateQuerySignature->getColumns();
 
-    std::vector<NodePtr> children = joinOperator->getChildren();
-    if (children.size() > 2) {
-        NES_THROW_RUNTIME_ERROR("Join operator can't have more than 2 child");
-    }
-
+    //Find the left and right join key
     auto joinDefinition = joinOperator->getJoinDefinition();
-
-    auto leftChild = children[0]->as<LogicalOperatorNode>();
     auto leftJoinKey = joinDefinition->getLeftJoinKey();
+    auto rightJoinKey = joinDefinition->getRightJoinKey();
+
+    //Find the left key expression
+    auto leftChild = children[0]->as<LogicalOperatorNode>();
     auto leftKeyName = leftJoinKey->getFieldName();
 
     z3::ExprPtr leftKeyExpr;
+    //Iterate over left source names and try to find the expression for left join key
     for (auto source : leftChild->getSignature()->getSources()) {
 
         if (attributeMap.find(leftKeyName) == attributeMap.end()) {
-            NES_THROW_RUNTIME_ERROR("");
+            NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Left join key " + leftKeyName
+                                    + " does not exists in the attribute map.");
         }
 
-        auto derivedAttributes = attributeMap[leftKeyName];
-
+        // Check if expected attribute name exists in the list of derived attribute names
         auto expectedAttributeName = source + "." + leftKeyName;
+        auto derivedAttributes = attributeMap[leftKeyName];
         auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
-
         if (found != derivedAttributes.end()) {
+            //Find the expression for the left join key expected attribute name
             if (columns.find(expectedAttributeName) != columns.end()) {
                 leftKeyExpr = columns[expectedAttributeName];
                 break;
@@ -583,22 +587,25 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
         }
     }
 
+    //Find the right key expression
     auto rightChild = children[1]->as<LogicalOperatorNode>();
-    auto rightJoinKey = joinDefinition->getRightJoinKey();
+    auto rightKeyName = rightJoinKey->getFieldName();
 
     z3::ExprPtr rightKeyExpr;
+    //Iterate over right source names and try to find the expression for right join key
     for (auto source : rightChild->getSignature()->getSources()) {
 
-        if (attributeMap.find(leftKeyName) == attributeMap.end()) {
-            NES_THROW_RUNTIME_ERROR("");
+        if (attributeMap.find(rightKeyName) == attributeMap.end()) {
+            NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Right join key " + rightKeyName
+                                    + " does not exists in the attribute map.");
         }
 
-        auto derivedAttributes = attributeMap[leftKeyName];
-
-        auto expectedAttributeName = source + "." + leftKeyName;
+        // Check if expected attribute name exists in the list of derived attribute names
+        auto expectedAttributeName = source + "." + rightKeyName;
+        auto derivedAttributes = attributeMap[rightKeyName];
         auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
-
         if (found != derivedAttributes.end()) {
+            //Find the expression for the right join key expected attribute name
             if (columns.find(expectedAttributeName) != columns.end()) {
                 rightKeyExpr = columns[expectedAttributeName];
                 break;
@@ -607,9 +614,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     }
 
     if (!leftKeyExpr || !rightKeyExpr) {
-        NES_THROW_RUNTIME_ERROR("");
+        NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Unable to find right or left join key ");
     }
 
+    //Compute the equi join condition
     auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
 
     //CNF the watermark conditions to the original condition
@@ -653,6 +661,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
     auto windowExpressions = intermediateQuerySignature->getWindowsExpressions();
 
+    //Compute join window key expression
     auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
     std::string windowKey = "JoinWindow";
     z3::expr windowKeyVal = context->string_val(windowKey);
