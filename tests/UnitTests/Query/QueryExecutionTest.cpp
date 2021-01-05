@@ -464,69 +464,6 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     nodeEngine->stop();
 }
 
-TEST_F(QueryExecutionTest, DISABLED_PlayAround) {
-    uint64_t millisecondOfallowedLateness = 1; /*second of allowedLateness*/
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-
-    // create a window source
-    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 10,
-                                             /*frequency*/ 1, /*varyWatermark*/ true);
-
-    auto query = TestQuery::from(windowSource->getSchema());
-
-    // add a watermark assigner operator with allowedLateness of 1 millisecond
-    query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(
-        Attribute("ts"), Milliseconds(millisecondOfallowedLateness), Milliseconds()));
-
-    // add a sink operator
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowSource->getSchema(), nodeEngine->getBufferManager());
-    query.sink(DummySink::create());
-
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-    auto plan = GeneratedQueryExecutionPlanBuilder::create()
-                    .addSink(testSink)
-                    .addSource(windowSource)
-                    .addOperatorQueryPlan(generatableOperators)
-                    .setCompiler(nodeEngine->getCompiler())
-                    .setBufferManager(nodeEngine->getBufferManager())
-                    .setQueryManager(nodeEngine->getQueryManager())
-                    .setQueryId(1)
-                    .setQuerySubPlanId(1)
-                    .build();
-
-    nodeEngine->registerQueryInNodeEngine(plan);
-    nodeEngine->startQuery(1);
-
-    // wait till all buffers have been produced
-    testSink->completed.get_future().get();
-
-    auto& resultBuffer = testSink->get(0);
-    std::vector<std::string> files = {"/tmp/nithishsink_tst.csv", "/tmp/nithishsink2_tst.csv", "/tmp/nithishsink3_tst.csv"};
-    std::vector<SinkLogicalOperatorNodePtr> sinkOperators;
-    SchemaPtr test_schema = Schema::create()
-                                ->addField("key", BasicType::INT64)
-                                ->addField("value", BasicType::INT64)
-                                ->addField("ts", BasicType::UINT64);
-    for (auto file : files) {
-        SinkFormatPtr format = std::make_shared<TextFormat>(test_schema, nodeEngine->getBufferManager());
-        const SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create(file, format->toString(), "OVERWRITE");
-        const auto sinkOperator =
-            LogicalOperatorFactory::createSinkOperator(std::move(sinkDescriptor))->as<SinkLogicalOperatorNode>();
-        sinkOperator->setOutputSchema(test_schema);
-        sinkOperators.push_back(std::move(sinkOperator));
-    };
-    nodeEngine->addSinks(sinkOperators, 1, 1);
-
-    // 14 because we start at 5 (inclusive) and create 10 records
-    EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
-    sleep(10);
-    nodeEngine->stop();
-}
-
 /**
  * @brief This tests creates a windowed query.
  * WindowSource -> windowOperator -> windowScan -> TestSink
