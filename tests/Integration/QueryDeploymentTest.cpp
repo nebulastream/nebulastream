@@ -1384,6 +1384,121 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 }
 
 /**
+ * Test deploying query merging with source on two different worker node using top down strategy.
+ */
+TEST_F(QueryDeploymentTest, testDeployQueryMergeTwoWorkerJoinUsingTopDownOnSameSchema) {
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd =
+        std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, std::thread::hardware_concurrency(), true);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("QueryDeploymentTest: Worker2 started SUCCESSFULLY");
+
+    std::string outputFilePathOne = "testDeployQueryMergeTwoWorkerJoinUsingTopDownOnSameSchema_1.out";
+    std::string outputFilePathTwo = "testDeployQueryMergeTwoWorkerJoinUsingTopDownOnSameSchema_2.out";
+    remove(outputFilePathOne.c_str());
+    remove(outputFilePathTwo.c_str());
+
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << window;
+    out.close();
+    wrk1->registerLogicalStream("window", testSchemaFileName);
+
+    //register logical stream qnv
+    std::string window2 =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName2 = "window.hpp";
+    std::ofstream out2(testSchemaFileName2);
+    out2 << window2;
+    out2.close();
+    wrk1->registerLogicalStream("window2", testSchemaFileName);
+
+    //register physical stream R2000070
+    PhysicalStreamConfigPtr windowStream =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window", true);
+
+    PhysicalStreamConfigPtr windowStream2 =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window2", true);
+
+    wrk1->registerPhysicalStream(windowStream);
+    wrk2->registerPhysicalStream(windowStream2);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("QueryDeploymentTest: Submit queryOne");
+    string queryOne =
+        R"(Query::from("window").join(Query::from("window2"), Attribute("id"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
+        + outputFilePathOne + "\", \"CSV_FORMAT\", \"APPEND\"));";
+
+    QueryId queryIdOne = queryService->validateAndQueueAddRequest(queryOne, "TopDown");
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryIdOne, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryIdOne, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryIdOne, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryIdOne, globalQueryPlan, 2));
+
+    string queryTwo =
+        R"(Query::from("window").join(Query::from("window2"), Attribute("id"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
+        + outputFilePathTwo + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    QueryId queryIdTwo = queryService->validateAndQueueAddRequest(queryTwo, "TopDown");
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryIdTwo, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryIdTwo, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryIdTwo, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryIdTwo, globalQueryPlan, 2));
+
+    NES_DEBUG("QueryDeploymentTest: Remove queryOne");
+    queryService->validateAndQueueStopRequest(queryIdOne);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryIdOne, queryCatalog));
+
+    NES_DEBUG("QueryDeploymentTest: Remove queryTwo");
+    queryService->validateAndQueueStopRequest(queryIdTwo);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryIdTwo, queryCatalog));
+
+    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_value:INTEGER,left_id:INTEGER,left_timestamp:INTEGER,"
+                             "right_value:INTEGER,right_id:INTEGER,right_timestamp:INTEGER\n"
+                             "1000,2000,4,1,4,1002,1,4,1002\n"
+                             "1000,2000,12,1,12,1001,1,12,1001\n"
+                             "2000,3000,1,2,1,2000,2,1,2000\n"
+                             "2000,3000,11,2,11,2001,2,11,2001\n"
+                             "2000,3000,16,2,16,2002,2,16,2002\n";
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePathOne));
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePathTwo));
+
+    NES_DEBUG("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_DEBUG("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+}
+
+/**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
