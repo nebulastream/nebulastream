@@ -1,7 +1,8 @@
 FROM ubuntu:20.04
 
 ADD ../../cmake/toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
-RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
+RUN cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
+apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
       build-essential \
       ca-certificates \
       crossbuild-essential-arm64 \
@@ -18,16 +19,17 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install --no-
       graphviz \
       xz-utils \
       ninja-build && \
-    apt-get clean -qq && \
-cp /etc/apt/sources.list /etc/apt/sources.list.bkp && \
-sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \
+    apt-get clean -qq
+
+RUN sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \
 cp /etc/apt/sources.list /etc/apt/sources.list.d/ports.list && \
 sed -i -- 's|amd64|arm64|g' /etc/apt/sources.list.d/ports.list && \
 sed -i -E -- 's|http://.*archive\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports|g' /etc/apt/sources.list.d/ports.list && \
 sed -i -E -- 's|http://.*security\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports|g' /etc/apt/sources.list.d/ports.list && \
 dpkg --add-architecture arm64 && \
-apt-get update && \
-apt-get install -qq --no-install-recommends \
+apt-get update
+
+RUN apt-get install -qq\
   libpython3-dev:arm64 \
   libncurses5-dev:arm64 \
   libxml2-dev:arm64 \
@@ -41,20 +43,23 @@ apt-get install -qq --no-install-recommends \
   libzmqpp-dev:arm64 \
   z3:arm64 && \
   apt-get clean -qq && \
-git config --global advice.detachedHead false && \
-git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost && \
+
+RUN git config --global advice.detachedHead false && \
+(git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost && \
 rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
 sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
-./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost && cd && \
-mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
+./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost) || cd
+
+RUN mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
 mkdir -p /opt/toolchain && \
 cd /opt/sysroots/aarch64-linux-gnu/usr && \
 cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && cd lib && \
 cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/*gcc* . && \
 cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/*crt* . && \
 cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libsupc++.a . && \
-cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libstdc++*  . && cd && \
-git clone --branch llvmorg-10.0.0 --single-branch https://github.com/llvm/llvm-project && \
+cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libstdc++*  . && cd
+
+RUN git clone --branch llvmorg-10.0.0 --single-branch https://github.com/llvm/llvm-project && \
 mkdir -p llvm-project/build && cd llvm-project/build && \
 cmake -G Ninja \
 -DCMAKE_BUILD_TYPE=Release \
@@ -67,9 +72,9 @@ cmake -G Ninja \
 -DLLVM_ENABLE_PROJECTS="clang;compiler-rt;lld;polly;libcxx;libcxxabi;openmp" \
 ../llvm && \
 ninja -j 2 clang && ninja -j 2 cxx && ninja install && \
-cd && rm -rf llvm-project && \
-cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
-cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
+cd && rm -rf llvm-project
+
+RUN cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
 cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && \
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
 -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install && \
