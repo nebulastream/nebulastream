@@ -76,7 +76,9 @@ ninja -j 2 clang && ninja -j 2 cxx && ninja install && \
 cd && rm -rf llvm-project
 
 RUN cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
-cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && \
+cd grpc && git submodule update --init --recursive --jobs 1 && mkdir -p build && cd build && \
+cmake .. -DCMAKE_BUILD_TYPE=Release -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_SSL_PROVIDER=package && \
+make -j2 install && cd .. && rm -rf build && mkdir -p build && cd build && \
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
 -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install && \
 make -j2 install && cd ../.. && rm -rf grpc
