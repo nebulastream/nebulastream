@@ -83,7 +83,11 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         LOG4CXX_TRACE(NESLogger, TEXT);                                                                                          \
     } while (0)
 #else
-#define NES_TRACE(TEXT) ((void) 0)
+#define NES_TRACE(TEXT)                                                                                                           \
+    do {                                                                                                                         \
+	    std::ostringstream oss;                                                                                                  \
+		((void) (oss << TEXT));                                                                                                  \
+    } while(0)
 #endif
 
 #if NES_LOGGING_LEVEL >= LEVEL_DEBUG
@@ -92,7 +96,11 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         LOG4CXX_DEBUG(NESLogger, TEXT);                                                                                          \
     } while (0)
 #else
-#define NES_DEBUG(TEXT) ((void) 0)
+#define NES_DEBUG(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+	    std::ostringstream oss;                                                                                                  \
+		((void) (oss << TEXT));                                                                                                  \
+    } while(0)
 #endif
 
 #if NES_LOGGING_LEVEL >= LEVEL_INFO
@@ -101,7 +109,11 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         LOG4CXX_INFO(NESLogger, TEXT);                                                                                           \
     } while (0)
 #else
-#define NES_INFO(TEXT) ((void) 0)
+#define NES_INFO(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+	    std::ostringstream oss;                                                                                                  \
+		((void) (oss << TEXT));                                                                                                  \
+    } while(0)
 #endif
 
 #if NES_LOGGING_LEVEL >= LEVEL_WARN
@@ -110,7 +122,11 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         LOG4CXX_WARN(NESLogger, TEXT);                                                                                           \
     } while (0)
 #else
-#define NES_WARNING(TEXT) ((void) 0)
+#define NES_WARNING(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+	    std::ostringstream oss;                                                                                                  \
+		((void) (oss << TEXT));                                                                                                  \
+    } while(0)
 #endif
 
 #if NES_LOGGING_LEVEL >= LEVEL_ERROR
@@ -119,7 +135,11 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         LOG4CXX_ERROR(NESLogger, TEXT);                                                                                          \
     } while (0)
 #else
-#define NES_ERROR(TEXT) ((void) 0)
+#define NES_ERROR(TEXT)                                                                                                           \
+    do {                                                                                                                         \
+	    std::ostringstream oss;                                                                                                  \
+		((void) (oss << TEXT));                                                                                                  \
+    } while(0)
 #endif
 
 #if NES_LOGGING_LEVEL >= LEVEL_FATAL
@@ -128,7 +148,11 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         LOG4CXX_ERROR(NESLogger, TEXT);                                                                                          \
     } while (0)
 #else
-#define NES_FATAL_ERROR(TEXT) ((void) 0)
+#define NES_FATAL_ERROR(TEXT)                                                                                                           \
+    do {                                                                                                                         \
+	    std::ostringstream oss;                                                                                                  \
+		((void) (oss << TEXT));                                                                                                  \
+    } while(0)
 #endif
 #else
 #define NES_TRACE(TEXT)                                                                                                          \
@@ -213,6 +237,7 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
 
     // set log level
 #ifdef NES_LOGGING_LEVEL
+    ((void) level);
 #if NES_LOGGING_LEVEL == LEVEL_FATAL
     NESLogger->setLevel(log4cxx::Level::getFatal());
 #endif
@@ -255,6 +280,7 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
 static void setLogLevel(DebugLevel level) {
     // set log level
 #ifdef NES_LOGGING_LEVEL
+    ((void) level);
 #if NES_LOGGING_LEVEL == LEVEL_FATAL
     NESLogger->setLevel(log4cxx::Level::getFatal());
 #endif
