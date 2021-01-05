@@ -131,6 +131,7 @@ TEST_F(SinkTest, testTextFileSink) {
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
     const DataSinkPtr binSink = createTextFileSink(test_schema, 0, 1, nodeEngine, path_to_csv_file, true);
+    binSink->setup();
     for (uint64_t i = 0; i < 5; ++i) {
         for (uint64_t j = 0; j < 5; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -158,6 +159,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, 0, 1, nodeEngine, path_to_bin_file, true);
+    binSink->setup();
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
