@@ -1,7 +1,8 @@
 FROM ubuntu:20.04
 
 ADD ../../cmake/toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
-RUN cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
+RUN mkdir -p /opt/toolchain && \
+cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
 apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
       build-essential \
       ca-certificates \
@@ -29,20 +30,20 @@ sed -i -E -- 's|http://.*security\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ub
 dpkg --add-architecture arm64 && \
 apt-get update
 
-RUN apt-get install -qq\
+RUN apt-get install -qq \
   libpython3-dev:arm64 \
   libncurses5-dev:arm64 \
   libxml2-dev:arm64 \
   libedit-dev:arm64 \
   libdwarf-dev:arm64 \
   libdw-dev:arm64 \
-  liblog4cxx-dev:arm64 \
+#  liblog4cxx-dev:arm64 \
   libcpprest-dev:arm64 \
   libssl-dev:arm64 \
   libeigen3-dev:arm64 \
   libzmqpp-dev:arm64 \
   z3:arm64 && \
-  apt-get clean -qq && \
+  apt-get clean -qq
 
 RUN git config --global advice.detachedHead false && \
 (git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost && \
