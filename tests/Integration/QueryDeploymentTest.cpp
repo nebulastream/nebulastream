@@ -1431,10 +1431,10 @@ TEST_F(QueryDeploymentTest, testDeployQueryMergeTwoWorkerJoinUsingTopDownOnSameS
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 5, "test_stream", "window", true);
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 5, "test_stream", "window2", true);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -1443,9 +1443,7 @@ TEST_F(QueryDeploymentTest, testDeployQueryMergeTwoWorkerJoinUsingTopDownOnSameS
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit queryOne");
-    string queryOne =
-        R"(Query::from("window").join(Query::from("window2"), Attribute("id"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
-        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
+    string queryOne = R"(Query::from("window").merge(Query::from("window2")).sink(FileSinkDescriptor::create(")"
         + outputFilePathOne + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryIdOne = queryService->validateAndQueueAddRequest(queryOne, "TopDown");
@@ -1456,9 +1454,7 @@ TEST_F(QueryDeploymentTest, testDeployQueryMergeTwoWorkerJoinUsingTopDownOnSameS
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryIdOne, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryIdOne, globalQueryPlan, 2));
 
-    string queryTwo =
-        R"(Query::from("window").join(Query::from("window2"), Attribute("id"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
-        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
+    string queryTwo = R"(Query::from("window").merge(Query::from("window2")).sink(FileSinkDescriptor::create(")"
         + outputFilePathTwo + "\", \"CSV_FORMAT\", \"APPEND\"));";
     QueryId queryIdTwo = queryService->validateAndQueueAddRequest(queryTwo, "TopDown");
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryIdTwo, queryCatalog));
@@ -1474,13 +1470,19 @@ TEST_F(QueryDeploymentTest, testDeployQueryMergeTwoWorkerJoinUsingTopDownOnSameS
     queryService->validateAndQueueStopRequest(queryIdTwo);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryIdTwo, queryCatalog));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_value:INTEGER,left_id:INTEGER,left_timestamp:INTEGER,"
-                             "right_value:INTEGER,right_id:INTEGER,right_timestamp:INTEGER\n"
-                             "1000,2000,4,1,4,1002,1,4,1002\n"
-                             "1000,2000,12,1,12,1001,1,12,1001\n"
-                             "2000,3000,1,2,1,2000,2,1,2000\n"
-                             "2000,3000,11,2,11,2001,2,11,2001\n"
-                             "2000,3000,16,2,16,2002,2,16,2002\n";
+    string expectedContent = "value:INTEGER,id:INTEGER,timestamp:INTEGER\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "2,1,2000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "2,1,2000\n"
+                             "2,11,2001\n"
+                             "2,16,2002\n"
+                             "3,1,3000\n"
+                             "2,11,2001\n"
+                             "2,16,2002\n"
+                             "3,1,3000\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePathOne));
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePathTwo));
 
