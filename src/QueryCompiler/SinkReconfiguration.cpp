@@ -43,6 +43,13 @@ void SinkReconfiguration::destroyCallback(ReconfigurationTask& task) {
     Reconfigurable::destroyCallback(task);
     switch (task.getType()) {
         case Initialize: {
+            auto existingSinks = qep->getSinks();
+            for (auto existingSink : existingSinks) {
+                existingSink->shutdown();
+            }
+            for (auto newSink : sinks) {
+                newSink->setup();
+            }
             qep->addSinks(sinks);
             break;
         }
@@ -55,4 +62,4 @@ void SinkReconfiguration::setup(QueryManagerPtr queryManager, QuerySubPlanId que
     queryManager->addReconfigurationTask(querySubPlanId, ReconfigurationTask(querySubPlanId, NES::NodeEngine::Initialize, this),
                                          true);
 }
-} // namespace NES::NodeEngine
+}// namespace NES::NodeEngine
