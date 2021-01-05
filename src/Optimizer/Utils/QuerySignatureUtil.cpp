@@ -465,8 +465,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
 }
 
 QuerySignaturePtr
-QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context, std::shared_ptr<QuerySignature>& childQuerySignature,
-                                                     WatermarkAssignerLogicalOperatorNodePtr& watermarkAssignerOperator) {
+QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
+                                                     WatermarkAssignerLogicalOperatorNodePtr& watermarkOperator) {
     auto conditions = childQuerySignature->getConditions();
 
     //Find the source name
@@ -476,7 +476,7 @@ QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context, std
     }
     auto source = sources[0];
 
-    auto watermarkDescriptor = watermarkAssignerOperator->getWatermarkStrategyDescriptor();
+    auto watermarkDescriptor = watermarkOperator->getWatermarkStrategyDescriptor();
 
     //Compute conditions based on watermark descriptor
     z3::expr watermarkDescriptorConditions(*context);
