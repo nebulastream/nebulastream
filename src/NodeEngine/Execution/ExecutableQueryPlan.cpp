@@ -125,7 +125,7 @@ bool ExecutableQueryPlan::start() {
 
 void ExecutableQueryPlan::addSinks(std::vector<DataSinkPtr> newSinks) {
     std::unique_lock lock(mutationMutex);
-    sinks.insert(sinks.end(), newSinks.begin(), newSinks.end());
+    sinks = newSinks;
     std::shared_ptr<ExecutablePipeline>& sinkStage = pipelines.back();
     auto sinkContext = sinkStage->getPipelineContext();
     auto originId = queryManager->getNodeId();
