@@ -29,6 +29,10 @@ typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
 namespace NES {
+
+class Node;
+typedef std::shared_ptr<Node> NodePtr;
+
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
@@ -65,74 +69,60 @@ class QuerySignatureUtil {
   public:
     /**
      * @brief Convert input operator into an equivalent logical expression
-     * @param operatorNode: the input operator
-     * @param childrenQuerySignatures: vector containing signatures for each of the children operators (empty for source operator)
      * @param context: the context of Z3
+     * @param operatorNode: the input operator
      * @return the object representing signature created by the operator and its children
      */
-    static QuerySignaturePtr createQuerySignatureForOperator(OperatorNodePtr operatorNode,
-                                                             std::vector<QuerySignaturePtr> childrenQuerySignatures,
-                                                             z3::ContextPtr context);
+    static QuerySignaturePtr createQuerySignatureForOperator(z3::ContextPtr context, OperatorNodePtr operatorNode);
 
   private:
     /**
      * @brief Compute a CNF representation of Conds based on signatures from children operators
      * @param context : z3 context
-     * @param childrenQuerySignatures : signatures of immediate children
+     * @param children : immediate children operators
      * @return Signature based on children signatures
      */
-    static QuerySignaturePtr buildFromChildrenSignatures(z3::ContextPtr context,
-                                                         std::vector<QuerySignaturePtr> childrenQuerySignatures);
+    static QuerySignaturePtr buildQuerySignatureForChildren(z3::ContextPtr context, std::vector<NodePtr> children);
 
     /**
      * @brief Compute query signature for Map operator
      * @param context: z3 context
-     * @param childQuerySignature: signatures of immediate child
      * @param mapOperator: the map operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForMap(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
-                                                        MapLogicalOperatorNodePtr mapOperator);
+    static QuerySignaturePtr createQuerySignatureForMap(z3::ContextPtr context, MapLogicalOperatorNodePtr mapOperator);
 
     /**
      * @brief Compute query signature for Filter operator
      * @param context: z3 context
-     * @param childQuerySignature: signatures of immediate child
      * @param filterOperator: the Filter operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForFilter(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
-                                                           FilterLogicalOperatorNodePtr filterOperator);
+    static QuerySignaturePtr createQuerySignatureForFilter(z3::ContextPtr context, FilterLogicalOperatorNodePtr filterOperator);
 
     /**
      * @brief Compute query signature for window operator
      * @param context: z3 context
-     * @param childQuerySignature: signature of immediate child
      * @param windowOperator: the window operator
      * @return Signature based on window operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForWindow(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
-                                                           WindowLogicalOperatorNodePtr windowOperator);
+    static QuerySignaturePtr createQuerySignatureForWindow(z3::ContextPtr context, WindowLogicalOperatorNodePtr windowOperator);
 
     /**
      * @brief compute signature for join operator
      * @param context: z3 context
-     * @param childrenQuerySignatures: signatures of immediate children
      * @param joinOperator: the join operator
      * @return Signature based on join operator and its children signatures
      */
-    static QuerySignaturePtr createQuerySignatureForJoin(z3::ContextPtr context,
-                                                         std::vector<QuerySignaturePtr>& childrenQuerySignatures,
-                                                         JoinLogicalOperatorNodePtr joinOperator);
+    static QuerySignaturePtr createQuerySignatureForJoin(z3::ContextPtr context, JoinLogicalOperatorNodePtr joinOperator);
 
     /**
      * @brief compute signature for watermark operator
      * @param context: z3 context
-     * @param childQuerySignature: signature of immediate child
      * @param watermarkOperator: the watermark operator
      * @return Signature based on watermark operator and its child signature
      */
-    static QuerySignaturePtr createQuerySignatureForWatermark(z3::ContextPtr context, QuerySignaturePtr childQuerySignature,
+    static QuerySignaturePtr createQuerySignatureForWatermark(z3::ContextPtr context,
                                                               WatermarkAssignerLogicalOperatorNodePtr& watermarkOperator);
 
     /**

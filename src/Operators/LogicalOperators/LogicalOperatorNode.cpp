@@ -28,14 +28,12 @@ void LogicalOperatorNode::inferSignature(z3::ContextPtr context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("Inferring Z3 expressions for " << operatorNode->toString());
 
-    std::vector<Optimizer::QuerySignaturePtr> subQuerySignatures;
-
+    //Infer query signatures for child operators
     for (auto& child : children) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferSignature(context);
-        subQuerySignatures.emplace_back(childOperator->getSignature());
     }
-    signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(operatorNode, subQuerySignatures, context);
+    signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
 }
 
 void LogicalOperatorNode::setSignature(Optimizer::QuerySignaturePtr signature) { this->signature = signature; }
