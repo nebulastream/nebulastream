@@ -24,6 +24,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/TestHarness.hpp>
 #include <iostream>
 
 using namespace std;
@@ -1346,4 +1347,32 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
-}// namespace NES
+
+/*
+ * Test query deployment using test harness
+ */
+TEST_F(QueryDeploymentTest, testUsingTestHarness) {
+    uint64_t numWorkers = 2;
+    std::string filterOperator = ".filter(Attribute(\"key\") < 1000)";
+    TestHarness testHarness = TestHarness(numWorkers, filterOperator);
+
+    testHarness.pushElement({42,42,42},0);
+    testHarness.pushElement({1,1,1},0);
+    testHarness.pushElement({66,66,66},1);
+    testHarness.pushElement({99,99,99},1);
+    testHarness.pushElement({2,2,2},0);
+    testHarness.pushElement({2,2,2},0);
+
+    std::string output = testHarness.getOutput();
+
+    std::string expectedContent = "key:INTEGER,value:INTEGER,timestamp:INTEGER\n"
+                                  "42,42,42\n"
+                                  "1,1,1\n"
+                                  "2,2,2\n"
+                                  "2,2,2";
+
+//    ASSERT_EQ(expectedContent, output);
+}
+}
+
+// namespace NES
