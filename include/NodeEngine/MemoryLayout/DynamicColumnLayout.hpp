@@ -34,7 +34,7 @@ class DynamicColumnLayout : public DynamicMemoryLayout{
     DynamicMemoryLayoutPtr copy() const override;
     DynamicColumnLayout(uint64_t capacity, bool checkBoundaries, SchemaPtr schema);
     static DynamicColumnLayoutPtr create(SchemaPtr schema, uint64_t bufferSize, bool checkBoundaries);
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
+    DynamicLayoutBuffer map(TupleBuffer tupleBuffer) override;
 
   private:
     std::vector<COL_OFFSET_SIZE> columnOffsets;

@@ -17,6 +17,7 @@
 #ifndef NES_DYNAMICMEMORYLAYOUT_HPP
 #define NES_DYNAMICMEMORYLAYOUT_HPP
 
+#include "DynamicLayoutBuffer.hpp"
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
@@ -32,24 +33,11 @@ class DynamicMemoryLayout {
 
   public:
     virtual DynamicMemoryLayoutPtr copy() const = 0;
-
-    /**
-     * @brief calculates the address/offset of ithRecord and jthField
-     * @param ithRecord
-     * @param jthField
-     * @return
-     */
-    virtual uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) = 0;
-
-    uint64_t getCapacity() { return capacity; }
-    uint64_t getNumberOfRecords() {return numberOfRecords; }
-
+    virtual DynamicLayoutBuffer map(TupleBuffer tupleBuffer) = 0;
 
   protected:
     explicit DynamicMemoryLayout();
     bool checkBoundaryFieldChecks;
-    uint64_t capacity;
-    uint64_t numberOfRecords;
 
 };
 
