@@ -204,7 +204,8 @@ DataSinkPtr NodeEngine::getPhysicalSink(QueryId querySubPlanId, const SinkLogica
     auto schema = sinkOperator->getOutputSchema();
     auto operatorId = sinkOperator->getId();
     // todo use the correct schema
-    auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, seltPtr, querySubPlanId, operatorId);
+    auto legacySink =
+        ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, seltPtr, querySubPlanId, operatorId);
     return legacySink;
 }
 
