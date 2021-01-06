@@ -31,6 +31,18 @@ class SyntacticQueryValidationTest : public testing::Test {
         NES_INFO("Setup SyntacticQueryValidationTest class.");
     }
     void TearDown() { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
+    
+    void TestForException(std::string queryString){
+    try {
+        SyntacticQueryValidation syntacticQueryValidation;
+        syntacticQueryValidation.isValid(queryString);
+    } catch(std::runtime_error& e) {
+        std::cout << e.what();
+        SUCCEED();
+        return;
+    }
+    FAIL();
+    }
 };
 
 TEST_F(SyntacticQueryValidationTest, validQueryTest) {
@@ -48,51 +60,43 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
 TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
     NES_INFO("Missing semicolon test");
 
-    SyntacticQueryValidation syntacticQueryValidation;
-
     // missing ; at line end
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100) "
     ;
 
-    ASSERT_EQ(syntacticQueryValidation.isValid(queryString), false);   
+    TestForException(queryString);
 }
 
 TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
     NES_INFO("Typo in filter test");
-
-    SyntacticQueryValidation syntacticQueryValidation;
 
     // filter is misspelled as fliter
     std::string queryString =
         "Query::from(\"default_logical\").fliter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); "
     ;
 
-    ASSERT_EQ(syntacticQueryValidation.isValid(queryString), false);
+    TestForException(queryString);
 }
 
 TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
     NES_INFO("Missing closing parenthesis test");
 
-    SyntacticQueryValidation syntacticQueryValidation;
-
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100; "
     ;
 
-    ASSERT_EQ(syntacticQueryValidation.isValid(queryString), false);
+    TestForException(queryString);
 }
 
 TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
     NES_INFO("Invalid bool operator test");
 
-    SyntacticQueryValidation syntacticQueryValidation;
-
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 & Attribute(\"id\") < 100); "
     ;
 
-    ASSERT_EQ(syntacticQueryValidation.isValid(queryString), false);
+    TestForException(queryString);
 }
 
 }// namespace NES

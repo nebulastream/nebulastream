@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -44,6 +45,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithSingleFilter) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+    filterQuery->sink(FileSinkDescriptor::create(""));
 
     ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), true);
 }
@@ -58,6 +60,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLogicalExpression) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+    filterQuery->sink(FileSinkDescriptor::create(""));
 
     ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), true);
 }
@@ -72,6 +75,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLogicalExpression) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+    filterQuery->sink(FileSinkDescriptor::create(""));
 
     ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), false);
 }
@@ -86,6 +90,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithMultipleFilters) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+    filterQuery->sink(FileSinkDescriptor::create(""));
 
     ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), true);
 }
@@ -100,6 +105,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithMultipleFilters) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+    filterQuery->sink(FileSinkDescriptor::create(""));
 
     ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), false);
 }
@@ -114,10 +120,12 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-
+    
     filterQuery->filter(Attribute("id") != 42);
     filterQuery->filter(Attribute("value") < 42);
 
+    filterQuery->sink(FileSinkDescriptor::create(""));
+    
     ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), true);
 }
 
@@ -131,9 +139,11 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-
+    
     filterQuery->filter(Attribute("id") == 42);
     filterQuery->filter(Attribute("value") < 42);
+    
+    filterQuery->sink(FileSinkDescriptor::create(""));
 
     ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), false);
 }
@@ -149,6 +159,7 @@ TEST_F(SemanticQueryValidationTest, invalidLogicalStreamTest) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+    filterQuery->sink(FileSinkDescriptor::create(""));
 
     try {
         semanticQueryValidation.isSatisfiable(filterQuery);
@@ -171,6 +182,7 @@ TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
         ;
     
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+    filterQuery->sink(FileSinkDescriptor::create(""));
 
     try {
         semanticQueryValidation.isSatisfiable(filterQuery);
