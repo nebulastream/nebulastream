@@ -19,10 +19,10 @@ namespace NES::NodeEngine {
 
 bool DynamicMemoryLayout::isCheckBoundaryFieldChecks() const { return checkBoundaryFieldChecks; }
 uint64_t DynamicMemoryLayout::getRecordSize() const { return recordSize; }
-const std::shared_ptr<std::vector<FIELD_SIZE>>& DynamicMemoryLayout::getFieldSizesOffsets() const { return fieldSizesOffSets; }
+const std::shared_ptr<std::vector<FIELD_SIZE>>& DynamicMemoryLayout::getFieldSizes() const { return fieldSizes; }
 
 DynamicMemoryLayout::DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t recordSize,
-                                         std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizesOffSets)
-    : checkBoundaryFieldChecks(checkBoundaryFieldChecks), recordSize(recordSize), fieldSizesOffSets(fieldSizesOffSets) {}
-DynamicMemoryLayout::DynamicMemoryLayout() : checkBoundaryFieldChecks(true), recordSize(0), fieldSizesOffSets(std::make_shared<std::vector<FIELD_SIZE>>()) {}
+                                         std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes)
+    : checkBoundaryFieldChecks(checkBoundaryFieldChecks), recordSize(recordSize), fieldSizes(fieldSizes) {}
+DynamicMemoryLayout::DynamicMemoryLayout() : checkBoundaryFieldChecks(true), recordSize(0), fieldSizes(std::make_shared<std::vector<FIELD_SIZE>>()) {}
 }

@@ -3,16 +3,18 @@
 #define NES_DYNAMICLAYOUTBUFFER_HPP
 
 #include <NodeEngine/TupleBuffer.hpp>
+#include <string.h>
 
 namespace NES::NodeEngine {
 
 typedef uint64_t FIELD_SIZE;
+typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
 
 
 class DynamicLayoutBuffer {
 
   public:
-    DynamicLayoutBuffer(std::shared_ptr<TupleBuffer> tupleBuffer, uint64_t capacity)
+    DynamicLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity)
         : tupleBuffer(tupleBuffer), capacity(capacity), numberOfRecords(0) {}
     /**
      * @brief calculates the address/offset of ithRecord and jthField
@@ -25,10 +27,9 @@ class DynamicLayoutBuffer {
     uint64_t getNumberOfRecords() {return numberOfRecords; }
 
   protected:
-    std::shared_ptr<TupleBuffer> tupleBuffer;
+    TupleBuffer& tupleBuffer;
     uint64_t capacity;
     uint64_t numberOfRecords;
-
 };
 }
 
