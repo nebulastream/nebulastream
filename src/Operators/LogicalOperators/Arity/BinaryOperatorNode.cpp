@@ -64,10 +64,21 @@ bool BinaryOperatorNode::inferSchema() {
         NES_THROW_RUNTIME_ERROR("BinaryOperatorNode: this node should have at least one child operator");
     }
 
-    NES_ASSERT(children.size() == 2, "We do not support more than two childs in a binary operator");
-    //TODO: I am not sure if this is correct
-    leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-    rightInputSchema = children[1]->as<OperatorNode>()->getOutputSchema();
+    if(children.size() == 2)
+    {
+        leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
+        rightInputSchema = children[1]->as<OperatorNode>()->getOutputSchema();
+    }
+    else if(children.size() == 1)
+    {
+        //special case of self join
+        leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
+        rightInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
+    }
+    else
+    {
+        NES_THROW_RUNTIME_ERROR("Join with more than two childs is not supported");
+    }
 
     //TODO: this is only temporary and we need a solution to detect which schema is the final schema
     outputSchema = leftInputSchema;

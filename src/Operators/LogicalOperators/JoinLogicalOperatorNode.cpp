@@ -41,33 +41,36 @@ Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { re
 
 bool JoinLogicalOperatorNode::inferSchema() {
     BinaryOperatorNode::inferSchema();
-    if (getChildren().size() != 2) {
-        NES_THROW_RUNTIME_ERROR("JoinLogicalOperator: Join need two child operators.");
-    }
-
     auto child1 = getChildren()[0]->as<LogicalOperatorNode>();
-    auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
-
     auto schema1 = child1->getOutputSchema();
-    auto schema2 = child2->getOutputSchema();
-
-    // infer the data type of the key field.
     joinDefinition->getLeftJoinKey()->inferStamp(leftInputSchema);
-    joinDefinition->getRightJoinKey()->inferStamp(rightInputSchema);
-    NES_ASSERT(joinDefinition->getLeftJoinKey()->getStamp()->isEquals(joinDefinition->getRightJoinKey()->getStamp()),
-               "left and right join key type dont match");
 
     outputSchema = Schema::create()
-                       ->addField(createField("start", UINT64))
-                       ->addField(createField("end", UINT64))
-                       ->addField(AttributeField::create("key", joinDefinition->getLeftJoinKey()->getStamp()));
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField(AttributeField::create("key", joinDefinition->getLeftJoinKey()->getStamp()));
+
     // create dynamic fields to store all fields from left and right streams
     for (auto field : schema1->fields) {
         outputSchema = outputSchema->addField("left_" + field->name, field->getDataType());
     }
-    for (auto field : schema2->fields) {
-        outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
+
+    if (getChildren().size() == 2) {
+        auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
+        auto schema2 = child2->getOutputSchema();
+
+        // infer the data type of the key field.
+        joinDefinition->getRightJoinKey()->inferStamp(rightInputSchema);
+
+        for (auto field : schema2->fields) {
+            outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
+        }
     }
+    else
+    {
+        NES_WARNING("infer self join");
+    }
+
     joinDefinition->updateOutputDefinition(outputSchema);
     return true;
 }
