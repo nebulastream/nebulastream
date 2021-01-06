@@ -174,3 +174,10 @@ cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
   -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install \
   && sudo make -j2 install && cd ../.. && sudo rm -rf grpc
+
+RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 10 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /opt/toolchain/bin/clang++ 10 && \
+    update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
+    update-alternatives --set cc /usr/bin/clang && \
+    update-alternatives --set c++ /usr/bin/clang++
