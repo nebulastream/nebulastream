@@ -6,14 +6,15 @@
 
 namespace NES::NodeEngine {
 uint64_t NES::NodeEngine::DynamicColumnLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField) {
-    NES_VERIFY(jthField < fieldSizes->size(), "jthField" << jthField << " is larger than fieldSizes.size() " << fieldSizes->size());
-    NES_VERIFY(jthField < columnOffsets->size(), "columnOffsets" << jthField << " is larger than columnOffsets.size() " << columnOffsets->size());
+    auto fieldSize = dynamicColLayout->getFieldSizesOffsets();
+    NES_VERIFY(jthField < fieldSize->size(), "jthField" << jthField << " is larger than fieldSize.size() " << fieldSize->size());
+    NES_VERIFY(jthField < columnOffsets.size(), "columnOffsets" << jthField << " is larger than columnOffsets.size() " << columnOffsets.size());
 
-    return (ithRecord * fieldSizes->at(jthField)) + columnOffsets->at(jthField);
+    return (ithRecord * fieldSize->at(jthField)) + columnOffsets[jthField];
 }
+DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(std::shared_ptr<TupleBuffer> tupleBuffer, uint64_t capacity,
+                                                     std::shared_ptr<DynamicColumnLayout> dynamicColLayout, std::vector<COL_OFFSET_SIZE> columnOffsets)
+                                                    : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)), dynamicColLayout(dynamicColLayout) {}
 
 
-DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(uint64_t recordSize, std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes, std::shared_ptr<std::vector<COL_OFFSET_SIZE>> columnOffsets,
-                                                     std::shared_ptr<TupleBuffer> tupleBuffer, uint64_t capacity, bool checkBoundaryFieldChecks)
-        : columnOffsets(columnOffsets), DynamicLayoutBuffer(tupleBuffer, capacity, checkBoundaryFieldChecks, recordSize, fieldSizes) {}
 }
