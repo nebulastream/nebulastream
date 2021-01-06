@@ -52,7 +52,7 @@ namespace NES {
          * then return the result of the query execution
          * @return output string
          */
-        std::string getOutput();
+        std::string getOutput(uint64_t bufferToExpect);
 
       private:
         NesCoordinatorPtr crd;
@@ -61,7 +61,6 @@ namespace NES {
         uint64_t numWorkers;
         std::string operatorToTest;
 
-        std::vector<AbstractPhysicalStreamConfigPtr> physicalStreamConfigurationPtrs;
         std::vector<NesWorkerPtr> workerPtrs;
         std::vector<std::vector<Record>> records;
         std::vector<uint64_t> counters;

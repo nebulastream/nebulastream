@@ -1363,7 +1363,7 @@ TEST_F(QueryDeploymentTest, testUsingTestHarness) {
     testHarness.pushElement({2,2,2},0);
     testHarness.pushElement({2,2,2},0);
 
-    std::string output = testHarness.getOutput();
+    std::string output = testHarness.getOutput(1);
 
     std::string expectedContent = "key:INTEGER,value:INTEGER,timestamp:INTEGER\n"
                                   "42,42,42\n"
