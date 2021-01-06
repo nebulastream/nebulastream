@@ -96,7 +96,7 @@ def request_monitoring_data(type):
         raise RuntimeError("Monitoring request with type " + type.value + " not supported")
 
     if resp and resp.status_code == 200:
-        return True
+        return resp
     else:
         raise RuntimeError("Response with status code " + str(resp.status_code))
 

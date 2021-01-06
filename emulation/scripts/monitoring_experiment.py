@@ -12,7 +12,9 @@ setLogLevel('info')
 # ---------------------------------------------------------------------
 number_workers_producing = [5]
 number_workers_not_producing = [0]
-monitoring_types = [MonitoringType.DISABLED, MonitoringType.NEMO_PULL, MonitoringType.PROMETHEUS]
+#MonitoringType.DISABLED, MonitoringType.NEMO_PULL, MonitoringType.PROMETHEUS
+monitoring_types = [MonitoringType.PROMETHEUS]
+store_measurements = False
 
 # topology parameters
 # ---------------------------------------------------------------------
@@ -25,7 +27,7 @@ nes_log_level = LogLevel.NONE
 
 # experiment parameters
 # ---------------------------------------------------------------------
-version = "4"
+version = "2"
 iterations = 30
 iterations_before_execution = 0
 monitoring_frequency = 1
@@ -40,7 +42,7 @@ description = str(num_tuples) + "Tup-" + str(num_buffers) + "Buf"
 def execute_experiment(_nes_dir, _influx_storage, _nes_log_level, _number_workers_producing,
                        _number_workers_not_producing, _num_tuples, _num_buffers, _monitoring_type, _influx_db,
                        _influx_table, _iterations, _iterations_before_execution, _monitoring_frequency,
-                       _no_coordinators, _description, _version, run_cli, sleep_time):
+                       _no_coordinators, _description, _version, _run_cli, _sleep_time, _store_measurements):
     topology = Topology(_nes_dir, _influx_storage, _nes_log_level, _number_workers_producing,
                         _number_workers_not_producing, _num_tuples, _num_buffers, _monitoring_type)
     net = topology.create_topology()
@@ -48,22 +50,21 @@ def execute_experiment(_nes_dir, _influx_storage, _nes_log_level, _number_worker
     info('*** Starting network\n')
     net.start()
 
-    info('*** Sleeping ' + str(sleep_time) + '\n')
-    sleep(sleep_time)
+    info('*** Sleeping ' + str(_sleep_time) + '\n')
+    sleep(_sleep_time)
 
     info('*** Executing experiment with following parameters producers=' + str(
-        worker_producing) + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + mt.value + '\n')
+        worker_producing) + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + monitoring.value + '\n')
     experiment = Experiment(_number_workers_producing, _number_workers_not_producing, _influx_db, _influx_table,
-                            _iterations,
-                            _iterations_before_execution, _monitoring_frequency, _no_coordinators, _monitoring_type,
-                            _description, _version)
-    experiment.start()
+                            _iterations, _iterations_before_execution, _monitoring_frequency, _no_coordinators,
+                            _monitoring_type, _description, _version)
+    experiment.start(_store_measurements)
 
-    if run_cli:
+    if _run_cli:
         info('*** Running CLI\n')
         CLI(net)
     else:
-        sleep(sleep_time)
+        sleep(_sleep_time)
 
     info('*** Stopping network')
     net.stop()
@@ -76,17 +77,17 @@ run_cli = False
 sleep_time = 10
 for worker_producing in number_workers_producing:
     for worker_not_producing in number_workers_not_producing:
-        for mt in monitoring_types:
+        for monitoring in monitoring_types:
             info('*** Executing experiment with following parameters producers=' + str(worker_producing)
-                 + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + mt.value + '\n')
+                 + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + monitoring.value + '\n')
 
             if i == len(number_workers_producing)*len(number_workers_not_producing)*len(monitoring_types)-1:
                 info('*** Experiment reached last iteration=' + str(i) + ". Activating CLI")
                 run_cli = True
 
             execute_experiment(nes_dir, influx_storage, nes_log_level, worker_producing,
-                               worker_not_producing, num_tuples, num_buffers, mt, influx_db,
+                               worker_not_producing, num_tuples, num_buffers, monitoring, influx_db,
                                influx_table, iterations, iterations_before_execution, monitoring_frequency,
-                               no_coordinators, description, version, run_cli, sleep_time)
+                               no_coordinators, description, version, run_cli, sleep_time, store_measurements)
             sleep(sleep_time)
             i = i + 1
