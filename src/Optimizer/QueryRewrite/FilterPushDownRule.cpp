@@ -55,13 +55,11 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
                   return lhs->getId() < rhs->getId();
               });
 
-    NES_DEBUG("\n\nInput Query Plan:\n "+(queryPlanPtr)->toString());
     NES_INFO("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (auto filterOperator : filterOperators) {
         pushDownFilter(filterOperator);
     }
 
-    NES_DEBUG("\n\nUpdated Query Plan:\n "+(queryPlanPtr)->toString());
     NES_INFO("FilterPushDownRule: Return the updated query plan");
     return queryPlanPtr;
 }
@@ -75,7 +73,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
     while (!nodesToProcess.empty()) {
 
-        static bool s_IsFilterAboveAMergeOperator { false };
+        static bool isFilterAboveAMergeOperator { false };
         NES_INFO("FilterPushDownRule: Get first operator for processing");
         NodePtr node = nodesToProcess.front();
         nodesToProcess.pop_front();
@@ -89,7 +87,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
                 NES_INFO("FilterPushDownRule: Adding Filter operator between current operator and its parents");
 
-                if (s_IsFilterAboveAMergeOperator) {
+                if (isFilterAboveAMergeOperator) {
 
                     NES_INFO("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
@@ -102,7 +100,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                     }
 
-                    s_IsFilterAboveAMergeOperator = false;
+                    isFilterAboveAMergeOperator = false;
                     continue;
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
                       && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
@@ -127,7 +125,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                 continue;
             } else {
                 std::vector<NodePtr> children = node->getChildren();
-                if (s_IsFilterAboveAMergeOperator) { //To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
+                if (isFilterAboveAMergeOperator) { //To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
                     std::copy(children.begin(), children.end(), std::front_inserter(nodesToProcess));
                 } else {
                     std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
@@ -135,7 +133,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             }
         } else if (node->instanceOf<MergeLogicalOperatorNode>()) {
 
-            s_IsFilterAboveAMergeOperator = true;
+            isFilterAboveAMergeOperator = true;
             std::vector<NodePtr> childrenOfMergeOP = node->getChildren();
             std::copy(childrenOfMergeOP.begin(), childrenOfMergeOP.end(), std::front_inserter(nodesToProcess));
             std::sort(nodesToProcess.begin(), nodesToProcess.end()); //To ensure consistency in nodes traversed below a merge operator

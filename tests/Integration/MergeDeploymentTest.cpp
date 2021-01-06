@@ -636,33 +636,41 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     std::string outputFilePath = "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams.out";
     remove(outputFilePath.c_str());
 
-    //register logical stream filterPushDownMergeOp
-    std::string filterPushDownMergeOp =
+    //register logical stream
+    std::string rareStonesSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    std::string testSchemaFileName = "filterPushDownMergeOp.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << filterPushDownMergeOp;
+    std::string rareStonesSchemaFileName = "rareStonesSchema.hpp";
+    std::ofstream out(rareStonesSchemaFileName);
+    out << rareStonesSchema;
     out.close();
 
-    wrk1->registerLogicalStream("filterPushDownMergeOp", testSchemaFileName);
-    wrk2->registerLogicalStream("filterPushDownMergeOp2", testSchemaFileName);
+    wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
+    wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confFilterPushDownMergeOpStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_filterPushDownMergeOp", "filterPushDownMergeOp", false);
+    PhysicalStreamConfigPtr confStreamRuby =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
 
-    PhysicalStreamConfigPtr confFilterPushDownMergeOpStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_filterPushDownMergeOp2", "filterPushDownMergeOp2", false);
+    PhysicalStreamConfigPtr confStreamDiamond =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_diamond", "diamond", false);
 
-    wrk1->registerPhysicalStream(confFilterPushDownMergeOpStream);
-    wrk2->registerPhysicalStream(confFilterPushDownMergeOpStream2);
+    wrk1->registerPhysicalStream(confStreamRuby);
+    wrk2->registerPhysicalStream(confStreamDiamond);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
     string query =
-        "Query::from(\"filterPushDownMergeOp\").filter(Attribute(\"id\") < 12).merge(Query::from(\"filterPushDownMergeOp2\").filter(Attribute(\"value\") < 15)).map(Attribute(\"timestamp\") = 1).filter(Attribute(\"value\") < 17).map(Attribute(\"timestamp\") = 2).filter(Attribute(\"value\") > 1).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+        "Query::from(\"ruby\")"
+                ".filter(Attribute(\"id\") < 12)"
+                ".merge(Query::from(\"diamond\")"
+                                ".filter(Attribute(\"value\") < 15))"
+                                ".map(Attribute(\"timestamp\") = 1)"
+                ".filter(Attribute(\"value\") < 17)"
+                ".map(Attribute(\"timestamp\") = 2)"
+                ".filter(Attribute(\"value\") > 1)"
+                ".sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -674,7 +682,7 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    std::string expectedContent =
+    std::string expectedContentSubQry =
         "+----------------------------------------------------+\n"
         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
         "+----------------------------------------------------+\n"
@@ -696,7 +704,9 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
         "|12|1|2|\n"
         "|13|1|2|\n"
         "|14|1|2|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry =
+        "+----------------------------------------------------+\n"
         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
         "+----------------------------------------------------+\n"
         "|2|1|2|\n"
@@ -718,11 +728,13 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
         "|14|1|2|\n"
         "|15|1|2|\n"
         "|16|1|2|\n"
-        "+----------------------------------------------------+";
+        "+----------------------------------------------------+\n";
 
     NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): content=" << content);
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expContent=" << expectedContent);
-    EXPECT_EQ(expectedContent, content);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentSubQry=" << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentMainQry=" << expectedContentMainQry);
+    EXPECT_TRUE(content.find(expectedContentSubQry));
+    EXPECT_TRUE(content.find(expectedContentMainQry));
 
     NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -770,33 +782,39 @@ TEST_F(MergeDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     std::string outputFilePath = "testOneFilterPushDownWithMergeOfTwoDifferentStreams.out";
     remove(outputFilePath.c_str());
 
-    //register logical stream filterPushDownMergeOp
-    std::string filterPushDownMergeOp =
+    //register logical stream
+    std::string rareStonesSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    std::string testSchemaFileName = "filterPushDownMergeOp.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << filterPushDownMergeOp;
+    std::string rareStonesSchemaFileName = "rareStonesSchema.hpp";
+    std::ofstream out(rareStonesSchemaFileName);
+    out << rareStonesSchema;
     out.close();
 
-    wrk1->registerLogicalStream("filterPushDownMergeOp", testSchemaFileName);
-    wrk2->registerLogicalStream("filterPushDownMergeOp2", testSchemaFileName);
+    wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
+    wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confFilterPushDownMergeOpStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_filterPushDownMergeOp", "filterPushDownMergeOp", false);
+    PhysicalStreamConfigPtr confStreamRuby =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
 
-    PhysicalStreamConfigPtr confFilterPushDownMergeOpStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_filterPushDownMergeOp2", "filterPushDownMergeOp2", false);
+    PhysicalStreamConfigPtr confStreamDiamond =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_diamond", "diamond", false);
 
-    wrk1->registerPhysicalStream(confFilterPushDownMergeOpStream);
-    wrk2->registerPhysicalStream(confFilterPushDownMergeOpStream2);
+    wrk1->registerPhysicalStream(confStreamRuby);
+    wrk2->registerPhysicalStream(confStreamDiamond);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
     string query =
-        "Query::from(\"filterPushDownMergeOp\").merge(Query::from(\"filterPushDownMergeOp2\").map(Attribute(\"timestamp\") = 1).filter(Attribute(\"id\") > 3)).map(Attribute(\"timestamp\") = 2).filter(Attribute(\"id\") > 4).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+        "Query::from(\"ruby\")"
+                ".merge(Query::from(\"diamond\")"
+                                ".map(Attribute(\"timestamp\") = 1)"
+                                ".filter(Attribute(\"id\") > 3))"
+                ".map(Attribute(\"timestamp\") = 2)"
+                ".filter(Attribute(\"id\") > 4)"
+                ".sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -809,7 +827,7 @@ TEST_F(MergeDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    std::string expectedContent =
+    std::string expectedContentSubQry =
         "+----------------------------------------------------+\n"
         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
         "+----------------------------------------------------+\n"
@@ -817,18 +835,22 @@ TEST_F(MergeDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
         "|2|11|2|\n"
         "|2|16|2|\n"
         "|3|11|2|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry =
+        "+----------------------------------------------------+\n"
         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1|12|2|\n"
         "|2|11|2|\n"
         "|2|16|2|\n"
         "|3|11|2|\n"
-        "+----------------------------------------------------+";
+        "+----------------------------------------------------+\n";
 
     NES_INFO("MergeDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentStreams): content=" << content);
-    NES_INFO("MergeDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentStreams): expContent=" << expectedContent);
-    EXPECT_EQ(expectedContent, content);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentSubQry=" << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentMainQry=" << expectedContentMainQry);
+    EXPECT_TRUE(content.find(expectedContentSubQry));
+    EXPECT_TRUE(content.find(expectedContentMainQry));
 
     NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -875,33 +897,40 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     std::string outputFilePath = "testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams.out";
     remove(outputFilePath.c_str());
 
-    //register logical stream filterPushDownMergeOp
-    std::string filterPushDownMergeOp =
+    //register logical stream
+    std::string rareStonesSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    std::string testSchemaFileName = "filterPushDownMergeOp.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << filterPushDownMergeOp;
+    std::string rareStonesSchemaFileName = "rareStonesSchema.hpp";
+    std::ofstream out(rareStonesSchemaFileName);
+    out << rareStonesSchema;
     out.close();
 
-    wrk1->registerLogicalStream("filterPushDownMergeOp", testSchemaFileName);
-    wrk2->registerLogicalStream("filterPushDownMergeOp2", testSchemaFileName);
+    wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
+    wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confFilterPushDownMergeOpStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_filterPushDownMergeOp", "filterPushDownMergeOp", false);
+    PhysicalStreamConfigPtr confStreamRuby =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
 
-    PhysicalStreamConfigPtr confFilterPushDownMergeOpStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_filterPushDownMergeOp2", "filterPushDownMergeOp2", false);
+    PhysicalStreamConfigPtr confStreamDiamond =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_diamond", "diamond", false);
 
-    wrk1->registerPhysicalStream(confFilterPushDownMergeOpStream);
-    wrk2->registerPhysicalStream(confFilterPushDownMergeOpStream2);
+    wrk1->registerPhysicalStream(confStreamRuby);
+    wrk2->registerPhysicalStream(confStreamDiamond);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
     string query =
-        "Query::from(\"filterPushDownMergeOp\").map(Attribute(\"timestamp\") = 2).filter(Attribute(\"value\") < 9).merge(Query::from(\"filterPushDownMergeOp2\").map(Attribute(\"timestamp\") = 1).filter(Attribute(\"id\") < 12).filter(Attribute(\"value\") < 6)).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+        "Query::from(\"ruby\")"
+                ".map(Attribute(\"timestamp\") = 2)"
+                ".filter(Attribute(\"value\") < 9)"
+                ".merge(Query::from(\"diamond\")"
+                                ".map(Attribute(\"timestamp\") = 1)"
+                                ".filter(Attribute(\"id\") < 12)"
+                                ".filter(Attribute(\"value\") < 6))"
+                ".sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -914,7 +943,7 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    std::string expectedContent =
+    std::string expectedContentSubQry =
         "+----------------------------------------------------+\n"
         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
         "+----------------------------------------------------+\n"
@@ -933,7 +962,9 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
         "|6|1|2|\n"
         "|7|1|2|\n"
         "|8|1|2|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry =
+        "+----------------------------------------------------+\n"
         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1|1|1|\n"
@@ -946,11 +977,13 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
         "|3|1|1|\n"
         "|4|1|1|\n"
         "|5|1|1|\n"
-        "+----------------------------------------------------+";
+        "+----------------------------------------------------+\n";
 
     NES_INFO("MergeDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams): content=" << content);
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams): expContent=" << expectedContent);
-    EXPECT_EQ(expectedContent, content);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentSubQry=" << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentMainQry=" << expectedContentMainQry);
+    EXPECT_TRUE(content.find(expectedContentSubQry));
+    EXPECT_TRUE(content.find(expectedContentMainQry));
 
     NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
