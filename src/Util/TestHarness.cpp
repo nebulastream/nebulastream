@@ -63,6 +63,9 @@ TestHarness::TestHarness(uint64_t numWorkers,
 }
 void TestHarness::pushElement(Record element, uint64_t sourceIdx) {
     // push an element to a specific source
+    if (sourceIdx >= numWorkers){
+        NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
+    }
     NES_INFO("TestHarness: pushed element (" << std::to_string(element.key) <<"," << std::to_string(element.value) << ","
                                               << std::to_string(element.timestamp) << ") to source=" << std::to_string(sourceIdx));
     records[sourceIdx].push_back(element);
