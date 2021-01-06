@@ -40,25 +40,28 @@ const std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
 void MemorySource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
-    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    std::string thName = "MemSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
     auto recordSize = schema->getSchemaSizeInBytes();
     auto bufferSize = bufferManager->getBufferSize();
-    NES_ASSERT(memoryAreaSize % bufferSize == 0, "memory area size must be a multiple of buffer size");
-    NES_ASSERT(bufferSize % recordSize == 0, "buffer size must be a multiple of record size");
-
-    auto numOfBuffers = memoryAreaSize / bufferSize;
-    auto recordsPerBuffer = bufferSize / recordSize;
+    auto numOfBuffers = memoryAreaSize < bufferSize ? 1 : std::ceil(double(memoryAreaSize) / double(bufferSize));
     auto* pointer = memoryArea.get();
+    auto remainingSize = memoryAreaSize;
+    NES_ASSERT2(bufferSize % recordSize == 0, "A record might span multiple buffers and this is not supported bufferSize="
+                    << bufferSize << " recordSize=" << recordSize);
     for (auto i = 0u; i < numOfBuffers; ++i) {
         auto buffer = bufferManager->getBufferBlocking();
-        memcpy(buffer.getBuffer(), pointer, bufferSize);
+        auto length = std::min<size_t>(bufferSize, remainingSize);
+        auto recordsPerBuffer = length / recordSize;
+        memcpy(buffer.getBuffer(), pointer, length);
         buffer.setOriginId(operatorId);
         buffer.setNumberOfTuples(recordsPerBuffer);
         queryManager->addWork(operatorId, buffer);
-        pointer += bufferSize;
+        pointer += length;
+        remainingSize -= length;
     }
+    NES_ASSERT2(remainingSize == 0, "something wrong with remaining size " << remainingSize);
 }
 
 }// namespace NES
