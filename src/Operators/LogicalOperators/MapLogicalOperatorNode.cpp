@@ -44,18 +44,17 @@ bool MapLogicalOperatorNode::inferSchema() {
     mapExpression->inferStamp(getInputSchema());
 
     auto assignedField = mapExpression->getField();
-    if (outputSchema->has(assignedField->getFieldName())) {
+    const std::string& fieldName = assignedField->getFieldName();
+    if (outputSchema->hasFullyQualifiedFieldName(fieldName)) {
         // The assigned field is part of the current schema.
         // Thus we check if it has the correct type.
-        outputSchema->replaceField(assignedField->getFieldName(), assignedField->getStamp());
-        NES_DEBUG("MAP Logical Operator: the field " << assignedField->getFieldName()
-                                                     << " is already of the schema, so we updated its type.");
+        outputSchema->replaceField(fieldName, assignedField->getStamp());
+        NES_DEBUG("MAP Logical Operator: the field " << fieldName << " is already of the schema, so we updated its type.");
     } else {
         // The assigned field is not part of the current schema.
         // Thus we extend the schema by the new attribute.
-        outputSchema->addField(assignedField->getFieldName(), assignedField->getStamp());
-        NES_DEBUG("MAP Logical Operator: the field " << assignedField->getFieldName()
-                                                     << " is not part of the schema, so we added it.");
+        outputSchema->addField(inputSchema->qualifyingName + fieldName, assignedField->getStamp());
+        NES_DEBUG("MAP Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
     }
     return true;
 }

@@ -35,6 +35,11 @@ class Schema {
     Schema(SchemaPtr query);
 
     /**
+     * @brief Schema qualifier separator
+     */
+    constexpr static const char* const ATTRIBUTE_NAME_SEPARATOR = "$";
+
+    /**
      * @brief Factory method to create a new SchemaPtr.
      * @return SchemaPtr
      */
@@ -90,11 +95,20 @@ class Schema {
     void replaceField(const std::string& name, DataTypePtr type);
 
     /**
-     * @brief Checks if attribute field name is defined in the schema
-     * @param fieldName
-     * @return bool
+     * @brief Checks if an attribute with the input field name is defined in the schema
+     * @warning: a field name with $ sign may produce incorrect result
+     * @param fieldName: the field name
+     * @return bool: true if present else false
      */
-    bool has(const std::string& fieldName);
+    bool hasFieldName(const std::string& fieldName);
+
+    /**
+     * @brief Checks if an attribute with the input field name is defined in the schema or not
+     * @warning: a field name with $ sign may produce incorrect result
+     * @param fullyQualifiedFieldName: the input fully qualified filed name
+     * @return bool: true if present else false
+     */
+    bool hasFullyQualifiedFieldName(const std::string& fullyQualifiedFieldName);
 
     /**
      * @brief Checks if attribute field name is defined in the schema and returns its index.
@@ -146,6 +160,10 @@ class Schema {
     bool contains(const std::string& fieldName);
 
     const std::string toString() const;
+
+    void setQualifyingName(std::string qualifyingName) { this->qualifyingName = qualifyingName + ATTRIBUTE_NAME_SEPARATOR; };
+
+    std::string qualifyingName;
 
     std::vector<AttributeFieldPtr> fields;
 };

@@ -50,13 +50,19 @@ const std::string FieldAccessExpressionNode::toString() const {
 
 void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
     // check if the access field is defined in the schema.
-    if (!schema->has(fieldName)) {
-        NES_THROW_RUNTIME_ERROR("FieldAccessExpression: the field " + fieldName + " is not defined in the schema "
-                                + schema->toString());
+    if (schema->hasFullyQualifiedFieldName(fieldName)) {
+        auto field = schema->get(fieldName);
+        stamp = field->getDataType();
+        return;
+    } else if(schema->hasFieldName(fieldName)) {
+        fieldName = schema->qualifyingName + fieldName;
+        auto field = schema->get(fieldName);
+        stamp = field->getDataType();
+        return;
     }
+    NES_THROW_RUNTIME_ERROR("FieldAccessExpression: the field " + fieldName + " is not defined in the  schema "
+                            + schema->toString());
     // assign the stamp of this field access with the type of this field.
-    auto field = schema->get(fieldName);
-    stamp = field->getDataType();
 }
 
 ExpressionNodePtr FieldAccessExpressionNode::copy() {

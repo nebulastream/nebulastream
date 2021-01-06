@@ -49,19 +49,19 @@ namespace NES {
 class TypeInferencePhaseTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup TypeInferencePhaseTest test class." << std::endl; }
-
-    /* Will be called before a  test is executed. */
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("TypeInferencePhaseTest.log", NES::LOG_DEBUG);
-        std::cout << "Setup TypeInferencePhaseTest test case." << std::endl;
+        NES_INFO("Setup TypeInferencePhaseTest test class.");
     }
 
+    /* Will be called before a  test is executed. */
+    void SetUp() { NES_INFO("Setup TypeInferencePhaseTest test case."); }
+
     /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Tear down TypeInferencePhaseTest test case." << std::endl; }
+    void TearDown() { NES_INFO("Tear down TypeInferencePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TypeInferencePhaseTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down TypeInferencePhaseTest test class."); }
 };
 
 /**
@@ -184,6 +184,41 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
                             ->addField("id", BasicType::UINT32)
                             ->addField("value", BasicType::UINT64)
                             ->addField("f3", BasicType::UINT32);
+
+    NES_INFO(sink->getOutputSchema()->toString());
+
+    ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));
+}
+
+/**
+ * @brief In this test we ensure that the schema can be propagated properly when merge operator is present.
+ */
+TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
+
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+
+    Query subQuery = Query::from("default_logical");
+    auto query = Query::from("default_logical").merge(&subQuery).map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
+    auto plan = query.getQueryPlan();
+
+    auto phase = TypeInferencePhase::create(streamCatalog);
+
+    plan = phase->execute(plan);
+    auto sink = plan->getSinkOperators()[0];
+
+    auto resultSchema = Schema::create()
+        ->addField("id", BasicType::UINT32)
+        ->addField("value", BasicType::UINT64)
+        ->addField("f3", BasicType::UINT32);
+
+    NES_INFO(sink->getOutputSchema()->toString());
 
     ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));
 }
