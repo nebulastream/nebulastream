@@ -53,7 +53,7 @@ RUN git config --global advice.detachedHead false && \
 (git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost && \
 rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
 sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
-./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost) || cd
+./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost) || cd .. || rm -rf boost
 
 RUN mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
 mkdir -p /opt/toolchain && \
