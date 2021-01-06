@@ -91,7 +91,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-    itr = updatedQueryPlanNodeIterator.begin();
+    itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperator->equal((*itr)));
@@ -133,7 +133,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-    itr = updatedQueryPlanNodeIterator.begin();
+    itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperator->equal((*itr)));
@@ -180,7 +180,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-    itr = updatedQueryPlanNodeIterator.begin();
+    itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperator1->equal((*itr)));
@@ -226,7 +226,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-    itr = updatedQueryPlanNodeIterator.begin();
+    itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperator->equal((*itr)));
@@ -265,7 +265,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-    itr = updatedQueryPlanNodeIterator.begin();
+    itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperator->equal((*itr)));
@@ -315,9 +315,9 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("\n\nInput Query Plan:\n "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("\n\nUpdated Query Plan:\n "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -381,9 +381,9 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator)
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("\n\nInput Query Plan:\n "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("\n\nUpdated Query Plan:\n "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -445,9 +445,9 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("\n\nInput Query Plan:\n "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("\n\nUpdated Query Plan:\n "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -518,9 +518,9 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("\n\nInput Query Plan:\n "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("\n\nUpdated Query Plan:\n "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -596,9 +596,9 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("\n\nInput Query Plan:\n "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("\n\nUpdated Query Plan:\n "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
