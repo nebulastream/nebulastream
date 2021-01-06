@@ -42,14 +42,15 @@ class Experiment:
         else:
             raise RuntimeError("Monitoring type " + monitoring_type + " is not valid")
 
-    def execute_iterations(self, iterations, container_iter, sleep_duration, disable_monitoring):
+    def execute_iterations(self, iterations, container_iter, sleep_duration, with_monitoring):
         msrmnt_batch = []
         start = datetime.datetime.now()
         for i in range(1, iterations):
             print("\nExecuting iteration " + str(i))
-            if (not disable_monitoring) and (self.monitoring_type != MonitoringType.DISABLED) and (
-                    (i % self.monitoring_frequency) == 0):
-                request_monitoring_data(self.monitoring_type)
+            if with_monitoring and (self.monitoring_type != MonitoringType.DISABLED) \
+                    and ((i % self.monitoring_frequency) == 0):
+                resp = request_monitoring_data(self.monitoring_type)
+                # print("Received monitoring data from coordinator " + str(resp.json()))
 
             print("Reading docker stats " + str(i))
             end = datetime.datetime.now()
@@ -63,7 +64,7 @@ class Experiment:
             sleep(sleep_duration)
         return msrmnt_batch
 
-    def start(self):
+    def start(self, store_measurements):
         print("Executing monitoring request experiment")
         # execute experiment
         msrmnt_batch = []
@@ -73,9 +74,9 @@ class Experiment:
         container_iter = [(c.name, c.stats(decode=True)) for c in containers]
 
         # make measurements before request
-        if (self.noIterationsBeforeExecution > 0):
+        if self.noIterationsBeforeExecution > 0:
             print("Making measurements before request")
-            res = self.execute_iterations(self.noIterationsBeforeExecution, container_iter, 1, True)
+            res = self.execute_iterations(self.noIterationsBeforeExecution, container_iter, 1, False)
             msrmnt_batch.extend(res)
 
         # execute query on nes
@@ -88,12 +89,13 @@ class Experiment:
 
         # make measurements after request
         print("Making measurements after request")
-        res = self.execute_iterations(self.noIterationsBeforeExecution + self.noIterations, container_iter, 1, False)
+        res = self.execute_iterations(self.noIterationsBeforeExecution + self.noIterations, container_iter, 1, True)
         msrmnt_batch.extend(res)
 
         # influx operations
-        print("Experiment finished! Writing to Influx..")
-        store_to_influx(self.influx_db, msrmnt_batch)
+        if store_measurements:
+            print("Experiment finished! Writing to Influx..")
+            store_to_influx(self.influx_db, msrmnt_batch)
         sleep(1)
 
         print("Finished!")
