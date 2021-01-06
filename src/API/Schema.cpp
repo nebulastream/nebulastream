@@ -49,14 +49,16 @@ uint64_t Schema::getSchemaSizeInBytes() const {
 
 SchemaPtr Schema::copyFields(SchemaPtr otherSchema) {
     for (AttributeFieldPtr attr : otherSchema->fields) {
-        this->fields.push_back(attr);
+        fields.push_back(AttributeField::create(attr->name, attr->dataType));
     }
+    this->qualifyingName = otherSchema->qualifyingName;
     return copy();
 }
 
 SchemaPtr Schema::addField(AttributeFieldPtr field) {
-    if (field)
-        fields.push_back(field);
+    if (field) {
+        fields.push_back(AttributeField::create(field->name, field->dataType));
+    }
     return copy();
 }
 
@@ -84,12 +86,6 @@ void Schema::replaceField(const std::string& name, DataTypePtr type) {
             return;
         }
     }
-}
-
-bool Schema::has(const std::string& fieldName) {
-    return std::any_of(fields.begin(), fields.end(), [&fieldName](const auto& field) {
-        return field->name == fieldName;
-    });
 }
 
 AttributeFieldPtr Schema::get(const std::string& fieldName) {
@@ -123,7 +119,7 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
         return true;
     } else {
         for (AttributeFieldPtr attr : fields) {
-            if (!(schema->has(attr->name) && schema->get(attr->name)->isEqual(attr))) {
+            if (!(schema->hasFullyQualifiedFieldName(attr->name) && schema->get(attr->name)->isEqual(attr))) {
                 return false;
             }
         }
@@ -167,6 +163,21 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
     } else {
         return -1;
     }
+}
+
+bool Schema::hasFieldName(const std::string& fieldName) {
+    return std::any_of(fields.begin(), fields.end(), [&](const AttributeFieldPtr& field) {
+        std::string& fullyQualifiedFieldName = field->name;
+        auto unqualifiedFieldName = fullyQualifiedFieldName.substr(
+            fullyQualifiedFieldName.find(qualifyingName) + qualifyingName.length(), fullyQualifiedFieldName.length());
+        return unqualifiedFieldName == fieldName;
+    });
+}
+
+bool Schema::hasFullyQualifiedFieldName(const std::string& fullyQualifiedFieldName) {
+    return std::any_of(fields.begin(), fields.end(), [&fullyQualifiedFieldName](const auto& field) {
+        return field->name == fullyQualifiedFieldName;
+    });
 }
 
 }// namespace NES

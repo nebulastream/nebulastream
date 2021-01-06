@@ -47,7 +47,6 @@ bool MergeLogicalOperatorNode::inferSchema() {
     }
     if (getChildren().size() < 2) {
         NES_THROW_RUNTIME_ERROR("MergeLogicalOperator: merge need two child operators.");
-        return false;
     }
 
     std::vector<SchemaPtr> schemas;
