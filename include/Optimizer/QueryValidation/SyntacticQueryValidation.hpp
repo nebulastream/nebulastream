@@ -27,6 +27,8 @@ namespace NES {
  * @brief This class is responsible for Syntactic Query Validation
  */
 class SyntacticQueryValidation {
+    private:
+        void handleException(const std::exception& ex);
     public:
         bool isValid(std::string inputQuery);
 };

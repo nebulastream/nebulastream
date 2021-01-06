@@ -195,7 +195,23 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     for (const auto& arg : flags->getFlags()) {
         compilerCall << arg << " ";
     }
-    auto ret = system(compilerCall.str().c_str());
+    // auto ret = system(compilerCall.str().c_str());
+
+    FILE *fp;
+    char buffer[10000];
+    compilerCall << " 2>&1";
+    fp = popen(compilerCall.str().c_str(), "r");
+
+    if (fp == NULL) {
+        printf("Failed to run command\n" );
+        return;
+    }
+    std::ostringstream strstream;
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        strstream << buffer;
+    }
+    auto ret = pclose(fp);
+
     if (ret != 0) {
         NES_ERROR("Compiler: compilation failed");
         throw std::runtime_error(strstream.str());

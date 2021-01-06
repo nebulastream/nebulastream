@@ -16,12 +16,16 @@
 
 
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
@@ -30,17 +34,37 @@ namespace NES {
 
 bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
 
-    SchemaPtr schema;
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    auto sourceOperators = inputQuery->getQueryPlan()->getSourceOperators();
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    
+    auto queryPlan = inputQuery->getQueryPlan();
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    
+    sourceValidityCheck(queryPlan, streamCatalog);
+
+    typeInferencePhase->execute(queryPlan);
+    signatureInferencePhase->execute(queryPlan);
+
+    z3::solver solver(*context);
+    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+
+    for (int i = 0; i < filterOperators.size(); i++) {
+        Optimizer::QuerySignaturePtr qsp = filterOperators[i]->getSignature();
+        solver.add(*(qsp->getConditions()));
+    }
+
+    return solver.check() != z3::unsat;
+}
+
+void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog){
 
     auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
+    auto sourceOperators = queryPlan->getSourceOperators();
 
     for (auto source : sourceOperators) {
         auto sourceDescriptor = source->getSourceDescriptor();
 
-        // if the source descriptor is only a logical stream source we have to replace it with the correct
-        // source descriptor form the catalog.
         if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
             auto streamName = sourceDescriptor->getStreamName();
 
@@ -48,27 +72,8 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
                 NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: The logical stream " + streamName
                                         + " could not be found in the StreamCatalog");
             }
-            
-            schema = streamCatalog->getSchemaForLogicalStream(streamName);
         }
     }
-    
-    std::shared_ptr<z3::context> c = std::make_shared<z3::context>();
-    z3::solver s(*c);
-
-    auto filterOperators = inputQuery->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
-
-    for (int i = 0; i < filterOperators.size(); i++) {
-        filterOperators[i]->getPredicate()->inferStamp(schema);
-    }
-    for (int i = 0; i < filterOperators.size(); i++) {
-        filterOperators[i]->inferZ3Expression(c);
-    }
-    for (int i = 0; i < filterOperators.size(); i++) {
-        s.add(filterOperators[i]->getZ3Expression());
-    }
-
-    return s.check() != z3::unsat;
 }
 
 bool NES::SemanticQueryValidation::isLogicalStreamInCatalog(std::string streamname, std::map<std::string, std::string> allLogicalStreams) {

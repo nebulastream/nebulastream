@@ -29,6 +29,7 @@ namespace NES {
 class SemanticQueryValidation {
     private:
         bool isLogicalStreamInCatalog(std::string streamname, std::map<std::string, std::string> allLogicalStreams);
+        void sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
     public:
         bool isSatisfiable(QueryPtr inputQuery);
 };
