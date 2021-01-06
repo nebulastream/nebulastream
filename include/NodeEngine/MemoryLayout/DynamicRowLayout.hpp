@@ -18,19 +18,15 @@
 #define NES_DYNAMICROWLAYOUT_HPP
 
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 
 
 namespace NES::NodeEngine {
 
-class ArrayPhysicalField;
-typedef std::shared_ptr<ArrayPhysicalField> ArrayPhysicalFieldPtr;
-
 class DynamicRowLayout;
 typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
 
-class DynamicRowLayout : public DynamicMemoryLayout{
+class DynamicRowLayout : public DynamicMemoryLayout {
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
@@ -38,8 +34,6 @@ class DynamicRowLayout : public DynamicMemoryLayout{
     static DynamicRowLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
     std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
 
-
-  private:
 };
 
 

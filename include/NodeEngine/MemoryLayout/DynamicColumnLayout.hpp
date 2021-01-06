@@ -22,8 +22,6 @@
 
 namespace NES::NodeEngine {
 
-typedef uint64_t FIELD_SIZE;
-typedef uint64_t COL_OFFSET_SIZE;
 
 class DynamicColumnLayout;
 typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
@@ -32,13 +30,9 @@ class DynamicColumnLayout : public DynamicMemoryLayout{
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
-    DynamicColumnLayout(uint64_t capacity, bool checkBoundaries, SchemaPtr schema);
-    static DynamicColumnLayoutPtr create(SchemaPtr schema, uint64_t bufferSize, bool checkBoundaries);
+    DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
+    static DynamicColumnLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
     std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
-
-  private:
-    std::shared_ptr<std::vector<COL_OFFSET_SIZE>> columnOffsets;
-    std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes;
 };
 
 }

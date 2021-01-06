@@ -21,15 +21,15 @@
 
 namespace NES::NodeEngine {
 
-DynamicColumnLayout::DynamicColumnLayout(uint64_t capacity, bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
+DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
+    this->fieldSizesOffSets = std::make_shared<std::vector<FIELD_SIZE>>();
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : schema->fields) {
         auto curFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
-        fieldSizes->emplace_back(curFieldSize);
-        columnOffsets->emplace_back(curFieldSize * capacity);
+        fieldSizesOffSets->emplace_back(curFieldSize);
     }
 }
 
@@ -39,21 +39,23 @@ DynamicColumnLayout::DynamicColumnLayout(uint64_t capacity, bool checkBoundaries
  * @param bufferSize
  * @return
  */
-DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, uint64_t bufferSize, bool checkBoundaries) {
+DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, bool checkBoundaries) {
 
-    auto recordSize = schema->getSchemaSizeInBytes();
-    auto capacity = bufferSize / recordSize;
-
-    return std::make_shared<DynamicColumnLayout>(capacity, checkBoundaries, schema);
+    return std::make_shared<DynamicColumnLayout>(checkBoundaries, schema);
 }
-
 
 DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
 
 std::unique_ptr<DynamicLayoutBuffer> DynamicColumnLayout::map(TupleBuffer& tupleBuffer) {
+    std::vector<COL_OFFSET_SIZE> columnOffsets;
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
-    return std::make_unique<DynamicColumnLayoutBuffer>(recordSize, fieldSizes, columnOffsets, std::make_shared<TupleBuffer>(tupleBuffer), capacity, checkBoundaryFieldChecks);
+    uint64_t offsetCounter = 0;
+    for (auto it = fieldSizesOffSets->begin(); it != fieldSizesOffSets->end(); ++it) {
+        columnOffsets.emplace_back(offsetCounter);
+        offsetCounter += *it * capacity;
+    }
+    return std::make_unique<DynamicColumnLayoutBuffer>(std::make_shared<TupleBuffer>(tupleBuffer), capacity,
+                                                       std::make_shared<DynamicColumnLayout>(*this), columnOffsets);
 }
-
 }
