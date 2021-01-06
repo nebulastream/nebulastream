@@ -20,6 +20,7 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
@@ -54,11 +55,13 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
                   return lhs->getId() < rhs->getId();
               });
 
+    NES_DEBUG("\n\nInput Query Plan:\n "+(queryPlanPtr)->toString());
     NES_INFO("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (auto filterOperator : filterOperators) {
         pushDownFilter(filterOperator);
     }
 
+    NES_DEBUG("\n\nUpdated Query Plan:\n "+(queryPlanPtr)->toString());
     NES_INFO("FilterPushDownRule: Return the updated query plan");
     return queryPlanPtr;
 }
@@ -72,6 +75,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
     while (!nodesToProcess.empty()) {
 
+        static bool s_IsFilterAboveAMergeOperator { false };
         NES_INFO("FilterPushDownRule: Get first operator for processing");
         NodePtr node = nodesToProcess.front();
         nodesToProcess.pop_front();
@@ -84,7 +88,23 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {
 
                 NES_INFO("FilterPushDownRule: Adding Filter operator between current operator and its parents");
-                if (!(filterOperator->removeAndJoinParentAndChildren()
+
+                if (s_IsFilterAboveAMergeOperator) {
+
+                    NES_INFO("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
+                    OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
+                    duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
+
+                    if (!(duplicatedFilterOperator->removeAndJoinParentAndChildren()
+                          && node->insertBetweenThisAndParentNodes(duplicatedFilterOperator))) {
+
+                        NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
+                        throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
+                    }
+
+                    s_IsFilterAboveAMergeOperator = false;
+                    continue;
+                } else if (!(filterOperator->removeAndJoinParentAndChildren()
                       && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
@@ -107,8 +127,18 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                 continue;
             } else {
                 std::vector<NodePtr> children = node->getChildren();
-                std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
+                if (s_IsFilterAboveAMergeOperator) { //To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
+                    std::copy(children.begin(), children.end(), std::front_inserter(nodesToProcess));
+                } else {
+                    std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
+                }
             }
+        } else if (node->instanceOf<MergeLogicalOperatorNode>()) {
+
+            s_IsFilterAboveAMergeOperator = true;
+            std::vector<NodePtr> childrenOfMergeOP = node->getChildren();
+            std::copy(childrenOfMergeOP.begin(), childrenOfMergeOP.end(), std::front_inserter(nodesToProcess));
+            std::sort(nodesToProcess.begin(), nodesToProcess.end()); //To ensure consistency in nodes traversed below a merge operator
         }
     }
 
