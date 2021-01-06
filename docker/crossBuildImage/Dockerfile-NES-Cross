@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 ADD ../../cmake/toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
 RUN mkdir -p /opt/toolchain && \
 cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
-apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
+apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
       build-essential \
       ca-certificates \
       crossbuild-essential-arm64 \
@@ -19,7 +19,11 @@ apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
       doxygen \
       graphviz \
       xz-utils \
-      ninja-build && \
+      ninja-build \
+      rsync \
+      ssh \
+      gdb \
+      libssl-dev && \
     apt-get clean -qq
 
 RUN sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \
@@ -30,7 +34,7 @@ sed -i -E -- 's|http://.*security\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ub
 dpkg --add-architecture arm64 && \
 apt-get update
 
-RUN apt-get install -qq \
+RUN apt-get install --no-install-recommends -qq \
   libpython3-dev:arm64 \
   libncurses5-dev:arm64 \
   libxml2-dev:arm64 \
@@ -83,5 +87,13 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolch
 -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install && \
 make -j2 install && cd ../.. && rm -rf grpc
 
-ADD ./entrypoint-nes-cross.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 10 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /opt/toolchain/bin/clang++ 10 && \
+    update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
+    update-alternatives --set cc /usr/bin/clang && \
+    update-alternatives --set c++ /usr/bin/clang++
+
+RUN service ssh start && useradd -m nes && yes password | passwd nes
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
