@@ -377,7 +377,6 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-
 TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -536,6 +535,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     EXPECT_TRUE(retStopCord);
     NES_INFO("MergeDeploymentTest: Test finished");
 }
+    
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
