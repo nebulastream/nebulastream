@@ -41,7 +41,7 @@ RUN apt-get install --no-install-recommends -qq \
   libedit-dev:arm64 \
   libdwarf-dev:arm64 \
   libdw-dev:arm64 \
-#  liblog4cxx-dev:arm64 \
+  liblog4cxx-dev:arm64 \
   libcpprest-dev:arm64 \
   libssl-dev:arm64 \
   libeigen3-dev:arm64 \
