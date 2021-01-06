@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-ADD ../../cmake/toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
+COPY toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
 RUN mkdir -p /opt/toolchain && \
 cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
 apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
