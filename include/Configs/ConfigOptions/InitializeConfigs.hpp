@@ -1,0 +1,8 @@
+//
+// Created by eleicha on 06.01.21.
+//
+
+#ifndef NES_INITIALIZECONFIGS_HPP
+#define NES_INITIALIZECONFIGS_HPP
+
+#endif//NES_INITIALIZECONFIGS_HPP
