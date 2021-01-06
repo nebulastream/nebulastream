@@ -322,6 +322,11 @@ add_executable(query-deployment-test "Integration/QueryDeploymentTest.cpp")
 target_link_libraries(query-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-deployment-test COMMAND query-deployment-test)
 
+### JoinDeploymentTest ###
+add_executable(join-deployment-test "Integration/JoinDeploymentTest.cpp")
+target_link_libraries(join-deployment-test nes ${GTEST_LIBRARIES})
+add_test(NAME join-deployment-test COMMAND join-deployment-test)
+
 ### windowDeploymentTest ###
 add_executable(window-deployment-test "Integration/WindowDeploymentTest.cpp")
 target_link_libraries(window-deployment-test nes ${GTEST_LIBRARIES})

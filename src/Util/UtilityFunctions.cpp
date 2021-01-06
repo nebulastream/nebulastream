@@ -114,11 +114,12 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
                 boost::replace_first(newQuery, "Query::from", "return Query::from");
                 std::string tmp = queryCodeSnippet.substr(pos1);
                 auto pos2 = tmp.find("),");
+
                 //find the end bracket of merge query
                 std::string subquery = tmp.substr(5, pos2 - 4);
                 NES_DEBUG("UtilityFunctions: subquery = " << subquery);
                 code << "auto subQuery = " << subquery << ";" << std::endl;
-                boost::replace_all(newQuery, subquery, "join(&subQuery");
+                boost::replace_last(newQuery, subquery, "join(&subQuery");
                 boost::replace_first(newQuery, "join(", "");
                 NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
             } else {
