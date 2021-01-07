@@ -77,16 +77,11 @@ std::string TestHarness::getOutput(uint64_t bufferToExpect) {
     // add value collected by the record vector to the memory source
     for(int i = 0; i < numWorkers; ++i) {
         auto currentSourceNumOfRecords = records.at(i).size();
-        // TODO: adjust based on the number of records
-        auto memAreaSize = 4096;
+        auto memAreaSize = currentSourceNumOfRecords * schema->getSchemaSizeInBytes();
         auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
         Record* currentSourceRecord = reinterpret_cast<Record*>(memArea);
-        for (auto j = 0u; j < currentSourceNumOfRecords; ++j) {
-            currentSourceRecord[j].key = records.at(i).at(j).key;
-            currentSourceRecord[j].value = records.at(i).at(j).value;
-            currentSourceRecord[j].timestamp = records.at(i).at(j).timestamp;
-        }
+        std::copy(records.at(i).begin(), records.at(i).end(), currentSourceRecord);
 
         AbstractPhysicalStreamConfigPtr conf =
             MemorySourceStreamConfig::create("MemorySource", "memory_stream_"+std::to_string(i), "memory_stream", memArea, memAreaSize);

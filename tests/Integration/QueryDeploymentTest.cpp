@@ -1368,10 +1368,12 @@ TEST_F(QueryDeploymentTest, testUsingTestHarness) {
     std::string expectedContent = "key:INTEGER,value:INTEGER,timestamp:INTEGER\n"
                                   "42,42,42\n"
                                   "1,1,1\n"
+                                  "66,66,66\n"
+                                  "99,99,99\n"
                                   "2,2,2\n"
-                                  "2,2,2";
+                                  "2,2,2\n";
 
-//    ASSERT_EQ(expectedContent, output);
+    ASSERT_EQ(expectedContent, output);
 }
 }
 
