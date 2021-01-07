@@ -26,7 +26,6 @@
 #include <Util/TestUtils.hpp>
 #include <iostream>
 
-
 namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
@@ -65,8 +64,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     static_assert(sizeof(Record) == 16);
 
     auto schema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                      ->addField("key", DataTypeFactory::createUInt64())
+                      ->addField("timestamp", DataTypeFactory::createUInt64());
     ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
 
     streamCatalog->addLogicalStream("memory_stream", schema);
@@ -158,8 +157,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     static_assert(sizeof(Record) == 16);
 
     auto schema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                      ->addField("key", DataTypeFactory::createUInt64())
+                      ->addField("timestamp", DataTypeFactory::createUInt64());
     ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
 
     streamCatalog->addLogicalStream("memory_stream", schema);
@@ -252,8 +251,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
     static_assert(sizeof(Record) == 16);
 
     auto schema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                      ->addField("key", DataTypeFactory::createUInt64())
+                      ->addField("timestamp", DataTypeFactory::createUInt64());
     ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
 
     streamCatalog->addLogicalStream("memory_stream", schema);
@@ -326,4 +325,4 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
     EXPECT_TRUE(retStopCord);
 }
 
-}
+}// namespace NES
