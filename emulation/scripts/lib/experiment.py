@@ -22,25 +22,24 @@ from lib.util import MonitoringType
 
 
 class Experiment:
-    def __init__(self, no_workers_producing, no_workers_not_producing, influx_db, influx_table, noIterations,
-                 noIterationsBeforeExecution, monitoring_frequency, no_coordinators, monitoring_type, description,
-                 version):
-        self.no_workers_producing = no_workers_producing
-        self.no_workers_not_producing = no_workers_not_producing
+    def __init__(self, topology, influx_db, influx_table, iterations, iterations_before_execution,
+                 monitoring_frequency, description, version):
+        self.no_workers_producing = topology.no_workers_producing
+        self.no_workers_not_producing = topology.no_workers_not_producing
         self.influx_db = influx_db
         self.influx_table = influx_table
-        self.noIterations = noIterations
-        self.noIterationsBeforeExecution = noIterationsBeforeExecution
+        self.noIterations = iterations
+        self.noIterationsBeforeExecution = iterations_before_execution
         self.monitoring_frequency = monitoring_frequency
-        self.no_coordinators = no_coordinators
+        self.no_coordinators = topology.number_coordinators
         self.description = description
         self.version = version
+        self.expected_topology_size = topology.get_topology_size()
 
         # check monitoring type
-        if monitoring_type in [MonitoringType.DISABLED, MonitoringType.NEMO_PULL, MonitoringType.PROMETHEUS]:
-            self.monitoring_type = monitoring_type
-        else:
-            raise RuntimeError("Monitoring type " + monitoring_type + " is not valid")
+        self.monitoring_type = topology.monitoring_type
+        if self.monitoring_type not in [MonitoringType.DISABLED, MonitoringType.NEMO_PULL, MonitoringType.PROMETHEUS]:
+            raise RuntimeError("Monitoring type " + self.monitoring_type + " is not valid")
 
     def execute_iterations(self, iterations, container_iter, sleep_duration, with_monitoring):
         msrmnt_batch = []
@@ -50,7 +49,13 @@ class Experiment:
             if with_monitoring and (self.monitoring_type != MonitoringType.DISABLED) \
                     and ((i % self.monitoring_frequency) == 0):
                 resp = request_monitoring_data(self.monitoring_type)
-                # print("Received monitoring data from coordinator " + str(resp.json()))
+                s = len(resp.json())
+
+                if s == self.expected_topology_size:
+                    print("Received monitoring data from coordinator for nodes " + str(s))
+                else:
+                    raise RuntimeError("Expected a topology of size " + str(self.expected_topology_size) +
+                                       " but received size of " + str(s))
 
             print("Reading docker stats " + str(i))
             end = datetime.datetime.now()
