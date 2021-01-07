@@ -80,6 +80,8 @@ bool BinaryOperatorNode::inferSchema() {
         NES_THROW_RUNTIME_ERROR("Join with more than two childs is not supported");
     }
 
+    NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
+
     //TODO: this is only temporary and we need a solution to detect which schema is the final schema
     outputSchema = leftInputSchema;
     return true;
