@@ -49,20 +49,20 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
     //FIXME: @Steffen why did you defined merge operator as a unary operator? This is not only causing problem here but will also cause problem during placement.
     // 1410 is opened to resolve this issue.
     auto children = operatorNode->getChildren();
-    if (operatorNode->instanceOf<MergeLogicalOperatorNode>() && ((children.empty() || children.size() == 1))) {
-        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can't have empty or only one children : "
-                                + operatorNode->toString());
+    if (operatorNode->instanceOf<MergeLogicalOperatorNode>() && children.size() != 2) {
+        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can have only two children : " + operatorNode->toString()
+                                + " found : " + std::to_string(children.size()));
     } else if (operatorNode->isUnaryOperator() && !operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
             NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
         } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>() && children.empty()) {
             NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have empty children set : " + operatorNode->toString());
         } else if (!(operatorNode->instanceOf<SourceLogicalOperatorNode>() || operatorNode->instanceOf<SinkLogicalOperatorNode>())
-                   && ((children.empty() || children.size() > 1))) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can't have empty or more than one children : "
-                                    + operatorNode->toString());
+                   && children.size() != 1) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can have oly one children : " + operatorNode->toString()
+                                    + " found : " + std::to_string(children.size()));
         }
-    } else if (operatorNode->isBinaryOperator() && (children.empty() || children.size() == 1)) {
+    } else if (operatorNode->isBinaryOperator() && children.size() != 2) {
         NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Binary operator can't have empty or only one children : "
                                 + operatorNode->toString());
     }
@@ -490,7 +490,7 @@ QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
 
     //Find the source name
     auto sources = childQuerySignature->getSources();
-    if (sources.empty() || sources.size() > 1) {
+    if (sources.size() != 1) {
         NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Watermark assigner operator can't have none or more than 1 source");
     }
     auto source = sources[0];
@@ -547,8 +547,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
 
     //Compute intermediate signature by performing CNFs of all child signatures
     std::vector<NodePtr> children = joinOperator->getChildren();
-    if (children.size() > 2) {
-        NES_THROW_RUNTIME_ERROR("Join operator can't have more than 2 child");
+    if (children.size() != 2) {
+        NES_THROW_RUNTIME_ERROR("Join operator can have only 2 child. Found " + std::to_string(children.size()));
     }
     auto intermediateQuerySignature = buildQuerySignatureForChildren(context, children);
 
@@ -568,7 +568,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     z3::ExprPtr leftKeyExpr;
     //Iterate over left source names and try to find the expression for left join key
     for (auto source : leftChild->getSignature()->getSources()) {
-
         if (attributeMap.find(leftKeyName) == attributeMap.end()) {
             NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Left join key " + leftKeyName
                                     + " does not exists in the attribute map.");
@@ -594,7 +593,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     z3::ExprPtr rightKeyExpr;
     //Iterate over right source names and try to find the expression for right join key
     for (auto source : rightChild->getSignature()->getSources()) {
-
         if (attributeMap.find(rightKeyName) == attributeMap.end()) {
             NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Right join key " + rightKeyName
                                     + " does not exists in the attribute map.");
@@ -613,9 +611,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
         }
     }
 
-    if (!leftKeyExpr || !rightKeyExpr) {
-        NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Unable to find right or left join key ");
-    }
+    NES_ASSERT(!leftKeyExpr || !rightKeyExpr, "Unexpected behaviour! Unable to find right or left join key ");
 
     //Compute the equi join condition
     auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
@@ -645,7 +641,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     if (windowType->isTumblingWindow()) {
         auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
         length = tumblingWindow->getSize().getTime() * multiplier;
-        slide = tumblingWindow->getSize().getTime() * multiplier;
+        slide = length;
     } else if (windowType->isSlidingWindow()) {
         auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
         length = slidingWindow->getSize().getTime() * multiplier;
