@@ -109,6 +109,11 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             auto op =  LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());
             op->setIsLeftOperator(false);
+            auto childs = op->getAndFlattenAllChildren(false);
+            for(auto& child : childs)
+            {
+                child->as<OperatorNode>()->setIsLeftOperator(false);
+            }
             rhsQueryPlan->appendOperatorAsNewRoot(op);
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(
@@ -116,6 +121,11 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
                                                              Milliseconds(0),
                                                              windowType->getTimeCharacteristic()->getTimeUnit()));
             op->setIsLeftOperator(false);
+            auto childs = op->getAndFlattenAllChildren(false);
+            for(auto& child : childs)
+            {
+                child->as<OperatorNode>()->setIsLeftOperator(false);
+            }
             rhsQueryPlan->appendOperatorAsNewRoot(op);
         }
     }
