@@ -48,8 +48,9 @@ void MemorySource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, No
     auto numOfBuffers = memoryAreaSize < bufferSize ? 1 : std::ceil(double(memoryAreaSize) / double(bufferSize));
     auto* pointer = memoryArea.get();
     auto remainingSize = memoryAreaSize;
-    NES_ASSERT2(bufferSize % recordSize == 0, "A record might span multiple buffers and this is not supported bufferSize="
-                    << bufferSize << " recordSize=" << recordSize);
+    NES_ASSERT2(bufferSize % recordSize == 0,
+                "A record might span multiple buffers and this is not supported bufferSize=" << bufferSize
+                                                                                             << " recordSize=" << recordSize);
     for (auto i = 0u; i < numOfBuffers; ++i) {
         auto buffer = bufferManager->getBufferBlocking();
         auto length = std::min<size_t>(bufferSize, remainingSize);

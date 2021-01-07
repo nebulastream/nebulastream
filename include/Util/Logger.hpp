@@ -207,11 +207,11 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
         }                                                                                                                        \
     } while (0)
 
-#define NES_ASSERT2(CONDITION, ...)                                                                                        \
+#define NES_ASSERT2(CONDITION, ...)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
             NES::collectAndPrintStacktrace();                                                                                    \
-            NES_FATAL_ERROR(__VA_ARGS__);                                                                                \
+            NES_FATAL_ERROR(__VA_ARGS__);                                                                                        \
             throw std::runtime_error("NES Runtime Error on condition " #CONDITION);                                              \
         }                                                                                                                        \
     } while (0)
