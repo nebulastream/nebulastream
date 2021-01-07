@@ -34,6 +34,11 @@ class DynamicMemoryLayout {
                         std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes);
 
     virtual DynamicMemoryLayoutPtr copy() const = 0;
+    /**
+     * Maps a memoryLayout (column or row) to a tupleBuffer
+     * @param tupleBuffer
+     * @return
+     */
     virtual std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) = 0;
 
 

@@ -34,10 +34,32 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
   public:
     uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
     DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayoutPtr dynamicColLayout, std::vector<COL_OFFSET_SIZE> columnOffsets);
+
+    /**
+     * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
+     * @tparam Types
+     * @param record
+     */
     template<typename... Types> std::tuple<Types...> readRecord(uint64_t recordIndex);
+
+    /**
+     * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
+     * @tparam Types
+     * @param record
+     */
     template<typename... Types> void pushRecord(std::tuple<Types...> record);
 
   private:
+    /**
+     * @brief This function writes a record/tuple in a column layout via a template recursion.
+     * @tparam I
+     * @tparam Tp
+     * @param t
+     * @param address
+     * @param ithRecord
+     * @param fieldSizes
+     * @return
+     */
     template<std::size_t I = 0, typename... Tp>
     inline typename std::enable_if<I == sizeof...(Tp), void>::type
     writeTupleToBufferColumnWise(std::tuple<Tp...>& t, unsigned char* address, uint64_t ithRecord, FieldSizesPtr fieldSizes) {
@@ -47,6 +69,16 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
         ((void)ithRecord);
     }
 
+    /**
+     * @brief This function writes a record/tuple in a column layout via a template recursion.
+     * @tparam I
+     * @tparam Tp
+     * @param t
+     * @param address
+     * @param ithRecord
+     * @param fieldSizes
+     * @return
+     */
     template<std::size_t I = 0, typename... Tp>
     inline typename std::enable_if<I < sizeof...(Tp), void>::type
     writeTupleToBufferColumnWise(std::tuple<Tp...>& t, unsigned char* address, uint64_t ithRecord, FieldSizesPtr fieldSizes) {
@@ -56,6 +88,16 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
         writeTupleToBufferColumnWise<I + 1, Tp...>(t, address, ithRecord, fieldSizes);
     }
 
+    /**
+     * @brief This function reads ithRecord record/tuple in a column layout via a template recursion.
+     * @tparam I
+     * @tparam Tp
+     * @param t
+     * @param address
+     * @param ithRecord
+     * @param fieldSizes
+     * @return ithRecord tuple/record
+     */
     template<std::size_t I = 0, typename... Tp>
     inline typename std::enable_if<I == sizeof...(Tp), void>::type
     readTupleFromBufferColumnWise(std::tuple<Tp...>& t, unsigned char* address, uint64_t ithRecord, FieldSizesPtr fieldSizes) {
@@ -65,6 +107,16 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
         ((void)ithRecord);
     }
 
+    /**
+     * @brief This function reads ithRecord record/tuple in a column layout via a template recursion.
+     * @tparam I
+     * @tparam Tp
+     * @param t
+     * @param address
+     * @param ithRecord
+     * @param fieldSizes
+     * @return ithRecord tuple/record
+     */
     template<std::size_t I = 0, typename... Tp>
     inline typename std::enable_if<I < sizeof...(Tp), void>::type
     readTupleFromBufferColumnWise(std::tuple<Tp...>& t, unsigned char* address, uint64_t ithRecord, FieldSizesPtr fieldSizes) {
