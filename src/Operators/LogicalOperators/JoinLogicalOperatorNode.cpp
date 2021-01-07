@@ -55,7 +55,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
         outputSchema = outputSchema->addField("left_" + field->name, field->getDataType());
     }
 
-    if (getChildren().size() == 2) {
+    if (getChildren().size() >= 2) {
         auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
 
         auto schema2 = child2->getOutputSchema();

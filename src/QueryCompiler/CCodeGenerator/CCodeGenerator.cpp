@@ -842,11 +842,11 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto tf = getTypeFactory();
 
     if (context->arity == PipelineContext::BinaryLeft) {
-        auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightStreamType());
-        context->code->structDeclaratonInputTuples.emplace_back(rightTypeStruct);
-    } else {
-        auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getLeftStreamType());
+        auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getLeftStreamType());
         context->code->structDeclaratonInputTuples.emplace_back(leftTypeStruct);
+    } else {
+        auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getRightStreamType());
+        context->code->structDeclaratonInputTuples.emplace_back(rightTypeStruct);
     }
 
     NES_ASSERT(joinDef, "invalid join definition");
@@ -896,18 +896,38 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     */
     // Read key value from record
     // int64_t key = windowTuples[recordIndex].key;
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()),
-                                                              joinDef->getLeftJoinKey()->getFieldName());
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key");
+    if (context->arity == PipelineContext::BinaryLeft) {
+        keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()),
+                                                                  joinDef->getLeftJoinKey()->getFieldName());
 
-    NES_ASSERT(context->code->structDeclaratonInputTuples.size() > 0, "invalid input tuple");
-    auto keyVariableAttributeDeclaration =
-        context->code->structDeclaratonInputTuples[0].getVariableDeclaration(joinDef->getLeftJoinKey()->getFieldName());
-    auto keyVariableAttributeStatement =
-        VarDeclStatement(keyVariableDeclaration)
-            .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                VarRef(keyVariableAttributeDeclaration)));
-    context->code->currentCodeInsertionPoint->addStatement(
-        std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
+        NES_ASSERT(context->code->structDeclaratonInputTuples.size() > 0, "invalid input tuple");
+        auto keyVariableAttributeDeclaration =
+            context->code->structDeclaratonInputTuples[0].getVariableDeclaration(joinDef->getLeftJoinKey()->getFieldName());
+        auto keyVariableAttributeStatement =
+            VarDeclStatement(keyVariableDeclaration)
+                .assign(
+                    VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                        VarRef(keyVariableAttributeDeclaration)));
+        context->code->currentCodeInsertionPoint->addStatement(
+            std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
+    }
+    else
+    {
+        keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getRightJoinKey()->getStamp()),
+                                                             joinDef->getRightJoinKey()->getFieldName());
+
+        NES_ASSERT(context->code->structDeclaratonInputTuples.size() > 0, "invalid input tuple");
+        auto keyVariableAttributeDeclaration =
+            context->code->structDeclaratonInputTuples[0].getVariableDeclaration(joinDef->getRightJoinKey()->getFieldName());
+        auto keyVariableAttributeStatement =
+            VarDeclStatement(keyVariableDeclaration)
+                .assign(
+                    VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                        VarRef(keyVariableAttributeDeclaration)));
+        context->code->currentCodeInsertionPoint->addStatement(
+            std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
+    }
 
     // get key handle for current key
     // auto key_value_handle = state_variable->get(key);

@@ -152,7 +152,8 @@ class JoinHandler : public AbstractJoinHandler {
      */
     void updateMaxTs(uint64_t ts, uint64_t originId, bool isLeftSide) override {
         std::unique_lock lock(mutex);
-        NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId);
+        std::string side = isLeftSide ? "leftSide" : "rightSide";
+        NES_DEBUG("JoinHandler: updateAllMaxTs with ts=" << ts << " originId=" << originId << " side=" << side);
         if (joinDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
             uint64_t beforeMin;
             uint64_t afterMin;

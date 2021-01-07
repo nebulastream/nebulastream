@@ -187,8 +187,6 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger Complete or combining window for slices="
                   << slicesLeft.size() << " windows=" << windows.size());
-        // allocate partial final aggregates for each window because we trigger each second, there could be multiple windows ready
-        auto partialFinalAggregates = std::vector<KeyType>(windows.size());
         std::vector<size_t> toDelete;
         for (size_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
             for (size_t windowId = 0; windowId < windows.size(); windowId++) {

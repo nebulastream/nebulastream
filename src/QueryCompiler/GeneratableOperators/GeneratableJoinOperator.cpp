@@ -22,8 +22,6 @@
 namespace NES {
 
 void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    NES_ASSERT(getChildren().size() == 2, "GeneratableJoinOperator does not have two children");
-
     auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDefinition, context->getResultSchema());
 
     auto newPipelineContext1 = PipelineContext::create();

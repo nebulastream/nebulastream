@@ -47,7 +47,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
          */
         NES_DEBUG("DistributeWindowRule::apply: found " << windowOps.size() << " window operators");
         for (auto& windowOp : windowOps) {
-            NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp << " << windowOp->toString()");
+            NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp->toString());
 
             if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
                 createCentralWindowOperator(windowOp);
