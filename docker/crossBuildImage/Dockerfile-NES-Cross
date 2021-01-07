@@ -49,12 +49,6 @@ RUN apt-get install --no-install-recommends -o APT::Immediate-Configure=false -q
   z3:arm64 && \
   apt-get clean -qq
 
-RUN git config --global advice.detachedHead false && \
-(git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost && \
-rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
-sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
-./b2 install -j2 toolset=gcc-arm64 --prefix=/usr/local/boost) || cd .. || rm -rf boost
-
 RUN mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
 mkdir -p /opt/toolchain && \
 cd /opt/sysroots/aarch64-linux-gnu/usr && \
@@ -63,6 +57,12 @@ cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/*gcc* . && \
 cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/*crt* . && \
 cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libsupc++.a . && \
 cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libstdc++*  . && cd
+
+RUN git config --global advice.detachedHead false && \
+(git clone --quiet --single-branch --recursive https://github.com/boostorg/boost && cd boost && \
+rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
+sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
+./b2 install -j2 toolset=gcc-arm64 --prefix=/opt/sysroots/aarch64-linux-gnu) || cd .. || rm -rf boost
 
 RUN git clone --branch llvmorg-10.0.0 --single-branch https://github.com/llvm/llvm-project && \
 mkdir -p llvm-project/build && cd llvm-project/build && \
@@ -84,7 +84,7 @@ cd grpc && git submodule update --init --recursive --jobs 1 && mkdir -p build &&
 cmake .. -DCMAKE_BUILD_TYPE=Release -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_SSL_PROVIDER=package && \
 make -j2 install && cd .. && rm -rf build && mkdir -p build && cd build && \
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
--DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install && \
+-DCMAKE_INSTALL_PREFIX=/opt/sysroots/aarch64-linux-gnu/ && \
 make -j2 install && cd ../.. && rm -rf grpc
 
 RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 10 && \
@@ -93,6 +93,8 @@ RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
     update-alternatives --set cc /usr/bin/clang && \
     update-alternatives --set c++ /usr/bin/clang++
+
+ENV PATH="/opt/toolchain/bin:${PATH}"
 
 RUN service ssh start && useradd -m nes && yes password | passwd nes
 EXPOSE 22
