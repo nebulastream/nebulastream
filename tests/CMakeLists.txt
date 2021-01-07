@@ -378,6 +378,11 @@ add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.c
 target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
 
+### MemorySourceIntegrationTest ###
+add_executable(memory-source-test "Integration/MemorySourceIntegrationTest.cpp")
+target_link_libraries(memory-source-test nes ${GTEST_LIBRARIES})
+add_test(NAME memory-source-test COMMAND memory-source-test)
+
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")
