@@ -64,20 +64,34 @@ bool BinaryOperatorNode::inferSchema() {
         NES_THROW_RUNTIME_ERROR("BinaryOperatorNode: this node should have at least one child operator");
     }
 
-    if(children.size() == 2)
+    if(children.size() >= 2)
     {
-        leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-        rightInputSchema = children[1]->as<OperatorNode>()->getOutputSchema();
+        //TODO: think about checking also if all left/right have the same schema
+        //find first left
+        for(auto& leftOp : children)
+        {
+            if(leftOp->as<OperatorNode>()->getIsLeftOperator())
+            {
+                leftInputSchema = leftOp->as<OperatorNode>()->getOutputSchema();
+            }
+        }
+
+        //find first right
+        for(auto& rightOp : children)
+        {
+            if(!rightOp->as<OperatorNode>()->getIsLeftOperator())
+            {
+                rightInputSchema = rightOp->as<OperatorNode>()->getOutputSchema();
+            }
+        }
+        NES_ASSERT(leftInputSchema, "no left input for join");
+        NES_ASSERT(rightInputSchema, "no left input for join");
     }
     else if(children.size() == 1)
     {
         //special case of self join
         leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
         rightInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-    }
-    else
-    {
-        NES_THROW_RUNTIME_ERROR("Join with more than two childs is not supported");
     }
 
     NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
