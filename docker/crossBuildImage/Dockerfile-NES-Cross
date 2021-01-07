@@ -97,5 +97,6 @@ RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 
 ENV PATH="/opt/toolchain/bin:${PATH}"
 
 RUN service ssh start && useradd -m nes && yes password | passwd nes
-EXPOSE 22
-CMD ["/usr/sbin/sshd", "-D"]
+
+ADD ./entrypoint-nes-cross.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
