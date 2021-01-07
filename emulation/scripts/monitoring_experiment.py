@@ -2,7 +2,6 @@ from lib.topology import Topology, LogLevel
 from lib.experiment import Experiment
 from lib.util import MonitoringType
 
-from mininet.cli import CLI
 from mininet.log import info, setLogLevel
 from time import sleep
 
@@ -12,9 +11,10 @@ setLogLevel('info')
 # ---------------------------------------------------------------------
 number_workers_producing = [5]
 number_workers_not_producing = [0]
-#MonitoringType.DISABLED, MonitoringType.NEMO_PULL, MonitoringType.PROMETHEUS
-monitoring_types = [MonitoringType.PROMETHEUS]
+# MonitoringType.DISABLED, MonitoringType.NEMO_PULL, MonitoringType.PROMETHEUS
+monitoring_types = [MonitoringType.NEMO_PULL]
 store_measurements = False
+run_experiment = False
 
 # topology parameters
 # ---------------------------------------------------------------------
@@ -22,8 +22,10 @@ num_tuples = 25
 num_buffers = 30
 
 nes_dir = "/home/xenofon/git/nebulastream/"
+log_dir = "/var/log/nes"
 influx_storage = "/home/xenofon/experiments/influx/"
-nes_log_level = LogLevel.NONE
+nes_log_level = LogLevel.INFO
+timeout = 60
 
 # experiment parameters
 # ---------------------------------------------------------------------
@@ -39,35 +41,25 @@ description = str(num_tuples) + "Tup-" + str(num_buffers) + "Buf"
 
 # experiment method definitions
 # ---------------------------------------------------------------------
-def execute_experiment(_nes_dir, _influx_storage, _nes_log_level, _number_workers_producing,
-                       _number_workers_not_producing, _num_tuples, _num_buffers, _monitoring_type, _influx_db,
-                       _influx_table, _iterations, _iterations_before_execution, _monitoring_frequency,
-                       _no_coordinators, _description, _version, _run_cli, _sleep_time, _store_measurements):
-    topology = Topology(_nes_dir, _influx_storage, _nes_log_level, _number_workers_producing,
-                        _number_workers_not_producing, _num_tuples, _num_buffers, _monitoring_type)
-    net = topology.create_topology()
+def setup_topology(_nes_dir, _log_dir, _influx_storage, _nes_log_level, _number_workers_producing, _number_workers_not_producing,
+                   _number_coordinators, _num_tuples, _num_buffers, _monitoring_type, _timeout):
+    info('*** Starting topology\n')
+    topo = Topology(_nes_dir, _log_dir, _influx_storage, _nes_log_level, _number_workers_producing, _number_workers_not_producing,
+                    _number_coordinators, _num_tuples, _num_buffers, _monitoring_type)
+    topo.create_topology()
+    topo.start_emulation()
+    #topo.wait_until_topology_is_complete(_timeout)
+    return topo
 
-    info('*** Starting network\n')
-    net.start()
 
-    info('*** Sleeping ' + str(_sleep_time) + '\n')
-    sleep(_sleep_time)
+def execute_experiment(_topology, _influx_db, _influx_table, _iterations, _iterations_before_execution,
+                       _monitoring_frequency, _description, _version, _run_cli, _sleep_time, _store_measurements):
+    info('*** Executing experiment with following parameters producers=' + str(worker_producing)
+         + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + monitoring.value + '\n')
 
-    info('*** Executing experiment with following parameters producers=' + str(
-        worker_producing) + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + monitoring.value + '\n')
-    experiment = Experiment(_number_workers_producing, _number_workers_not_producing, _influx_db, _influx_table,
-                            _iterations, _iterations_before_execution, _monitoring_frequency, _no_coordinators,
-                            _monitoring_type, _description, _version)
+    experiment = Experiment(_topology, _influx_db, _influx_table, _iterations, _iterations_before_execution,
+                            _monitoring_frequency, _description, _version)
     experiment.start(_store_measurements)
-
-    if _run_cli:
-        info('*** Running CLI\n')
-        CLI(net)
-    else:
-        sleep(_sleep_time)
-
-    info('*** Stopping network')
-    net.stop()
 
 
 # experiment the executable part
@@ -81,13 +73,21 @@ for worker_producing in number_workers_producing:
             info('*** Executing experiment with following parameters producers=' + str(worker_producing)
                  + '; non_producers=' + str(worker_not_producing) + '; monitoring_type=' + monitoring.value + '\n')
 
-            if i == len(number_workers_producing)*len(number_workers_not_producing)*len(monitoring_types)-1:
-                info('*** Experiment reached last iteration=' + str(i) + ". Activating CLI")
-                run_cli = True
+            topology = setup_topology(nes_dir, log_dir, influx_storage, nes_log_level, worker_producing,
+                                      worker_not_producing, no_coordinators, num_tuples, num_buffers,
+                                      monitoring, timeout)
 
-            execute_experiment(nes_dir, influx_storage, nes_log_level, worker_producing,
-                               worker_not_producing, num_tuples, num_buffers, monitoring, influx_db,
-                               influx_table, iterations, iterations_before_execution, monitoring_frequency,
-                               no_coordinators, description, version, run_cli, sleep_time, store_measurements)
+            if run_experiment:
+                execute_experiment(topology, influx_db, influx_table, iterations, iterations_before_execution,
+                                   monitoring_frequency, description, version, run_cli, sleep_time, store_measurements)
+
+            if i == len(number_workers_producing) * len(number_workers_not_producing) * len(monitoring_types) - 1:
+                info('*** Experiment reached last iteration=' + str(i) + ". Activating CLI")
+                topology.start_cli()
+            else:
+                sleep(sleep_time)
+
+            info('*** Stopping network')
+            topology.stop_emulation()
             sleep(sleep_time)
             i = i + 1
