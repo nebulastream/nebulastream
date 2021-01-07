@@ -173,7 +173,35 @@ cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   && make -j2 install && cd .. && rm -rf build && mkdir -p build && cd build \
   && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
   -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install \
-  && sudo make -j2 install && cd ../.. && sudo rm -rf grpc
+  && sudo make -j2 install && cd ../.. && sudo rm -rf grpc && \
+
+sudo cd /opt/sysroots/aarch64-linux-gnu/usr && \
+sudo cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && cd lib && \
+sudo cp -r -v -L /usr/include/z3* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/zmq* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/log4* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/libdwarf* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/dwarf* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/elfutils* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/cpprest* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/pplx* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/aarch64-linux-gnu/openssl* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/openssl* /opt/sysroots/aarch64-linux-gnu/include/ && \
+
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libz3* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libzmq* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/liblog4* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libdwarf* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libdw* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libebl* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/cmake/cpprestsdk* /opt/sysroots/aarch64-linux-gnu/lib/cmake/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcrypto* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libssl* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
+sudo sed -i -- 's|/lib/aarch64-linux-gnu/cmake/|/aarch64-linux-gnu/lib/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
+cd
 
 RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 10 && \
     update-alternatives --install /usr/bin/clang++ clang++ /opt/toolchain/bin/clang++ 10 && \
