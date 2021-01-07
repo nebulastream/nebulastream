@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
@@ -100,7 +101,7 @@ std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>>
 LogicalSourceExpansionRule::getLogicalGraphToDuplicate(OperatorNodePtr operatorNode) {
     NES_DEBUG("LogicalSourceExpansionRule: Get the logical graph to duplicate.");
     if (operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()
-        || operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+        || operatorNode->instanceOf<MergeLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         NES_TRACE("LogicalSourceExpansionRule: Found the first binary or sink operator.");
         return std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>>();
     }
