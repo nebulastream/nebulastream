@@ -57,9 +57,9 @@ class Topology:
         info('*** Adding controller\n')
         net.addController('c0')
 
-        topology_size = self.number_coordinators + self.number_workers_producing + self.number_workers_not_producing
-        date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_sub_dir = date_str + "_" + str(topology_size) + "_" + self.monitoring_type.value
+        topology_size = self.number_workers_producing + self.number_workers_not_producing
+        date_str = datetime.now().strftime("%Y%m%dT%H%M%S")
+        log_sub_dir = date_str + "_W" + str(topology_size) + "_" + self.monitoring_type.value
 
         if not self.nes_dir:
             raise RuntimeError("Please specify a nes directory like /git/nebulastream/")

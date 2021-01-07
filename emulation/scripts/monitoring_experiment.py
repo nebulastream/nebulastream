@@ -48,7 +48,7 @@ def setup_topology(_nes_dir, _log_dir, _influx_storage, _nes_log_level, _number_
                     _number_coordinators, _num_tuples, _num_buffers, _monitoring_type)
     topo.create_topology()
     topo.start_emulation()
-    #topo.wait_until_topology_is_complete(_timeout)
+    topo.wait_until_topology_is_complete(_timeout)
     return topo
 
 
