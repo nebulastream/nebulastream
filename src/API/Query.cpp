@@ -107,14 +107,23 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
     auto rhsQueryPlan = subQueryRhs->getQueryPlan();
     if (rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
-            rhsQueryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
+            auto op =  LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());
+            op->setIsLeftOperator(false);
+            rhsQueryPlan->appendOperatorAsNewRoot(op);
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            rhsQueryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
+            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(
                 EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name),
                                                              Milliseconds(0),
-                                                             windowType->getTimeCharacteristic()->getTimeUnit())));
+                                                             windowType->getTimeCharacteristic()->getTimeUnit()));
+            op->setIsLeftOperator(false);
+            rhsQueryPlan->appendOperatorAsNewRoot(op);
         }
+    }
+    else
+    {
+        auto op = rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
+        NES_ASSERT(op.size() == 1, "Only one watermark assigner is allowed per pipeline");
+        op[0]->setIsLeftOperator(false);
     }
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges

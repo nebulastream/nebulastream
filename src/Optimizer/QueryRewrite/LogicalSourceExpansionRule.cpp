@@ -35,7 +35,8 @@ LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(StreamCatalogPt
 
 QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("LogicalSourceExpansionRule: Apply Logical source expansion rule for the query.");
-    NES_DEBUG("LogicalSourceExpansionRule: Get all logical source operators in the query.");
+    NES_DEBUG("LogicalSourceExpansionRule: Get all logical source operators in the query for plan=" << queryPlan->toString());
+
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
     for (auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
@@ -93,7 +94,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             }
         }
     }
-    NES_INFO("LogicalSourceExpansionRule: Finished applying LogicalSourceExpansionRule.");
+    NES_INFO("LogicalSourceExpansionRule: Finished applying LogicalSourceExpansionRule plan=" << queryPlan->toString());
     return queryPlan;
 }
 
@@ -119,15 +120,14 @@ LogicalSourceExpansionRule::getLogicalGraphToDuplicate(OperatorNodePtr operatorN
         std::tie(duplicatedParentOperator, rootOperators) = getLogicalGraphToDuplicate(parent->as<OperatorNode>());
 
         if (duplicatedParentOperator) {
-
             NES_TRACE("LogicalSourceExpansionRule: Got a duplicated parent operator. Add the duplicate as parent to the copy of "
                       "input operator.");
             copyOfOperator->addParent(duplicatedParentOperator);
             NES_TRACE("LogicalSourceExpansionRule: Add the original head operators to the list of head operators for the input "
                       "operator");
+
             originalRootOperator.insert(rootOperators.begin(), rootOperators.end());
         } else {
-
             NES_TRACE("LogicalSourceExpansionRule: Parent operator was either n-ary or was of type sink.");
             NES_TRACE("LogicalSourceExpansionRule: Add the input operator as original head operator of the duplicated sub-graph");
             originalRootOperator.insert(operatorNode);

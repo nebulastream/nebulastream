@@ -57,6 +57,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
     if (getChildren().size() == 2) {
         auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
+
         auto schema2 = child2->getOutputSchema();
 
         // infer the data type of the key field.

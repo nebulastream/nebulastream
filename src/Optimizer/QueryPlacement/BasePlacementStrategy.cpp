@@ -133,7 +133,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
     for (const auto& sourceNode : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceNode->getSourceDescriptor();
         std::string logicalSourceName = sourceDescriptor->getStreamName();
-        NES_TRACE("BasePlacementStrategy: Get the topology node for logical source name " << logicalSourceName);
+        NES_DEBUG("BasePlacementStrategy: Get the topology node for logical source name " << logicalSourceName);
         std::vector<TopologyNodePtr> topologyNodes = mapOfSourceToTopologyNodes[logicalSourceName];
         if (topologyNodes.empty()) {
             NES_ERROR("BasePlacementStrategy: unable to find topology nodes for logical source " << logicalSourceName);
