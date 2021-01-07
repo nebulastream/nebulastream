@@ -17,4 +17,5 @@ add_source_nes(
         FilterPushDownRule.cpp
         LogicalSourceExpansionRule.cpp
         DistributedWindowRule.cpp
+        DistributedJoinRule.cpp
 )

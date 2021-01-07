@@ -76,5 +76,11 @@ void LogicalJoinDefinition::updateStreamTypes(SchemaPtr leftStreamType, SchemaPt
 void LogicalJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = outputSchema; }
 
 SchemaPtr LogicalJoinDefinition::getOutputSchema() const { return outputSchema; }
+void LogicalJoinDefinition::setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft) {
+    LogicalJoinDefinition::numberOfInputEdgesLeft = numberOfInputEdgesLeft;
+}
+void LogicalJoinDefinition::setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight) {
+    LogicalJoinDefinition::numberOfInputEdgesRight = numberOfInputEdgesRight;
+}
 
 };// namespace NES::Join

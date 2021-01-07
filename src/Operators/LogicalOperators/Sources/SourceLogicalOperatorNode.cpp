@@ -60,6 +60,7 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setSignature(signature);
+    copy->setIsLeftOperator(isLeftOperator);
     if (copy->instanceOf<SourceLogicalOperatorNode>()) {
         copy->as<SourceLogicalOperatorNode>()->setProjectSchema(projectSchema);
     }

@@ -38,6 +38,9 @@ typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
 class DistributeWindowRule;
 typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
 
+class DistributeJoinRule;
+typedef std::shared_ptr<DistributeJoinRule> DistributeJoinRulePtr;
+
 /**
  * @brief This phase is responsible for re-writing the query plan
  */
@@ -59,6 +62,7 @@ class QueryRewritePhase {
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     FilterPushDownRulePtr filterPushDownRule;
     DistributeWindowRulePtr distributeWindowRule;
+    DistributeJoinRulePtr  distributeJoinRule;
 };
 }// namespace NES
 #endif//NES_QUERYREWRITEPHASE_HPP

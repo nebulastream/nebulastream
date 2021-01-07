@@ -114,6 +114,8 @@ class LogicalJoinDefinition {
      */
     SchemaPtr getOutputSchema() const;
 
+    void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
+    void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
   private:
     FieldAccessExpressionNodePtr leftJoinKeyType;
     FieldAccessExpressionNodePtr rightJoinKeyType;
@@ -126,6 +128,7 @@ class LogicalJoinDefinition {
     Windowing::DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
+
 };
 
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
