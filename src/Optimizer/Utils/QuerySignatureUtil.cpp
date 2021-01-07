@@ -121,7 +121,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         return createQuerySignatureForWindow(context, windowOperator);
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
-
+        NES_ASSERT(children.size() == 1 && children[0], "Project operator should only have one non null children.");
         auto childQuerySignature = children[0]->as<LogicalOperatorNode>()->getSignature();
         auto sources = childQuerySignature->getSources();
 
@@ -244,7 +244,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
                                                                     WindowLogicalOperatorNodePtr windowOperator) {
 
     //Fetch query signature of the child operator
-    auto child = windowOperator->getChildren()[0];
+    std::vector<NodePtr> children = windowOperator->getChildren();
+    NES_ASSERT(children.size() == 1 && children[0], "Map operator should only have one non null children.");
+    auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getSignature();
 
     NES_DEBUG("QuerySignatureUtil: compute signature for window operator");
@@ -291,7 +293,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
         length = slidingWindow->getSize().getTime() * multiplier;
         slide = slidingWindow->getSlide().getTime() * multiplier;
     } else {
-        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Type");
+        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
     }
     auto windowTimeSizeVar = context->int_const("window-time-size");
     z3::expr windowTimeSizeVal = context->int_val(length);
@@ -388,7 +390,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr context, MapLogicalOperatorNodePtr mapOperator) {
 
     //Fetch query signature of the child operator
-    auto child = mapOperator->getChildren()[0];
+    std::vector<NodePtr> children = mapOperator->getChildren();
+    NES_ASSERT(children.size() == 1 && children[0], "Map operator should only have one non null children.");
+    auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getSignature();
 
     auto exprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context);
@@ -448,7 +452,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
                                                                     FilterLogicalOperatorNodePtr filterOperator) {
 
     //Fetch query signature of the child operator
-    auto child = filterOperator->getChildren()[0];
+    std::vector<NodePtr> children = filterOperator->getChildren();
+    NES_ASSERT(children.size() == 1 && children[0], "Map operator should only have one non null children.");
+    auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getSignature();
 
     auto filterExprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(filterOperator->getPredicate(), context);
@@ -483,18 +489,18 @@ QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
                                                      WatermarkAssignerLogicalOperatorNodePtr& watermarkOperator) {
 
     //Fetch query signature of the child operator
-    auto child = watermarkOperator->getChildren()[0];
+    std::vector<NodePtr> children = watermarkOperator->getChildren();
+    NES_ASSERT(children.size() == 1 && children[0], "Map operator should only have one non null children.");
+    auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getSignature();
 
     auto conditions = childQuerySignature->getConditions();
 
     //Find the source name
     auto sources = childQuerySignature->getSources();
-    if (sources.size() != 1) {
-        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Watermark assigner operator can't have none or more than 1 source");
-    }
+    NES_ASSERT(sources.size() == 1 && !sources[0].empty(),
+               "QuerySignatureUtil: Watermark assigner operator can have only 1 non empty source");
     auto source = sources[0];
-
     auto watermarkDescriptor = watermarkOperator->getWatermarkStrategyDescriptor();
 
     //Compute conditions based on watermark descriptor
@@ -548,7 +554,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     //Compute intermediate signature by performing CNFs of all child signatures
     std::vector<NodePtr> children = joinOperator->getChildren();
     if (children.size() != 2) {
-        NES_THROW_RUNTIME_ERROR("Join operator can have only 2 child. Found " + std::to_string(children.size()));
+        NES_THROW_RUNTIME_ERROR("Join operator can have only 2 children. Found " + std::to_string(children.size()));
     }
     auto intermediateQuerySignature = buildQuerySignatureForChildren(context, children);
 
@@ -611,7 +617,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
         }
     }
 
-    NES_ASSERT(!leftKeyExpr || !rightKeyExpr, "Unexpected behaviour! Unable to find right or left join key ");
+    NES_ASSERT(leftKeyExpr && rightKeyExpr, "Unexpected behaviour! Unable to find right or left join key ");
 
     //Compute the equi join condition
     auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
@@ -624,12 +630,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     auto windowType = joinDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
     z3::expr windowTimeKeyVal(*context);
-    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+    Windowing::TimeCharacteristic::Type type = timeCharacteristic->getType();
+    if (type == Windowing::TimeCharacteristic::EventTime) {
         windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
-    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    } else if (type == Windowing::TimeCharacteristic::IngestionTime) {
         windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
     } else {
-        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
+        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
     }
     auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
     auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));

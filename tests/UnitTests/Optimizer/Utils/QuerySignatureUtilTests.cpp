@@ -44,10 +44,14 @@ class QuerySignatureUtilTests : public testing::Test {
   public:
     SchemaPtr schema;
 
-    /* Will be called before a test is executed. */
-    void SetUp() {
+    /* Will be called before all tests in this class are started. */
+    static void SetUpTestCase() {
         NES::setupLogging("QuerySignatureUtilTests.log", NES::LOG_DEBUG);
         NES_INFO("Setup QuerySignatureUtilTests test case.");
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() {
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 
