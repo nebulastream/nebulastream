@@ -34,7 +34,7 @@ sed -i -E -- 's|http://.*security\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ub
 dpkg --add-architecture arm64 && \
 apt-get update
 
-RUN apt-get install --no-install-recommends -qq \
+RUN apt-get install --no-install-recommends -o APT::Immediate-Configure=false -qq \
   libpython3-dev:arm64 \
   libncurses5-dev:arm64 \
   libxml2-dev:arm64 \
