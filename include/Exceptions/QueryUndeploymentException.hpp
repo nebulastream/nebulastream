@@ -17,6 +17,7 @@
 #ifndef NES_QUERYUNDEPLOYMENTEXCEPTION_HPP
 #define NES_QUERYUNDEPLOYMENTEXCEPTION_HPP
 
+#include <string>
 #include <stdexcept>
 
 namespace NES {

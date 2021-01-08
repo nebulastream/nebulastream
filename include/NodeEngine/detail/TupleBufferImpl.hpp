@@ -184,10 +184,6 @@ class MemorySegment {
 
     MemorySegment& operator=(const MemorySegment& other);
 
-    MemorySegment(MemorySegment&& other) = delete;
-
-    MemorySegment& operator=(MemorySegment&& other) = delete;
-
     MemorySegment();
 
     explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)>&& recycleFunction);

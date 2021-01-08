@@ -17,9 +17,10 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
-#include <string.h>
+#include <string>
 
 namespace NES {
 

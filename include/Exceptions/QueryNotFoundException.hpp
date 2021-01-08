@@ -17,6 +17,7 @@
 #ifndef NES_QUERYNOTFOUNDEXCEPTION_HPP
 #define NES_QUERYNOTFOUNDEXCEPTION_HPP
 
+#include <string>
 #include <stdexcept>
 
 namespace NES {
