@@ -182,6 +182,11 @@ class DataSource : public NodeEngine::Reconfigurable {
     std::mutex startStopMutex;
     std::atomic_bool running;
     std::shared_ptr<std::thread> thread;
+    bool isLeftSide;
+
+  public:
+    bool getIsLeftSide() const;
+    void setIsLeftSide(bool isLeftSide);
 };
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;

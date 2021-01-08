@@ -31,5 +31,7 @@ std::string SourceDescriptor::getStreamName() { return streamName; }
 bool SourceDescriptor::hasStreamName() { return !streamName.empty(); }
 
 void SourceDescriptor::setSchema(SchemaPtr schema) { this->schema = schema; }
+bool SourceDescriptor::getIsLeftOperator() const { return isLeftOperator; }
+void SourceDescriptor::setIsLeftOperator(bool isLeftOperator) { SourceDescriptor::isLeftOperator = isLeftOperator; }
 
 }// namespace NES
