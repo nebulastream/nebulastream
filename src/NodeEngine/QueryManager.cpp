@@ -141,12 +141,21 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             queryMapToOperatorId[qep->getQueryId()].push_back(source->getOperatorId());
             if (isBinaryOperator) {
                 NES_ASSERT(qep->getPipelines().size() >= 2, "Binary operator must have at least two pipelines");
-                if (queryMapToOperatorId[qep->getQueryId()].size() == 1) {
-                    NES_DEBUG("QueryManager: mm.size() == 1 " << qep << " to Source" << source->getOperatorId());
+                if(source->getIsLeftSide())
+                {
                     operatorIdToPipelineStage[source->getOperatorId()] = 0;
-                } else {
+                }
+                else
+                {
                     operatorIdToPipelineStage[source->getOperatorId()] = 1;
                 }
+//                if (queryMapToOperatorId[qep->getQueryId()].size() == 1) {
+//                    NES_DEBUG("QueryManager: mm.size() == 1 " << qep << " to Source" << source->getOperatorId());
+//                    operatorIdToPipelineStage[source->getOperatorId()] = 0;
+//
+//                } else {
+//                    operatorIdToPipelineStage[source->getOperatorId()] = 1;
+//                }
             }
             NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << source->getOperatorId());
         }

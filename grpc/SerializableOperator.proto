@@ -117,6 +117,7 @@ message SerializableOperator{
     }
 
     google.protobuf.Any sourceDescriptor = 1;
+    bool isLeftSide = 2;
   }
 
   /**

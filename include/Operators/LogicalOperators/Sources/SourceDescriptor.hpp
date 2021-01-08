@@ -117,6 +117,11 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
   protected:
     SchemaPtr schema;
     std::string streamName;
+    bool isLeftOperator;
+
+  public:
+    bool getIsLeftOperator() const;
+    void setIsLeftOperator(bool isLeftOperator);
 };
 
 }// namespace NES
