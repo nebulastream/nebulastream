@@ -6,8 +6,8 @@
 #define NES_CONFIGOPTION_HPP
 
 #include <any>
-#include <typeinfo>
 #include <string>
+#include <typeinfo>
 
 namespace NES {
 
@@ -19,11 +19,10 @@ enum class ConfigType {
     YAML,   //obtained from the yaml config file
     CONSOLE //obtained from the console
 };
-
-template<typename _Tp>
+template<typename Tp>
 class ConfigOption {
   public:
-    ConfigOption(std::string key, _Tp value, std::string description, std::string dataType, ConfigType usedConfiguration,
+    ConfigOption(std::string key, Tp value, std::string description, std::string dataType, ConfigType usedConfiguration,
                  bool isList);
     ~ConfigOption();
 
@@ -33,9 +32,14 @@ class ConfigOption {
     std::string toString();
 
     /**
+     * @brief converts the ConfigType enum into a string
+     */
+    std::string configTypeToString(ConfigType configType);
+
+    /**
      * @brief a method to make an object comparable
      */
-     bool equals(std::any o);
+    bool equals(std::any o);
 
     /**
       * @brief get the name of the ConfigOption Object
@@ -45,12 +49,17 @@ class ConfigOption {
     /**
       * @brief get the value of the ConfigOption Object
       */
-    _Tp getValue();
+    Tp getValue();
+
+    /**
+     * @brief get the data type of value
+     */
+    std::string getDataType();
 
     /**
       * @brief obtain the enum value describing where the current value was obtained from (DEFAULT, YAML, CONSOLE)
       */
-    ConfigType getConfigType();
+    ConfigType getUsedConfiguration();
 
     /**
        * @brief returns false if the value is just a value, and true if value consists of multiple values
@@ -66,17 +75,15 @@ class ConfigOption {
      * @brief set the value of the ConfigOption Object as well as the values associated with it,
      * i.e. dataType, usedConfiguration, isList
      */
-    void setValue(_Tp value, std::string dataType, ConfigType usedConfiguration, bool isList);
+    void setValue(Tp value, std::string dataType, ConfigType usedConfiguration, bool isList);
 
   private:
-    ConfigOption();
-
     std::string key;
     std::string description;
-    _Tp value;
+    Tp value;
     std::string dataType;
     ConfigType usedConfiguration;
-    bool isList;
+    bool isList{};
 };
 
 }// namespace NES
