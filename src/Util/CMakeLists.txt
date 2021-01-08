@@ -18,6 +18,5 @@ add_source_nes(
         TimeMeasurement.cpp
         StacktraceLoader.cpp
         ThreadNaming.cpp
-        TestHarness.cpp
 )
 
