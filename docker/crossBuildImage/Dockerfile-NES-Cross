@@ -8,7 +8,6 @@ apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install --no-inst
       ca-certificates \
       crossbuild-essential-arm64 \
       libstdc++6-arm64-cross \
-      g++-multilib \
       cmake \
       git \
       python3-dev \

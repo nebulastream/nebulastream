@@ -17,6 +17,7 @@
 #ifndef NES_Z3EXPRANDFIELDMAP_HPP
 #define NES_Z3EXPRANDFIELDMAP_HPP
 
+#include <string>
 #include <map>
 #include <memory>
 
