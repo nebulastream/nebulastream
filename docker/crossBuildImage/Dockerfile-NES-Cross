@@ -35,6 +35,8 @@ dpkg --add-architecture arm64 && \
 apt-get update
 
 RUN apt-get install --no-install-recommends -o APT::Immediate-Configure=false -qq \
+  libc++-dev:arm64 \
+  libstdc++-9-dev:arm64 \
   libpython3-dev:arm64 \
   libncurses5-dev:arm64 \
   libxml2-dev:arm64 \
@@ -46,7 +48,8 @@ RUN apt-get install --no-install-recommends -o APT::Immediate-Configure=false -q
   libssl-dev:arm64 \
   libeigen3-dev:arm64 \
   libzmqpp-dev:arm64 \
-  z3:arm64 && \
+  z3:arm64 \
+  libz3-dev:arm64 && \
   apt-get clean -qq
 
 RUN mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
@@ -89,11 +92,6 @@ make -j2 install && cd ../.. && rm -rf grpc
 
 RUN cd /opt/sysroots/aarch64-linux-gnu/usr && \
 cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && cd lib && \
-cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/*gcc* . && \
-cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/*crt* . && \
-cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libsupc++.a . && \
-cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libstdc++*  . && \
-cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/9/libstdc++*  . && \
 cp -r -v -L /usr/include/z3* /opt/sysroots/aarch64-linux-gnu/include/ && \
 cp -r -v -L /usr/include/zmq* /opt/sysroots/aarch64-linux-gnu/include/ && \
 cp -r -v -L /usr/include/log4* /opt/sysroots/aarch64-linux-gnu/include/ && \
@@ -104,6 +102,11 @@ cp -r -v -L /usr/include/cpprest* /opt/sysroots/aarch64-linux-gnu/include/ && \
 cp -r -v -L /usr/include/pplx* /opt/sysroots/aarch64-linux-gnu/include/ && \
 cp -r -v -L /usr/include/aarch64-linux-gnu/openssl* /opt/sysroots/aarch64-linux-gnu/include/ && \
 cp -r -v -L /usr/include/openssl* /opt/sysroots/aarch64-linux-gnu/include/ && \
+cp -r -v -L /usr/include/aarch64-linux-gnu/c++/9* /opt/sysroots/aarch64-linux-gnu/include/ && \
+cp -r -v -L /usr/include/c++/9* /opt/sysroots/aarch64-linux-gnu/include/ && \
+cp -r -v -L /usr/include/gelf* /opt/sysroots/aarch64-linux-gnu/include/ && \
+cp -r -v -L cp -r -v -L /usr/include/libelf* /opt/sysroots/aarch64-linux-gnu/include/ && \
+cp -r -v -L /usr/include/nlist* /opt/sysroots/aarch64-linux-gnu/include/ && \
 
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libz3* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libzmq* /opt/sysroots/aarch64-linux-gnu/lib/ && \
@@ -116,8 +119,12 @@ cp -r -v -L /usr/lib/aarch64-linux-gnu/cmake/cpprestsdk* /opt/sysroots/aarch64-l
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libcrypto* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libssl* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+cp -r -v -L /usr/lib/llvm-10* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+cp -r -v -L /usr/lib/gcc/aarch64-linux-gnu/9* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/libelf* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
-sed -i -- 's|/lib/aarch64-linux-gnu/cmake/|/aarch64-linux-gnu/lib/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake
+sed -i -- 's|/lib/aarch64-linux-gnu/|/aarch64-linux-gnu/lib/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
+sed -i -- 's|/include/|/aarch64-linux-gnu/include/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake
 
 RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 10 && \
     update-alternatives --install /usr/bin/clang++ clang++ /opt/toolchain/bin/clang++ 10 && \

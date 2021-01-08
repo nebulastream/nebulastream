@@ -62,7 +62,8 @@ sudo apt-get install -qq --no-install-recommends \
   libssl-dev:arm64 \
   libeigen3-dev:arm64 \
   libzmqpp-dev:arm64 \
-  z3:arm64 && \
+  z3:arm64 \
+  libz3-dev:arm64 && \
   sudo apt-get clean -qq && \
 
 # git checkout later produces non-empty output
@@ -200,7 +201,8 @@ sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcrypto* /opt/sysroots/aarch64-lin
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libssl* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
-sudo sed -i -- 's|/lib/aarch64-linux-gnu/cmake/|/aarch64-linux-gnu/lib/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
+sudo sed -i -- 's|/lib/aarch64-linux-gnu/|/aarch64-linux-gnu/lib/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
+sudo sed -i -- 's|/include/|/aarch64-linux-gnu/include/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
 cd
 
 RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 10 && \
