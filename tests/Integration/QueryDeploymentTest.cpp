@@ -24,7 +24,6 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Util/TestHarness.hpp>
 #include <iostream>
 
 using namespace std;
@@ -1347,58 +1346,4 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
-
-/*
- * Test query deployment using test harness
- */
-TEST_F(QueryDeploymentTest, testUsingTestHarness) {
-    struct Car {
-        uint32_t key;
-        uint32_t value;
-        uint64_t timestamp;
-    };
-
-    struct Truck {
-        uint32_t key;
-        uint32_t value;
-        uint64_t timestamp;
-    };
-
-    auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
-    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
-
-    auto truckSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
-    ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
-
-    std::string filterOperator = ".filter(Attribute(\"key\") < 1000)";
-    TestHarness testHarness = TestHarness(filterOperator);
-
-    // TODO: Add test with different logical sources
-    testHarness.addSource("car", carSchema, "car1");
-    testHarness.addSource("car", carSchema, "car2");
-
-    testHarness.pushElement<Car>({40,40,40},0);
-    testHarness.pushElement<Car>({30,30,30},0);
-    testHarness.pushElement<Car>({71,71,71},1);
-    testHarness.pushElement<Car>({21,21,21},1);
-
-    std::string output = testHarness.getOutput(1);
-
-    // TODO: make this deterministic
-    std::string expectedContent = "key:INTEGER,value:INTEGER,timestamp:INTEGER\n"
-                                  "40,40,40\n"
-                                  "30,30,30\n"
-                                  "71,71,71\n"
-                                  "21,21,21\n";
-
-    ASSERT_EQ(expectedContent, output);
-}
-}
-
-// namespace NES
+}// namespace NES

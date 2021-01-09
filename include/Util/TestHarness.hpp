@@ -20,6 +20,7 @@
 #include <Operators/OperatorNode.hpp>
 #include <Util/TestUtils.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
+#include <Services/QueryService.hpp>
 /**
  * @brief This test harness wrap query deployment test in our test framework.
  */
@@ -43,6 +44,8 @@ class TestHarness {
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     };
 
+    ~TestHarness(){};
+
     /*
          * @brief push a single element/tuple to specific source
          * @param element element of Record to push
@@ -53,6 +56,11 @@ class TestHarness {
         if (sourceIdx >= sourceSchemas.size()) {
             NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
         }
+
+        if (sizeof(T) != sourceSchemas.at(sourceIdx)->getSchemaSizeInBytes()){
+            NES_THROW_RUNTIME_ERROR("TestHarness: tuple size and schema size does not match");
+        }
+
         auto* memArea = reinterpret_cast<uint8_t*>(malloc(sizeof(T)));
         memcpy(memArea, reinterpret_cast<uint8_t*>(&element), sizeof(T));
         records[sourceIdx].push_back(memArea);
@@ -68,8 +76,10 @@ class TestHarness {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
-        // TODO: Maybe we need a check because the same logicalStreamName might have been added
-        crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);;
+        if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)){
+            crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
+        }
+
 
         workerCount++;
         auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress,
@@ -84,6 +94,10 @@ class TestHarness {
 
         std::vector<uint8_t*> currentSourceRecords;
         records.push_back(currentSourceRecords);
+    }
+
+    uint64_t getWorkerCount() {
+        return workerPtrs.size();
     }
 
     /*
@@ -122,7 +136,7 @@ class TestHarness {
 
         //register query
         // TODO: maybe move this Query::from to test driver, as tester may want to use more than 1 source
-        std::string queryString = R"(Query::from("car"))" + operatorToTest + R"(.sink(FileSinkDescriptor::create(")" + filePath
+        std::string queryString = operatorToTest + R"(.sink(FileSinkDescriptor::create(")" + filePath
             + R"(" , "CSV_FORMAT", "APPEND"));)";
         QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
 

@@ -388,6 +388,11 @@ add_executable(memory-source-test "Integration/MemorySourceIntegrationTest.cpp")
 target_link_libraries(memory-source-test nes ${GTEST_LIBRARIES})
 add_test(NAME memory-source-test COMMAND memory-source-test)
 
+### TestHarnessUtilTest ###
+add_executable(test-harness-util-test "Integration/TestHarnessUtilTest.cpp")
+target_link_libraries(test-harness-util-test nes ${GTEST_LIBRARIES})
+add_test(NAME test-harness-util-test COMMAND test-harness-util-test)
+
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")
