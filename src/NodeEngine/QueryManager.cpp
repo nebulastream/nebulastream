@@ -115,6 +115,20 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
+//    NES_DEBUG("pipes=");
+//    for(auto& p : qep->getPipelines())
+//    {
+//        NES_DEBUG("id=" << p->getPipeStageId());
+//        if(p->getNextPipeline())
+//        {
+//            NES_DEBUG(" nextId=" << p->getNextPipeline()->getPipeStageId());
+//        }
+//        else
+//        {
+//            NES_DEBUG("no next");
+//        }
+//    }
+
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
@@ -143,22 +157,22 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                 NES_ASSERT(qep->getPipelines().size() >= 2, "Binary operator must have at least two pipelines");
                 if(source->getIsLeftSide())
                 {
-                    operatorIdToPipelineStage[source->getOperatorId()] = 0;
+                    NES_DEBUG("QueryManager: isleftSide" << qep << " to Source" << source->getOperatorId());
+                    operatorIdToPipelineStage[source->getOperatorId()] = 1;
                 }
                 else
                 {
-                    operatorIdToPipelineStage[source->getOperatorId()] = 1;
+                    NES_DEBUG("QueryManager: isrightSide" << qep << " to Source" << source->getOperatorId());
+                    operatorIdToPipelineStage[source->getOperatorId()] = 0;
                 }
-//                if (queryMapToOperatorId[qep->getQueryId()].size() == 1) {
-//                    NES_DEBUG("QueryManager: mm.size() == 1 " << qep << " to Source" << source->getOperatorId());
-//                    operatorIdToPipelineStage[source->getOperatorId()] = 0;
-//
-//                } else {
-//                    operatorIdToPipelineStage[source->getOperatorId()] = 1;
-//                }
             }
             NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << source->getOperatorId());
         }
+    }
+    NES_DEBUG("operatorIdToPipelineStage mapping:");
+    for(auto& a : operatorIdToPipelineStage)
+    {
+        NES_DEBUG("first=" << a.first << " second=" << a.second);
     }
 
     return true;
@@ -204,6 +218,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
+        NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
         taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
 
         NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId

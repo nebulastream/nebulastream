@@ -256,6 +256,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                                       "operator.");
                             OperatorNodePtr networkSink =
                                 createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
+                            networkSink->setIsLeftOperator(operatorNode->getIsLeftOperator());
                             targetUpStreamOperator->addParent(networkSink);
                             querySubPlan->removeAsRootOperator(targetUpStreamOperator);
                             querySubPlan->addRootOperator(networkSink);
@@ -273,6 +274,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                     NES_TRACE("BasePlacementStrategy: Find the query plan with parent operator.");
                     std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
                     OperatorNodePtr sourceOperator = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);
+                    sourceOperator->setIsLeftOperator(operatorNode->getIsLeftOperator());
                     bool found = false;
                     for (auto& querySubPlan : querySubPlans) {
                         OperatorNodePtr targetDownstreamOperator = querySubPlan->getOperatorWithId(parentOperator->getId());
@@ -300,11 +302,13 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
 
                     NES_TRACE("BasePlacementStrategy: add network source operator");
                     const OperatorNodePtr networkSource = createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId);
+                    networkSource->setIsLeftOperator(operatorNode->getIsLeftOperator());
                     querySubPlan->appendOperatorAsNewRoot(networkSource);
 
                     NES_TRACE("BasePlacementStrategy: add network sink operator");
                     sourceOperatorId = UtilityFunctions::getNextOperatorId();
                     OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
+                    networkSink->setIsLeftOperator(operatorNode->getIsLeftOperator());
                     querySubPlan->appendOperatorAsNewRoot(networkSink);
 
                     NES_TRACE("BasePlacementStrategy: add query plan to execution node and update the global execution plan");

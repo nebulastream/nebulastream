@@ -936,6 +936,7 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr s
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
+    sourceDetails->set_isleftside(sourceDescriptor->getIsLeftOperator());
     return sourceDetails;
 }
 
