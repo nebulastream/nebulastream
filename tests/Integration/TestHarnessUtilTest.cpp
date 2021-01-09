@@ -173,8 +173,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
         uint64_t timestamp;
     };
 
-    std::string filterOperator = ".filter(Attribute(\"key\") < 1000)";
-    TestHarness testHarness = TestHarness(filterOperator);
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0);
 
@@ -191,8 +191,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
         uint64_t timestamp;
     };
 
-    std::string filterOperator = ".filter(Attribute(\"key\") < 1000)";
-    TestHarness testHarness = TestHarness(filterOperator);
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0);
     EXPECT_THROW(testHarness.pushElement<Car>({30,30,30},0), std::runtime_error);
@@ -226,9 +226,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
         ->addField("value", DataTypeFactory::createUInt32())
         ->addField("timestamp", DataTypeFactory::createUInt64());
 
-    // TODO: allow to define query::from from here
-    std::string filterOperator = ".filter(Attribute(\"key\") < 1000)";
-    TestHarness testHarness = TestHarness(filterOperator);
+    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
     testHarness.addSource("car", carSchema, "car1");
     testHarness.addSource("truck", truckSchema, "truck1");
