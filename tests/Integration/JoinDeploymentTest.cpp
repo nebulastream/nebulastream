@@ -608,11 +608,17 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
 
     string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_win1:INTEGER,left_id1:INTEGER,left_timestamp:INTEGER,"
                              "right_win2:INTEGER,right_id2:INTEGER,right_timestamp:INTEGER\n"
-                             "2000,3000,1,2,1,2010,2,1,2000\n"
-                             "1000,2000,4,3,4,1102,1,4,1002\n"
-                             "1000,2000,4,3,4,1112,1,4,1002\n"
-                             "2000,3000,11,2,11,2301,2,11,2001\n"
-                             "1000,2000,12,5,12,1011,1,12,1001\n";
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n";
+
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");

@@ -123,9 +123,11 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
             op->setIsLeftOperator(false);
             rhsQueryPlan->appendOperatorAsNewRoot(op);
             auto childs = op->getAndFlattenAllChildren(false);
+            NES_DEBUG("set false for op id=" << op->getId());
             for(auto& child : childs)
             {
                 child->as<OperatorNode>()->setIsLeftOperator(false);
+                NES_DEBUG("set false child for op id=" << child->as<OperatorNode>()->getId());
             }
         }
     }
@@ -134,6 +136,11 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
         auto op = rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
         NES_ASSERT(op.size() == 1, "Only one watermark assigner is allowed per pipeline");
         op[0]->setIsLeftOperator(false);
+        auto childs = op[0]->getAndFlattenAllChildren(false);
+        for(auto& child : childs)
+        {
+            child->as<OperatorNode>()->setIsLeftOperator(false);
+        }
     }
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges

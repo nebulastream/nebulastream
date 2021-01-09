@@ -19,10 +19,10 @@
 #include <utility>
 namespace NES {
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema) : schema(std::move(schema)), streamName() {}
+SourceDescriptor::SourceDescriptor(SchemaPtr schema) : schema(std::move(schema)), streamName(), isLeftOperator(true) {}
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string streamName)
-    : schema(std::move(schema)), streamName(std::move(streamName)) {}
+    : schema(std::move(schema)), streamName(std::move(streamName)), isLeftOperator(true) {}
 
 SchemaPtr SourceDescriptor::getSchema() { return schema; }
 

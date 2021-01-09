@@ -166,14 +166,13 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         for (const auto& sources : sourceOperators) {
             auto operatorId = sources->getId();
             auto sourceDescriptor = sources->getSourceDescriptor();
-            sourceDescriptor->setIsLeftOperator(sources->getIsLeftOperator());
             //perform the operation only for Logical stream source descriptor
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
                 sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
             }
             auto legacySource =
                 ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, shared_from_this());
-            legacySource->setIsLeftSide(sources->getIsLeftOperator());
+            legacySource->setIsLeftSide(sourceDescriptor->getIsLeftOperator());
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }
