@@ -18,6 +18,7 @@ class YAMLConfig {
     YAMLConfig(std::map<std::string, _Tp> configurations);
 
     std::map<std::string, _Tp> loadConfig(std::string filePath);
+    void setConfigurations(const std::map<std::string, _Tp>& configurations);
 
   private:
     std::map<std::string, _Tp> configurations;

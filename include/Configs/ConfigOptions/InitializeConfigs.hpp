@@ -28,7 +28,8 @@ class InitializeConfigurations {
      * @param configurations from a YAML file saved in a HashMap
      * @return return a configuration object
      */
-    std::any initializeConfigurations(std::map<std::string, _Tp> configurations);
+    template<typename Tp>
+    std::any initializeConfigurations(std::map<std::string, Tp> configurations);
 
     /**
      * overwrite default or YAML file values with command line input
