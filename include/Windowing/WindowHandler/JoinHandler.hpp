@@ -49,6 +49,7 @@ class JoinHandler : public AbstractJoinHandler {
     static AbstractJoinHandlerPtr
     create(Join::LogicalJoinDefinitionPtr joinDefinition, Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
            BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction) {
+        NES_DEBUG("JoinHandler: create join handler ");
         return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction);
     }
 

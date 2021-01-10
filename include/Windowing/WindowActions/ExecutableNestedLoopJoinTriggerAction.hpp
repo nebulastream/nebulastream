@@ -166,8 +166,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto slicesLeft = leftStore->getSliceMetadata();
         NES_DEBUG("content left side for key=" << key);
         size_t id = 0;
-        for(auto& left : slicesLeft)
-        {
+        for (auto& left : slicesLeft) {
             NES_DEBUG("left start=" << left.getStartTs() << " left end=" << left.getEndTs() << " id=" << id++);
         }
 
@@ -183,8 +182,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto listRight = rightStore->getAppendList();
         NES_DEBUG("content right side for key=" << key);
         id = 0;
-        for(auto& right : slicesRight)
-        {
+        for (auto& right : slicesRight) {
             NES_DEBUG("right start=" << right.getStartTs() << " right end=" << right.getEndTs() << " id=" << id++);
         }
 
@@ -192,7 +190,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             NES_DEBUG("joinWindows trigger because currentWatermarkLeft=" << currentWatermarkLeft
                                                                           << " > lastWatermarkLeft=" << lastWatermarkLeft);
             joinDefinition->getWindowType()->triggerWindows(windows, lastWatermarkLeft, currentWatermarkLeft);//watermark
-            NES_TRACE(
+            NES_DEBUG(
                 "ExecutableNestedLoopJoinTriggerAction: trigger Complete or combining window for windows=" << windows.size());
         } else {
             NES_DEBUG("aggregateWindows No trigger because NOT currentWatermarkLeft="
@@ -220,8 +218,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                         for (auto& left : listLeft[sliceId]) {
                             for (auto& right : listRight[sliceId]) {
                                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: write key="
-                                              << key << " window.start()=" << window.getStartTs() << " window.getEndTs()="
-                                              << window.getEndTs() << " windowId=" << windowId << " sliceId=" << sliceId);
+                                          << key << " window.start()=" << window.getStartTs() << " window.getEndTs()="
+                                          << window.getEndTs() << " windowId=" << windowId << " sliceId=" << sliceId);
                                 writeResultRecord(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(), key,
                                                   left, right);
                                 currentNumberOfTuples++;

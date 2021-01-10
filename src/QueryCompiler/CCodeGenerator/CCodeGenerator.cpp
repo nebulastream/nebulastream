@@ -842,11 +842,11 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto tf = getTypeFactory();
 
     if (context->arity == PipelineContext::BinaryLeft) {
-        auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getLeftStreamType());
-        context->code->structDeclaratonInputTuples.emplace_back(leftTypeStruct);
-    } else {
-        auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getRightStreamType());
+        auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightStreamType());
         context->code->structDeclaratonInputTuples.emplace_back(rightTypeStruct);
+    } else {
+        auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getLeftStreamType());
+        context->code->structDeclaratonInputTuples.emplace_back(leftTypeStruct);
     }
 
     NES_ASSERT(joinDef, "invalid join definition");
@@ -899,7 +899,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key");
     if (context->arity == PipelineContext::BinaryLeft) {
         keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()),
-                                                                  joinDef->getLeftJoinKey()->getFieldName());
+                                                             joinDef->getLeftJoinKey()->getFieldName());
 
         NES_ASSERT(context->code->structDeclaratonInputTuples.size() > 0, "invalid input tuple");
         auto keyVariableAttributeDeclaration =
@@ -911,9 +911,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                         VarRef(keyVariableAttributeDeclaration)));
         context->code->currentCodeInsertionPoint->addStatement(
             std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
-    }
-    else
-    {
+    } else {
         keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getRightJoinKey()->getStamp()),
                                                              joinDef->getRightJoinKey()->getFieldName());
 
