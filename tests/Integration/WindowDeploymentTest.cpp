@@ -468,7 +468,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
 
     //register physical stream
     PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 0, 3, 3, "test_stream", "window", false);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
 
