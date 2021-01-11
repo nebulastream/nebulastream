@@ -21,9 +21,15 @@ run_experiment = True
 num_tuples = 25
 num_buffers = 30
 
-nes_dir = "/home/xenofon/git/nebulastream/"
-log_dir = "/var/log/nes"
+# e.g. /home/user/git/nebulastream/
+nes_dir = ""
+
+# e.g. /var/log/nes
+log_dir = ""
+
+# e.g. /home/user/experiments/influx/
 influx_storage = "/home/xenofon/experiments/influx/"
+
 nes_log_level = LogLevel.INFO
 topology_creation_timeout = 120
 
