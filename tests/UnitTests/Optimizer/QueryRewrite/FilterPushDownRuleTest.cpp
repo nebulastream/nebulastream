@@ -35,7 +35,7 @@
 
 using namespace NES;
 
-class FilterPushDownRuleTest : public testing::Test {
+class AttributeSortRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
@@ -64,7 +64,7 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     streamCatalog->addPhysicalStream("default_logical", sce);
 }
 
-TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
+TEST_F(AttributeSortRuleTest, testPushingOneFilterBelowMap) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
@@ -101,7 +101,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
+TEST_F(AttributeSortRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
@@ -145,7 +145,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
+TEST_F(AttributeSortRuleTest, testPushingFiltersBelowAllMapOperators) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
@@ -194,7 +194,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
+TEST_F(AttributeSortRuleTest, testPushingTwoFilterBelowMap) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
@@ -238,7 +238,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
+TEST_F(AttributeSortRuleTest, testPushingFilterAlreadyAtBottom) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 

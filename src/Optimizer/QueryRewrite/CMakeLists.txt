@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
+        AttributeSortRule.cpp
         BaseRefinementRule.cpp
         FilterPushDownRule.cpp
         LogicalSourceExpansionRule.cpp
