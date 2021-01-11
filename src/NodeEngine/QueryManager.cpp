@@ -115,19 +115,6 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
-//    NES_DEBUG("pipes=");
-//    for(auto& p : qep->getPipelines())
-//    {
-//        NES_DEBUG("id=" << p->getPipeStageId());
-//        if(p->getNextPipeline())
-//        {
-//            NES_DEBUG(" nextId=" << p->getNextPipeline()->getPipeStageId());
-//        }
-//        else
-//        {
-//            NES_DEBUG("no next");
-//        }
-//    }
 
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
