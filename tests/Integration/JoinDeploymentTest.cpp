@@ -604,7 +604,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
                              "1000,2000,4,1,4,1002,3,4,1102\n"
                              "1000,2000,4,1,4,1002,3,4,1112\n"
                              "1000,2000,12,1,12,1001,5,12,1011\n";
-    
+
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");

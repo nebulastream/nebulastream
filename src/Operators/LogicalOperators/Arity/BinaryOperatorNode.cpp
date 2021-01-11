@@ -64,6 +64,7 @@ bool BinaryOperatorNode::inferSchema() {
         NES_THROW_RUNTIME_ERROR("BinaryOperatorNode: this node should have at least one child operator");
     }
 
+    //due to source expansion, an operator at this stage can have more than one children
     if(children.size() >= 2)
     {
         //TODO: think about checking also if all left/right have the same schema
@@ -73,6 +74,7 @@ bool BinaryOperatorNode::inferSchema() {
             if(leftOp->as<OperatorNode>()->getIsLeftOperator())
             {
                 leftInputSchema = leftOp->as<OperatorNode>()->getOutputSchema();
+                break;
             }
         }
 
@@ -82,6 +84,7 @@ bool BinaryOperatorNode::inferSchema() {
             if(!rightOp->as<OperatorNode>()->getIsLeftOperator())
             {
                 rightInputSchema = rightOp->as<OperatorNode>()->getOutputSchema();
+                break;
             }
         }
         NES_ASSERT(leftInputSchema, "no left input for join");
@@ -89,6 +92,7 @@ bool BinaryOperatorNode::inferSchema() {
     }
     else if(children.size() == 1)
     {
+        NES_THROW_RUNTIME_ERROR("self join not implemented");
         //special case of self join
         leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
         rightInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();

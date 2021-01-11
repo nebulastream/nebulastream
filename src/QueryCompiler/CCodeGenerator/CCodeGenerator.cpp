@@ -896,6 +896,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     */
     // Read key value from record
     // int64_t key = windowTuples[recordIndex].key;
+    //TODO this is an ugly hack because we cannot create empty VariableDeclaration and we want it outide the if/else
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key");
     if (context->arity == PipelineContext::BinaryLeft) {
         keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()),
