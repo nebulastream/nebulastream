@@ -190,9 +190,9 @@ uint64_t BufferControlBlock::getNumberOfTuples() const { return numberOfTuples; 
 
 void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
 
-int64_t BufferControlBlock::getWatermark() const { return watermark; }
+uint64_t BufferControlBlock::getWatermark() const { return watermark; }
 
-void BufferControlBlock::setWatermark(int64_t watermark) { this->watermark = watermark; }
+void BufferControlBlock::setWatermark(uint64_t watermark) { this->watermark = watermark; }
 const uint64_t BufferControlBlock::getOriginId() const { return originId; }
 void BufferControlBlock::setOriginId(uint64_t originId) { this->originId = originId; }
 

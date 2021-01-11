@@ -124,6 +124,7 @@ class ExecutableSliceAggregationTriggerAction
         auto slices = store->getSliceMetadata();
         auto partialAggregates = store->getPartialAggregates();
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
+        uint64_t maxSliceEnd = 0;
 
         NES_DEBUG("ExecutableSliceAggregationTriggerAction: trigger "
                   << slices.size() << " slices "
@@ -147,7 +148,7 @@ class ExecutableSliceAggregationTriggerAction
                                                         slices[sliceId].getEndTs(), key, partialAggregates[sliceId],
                                                         slices[sliceId].getRecordsPerSlice());
                 currentNumberOfTuples++;
-
+                maxSliceEnd = std::max(maxSliceEnd, slices[sliceId].getEndTs());
                 //if we would write to a new buffer and we still have tuples to write
                 if (currentNumberOfTuples * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
                     && sliceId + 1 < slices.size()) {
@@ -175,6 +176,7 @@ class ExecutableSliceAggregationTriggerAction
          //remove the old slices from current watermark
         store->removeSlicesUntil(currentWatermark);
         tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
+        tupleBuffer.setWatermark(std::max(maxSliceEnd, tupleBuffer.getWatermark()));
     }
 
     /**

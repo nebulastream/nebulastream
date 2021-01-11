@@ -203,6 +203,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
                     buffer.setOriginId(bufferHeader->getOriginId());
+                    buffer.setWatermark(bufferHeader->getWatermark());
 
                     exchangeProtocol.onBuffer(nesPartition, buffer);
                     break;
