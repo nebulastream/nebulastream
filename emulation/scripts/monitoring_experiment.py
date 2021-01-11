@@ -28,7 +28,7 @@ nes_dir = ""
 log_dir = ""
 
 # e.g. /home/user/experiments/influx/
-influx_storage = "/home/xenofon/experiments/influx/"
+influx_storage = ""
 
 nes_log_level = LogLevel.INFO
 topology_creation_timeout = 120
