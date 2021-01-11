@@ -11,6 +11,11 @@
 
 namespace NES {
 
+enum class ConfigOptionType {
+    COORDINATOR,// identifying coordinator YAML file
+    WORKER,   // identifying worker YAML file
+    SOURCE // identifying source YAML file
+};
 /**
  * @brief enum defining the origin of the configuration
  */

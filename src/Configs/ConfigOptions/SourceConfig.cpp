@@ -44,5 +44,6 @@ const ConfigOption<bool>& NES::SourceConfig::getSkipHeader() const { return skip
 void SourceConfig::setSkipHeader(const NES::ConfigOption<bool>& skipHeader) { SourceConfig::skipHeader = skipHeader; }
 const ConfigOption<std::string>& NES::SourceConfig::getLogLevel() const { return logLevel; }
 void SourceConfig::setLogLevel(const NES::ConfigOption<std::string>& logLevel) { SourceConfig::logLevel = logLevel; }
+SourceConfig::SourceConfig() {}
 
 }// namespace NES

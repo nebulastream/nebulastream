@@ -41,4 +41,5 @@ namespace NES{
     void WorkerConfig::setParentId(const NES::ConfigOption<std::string>& parentId) { WorkerConfig::parentId = parentId; }
     const ConfigOption<std::string>& NES::WorkerConfig::getLogLevel() const { return logLevel; }
     void WorkerConfig::setLogLevel(const NES::ConfigOption<std::string>& logLevel) { WorkerConfig::logLevel = logLevel; }
-}
+    WorkerConfig::WorkerConfig() {}
+    }

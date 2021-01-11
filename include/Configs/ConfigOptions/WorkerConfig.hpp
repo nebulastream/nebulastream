@@ -14,6 +14,7 @@ namespace NES {
 class WorkerConfig {
 
   public:
+    WorkerConfig();
     WorkerConfig(ConfigOption<std::string> localWorkerIp, ConfigOption<std::string> coordinatorIp,
                       ConfigOption<uint16_t> coordinatorPort, ConfigOption<uint16_t> rpcPort, ConfigOption<uint16_t> dataPort,
                       ConfigOption<uint16_t> numberOfSlots, ConfigOption<uint16_t> numWorkerThreads,
