@@ -52,6 +52,10 @@ class Topology:
             raise RuntimeError("Monitoring type " + monitoring_type + " is not valid")
         self.net = None
 
+        if self.get_topology_size() > 51:
+            raise RuntimeError("Currently the emulation does not support topologies of sizes >51, but " +
+                               str(self.get_topology_size()) + " requested.")
+
     def create_topology(self):
         net = Containernet(controller=Controller)
         info('*** Adding controller\n')
@@ -98,14 +102,14 @@ class Topology:
 
             if i < self.number_workers_producing:
                 cmd = '/entrypoint-prom.sh ' + log_sub_dir + ' w' + str(
-                    i) + 'p  ' + self.monitoring_type.value + ' wrk /opt/local/nebula-stream/nesWorker --logLevel=' + self.nes_log_level.value \
+                    i).zfill(3) + '_p  ' + self.monitoring_type.value + ' wrk /opt/local/nebula-stream/nesWorker --logLevel=' + self.nes_log_level.value \
                       + ' --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip \
                       + ' --sourceType=YSBSource --numberOfBuffersToProduce=' + str(self.num_buffers) \
                       + ' --numberOfTuplesToProducePerBuffer=' + str(self.num_tuples) \
                       + ' --sourceFrequency=1 --physicalStreamName=ysb' + str(i) + ' --logicalStreamName=ysb'
             else:
                 cmd = '/entrypoint-prom.sh ' + log_sub_dir + ' w' + str(
-                    i) + 'np ' + self.monitoring_type.value + ' wrk /opt/local/nebula-stream/nesWorker --logLevel=' \
+                    i).zfill(3) + '_np ' + self.monitoring_type.value + ' wrk /opt/local/nebula-stream/nesWorker --logLevel=' \
                       + self.nes_log_level.value + ' --coordinatorPort=4000 --coordinatorIp=10.15.16.3 --localWorkerIp=' + ip
 
             print('Worker ' + str(i) + ": " + cmd)
@@ -127,22 +131,28 @@ class Topology:
         self.net = net
 
     def get_topology_size(self):
-        return self.number_workers_producing + self.number_workers_not_producing + 1
+        return self.number_workers_producing + self.number_workers_not_producing + self.number_coordinators
 
     def wait_until_topology_is_complete(self, timeout):
+        timeout = timeout // 5
         complete = False
-        node_number = 0
-        for i in range(0, timeout // 5):
+        current_size = 0
+        print("Checking completion of topology with timeout re-tries " + str(timeout))
+        for i in range(0, timeout):
             try:
-                node_number = len(request_monitoring_data(self.monitoring_type).json())
-            except:
-                print("Failed requesting size of topology")
-            if node_number == self.get_topology_size():
-                print("Completed: Received monitoring data from coordinator for nodes " + str(node_number))
+                print("(" + str(i) + "/" + str(timeout) + ") Requesting monitoring data..")
+                current_size = len(request_monitoring_data(self.monitoring_type).json())
+            except RuntimeError as e:
+                print("Failed requesting size of topology: ", e)
+            except Exception as e:
+                print("Failed to connect to REST service of coordinator: ", e)
+
+            if current_size == self.get_topology_size():
+                print("Completed: Received monitoring data from coordinator for nodes " + str(current_size))
                 complete = True
                 break
             else:
-                print("Waiting: Received monitoring data from coordinator for nodes " + str(node_number) +
+                print("Waiting: Received monitoring data from coordinator for nodes " + str(current_size) +
                       " but expecting " + str(self.get_topology_size()))
                 sleep(5)
         return complete
