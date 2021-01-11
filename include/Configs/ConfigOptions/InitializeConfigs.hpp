@@ -5,6 +5,7 @@
 #ifndef NES_INITIALIZECONFIGS_HPP
 #define NES_INITIALIZECONFIGS_HPP
 
+#include "CoordinatorConfig.hpp"
 #include <any>
 #include <map>
 #include <string>
@@ -12,6 +13,7 @@
 
 namespace NES {
 
+template<typename Tp>
 class InitializeConfigurations {
 
   public:
@@ -21,21 +23,20 @@ class InitializeConfigurations {
      * initialize a configuration object
      * @return return a configuration object
      */
-    std::any initializeConfigurations();
+    std::any initializeConfigurations(ConfigOptionType executableType);
 
     /**
      * initialize configurations with yaml file input
      * @param configurations from a YAML file saved in a HashMap
      * @return return a configuration object
      */
-    template<typename Tp>
-    std::any initializeConfigurations(std::map<std::string, Tp> configurations);
+    std::any initializeConfigurations(std::map<std::string, Tp> configurations, ConfigOptionType executableType);
 
     /**
      * overwrite default or YAML file values with command line input
      * @return return a configuration object
      */
-    std::any overwriteConfigWithCommandLineInput();
+    std::any overwriteConfigWithCommandLineInput(std::any configObject);
 };
 
 }// namespace NES

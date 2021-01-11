@@ -34,4 +34,5 @@ void CoordinatorConfig::setEnableQueryMerging(const NES::ConfigOption<bool>& ena
 }
 const ConfigOption<std::string>& NES::CoordinatorConfig::getLogLevel() const { return logLevel; }
 void CoordinatorConfig::setLogLevel(const NES::ConfigOption<std::string>& logLevel) { CoordinatorConfig::logLevel = logLevel; }
+CoordinatorConfig::CoordinatorConfig() {}
 }// namespace NES

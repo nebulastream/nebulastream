@@ -11,17 +11,18 @@
 
 namespace NES {
 
+template<typename Tp>
 class YAMLConfig {
 
   public:
-    //todo: does _tp work?
-    YAMLConfig(std::map<std::string, _Tp> configurations);
+    YAMLConfig(std::map<std::string, Tp> configurations);
 
-    std::map<std::string, _Tp> loadConfig(std::string filePath);
-    void setConfigurations(const std::map<std::string, _Tp>& configurations);
+    std::map<std::string, Tp> loadConfig(std::string filePath, ConfigOptionType executableType);
+
+    const std::map<std::string, Tp>& getConfigurations() const;
 
   private:
-    std::map<std::string, _Tp> configurations;
+    std::map<std::string, Tp> configurations;
 };
 
 }// namespace NES

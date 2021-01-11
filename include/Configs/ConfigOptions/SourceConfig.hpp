@@ -13,6 +13,7 @@ namespace NES {
 class SourceConfig {
 
   public:
+    SourceConfig();
     SourceConfig(ConfigOption<std::string> sourceType, ConfigOption<std::string> sourceConfig,
                       ConfigOption<uint64_t> sourceFrequency, ConfigOption<uint64_t> numberOfBuffersToProduce,
                       ConfigOption<uint16_t> numberOfTuplesToProducePerBuffer, ConfigOption<std::string> physicalStreamName,
