@@ -35,7 +35,7 @@ topology_creation_timeout = 120
 
 # experiment parameters
 # ---------------------------------------------------------------------
-version = "5"
+version = "1"
 iterations = 60
 iterations_before_execution = 0
 monitoring_frequency = 1
