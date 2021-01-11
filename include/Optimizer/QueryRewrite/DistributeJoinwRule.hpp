@@ -40,7 +40,6 @@ typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
  */
 class DistributeJoinRule : public BaseRefinementRule {
   public:
-
     static DistributeJoinRulePtr create();
 
     /**

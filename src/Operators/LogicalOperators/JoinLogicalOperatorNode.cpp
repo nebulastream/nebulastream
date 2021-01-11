@@ -46,9 +46,9 @@ bool JoinLogicalOperatorNode::inferSchema() {
     joinDefinition->getLeftJoinKey()->inferStamp(leftInputSchema);
 
     outputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField(AttributeField::create("key", joinDefinition->getLeftJoinKey()->getStamp()));
+                       ->addField(createField("start", UINT64))
+                       ->addField(createField("end", UINT64))
+                       ->addField(AttributeField::create("key", joinDefinition->getLeftJoinKey()->getStamp()));
 
     // create dynamic fields to store all fields from left and right streams
     for (auto field : schema1->fields) {
@@ -66,11 +66,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
         for (auto field : schema2->fields) {
             outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
         }
-    }
-    else
-    {
+    } else {
         NES_THROW_RUNTIME_ERROR("infer self join not allowed");
-
     }
 
     joinDefinition->updateOutputDefinition(outputSchema);

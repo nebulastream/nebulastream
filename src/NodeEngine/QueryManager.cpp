@@ -115,7 +115,6 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
-
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
@@ -142,13 +141,10 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             queryMapToOperatorId[qep->getQueryId()].push_back(source->getOperatorId());
             if (isBinaryOperator) {
                 NES_ASSERT(qep->getPipelines().size() >= 2, "Binary operator must have at least two pipelines");
-                if(source->getIsLeftSide())
-                {
+                if (source->getIsLeftSide()) {
                     NES_DEBUG("QueryManager: isleftSide" << qep << " to Source" << source->getOperatorId());
                     operatorIdToPipelineStage[source->getOperatorId()] = 1;
-                }
-                else
-                {
+                } else {
                     NES_DEBUG("QueryManager: isrightSide" << qep << " to Source" << source->getOperatorId());
                     operatorIdToPipelineStage[source->getOperatorId()] = 0;
                 }
@@ -157,8 +153,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
     NES_DEBUG("operatorIdToPipelineStage mapping:");
-    for(auto& a : operatorIdToPipelineStage)
-    {
+    for (auto& a : operatorIdToPipelineStage) {
         NES_DEBUG("first=" << a.first << " second=" << a.second);
     }
 
