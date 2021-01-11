@@ -198,8 +198,8 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(Express
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFiledMap);
     } else if (expression->instanceOf<NegateExpressionNode>()) {
-        auto equalsExpressionNode = expression->as<NegateExpressionNode>();
-        auto expr = createForExpression(equalsExpressionNode->child(), context);
+        auto negateExpressionNode = expression->as<NegateExpressionNode>();
+        auto expr = createForExpression(negateExpressionNode->child(), context);
         auto updatedExpr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_not(*context, *expr->getExpr())));
         return Z3ExprAndFieldMap::create(updatedExpr, expr->getFieldMap());
     }

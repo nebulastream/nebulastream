@@ -30,7 +30,11 @@ bool NegateExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string NegateExpressionNode::toString() const { return "NegateNode(" + stamp->toString() + ")"; }
+const std::string NegateExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << "!" << children[0]->toString();
+    return ss.str();
+}
 
 ExpressionNodePtr NegateExpressionNode::create(const ExpressionNodePtr child) {
     auto equals = std::make_shared<NegateExpressionNode>();

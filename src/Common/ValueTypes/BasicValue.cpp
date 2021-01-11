@@ -16,13 +16,19 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <sstream>
+
 namespace NES {
 
 BasicValue::BasicValue(DataTypePtr type, std::string value) : ValueType(type), value(value) {}
 
 bool BasicValue::isBasicValue() { return true; }
 
-std::string BasicValue::toString() { return "BasicValue"; }
+std::string BasicValue::toString() {
+    std::stringstream ss;
+    ss << "BasicValue(" << value << ")";
+    return ss.str();
+}
 
 std::string BasicValue::getValue() { return value; }
 

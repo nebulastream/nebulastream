@@ -36,7 +36,12 @@ bool GreaterEqualsExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string GreaterEqualsExpressionNode::toString() const { return "GreaterThenNode(" + stamp->toString() + ")"; }
+const std::string GreaterEqualsExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << ">=" << children[1]->toString();
+    return ss.str();
+}
+
 ExpressionNodePtr GreaterEqualsExpressionNode::copy() {
     return std::make_shared<GreaterEqualsExpressionNode>(GreaterEqualsExpressionNode(this));
 }

@@ -34,7 +34,12 @@ bool OrExpressionNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
-const std::string OrExpressionNode::toString() const { return "OrNode(" + stamp->toString() + ")"; }
+
+const std::string OrExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "||" << children[1]->toString();
+    return ss.str();
+}
 
 void OrExpressionNode::inferStamp(SchemaPtr schema) {
     // delegate stamp inference of children

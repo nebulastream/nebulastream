@@ -45,7 +45,7 @@ bool FieldAccessExpressionNode::equal(const NodePtr rhs) const {
 const std::string FieldAccessExpressionNode::getFieldName() { return fieldName; }
 
 const std::string FieldAccessExpressionNode::toString() const {
-    return "FieldAccessNode(" + fieldName + ": " + stamp->toString() + ")";
+    return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";
 }
 
 void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {

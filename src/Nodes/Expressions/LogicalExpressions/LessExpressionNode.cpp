@@ -35,7 +35,12 @@ bool LessExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string LessExpressionNode::toString() const { return "LessNode(" + stamp->toString() + ")"; }
+const std::string LessExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "<" << children[1]->toString();
+    return ss.str();
+}
+
 ExpressionNodePtr LessExpressionNode::copy() { return std::make_shared<LessExpressionNode>(LessExpressionNode(this)); }
 
 }// namespace NES

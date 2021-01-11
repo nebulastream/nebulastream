@@ -35,7 +35,12 @@ bool LessEqualsExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string LessEqualsExpressionNode::toString() const { return "LessThenNode(" + stamp->toString() + ")"; }
+const std::string LessEqualsExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "<=" << children[1]->toString();
+    return ss.str();
+}
+
 ExpressionNodePtr LessEqualsExpressionNode::copy() {
     return std::make_shared<LessEqualsExpressionNode>(LessEqualsExpressionNode(this));
 }
