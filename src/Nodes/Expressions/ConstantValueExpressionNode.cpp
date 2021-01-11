@@ -31,7 +31,7 @@ bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string ConstantValueExpressionNode::toString() const { return "ConstantValueNode(" + constantValue->toString() + ")"; }
+const std::string ConstantValueExpressionNode::toString() const { return "ConstantValue(" + constantValue->toString() + ")"; }
 
 ExpressionNodePtr ConstantValueExpressionNode::create(const ValueTypePtr constantValue) {
     return std::make_shared<ConstantValueExpressionNode>(ConstantValueExpressionNode(constantValue));

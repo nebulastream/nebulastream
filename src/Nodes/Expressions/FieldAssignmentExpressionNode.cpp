@@ -43,7 +43,11 @@ bool FieldAssignmentExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string FieldAssignmentExpressionNode::toString() const { return "FieldAssignment()"; }
+const std::string FieldAssignmentExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "=" << children[1]->toString();
+    return ss.str();
+}
 
 FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const {
     return getLeft()->as<FieldAccessExpressionNode>();

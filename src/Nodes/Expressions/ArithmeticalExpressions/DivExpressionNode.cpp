@@ -36,7 +36,13 @@ bool DivExpressionNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
-const std::string DivExpressionNode::toString() const { return "DivNode(" + stamp->toString() + ")"; }
+
+const std::string DivExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "/" << children[1]->toString();
+    return ss.str();
+}
+
 ExpressionNodePtr DivExpressionNode::copy() { return std::make_shared<DivExpressionNode>(DivExpressionNode(this)); }
 
 }// namespace NES

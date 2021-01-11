@@ -60,7 +60,7 @@ TEST_F(AttributeSortRuleTest, testPushingOneFilterBelowMap) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical").map(Attribute("value") = 40).sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").map(Attribute("value") = 40 + Attribute("id")).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto attributeSortRule = AttributeSortRule::create();

@@ -36,7 +36,13 @@ bool SubExpressionNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
-const std::string SubExpressionNode::toString() const { return "SubNode(" + stamp->toString() + ")"; }
+
+const std::string SubExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "-" << children[1]->toString();
+    return ss.str();
+}
+
 ExpressionNodePtr SubExpressionNode::copy() { return std::make_shared<SubExpressionNode>(SubExpressionNode(this)); }
 
 }// namespace NES

@@ -35,7 +35,12 @@ bool GreaterExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string GreaterExpressionNode::toString() const { return "GreaterNode(" + stamp->toString() + ")"; }
+const std::string GreaterExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << ">" << children[1]->toString();
+    return ss.str();
+}
+
 ExpressionNodePtr GreaterExpressionNode::copy() { return std::make_shared<GreaterExpressionNode>(GreaterExpressionNode(this)); }
 
 }// namespace NES
