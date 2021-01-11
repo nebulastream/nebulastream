@@ -324,6 +324,11 @@ add_executable(join-handler-tests "UnitTests/JoinHandlerTest.cpp")
 target_link_libraries(join-handler-tests nes ${GTEST_LIBRARIES})
 add_test(NAME join-handler-tests COMMAND join-handler-tests)
 
+### Attribute Sort Rule Test ###
+add_executable(attribute-sort-rule-test "UnitTests/Optimizer/QueryRewrite/AttributeSortRuleTest.cpp")
+target_link_libraries(attribute-sort-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME attribute-sort-rule-test COMMAND attribute-sort-rule-test)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
