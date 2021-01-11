@@ -65,33 +65,26 @@ bool BinaryOperatorNode::inferSchema() {
     }
 
     //due to source expansion, an operator at this stage can have more than one children
-    if(children.size() >= 2)
-    {
+    if (children.size() >= 2) {
         //TODO: think about checking also if all left/right have the same schema
         //find first left
-        for(auto& leftOp : children)
-        {
-            if(leftOp->as<OperatorNode>()->getIsLeftOperator())
-            {
+        for (auto& leftOp : children) {
+            if (leftOp->as<OperatorNode>()->getIsLeftOperator()) {
                 leftInputSchema = leftOp->as<OperatorNode>()->getOutputSchema();
                 break;
             }
         }
 
         //find first right
-        for(auto& rightOp : children)
-        {
-            if(!rightOp->as<OperatorNode>()->getIsLeftOperator())
-            {
+        for (auto& rightOp : children) {
+            if (!rightOp->as<OperatorNode>()->getIsLeftOperator()) {
                 rightInputSchema = rightOp->as<OperatorNode>()->getOutputSchema();
                 break;
             }
         }
         NES_ASSERT(leftInputSchema, "no left input for join");
         NES_ASSERT(rightInputSchema, "no left input for join");
-    }
-    else if(children.size() == 1)
-    {
+    } else if (children.size() == 1) {
         NES_THROW_RUNTIME_ERROR("self join not implemented");
         //special case of self join
         leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();

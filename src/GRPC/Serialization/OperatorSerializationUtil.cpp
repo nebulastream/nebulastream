@@ -953,7 +953,8 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         serializedSourceDescriptor.UnpackTo(&zmqSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(zmqSerializedSourceDescriptor.release_sourceschema());
-        auto ret = ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port());
+        auto ret =
+            ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port());
         ret->setIsLeftOperator(serializedSourceDetails->isleftside());
         return ret;
     }
@@ -970,7 +971,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         ident[opcSerializedSourceDescriptor.identifier().length()] = '\0';
         UA_NodeId nodeId = UA_NODEID_STRING(opcSerializedSourceDescriptor.namespaceindex(), ident);
         auto ret = OPCSourceDescriptor::create(schema, opcSerializedSourceDescriptor.url(), nodeId,
-                                           opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password());
+                                               opcSerializedSourceDescriptor.user(), opcSerializedSourceDescriptor.password());
         ret->setIsLeftOperator(serializedSourceDetails->isleftside());
         return ret;
     }
@@ -997,7 +998,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(defaultSerializedSourceDescriptor.release_sourceschema());
         auto ret = DefaultSourceDescriptor::create(schema, defaultSerializedSourceDescriptor.numbufferstoprocess(),
-                                               defaultSerializedSourceDescriptor.frequency());
+                                                   defaultSerializedSourceDescriptor.frequency());
         ret->setIsLeftOperator(serializedSourceDetails->isleftside());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor>()) {
@@ -1007,7 +1008,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         serializedSourceDescriptor.UnpackTo(&binarySerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(binarySerializedSourceDescriptor.release_sourceschema());
-        auto ret =  BinarySourceDescriptor::create(schema, binarySerializedSourceDescriptor.filepath());
+        auto ret = BinarySourceDescriptor::create(schema, binarySerializedSourceDescriptor.filepath());
         ret->setIsLeftOperator(serializedSourceDetails->isleftside());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>()) {

@@ -107,38 +107,32 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
     auto rhsQueryPlan = subQueryRhs->getQueryPlan();
     if (rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
-            auto op =  LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());
+            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());
             op->setIsLeftOperator(false);
             rhsQueryPlan->appendOperatorAsNewRoot(op);
             auto childs = op->getAndFlattenAllChildren(false);
-            for(auto& child : childs)
-            {
+            for (auto& child : childs) {
                 child->as<OperatorNode>()->setIsLeftOperator(false);
             }
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(
-                EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name),
-                                                             Milliseconds(0),
-                                                             windowType->getTimeCharacteristic()->getTimeUnit()));
+            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0),
+                windowType->getTimeCharacteristic()->getTimeUnit()));
             op->setIsLeftOperator(false);
             rhsQueryPlan->appendOperatorAsNewRoot(op);
             auto childs = op->getAndFlattenAllChildren(false);
             NES_DEBUG("set false for op id=" << op->getId());
-            for(auto& child : childs)
-            {
+            for (auto& child : childs) {
                 child->as<OperatorNode>()->setIsLeftOperator(false);
                 NES_DEBUG("set false child for op id=" << child->as<OperatorNode>()->getId());
             }
         }
-    }
-    else
-    {
+    } else {
         auto op = rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
         NES_ASSERT(op.size() == 1, "Only one watermark assigner is allowed per pipeline");
         op[0]->setIsLeftOperator(false);
         auto childs = op[0]->getAndFlattenAllChildren(false);
-        for(auto& child : childs)
-        {
+        for (auto& child : childs) {
             child->as<OperatorNode>()->setIsLeftOperator(false);
         }
     }

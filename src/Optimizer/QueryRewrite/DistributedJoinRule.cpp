@@ -16,6 +16,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeJoinwRule.hpp>
@@ -24,7 +25,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 
 #include <algorithm>
 namespace NES {
@@ -43,14 +43,10 @@ QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
             NES_DEBUG("DistributeJoinRule::apply: join operator " << joinOp->toString());
             uint64_t edgesLeft = 0;
             uint64_t edgesRight = 0;
-            for(auto& child : joinOp->getChildren())
-            {
-                if(child->as<OperatorNode>()->getIsLeftOperator())
-                {
+            for (auto& child : joinOp->getChildren()) {
+                if (child->as<OperatorNode>()->getIsLeftOperator()) {
                     edgesLeft++;
-                }
-                else
-                {
+                } else {
                     edgesRight++;
                 }
             }

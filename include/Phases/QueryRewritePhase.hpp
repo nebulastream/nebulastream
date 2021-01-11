@@ -62,7 +62,7 @@ class QueryRewritePhase {
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     FilterPushDownRulePtr filterPushDownRule;
     DistributeWindowRulePtr distributeWindowRule;
-    DistributeJoinRulePtr  distributeJoinRule;
+    DistributeJoinRulePtr distributeJoinRule;
 };
 }// namespace NES
 #endif//NES_QUERYREWRITEPHASE_HPP

@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
+#include <Optimizer/QueryRewrite/DistributeJoinwRule.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Optimizer/QueryRewrite/DistributeJoinwRule.hpp>
 
 #include <Phases/QueryRewritePhase.hpp>
 
