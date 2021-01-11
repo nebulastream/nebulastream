@@ -69,7 +69,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
     }
     else
     {
-        NES_WARNING("infer self join");
+        NES_THROW_RUNTIME_ERROR("infer self join not allowed");
+
     }
 
     joinDefinition->updateOutputDefinition(outputSchema);
