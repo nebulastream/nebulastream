@@ -86,11 +86,11 @@ def make_request(request_type):
 
 
 def request_monitoring_data(type):
-    print("Executing monitoring call on " + type.value)
+    print("Executing monitoring call on topology with monitoring " + type.value)
     resp = None
     if type == MonitoringType.PROMETHEUS:
         resp = make_request("monitoring_prometheus")
-    elif type == MonitoringType.NEMO_PULL:
+    elif type == MonitoringType.NEMO_PULL or type == MonitoringType.DISABLED:
         resp = make_request("monitoring_nes")
     else:
         raise RuntimeError("Monitoring request with type " + type.value + " not supported")

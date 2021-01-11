@@ -21,11 +21,11 @@ from lib.util import request_monitoring_data, readDockerStats, make_request, sto
 from lib.util import MonitoringType
 
 
-class Experiment:
+class MonitoringExperiment:
     def __init__(self, topology, influx_db, influx_table, iterations, iterations_before_execution,
                  monitoring_frequency, description, version):
-        self.no_workers_producing = topology.no_workers_producing
-        self.no_workers_not_producing = topology.no_workers_not_producing
+        self.no_workers_producing = topology.number_workers_producing
+        self.no_workers_not_producing = topology.number_workers_not_producing
         self.influx_db = influx_db
         self.influx_table = influx_table
         self.noIterations = iterations
@@ -69,7 +69,7 @@ class Experiment:
             sleep(sleep_duration)
         return msrmnt_batch
 
-    def start(self, store_measurements):
+    def start(self, store_measurements, wait_time_after_query_deployment):
         print("Executing monitoring request experiment")
         # execute experiment
         msrmnt_batch = []
@@ -91,6 +91,8 @@ class Experiment:
             raise RuntimeError("Response with status code " + str(response.status_code))
         else:
             print("YSB request successful with status code " + str(response.status_code))
+
+        sleep(wait_time_after_query_deployment)
 
         # make measurements after request
         print("Making measurements after request")
