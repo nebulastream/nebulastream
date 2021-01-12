@@ -2,29 +2,7 @@ FROM ubuntu:20.04
 
 COPY toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
 RUN mkdir -p /opt/toolchain && \
-cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
-apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
-      build-essential \
-      ca-certificates \
-      crossbuild-essential-arm64 \
-      libstdc++6-arm64-cross \
-      cmake \
-      git \
-      python3-dev \
-      python-dev \
-      libncurses5-dev \
-      libxml2-dev \
-      libedit-dev \
-      swig \
-      doxygen \
-      graphviz \
-      xz-utils \
-      ninja-build \
-      rsync \
-      ssh \
-      gdb \
-      libssl-dev && \
-    apt-get clean -qq
+cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake
 
 RUN sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \
 cp /etc/apt/sources.list /etc/apt/sources.list.d/ports.list && \
@@ -34,7 +12,21 @@ sed -i -E -- 's|http://.*security\.ubuntu\.com/ubuntu|http://ports.ubuntu.com/ub
 dpkg --add-architecture arm64 && \
 apt-get update
 
-RUN apt-get install --no-install-recommends -o APT::Immediate-Configure=false -qq \
+RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -o APT::Immediate-Configure=false -qq \
+  build-essential \
+  ca-certificates \
+  llvm \
+  clang \
+  lld \
+  libssl-dev \
+  crossbuild-essential-arm64 \
+  libstdc++6-arm64-cross \
+  qemu-system \
+  cmake \
+  git \
+  python3-dev \
+  python-dev \
+  gdb \
   libc++-dev:arm64 \
   libstdc++-9-dev:arm64 \
   libpython3-dev:arm64 \
@@ -52,6 +44,13 @@ RUN apt-get install --no-install-recommends -o APT::Immediate-Configure=false -q
   libz3-dev:arm64 && \
   apt-get clean -qq
 
+RUN update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
+    update-alternatives --set cc /usr/bin/clang && \
+    update-alternatives --set c++ /usr/bin/clang++
+
+ENV PATH="/opt/toolchain/bin:${PATH}"
+
 RUN mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
 mkdir -p /opt/toolchain && \
 cd /opt/sysroots/aarch64-linux-gnu/usr && \
@@ -66,29 +65,6 @@ RUN git config --global advice.detachedHead false && \
 rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
 sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
 ./b2 install -j2 toolset=gcc-arm64 --prefix=/opt/sysroots/aarch64-linux-gnu/usr) || cd .. || rm -rf boost
-
-RUN git clone --branch llvmorg-10.0.0 --single-branch https://github.com/llvm/llvm-project && \
-mkdir -p llvm-project/build && cd llvm-project/build && \
-cmake -G Ninja \
--DCMAKE_BUILD_TYPE=Release \
--DCMAKE_INSTALL_PREFIX=/opt/toolchain \
--DCMAKE_CROSSCOMPILING=ON \
--DLLVM_BUILD_DOCS=OFF \
--DLLVM_DEFAULT_TARGET_TRIPLE=aarch64-linux-gnu \
--DLLVM_TARGET_ARCH=AArch64 \
--DLLVM_TARGETS_TO_BUILD=AArch64 \
--DLLVM_ENABLE_PROJECTS="clang;compiler-rt;lld;polly;libcxx;libcxxabi;openmp" \
-../llvm && \
-ninja -j 2 clang && ninja -j 2 cxx && ninja install && \
-cd && rm -rf llvm-project
-
-RUN cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
-cd grpc && git submodule update --init --recursive --jobs 1 && mkdir -p build && cd build && \
-cmake .. -DCMAKE_BUILD_TYPE=Release -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_SSL_PROVIDER=package && \
-make -j2 install && cd .. && rm -rf build && mkdir -p build && cd build && \
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
--DCMAKE_INSTALL_PREFIX=/opt/sysroots/aarch64-linux-gnu/ && \
-make -j2 install && cd ../.. && rm -rf grpc
 
 RUN cd /opt/sysroots/aarch64-linux-gnu/usr && \
 cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && \
@@ -105,7 +81,7 @@ cp -r -v -L /usr/include/openssl* /opt/sysroots/aarch64-linux-gnu/usr/include/ &
 cp -r -v -L /usr/include/aarch64-linux-gnu/c++/9* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/c++/9* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/gelf* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
-cp -r -v -L cp -r -v -L /usr/include/libelf* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/include/libelf* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/nlist* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libz3* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
@@ -126,14 +102,13 @@ sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-l
 sed -i -- 's|/lib/aarch64-linux-gnu/|/aarch64-linux-gnu/usr/lib/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
 sed -i -- 's|/include/|/aarch64-linux-gnu/usr/include/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake
 
-RUN update-alternatives --install /usr/bin/clang clang /opt/toolchain/bin/clang 10 && \
-    update-alternatives --install /usr/bin/clang++ clang++ /opt/toolchain/bin/clang++ 10 && \
-    update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
-    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
-    update-alternatives --set cc /usr/bin/clang && \
-    update-alternatives --set c++ /usr/bin/clang++
-
-ENV PATH="/opt/toolchain/bin:${PATH}"
+RUN cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
+cd grpc && git submodule update --init --recursive --jobs 1 && mkdir -p build && cd build && \
+cmake .. -DCMAKE_BUILD_TYPE=Release -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_SSL_PROVIDER=package && \
+make -j2 install && cd .. && rm -rf build && mkdir -p build && cd build && \
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
+-DCMAKE_INSTALL_PREFIX=/opt/sysroots/aarch64-linux-gnu/ && \
+make -j2 install && cd ../.. && rm -rf grpc
 
 RUN service ssh start && useradd -m nes && yes password | passwd nes
 
