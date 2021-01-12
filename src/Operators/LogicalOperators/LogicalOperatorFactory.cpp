@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -45,6 +46,10 @@ UnaryOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const SinkDescri
 
 UnaryOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr predicate, OperatorId id) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate, id);
+}
+
+UnaryOperatorNodePtr LogicalOperatorFactory::createRenameStreamOperator(const std::string newStreamName, OperatorId id) {
+    return std::make_shared<RenameStreamOperatorNode>(newStreamName, id);
 }
 
 UnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(std::vector<ExpressionItem> expressions, OperatorId id) {

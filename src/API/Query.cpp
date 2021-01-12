@@ -51,6 +51,12 @@ Query Query::from(const std::string sourceStreamName) {
     return Query(queryPlan);
 }
 
+Query& Query::as(const std::string newStreamName) {
+    auto renameOperator = LogicalOperatorFactory::createRenameStreamOperator(newStreamName);
+    queryPlan->appendOperatorAsNewRoot(renameOperator);
+    return *this;
+}
+
 Query& Query::merge(Query* subQuery) {
     NES_DEBUG("Query: merge the subQuery to current query");
     OperatorNodePtr op = LogicalOperatorFactory::createMergeOperator();
