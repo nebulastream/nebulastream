@@ -138,7 +138,12 @@ template<typename... Types>
 void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
     auto fieldSizes = dynamicColLayout->getFieldSizes();
-    writeTupleToBufferColumnWise(record, &(byteBuffer[0]), numberOfRecords, fieldSizes);
+//    writeTupleToBufferColumnWise(record, &(byteBuffer[0]), numberOfRecords, fieldSizes);
+
+    auto address = &(byteBuffer[0]);
+    size_t I = 0;
+    auto fieldAddress = address + calcOffset(numberOfRecords, I);
+    std::apply([&I, &address, &fieldAddress, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(numberOfRecords, I), memcpy(fieldAddress, &args, fieldSizes->at(I)), ++I), ...);}, record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
 }
@@ -149,8 +154,14 @@ std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex)
 
     std::tuple<Types...> retTuple;
     auto fieldSizes = dynamicColLayout->getFieldSizes();
+//    readTupleFromBufferColumnWise(retTuple, &(byteBuffer[0]), recordIndex, fieldSizes);
 
-    readTupleFromBufferColumnWise(retTuple, &(byteBuffer[0]), recordIndex, fieldSizes);
+    auto address = &(byteBuffer[0]);
+    size_t I = 0;
+    unsigned char* fieldAddress;
+    std::apply([&I, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(recordIndex, I), memcpy(&args, fieldAddress, fieldSizes->at(I)), ++I), ...);}, retTuple);
+
+
     return retTuple;
 }
 

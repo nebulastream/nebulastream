@@ -126,7 +126,10 @@ void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     uint64_t offSet = calcOffset(numberOfRecords, 0);
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
     auto fieldSizes = dynamicRowLayout->getFieldSizes();
-    writeTupleToBufferRowWise(record, &(byteBuffer[offSet]), fieldSizes);
+    auto address = &(byteBuffer[offSet]);
+    size_t I = 0;
+//    writeTupleToBufferRowWise(record, &(byteBuffer[offSet]), fieldSizes);
+    std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(address, &args, fieldSizes->at(I)), address = address + fieldSizes->at(I), ++I), ...);}, record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
 }
@@ -139,8 +142,12 @@ std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
     std::tuple<Types...> retTuple;
     auto fieldSizes = dynamicRowLayout->getFieldSizes();
 
-    readTupleFromBufferRowWise(retTuple, &(byteBuffer[offSet]), fieldSizes);
+//    readTupleFromBufferRowWise(retTuple, &(byteBuffer[offSet]), fieldSizes);
+    auto address = &(byteBuffer[offSet]);
+    size_t I = 0;
+    std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(&args, address, fieldSizes->at(I)), address = address + fieldSizes->at(I), ++I), ...);}, retTuple);
     return retTuple;
+
 }
 
 }
