@@ -182,7 +182,7 @@ class TestHarness {
 
         std::ifstream ifs(filePath.c_str());
         if (!ifs.good()) {
-            NES_WARNING("TestHarness:ifs.good() returns false for query with id " + queryId + " file path=" + filePath);
+            NES_WARNING("TestHarness:ifs.good() returns false for query with id " + queryId << " file path=" + filePath);
         }
 
         std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
