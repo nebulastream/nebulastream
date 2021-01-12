@@ -54,10 +54,6 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan) {
         sortAttributesInOperator(map);
     }
 
-    auto projectOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    for (auto& project : projectOperators) {
-        sortAttributesInOperator(project);
-    }
     return queryPlan;
 }
 
@@ -94,7 +90,6 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
         auto addExpressionNode = expression->as<AddExpressionNode>();
         auto left = addExpressionNode->getLeft();
         auto right = addExpressionNode->getRight();
-
     } else if (expression->instanceOf<SubExpressionNode>()) {
         auto subExpressionNode = expression->as<SubExpressionNode>();
         auto left = subExpressionNode->getLeft();

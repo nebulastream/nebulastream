@@ -60,6 +60,12 @@ class LogicalOperatorNode : public OperatorNode {
      */
     Optimizer::QuerySignaturePtr getSignature();
 
+    /**
+     * @brief Get the string signature computed based on upstream operator chain
+     * @return string representing the query signature
+     */
+    virtual std::string getStringBasedSignature() = 0;
+
     virtual bool inferSchema() = 0;
     virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
     virtual SchemaPtr getOutputSchema() const = 0;

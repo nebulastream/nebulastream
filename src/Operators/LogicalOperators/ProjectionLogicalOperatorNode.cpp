@@ -45,6 +45,21 @@ const std::string ProjectionLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string ProjectionLogicalOperatorNode::getStringBasedSignature() {
+    std::stringstream ss;
+    std::vector<std::string> fields;
+    for (auto& field : outputSchema->fields) {
+        fields.push_back(field->name);
+    }
+    std::sort(fields.begin(), fields.end());
+    ss << "PROJECTION(";
+    for (auto field : fields) {
+        ss << " " << field << " ";
+    }
+    ss << ")." << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    return ss.str();
+}
+
 bool ProjectionLogicalOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
     outputSchema = Schema::create();
