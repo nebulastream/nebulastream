@@ -58,7 +58,7 @@ int main() {
     }
 
     auto benchmarkSchema =  Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
-
+    auto numBuffers = 1024;
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
     for (auto bufferSize : allBufferSizes) {
         BM_AddBenchmarkCustomBufferSize(
