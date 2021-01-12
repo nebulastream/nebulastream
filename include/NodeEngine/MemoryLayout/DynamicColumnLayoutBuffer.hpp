@@ -143,7 +143,7 @@ void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     auto address = &(byteBuffer[0]);
     size_t I = 0;
     auto fieldAddress = address + calcOffset(numberOfRecords, I);
-    std::apply([&I, &address, &fieldAddress, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(numberOfRecords, I), memcpy(fieldAddress, &args, fieldSizes->at(I)), ++I), ...);}, record);
+    std::apply([&I, &address, &fieldAddress, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(numberOfRecords, I), memcpy(fieldAddress, &args, fieldSizes[I]), ++I), ...);}, record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
 }
@@ -159,7 +159,7 @@ std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex)
     auto address = &(byteBuffer[0]);
     size_t I = 0;
     unsigned char* fieldAddress;
-    std::apply([&I, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(recordIndex, I), memcpy(&args, fieldAddress, fieldSizes->at(I)), ++I), ...);}, retTuple);
+    std::apply([&I, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(recordIndex, I), memcpy(&args, fieldAddress, fieldSizes[I]), ++I), ...);}, retTuple);
 
 
     return retTuple;

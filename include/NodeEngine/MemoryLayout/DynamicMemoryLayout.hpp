@@ -31,7 +31,7 @@ class DynamicMemoryLayout {
 
   public:
     DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t recordSize,
-                        std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes);
+                        std::vector<FIELD_SIZE>& fieldSizes);
 
     virtual DynamicMemoryLayoutPtr copy() const = 0;
     /**
@@ -44,13 +44,13 @@ class DynamicMemoryLayout {
 
     bool isCheckBoundaryFieldChecks() const;
     uint64_t getRecordSize() const;
-    const std::shared_ptr<std::vector<FIELD_SIZE>>& getFieldSizes() const;
+    const std::vector<FIELD_SIZE>& getFieldSizes() const;
   protected:
 
     explicit DynamicMemoryLayout();
     bool checkBoundaryFieldChecks;
     uint64_t recordSize;
-    std::shared_ptr<std::vector<FIELD_SIZE>> fieldSizes;
+    std::vector<FIELD_SIZE> fieldSizes;
 };
 
 }

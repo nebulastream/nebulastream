@@ -129,7 +129,7 @@ void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     auto address = &(byteBuffer[offSet]);
     size_t I = 0;
 //    writeTupleToBufferRowWise(record, &(byteBuffer[offSet]), fieldSizes);
-    std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(address, &args, fieldSizes->at(I)), address = address + fieldSizes->at(I), ++I), ...);}, record);
+    std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(address, &args, fieldSizes[I]), address = address + fieldSizes[I], ++I), ...);}, record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
 }
@@ -145,7 +145,7 @@ std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
 //    readTupleFromBufferRowWise(retTuple, &(byteBuffer[offSet]), fieldSizes);
     auto address = &(byteBuffer[offSet]);
     size_t I = 0;
-    std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(&args, address, fieldSizes->at(I)), address = address + fieldSizes->at(I), ++I), ...);}, retTuple);
+    std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(&args, address, fieldSizes[I]), address = address + fieldSizes[I], ++I), ...);}, retTuple);
     return retTuple;
 
 }

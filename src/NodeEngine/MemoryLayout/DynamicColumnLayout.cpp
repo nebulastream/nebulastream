@@ -24,12 +24,12 @@ namespace NES::NodeEngine {
 DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
-    this->fieldSizes = std::make_shared<std::vector<FIELD_SIZE>>();
+    this->fieldSizes = std::vector<FIELD_SIZE>();
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : schema->fields) {
         auto curFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
-        fieldSizes->emplace_back(curFieldSize);
+        fieldSizes.emplace_back(curFieldSize);
     }
 }
 
@@ -51,7 +51,7 @@ std::unique_ptr<DynamicLayoutBuffer> DynamicColumnLayout::map(TupleBuffer& tuple
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
     uint64_t offsetCounter = 0;
-    for (auto it = fieldSizes->begin(); it != fieldSizes->end(); ++it) {
+    for (auto it = fieldSizes.begin(); it != fieldSizes.end(); ++it) {
         columnOffsets.emplace_back(offsetCounter);
         offsetCounter += (*it) * capacity;
     }
