@@ -41,6 +41,14 @@ class LogicalOperatorFactory {
                                                      OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
+     * @brief Create a new stream rename operator.
+     * @param new stream name
+     * @return UnaryOperatorNodePtr
+     */
+    static UnaryOperatorNodePtr createRenameStreamOperator(const std::string newStreamName,
+                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
     * @brief Create a new logical projection operator.
     * @param expression list
     * @param id: the id of the operator if not defined then next free operator id is used.

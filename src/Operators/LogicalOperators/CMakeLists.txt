@@ -22,6 +22,7 @@ add_source_nes(
         BroadcastLogicalOperatorNode.cpp
         JoinLogicalOperatorNode.cpp
         WatermarkAssignerLogicalOperatorNode.cpp
+        RenameStreamOperatorNode.cpp
 )
 
 add_subdirectory(Arity)

@@ -35,11 +35,6 @@
 #endif// KAFKASINK_HPP
 #include <string>
 
-//namespace NES::Windowing {
-//class WatermarkStrategyDescriptor;
-//typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
-//}
-
 namespace NES {
 
 class OperatorNode;
@@ -87,6 +82,13 @@ class Query {
     static Query from(const std::string sourceStreamName);
 
     /**
+    * This looks ugly, but we can't reference to QueryPtr at this line.
+    * @param subQuery is the query to be merged
+    * @return
+    */
+    Query& merge(Query* subQuery);
+
+    /**
      * @brief this call projects out the attributes in the parameter list
      * @param attribute list
      * @return
@@ -102,13 +104,13 @@ class Query {
     }
     /**
      * This looks ugly, but we can't reference to QueryPtr at this line.
-     * @param subQuery is the query to be merged
+     * @param new stream name
      * @return
      */
-    Query& merge(Query* subQuery);
+    Query& as(const std::string newStreamName);
 
     /**
-     * This looks ugly, but we can't reference to QueryPtr at this line.
+     * @brief This methods add the join operator to a query
      * @param subQuery is the query to be merged
      * @return
      */
