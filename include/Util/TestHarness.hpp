@@ -174,15 +174,15 @@ class TestHarness {
 
         NES_INFO("QueryDeploymentTest: Remove query");
         if (!queryService->validateAndQueueStopRequest(queryId)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: cannot validateAndQueueStopRequest");
+            NES_THROW_RUNTIME_ERROR("TestHarness: cannot validateAndQueueStopRequest for query with id=" + queryId);
         }
         if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalog)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false");
+            NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " + queryId);
         }
 
         std::ifstream ifs(filePath.c_str());
         if (!ifs.good()) {
-            NES_WARNING("TestHarness:ifs.good() returns false");
+            NES_WARNING("TestHarness:ifs.good() returns false for query with id " + queryId + " file path=" + filePath);
         }
 
         std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
