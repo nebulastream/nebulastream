@@ -282,9 +282,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    Query subQuery = Query::from("car")
-                         .map(Attribute("value") = 40)
-                         .filter(Attribute("id") < 45);
+    Query subQuery = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45);
 
     Query query = Query::from("default_logical")
                       .merge(&subQuery)
@@ -315,9 +313,9 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -348,15 +346,13 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator)
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    Query subQuery = Query::from("car")
-        .map(Attribute("value") = 40)
-        .filter(Attribute("id") < 45);
+    Query subQuery = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45);
 
     Query query = Query::from("default_logical")
-        .map(Attribute("value") = 80)
-        .filter(Attribute("id") > 45)
-        .merge(&subQuery)
-        .sink(printSinkDescriptor);
+                      .map(Attribute("value") = 80)
+                      .filter(Attribute("id") > 45)
+                      .merge(&subQuery)
+                      .sink(printSinkDescriptor);
 
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -381,9 +377,9 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator)
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -445,9 +441,9 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -480,9 +476,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    Query subQuery = Query::from("car")
-                         .map(Attribute("value") = 90)
-                         .filter(Attribute("id") > 35);
+    Query subQuery = Query::from("car").map(Attribute("value") = 90).filter(Attribute("id") > 35);
 
     Query query = Query::from("default_logical")
                       .merge(&subQuery)
@@ -518,9 +512,9 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -557,8 +551,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    Query subQuery = Query::from("car")
-                         .filter(Attribute("id") > 35);
+    Query subQuery = Query::from("car").filter(Attribute("id") > 35);
 
     Query query = Query::from("default_logical")
                       .filter(Attribute("id") > 25)
@@ -593,12 +586,11 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     ++itr;
     const NodePtr srcOperatorSQ = (*itr);
 
-
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: "+(queryPlan)->toString());
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: "+(updatedPlan)->toString());
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
