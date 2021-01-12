@@ -1,4 +1,5 @@
 
+#include <Configs/ConfigOption.hpp>
 #include <Configs/ConfigOptions/SourceConfig.hpp>
 
 namespace NES {
@@ -8,8 +9,8 @@ SourceConfig::SourceConfig(NES::ConfigOption<std::string> sourceType, NES::Confi
                            NES::ConfigOption<std::string> physicalStreamName, NES::ConfigOption<std::string> logicalStreamName,
                            NES::ConfigOption<bool> skipHeader, NES::ConfigOption<std::string> logLevel)
     : sourceType(sourceType), sourceConfig(sourceConfig), sourceFrequency(sourceFrequency),
-      numberOfBuffersToProduce(numberOfBuffersToProduce), physicalStreamName(physicalStreamName),
-      logicalStreamName(logicalStreamName), skipHeader(skipHeader), logLevel(logLevel) {}
+      numberOfBuffersToProduce(numberOfBuffersToProduce), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
+      physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), skipHeader(skipHeader), logLevel(logLevel) {}
 
 //todo: add sanity checks to setters
 const ConfigOption<std::string>& NES::SourceConfig::getSourceType() const { return sourceType; }

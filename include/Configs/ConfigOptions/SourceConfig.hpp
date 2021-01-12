@@ -15,10 +15,9 @@ class SourceConfig {
   public:
     SourceConfig();
     SourceConfig(ConfigOption<std::string> sourceType, ConfigOption<std::string> sourceConfig,
-                      ConfigOption<uint64_t> sourceFrequency, ConfigOption<uint64_t> numberOfBuffersToProduce,
-                      ConfigOption<uint16_t> numberOfTuplesToProducePerBuffer, ConfigOption<std::string> physicalStreamName,
-                      ConfigOption<std::string> logicalStreamName, ConfigOption<bool> skipHeader,
-                      ConfigOption<std::string> logLevel);
+                 ConfigOption<uint64_t> sourceFrequency, ConfigOption<uint64_t> numberOfBuffersToProduce,
+                 ConfigOption<uint16_t> numberOfTuplesToProducePerBuffer, ConfigOption<std::string> physicalStreamName,
+                 ConfigOption<std::string> logicalStreamName, ConfigOption<bool> skipHeader, ConfigOption<std::string> logLevel);
 
     const ConfigOption<std::string>& getSourceType() const;
     void setSourceType(const ConfigOption<std::string>& sourceType);
@@ -40,42 +39,27 @@ class SourceConfig {
     void setLogLevel(const ConfigOption<std::string>& logLevel);
 
   private:
-    ConfigOption<std::string> sourceType =
-        ConfigOption("sourceType", std::string("NoSource"),
-                     "Type of the Source (available options: DefaultSource, CSVSource, BinarySource, YSBSource).",
-                     "string", ConfigType::DEFAULT, false);
-    ConfigOption<std::string> sourceConfig =
-        ConfigOption("sourceConfig", std::string("NoConfig"),
-                     "Source configuration. Options depend on source type. See Source Configurations on our wiki page for further details.",
-                     "string", ConfigType::DEFAULT, false);
+    ConfigOption<std::string> sourceType = ConfigOption(
+        "sourceType", std::string("NoSource"),
+        "Type of the Source (available options: DefaultSource, CSVSource, BinarySource, YSBSource).", "string", false);
+    ConfigOption<std::string> sourceConfig = ConfigOption(
+        "sourceConfig", std::string("NoConfig"),
+        "Source configuration. Options depend on source type. See Source Configurations on our wiki page for further details.",
+        "string", false);
     ConfigOption<uint64_t> sourceFrequency =
-        ConfigOption("sourceFrequency", uint64_t(0),
-                     "Sampling frequency of the source.",
-                     "uint64_t", ConfigType::DEFAULT, false);
+        ConfigOption("sourceFrequency", uint64_t(0), "Sampling frequency of the source.", "uint64_t", false);
     ConfigOption<uint64_t> numberOfBuffersToProduce =
-        ConfigOption("numberOfBuffersToProduce", uint64_t(1),
-                     "Number of buffers to produce.",
-                     "uint64_t", ConfigType::DEFAULT, false);
-    ConfigOption<uint16_t> numberOfTuplesToProducePerBuffer =
-        ConfigOption("numberOfTuplesToProducePerBuffer", uint16_t(0),
-                     "Number of tuples to produce per buffer.",
-                     "uint16_t", ConfigType::DEFAULT, false);
+        ConfigOption("numberOfBuffersToProduce", uint64_t(1), "Number of buffers to produce.", "uint64_t", false);
+    ConfigOption<uint16_t> numberOfTuplesToProducePerBuffer = ConfigOption(
+        "numberOfTuplesToProducePerBuffer", uint16_t(0), "Number of tuples to produce per buffer.", "uint16_t", false);
     ConfigOption<std::string> physicalStreamName =
-        ConfigOption("physicalStreamName", std::string(""),
-                     "Physical name of the stream.",
-                     "string", ConfigType::DEFAULT, false);
+        ConfigOption("physicalStreamName", std::string(""), "Physical name of the stream.", "string", false);
     ConfigOption<std::string> logicalStreamName =
-        ConfigOption("logicalStreamName", std::string(""),
-                     "Logical name of the stream.",
-                     "string", ConfigType::DEFAULT, false);
-    ConfigOption<bool> skipHeader =
-        ConfigOption("skipHeader", false,
-                     "Skip first line of the file.",
-                     "bool", ConfigType::DEFAULT, false);
+        ConfigOption("logicalStreamName", std::string(""), "Logical name of the stream.", "string", false);
+    ConfigOption<bool> skipHeader = ConfigOption("skipHeader", false, "Skip first line of the file.", "bool", false);
     ConfigOption<std::string> logLevel =
-        ConfigOption("logLevel", std::string("LOG_DEBUG"),
-                     "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ",
-                     "string", ConfigType::DEFAULT, false);
+        ConfigOption("logLevel", std::string("LOG_DEBUG"), "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ",
+                     "string", false);
 };
 
 }// namespace NES
