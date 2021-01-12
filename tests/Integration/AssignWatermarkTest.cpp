@@ -199,7 +199,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "1000,2000,1,36\n";
+                             "1000,2000,1,36\n"
+                             "2000,3000,1,72\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
