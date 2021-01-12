@@ -67,7 +67,8 @@ class TestHarness {
 
         // check if worker sourceIdx have been successfully started
         if (!workerAndStatusPair.at(sourceIdx).second){
-            workerAndStatusPair.at(sourceIdx).first->start(/**blocking**/ false, /**withConnect**/ true);
+            bool started = workerAndStatusPair.at(sourceIdx).first->start(/**blocking**/ false, /**withConnect**/ true);
+            workerAndStatusPair.at(sourceIdx).second = started;
         }
 
         auto* memArea = reinterpret_cast<uint8_t*>(malloc(sizeof(T)));
