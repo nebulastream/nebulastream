@@ -35,7 +35,6 @@ typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
  * 1. map("b" = "c" + "a") => map("b" = "a" + "c")
  * 2. filter("c" * "b" > "d" + "a") => filter("b" * "c" > "a" + "d")
  * 3. filter("c" * "b" > "d" + "a" and "a" < "b") => filter("a" < "b" and "b" * "c" > "a" + "d")
- * 4. project("c", "a", "b") => project ("a", "b", "c")
  */
 class AttributeSortRule : public BaseRefinementRule {
 
@@ -53,8 +52,8 @@ class AttributeSortRule : public BaseRefinementRule {
   private:
 
     /**
-     * @brief Alphabetically sort the attributes in the operator. This method expects operators of type filer, map, and project.
-     * @param logicalOperator: the vector of operators to sort
+     * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filer and map.
+     * @param logicalOperator: the operator to be sorted
      */
     void sortAttributesInOperator(OperatorNodePtr logicalOperator);
     void sortAttributesInExpressions(ExpressionNodePtr expression);

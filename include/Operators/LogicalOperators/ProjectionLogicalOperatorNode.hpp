@@ -48,6 +48,7 @@ class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
     OperatorNodePtr copy() override;
 
     std::vector<ExpressionItem> getExpressions();
+    std::string getStringBasedSignature() override;
 
   private:
     std::vector<ExpressionItem> expressions;

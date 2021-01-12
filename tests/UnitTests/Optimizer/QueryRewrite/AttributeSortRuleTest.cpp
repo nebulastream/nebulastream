@@ -56,11 +56,11 @@ class AttributeSortRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down FilterPushDownTest test class."); }
 };
 
-TEST_F(AttributeSortRuleTest, testPushingOneFilterBelowMap) {
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical").map(Attribute("value") = 40 + Attribute("id")).sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").map(Attribute("value") = 40 - Attribute("id")).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto attributeSortRule = AttributeSortRule::create();

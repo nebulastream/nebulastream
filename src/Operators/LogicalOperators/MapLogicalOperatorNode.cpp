@@ -68,8 +68,12 @@ bool MapLogicalOperatorNode::inferSchema() {
 
 const std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "MAP(" << id << mapExpression->toString() << ")";
+    ss << "MAP(" << id << ")";
     return ss.str();
+}
+
+std::string MapLogicalOperatorNode::getStringBasedSignature() {
+    return "MAP(" + mapExpression->toString() + ")." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
 }
 
 FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }

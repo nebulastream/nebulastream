@@ -47,6 +47,7 @@ class MapLogicalOperatorNode : public UnaryOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+    std::string getStringBasedSignature() override;
 
   private:
     FieldAssignmentExpressionNodePtr mapExpression;
