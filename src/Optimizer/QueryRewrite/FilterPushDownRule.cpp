@@ -73,7 +73,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
     while (!nodesToProcess.empty()) {
 
-        static bool isFilterAboveAMergeOperator { false };
+        static bool isFilterAboveAMergeOperator{false};
         NES_INFO("FilterPushDownRule: Get first operator for processing");
         NodePtr node = nodesToProcess.front();
         nodesToProcess.pop_front();
@@ -103,7 +103,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                     isFilterAboveAMergeOperator = false;
                     continue;
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
-                      && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
+                             && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
@@ -125,7 +125,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                 continue;
             } else {
                 std::vector<NodePtr> children = node->getChildren();
-                if (isFilterAboveAMergeOperator) { //To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
+                if (isFilterAboveAMergeOperator) {//To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
                     std::copy(children.begin(), children.end(), std::front_inserter(nodesToProcess));
                 } else {
                     std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
@@ -136,7 +136,8 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             isFilterAboveAMergeOperator = true;
             std::vector<NodePtr> childrenOfMergeOP = node->getChildren();
             std::copy(childrenOfMergeOP.begin(), childrenOfMergeOP.end(), std::front_inserter(nodesToProcess));
-            std::sort(nodesToProcess.begin(), nodesToProcess.end()); //To ensure consistency in nodes traversed below a merge operator
+            std::sort(nodesToProcess.begin(),
+                      nodesToProcess.end());//To ensure consistency in nodes traversed below a merge operator
         }
     }
 

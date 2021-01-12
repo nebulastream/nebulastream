@@ -535,7 +535,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     EXPECT_TRUE(retStopCord);
     NES_INFO("MergeDeploymentTest: Test finished");
 }
-    
+
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
@@ -608,7 +608,6 @@ TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest: Test finished");
 }
 
-
 /**
  * Test deploying filter-push-down on merge query with source on two different worker node using top down strategy.
  * Case: 2 filter operators are above a merge operator and will be pushed down towards both of the available sources.
@@ -651,8 +650,8 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     PhysicalStreamConfigPtr confStreamRuby =
         PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
 
-    PhysicalStreamConfigPtr confStreamDiamond =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_diamond", "diamond", false);
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
+                                                                             1, "physical_diamond", "diamond", false);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);
@@ -661,16 +660,16 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
-    string query =
-        "Query::from(\"ruby\")"
-                ".filter(Attribute(\"id\") < 12)"
-                ".merge(Query::from(\"diamond\")"
-                                ".filter(Attribute(\"value\") < 15))"
-                                ".map(Attribute(\"timestamp\") = 1)"
-                ".filter(Attribute(\"value\") < 17)"
-                ".map(Attribute(\"timestamp\") = 2)"
-                ".filter(Attribute(\"value\") > 1)"
-                ".sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"ruby\")"
+                   ".filter(Attribute(\"id\") < 12)"
+                   ".merge(Query::from(\"diamond\")"
+                   ".filter(Attribute(\"value\") < 15))"
+                   ".map(Attribute(\"timestamp\") = 1)"
+                   ".filter(Attribute(\"value\") < 17)"
+                   ".map(Attribute(\"timestamp\") = 2)"
+                   ".filter(Attribute(\"value\") > 1)"
+                   ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -682,57 +681,60 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    std::string expectedContentSubQry =
-        "+----------------------------------------------------+\n"
-        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|2|1|2|\n"
-        "|2|11|2|\n"
-        "|2|16|2|\n"
-        "|3|1|2|\n"
-        "|3|11|2|\n"
-        "|3|1|2|\n"
-        "|3|1|2|\n"
-        "|4|1|2|\n"
-        "|5|1|2|\n"
-        "|6|1|2|\n"
-        "|7|1|2|\n"
-        "|8|1|2|\n"
-        "|9|1|2|\n"
-        "|10|1|2|\n"
-        "|11|1|2|\n"
-        "|12|1|2|\n"
-        "|13|1|2|\n"
-        "|14|1|2|\n"
-        "+----------------------------------------------------+\n";
-    std::string expectedContentMainQry =
-        "+----------------------------------------------------+\n"
-        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|2|1|2|\n"
-        "|2|11|2|\n"
-        "|3|1|2|\n"
-        "|3|11|2|\n"
-        "|3|1|2|\n"
-        "|3|1|2|\n"
-        "|4|1|2|\n"
-        "|5|1|2|\n"
-        "|6|1|2|\n"
-        "|7|1|2|\n"
-        "|8|1|2|\n"
-        "|9|1|2|\n"
-        "|10|1|2|\n"
-        "|11|1|2|\n"
-        "|12|1|2|\n"
-        "|13|1|2|\n"
-        "|14|1|2|\n"
-        "|15|1|2|\n"
-        "|16|1|2|\n"
-        "+----------------------------------------------------+\n";
+    std::string expectedContentSubQry = "+----------------------------------------------------+\n"
+                                        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                        "+----------------------------------------------------+\n"
+                                        "|2|1|2|\n"
+                                        "|2|11|2|\n"
+                                        "|2|16|2|\n"
+                                        "|3|1|2|\n"
+                                        "|3|11|2|\n"
+                                        "|3|1|2|\n"
+                                        "|3|1|2|\n"
+                                        "|4|1|2|\n"
+                                        "|5|1|2|\n"
+                                        "|6|1|2|\n"
+                                        "|7|1|2|\n"
+                                        "|8|1|2|\n"
+                                        "|9|1|2|\n"
+                                        "|10|1|2|\n"
+                                        "|11|1|2|\n"
+                                        "|12|1|2|\n"
+                                        "|13|1|2|\n"
+                                        "|14|1|2|\n"
+                                        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry = "+----------------------------------------------------+\n"
+                                         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                         "+----------------------------------------------------+\n"
+                                         "|2|1|2|\n"
+                                         "|2|11|2|\n"
+                                         "|3|1|2|\n"
+                                         "|3|11|2|\n"
+                                         "|3|1|2|\n"
+                                         "|3|1|2|\n"
+                                         "|4|1|2|\n"
+                                         "|5|1|2|\n"
+                                         "|6|1|2|\n"
+                                         "|7|1|2|\n"
+                                         "|8|1|2|\n"
+                                         "|9|1|2|\n"
+                                         "|10|1|2|\n"
+                                         "|11|1|2|\n"
+                                         "|12|1|2|\n"
+                                         "|13|1|2|\n"
+                                         "|14|1|2|\n"
+                                         "|15|1|2|\n"
+                                         "|16|1|2|\n"
+                                         "+----------------------------------------------------+\n";
 
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): content=" << content);
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentSubQry=" << expectedContentSubQry);
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentMainQry=" << expectedContentMainQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): content="
+             << content);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentSubQry="
+             << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentMainQry="
+             << expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
@@ -753,7 +755,6 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     EXPECT_TRUE(retStopCord);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Test finished");
 }
-
 
 /**
  * Test deploying filter-push-down on merge query with source on two different worker node using top down strategy.
@@ -797,8 +798,8 @@ TEST_F(MergeDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     PhysicalStreamConfigPtr confStreamRuby =
         PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
 
-    PhysicalStreamConfigPtr confStreamDiamond =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_diamond", "diamond", false);
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
+                                                                             1, "physical_diamond", "diamond", false);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);
@@ -807,14 +808,14 @@ TEST_F(MergeDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
-    string query =
-        "Query::from(\"ruby\")"
-                ".merge(Query::from(\"diamond\")"
-                                ".map(Attribute(\"timestamp\") = 1)"
-                                ".filter(Attribute(\"id\") > 3))"
-                ".map(Attribute(\"timestamp\") = 2)"
-                ".filter(Attribute(\"id\") > 4)"
-                ".sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"ruby\")"
+                   ".merge(Query::from(\"diamond\")"
+                   ".map(Attribute(\"timestamp\") = 1)"
+                   ".filter(Attribute(\"id\") > 3))"
+                   ".map(Attribute(\"timestamp\") = 2)"
+                   ".filter(Attribute(\"id\") > 4)"
+                   ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -827,28 +828,30 @@ TEST_F(MergeDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    std::string expectedContentSubQry =
-        "+----------------------------------------------------+\n"
-        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|1|12|2|\n"
-        "|2|11|2|\n"
-        "|2|16|2|\n"
-        "|3|11|2|\n"
-        "+----------------------------------------------------+\n";
-    std::string expectedContentMainQry =
-        "+----------------------------------------------------+\n"
-        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|1|12|2|\n"
-        "|2|11|2|\n"
-        "|2|16|2|\n"
-        "|3|11|2|\n"
-        "+----------------------------------------------------+\n";
+    std::string expectedContentSubQry = "+----------------------------------------------------+\n"
+                                        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                        "+----------------------------------------------------+\n"
+                                        "|1|12|2|\n"
+                                        "|2|11|2|\n"
+                                        "|2|16|2|\n"
+                                        "|3|11|2|\n"
+                                        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry = "+----------------------------------------------------+\n"
+                                         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                         "+----------------------------------------------------+\n"
+                                         "|1|12|2|\n"
+                                         "|2|11|2|\n"
+                                         "|2|16|2|\n"
+                                         "|3|11|2|\n"
+                                         "+----------------------------------------------------+\n";
 
     NES_INFO("MergeDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentStreams): content=" << content);
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentSubQry=" << expectedContentSubQry);
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentMainQry=" << expectedContentMainQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentSubQry="
+             << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentMainQry="
+             << expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
@@ -912,8 +915,8 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     PhysicalStreamConfigPtr confStreamRuby =
         PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
 
-    PhysicalStreamConfigPtr confStreamDiamond =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_diamond", "diamond", false);
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
+                                                                             1, "physical_diamond", "diamond", false);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);
@@ -922,15 +925,15 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
-    string query =
-        "Query::from(\"ruby\")"
-                ".map(Attribute(\"timestamp\") = 2)"
-                ".filter(Attribute(\"value\") < 9)"
-                ".merge(Query::from(\"diamond\")"
-                                ".map(Attribute(\"timestamp\") = 1)"
-                                ".filter(Attribute(\"id\") < 12)"
-                                ".filter(Attribute(\"value\") < 6))"
-                ".sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"ruby\")"
+                   ".map(Attribute(\"timestamp\") = 2)"
+                   ".filter(Attribute(\"value\") < 9)"
+                   ".merge(Query::from(\"diamond\")"
+                   ".map(Attribute(\"timestamp\") = 1)"
+                   ".filter(Attribute(\"id\") < 12)"
+                   ".filter(Attribute(\"value\") < 6))"
+                   ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -943,45 +946,47 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    std::string expectedContentSubQry =
-        "+----------------------------------------------------+\n"
-        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|2|\n"
-        "|1|12|2|\n"
-        "|1|4|2|\n"
-        "|2|1|2|\n"
-        "|2|11|2|\n"
-        "|2|16|2|\n"
-        "|3|1|2|\n"
-        "|3|11|2|\n"
-        "|3|1|2|\n"
-        "|3|1|2|\n"
-        "|4|1|2|\n"
-        "|5|1|2|\n"
-        "|6|1|2|\n"
-        "|7|1|2|\n"
-        "|8|1|2|\n"
-        "+----------------------------------------------------+\n";
-    std::string expectedContentMainQry =
-        "+----------------------------------------------------+\n"
-        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|1|\n"
-        "|1|4|1|\n"
-        "|2|1|1|\n"
-        "|2|11|1|\n"
-        "|3|1|1|\n"
-        "|3|11|1|\n"
-        "|3|1|1|\n"
-        "|3|1|1|\n"
-        "|4|1|1|\n"
-        "|5|1|1|\n"
-        "+----------------------------------------------------+\n";
+    std::string expectedContentSubQry = "+----------------------------------------------------+\n"
+                                        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                        "+----------------------------------------------------+\n"
+                                        "|1|1|2|\n"
+                                        "|1|12|2|\n"
+                                        "|1|4|2|\n"
+                                        "|2|1|2|\n"
+                                        "|2|11|2|\n"
+                                        "|2|16|2|\n"
+                                        "|3|1|2|\n"
+                                        "|3|11|2|\n"
+                                        "|3|1|2|\n"
+                                        "|3|1|2|\n"
+                                        "|4|1|2|\n"
+                                        "|5|1|2|\n"
+                                        "|6|1|2|\n"
+                                        "|7|1|2|\n"
+                                        "|8|1|2|\n"
+                                        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry = "+----------------------------------------------------+\n"
+                                         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                         "+----------------------------------------------------+\n"
+                                         "|1|1|1|\n"
+                                         "|1|4|1|\n"
+                                         "|2|1|1|\n"
+                                         "|2|11|1|\n"
+                                         "|3|1|1|\n"
+                                         "|3|11|1|\n"
+                                         "|3|1|1|\n"
+                                         "|3|1|1|\n"
+                                         "|4|1|1|\n"
+                                         "|5|1|1|\n"
+                                         "+----------------------------------------------------+\n";
 
     NES_INFO("MergeDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams): content=" << content);
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentSubQry=" << expectedContentSubQry);
-    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): expectedContentMainQry=" << expectedContentMainQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentSubQry="
+             << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentMainQry="
+             << expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
