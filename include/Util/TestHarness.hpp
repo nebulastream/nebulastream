@@ -57,8 +57,17 @@ class TestHarness {
             NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
         }
 
+        if (!std::is_class<T>::value){
+            NES_THROW_RUNTIME_ERROR("TestHarness: tuples must be instances of struct");
+        }
+
         if (sizeof(T) != sourceSchemas.at(sourceIdx)->getSchemaSizeInBytes()){
             NES_THROW_RUNTIME_ERROR("TestHarness: tuple size and schema size does not match");
+        }
+
+        // check if worker sourceIdx have been successfully started
+        if (!workerAndStatusPair.at(sourceIdx).second){
+            workerAndStatusPair.at(sourceIdx).first->start(/**blocking**/ false, /**withConnect**/ true);
         }
 
         auto* memArea = reinterpret_cast<uint8_t*>(malloc(sizeof(T)));
@@ -80,13 +89,11 @@ class TestHarness {
             crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
         }
 
-
-        workerCount++;
+        // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
         auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress,
-                                               crdPort + (workerCount)*20, crdPort + (workerCount)*20+1,
+                                               crdPort + (workerAndStatusPair.size()+1)*20, crdPort + (workerAndStatusPair.size()+1)*20+1,
                                                NodeType::Sensor);
-        workerPtrs.push_back(wrk);
-        wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        workerAndStatusPair.push_back(std::pair<NesWorkerPtr, bool>(wrk, false));
 
         physicalStreamNames.push_back(physicalStreamName);
         logicalStreamNames.push_back(logicalStreamName);
@@ -97,7 +104,7 @@ class TestHarness {
     }
 
     uint64_t getWorkerCount() {
-        return workerPtrs.size();
+        return workerAndStatusPair.size();
     }
 
     /*
@@ -106,8 +113,12 @@ class TestHarness {
          * @return output string
          */
     std::string getOutput(uint64_t bufferToExpect) {
-        if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly");
+        if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerAndStatusPair.size() == 0) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
+                                    + std::to_string(physicalStreamNames.size()) + " number of added logical streams = "
+                                    + std::to_string(logicalStreamNames.size()) + " number of added workers = "
+                                    + std::to_string(workerAndStatusPair.size()) + " buffers to expect = "
+                                    + std::to_string(bufferToExpect));
         }
 
         QueryServicePtr queryService = crd->getQueryService();
@@ -127,7 +138,7 @@ class TestHarness {
 
             AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
                 "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
-            workerPtrs[i]->registerPhysicalStream(conf);
+            workerAndStatusPair[i].first->registerPhysicalStream(conf);
         }
 
         // local fs
@@ -135,7 +146,6 @@ class TestHarness {
         remove(filePath.c_str());
 
         //register query
-        // TODO: maybe move this Query::from to test driver, as tester may want to use more than 1 source
         std::string queryString = operatorToTest + R"(.sink(FileSinkDescriptor::create(")" + filePath
             + R"(" , "CSV_FORMAT", "APPEND"));)";
         QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
@@ -146,7 +156,8 @@ class TestHarness {
         }
 
         if (!TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, bufferToExpect)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: checkCompleteOrTimeout returns false");
+            NES_THROW_RUNTIME_ERROR("TestHarness: checkCompleteOrTimeout returns false: queryId=" + std::to_string(queryId)
+                                    + " number of buffers to expect=" + std::to_string(bufferToExpect));
         }
 
         NES_INFO("QueryDeploymentTest: Remove query");
@@ -164,8 +175,9 @@ class TestHarness {
 
         std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-        for (NesWorkerPtr wrk : workerPtrs) {
-            wrk->stop(false);
+        for (std::pair<NesWorkerPtr, bool> wrkPair : workerAndStatusPair) {
+            bool stopped = wrkPair.first->stop(false);
+            wrkPair.second = stopped;
         }
         crd->stopCoordinator(false);
 
@@ -176,12 +188,11 @@ class TestHarness {
   private:
     NesCoordinatorPtr crd;
     uint64_t crdPort;
-    uint64_t workerCount;
     std::string ipAddress;
 
     std::string operatorToTest;
 
-    std::vector<NesWorkerPtr> workerPtrs;
+    std::vector<std::pair<NesWorkerPtr, bool>> workerAndStatusPair;
     std::vector<std::vector<uint8_t*>> records;
     std::vector<uint64_t> counters;
     std::vector<SchemaPtr> sourceSchemas;
