@@ -65,12 +65,6 @@ class TestHarness {
             NES_THROW_RUNTIME_ERROR("TestHarness: tuple size and schema size does not match");
         }
 
-        // check if worker sourceIdx have been successfully started
-        if (!workerAndStatusPair.at(sourceIdx).second){
-            bool started = workerAndStatusPair.at(sourceIdx).first->start(/**blocking**/ false, /**withConnect**/ true);
-            workerAndStatusPair.at(sourceIdx).second = started;
-        }
-
         auto* memArea = reinterpret_cast<uint8_t*>(malloc(sizeof(T)));
         memcpy(memArea, reinterpret_cast<uint8_t*>(&element), sizeof(T));
         records[sourceIdx].push_back(memArea);
@@ -107,16 +101,17 @@ class TestHarness {
 
         // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
         auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress,
-                                               crdPort + (workerAndStatusPair.size()+1)*20, crdPort + (workerAndStatusPair.size()+1)*20+1,
+                                               crdPort + (workerPtrs.size()+1)*20, crdPort + (workerPtrs.size()+1)*20+1,
                                                NodeType::Sensor);
-        workerAndStatusPair.push_back(std::pair<NesWorkerPtr, bool>(wrk, false));
+        wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        workerPtrs.push_back(wrk);
 
         std::vector<uint8_t*> currentSourceRecords;
         records.push_back(currentSourceRecords);
     }
 
     uint64_t getWorkerCount() {
-        return workerAndStatusPair.size();
+        return workerPtrs.size();
     }
 
     /*
@@ -125,11 +120,11 @@ class TestHarness {
          * @return output string
          */
     std::string getOutput(uint64_t bufferToExpect) {
-        if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerAndStatusPair.size() == 0) {
+        if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
                                     + std::to_string(physicalStreamNames.size()) + " number of added logical streams = "
                                     + std::to_string(logicalStreamNames.size()) + " number of added workers = "
-                                    + std::to_string(workerAndStatusPair.size()) + " buffers to expect = "
+                                    + std::to_string(workerPtrs.size()) + " buffers to expect = "
                                     + std::to_string(bufferToExpect));
         }
 
@@ -150,7 +145,7 @@ class TestHarness {
 
             AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
                 "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
-            workerAndStatusPair[i].first->registerPhysicalStream(conf);
+            workerPtrs[i]->registerPhysicalStream(conf);
         }
 
         // local fs
@@ -187,9 +182,8 @@ class TestHarness {
 
         std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-        for (std::pair<NesWorkerPtr, bool> wrkPair : workerAndStatusPair) {
-            bool stopped = wrkPair.first->stop(false);
-            wrkPair.second = stopped;
+        for (NesWorkerPtr wrk : workerPtrs) {
+            wrk->stop(false);
         }
         crd->stopCoordinator(false);
 
@@ -204,7 +198,7 @@ class TestHarness {
 
     std::string operatorToTest;
 
-    std::vector<std::pair<NesWorkerPtr, bool>> workerAndStatusPair;
+    std::vector<NesWorkerPtr> workerPtrs;
     std::vector<std::vector<uint8_t*>> records;
     std::vector<uint64_t> counters;
     std::vector<SchemaPtr> sourceSchemas;
