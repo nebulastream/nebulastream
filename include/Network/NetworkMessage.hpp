@@ -164,8 +164,8 @@ class DataBufferMessage {
     const uint64_t getOriginId() const { return originId; }
 
     /**
-     * @brief get the origin id within the current BufferMessage
-    * @return the origin id
+     * @brief get the watermark of the current BufferMessage
+    * @return the watermark
     */
     const uint64_t getWatermark() const { return watermark; }
 
