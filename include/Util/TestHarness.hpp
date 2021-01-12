@@ -86,19 +86,30 @@ class TestHarness {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
+        // Check if logical stream already exists
         if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)){
+            NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
+                      << logicalStreamName);
             crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
+        } else {
+            // Check if it has the same schema
+            if(!crd->getStreamCatalog()->getSchemaForLogicalStream(logicalStreamName)->equals(schema, true)){
+                NES_TRACE("TestHarness: logical source " << logicalStreamName << " exists in the stream catalog with "
+                                 "different schema, replacing it with a new schema");
+                crd->getStreamCatalog()->removeLogicalStream(logicalStreamName);
+                crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
+            }
         }
+
+        physicalStreamNames.push_back(physicalStreamName);
+        logicalStreamNames.push_back(logicalStreamName);
+        sourceSchemas.push_back(schema);
 
         // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
         auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress,
                                                crdPort + (workerAndStatusPair.size()+1)*20, crdPort + (workerAndStatusPair.size()+1)*20+1,
                                                NodeType::Sensor);
         workerAndStatusPair.push_back(std::pair<NesWorkerPtr, bool>(wrk, false));
-
-        physicalStreamNames.push_back(physicalStreamName);
-        logicalStreamNames.push_back(logicalStreamName);
-        sourceSchemas.push_back(schema);
 
         std::vector<uint8_t*> currentSourceRecords;
         records.push_back(currentSourceRecords);
