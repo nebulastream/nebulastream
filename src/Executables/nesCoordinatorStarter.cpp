@@ -24,6 +24,8 @@
  *
  ********************************************************/
 #include <Components/NesCoordinator.hpp>
+#include <Configs/ConfigOption.hpp>
+#include <Configs/ConfigOptions/CoordinatorConfig.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hh>
@@ -57,6 +59,7 @@ int main(int argc, const char* argv[]) {
     std::string restIp = "127.0.0.1";
     std::string coordinatorIp = "127.0.0.1";
     std::string logLevel = "LOG_DEBUG";
+    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel(logLevel));
 
@@ -109,35 +112,23 @@ int main(int argc, const char* argv[]) {
             NES_ERROR("NESWORKERSTARTER: Configuration file not found at: " << configPath);
             return EXIT_FAILURE;
         }
-        Yaml::Node config;
-        Yaml::Parse(config, configPath.c_str());
 
-        // Initializing IPs and Ports
-        restPort = config["restPort"].As<uint16_t>();
-        rpcPort = config["rpcPort"].As<uint16_t>();
-        dataPort = config["dataPort"].As<uint16_t>();
-        restIp = config["restIp"].As<string>();
-        coordinatorIp = config["coordinatorIp"].As<string>();
-        if (config["numberOfSlots"].As<uint16_t>() != 0) {
-            numberOfSlots = config["numberOfSlots"].As<uint16_t>();
-        }
-        enableQueryMerging = config["enableQueryMerging"].As<bool>();
-        logLevel = config["logLevel"].As<string>();
+        coordinatorConfig->overwriteConfigWithYAMLFileInput(configPath);
     }
 
-    NES::setLogLevel(NES::getStringAsDebugLevel(logLevel));
-
-    NES_INFO("Read Coordinator Config. restPort: " << restPort << " , rpcPort: " << rpcPort << " , logLevel: " << logLevel
-                                                   << " restIp: " << restIp << " coordinatorIp: " << coordinatorIp
-                                                   << " enableQueryMerging: " << enableQueryMerging);
+    //NES::setLogLevel(NES::getStringAsDebugLevel(coordinatorConfig->getLogLevel().getValueAsString()));
 
     NES_INFO("creating coordinator");
-    NesCoordinatorPtr crd =
-        std::make_shared<NesCoordinator>(restIp, restPort, coordinatorIp, rpcPort, numberOfSlots, enableQueryMerging);
+    /*NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig->getRestIp().getValueAsUint16_t(), coordinatorConfig->getRestPort().getValueAsUint16_t(),
+                                                                              coordinatorConfig->getCoordinatorIp().getValueAsString(), coordinatorConfig->getRpcPort().getValueAsUint16_t(),
+                                                                              coordinatorConfig->getNumberOfSlots().getValueAsUint16_t(), coordinatorConfig->getEnableQueryMerging().getValueAsBool());*/
 
-    NES_INFO("start coordinator with RestIp=" << restIp << " restPort=" << restPort << " coordinatorIp=" << coordinatorIp
-                                              << " with rpc port " << rpcPort << " numberOfSlots=" << numberOfSlots);
-    crd->startCoordinator(/**blocking**/ true);//blocking call
-    crd->stopCoordinator(true);
+    /*NES_INFO("start coordinator with RestIp=" << coordinatorConfig->getRestIp().getValue() << " restPort="
+                                                               << coordinatorConfig->getRestPort().getValue()
+                                              << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp().getValue() << " with rpc port "
+                                              << coordinatorConfig->getRpcPort().getValue()
+                                              << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots().getValue());*/
+    //    crd->startCoordinator(/**blocking**/ true);//blocking call
+    //    crd->stopCoordinator(true);
     NES_INFO("coordinator started");
 }
