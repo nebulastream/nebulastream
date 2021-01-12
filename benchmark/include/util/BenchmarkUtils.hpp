@@ -131,12 +131,12 @@ class BenchmarkUtils {
                             for (auto sourceCnt : allDataSources) {                                                              \
                                                                                                                                      \
                                     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();                             \
-                                    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads, bufferSize); \
+                                    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads, bufferSize, numBuffers); \
                                                                                                                                      \
                                     BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                     BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
                                                                                                                                      \
-                                    std::vector<QueryStatistics*> statisticsVec;                                                     \
+                                    std::vector<NodeEngine::QueryStatistics*> statisticsVec;                                                     \
                                     NES_WARNING("Starting benchmark with ingestRate=" + std::to_string(ingestionRate) + ", "         \
                                                 + "singleExpSec=" + std::to_string(BenchmarkUtils::runSingleExperimentSeconds)       \
                                                 + ", " + "benchPeriod=" + std::to_string(BenchmarkUtils::periodLengthInSeconds)      \
@@ -190,7 +190,8 @@ class BenchmarkUtils {
  */
 #define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
 {                                                                                                                            \
-    auto bufferSize = NodeEngine::DEFAULT_BUFFER_SIZE;                                                                       \
+    auto bufferSize = 4096;                                                                       \
+    auto numBuffers = 1024;                                                                                                                             \
     BM_AddBenchmarkCustomBufferSize(benchmarkName,                                                                           \
                                     benchmarkQuery,                                                                          \
                                     benchmarkSource,                                                                         \
