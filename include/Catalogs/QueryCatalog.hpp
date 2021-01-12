@@ -35,7 +35,7 @@ namespace NES {
  *  - TODO: does not differ between deployed and started
  *
  */
-class  QueryCatalog {
+class QueryCatalog {
   public:
     QueryCatalog();
     ~QueryCatalog();
