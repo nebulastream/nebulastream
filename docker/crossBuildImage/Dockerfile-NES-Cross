@@ -1,8 +1,14 @@
 FROM ubuntu:20.04
 
 COPY toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
+COPY toolchain-aarch64-gcc.cmake toolchain-aarch64-gcc.cmake
+COPY CMakeLists.txt CMakeLists.txt
+COPY nesCoordinator nesCoordinator
+COPY nesWorker nesWorker
+
 RUN mkdir -p /opt/toolchain && \
-cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake
+cp toolchain-aarch64-llvm.cmake /opt/toolchain/toolchain-aarch64-llvm.cmake && \
+cp toolchain-aarch64-gcc.cmake /opt/toolchain/toolchain-aarch64-gcc.cmake
 
 RUN sed -i -- 's|deb http|deb [arch=amd64] http|g' /etc/apt/sources.list && \
 cp /etc/apt/sources.list /etc/apt/sources.list.d/ports.list && \
@@ -15,13 +21,16 @@ apt-get update
 RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -o APT::Immediate-Configure=false -qq \
   build-essential \
   ca-certificates \
-  llvm \
   clang \
+  clang-format \
   lld \
+  llvm \
+  llvm-dev \
   libssl-dev \
   crossbuild-essential-arm64 \
   libstdc++6-arm64-cross \
-  qemu-system \
+  qemu \
+  qemu-utils \
   cmake \
   git \
   python3-dev \
@@ -43,13 +52,6 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -o 
   z3:arm64 \
   libz3-dev:arm64 && \
   apt-get clean -qq
-
-RUN update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
-    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
-    update-alternatives --set cc /usr/bin/clang && \
-    update-alternatives --set c++ /usr/bin/clang++
-
-ENV PATH="/opt/toolchain/bin:${PATH}"
 
 RUN mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \
 mkdir -p /opt/toolchain && \
@@ -99,18 +101,23 @@ cp -r -v -L /usr/lib/llvm-10* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/gcc/aarch64-linux-gnu/9* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libelf* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
-sed -i -- 's|/lib/aarch64-linux-gnu/|/aarch64-linux-gnu/usr/lib/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
-sed -i -- 's|/include/|/aarch64-linux-gnu/usr/include/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake
+sed -i -- 's|/lib/aarch64-linux-gnu/|/usr/lib/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
+sed -i -- 's|/include|/usr/include|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake
 
 RUN cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
 cd grpc && git submodule update --init --recursive --jobs 1 && mkdir -p build && cd build && \
 cmake .. -DCMAKE_BUILD_TYPE=Release -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_SSL_PROVIDER=package && \
 make -j2 install && cd .. && rm -rf build && mkdir -p build && cd build && \
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-gcc.cmake \
 -DCMAKE_INSTALL_PREFIX=/opt/sysroots/aarch64-linux-gnu/ && \
 make -j2 install && cd ../.. && rm -rf grpc
 
-RUN service ssh start && useradd -m nes && yes password | passwd nes
+RUN update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
+    update-alternatives --set cc /usr/bin/clang && \
+    update-alternatives --set c++ /usr/bin/clang++
+
+ENV PATH="/opt/toolchain/bin:${PATH}"
 
 ADD ./entrypoint-nes-cross.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

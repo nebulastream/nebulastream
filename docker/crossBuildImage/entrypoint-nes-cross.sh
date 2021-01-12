@@ -24,8 +24,8 @@ then
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
       -DBoost_NO_SYSTEM_PATHS=TRUE \
-      -DBoost_INCLUDE_DIR="/opt/sysroots/aarch64-linux-gnu/include/" \
-      -DBoost_LIBRARY_DIR="/opt/sysroots/aarch64-linux-gnu/lib/" \
+      -DBoost_INCLUDE_DIR="/opt/sysroots/aarch64-linux-gnu/usr/include/" \
+      -DBoost_LIBRARY_DIR="/opt/sysroots/aarch64-linux-gnu/usr/lib/" \
       -DCPPRESTSDK_DIR="/usr/lib/aarch64-linux-gnu/cmake/" \
       -DNES_USE_OPC=0 \
       -DNES_USE_ADAPTIVE=0
