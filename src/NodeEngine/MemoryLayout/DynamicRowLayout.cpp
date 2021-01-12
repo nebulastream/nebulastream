@@ -25,15 +25,15 @@ namespace NES::NodeEngine {
 DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout(){
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
-    this->fieldOffSets = std::make_shared<std::vector<FIELD_OFFSET>>();
-    this->fieldSizes = std::make_shared<std::vector<FIELD_SIZE>>();
+    this->fieldOffSets = std::vector<FIELD_OFFSET>();
+    this->fieldSizes = std::vector<FIELD_SIZE>();
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     uint64_t offsetCounter = 0;
     for (auto const& field : schema->fields) {
         auto curFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
-        fieldSizes->emplace_back(curFieldSize);
-        fieldOffSets->emplace_back(offsetCounter);
+        fieldSizes.emplace_back(curFieldSize);
+        fieldOffSets.emplace_back(offsetCounter);
         offsetCounter += curFieldSize;
     }
 }
@@ -57,5 +57,5 @@ std::unique_ptr<DynamicLayoutBuffer> DynamicRowLayout::map(TupleBuffer& tupleBuf
 
 
 DynamicMemoryLayoutPtr DynamicRowLayout::copy() const { return std::make_shared<DynamicRowLayout>(*this); }
-const std::shared_ptr<std::vector<FIELD_SIZE>>& DynamicRowLayout::getFieldOffSets() const { return fieldOffSets; }
+const std::vector<FIELD_SIZE>& DynamicRowLayout::getFieldOffSets() const { return fieldOffSets; }
 }
