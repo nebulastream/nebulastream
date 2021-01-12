@@ -97,7 +97,7 @@ cp -r -v -L /usr/lib/aarch64-linux-gnu/cmake/cpprestsdk* /opt/sysroots/aarch64-l
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libcrypto* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libssl* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
-cp -r -v -L /usr/lib/llvm-10* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
+cp -r -v -L -fd /usr/lib/llvm-10* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/gcc/aarch64-linux-gnu/9* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libelf* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
