@@ -6,6 +6,7 @@
 #define NES_SOURCECONFIG_HPP
 
 #include <Configs/ConfigOption.hpp>
+#include <map>
 #include <string>
 
 namespace NES {
@@ -14,29 +15,29 @@ class SourceConfig {
 
   public:
     SourceConfig();
-    SourceConfig(ConfigOption<std::string> sourceType, ConfigOption<std::string> sourceConfig,
-                 ConfigOption<uint64_t> sourceFrequency, ConfigOption<uint64_t> numberOfBuffersToProduce,
-                 ConfigOption<uint16_t> numberOfTuplesToProducePerBuffer, ConfigOption<std::string> physicalStreamName,
-                 ConfigOption<std::string> logicalStreamName, ConfigOption<bool> skipHeader, ConfigOption<std::string> logLevel);
+
+    //void overwriteConfigWithYAMLFileInput(string filePath, Yaml::Node config);
+    void overwriteConfigWithCommandLineInput(map<string,string> inputParams);
+    void resetSourceOptions();
 
     const ConfigOption<std::string>& getSourceType() const;
-    void setSourceType(const ConfigOption<std::string>& sourceType);
+    void setSourceType(const string& sourceType);
     const ConfigOption<std::string>& getSourceConfig() const;
-    void setSourceConfig(const ConfigOption<std::string>& sourceConfig);
+    void setSourceConfig(const std::string& sourceConfig);
     const ConfigOption<uint64_t>& getSourceFrequency() const;
-    void setSourceFrequency(const ConfigOption<uint64_t>& sourceFrequency);
+    void setSourceFrequency(const uint64_t& sourceFrequency);
     const ConfigOption<uint64_t>& getNumberOfBuffersToProduce() const;
-    void setNumberOfBuffersToProduce(const ConfigOption<uint64_t>& numberOfBuffersToProduce);
+    void setNumberOfBuffersToProduce(const uint64_t& numberOfBuffersToProduce);
     const ConfigOption<uint16_t>& getNumberOfTuplesToProducePerBuffer() const;
-    void setNumberOfTuplesToProducePerBuffer(const ConfigOption<uint16_t>& numberOfTuplesToProducePerBuffer);
+    void setNumberOfTuplesToProducePerBuffer(const uint16_t& numberOfTuplesToProducePerBuffer);
     const ConfigOption<std::string>& getPhysicalStreamName() const;
-    void setPhysicalStreamName(const ConfigOption<std::string>& physicalStreamName);
+    void setPhysicalStreamName(const string& physicalStreamName);
     const ConfigOption<std::string>& getLogicalStreamName() const;
-    void setLogicalStreamName(const ConfigOption<std::string>& logicalStreamName);
+    void setLogicalStreamName(const string& logicalStreamName);
     const ConfigOption<bool>& getSkipHeader() const;
-    void setSkipHeader(const ConfigOption<bool>& skipHeader);
+    void setSkipHeader(const bool& skipHeader);
     const ConfigOption<std::string>& getLogLevel() const;
-    void setLogLevel(const ConfigOption<std::string>& logLevel);
+    void setLogLevel(const std::string& logLevel);
 
   private:
     ConfigOption<std::string> sourceType = ConfigOption(
