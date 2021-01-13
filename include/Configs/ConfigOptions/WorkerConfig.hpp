@@ -19,7 +19,7 @@ class WorkerConfig {
   public:
     WorkerConfig();
 
-    //void overwriteConfigWithYAMLFileInput(string filePath, Yaml::Node config);
+    void overwriteConfigWithYAMLFileInput(string filePath);
     void overwriteConfigWithCommandLineInput(map<string,string> inputParams);
     void resetWorkerOptions();
 
@@ -51,10 +51,10 @@ class WorkerConfig {
     ConfigOption<uint16_t> coordinatorPort =
         ConfigOption("coordinatorPort", uint16_t(0),
                      "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
-                     "to be the same as restPort in Coordinator.",
+                     "to be the same as rpcPort in Coordinator.",
                      "uint16_t", false);
     ConfigOption<uint16_t> rpcPort =
-        ConfigOption("rpcPort", uint16_t(8081), "RPC server port of the NES Worker.", "uint16_t", false);
+        ConfigOption("rpcPort", uint16_t(3000), "RPC server port of the NES Worker.", "uint16_t", false);
     ConfigOption<uint16_t> dataPort = ConfigOption("dataPort", uint16_t(3001), "Data port of the NES Worker.", "uint16_t", false);
     ConfigOption<uint16_t> numberOfSlots = ConfigOption("numberOfSlots", uint16_t(std::thread::hardware_concurrency()),
                                                         "Number of computing slots for the NES Worker.", "uint16_t", false);

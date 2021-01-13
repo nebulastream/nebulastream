@@ -2,20 +2,22 @@
 #include <Configs/ConfigOption.hpp>
 #include <Configs/ConfigOptions/SourceConfig.hpp>
 #include <Util/Logger.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <string>
 #include <sys/stat.h>
 
 namespace NES {
 SourceConfig::SourceConfig() { NES_INFO("NesSourceConfig: Init source config object."); }
 
-/*void SourceConfig::overwriteConfigWithYAMLFileInput(string filePath, Yaml::Node config) {
-    config;
+void SourceConfig::overwriteConfigWithYAMLFileInput(string filePath) {
+
     struct stat buffer {};
     if (!filePath.empty() && !(stat(filePath.c_str(), &buffer) == -1)) {
 
         NES_INFO("NesSourceConfig: Using config file with path: " << filePath << " .");
 
-        /*Yaml::Parse(config, filePath.c_str());
+        Yaml::Node config = *(new Yaml::Node());
+        Yaml::Parse(config, filePath.c_str());
 
         setSourceConfig(config["sourceConfig"].As<string>());
         setSourceType(config["sourceType"].As<string>());
@@ -25,12 +27,12 @@ SourceConfig::SourceConfig() { NES_INFO("NesSourceConfig: Init source config obj
         setPhysicalStreamName(config["physicalStreamName"].As<string>());
         setLogicalStreamName(config["logicalStreamName"].As<string>());
         setSkipHeader(config["skipHeader"].As<bool>());
-        setLogLevel(config["logLevel"].As<string>());*/
-    /*} else {
+        setLogLevel(config["logLevel"].As<string>());
+    } else {
         NES_ERROR("NesWorkerConfig: No file path was provided or file could not be found at " << filePath << ".");
         NES_INFO("Keeping default values for Coordinator Config.");
     }
-}*/
+}
 
 void SourceConfig::overwriteConfigWithCommandLineInput(map<string, string> inputParams) {
     try {

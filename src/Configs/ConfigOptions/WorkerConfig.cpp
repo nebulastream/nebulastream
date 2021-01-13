@@ -3,6 +3,7 @@
 #include <Configs/ConfigOption.hpp>
 #include <Configs/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <string>
 #include <sys/stat.h>
 
@@ -10,13 +11,14 @@ namespace NES {
 
 WorkerConfig::WorkerConfig() { NES_INFO("Generated new Worker Config object. Configurations initialized with default values."); }
 
-/*void WorkerConfig::overwriteConfigWithYAMLFileInput(string filePath, Yaml::Node config) {
+void WorkerConfig::overwriteConfigWithYAMLFileInput(string filePath) {
 
     struct stat buffer {};
     if (!filePath.empty() && !(stat(filePath.c_str(), &buffer) == -1)) {
 
         NES_INFO("NesWorkerConfig: Using config file with path: " << filePath << " .");
 
+        Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
 
         setCoordinatorPort(config["coordinatorPort"].As<uint16_t>());
@@ -32,7 +34,7 @@ WorkerConfig::WorkerConfig() { NES_INFO("Generated new Worker Config object. Con
         NES_ERROR("NesWorkerConfig: No file path was provided or file could not be found at " << filePath << ".");
         NES_INFO("Keeping default values for Coordinator Config.");
     }
-}*/
+}
 void WorkerConfig::overwriteConfigWithCommandLineInput(map<string,string> inputParams) {
     try {
 

@@ -16,7 +16,7 @@ class SourceConfig {
   public:
     SourceConfig();
 
-    //void overwriteConfigWithYAMLFileInput(string filePath, Yaml::Node config);
+    void overwriteConfigWithYAMLFileInput(string filePath);
     void overwriteConfigWithCommandLineInput(map<string,string> inputParams);
     void resetSourceOptions();
 

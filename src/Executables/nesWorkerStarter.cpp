@@ -79,11 +79,10 @@ int main(int argc, char** argv) {
     auto sourceConfigPath = commandLineParams.find("--sourceConfigPath");
 
     if (workerConfigPath != commandLineParams.end()) {
-//        workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second, config);
+        workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
-    //config.Clear();
     if (sourceConfigPath != commandLineParams.end()) {
-        //sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second, config);
+        sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
     }
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
