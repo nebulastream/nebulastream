@@ -33,6 +33,7 @@ void ExpressionNode::inferStamp(SchemaPtr schema) {
     }
 }
 
+
 ExpressionNode::ExpressionNode(ExpressionNode* other) : stamp(other->stamp) {}
 
 }// namespace NES
