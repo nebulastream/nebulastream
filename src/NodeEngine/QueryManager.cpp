@@ -276,6 +276,50 @@ bool QueryManager::deregisterQuery(Execution::ExecutableQueryPlanPtr qep) {
     return succeed;
 }
 
+bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr qep) {
+    NES_DEBUG("QueryManager::failQuery: query" << qep);
+    bool ret = true;
+    {
+        std::unique_lock lock(queryMutex);
+
+        auto sources = qep->getSources();
+        for (const auto& source : sources) {
+            NES_DEBUG("QueryManager: stop source " << source->toString());
+            // TODO what if two qeps use the same source
+
+            if (operatorIdToQueryMap[source->getOperatorId()].size() != 1) {
+                NES_WARNING("QueryManager: could not stop source " << source->toString() << " because other qeps are using it n="
+                                                                   << operatorIdToQueryMap[source->getOperatorId()].size());
+            } else {
+                NES_DEBUG("QueryManager: failQuery source " << source->toString() << " because only " << qep << " is using it");
+                bool success = source->stop();
+                if (!success) {
+                    NES_ERROR("QueryManager: failQuery: could not stop source " << source->toString());
+                    ret = false;
+                } else {
+                    NES_DEBUG("QueryManager: failQuery: source " << source->toString() << " successfully stopped");
+                }
+            }
+        }
+        NES_DEBUG("QueryManager::stopQuery: query finished " << qep);
+    }
+    if (!qep->fail()) {
+        NES_FATAL_ERROR("QueryManager: QEP could not be failed");
+        ret = false;
+    }
+
+    auto sinks = qep->getSinks();
+    for (const auto& sink : sinks) {
+        NES_DEBUG("QueryManager: stop sink " << sink->toString());
+        // TODO: do we also have to prevent to shutdown sink that is still used by another qep
+        sink->shutdown();
+    }
+    if (ret) {
+        addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, this), true);
+    }
+    return ret;
+}
+
 bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::stopQuery: query" << qep);
     bool ret = true;
@@ -314,7 +358,9 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
         // TODO: do we also have to prevent to shutdown sink that is still used by another qep
         sink->shutdown();
     }
-    addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, this), true);
+    if (ret) {
+        addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, this), true);
+    }
     return ret;
 }
 

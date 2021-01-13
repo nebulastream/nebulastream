@@ -57,6 +57,11 @@ class ExecutableQueryPlan {
      */
     bool stop();
 
+    /**
+     * @brief Fail the query plan and free all associated resources.
+     */
+    bool fail();
+
     ExecutableQueryPlanStatus getStatus();
 
     /**

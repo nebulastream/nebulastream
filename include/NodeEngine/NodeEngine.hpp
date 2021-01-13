@@ -163,8 +163,9 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
     /**
      * @brief release all resource of the node engine
+     * @param withError true if the node engine stopped with an error
      */
-    bool stop();
+    bool stop(bool withError = false);
 
     /**
      * @brief gets the node properties.

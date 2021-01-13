@@ -141,6 +141,13 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     bool stopQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
+    * @brief method to fail a query
+    * @param qep of the query to fail
+    * @return bool indicating success
+    */
+    bool failQuery(Execution::ExecutableQueryPlanPtr qep);
+
+    /**
      * @brief notify all waiting threads in getWork() to wake up and try again
      */
     void unblockThreads() { cv.notify_all(); }

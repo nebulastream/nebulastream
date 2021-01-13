@@ -587,11 +587,6 @@ void segkiller() {
 }
 }// namespace detail
 
-TEST_F(EngineTest, testFatalCrash) {
-    auto engine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::create());
-    EXPECT_EXIT(detail::segkiller(), testing::ExitedWithCode(1), "NodeEngine failed fatally");
-}
-
 TEST_F(EngineTest, testExceptionCrash) {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
       public:
@@ -607,11 +602,11 @@ TEST_F(EngineTest, testExceptionCrash) {
             ASSERT_TRUE(strcmp(exception->what(), "Failed assertion on false error message: this will fail now with a NesRuntimeException") == 0);
         }
     };
-    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
+    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31340);
     NES_ASSERT(false, "this will fail now with a NesRuntimeException");
 }
 
-void runQueryWithException() {
+TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
       public:
         std::promise<bool> completedPromise;
@@ -626,7 +621,7 @@ void runQueryWithException() {
             NES_ERROR(str);
             ASSERT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
             completedPromise.set_value(true);
-            std::exit(1);
+            stop(true);
         }
     };
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {
@@ -661,18 +656,16 @@ void runQueryWithException() {
     auto qep = builder.build();
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
     ASSERT_TRUE(engine->completedPromise.get_future().get());
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::ErrorState);
     ASSERT_TRUE(engine->stop());
 }
 
-TEST_F(EngineTest, testSemiUnhandledExceptionCrash) {
-    EXPECT_EXIT(runQueryWithException(), testing::ExitedWithCode(1), "");
-}
 
-
-void executeFailingQueryWithUnhandledException() {
+TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
       public:
+        std::promise<bool> completedPromise;
+
         explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
@@ -683,13 +676,11 @@ void executeFailingQueryWithUnhandledException() {
             auto str = exception->what();
             NES_ERROR(str);
             ASSERT_TRUE(strcmp(str, "Unknown exception caught") == 0);
-            std::exit(1);
+            completedPromise.set_value(true);
         }
     };
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {
       public:
-        std::promise<bool> completedPromise;
-
         uint32_t execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
             NES_DEBUG("Going to throw exception");
             throw 1;
@@ -716,13 +707,14 @@ void executeFailingQueryWithUnhandledException() {
     builder.addPipeline(pipeline);
     auto qep = builder.build();
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
-    executable->completedPromise.get_future().get();
+    engine->completedPromise.get_future().get();
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     ASSERT_TRUE(engine->stop());
 }
 
-TEST_F(EngineTest, testFullyUnhandledExceptionCrash) {
-    EXPECT_EXIT(executeFailingQueryWithUnhandledException(), testing::ExitedWithCode(1), "");
+TEST_F(EngineTest, DISABLED_testFatalCrash) {
+    auto engine = NodeEngine::create("127.0.0.1", 31400, PhysicalStreamConfig::create());
+    EXPECT_EXIT(detail::segkiller(), testing::ExitedWithCode(1), "NodeEngine failed fatally");
 }
 
 }// namespace NES
