@@ -2,7 +2,6 @@ FROM ubuntu:20.04
 
 COPY toolchain-aarch64-llvm.cmake toolchain-aarch64-llvm.cmake
 COPY toolchain-aarch64-gcc.cmake toolchain-aarch64-gcc.cmake
-COPY CMakeLists.txt CMakeLists.txt
 COPY nesCoordinator nesCoordinator
 COPY nesWorker nesWorker
 
