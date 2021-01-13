@@ -67,8 +67,6 @@ bool Node::removeChild(const NodePtr node) {
 
     // check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
-        NES_DEBUG("Node: remove " << (*nodeItr)->toString() << " from " << node->toString() << " this=" << this
-                                  << " other=" << node.get());
         if ((*nodeItr).get() == node.get()) {
             // remove this from nodeItr's parents
             for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {

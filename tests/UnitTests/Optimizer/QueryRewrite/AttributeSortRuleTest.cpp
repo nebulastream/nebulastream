@@ -154,182 +154,96 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator5) {
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
-    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
-                             ")+FieldAccessNode(c[Undefined])).SOURCE(src)";
+    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(d[Undefined]"
+                             ")>FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
-//TEST_F(AttributeSortRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
-//    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-//    setupSensorNodeAndStreamCatalog(streamCatalog);
-//
-//    // Prepare
-//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-//    Query query = Query::from("default_logical")
-//                      .filter(Attribute("id") > 45)
-//                      .map(Attribute("value") = 40)
-//                      .filter(Attribute("id") < 45)
-//                      .sink(printSinkDescriptor);
-//    const QueryPlanPtr queryPlan = query.getQueryPlan();
-//
-//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
-//    auto itr = queryPlanNodeIterator.begin();
-//
-//    const NodePtr sinkOperator = (*itr);
-//    ++itr;
-//    const NodePtr filterOperator1 = (*itr);
-//    ++itr;
-//    const NodePtr mapOperator = (*itr);
-//    ++itr;
-//    const NodePtr filterOperator2 = (*itr);
-//    ++itr;
-//    const NodePtr srcOperator = (*itr);
-//
-//    // Execute
-//    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-//    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-//
-//    // Validate
-//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-//    itr = queryPlanNodeIterator.begin();
-//    EXPECT_TRUE(sinkOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(mapOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(filterOperator1->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(filterOperator2->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(srcOperator->equal((*itr)));
-//}
-//
-//TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
-//    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-//    setupSensorNodeAndStreamCatalog(streamCatalog);
-//
-//    // Prepare
-//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-//    Query query = Query::from("default_logical")
-//                      .map(Attribute("value") = 80)
-//                      .filter(Attribute("id") > 45)
-//                      .map(Attribute("value") = 40)
-//                      .filter(Attribute("id") < 45)
-//                      .sink(printSinkDescriptor);
-//    const QueryPlanPtr queryPlan = query.getQueryPlan();
-//
-//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
-//    auto itr = queryPlanNodeIterator.begin();
-//
-//    const NodePtr sinkOperator = (*itr);
-//    ++itr;
-//    const NodePtr filterOperator1 = (*itr);
-//    ++itr;
-//    const NodePtr mapOperator1 = (*itr);
-//    ++itr;
-//    const NodePtr filterOperator2 = (*itr);
-//    ++itr;
-//    const NodePtr mapOperator2 = (*itr);
-//    ++itr;
-//    const NodePtr srcOperator = (*itr);
-//
-//    // Execute
-//    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-//    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-//
-//    // Validate
-//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-//    itr = queryPlanNodeIterator.begin();
-//    EXPECT_TRUE(sinkOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(mapOperator1->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(mapOperator2->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(filterOperator1->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(filterOperator2->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(srcOperator->equal((*itr)));
-//}
-//
-//TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
-//    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-//    setupSensorNodeAndStreamCatalog(streamCatalog);
-//
-//    // Prepare
-//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-//    Query query = Query::from("default_logical")
-//                      .map(Attribute("value") = 40)
-//                      .filter(Attribute("id") > 45)
-//                      .filter(Attribute("id") < 45)
-//                      .sink(printSinkDescriptor);
-//    const QueryPlanPtr queryPlan = query.getQueryPlan();
-//
-//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
-//    auto itr = queryPlanNodeIterator.begin();
-//
-//    const NodePtr sinkOperator = (*itr);
-//    ++itr;
-//    const NodePtr filterOperator1 = (*itr);
-//    ++itr;
-//    const NodePtr filterOperator2 = (*itr);
-//    ++itr;
-//    const NodePtr mapOperator = (*itr);
-//    ++itr;
-//    const NodePtr srcOperator = (*itr);
-//
-//    // Execute
-//    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-//    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-//
-//    // Validate
-//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-//    itr = queryPlanNodeIterator.begin();
-//    EXPECT_TRUE(sinkOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(mapOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(filterOperator1->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(filterOperator2->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(srcOperator->equal((*itr)));
-//}
-//
-//TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
-//    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-//    setupSensorNodeAndStreamCatalog(streamCatalog);
-//
-//    // Prepare
-//    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-//    Query query =
-//        Query::from("default_logical").filter(Attribute("id") > 45).map(Attribute("value") = 40).sink(printSinkDescriptor);
-//    const QueryPlanPtr queryPlan = query.getQueryPlan();
-//
-//    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
-//    auto itr = queryPlanNodeIterator.begin();
-//
-//    const NodePtr sinkOperator = (*itr);
-//    ++itr;
-//    const NodePtr mapOperator = (*itr);
-//    ++itr;
-//    const NodePtr filterOperator2 = (*itr);
-//    ++itr;
-//    const NodePtr srcOperator = (*itr);
-//
-//    // Execute
-//    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
-//    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-//
-//    // Validate
-//    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-//    itr = queryPlanNodeIterator.begin();
-//    EXPECT_TRUE(sinkOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(mapOperator->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(filterOperator2->equal((*itr)));
-//    ++itr;
-//    EXPECT_TRUE(srcOperator->equal((*itr)));
-//}
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator6) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .map(Attribute("b") = Attribute("d") + Attribute("c") > Attribute("c") + Attribute("a"))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined]"
+                             ")<FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator7) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query =
+        Query::from("src")
+            .map(Attribute("b") = ((Attribute("d") + Attribute("c")) * Attribute("a")) > Attribute("c") + Attribute("a"))
+            .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])*FieldAccessNode(c[Undefined]"
+                             ")+FieldAccessNode(d[Undefined]"
+                             ")>FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator8) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query =
+        Query::from("src")
+            .map(Attribute("b") = ((Attribute("d") + Attribute("c")) * Attribute("d")) < Attribute("c") + Attribute("a"))
+            .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>"
+        "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator9) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query =
+        Query::from("src")
+            .map(Attribute("b") = ((Attribute("d") + Attribute("c")) * Attribute("d")) <= Attribute("c") + Attribute("a"))
+            .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>="
+        "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}

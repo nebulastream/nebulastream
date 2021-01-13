@@ -129,7 +129,6 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
                 addExpressionNode->removeChildren();
                 addExpressionNode->setChildren(right, left);
             }
-            return;
         }
         return;
     } else if (expression->instanceOf<SubExpressionNode>()) {
@@ -147,8 +146,8 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
         sortAttributesInExpressions(left);
         sortAttributesInExpressions(right);
 
-        auto leftCommutativeFields = fetchCommutativeFields<AddExpressionNode>(left);
-        auto rightCommutativeFields = fetchCommutativeFields<AddExpressionNode>(right);
+        auto leftCommutativeFields = fetchCommutativeFields<MulExpressionNode>(left);
+        auto rightCommutativeFields = fetchCommutativeFields<MulExpressionNode>(right);
 
         std::vector<FieldAccessExpressionNodePtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
@@ -182,7 +181,6 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
                 mulExpressionNode->removeChildren();
                 mulExpressionNode->setChildren(right, left);
             }
-            return;
         }
         return;
     } else if (expression->instanceOf<DivExpressionNode>()) {
@@ -203,40 +201,189 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
         auto andExpressionNode = expression->as<AndExpressionNode>();
         auto left = andExpressionNode->getLeft();
         auto right = andExpressionNode->getRight();
+        sortAttributesInExpressions(left);
+        sortAttributesInExpressions(right);
+
+        auto leftCommutativeFields = fetchCommutativeFields<AndExpressionNode>(left);
+        auto rightCommutativeFields = fetchCommutativeFields<AndExpressionNode>(right);
+
+        std::vector<FieldAccessExpressionNodePtr> allCommutativeFields;
+        allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
+        allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
+
+        std::vector<FieldAccessExpressionNodePtr> sortedCommutativeFields;
+        for (auto& commutativeField : allCommutativeFields) {
+            sortedCommutativeFields.push_back(commutativeField->copy()->as<FieldAccessExpressionNode>());
+        }
+
+        std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
+                  [](const FieldAccessExpressionNodePtr& lhsField, const FieldAccessExpressionNodePtr& rhsField) {
+                      return lhsField->getFieldName().compare(rhsField->getFieldName()) < 0;
+                  });
+
+        for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
+            auto& originalField = allCommutativeFields[i];
+            auto& updatedField = sortedCommutativeFields[i];
+            originalField->setFieldName(updatedField->getFieldName());
+            originalField->setStamp(updatedField->getStamp());
+        }
+
+        if (!left->instanceOf<AndExpressionNode>() || !right->instanceOf<AndExpressionNode>()) {
+            auto leftSortedField = fetchLeftMostField(left);
+            auto rightSortedField = fetchLeftMostField(right);
+            std::string leftFieldName = leftSortedField->getFieldName();
+            std::string rightFieldName = rightSortedField->getFieldName();
+            int compared = leftFieldName.compare(rightFieldName);
+            if (compared > 0) {
+                andExpressionNode->removeChildren();
+                andExpressionNode->setChildren(right, left);
+            }
+        }
+
         return;
     } else if (expression->instanceOf<OrExpressionNode>()) {
         auto orExpressionNode = expression->as<OrExpressionNode>();
         auto left = orExpressionNode->getLeft();
         auto right = orExpressionNode->getRight();
+        sortAttributesInExpressions(left);
+        sortAttributesInExpressions(right);
+
+        auto leftCommutativeFields = fetchCommutativeFields<OrExpressionNode>(left);
+        auto rightCommutativeFields = fetchCommutativeFields<OrExpressionNode>(right);
+
+        std::vector<FieldAccessExpressionNodePtr> allCommutativeFields;
+        allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
+        allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
+
+        std::vector<FieldAccessExpressionNodePtr> sortedCommutativeFields;
+        for (auto& commutativeField : allCommutativeFields) {
+            sortedCommutativeFields.push_back(commutativeField->copy()->as<FieldAccessExpressionNode>());
+        }
+
+        std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
+                  [](const FieldAccessExpressionNodePtr& lhsField, const FieldAccessExpressionNodePtr& rhsField) {
+                    return lhsField->getFieldName().compare(rhsField->getFieldName()) < 0;
+                  });
+
+        for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
+            auto& originalField = allCommutativeFields[i];
+            auto& updatedField = sortedCommutativeFields[i];
+            originalField->setFieldName(updatedField->getFieldName());
+            originalField->setStamp(updatedField->getStamp());
+        }
+
+        if (!left->instanceOf<OrExpressionNode>() || !right->instanceOf<OrExpressionNode>()) {
+            auto leftSortedField = fetchLeftMostField(left);
+            auto rightSortedField = fetchLeftMostField(right);
+            std::string leftFieldName = leftSortedField->getFieldName();
+            std::string rightFieldName = rightSortedField->getFieldName();
+            int compared = leftFieldName.compare(rightFieldName);
+            if (compared > 0) {
+                orExpressionNode->removeChildren();
+                orExpressionNode->setChildren(right, left);
+            }
+        }
         return;
     } else if (expression->instanceOf<LessExpressionNode>()) {
         auto lessExpressionNode = expression->as<LessExpressionNode>();
         auto left = lessExpressionNode->getLeft();
         auto right = lessExpressionNode->getRight();
+
+        sortAttributesInExpressions(left);
+        sortAttributesInExpressions(right);
+
+        auto leftSortedField = fetchLeftMostField(left);
+        auto rightSortedField = fetchLeftMostField(right);
+        std::string leftFieldName = leftSortedField->getFieldName();
+        std::string rightFieldName = rightSortedField->getFieldName();
+        int compared = leftFieldName.compare(rightFieldName);
+        if (compared > 0) {
+            auto greaterExpression = std::make_shared<GreaterExpressionNode>();
+            lessExpressionNode->replace(greaterExpression);
+            greaterExpression->removeChildren();
+            greaterExpression->setChildren(right, left);
+        }
         return;
+
     } else if (expression->instanceOf<LessEqualsExpressionNode>()) {
         auto lessEqualsExpressionNode = expression->as<LessEqualsExpressionNode>();
         auto left = lessEqualsExpressionNode->getLeft();
         auto right = lessEqualsExpressionNode->getRight();
+        sortAttributesInExpressions(left);
+        sortAttributesInExpressions(right);
+
+        auto leftSortedField = fetchLeftMostField(left);
+        auto rightSortedField = fetchLeftMostField(right);
+        std::string leftFieldName = leftSortedField->getFieldName();
+        std::string rightFieldName = rightSortedField->getFieldName();
+        int compared = leftFieldName.compare(rightFieldName);
+        if (compared > 0) {
+            auto greaterEqualExpression = std::make_shared<GreaterEqualsExpressionNode>();
+            lessEqualsExpressionNode->replace(greaterEqualExpression);
+            greaterEqualExpression->removeChildren();
+            greaterEqualExpression->setChildren(right, left);
+        }
         return;
     } else if (expression->instanceOf<GreaterExpressionNode>()) {
         auto greaterExpressionNode = expression->as<GreaterExpressionNode>();
         auto left = greaterExpressionNode->getLeft();
         auto right = greaterExpressionNode->getRight();
+
+        sortAttributesInExpressions(left);
+        sortAttributesInExpressions(right);
+
+        auto leftSortedField = fetchLeftMostField(left);
+        auto rightSortedField = fetchLeftMostField(right);
+        std::string leftFieldName = leftSortedField->getFieldName();
+        std::string rightFieldName = rightSortedField->getFieldName();
+        int compared = leftFieldName.compare(rightFieldName);
+        if (compared > 0) {
+            auto lessExpression = std::make_shared<LessExpressionNode>();
+            greaterExpressionNode->replace(lessExpression);
+            lessExpression->removeChildren();
+            lessExpression->setChildren(right, left);
+        }
         return;
     } else if (expression->instanceOf<GreaterEqualsExpressionNode>()) {
         auto greaterEqualsExpressionNode = expression->as<GreaterEqualsExpressionNode>();
         auto left = greaterEqualsExpressionNode->getLeft();
         auto right = greaterEqualsExpressionNode->getRight();
+        sortAttributesInExpressions(left);
+        sortAttributesInExpressions(right);
+
+        auto leftSortedField = fetchLeftMostField(left);
+        auto rightSortedField = fetchLeftMostField(right);
+        std::string leftFieldName = leftSortedField->getFieldName();
+        std::string rightFieldName = rightSortedField->getFieldName();
+        int compared = leftFieldName.compare(rightFieldName);
+        if (compared > 0) {
+            auto lessEqualExpression = std::make_shared<LessEqualsExpressionNode>();
+            greaterEqualsExpressionNode->replace(lessEqualExpression);
+            lessEqualExpression->removeChildren();
+            lessEqualExpression->setChildren(right, left);
+        }
         return;
     } else if (expression->instanceOf<EqualsExpressionNode>()) {
         auto equalsExpressionNode = expression->as<EqualsExpressionNode>();
         auto left = equalsExpressionNode->getLeft();
         auto right = equalsExpressionNode->getRight();
+        sortAttributesInExpressions(left);
+        sortAttributesInExpressions(right);
+
+        auto leftSortedField = fetchLeftMostField(left);
+        auto rightSortedField = fetchLeftMostField(right);
+        std::string leftFieldName = leftSortedField->getFieldName();
+        std::string rightFieldName = rightSortedField->getFieldName();
+        int compared = leftFieldName.compare(rightFieldName);
+        if (compared > 0) {
+            equalsExpressionNode->removeChildren();
+            equalsExpressionNode->setChildren(right, left);
+        }
         return;
     } else if (expression->instanceOf<NegateExpressionNode>()) {
         auto negateExpressionNode = expression->as<NegateExpressionNode>();
-        auto expr = negateExpressionNode->child();
+        auto childExpression = negateExpressionNode->child();
+        sortAttributesInExpressions(childExpression);
         return;
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for the logical expression node: " + expression->toString());
