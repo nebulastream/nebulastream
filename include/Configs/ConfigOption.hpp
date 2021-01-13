@@ -5,6 +5,7 @@
 #ifndef NES_CONFIGOPTION_HPP
 #define NES_CONFIGOPTION_HPP
 
+#include <Util/yaml/YamlDef.hh>
 #include <Util/Logger.hpp>
 #include <any>
 #include <sstream>
@@ -25,15 +26,7 @@ class ConfigOption {
      */
     std::string toString();
 
-    uint16_t getValueAsUint16_t();
-
-    uint32_t getValueAsUint32_t();
-
-    uint64_t getValueAsUint64_t();
-
-    bool getValueAsBool();
-
-    string getValueAsString();
+    string getValueAsString() const;
 
     /**
      * @brief a method to make an object comparable
@@ -48,7 +41,7 @@ class ConfigOption {
     /**
       * @brief get the value of the ConfigOption Object
       */
-    T getValue();
+    T getValue() const;
 
     /**
        * @brief returns false if the value is just a value, and true if value consists of multiple values
@@ -57,12 +50,11 @@ class ConfigOption {
 
     string getDataType();
 
-    void setUint16_tValue(uint16_t value);
-    void setUint32_tValue(uint32_t value);
-    void setUint64_tValue(uint64_t value);
-    void setBoolValue(bool value);
-    void setStringValue(string value);
+    void setValue(T value);
 
+    const string& getDescription() const;
+    T getDefaultValue() const;
+    bool isList1() const;
 
   private:
     std::string key;
@@ -79,49 +71,7 @@ ConfigOption<T>::ConfigOption(std::string key, T value, string description, stri
 }
 
 template<typename T>
-uint16_t ConfigOption<T>::getValueAsUint16_t() {
-
-    if (dataType == "uint16_t" && !isList) {
-        return uint16_t(value);
-    } else {
-        NES_ERROR("Value type not available in format uint16_t");
-        return 0;
-    }
-}
-
-template<typename T>
-uint32_t ConfigOption<T>::getValueAsUint32_t() {
-
-    if ((dataType == "uint16_t" || dataType == "uint32_t") && !isList) {
-        return value;
-    } else {
-        NES_ERROR("Value type not available in format uint32_t");
-        return 0;
-    }
-}
-
-template<typename T>
-uint64_t ConfigOption<T>::getValueAsUint64_t() {
-
-    if ((dataType == "uint16_t" || dataType == "uint32_t" || dataType == "uint64_t") && !isList) {
-        return value;
-    } else {
-        NES_ERROR("Value type not available in format uint64_t");
-        return 0;
-    }
-}
-
-template<typename T>
-bool ConfigOption<T>::getValueAsBool() {
-    if (dataType == "bool" && !isList) {
-        return value;
-    } else {
-        NES_ERROR("Value type not available in format bool");
-        return false;
-    }
-}
-template<typename T>
-string ConfigOption<T>::getValueAsString() {
+string ConfigOption<T>::getValueAsString() const {
     if (dataType == "string" && !isList) {
         return string(value);
     } else {
@@ -130,29 +80,8 @@ string ConfigOption<T>::getValueAsString() {
 }
 
 template<class T>
-void ConfigOption<T>::setUint16_tValue(uint16_t value) {
+void ConfigOption<T>::setValue(T value) {
     this->value = value;
-    this->isList = false;
-}
-template<class T>
-void ConfigOption<T>::setUint32_tValue(uint32_t value) {
-    this->value = value;
-    this->isList = false;
-}
-template<class T>
-void ConfigOption<T>::setUint64_tValue(uint64_t value) {
-    this->value = value;
-    this->isList = false;
-}
-template<class T>
-void ConfigOption<T>::setBoolValue(bool value) {
-    this->value = value;
-    this->isList = false;
-}
-template<class T>
-void ConfigOption<T>::setStringValue(string value) {
-    this->value = value;
-    this->isList = false;
 }
 
 template<class T>
@@ -185,7 +114,7 @@ std::string ConfigOption<T>::getKey() {
     return key;
 }
 template<class T>
-T ConfigOption<T>::getValue() {
+T ConfigOption<T>::getValue() const {
     return value;
 }
 template<class T>
@@ -194,6 +123,18 @@ std::string ConfigOption<T>::getDataType() {
 }
 template<class T>
 bool ConfigOption<T>::getIsList() {
+    return isList;
+}
+template<class T>
+const string& ConfigOption<T>::getDescription() const {
+    return description;
+}
+template<class T>
+T ConfigOption<T>::getDefaultValue() const {
+    return defaultValue;
+}
+template<class T>
+bool ConfigOption<T>::isList1() const {
     return isList;
 }
 

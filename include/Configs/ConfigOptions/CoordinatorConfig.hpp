@@ -16,26 +16,25 @@ class CoordinatorConfig {
     CoordinatorConfig();
 
     void overwriteConfigWithYAMLFileInput(string filePath);
-    void overwriteConfigWithCommandLineInput();
+    void overwriteConfigWithCommandLineInput(map<string,string> inputParams);
+    void resetCoordinatorOptions();
 
     const ConfigOption<std::string>& getRestIp() const;
-    void setRestIp(const ConfigOption<std::string>& restIp);
+    void setRestIp(const string& restIp);
     const ConfigOption<std::string>& getCoordinatorIp() const;
-    void setCoordinatorIp(const ConfigOption<std::string>& coordinatorIp);
+    void setCoordinatorIp(const string& coordinatorIp);
     const ConfigOption<uint16_t>& getRpcPort() const;
-    void setRpcPort(const ConfigOption<uint16_t>& rpcPort);
+    void setRpcPort(const uint16_t& rpcPort);
     const ConfigOption<uint16_t>& getRestPort() const;
-    void setRestPort(const ConfigOption<uint16_t>& restPort);
+    void setRestPort(const uint16_t& restPort);
     const ConfigOption<uint16_t>& getDataPort() const;
-    void setDataPort(const ConfigOption<uint16_t>& dataPort);
+    void setDataPort(const uint16_t& dataPort);
     const ConfigOption<uint16_t>& getNumberOfSlots() const;
-    void setNumberOfSlots(const ConfigOption<uint16_t>& numberOfSlots);
+    void setNumberOfSlots(const uint16_t& numberOfSlots);
     const ConfigOption<bool>& getEnableQueryMerging() const;
-    void setEnableQueryMerging(const ConfigOption<bool>& enableQueryMerging);
+    void setEnableQueryMerging(const bool& enableQueryMerging);
     const ConfigOption<std::string>& getLogLevel() const;
-    void setLogLevel(const ConfigOption<std::string>& logLevel);
-    const string& getFilePath() const;
-    void setFilePath(const string& filePath);
+    void setLogLevel(const string& logLevel);
 
   private:
     ConfigOption<std::string> restIp =
@@ -54,7 +53,6 @@ class CoordinatorConfig {
     ConfigOption<std::string> logLevel =
         ConfigOption("logLevel", std::string("LOG_DEBUG"),
                      "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)", "string", false);
-    string filePath;
 };
 
 }// namespace NES
