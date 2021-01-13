@@ -31,8 +31,6 @@ then
       -DNES_USE_ADAPTIVE=0
     make -j4
     cd /nebulastream/build/tests
-    ln -s ../nesCoordinator .
-   	ln -s ../nesWorker .
     make test_debug
     result=$?
     rm -rf /nebulastream/build
