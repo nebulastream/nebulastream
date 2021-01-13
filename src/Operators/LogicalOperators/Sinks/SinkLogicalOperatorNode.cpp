@@ -48,6 +48,10 @@ const std::string SinkLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string SinkLogicalOperatorNode::getStringBasedSignature() {
+    return "SINK()." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+}
+
 OperatorNodePtr SinkLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, id);
     copy->setInputSchema(inputSchema);

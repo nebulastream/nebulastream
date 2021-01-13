@@ -54,6 +54,7 @@ class SourceLogicalOperatorNode : public UnaryOperatorNode {
     OperatorNodePtr copy() override;
 
     void setProjectSchema(SchemaPtr schema);
+    std::string getStringBasedSignature() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;

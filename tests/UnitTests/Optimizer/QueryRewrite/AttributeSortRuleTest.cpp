@@ -56,20 +56,108 @@ class AttributeSortRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down FilterPushDownTest test class."); }
 };
 
-TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator) {
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator1) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical").map(Attribute("value") = 40 - Attribute("id")).sink(printSinkDescriptor);
+    Query query = Query::from("src").map(Attribute("b") = Attribute("b") + Attribute("a")).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto attributeSortRule = AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
 
-    auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperatorNode>();
-    EXPECT_TRUE(mapOperators.size() == 1);
-    EXPECT_EQ(mapOperators[0]->toString(), "");
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator2) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query =
+        Query::from("src").map(Attribute("b") = Attribute("c") + Attribute("b") + Attribute("a")).sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
+                             ")+FieldAccessNode(c[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator3) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query =
+        Query::from("src")
+            .map(Attribute("b") = (Attribute("d") + Attribute("a")) + ((Attribute("c") + Attribute("b")) + Attribute("a")))
+            .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(a[Undefined]"
+        ")+FieldAccessNode(b[Undefined])+FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator4) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .map(Attribute("b") = (Attribute("d") + Attribute("c")) * (Attribute("a") + Attribute("b")))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
+                             ")*FieldAccessNode(d[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator5) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .map(Attribute("b") = Attribute("d") + Attribute("a") > Attribute("c") + Attribute("a"))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
+                             ")+FieldAccessNode(c[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
 }
 
 //TEST_F(AttributeSortRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
