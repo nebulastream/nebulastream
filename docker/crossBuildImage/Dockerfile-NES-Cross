@@ -29,8 +29,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -o 
   libssl-dev \
   crossbuild-essential-arm64 \
   libstdc++6-arm64-cross \
-  qemu \
-  qemu-utils \
+  qemu-user \
   cmake \
   git \
   python3-dev \

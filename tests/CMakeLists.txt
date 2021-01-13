@@ -14,10 +14,23 @@
 
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
+
+if (CMAKE_CROSSCOMPILING)
+    set(CMAKE_ARGS_CROSS -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake
+            -DBoost_NO_SYSTEM_PATHS=TRUE
+            -DBoost_INCLUDE_DIR=/opt/sysroots/aarch64-linux-gnu/usr/include/
+            -DBoost_LIBRARY_DIR=/opt/sysroots/aarch64-linux-gnu/usr/lib/
+    )
+else()
+    set(CMAKE_ARGS_CROSS "")
+endif ()
+
 ExternalProject_Add(
         gtest
         URL https://github.com/google/googletest/archive/release-1.8.1.zip
         PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
+        CMAKE_ARGS ${CMAKE_ARGS_CROSS}
         # Disable install step
         INSTALL_COMMAND ""
         URL_HASH SHA256=927827c183d01734cc5cfef85e0ff3f5a92ffe6188e0d18e909c5efebf28a0c7

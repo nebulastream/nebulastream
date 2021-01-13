@@ -19,7 +19,7 @@ if [ $# -eq 0 ]
 then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
-#    python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
+    python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
     cmake .. \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake \
