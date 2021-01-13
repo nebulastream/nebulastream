@@ -154,6 +154,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
             }
         } else {
             NES_THROW_RUNTIME_ERROR("getNumberOfMappings: invalid side");
+            return -1;
         }
     }
 

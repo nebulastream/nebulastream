@@ -17,6 +17,7 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
+#include <NodeEngine/ErrorListener.hpp>
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
@@ -53,7 +54,11 @@ NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamC
  * such as deploying, undeploying, starting, and stopping.
  *
  */
-class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_shared_from_this<NodeEngine> {
+class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_shared_from_this<NodeEngine>, public ErrorListener {
+
+    typedef Network::ExchangeProtocolListener inherited0;
+    typedef std::enable_shared_from_this<NodeEngine> inherited1;
+    typedef ErrorListener inherited2;
 
     static constexpr auto DEFAULT_NUM_BUFFERS = 1024;
     static constexpr auto DEFAULT_NUM_THREADS = 1;
@@ -89,6 +94,10 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     NodeEngine() = delete;
     NodeEngine(const NodeEngine&) = delete;
     NodeEngine& operator=(const NodeEngine&) = delete;
+
+    void onFatalError(int signalNumber, std::string callstack) override;
+
+    void onException(const std::shared_ptr<std::exception> exception, std::string callstack) override;
 
     /**
      * @brief deploy registers and starts a query

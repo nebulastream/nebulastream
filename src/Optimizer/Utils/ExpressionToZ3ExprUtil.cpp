@@ -59,6 +59,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(ExpressionNodeP
         return createForExpression(fieldAssignmentExpressionNode->getAssignment(), context);
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the expression: " + expression->toString());
+    return nullptr;
 }
 
 Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(ExpressionNodePtr expression,
@@ -114,6 +115,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(Ex
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the arithmetical expression node: "
                             + expression->toString());
+    return nullptr;
 }
 
 Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(ExpressionNodePtr expression, z3::ContextPtr context) {
@@ -204,6 +206,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(Express
         return Z3ExprAndFieldMap::create(updatedExpr, expr->getFieldMap());
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for the logical expression node: " + expression->toString());
+    return nullptr;
 }
 
 }// namespace NES::Optimizer

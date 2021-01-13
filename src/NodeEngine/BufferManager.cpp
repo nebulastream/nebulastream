@@ -92,6 +92,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+        return {};
     }
 }
 
@@ -106,6 +107,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+        return {};
     }
 }
 
@@ -123,6 +125,7 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+        return {};
     }
 }
 
@@ -141,6 +144,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
                         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
                     } else {
                         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+                        return {};
                     }
                 }
             } else {
@@ -162,6 +166,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         return TupleBuffer(leakedMemSegment->controlBlock, leakedMemSegment->ptr, leakedMemSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+        return {};
     }
 }
 

@@ -199,6 +199,7 @@ class Node : public std::enable_shared_from_this<Node> {
         } else {
             NES_THROW_RUNTIME_ERROR("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
                                     + typeid(NodeType).name());
+            return nullptr;
         }
     }
 

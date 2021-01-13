@@ -66,6 +66,7 @@ GeneratableValueTypePtr CompilerTypesFactory::createValueType(ValueTypePtr value
         return std::make_shared<GeneratableArrayValueType>(valueType, charValue->getValues(), charValue->getIsString());
     }
     NES_THROW_RUNTIME_ERROR("CompilerTypesFactory:: No suitable value  type was found.");
+    return nullptr;
 }
 
 GeneratableDataTypePtr CompilerTypesFactory::createAnonymusDataType(std::string type) {

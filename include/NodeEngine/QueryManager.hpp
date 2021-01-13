@@ -171,6 +171,11 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor,
                                 bool blocking = false);
 
+    /**
+     * @return true if thread pool is running
+     */
+    bool isThreadPoolRunning() const;
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;

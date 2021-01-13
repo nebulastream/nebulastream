@@ -62,7 +62,7 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
         NES_DEBUG("Threadpool: end runningRoutine");
     } catch (std::exception& error) {
         NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
-        NES_ASSERT(false, "fatal error");
+        NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
     }
 }
 

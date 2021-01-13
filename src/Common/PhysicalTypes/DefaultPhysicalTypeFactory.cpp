@@ -45,6 +45,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     }
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: "
                             + dataType->toString());
+    return nullptr;
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) {
@@ -71,6 +72,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) 
     }
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: "
                             + integer->toString());
+    return nullptr;
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FixedCharPtr charType) {
@@ -86,6 +88,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FloatPtr floatType) 
     }
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: "
                             + floatType->toString());
+    return nullptr;
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(ArrayPtr arrayType) {

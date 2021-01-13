@@ -512,4 +512,6 @@ void QueryManager::destroyCallback(ReconfigurationTask& task) {
 
 uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 
+bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
+
 }// namespace NES::NodeEngine
