@@ -3,8 +3,7 @@
 #include <Configs/ConfigOption.hpp>
 #include <Configs/ConfigOptions/CoordinatorConfig.hpp>
 #include <Util/Logger.hpp>
-#include <Util/yaml/YamlDef.hh>
-#include <Util/yaml/Yaml.hh>
+#include <Util/yaml/Yaml.hpp>
 #include <string>
 #include <sys/stat.h>
 
@@ -23,10 +22,10 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(string filePath) {
 
         NES_INFO("NESCOORDINATORCONFIG: Using config file with path: " << filePath << " .");
 
-        Yaml::Node config;
+        Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
 
-        //try {
+        try {
             setRestPort(config["restPort"].As<uint16_t>());
             setRpcPort(config["rpcPort"].As<uint16_t>());
             setDataPort(config["dataPort"].As<uint16_t>());
@@ -35,11 +34,11 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(string filePath) {
             setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
             setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
             setLogLevel(config["logLevel"].As<string>());
-        /*} catch (exception& e) {
+        } catch (exception& e) {
             NES_ERROR("NesCoordinatorConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values.");
             resetCoordinatorOptions();
-        }*/
+        }
 
     } else {
         NES_ERROR("NESCOORDINATORCONFIG: No file path was provided or file could not be found at " << filePath << ".");

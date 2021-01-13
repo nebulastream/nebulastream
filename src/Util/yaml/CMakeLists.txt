@@ -13,11 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        UtilityFunctions.cpp
-        SharedLibrary.cpp
-        TimeMeasurement.cpp
-        StacktraceLoader.cpp
-        ThreadNaming.cpp
+        Yaml.cpp
 )
-add_subdirectory(yaml)
+
 
