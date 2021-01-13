@@ -20,9 +20,23 @@
 
 namespace NES {
 
+/**
+ * @brief This is an error interceptor suitable for signals and exceptions
+ */
 class ErrorListener : public std::enable_shared_from_this<ErrorListener> {
   public:
+    /**
+     * @brief onFatalError shall be called when a signal is caught
+     * @param signalNumber the caught signal
+     * @param stacktrace the stacktrace of the error
+     */
     virtual void onFatalError(int signalNumber, std::string) = 0;
+
+    /**
+     * @brief onException shall be called when an exception is caught
+     * @param exception the caught exception
+     * @param stacktrace the stacktrace of the error
+     */
     virtual void onException(const std::shared_ptr<std::exception>, std::string) = 0;
 };
 

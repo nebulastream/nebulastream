@@ -485,6 +485,7 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
 
 void NodeEngine::onException(const std::shared_ptr<std::exception> exception, std::string callstack) {
     NES_ERROR("onException: exception=" << exception->what() << " callstack=\n" << callstack);
+    std::exit(1);
 }
 
 }// namespace NES::NodeEngine
