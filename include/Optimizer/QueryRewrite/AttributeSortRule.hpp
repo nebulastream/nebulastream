@@ -63,12 +63,25 @@ class AttributeSortRule : public BaseRefinementRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan);
 
   private:
+
     /**
      * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filer and map.
      * @param logicalOperator: the operator to be sorted
      */
     void sortAttributesInExpressions(ExpressionNodePtr expression);
+
+    /**
+     * @brief fetch all commutative fields from the expression
+     * make copy of all extracted field expressions
+     * Sort them by alphabets and assign them to respective pointer refer by index.
+     * @param expression
+     */
     void sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression);
+
+    /**
+     * @brief
+     * @param expression
+     */
     void sortAttributesInLogicalExpressions(ExpressionNodePtr expression);
 
     /**
@@ -90,6 +103,23 @@ class AttributeSortRule : public BaseRefinementRule {
             }
         }
         return commutativeFields;
+    }
+
+    /**
+     * @brief
+     * @param expression
+     * @return
+     */
+    FieldAccessExpressionNodePtr fetchLeftMostField(ExpressionNodePtr expression) {
+
+        if (expression->instanceOf<FieldAccessExpressionNode>()) {
+            return expression->template as<FieldAccessExpressionNode>();
+        }
+        ExpressionNodePtr startPoint = expression;
+        while (!startPoint->instanceOf<FieldAccessExpressionNode>()) {
+            startPoint = startPoint->getChildren()[0]->as<ExpressionNode>();
+        }
+        return startPoint->as<FieldAccessExpressionNode>();
     }
 };
 }// namespace NES

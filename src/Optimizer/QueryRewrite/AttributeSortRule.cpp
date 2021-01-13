@@ -117,27 +117,20 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
             auto& updatedField = sortedCommutativeFields[i];
             originalField->setFieldName(updatedField->getFieldName());
             originalField->setStamp(updatedField->getStamp());
-            NES_INFO(originalField->toString());
         }
-        return;
-        //
-        //        if (left->instanceOf<FieldAccessExpressionNode>() && right->instanceOf<FieldAccessExpressionNode>()) {
-        //            auto leftFieldAccessExpression = left->as<FieldAccessExpressionNode>();
-        //            std::string leftFieldName = leftFieldAccessExpression->getFieldName();
-        //            auto rightFieldAccessExpression = right->as<FieldAccessExpressionNode>();
-        //            std::string rightFieldName = rightFieldAccessExpression->getFieldName();
-        //            int compared = leftFieldName.compare(rightFieldName);
-        //            if (compared > 0) {
-        //                addExpressionNode->removeChildren();
-        //                addExpressionNode->setChildren(right, left);
-        //            }
-        //            return;
-        //        }
 
-        //fetch all commutative fields from the expression
-        //make copy of all extracted field expressions
-        //Sort them by alphabets and assign them to respective pointer refer by index.
-
+        if (!left->instanceOf<MulExpressionNode>() || !right->instanceOf<MulExpressionNode>()) {
+            auto leftSortedField = fetchLeftMostField(left);
+            auto rightSortedField = fetchLeftMostField(right);
+            std::string leftFieldName = leftSortedField->getFieldName();
+            std::string rightFieldName = rightSortedField->getFieldName();
+            int compared = leftFieldName.compare(rightFieldName);
+            if (compared > 0) {
+                addExpressionNode->removeChildren();
+                addExpressionNode->setChildren(right, left);
+            }
+            return;
+        }
         return;
     } else if (expression->instanceOf<SubExpressionNode>()) {
         auto subExpressionNode = expression->as<SubExpressionNode>();
@@ -168,7 +161,7 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
 
         std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
                   [](const FieldAccessExpressionNodePtr& lhsField, const FieldAccessExpressionNodePtr& rhsField) {
-                    return lhsField->getFieldName().compare(rhsField->getFieldName()) < 0;
+                      return lhsField->getFieldName().compare(rhsField->getFieldName()) < 0;
                   });
 
         for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
@@ -179,10 +172,18 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
             NES_INFO(originalField->toString());
         }
 
-        if(!left->instanceOf<MulExpressionNode>() || !right->instanceOf<MulExpressionNode>()){
-
+        if (!left->instanceOf<MulExpressionNode>() || !right->instanceOf<MulExpressionNode>()) {
+            auto leftSortedField = fetchLeftMostField(left);
+            auto rightSortedField = fetchLeftMostField(right);
+            std::string leftFieldName = leftSortedField->getFieldName();
+            std::string rightFieldName = rightSortedField->getFieldName();
+            int compared = leftFieldName.compare(rightFieldName);
+            if (compared > 0) {
+                mulExpressionNode->removeChildren();
+                mulExpressionNode->setChildren(right, left);
+            }
+            return;
         }
-
         return;
     } else if (expression->instanceOf<DivExpressionNode>()) {
         auto divExpressionNode = expression->as<DivExpressionNode>();

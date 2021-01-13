@@ -134,7 +134,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator4) {
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
-                             ")*FieldAccessNode(d[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
+                             ")*FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
