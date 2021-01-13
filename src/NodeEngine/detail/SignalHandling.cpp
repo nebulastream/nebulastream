@@ -24,17 +24,28 @@
 
 namespace NES::NodeEngine {
 
+/// this mutex protected the globalErrorListeners vector
 static std::mutex globalErrorListenerMutex;
+/// this vector contains system-wide error listeners, e.g., NodeEngine and CoordinatorEngine
 static std::vector<std::shared_ptr<ErrorListener>> globalErrorListeners;
 
+/**
+ * @brief calls to this function will create a NesRuntimeException that is passed to all system-wide error listeners
+ * @param buffer the message of the exception
+ * @param stacktrace the stacktrace of where the error was raised
+ */
 void invokeErrorHandlers(const std::string buffer, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
-    auto exception = std::make_shared<std::runtime_error>(buffer);
+    auto exception = std::make_shared<NesRuntimeException>(buffer);
     for (auto& listener : globalErrorListeners) {
         listener->onException(exception, stacktrace);
     }
 }
 
+/**
+ * @brief make an error listener system-wide
+ * @param listener the error listener to make system-wide
+ */
 void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
     std::unique_lock lock(globalErrorListenerMutex);
     if (listener) {
@@ -45,6 +56,7 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
 namespace detail {
 static backward::SignalHandling sh;
 
+/// called when a signal is intercepted
 void nesErrorHandler(int signal) {
     auto stacktrace = collectAndPrintStacktrace();
     {
@@ -56,6 +68,7 @@ void nesErrorHandler(int signal) {
     std::exit(-1);
 }
 
+/// called when std::terminate() is invoked
 void nesTerminateHandler() {
     auto stacktrace = collectAndPrintStacktrace();
     auto unknown = std::current_exception();
@@ -81,6 +94,7 @@ void nesTerminateHandler() {
     std::exit(-1);
 }
 
+/// called when an exception is not caught in our code
 void nesUnexpectedException() {
     auto stacktrace = collectAndPrintStacktrace();
     auto unknown = std::current_exception();

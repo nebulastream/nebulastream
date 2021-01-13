@@ -95,8 +95,18 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     NodeEngine(const NodeEngine&) = delete;
     NodeEngine& operator=(const NodeEngine&) = delete;
 
+    /**
+     * @brief signal handler: behaviour not clear yet!
+     * @param signalNumber
+     * @param callstack
+     */
     void onFatalError(int signalNumber, std::string callstack) override;
 
+    /**
+     * @brief exception handler: behaviour not clear yet!
+     * @param exception
+     * @param callstack
+     */
     void onException(const std::shared_ptr<std::exception> exception, std::string callstack) override;
 
     /**
