@@ -52,6 +52,7 @@ class FilterLogicalOperatorNode : public UnaryOperatorNode {
     */
     bool inferSchema() override;
     OperatorNodePtr copy() override;
+    std::string getStringBasedSignature() override;
 
   private:
     ExpressionNodePtr predicate;
