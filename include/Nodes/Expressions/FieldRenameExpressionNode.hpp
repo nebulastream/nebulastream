@@ -14,25 +14,21 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FieldRenameExpressionNode_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_FieldRenameExpressionNode_HPP_
 #include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
 /**
  * @brief A FieldAccessExpression reads a specific field of the current record.
  * It can be created typed or untyped.
  */
-class FieldAccessExpressionNode : public ExpressionNode {
+class FieldRenameExpressionNode : public FieldAccessExpressionNode {
   public:
     /**
     * @brief Create typed field read.
     */
-    static ExpressionNodePtr create(DataTypePtr stamp, std::string fieldName);
-
-    /**
-     * @brief Create untyped field read.
-     */
-    static ExpressionNodePtr create(std::string fieldName);
+    static ExpressionNodePtr create(ExpressionNodePtr expression, std::string newFieldName);
 
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
@@ -43,7 +39,7 @@ class FieldAccessExpressionNode : public ExpressionNode {
     * @brief Infers the stamp of the expression given the current schema.
     * @param SchemaPtr
     */
-    virtual void inferStamp(SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.
@@ -52,17 +48,19 @@ class FieldAccessExpressionNode : public ExpressionNode {
     ExpressionNodePtr copy() override;
 
   protected:
-    explicit FieldAccessExpressionNode(FieldAccessExpressionNode* other);
+    explicit FieldRenameExpressionNode(FieldRenameExpressionNode* other);
 
-    FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);
+  private:
+    FieldRenameExpressionNode(ExpressionNodePtr expression, std::string newFieldName);
     /**
      * @brief Name of the field want to access.
      */
-    std::string fieldName;
+    ExpressionNodePtr expression;
+    std::string newFieldName;
 };
 
-typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
+typedef std::shared_ptr<FieldRenameExpressionNode> FieldRenameExpressionNodePtr;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_NODES_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_FieldRenameExpressionNode_HPP_

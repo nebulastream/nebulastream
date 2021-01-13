@@ -17,6 +17,8 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
@@ -51,11 +53,26 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
         if (!expression->instanceOf<FieldAccessExpressionNode>()) {
             NES_ERROR("Query: stream has to be an FieldAccessExpression but it was a " + expression->toString());
         }
-        auto fieldAccess = expression->as<FieldAccessExpressionNode>();
-        if (inputSchema->contains(fieldAccess->getFieldName())) {
-            outputSchema->addField(inputSchema->get(fieldAccess->getFieldName()));
+        std::string fieldName;
+        if(expression->instanceOf<FieldRenameExpressionNode>())
+        {
+            auto fieldAccess = expression->as<FieldRenameExpressionNode>();
+            fieldAccess->inferStamp(inputSchema);
+            fieldName = fieldAccess->getFieldName();
+            NES_DEBUG("schema after in project=" << inputSchema->toString());
+
+        }
+        else
+        {
+            auto fieldAccess = expression->as<FieldAccessExpressionNode>();
+            fieldAccess->inferStamp(inputSchema);
+            fieldName = fieldAccess->getFieldName();
+        }
+
+        if (inputSchema->contains(fieldName)) {
+            outputSchema->addField(inputSchema->get(fieldName));
         } else {
-            NES_ERROR("ProjectionLogicalOperatorNode::inferSchema(): expression not found=" << fieldAccess->getFieldName());
+            NES_ERROR("ProjectionLogicalOperatorNode::inferSchema(): expression not found=" << fieldName);
             return false;
         }
     }

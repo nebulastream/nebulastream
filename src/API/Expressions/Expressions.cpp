@@ -19,6 +19,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 
 #include <utility>
@@ -62,6 +63,20 @@ ExpressionItem::ExpressionItem(const char* value) : ExpressionItem(DataTypeFacto
 ExpressionItem::ExpressionItem(ValueTypePtr value) : ExpressionItem(ConstantValueExpressionNode::create(std::move(value))) {}
 
 ExpressionItem::ExpressionItem(ExpressionNodePtr exp) : expression(std::move(exp)) {}
+
+ExpressionItem ExpressionItem::rename(std::string newName)
+{
+    //rename expression node
+    if(expression->instanceOf<FieldAccessExpressionNode>())
+    {
+        return FieldRenameExpressionNode::create(expression, newName);
+    }
+    else
+    {
+        NES_ERROR("Renaming is only allowed on Field Access Attributes");
+        NES_NOT_IMPLEMENTED();
+    }
+}
 
 FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionItem assignItem) {
     return operator=(assignItem.getExpressionNode());

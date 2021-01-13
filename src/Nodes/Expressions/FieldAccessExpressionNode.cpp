@@ -58,7 +58,7 @@ void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
     auto field = schema->get(fieldName);
     stamp = field->getDataType();
 }
-void FieldAccessExpressionNode::setFieldName(std::string name) { this->fieldName = name; }
+
 ExpressionNodePtr FieldAccessExpressionNode::copy() {
     return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(this));
 }
