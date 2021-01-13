@@ -17,6 +17,8 @@
 #ifndef NES_ATTRIBUTESORTRULE_HPP
 #define NES_ATTRIBUTESORTRULE_HPP
 
+#include <Common/ValueTypes/BasicValue.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 
@@ -63,7 +65,6 @@ class AttributeSortRule : public BaseRefinementRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan);
 
   private:
-
     /**
      * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filer and map.
      * @param logicalOperator: the operator to be sorted
@@ -110,16 +111,20 @@ class AttributeSortRule : public BaseRefinementRule {
      * @param expression
      * @return
      */
-    FieldAccessExpressionNodePtr fetchLeftMostField(ExpressionNodePtr expression) {
+    std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression) {
 
-        if (expression->instanceOf<FieldAccessExpressionNode>()) {
-            return expression->template as<FieldAccessExpressionNode>();
-        }
         ExpressionNodePtr startPoint = expression;
-        while (!startPoint->instanceOf<FieldAccessExpressionNode>()) {
+        while (!(startPoint->instanceOf<FieldAccessExpressionNode>() || startPoint->instanceOf<ConstantValueExpressionNode>())) {
             startPoint = startPoint->getChildren()[0]->as<ExpressionNode>();
         }
-        return startPoint->as<FieldAccessExpressionNode>();
+
+        if (startPoint->instanceOf<FieldAccessExpressionNode>()) {
+            return startPoint->template as<FieldAccessExpressionNode>()->getFieldName();
+        } else {
+            const ValueTypePtr& constantValue = startPoint->as<ConstantValueExpressionNode>()->getConstantValue();
+            auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
+            return basicValueType->getValue();
+        }
     }
 };
 }// namespace NES

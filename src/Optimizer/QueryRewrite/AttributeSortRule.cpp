@@ -120,11 +120,9 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
         }
 
         if (!left->instanceOf<MulExpressionNode>() || !right->instanceOf<MulExpressionNode>()) {
-            auto leftSortedField = fetchLeftMostField(left);
-            auto rightSortedField = fetchLeftMostField(right);
-            std::string leftFieldName = leftSortedField->getFieldName();
-            std::string rightFieldName = rightSortedField->getFieldName();
-            int compared = leftFieldName.compare(rightFieldName);
+            auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+            auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+            int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0) {
                 addExpressionNode->removeChildren();
                 addExpressionNode->setChildren(right, left);
@@ -172,11 +170,9 @@ void AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePt
         }
 
         if (!left->instanceOf<MulExpressionNode>() || !right->instanceOf<MulExpressionNode>()) {
-            auto leftSortedField = fetchLeftMostField(left);
-            auto rightSortedField = fetchLeftMostField(right);
-            std::string leftFieldName = leftSortedField->getFieldName();
-            std::string rightFieldName = rightSortedField->getFieldName();
-            int compared = leftFieldName.compare(rightFieldName);
+            auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+            auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+            int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0) {
                 mulExpressionNode->removeChildren();
                 mulExpressionNode->setChildren(right, left);
@@ -229,11 +225,9 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
         }
 
         if (!left->instanceOf<AndExpressionNode>() || !right->instanceOf<AndExpressionNode>()) {
-            auto leftSortedField = fetchLeftMostField(left);
-            auto rightSortedField = fetchLeftMostField(right);
-            std::string leftFieldName = leftSortedField->getFieldName();
-            std::string rightFieldName = rightSortedField->getFieldName();
-            int compared = leftFieldName.compare(rightFieldName);
+            auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+            auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+            int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0) {
                 andExpressionNode->removeChildren();
                 andExpressionNode->setChildren(right, left);
@@ -262,7 +256,7 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
 
         std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
                   [](const FieldAccessExpressionNodePtr& lhsField, const FieldAccessExpressionNodePtr& rhsField) {
-                    return lhsField->getFieldName().compare(rhsField->getFieldName()) < 0;
+                      return lhsField->getFieldName().compare(rhsField->getFieldName()) < 0;
                   });
 
         for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
@@ -273,11 +267,9 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
         }
 
         if (!left->instanceOf<OrExpressionNode>() || !right->instanceOf<OrExpressionNode>()) {
-            auto leftSortedField = fetchLeftMostField(left);
-            auto rightSortedField = fetchLeftMostField(right);
-            std::string leftFieldName = leftSortedField->getFieldName();
-            std::string rightFieldName = rightSortedField->getFieldName();
-            int compared = leftFieldName.compare(rightFieldName);
+            auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+            auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+            int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0) {
                 orExpressionNode->removeChildren();
                 orExpressionNode->setChildren(right, left);
@@ -292,11 +284,9 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
         sortAttributesInExpressions(left);
         sortAttributesInExpressions(right);
 
-        auto leftSortedField = fetchLeftMostField(left);
-        auto rightSortedField = fetchLeftMostField(right);
-        std::string leftFieldName = leftSortedField->getFieldName();
-        std::string rightFieldName = rightSortedField->getFieldName();
-        int compared = leftFieldName.compare(rightFieldName);
+        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+        int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0) {
             auto greaterExpression = std::make_shared<GreaterExpressionNode>();
             lessExpressionNode->replace(greaterExpression);
@@ -312,11 +302,9 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
         sortAttributesInExpressions(left);
         sortAttributesInExpressions(right);
 
-        auto leftSortedField = fetchLeftMostField(left);
-        auto rightSortedField = fetchLeftMostField(right);
-        std::string leftFieldName = leftSortedField->getFieldName();
-        std::string rightFieldName = rightSortedField->getFieldName();
-        int compared = leftFieldName.compare(rightFieldName);
+        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+        int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0) {
             auto greaterEqualExpression = std::make_shared<GreaterEqualsExpressionNode>();
             lessEqualsExpressionNode->replace(greaterEqualExpression);
@@ -332,11 +320,9 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
         sortAttributesInExpressions(left);
         sortAttributesInExpressions(right);
 
-        auto leftSortedField = fetchLeftMostField(left);
-        auto rightSortedField = fetchLeftMostField(right);
-        std::string leftFieldName = leftSortedField->getFieldName();
-        std::string rightFieldName = rightSortedField->getFieldName();
-        int compared = leftFieldName.compare(rightFieldName);
+        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+        int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0) {
             auto lessExpression = std::make_shared<LessExpressionNode>();
             greaterExpressionNode->replace(lessExpression);
@@ -351,11 +337,9 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
         sortAttributesInExpressions(left);
         sortAttributesInExpressions(right);
 
-        auto leftSortedField = fetchLeftMostField(left);
-        auto rightSortedField = fetchLeftMostField(right);
-        std::string leftFieldName = leftSortedField->getFieldName();
-        std::string rightFieldName = rightSortedField->getFieldName();
-        int compared = leftFieldName.compare(rightFieldName);
+        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+        int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0) {
             auto lessEqualExpression = std::make_shared<LessEqualsExpressionNode>();
             greaterEqualsExpressionNode->replace(lessEqualExpression);
@@ -370,11 +354,9 @@ void AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr exp
         sortAttributesInExpressions(left);
         sortAttributesInExpressions(right);
 
-        auto leftSortedField = fetchLeftMostField(left);
-        auto rightSortedField = fetchLeftMostField(right);
-        std::string leftFieldName = leftSortedField->getFieldName();
-        std::string rightFieldName = rightSortedField->getFieldName();
-        int compared = leftFieldName.compare(rightFieldName);
+        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(left);
+        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(right);
+        int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0) {
             equalsExpressionNode->removeChildren();
             equalsExpressionNode->setChildren(right, left);

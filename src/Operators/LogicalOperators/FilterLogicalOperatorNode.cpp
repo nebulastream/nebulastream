@@ -45,6 +45,10 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string FilterLogicalOperatorNode::getStringBasedSignature() {
+    return "FILTER(" + predicate->toString() + ")." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+}
+
 bool FilterLogicalOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
     predicate->inferStamp(inputSchema);

@@ -357,3 +357,191 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator14) {
     auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator15) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src").map(Attribute("b") = 10 + Attribute("a")).sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+FieldAccessNode(a[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator16) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .map(Attribute("b") = (10 + Attribute("c")) * ((Attribute("a") + Attribute("b"))))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+FieldAccessNode(c[Undefined]"
+                             ")*FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator17) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .map(Attribute("b") = (100 + Attribute("c") + 10) + (Attribute("b") + Attribute("a")))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+ConstantValue(BasicValue(100))+FieldAccessNode(a["
+        "Undefined])+FieldAccessNode(b[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleFilterOperator1) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .filter(((Attribute("d") + Attribute("c")) * Attribute("d")) > Attribute("c") + Attribute("a"))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])<"
+        "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator2) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .filter(((Attribute("d") + Attribute("c")) * Attribute("d")) < Attribute("c") + Attribute("a"))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>"
+        "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator3) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .filter(((Attribute("d") + Attribute("c")) * Attribute("d")) <= Attribute("c") + Attribute("a"))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>="
+        "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator4) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .filter(((Attribute("d") + Attribute("c")) * Attribute("d")) >= Attribute("c") + Attribute("a"))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])<="
+        "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator5) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .filter(((Attribute("d") + Attribute("c")) * Attribute("d")) != Attribute("c") + Attribute("a"))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().FILTER(!FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])=="
+        "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
+
+TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator6) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("src")
+                      .filter(((Attribute("d") + Attribute("c")) * Attribute("d")) == Attribute("c") + Attribute("a"))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto attributeSortRule = AttributeSortRule::create();
+    attributeSortRule->apply(queryPlan);
+
+    auto rootOperators = queryPlan->getRootOperators();
+    EXPECT_TRUE(rootOperators.size() == 1);
+    auto expectedSignature =
+        "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])=="
+        "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
+    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    EXPECT_EQ(expectedSignature, actualSignature);
+}
