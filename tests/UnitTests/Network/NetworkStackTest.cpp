@@ -671,6 +671,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
+        return nullptr;
     }
 }
 

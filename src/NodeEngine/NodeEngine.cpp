@@ -327,7 +327,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
 
 QueryManagerPtr NodeEngine::getQueryManager() { return queryManager; }
 
-bool NodeEngine::stop() {
+bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO: add check if still queries are running
     //TODO @Steffen: does it make sense to have force stop still?
     //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
@@ -344,11 +344,20 @@ bool NodeEngine::stop() {
     for (auto it = deployedQEPs.begin(); it != deployedQEPs.end();) {
         auto& [querySubPlanId, queryExecutionPlan] = *it;
         try {
-            if (queryManager->stopQuery(queryExecutionPlan)) {
-                NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " succeeded");
+            if (markQueriesAsFailed) {
+                if (queryManager->failQuery(queryExecutionPlan)) {
+                    NES_DEBUG("NodeEngine: fail of QEP " << querySubPlanId << " succeeded");
+                } else {
+                    NES_ERROR("NodeEngine: fail of QEP " << querySubPlanId << " failed");
+                    withError = true;
+                }
             } else {
-                NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed");
-                withError = true;
+                if (queryManager->stopQuery(queryExecutionPlan)) {
+                    NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " succeeded");
+                } else {
+                    NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed");
+                    withError = true;
+                }
             }
         } catch (std::exception& err) {
             NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed: " << err.what());
@@ -485,7 +494,9 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
 
 void NodeEngine::onException(const std::shared_ptr<std::exception> exception, std::string callstack) {
     NES_ERROR("onException: exception=" << exception->what() << " callstack=\n" << callstack);
-    std::exit(1);
+    // TODO make this work next sprint
+//    stop(true);
+//    std::exit(1);
 }
 
 }// namespace NES::NodeEngine

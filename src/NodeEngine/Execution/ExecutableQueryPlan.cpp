@@ -66,6 +66,27 @@ bool ExecutableQueryPlan::stop() {
     return ret;
 }
 
+bool ExecutableQueryPlan::fail() {
+    bool ret = true;
+    //    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId << " " << querySubPlanId);
+
+    auto expected = Running;
+    if (qepStatus.compare_exchange_strong(expected, ErrorState)) {
+        NES_DEBUG("QueryExecutionPlan: fail " << queryId << " " << querySubPlanId);
+        for (auto& stage : pipelines) {
+            if (!stage->stop()) {
+                NES_ERROR("QueryExecutionPlan: fail failed for stage " << stage);
+                ret = false;
+            }
+        }
+    }
+
+    if (!ret) {
+        qepStatus.store(ErrorState);
+    }
+    return ret;
+}
+
 ExecutableQueryPlanStatus ExecutableQueryPlan::getStatus() { return qepStatus.load(); }
 
 bool ExecutableQueryPlan::setup() {
