@@ -42,7 +42,10 @@ const std::string SourceLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string SourceLogicalOperatorNode::getStringBasedSignature() { return "SOURCE(" + sourceDescriptor->getStreamName() + ")"; }
+
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() { return sourceDescriptor; }
+
 bool SourceLogicalOperatorNode::inferSchema() {
     inputSchema = sourceDescriptor->getSchema();
     outputSchema = sourceDescriptor->getSchema();

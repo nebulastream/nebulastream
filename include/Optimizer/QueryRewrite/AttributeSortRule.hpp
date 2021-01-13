@@ -32,9 +32,22 @@ typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
  *
  * Example:
  *
- * 1. map("b" = "c" + "a") => map("b" = "a" + "c")
- * 2. filter("c" * "b" > "d" + "a") => filter("b" * "c" > "a" + "d")
- * 3. filter("c" * "b" > "d" + "a" and "a" < "b") => filter("a" < "b" and "b" * "c" > "a" + "d")
+ * For map:
+ * 1. map("b" = "c"+"a") => map("b" = "a"+"c")
+ *
+ * 2. map("b" = "c"+"b"+"a") => map("b" = "a"+"b"+"c")
+ *
+ * current: map("b" = (("c"+"b")+"a")) => map("b" = "b"+"c"+"a")
+ *
+ * 2. map("b" = (((("c"+"b")+"a")+"d")+"e")) => map("b" = "a"+"a"+"b"+"c")
+ *
+ * 3. map("b" = "d"+"c"+"b"*"a") => map("b" = "a"*"b"+"c"+"d")
+ * 4. map("b" = "d"+"b"+"c"*"a") => map("b" = "a"*"c"+"b"+"d")
+ *
+ *
+ * For Filter:
+ * 1. filter("c" * "b" > "d" + "a") => filter("a" + "d" < "b" * "c")
+ * 2. filter("c" * "b" > "d" + "a" and "a" < "b") => filter("a" < "b" and "b" * "c" > "a" + "d")
  */
 class AttributeSortRule : public BaseRefinementRule {
 
@@ -50,15 +63,34 @@ class AttributeSortRule : public BaseRefinementRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan);
 
   private:
-
     /**
      * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filer and map.
      * @param logicalOperator: the operator to be sorted
      */
-    void sortAttributesInOperator(OperatorNodePtr logicalOperator);
     void sortAttributesInExpressions(ExpressionNodePtr expression);
     void sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression);
     void sortAttributesInLogicalExpressions(ExpressionNodePtr expression);
+
+    /**
+     * @brief
+     * @tparam ExpressionType
+     * @param expression
+     * @return
+     */
+    template<class ExpressionType>
+    std::vector<FieldAccessExpressionNodePtr> fetchCommutativeFields(ExpressionNodePtr expression) {
+
+        std::vector<FieldAccessExpressionNodePtr> commutativeFields;
+        if (expression->instanceOf<FieldAccessExpressionNode>()) {
+            commutativeFields.push_back(expression->template as<FieldAccessExpressionNode>());
+        } else if (expression->template instanceOf<ExpressionType>()) {
+            for (auto& child : expression->getChildren()) {
+                auto childCommutativeFields = fetchCommutativeFields<ExpressionType>(child->template as<ExpressionNode>());
+                commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
+            }
+        }
+        return commutativeFields;
+    }
 };
 }// namespace NES
 #endif//NES_ATTRIBUTESORTRULE_HPP

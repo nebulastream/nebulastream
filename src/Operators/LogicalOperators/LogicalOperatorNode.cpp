@@ -38,4 +38,6 @@ void LogicalOperatorNode::inferSignature(z3::ContextPtr context) {
 
 void LogicalOperatorNode::setSignature(Optimizer::QuerySignaturePtr signature) { this->signature = signature; }
 
+std::string LogicalOperatorNode::getStringBasedSignature() { return "UNKNOWN"; }
+
 }// namespace NES
