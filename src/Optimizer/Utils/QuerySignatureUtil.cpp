@@ -156,6 +156,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         return createQuerySignatureForJoin(context, joinOperator);
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
+    return nullptr;
 }
 
 QuerySignaturePtr QuerySignatureUtil::buildQuerySignatureForChildren(z3::ContextPtr context, std::vector<NodePtr> children) {

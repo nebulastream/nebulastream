@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
@@ -36,6 +37,8 @@
 #include <string>
 
 namespace NES::NodeEngine {
+
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
     return NodeEngine::create(hostname, port, config);
@@ -62,29 +65,25 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
             NES_ERROR("NodeEngine: error while creating queryManager");
             throw Exception("Error while creating queryManager");
         }
-        if (!queryManager->startThreadPool()) {
-            NES_ERROR("NodeEngine: error while start thread pool");
-            throw Exception("Error while start thread pool");
-        } else {
-            NES_DEBUG("NodeEngine(): thread pool successfully started");
-        }
-
         auto compiler = createDefaultQueryCompiler();
         if (!compiler) {
             NES_ERROR("NodeEngine: error while creating compiler");
             throw Exception("Error while creating compiler");
         }
-        return std::make_shared<NodeEngine>(
+        auto engine = std::make_shared<NodeEngine>(
             config, std::move(bufferManager), std::move(queryManager),
             [hostname, port](std::shared_ptr<NodeEngine> engine) {
                 return Network::NetworkManager::create(
                     hostname, port, Network::ExchangeProtocol(engine->getPartitionManager(), engine), engine->getBufferManager());
             },
             std::move(partitionManager), std::move(compiler), nodeEngineId);
+        installGlobalErrorListener(engine);
+        return engine;
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
     }
+    return nullptr;
 }
 
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
@@ -104,7 +103,14 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
     networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*) {
+        // nop
     }));
+    if (!this->queryManager->startThreadPool()) {
+        NES_ERROR("NodeEngine: error while start thread pool");
+        throw Exception("Error while start thread pool");
+    } else {
+        NES_DEBUG("NodeEngine(): thread pool successfully started");
+    }
 }
 
 NodeEngine::~NodeEngine() {
@@ -168,7 +174,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
                 sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
             }
             auto legacySource =
-                ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, shared_from_this());
+                ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, this->inherited1::shared_from_this());
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }
@@ -178,8 +184,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink =
-                ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(
+                schema, sinkDescriptor, this->inherited1::shared_from_this(), querySubPlanId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
         }
@@ -197,6 +203,7 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
     NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId
                                                              << " querySubPlanId =" << querySubPlanId);
+    NES_ASSERT2(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         auto found = queryIdToQuerySubPlanIds.find(queryId);
         if (found == queryIdToQuerySubPlanIds.end()) {
@@ -468,6 +475,16 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
     NES_ASSERT(config, "physical source config is not specified");
     this->config = config;
+}
+
+void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
+    NES_ERROR("onFatalError: signal " << signalNumber << " callstack " << callstack);
+    std::cerr << "NodeEngine failed fatally" << std::endl; // it's necessary for testing and it wont harm us to write to stderr
+    std::exit(1);
+}
+
+void NodeEngine::onException(const std::shared_ptr<std::exception> exception, std::string callstack) {
+    NES_ERROR("onException: exception=" << exception->what() << " callstack=\n" << callstack);
 }
 
 }// namespace NES::NodeEngine

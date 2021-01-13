@@ -13,13 +13,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_
+#define NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_
 
-#ifndef NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_
-#define NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_
-
-#include <string>
+#include <memory>
 
 namespace NES {
-std::string collectAndPrintStacktrace();
+
+class ErrorListener : public std::enable_shared_from_this<ErrorListener> {
+  public:
+    virtual void onFatalError(int signalNumber, std::string) = 0;
+    virtual void onException(const std::shared_ptr<std::exception>, std::string) = 0;
+};
+
 }
-#endif//NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_
+
+#endif//NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_

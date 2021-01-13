@@ -209,6 +209,7 @@ SchemaPtr WorkerRPCClient::requestMonitoringData(const std::string& address, Mon
         NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
                                 + status.error_message());
     }
+    return nullptr;
 }
 
 }// namespace NES

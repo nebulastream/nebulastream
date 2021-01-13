@@ -101,6 +101,34 @@ std::string joinedExpectedOutput10 =
     "+----------------------------------------------------+";
 
 std::string filePath = "file.txt";
+namespace NodeEngine {
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener);
+}
+template<typename MockedNodeEngine>
+std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize = 8192,
+                                                     uint64_t numBuffers = 1024) {
+    try {
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+        auto partitionManager = std::make_shared<Network::PartitionManager>();
+        auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
+        auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
+        auto networkManagerCreator = [=](NodeEngine::NodeEnginePtr engine) {
+            return Network::NetworkManager::create(hostname, port, Network::ExchangeProtocol(partitionManager, engine),
+                                                   bufferManager);
+        };
+        auto compiler = createDefaultQueryCompiler();
+
+        auto mockEngine = std::make_shared<MockedNodeEngine>(
+            std::move(streamConf), std::move(bufferManager), std::move(queryManager), std::move(networkManagerCreator),
+            std::move(partitionManager), std::move(compiler), 0);
+        NES::NodeEngine::installGlobalErrorListener(mockEngine);
+        return mockEngine;
+    } catch (std::exception& err) {
+        NES_ERROR("Cannot start node engine " << err.what());
+        NES_THROW_RUNTIME_ERROR("Cant start node engine");
+    }
+    return nullptr;
+}
 
 class TextExecutablePipeline : public ExecutablePipelineStage {
   public:
@@ -551,4 +579,150 @@ TEST_F(EngineTest, testStartStopStartStop) {
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Invalid);
     testOutput();
 }
+
+namespace detail {
+void segkiller() {
+    char** p = reinterpret_cast<char**>(42);
+    *p = "segmentation fault now";
+}
+}// namespace detail
+
+TEST_F(EngineTest, testFatalCrash) {
+    auto engine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::create());
+    EXPECT_EXIT(detail::segkiller(), testing::ExitedWithCode(1), "NodeEngine failed fatally");
+}
+
+TEST_F(EngineTest, testExceptionCrash) {
+    class MockedNodeEngine : public NodeEngine::NodeEngine {
+      public:
+        using NodeEngine::NodeEngine;
+
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
+                                  std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
+                                  Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
+                                  uint64_t nodeEngineId)
+            : NodeEngine(config, std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
+
+        void onException(const std::shared_ptr<std::exception> exception, std::string) override {
+            ASSERT_TRUE(strcmp(exception->what(), "Failed assertion on false error message: this will fail now with a NesRuntimeException") == 0);
+        }
+    };
+    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
+    NES_ASSERT(false, "this will fail now with a NesRuntimeException");
+}
+
+void runQueryWithException() {
+    class MockedNodeEngine : public NodeEngine::NodeEngine {
+      public:
+        std::promise<bool> completedPromise;
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
+                                  std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
+                                  Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
+                                  uint64_t nodeEngineId)
+            : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
+
+        void onException(const std::shared_ptr<std::exception> exception, std::string) override {
+            auto str = exception->what();
+            NES_ERROR(str);
+            ASSERT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
+            completedPromise.set_value(true);
+            std::exit(1);
+        }
+    };
+    class FailingTextExecutablePipeline : public ExecutablePipelineStage {
+      public:
+
+        uint32_t execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
+            NES_DEBUG("Going to throw exception");
+            throw std::runtime_error("Catch me if you can!"); // :P
+        }
+    };
+
+
+    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
+
+    GeneratedQueryExecutionPlanBuilder builder = GeneratedQueryExecutionPlanBuilder::create();
+    DataSourcePtr source =
+        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+    SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
+    DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
+    builder.addSource(source);
+    builder.addSink(sink);
+    builder.setQueryId(testQueryId);
+    builder.setQuerySubPlanId(testQueryId);
+    builder.setQueryManager(engine->getQueryManager());
+    builder.setBufferManager(engine->getBufferManager());
+    builder.setCompiler(engine->getCompiler());
+
+    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink);
+    auto executable = std::make_shared<FailingTextExecutablePipeline>();
+    auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, nullptr);
+    builder.addPipeline(pipeline);
+    auto qep = builder.build();
+    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    ASSERT_TRUE(engine->completedPromise.get_future().get());
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->stop());
+}
+
+TEST_F(EngineTest, testSemiUnhandledExceptionCrash) {
+    EXPECT_EXIT(runQueryWithException(), testing::ExitedWithCode(1), "");
+}
+
+
+void executeFailingQueryWithUnhandledException() {
+    class MockedNodeEngine : public NodeEngine::NodeEngine {
+      public:
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
+                                  std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
+                                  Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
+                                  uint64_t nodeEngineId)
+            : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
+
+        void onException(const std::shared_ptr<std::exception> exception, std::string) override {
+            auto str = exception->what();
+            NES_ERROR(str);
+            ASSERT_TRUE(strcmp(str, "Unknown exception caught") == 0);
+            std::exit(1);
+        }
+    };
+    class FailingTextExecutablePipeline : public ExecutablePipelineStage {
+      public:
+        std::promise<bool> completedPromise;
+
+        uint32_t execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
+            NES_DEBUG("Going to throw exception");
+            throw 1;
+        }
+    };
+    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
+
+    GeneratedQueryExecutionPlanBuilder builder = GeneratedQueryExecutionPlanBuilder::create();
+    DataSourcePtr source =
+        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+    SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
+    DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
+    builder.addSource(source);
+    builder.addSink(sink);
+    builder.setQueryId(testQueryId);
+    builder.setQuerySubPlanId(testQueryId);
+    builder.setQueryManager(engine->getQueryManager());
+    builder.setBufferManager(engine->getBufferManager());
+    builder.setCompiler(engine->getCompiler());
+
+    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink);
+    auto executable = std::make_shared<FailingTextExecutablePipeline>();
+    auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, nullptr);
+    builder.addPipeline(pipeline);
+    auto qep = builder.build();
+    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    executable->completedPromise.get_future().get();
+    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->stop());
+}
+
+TEST_F(EngineTest, testFullyUnhandledExceptionCrash) {
+    EXPECT_EXIT(executeFailingQueryWithUnhandledException(), testing::ExitedWithCode(1), "");
+}
+
 }// namespace NES

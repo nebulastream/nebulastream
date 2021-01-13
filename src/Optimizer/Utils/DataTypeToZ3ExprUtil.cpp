@@ -53,6 +53,7 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr value
     NES_DEBUG("DataTypeToZ3ExprUtil: creating z3 expression for value type");
     if (valueType->isArrayValue()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of array type.");
+        return nullptr;
     } else {
         auto basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
         auto valueType = basicValueType->getType();
@@ -71,6 +72,7 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr value
             expr = std::make_shared<z3::expr>(context->string_val(basicValueType->getValue()));
         } else {
             NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueType->toString());
+            return nullptr;
         }
         return Z3ExprAndFieldMap::create(expr, {});
     }

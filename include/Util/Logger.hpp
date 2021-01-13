@@ -18,12 +18,15 @@
 #define INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
 
+#include <Exceptions/NesRuntimeException.hpp>
+#include <NodeEngine/ErrorListener.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <iostream>
 #include <log4cxx/consoleappender.h>
 #include <log4cxx/fileappender.h>
 #include <log4cxx/logger.h>
 #include <log4cxx/patternlayout.h>
+#include <mutex>
 
 using namespace log4cxx;
 using namespace log4cxx::helpers;
@@ -185,13 +188,23 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
     } while (0)
 #endif
 
+namespace NodeEngine {
+void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
+}
+
 #ifdef NES_DEBUG
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            NES::collectAndPrintStacktrace();                                                                                    \
-            NES_FATAL_ERROR(TEXT);                                                                                               \
-            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);                                              \
+            NES_FATAL_ERROR("NES Fatal Error on " #CONDITION << " message: " << TEXT);                                           \
+            {                                                                                                                    \
+                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                std::stringbuf __buffer;                                                                                         \
+                std::ostream __os(&__buffer);                                                                                    \
+                __os << "Failed assertion on " #CONDITION;                                                                       \
+                __os << " error message: " << TEXT;                                                                              \
+                NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+            }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
 #else
@@ -201,26 +214,41 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 #define NES_ASSERT(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            NES::collectAndPrintStacktrace();                                                                                    \
-            NES_FATAL_ERROR(TEXT);                                                                                               \
-            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);                                              \
+            NES_FATAL_ERROR("NES Fatal Error on " #CONDITION << " message: " << TEXT);                                           \
+            {                                                                                                                    \
+                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                std::stringbuf __buffer;                                                                                         \
+                std::ostream __os(&__buffer);                                                                                    \
+                __os << "Failed assertion on " #CONDITION;                                                                       \
+                __os << " error message: " << TEXT;                                                                              \
+                NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+            }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
 
 #define NES_ASSERT2(CONDITION, ...)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            NES::collectAndPrintStacktrace();                                                                                    \
-            NES_FATAL_ERROR(__VA_ARGS__);                                                                                        \
-            throw std::runtime_error("NES Runtime Error on condition " #CONDITION);                                              \
+            NES_FATAL_ERROR("NES Fatal Error on " #CONDITION << " message: " << __VA_ARGS__);                                    \
+            {                                                                                                                    \
+                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                std::stringbuf __buffer;                                                                                         \
+                std::ostream __os(&__buffer);                                                                                    \
+                __os << "Failed assertion on " #CONDITION;                                                                       \
+                __os << " error message: " << __VA_ARGS__;                                                                       \
+                NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+            }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
 
-#define NES_THROW_RUNTIME_ERROR(TEXT)                                                                                            \
+#define NES_THROW_RUNTIME_ERROR(...)                                                                                            \
     do {                                                                                                                         \
-        NES::collectAndPrintStacktrace();                                                                                        \
-        NES_FATAL_ERROR(TEXT);                                                                                                   \
-        throw std::runtime_error(TEXT);                                                                                          \
+        auto __stacktrace = collectAndPrintStacktrace();                                                                         \
+        std::stringbuf __buffer;                                                                                                 \
+        std::ostream __os(&__buffer);                                                                                            \
+        __os << __VA_ARGS__;                                                                                                            \
+        NES_FATAL_ERROR(__VA_ARGS__);                                                                                                   \
+        NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                           \
     } while (0)
 
 static void setupLogging(std::string logFileName, DebugLevel level) {

@@ -94,5 +94,6 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
     }
+    return nullptr;
 }
 }// namespace NES

@@ -110,6 +110,7 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
         return DataTypeFactory::createArray(arrayDetails.dimensions(), componentType);
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization is not possible");
+    return nullptr;
 }
 
 SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(ValueTypePtr valueType,
@@ -166,6 +167,7 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataVal
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: "
                             + serializedDataValue->DebugString());
+    return nullptr;
 }
 
 }// namespace NES
