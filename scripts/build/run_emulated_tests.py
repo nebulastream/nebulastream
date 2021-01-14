@@ -36,10 +36,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    not_tests = ["CMakeFiles", "CTestTestFile.cmake",
-                 "cmake_install.cmake",
-                 "gtest", "test_data"]
-
     success = True
     failed_tests = []
     for root, dirnames, filenames in os.walk(args.tests_dir):
