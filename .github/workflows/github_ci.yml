@@ -29,7 +29,7 @@ jobs:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v1
         with:
-            token: ${{ secrets.CI_SECRET }}
+            token: ${{ secrets.CI_PERSONAL_TOKEN }}
             repository: nebulastream/nebulastream-java-client
             event-type: nes-executable-image-update
       - name: Run tests
