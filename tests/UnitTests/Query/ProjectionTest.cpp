@@ -460,8 +460,12 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"), Attribute("asd")).sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    EXPECT_EQ(queryPlan, nullptr);
+    try {
+        auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+        FAIL();
+    } catch (...) {
+        SUCCEED();
+    }
 }
 
 TEST_F(ProjectionTest, projectNotExistingField) {
@@ -475,8 +479,13 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("asd")).sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    EXPECT_EQ(queryPlan, nullptr);
+
+    try {
+        auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+        FAIL();
+    } catch (...) {
+        SUCCEED();
+    }
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
