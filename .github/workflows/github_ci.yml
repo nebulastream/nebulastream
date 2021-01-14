@@ -26,6 +26,12 @@ jobs:
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1
+        with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            repository: nebulastream/nebulastream-java-client
+            event-type: nes-executable-image-update
       - name: Run tests
         run: |
           docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
