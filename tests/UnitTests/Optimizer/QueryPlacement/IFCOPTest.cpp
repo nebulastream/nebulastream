@@ -186,3 +186,5 @@ TEST_F(IFCOPTest, testSelectOptimizedExecutionPath) {
 
     auto randomExecutionPath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
 }
+
+// TODO: Add test for operator assignment
