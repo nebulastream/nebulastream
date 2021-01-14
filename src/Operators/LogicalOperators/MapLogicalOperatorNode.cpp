@@ -19,6 +19,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 
 namespace NES {
 
@@ -42,6 +43,8 @@ bool MapLogicalOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
     // use the default input schema to calculate the out schema of this operator.
     mapExpression->inferStamp(getInputSchema());
+
+
     auto assignedField = mapExpression->getField();
     if (outputSchema->has(assignedField->getFieldName())) {
         // The assigned field is part of the current schema.
@@ -55,6 +58,12 @@ bool MapLogicalOperatorNode::inferSchema() {
         outputSchema->addField(assignedField->getFieldName(), assignedField->getStamp());
         NES_DEBUG("MAP Logical Operator: the field " << assignedField->getFieldName()
                                                      << " is not part of the schema, so we added it.");
+    }
+
+    if(mapExpression->getField()->instanceOf<FieldRenameExpressionNode>())
+    {
+        auto fieldAccess = mapExpression->getLeft()->as<FieldRenameExpressionNode>();
+        fieldAccess->inferStamp(getOutputSchema());
     }
     return true;
 }

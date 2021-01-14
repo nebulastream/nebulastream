@@ -17,12 +17,13 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <utility>
 namespace NES {
 FieldRenameExpressionNode::FieldRenameExpressionNode(ExpressionNodePtr expression, std::string newFieldName)
-    : FieldAccessExpressionNode(expression->getStamp(), expression->as<FieldAccessExpressionNode>()->getFieldName()), newFieldName(newFieldName){};
+    : FieldAccessExpressionNode(expression->getStamp(), expression->as<FieldAccessExpressionNode>()->getFieldName()),
+      newFieldName(newFieldName){};
 
 FieldRenameExpressionNode::FieldRenameExpressionNode(FieldRenameExpressionNode* other)
     : FieldRenameExpressionNode(other->expression, other->getFieldName()){};
@@ -48,19 +49,10 @@ const std::string FieldRenameExpressionNode::toString() const {
 void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
     // check if the access field is defined in the schema.
 
-    if (!schema->has(fieldName)) {
-        if(!schema->has(newFieldName))
-        {
-            NES_THROW_RUNTIME_ERROR("FieldAccessExpression: the old field " + fieldName + " or new field " + newFieldName + " is not defined in the  schema "
-                                        + schema->toString());
-        }
-        else
-        {
-            NES_DEBUG("FieldRenameExpressionNode::inferStamp: attributed was already renamed");
-        }
-    }
-    else
-    {
+    if (!schema->has(fieldName) && !schema->has(newFieldName)) {
+        NES_THROW_RUNTIME_ERROR("FieldAccessExpression: the old field " + fieldName + " or new field " + newFieldName
+                                + " is not defined in the  schema " + schema->toString());
+    } else {
         //change name in schema
         schema->get(fieldName)->name = newFieldName;
         // assign the stamp of this field access with the type of this field.

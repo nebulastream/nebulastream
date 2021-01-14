@@ -18,6 +18,8 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <memory>
 #include <utility>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+
 namespace NES {
 FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};
 
@@ -48,6 +50,7 @@ FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const {
 }
 
 ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const { return getRight(); }
+
 void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     // infer stamp of assignment expression
     getAssignment()->inferStamp(schema);
