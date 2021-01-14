@@ -42,6 +42,7 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
      * @return FieldAccessExpressionNodePtr
      */
     FieldAccessExpressionNodePtr getField() const;
+
     /**
      * @brief returns the expressions, which calculates the new value.
      * @return ExpressionNodePtr

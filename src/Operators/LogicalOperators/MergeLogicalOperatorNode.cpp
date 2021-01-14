@@ -33,6 +33,23 @@ const std::string MergeLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string MergeLogicalOperatorNode::getStringBasedSignature() {
+    std::stringstream ss;
+    std::vector<std::string> fields;
+    for (auto& field : outputSchema->fields) {
+        fields.push_back(field->name);
+    }
+    std::sort(fields.begin(), fields.end());
+    ss << "MERGE(";
+    for (auto field : fields) {
+        ss << " " << field << " ";
+    }
+    ss << ")";
+    ss << ".(" << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
+    ss << children[1]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    return ss.str();
+}
+
 bool MergeLogicalOperatorNode::inferSchema() {
     if (!UnaryOperatorNode::inferSchema()) {
         return false;

@@ -18,6 +18,7 @@
 #define NES_ATTRIBUTESORTRULE_HPP
 
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <Nodes/Expressions/BinaryExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
@@ -36,15 +37,11 @@ typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
  *
  * For map:
  * 1. map("b" = "c"+"a") => map("b" = "a"+"c")
- *
  * 2. map("b" = "c"+"b"+"a") => map("b" = "a"+"b"+"c")
- *
- * current: map("b" = (("c"+"b")+"a")) => map("b" = "b"+"c"+"a")
- *
- * 2. map("b" = (((("c"+"b")+"a")+"d")+"e")) => map("b" = "a"+"a"+"b"+"c")
- *
- * 3. map("b" = "d"+"c"+"b"*"a") => map("b" = "a"*"b"+"c"+"d")
- * 4. map("b" = "d"+"b"+"c"*"a") => map("b" = "a"*"c"+"b"+"d")
+ * 3. map("b" = (((("c"+"b")+"a")+"d")+"e")) => map("b" = "a"+"a"+"b"+"c")
+ * 4. map("b" = "d"+"c"+"b"*"a") => map("b" = "a"*"b"+"c"+"d")
+ * 5. map("b" = "d"+"b"+"c"*"a") => map("b" = "a"*"c"+"b"+"d")
+ * 6. map("b" = "c"+10+"a"+100) => map("b" = 10+100+"a"+"c")
  *
  *
  * For Filter:
@@ -69,7 +66,7 @@ class AttributeSortRule : public BaseRefinementRule {
      * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filer and map.
      * @param logicalOperator: the operator to be sorted
      */
-    void sortAttributesInExpressions(ExpressionNodePtr expression);
+    ExpressionNodePtr sortAttributesInExpressions(ExpressionNodePtr expression);
 
     /**
      * @brief fetch all commutative fields from the expression
@@ -77,13 +74,13 @@ class AttributeSortRule : public BaseRefinementRule {
      * Sort them by alphabets and assign them to respective pointer refer by index.
      * @param expression
      */
-    void sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression);
+    ExpressionNodePtr sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression);
 
     /**
      * @brief
      * @param expression
      */
-    void sortAttributesInLogicalExpressions(ExpressionNodePtr expression);
+    ExpressionNodePtr sortAttributesInLogicalExpressions(ExpressionNodePtr expression);
 
     /**
      * @brief
@@ -92,18 +89,52 @@ class AttributeSortRule : public BaseRefinementRule {
      * @return
      */
     template<class ExpressionType>
-    std::vector<FieldAccessExpressionNodePtr> fetchCommutativeFields(ExpressionNodePtr expression) {
+    std::vector<ExpressionNodePtr> fetchCommutativeFields(ExpressionNodePtr expression) {
 
-        std::vector<FieldAccessExpressionNodePtr> commutativeFields;
-        if (expression->instanceOf<FieldAccessExpressionNode>()) {
-            commutativeFields.push_back(expression->template as<FieldAccessExpressionNode>());
+        std::vector<ExpressionNodePtr> commutativeFields;
+        if (expression->instanceOf<FieldAccessExpressionNode>() || expression->instanceOf<ConstantValueExpressionNode>()) {
+            commutativeFields.push_back(expression);
         } else if (expression->template instanceOf<ExpressionType>()) {
-            for (auto& child : expression->getChildren()) {
+            for (auto child : expression->getChildren()) {
                 auto childCommutativeFields = fetchCommutativeFields<ExpressionType>(child->template as<ExpressionNode>());
                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
             }
         }
         return commutativeFields;
+    }
+
+    /**
+     * @brief
+     * @param parentExpression
+     * @param originalExpression
+     * @param updatedExpression
+     */
+    bool replaceCommutativeFields(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
+                                  ExpressionNodePtr updatedExpression) {
+
+        auto binaryExpression = parentExpression->as<BinaryExpressionNode>();
+
+        const ExpressionNodePtr& leftChild = binaryExpression->getLeft();
+        const ExpressionNodePtr& rightChild = binaryExpression->getRight();
+        if (leftChild.get() == originalExpression.get()) {
+            binaryExpression->removeChildren();
+            binaryExpression->setChildren(updatedExpression, rightChild);
+            return true;
+        } else if (rightChild.get() == originalExpression.get()) {
+            binaryExpression->removeChildren();
+            binaryExpression->setChildren(leftChild, updatedExpression);
+            return true;
+        } else {
+            for (auto child : parentExpression->getChildren()) {
+                if (!(child->instanceOf<FieldAccessExpressionNode>() || child->instanceOf<ConstantValueExpressionNode>())) {
+                    bool replaced = replaceCommutativeFields(child->as<ExpressionNode>(), originalExpression, updatedExpression);
+                    if (replaced) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**

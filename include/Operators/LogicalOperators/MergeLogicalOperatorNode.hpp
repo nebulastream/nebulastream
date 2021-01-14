@@ -36,6 +36,7 @@ class MergeLogicalOperatorNode : public UnaryOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
+    std::string getStringBasedSignature() override;
 };
 }// namespace NES
 #endif// Merge_LOGICAL_OPERATOR_NODE_HPP

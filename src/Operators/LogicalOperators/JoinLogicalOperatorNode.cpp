@@ -37,6 +37,27 @@ const std::string JoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string JoinLogicalOperatorNode::getStringBasedSignature() {
+    std::stringstream ss;
+    ss << "JOIN(";
+    ss << joinDefinition;
+
+
+
+    std::vector<std::string> fields;
+    for (auto& field : outputSchema->fields) {
+        fields.push_back(field->name);
+    }
+    std::sort(fields.begin(), fields.end());
+    for (auto field : fields) {
+        ss << " " << field << " ";
+    }
+    ss << ")";
+    ss << ".(" << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
+    ss << children[1]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    return ss.str();
+}
+
 Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { return joinDefinition; }
 
 bool JoinLogicalOperatorNode::inferSchema() {
