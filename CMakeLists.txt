@@ -347,6 +347,8 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CP
 INCLUDE(CPack)
 
 project_enable_clang_format()
-project_enable_emulated_tests()
+if (CMAKE_CROSSCOMPILING)
+    project_enable_emulated_tests()
+endif ()
 project_enable_release()
 project_enable_version()
