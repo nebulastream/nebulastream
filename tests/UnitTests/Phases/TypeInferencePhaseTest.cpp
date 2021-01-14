@@ -21,6 +21,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -38,6 +39,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 
 using namespace NES::API;
 using namespace NES::Windowing;
@@ -186,4 +188,124 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));
 }
 
+/**
+ * @brief In this test we test the rename operator
+ */
+TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("f1", BasicType::INT32);
+    inputSchema->addField("f2", BasicType::INT8);
+
+    auto source =
+        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = Attribute("f3").rename("f5") * 42);
+    auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
+
+    auto plan = QueryPlan::create(source);
+    plan->appendOperatorAsNewRoot(map);
+    plan->appendOperatorAsNewRoot(sink);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    ASSERT_ANY_THROW(phase->execute(plan));
+}
+
+/**
+ * @brief In this test we test the rename operator
+ */
+TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("f1", BasicType::INT32);
+    inputSchema->addField("f2", BasicType::INT8);
+
+    auto source =
+        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = Attribute("f3") * 42);
+    auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
+
+    auto plan = QueryPlan::create(source);
+    plan->appendOperatorAsNewRoot(map);
+    plan->appendOperatorAsNewRoot(sink);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    ASSERT_ANY_THROW(phase->execute(plan));
+}
+
+/**
+     * @brief In this test we test the rename operator
+     */
+TEST_F(TypeInferencePhaseTest, inferQueryRenameinAssignment) {
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("f1", BasicType::INT32);
+    inputSchema->addField("f2", BasicType::INT8);
+
+    auto source =
+        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = 42);
+    auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
+
+    auto plan = QueryPlan::create(source);
+    plan->appendOperatorAsNewRoot(map);
+    plan->appendOperatorAsNewRoot(sink);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
+    phase->execute(plan);
+    ASSERT_TRUE(maps[0]->getOutputSchema()->getIndex("f4") == 2);
+}
+
+/**
+     * @brief In this test we test the rename operator
+     */
+TEST_F(TypeInferencePhaseTest, inferQueryRenameinAccess) {
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("f1", BasicType::INT32);
+    inputSchema->addField("f2", BasicType::INT8);
+
+    auto source =
+        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f2").rename("f4") < 42);
+    auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
+
+    auto plan = QueryPlan::create(source);
+    plan->appendOperatorAsNewRoot(filter);
+    plan->appendOperatorAsNewRoot(sink);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto filterNode = plan->getOperatorByType<FilterLogicalOperatorNode>();
+    phase->execute(plan);
+    NES_DEBUG("schema=" << filterNode[0]->getOutputSchema()->toString());
+    ASSERT_TRUE(filterNode[0]->getOutputSchema()->getIndex("f4") == 1);
+}
 }// namespace NES

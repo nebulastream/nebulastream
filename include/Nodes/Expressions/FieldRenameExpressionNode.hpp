@@ -20,8 +20,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
 /**
- * @brief A FieldAccessExpression reads a specific field of the current record.
- * It can be created typed or untyped.
+ * @brief A FieldRenameExpressionNode allows us to rename an attribute value via .rename in the query
  */
 class FieldRenameExpressionNode : public FieldAccessExpressionNode {
   public:

@@ -33,11 +33,13 @@ void UnaryOperatorNode::setInputSchema(SchemaPtr inputSchema) {
         this->inputSchema = std::move(inputSchema);
     }
 }
+
 void UnaryOperatorNode::setOutputSchema(SchemaPtr outputSchema) {
     if (outputSchema) {
         this->outputSchema = std::move(outputSchema);
     }
 }
+
 SchemaPtr UnaryOperatorNode::getInputSchema() const { return inputSchema; }
 
 SchemaPtr UnaryOperatorNode::getOutputSchema() const { return outputSchema; }
@@ -49,9 +51,11 @@ bool UnaryOperatorNode::inferSchema() {
             return false;
         }
     }
+
     if (children.empty()) {
         NES_THROW_RUNTIME_ERROR("UnaryOperatorNode: this node should have at least one child operator");
     }
+
     auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
@@ -61,6 +65,7 @@ bool UnaryOperatorNode::inferSchema() {
             return false;
         }
     }
+
     inputSchema = childSchema->copy();
     outputSchema = childSchema->copy();
     return true;

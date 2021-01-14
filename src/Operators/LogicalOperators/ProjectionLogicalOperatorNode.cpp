@@ -60,7 +60,6 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
             fieldAccess->inferStamp(inputSchema);
             fieldName = fieldAccess->getFieldName();
             NES_DEBUG("schema after in project=" << inputSchema->toString());
-
         }
         else
         {
