@@ -40,8 +40,8 @@ class AttributeSortRuleTest : public testing::Test {
   public:
     SchemaPtr schema;
 
-    /* Setup test case */
-    static void SetupTestCase() {
+    /* Will be called before all tests in this class are started. */
+    static void SetUpTestCase() {
         NES::setupLogging("AttributeSortRuleTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup AttributeSortRuleTest test case.");
     }

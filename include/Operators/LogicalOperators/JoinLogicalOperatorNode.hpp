@@ -40,6 +40,7 @@ class JoinLogicalOperatorNode : public BinaryOperatorNode {
     bool equal(const NodePtr rhs) const override;
 
     Join::LogicalJoinDefinitionPtr getJoinDefinition();
+    std::string getStringBasedSignature() override;
 
   private:
     Join::LogicalJoinDefinitionPtr joinDefinition;
