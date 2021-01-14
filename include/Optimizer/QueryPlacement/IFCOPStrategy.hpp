@@ -48,7 +48,8 @@ class IFCOPStrategy : public BasePlacementStrategy {
 
     TopologyNodePtr runGlobalOptimization(QueryPlanPtr queryPlan, TopologyPtr topology, StreamCatalogPtr streamCatalog, int maxIter);
     float getTotalCost(TopologyNodePtr executionPath);
-    TopologyNodePtr getRandomAssignment(TopologyNodePtr executionPath, QueryPlanPtr queryPlan);
+    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> getRandomAssignment(TopologyNodePtr executionPath,
+                                        LogicalOperatorNodePtr rootOperator, std::map<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>>);
     float getExecutionPathCost(TopologyNodePtr executionPath);
 };
 }// namespace NES

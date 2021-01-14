@@ -124,13 +124,14 @@ TopologyNodePtr IFCOPStrategy::runGlobalOptimization(QueryPlanPtr queryPlan, Top
         TopologyNodePtr optimizedExecutionPath = getOptimizedExecutionPath(topology, executionPathOptimizationMaxIter, queryPlan);
 
         // Step 2: Get an optimized assignment
-        TopologyNodePtr optimizedExecutionPathWithAssignment = getRandomAssignment(optimizedExecutionPath, queryPlan);
+//        TopologyNodePtr optimizedExecutionPathWithAssignment = getRandomAssignment(optimizedExecutionPath, queryPlan);
 
         // Step 3: Evaluate cost
-        float cost = getTotalCost(optimizedExecutionPathWithAssignment);
-        if (cost < bestCost){
-            bestCandidate = optimizedExecutionPathWithAssignment;
-        }
+//        float cost = getTotalCost(optimizedExecutionPathWithAssignment);
+//        if (cost < bestCost){
+//            bestCandidate = optimizedExecutionPathWithAssignment;
+//        }
+        NES_DEBUG("IFCOP: bestCost=" << bestCost);
     }
 
     return bestCandidate;
@@ -140,10 +141,34 @@ float IFCOPStrategy::getTotalCost(TopologyNodePtr executionPath) {
     // TODO: implement IFCOP cost
     return 0;
 }
-TopologyNodePtr IFCOPStrategy::getRandomAssignment(TopologyNodePtr executionPath, QueryPlanPtr queryPlan) {
-    // TODO: implement IFCOP random assignment
-    queryPlan.get();
-    return executionPath;
+std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> IFCOPStrategy::getRandomAssignment(TopologyNodePtr executionPath,
+                                                   LogicalOperatorNodePtr rootOperator,
+                                                   std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> nodeToOperatorsMap) {
+//    // TODO: implement IFCOP random assignment
+
+    // draw the random number
+    // TODO: draw this randomly
+    uint64_t randomNumberOfOperatorToPlace = 1;
+
+    // prepare a vector to map operators
+    // TODO: also consider if it reaches n-ary operator
+    std::vector<LogicalOperatorNodePtr> operatorsToMap;
+    LogicalOperatorNodePtr nextOperatorToMap = rootOperator;
+    for (int i=0; i<randomNumberOfOperatorToPlace; i++){
+        operatorsToMap.push_back(nextOperatorToMap);
+
+        // TODO: only accept unary operator
+        nextOperatorToMap = nextOperatorToMap->getChildren()[0]->as<LogicalOperatorNode>();
+    }
+
+    nodeToOperatorsMap.insert(std::pair<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>>(executionPath, operatorsToMap));
+
+    for (NodePtr childNode: executionPath->getChildren()){
+        getRandomAssignment(childNode->as<TopologyNode>(), nextOperatorToMap, nodeToOperatorsMap);
+    }
+
+
+    return nodeToOperatorsMap;
 }
 TopologyNodePtr IFCOPStrategy::getOptimizedExecutionPath(TopologyPtr topology, int maxIter, QueryPlanPtr queryPlan) {
     // TODO: implement IFCOP execution path optimization
@@ -284,6 +309,8 @@ TopologyNodePtr IFCOPStrategy::generateRandomExecutionPath(TopologyPtr topology,
     return rootOfMergedPath;
 
 }
+
+// TODO: also consider bandwidth for the cost
 float IFCOPStrategy::getExecutionPathCost(TopologyNodePtr executionPath) {
     uint16_t totalResources = executionPath->getAvailableResources();
 
