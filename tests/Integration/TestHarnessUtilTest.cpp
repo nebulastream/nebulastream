@@ -13,9 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <gtest/gtest.h>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness.hpp>
+#include <gtest/gtest.h>
 
 namespace NES {
 
@@ -40,9 +40,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -51,10 +51,10 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
 
     testHarness.addSource("car", carSchema, "car1");
 
-    testHarness.pushElement<Car>({40,40,40},0);
-    testHarness.pushElement<Car>({30,30,30},0);
-    testHarness.pushElement<Car>({71,71,71},0);
-    testHarness.pushElement<Car>({21,21,21},0);
+    testHarness.pushElement<Car>({40, 40, 40}, 0);
+    testHarness.pushElement<Car>({30, 30, 30}, 0);
+    testHarness.pushElement<Car>({71, 71, 71}, 0);
+    testHarness.pushElement<Car>({21, 21, 21}, 0);
 
     std::string output = testHarness.getOutput(1);
 
@@ -195,7 +195,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0);
-    EXPECT_THROW(testHarness.pushElement<Car>({30,30,30},0), std::runtime_error);
+    EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), std::runtime_error);
 }
 
 /*
@@ -217,14 +217,14 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto truckSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                           ->addField("key", DataTypeFactory::createUInt32())
+                           ->addField("value", DataTypeFactory::createUInt32())
+                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator);
@@ -234,7 +234,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
-    EXPECT_THROW(testHarness.pushElement<Truck>({30,30,30,30,30},0), std::runtime_error);
+    EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 0), std::runtime_error);
 }
 
 //TODO: more test using window, merge, or join operator (issue #1443)

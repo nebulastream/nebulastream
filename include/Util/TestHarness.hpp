@@ -17,15 +17,14 @@
 #ifndef NES_TESTHARNESS_HPP
 #define NES_TESTHARNESS_HPP
 #include <API/Schema.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <Util/TestUtils.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/TestUtils.hpp>
 /**
  * @brief This test harness wrap query deployment test in our test framework.
  */
 namespace NES {
-
 
 class TestHarness {
   public:
@@ -57,11 +56,11 @@ class TestHarness {
             NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
         }
 
-        if (!std::is_class<T>::value){
+        if (!std::is_class<T>::value) {
             NES_THROW_RUNTIME_ERROR("TestHarness: tuples must be instances of struct");
         }
 
-        if (sizeof(T) != sourceSchemas.at(sourceIdx)->getSchemaSizeInBytes()){
+        if (sizeof(T) != sourceSchemas.at(sourceIdx)->getSchemaSizeInBytes()) {
             NES_THROW_RUNTIME_ERROR("TestHarness: tuple size and schema size does not match");
         }
 
@@ -81,15 +80,16 @@ class TestHarness {
         restPort = restPort + 2;
 
         // Check if logical stream already exists
-        if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)){
+        if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
                       << logicalStreamName);
             crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
         } else {
             // Check if it has the same schema
-            if(!crd->getStreamCatalog()->getSchemaForLogicalStream(logicalStreamName)->equals(schema, true)){
-                NES_TRACE("TestHarness: logical source " << logicalStreamName << " exists in the stream catalog with "
-                                 "different schema, replacing it with a new schema");
+            if (!crd->getStreamCatalog()->getSchemaForLogicalStream(logicalStreamName)->equals(schema, true)) {
+                NES_TRACE("TestHarness: logical source " << logicalStreamName
+                                                         << " exists in the stream catalog with "
+                                                            "different schema, replacing it with a new schema");
                 crd->getStreamCatalog()->removeLogicalStream(logicalStreamName);
                 crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
             }
@@ -100,9 +100,8 @@ class TestHarness {
         sourceSchemas.push_back(schema);
 
         // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
-        auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress,
-                                               crdPort + (workerPtrs.size()+1)*20, crdPort + (workerPtrs.size()+1)*20+1,
-                                               NodeType::Sensor);
+        auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress, crdPort + (workerPtrs.size() + 1) * 20,
+                                               crdPort + (workerPtrs.size() + 1) * 20 + 1, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         workerPtrs.push_back(wrk);
 
@@ -110,9 +109,7 @@ class TestHarness {
         records.push_back(currentSourceRecords);
     }
 
-    uint64_t getWorkerCount() {
-        return workerPtrs.size();
-    }
+    uint64_t getWorkerCount() { return workerPtrs.size(); }
 
     /*
          * @brief execute the test based on the given operator, pushed elements, and number of workers,
@@ -122,10 +119,10 @@ class TestHarness {
     std::string getOutput(uint64_t bufferToExpect) {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
-                                    + std::to_string(physicalStreamNames.size()) + " number of added logical streams = "
-                                    + std::to_string(logicalStreamNames.size()) + " number of added workers = "
-                                    + std::to_string(workerPtrs.size()) + " buffers to expect = "
-                                    + std::to_string(bufferToExpect));
+                                    + std::to_string(physicalStreamNames.size())
+                                    + " number of added logical streams = " + std::to_string(logicalStreamNames.size())
+                                    + " number of added workers = " + std::to_string(workerPtrs.size())
+                                    + " buffers to expect = " + std::to_string(bufferToExpect));
         }
 
         QueryServicePtr queryService = crd->getQueryService();
@@ -139,8 +136,8 @@ class TestHarness {
             auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
             auto currentRecords = records.at(i);
-            for (int j=0; j<currentSourceNumOfRecords; ++j){
-                memcpy(&memArea[tupleSize*j], currentRecords.at(j), tupleSize);
+            for (int j = 0; j < currentSourceNumOfRecords; ++j) {
+                memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
             }
 
             AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
@@ -153,8 +150,8 @@ class TestHarness {
         remove(filePath.c_str());
 
         //register query
-        std::string queryString = operatorToTest + R"(.sink(FileSinkDescriptor::create(")" + filePath
-            + R"(" , "CSV_FORMAT", "APPEND"));)";
+        std::string queryString =
+            operatorToTest + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
         QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
 
         auto globalQueryPlan = crd->getGlobalQueryPlan();
@@ -189,7 +186,6 @@ class TestHarness {
 
         return content;
     }
-
 
   private:
     NesCoordinatorPtr crd;
