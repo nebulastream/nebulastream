@@ -44,11 +44,13 @@ if __name__ == "__main__":
                 if not args.quiet:
                     print("Running {} with {}".format(file, args.qemu_binary))
                 try:
-                    subprocess.check_output([args.qemu_binary,
+                    stdout = subprocess.run([args.qemu_binary,
                                            "-L",
                                            args.sysroot_dir,
-                                           os.path.join(root, file)])
-                except:
+                                           os.path.join(root, file)],
+                                   capture_output=True, text=True).stdout
+                    print(stdout)
+                except Exception as e:
                     success = False
                     failed_tests.append(file)
                     pass
