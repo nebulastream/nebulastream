@@ -30,7 +30,7 @@ then
       -DNES_USE_OPC=0 \
       -DNES_USE_ADAPTIVE=0
     make -j4
-    cd /nebulastream/build/tests
+    cd /nebulastream/build
     make test_aarch64_debug
     result=$?
     rm -rf /nebulastream/build
