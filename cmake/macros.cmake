@@ -58,8 +58,8 @@ macro(project_enable_clang_format)
     endif ()
 endmacro(project_enable_clang_format)
 
-find_program(QEMU_EMULATOR qemu-aarch64)
 macro(project_enable_emulated_tests)
+    find_program(QEMU_EMULATOR qemu-aarch64)
     string(CONCAT SYSROOT_DIR
             "/opt/sysroots/aarch64-linux-gnu")
     string(CONCAT TESTS_DIR
