@@ -248,11 +248,18 @@ set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
 set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
 set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
+if (CMAKE_CROSSCOMPILING)
+    # this can be parameterized with other archs
+    set(QEMU_EMULATOR_PATH /usr/bin/qemu-aarch64)
+endif ()
 
 # Print definition values.
 message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
 message(STATUS "Clang-Format Executable: ${CLANG_FORMAT_EXECUTABLE}")
 message(STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}")
+if (CMAKE_CROSSCOMPILING)
+    message(STATUS "Current Qemu Executable: ${QEMU_EMULATOR_PATH}")
+endif ()
 
 # Add definitions as compile flag.
 add_definitions(-D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"')
@@ -340,3 +347,6 @@ INCLUDE(CPack)
 project_enable_clang_format()
 project_enable_release()
 project_enable_version()
+if (CMAKE_CROSSCOMPILING)
+    project_enable_emulated_run()
+endif ()

@@ -31,7 +31,7 @@ then
       -DNES_USE_ADAPTIVE=0
     make -j4
     cd /nebulastream/build/tests
-    make test_debug
+    make test_aarch64_debug
     result=$?
     rm -rf /nebulastream/build
     exit $result
