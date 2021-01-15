@@ -26,13 +26,6 @@ jobs:
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v1
-        with:
-            token: ${{ secrets.CI_PERSONAL_TOKEN }}
-            repository: nebulastream/nebulastream-java-client
-            event-type: nes-executable-image-update
-            client-payload: '{"prtitle": "${{ github.event.pull_request.title}}", "prnumber": "${{ github.event.pull_request.number }}"}'
       - name: Run tests
         run: |
           docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
@@ -108,6 +101,13 @@ jobs:
           docker push nebulastream/nes-executable-image:latest
           echo "Pushed the execution image"
           docker logout
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.CI_PERSONAL_TOKEN }}
+          repository: nebulastream/nebulastream-java-client
+          event-type: nes-executable-image-update
+          client-payload: '{"prtitle": "${{ github.event.pull_request.title}}", "prnumber": "${{ github.event.pull_request.number }}"}'
       - name: Release new version
         env:
           CI_SECRET: ${{ secrets.CI_SECRET }}
