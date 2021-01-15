@@ -117,5 +117,5 @@ RUN update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
 
 ENV PATH="/opt/toolchain/bin:${PATH}"
 
-ADD ./entrypoint-nes-cross.sh /entrypoint.sh
+ADD ./entrypoint-nes-cross-build.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
