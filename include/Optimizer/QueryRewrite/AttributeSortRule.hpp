@@ -65,28 +65,28 @@ class AttributeSortRule : public BaseRefinementRule {
     /**
      * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filer and map.
      * @param logicalOperator: the operator to be sorted
+     * @return pointer to the updated expression
      */
     ExpressionNodePtr sortAttributesInExpressions(ExpressionNodePtr expression);
 
     /**
-     * @brief fetch all commutative fields from the expression
-     * make copy of all extracted field expressions
-     * Sort them by alphabets and assign them to respective pointer refer by index.
-     * @param expression
+     * @brief Alphabetically sort the attributes within the arithmetic expression
+     * @param expression: the input arithmetic expression
+     * @return pointer to the updated expression
      */
     ExpressionNodePtr sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression);
 
     /**
-     * @brief
-     * @param expression
+     * @brief Alphabetically sort the attributes within the logical expression
+     * @param expression: the input logical expression
+     * @return pointer to the updated expression
      */
     ExpressionNodePtr sortAttributesInLogicalExpressions(ExpressionNodePtr expression);
 
     /**
-     * @brief
-     * @tparam ExpressionType
-     * @param expression
-     * @return
+     * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic expression of type ExpressionType
+     * @param expression: the expression to be used
+     * @return: vector of expression containing commutative field access or constant expression type
      */
     template<class ExpressionType>
     std::vector<ExpressionNodePtr> fetchCommutativeFields(ExpressionNodePtr expression) {
@@ -104,43 +104,18 @@ class AttributeSortRule : public BaseRefinementRule {
     }
 
     /**
-     * @brief
-     * @param parentExpression
-     * @param originalExpression
-     * @param updatedExpression
+     * @brief Replace the original expression within parent expression with updated expression
+     * @param parentExpression: the parent expression containing original expression
+     * @param originalExpression: the original expression
+     * @param updatedExpression: the updated expression
      */
     bool replaceCommutativeFields(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
-                                  ExpressionNodePtr updatedExpression) {
-
-        auto binaryExpression = parentExpression->as<BinaryExpressionNode>();
-
-        const ExpressionNodePtr& leftChild = binaryExpression->getLeft();
-        const ExpressionNodePtr& rightChild = binaryExpression->getRight();
-        if (leftChild.get() == originalExpression.get()) {
-            binaryExpression->removeChildren();
-            binaryExpression->setChildren(updatedExpression, rightChild);
-            return true;
-        } else if (rightChild.get() == originalExpression.get()) {
-            binaryExpression->removeChildren();
-            binaryExpression->setChildren(leftChild, updatedExpression);
-            return true;
-        } else {
-            for (auto child : parentExpression->getChildren()) {
-                if (!(child->instanceOf<FieldAccessExpressionNode>() || child->instanceOf<ConstantValueExpressionNode>())) {
-                    bool replaced = replaceCommutativeFields(child->as<ExpressionNode>(), originalExpression, updatedExpression);
-                    if (replaced) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
+                                  ExpressionNodePtr updatedExpression);
 
     /**
-     * @brief
-     * @param expression
-     * @return
+     * @brief Fetch the value of left most constant or name of left most field access expression within the input expression
+     * @param expression: the input expression
+     * @return the name or value of field or constant expression
      */
     std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression) {
 

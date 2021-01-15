@@ -354,25 +354,25 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
 
         std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
                   [](ExpressionNodePtr lhsField, ExpressionNodePtr rhsField) {
-                    std::string leftValue;
-                    std::string rightValue;
+                      std::string leftValue;
+                      std::string rightValue;
 
-                    if (lhsField->instanceOf<ConstantValueExpressionNode>()) {
-                        auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
-                        auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                        leftValue = basicValueType->getValue();
-                    } else {
-                        leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
-                    }
+                      if (lhsField->instanceOf<ConstantValueExpressionNode>()) {
+                          auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                          auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
+                          leftValue = basicValueType->getValue();
+                      } else {
+                          leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                      }
 
-                    if (rhsField->instanceOf<ConstantValueExpressionNode>()) {
-                        auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
-                        auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                        rightValue = basicValueType->getValue();
-                    } else {
-                        rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
-                    }
-                    return leftValue.compare(rightValue) < 0;
+                      if (rhsField->instanceOf<ConstantValueExpressionNode>()) {
+                          auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                          auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
+                          rightValue = basicValueType->getValue();
+                      } else {
+                          rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                      }
+                      return leftValue.compare(rightValue) < 0;
                   });
 
         for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
@@ -491,6 +491,34 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
         return NegateExpressionNode::create(updatedChildExpression);
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for the logical expression node: " + expression->toString());
+}
+
+bool AttributeSortRule::replaceCommutativeFields(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
+                                                 ExpressionNodePtr updatedExpression) {
+
+    auto binaryExpression = parentExpression->as<BinaryExpressionNode>();
+
+    const ExpressionNodePtr& leftChild = binaryExpression->getLeft();
+    const ExpressionNodePtr& rightChild = binaryExpression->getRight();
+    if (leftChild.get() == originalExpression.get()) {
+        binaryExpression->removeChildren();
+        binaryExpression->setChildren(updatedExpression, rightChild);
+        return true;
+    } else if (rightChild.get() == originalExpression.get()) {
+        binaryExpression->removeChildren();
+        binaryExpression->setChildren(leftChild, updatedExpression);
+        return true;
+    } else {
+        for (auto child : parentExpression->getChildren()) {
+            if (!(child->instanceOf<FieldAccessExpressionNode>() || child->instanceOf<ConstantValueExpressionNode>())) {
+                bool replaced = replaceCommutativeFields(child->as<ExpressionNode>(), originalExpression, updatedExpression);
+                if (replaced) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 }// namespace NES
