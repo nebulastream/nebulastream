@@ -117,12 +117,12 @@ class IFCOPTest : public testing::Test {
                 /**Logical Stream Name**/ "truck");
 
         StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(8));
-//        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(9));
+        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(9));
         StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(confTruck, topologyNodes.at(10));
 
 
         streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
-//        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
         streamCatalog->addPhysicalStream("truck", streamCatalogEntry3);
     }
 
@@ -188,3 +188,29 @@ TEST_F(IFCOPTest, testSelectOptimizedExecutionPath) {
 }
 
 // TODO: Add test for operator assignment
+/* Test to run operator assignment */
+TEST_F(IFCOPTest, testOperatorAssignment) {
+    // Get an execution path
+    setupTopologyAndStreamCatalog();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto subQuery = Query::from("truck");
+    Query query = Query::from("car").filter(Attribute("id") > 1).merge(&subQuery).sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto ifcop = IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+
+    TopologyNodePtr rootOfOptimizedExecutionpath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
+
+    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> initialNodeToOperatorsMap;
+    auto nodeToOperatorMap = ifcop->getRandomAssignment(rootOfOptimizedExecutionpath, queryPlan->getSourceOperators());
+    NES_DEBUG("IFCOPTest: nodeToOperatorMap.size()=" << nodeToOperatorMap.size());
+}
