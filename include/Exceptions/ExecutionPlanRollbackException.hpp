@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_EXCEPTIONS_EXECUTIONPLANROLLBACKEXCEPTION_HPP_
 #define NES_INCLUDE_EXCEPTIONS_EXECUTIONPLANROLLBACKEXCEPTION_HPP_
 
-#include <string>
 #include <stdexcept>
+#include <string>
 
 namespace NES {
 
