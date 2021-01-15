@@ -142,34 +142,110 @@ float IFCOPStrategy::getTotalCost(TopologyNodePtr executionPath) {
     return 0;
 }
 std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> IFCOPStrategy::getRandomAssignment(TopologyNodePtr executionPath,
-                                                   LogicalOperatorNodePtr rootOperator,
-                                                   std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> nodeToOperatorsMap) {
-//    // TODO: implement IFCOP random assignment
+                                                   std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
+    // TODO: implement IFCOP random assignment
 
-    // draw the random number
-    // TODO: draw this randomly
-    uint64_t randomNumberOfOperatorToPlace = 1;
-
-    // prepare a vector to map operators
-    // TODO: also consider if it reaches n-ary operator
-    std::vector<LogicalOperatorNodePtr> operatorsToMap;
-    LogicalOperatorNodePtr nextOperatorToMap = rootOperator;
-    for (int i=0; i<randomNumberOfOperatorToPlace; i++){
-        operatorsToMap.push_back(nextOperatorToMap);
-
-        // TODO: only accept unary operator
-        nextOperatorToMap = nextOperatorToMap->getChildren()[0]->as<LogicalOperatorNode>();
+    // Get a map of stream names and their source nodes
+    std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
+    for (auto& sourceOperator : sourceOperators) {
+        const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
+        const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+        mapOfSourceToTopologyNodes[streamName] = sourceNodes;
     }
+    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> nodeToOperatorsMap;
+    // Place source operator to the source nodes, then trigger placement of rest of operators
+    for (auto& sourceOperator : sourceOperators) {
+        TopologyNodePtr candidateSourceNode = mapOfSourceToTopologyNodes[sourceOperator->getSourceDescriptor()->getStreamName()].back();
+        TopologyNodePtr candidateSourceNodeInExecutionPath;
 
-    nodeToOperatorsMap.insert(std::pair<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>>(executionPath, operatorsToMap));
+        // find matching mathcing node of candidateSourceNode in the executionPath
+        for (NodePtr sourceFromExecutionPath: executionPath->getAllLeafNodes()){
+            if (sourceFromExecutionPath->as<TopologyNode>()->getId() == candidateSourceNode->getId()){
+                candidateSourceNodeInExecutionPath = sourceFromExecutionPath->as<TopologyNode>();
+                break;
+            }
+        }
 
-    for (NodePtr childNode: executionPath->getChildren()){
-        getRandomAssignment(childNode->as<TopologyNode>(), nextOperatorToMap, nodeToOperatorsMap);
+        mapOfSourceToTopologyNodes[sourceOperator->getSourceDescriptor()->getStreamName()].pop_back();
+
+        if (nodeToOperatorsMap.find(candidateSourceNodeInExecutionPath) == nodeToOperatorsMap.end()){
+            std::vector<LogicalOperatorNodePtr> operators = {sourceOperator};
+            nodeToOperatorsMap.insert(std::pair<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>>(candidateSourceNodeInExecutionPath, operators) );
+        } else {
+            nodeToOperatorsMap[candidateSourceNodeInExecutionPath].push_back(sourceOperator);
+        }
+
+        std::vector<NodePtr> sourceFromExecutionPath = executionPath->getAllLeafNodes();
+
+        placeNextOperator(candidateSourceNodeInExecutionPath, sourceOperator->getParents()[0]->as<LogicalOperatorNode>(), nodeToOperatorsMap);
+
+
     }
-
 
     return nodeToOperatorsMap;
 }
+
+void IFCOPStrategy::placeNextOperator(TopologyNodePtr nextTopologyNodePtr, LogicalOperatorNodePtr nextOperatorPtr,
+                                      std::map<TopologyNodePtr , std::vector<LogicalOperatorNodePtr>>& nodeToOperatorsMap) {
+
+    uint64_t randomNumberOfOperatorToPlace = 1;
+    for (int i=0; i<randomNumberOfOperatorToPlace; ++i) {
+        // check if nextOperatorPtr is a sink node
+        bool sinkCheck = (nextOperatorPtr->getParents().empty() && nextTopologyNodePtr->getId()
+                                                                   == nextTopologyNodePtr->getAllRootNodes()[0]->as<TopologyNode>()->getId())
+                         || (!nextOperatorPtr->getParents().empty());
+
+        // if it is not a unary operator (e.g., merge) then break
+        //TODO: the `mergeCheck` should check the reachability of its child operators
+        uint64_t sinkNodeId = nextTopologyNodePtr->getAllRootNodes()[0]->as<TopologyNode>()->getId();
+        bool mergeCheck = nextTopologyNodePtr->getId() == sinkNodeId;
+
+        if (nextOperatorPtr->getChildren().size() > 1 && !mergeCheck) {
+            break; // try to place in the parent
+        }
+
+        // place the next operator
+        if (nodeToOperatorsMap.find(nextTopologyNodePtr) == nodeToOperatorsMap.end()){
+            if (sinkCheck) {
+                std::vector<LogicalOperatorNodePtr> operators = {nextOperatorPtr};
+                nodeToOperatorsMap.insert(std::pair<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>>(nextTopologyNodePtr, operators) );
+            }
+        } else {
+            // add the operator if it has not been added before
+            if (std::find(nodeToOperatorsMap[nextTopologyNodePtr].begin(), nodeToOperatorsMap[nextTopologyNodePtr].end(),
+                          nextOperatorPtr) == nodeToOperatorsMap[nextTopologyNodePtr].end() && sinkCheck){
+                nodeToOperatorsMap[nextTopologyNodePtr].push_back(nextOperatorPtr);
+            }
+        }
+
+        if (!nextOperatorPtr->getParents().empty()){
+            // get the parent of the operator we just place
+            nextOperatorPtr = nextOperatorPtr->getParents()[0]->as<LogicalOperatorNode>();
+        }
+    }
+
+    // check if root/sink node is reached
+    if (!nextTopologyNodePtr->getParents().empty()){
+        // TODO: Here we can random the index of topologyNodePtr's parent
+        uint64_t topologyNodeParentIndex = 0;
+        placeNextOperator(nextTopologyNodePtr->getParents()[topologyNodeParentIndex]->as<TopologyNode>(),
+            nextOperatorPtr, nodeToOperatorsMap);
+    } else {
+        // if root/sink node is reached but there are operators left, then place the remaining operators in the sink node
+        while (nextOperatorPtr){
+            if (std::find(nodeToOperatorsMap[nextTopologyNodePtr].begin(), nodeToOperatorsMap[nextTopologyNodePtr].end(),
+                          nextOperatorPtr) == nodeToOperatorsMap[nextTopologyNodePtr].end()){
+                nodeToOperatorsMap[nextTopologyNodePtr].push_back(nextOperatorPtr);
+            }
+            if (nextOperatorPtr->getParents().empty()){
+                nextOperatorPtr = nullptr;
+            } else {
+                nextOperatorPtr = nextOperatorPtr->getParents()[0]->as<LogicalOperatorNode>();
+            }
+        }
+    }
+}
+
 TopologyNodePtr IFCOPStrategy::getOptimizedExecutionPath(TopologyPtr topology, int maxIter, QueryPlanPtr queryPlan) {
     // TODO: implement IFCOP execution path optimization
     TopologyNodePtr bestExecutionPathCandidate = nullptr;
@@ -299,7 +375,9 @@ TopologyNodePtr IFCOPStrategy::generateRandomExecutionPath(TopologyPtr topology,
             }
             // traverse to the next node
             if (!currentNodeOfExtendingPath->getChildren().empty()){
-                currentNodeOfExtendingPath = currentNodeOfExtendingPath->getChildren()[0]->as<TopologyNode>();
+                auto nextNode = currentNodeOfExtendingPath->getChildren()[0]->as<TopologyNode>();
+                nextNode->removeAllParent();
+                currentNodeOfExtendingPath = nextNode;
             } else {
                 currentNodeOfExtendingPath = nullptr;
             }
@@ -320,5 +398,6 @@ float IFCOPStrategy::getExecutionPathCost(TopologyNodePtr executionPath) {
 
     return totalResources;
 }
+
 
 }// namespace NES

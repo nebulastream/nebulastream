@@ -42,15 +42,17 @@ class IFCOPStrategy : public BasePlacementStrategy {
     TopologyNodePtr generateRandomExecutionPath(TopologyPtr topology, QueryPlanPtr queryPlan);
     TopologyNodePtr getOptimizedExecutionPath(TopologyPtr topology, int maxIter, QueryPlanPtr queryPlan);
 
+    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> getRandomAssignment(TopologyNodePtr executionPath,
+                                                                                       std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
   private:
     explicit IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
         TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
 
     TopologyNodePtr runGlobalOptimization(QueryPlanPtr queryPlan, TopologyPtr topology, StreamCatalogPtr streamCatalog, int maxIter);
     float getTotalCost(TopologyNodePtr executionPath);
-    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> getRandomAssignment(TopologyNodePtr executionPath,
-                                        LogicalOperatorNodePtr rootOperator, std::map<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>>);
     float getExecutionPathCost(TopologyNodePtr executionPath);
+    void placeNextOperator(TopologyNodePtr nextTopologyNodePtr, LogicalOperatorNodePtr nextOperatorPtr,
+                           std::map<TopologyNodePtr , std::vector<LogicalOperatorNodePtr>>& nodeToOperatorsMap);
 };
 }// namespace NES
 
