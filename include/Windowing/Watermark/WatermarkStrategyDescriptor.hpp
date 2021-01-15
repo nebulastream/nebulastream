@@ -31,6 +31,8 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     virtual ~WatermarkStrategyDescriptor() = default;
     virtual bool equal(WatermarkStrategyDescriptorPtr other) = 0;
 
+    virtual std::string toString() = 0;
+
     /**
     * @brief Checks if the current node is of type WatermarkStrategyDescriptor
     * @tparam WatermarkStrategyType

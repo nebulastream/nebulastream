@@ -48,6 +48,7 @@ class RenameStreamOperatorNode : public UnaryOperatorNode {
     OperatorNodePtr copy() override;
 
     const std::string getNewStreamName();
+    std::string getStringBasedSignature() override;
 
   private:
     const std::string newStreamName;

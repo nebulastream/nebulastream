@@ -37,4 +37,12 @@ bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr 
 
 TimeUnit EventTimeWatermarkStrategyDescriptor::getTimeUnit() { return unit; }
 
+std::string EventTimeWatermarkStrategyDescriptor::toString() {
+    std::stringstream ss;
+    ss << "TYPE = EVENT-TIME,";
+    ss << "FIELD =" << onField.getExpressionNode() << ",";
+    ss << "ALLOWED-LATENESS =" << allowedLateness.toString();
+    return std::string();
+}
+
 }// namespace NES::Windowing

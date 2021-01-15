@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
+#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 
 namespace NES {
 
@@ -27,6 +28,13 @@ WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(
 const std::string WatermarkAssignerLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "WATERMARKASSIGNER(" << id << ")";
+    return ss.str();
+}
+
+std::string WatermarkAssignerLogicalOperatorNode::getStringBasedSignature() {
+    std::stringstream ss;
+    ss << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ").";
+    ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
     return ss.str();
 }
 
