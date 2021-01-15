@@ -32,7 +32,7 @@ jobs:
             token: ${{ secrets.CI_PERSONAL_TOKEN }}
             repository: nebulastream/nebulastream-java-client
             event-type: nes-executable-image-update
-            client-payload: '{"commitmsg": "${{ github.event.head_commit.message}}", "commitsha": "${{ github.sha }}", "issuenumber": "${{ github.event.issue.number }}"}'
+            client-payload: '{"commitmsg": "${{ github.event.head_commit.message}}", "commitsha": "${{ github.sha }}", "issuenumber": "${{ github.event.pull_request.number }}"}'
       - name: Run tests
         run: |
           docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
