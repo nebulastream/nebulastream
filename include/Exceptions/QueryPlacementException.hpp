@@ -17,8 +17,8 @@
 #ifndef NES_QUERYPLACEMENTEXCEPTION_HPP
 #define NES_QUERYPLACEMENTEXCEPTION_HPP
 
-#include <string>
 #include <stdexcept>
+#include <string>
 
 namespace NES {
 

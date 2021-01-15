@@ -17,8 +17,8 @@
 #ifndef NES_GLOBALQUERYPLANUPDATEEXCEPTION_HPP
 #define NES_GLOBALQUERYPLANUPDATEEXCEPTION_HPP
 
-#include <string>
 #include <stdexcept>
+#include <string>
 
 namespace NES {
 

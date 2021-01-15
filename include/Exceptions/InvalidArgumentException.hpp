@@ -17,8 +17,8 @@
 #ifndef NES_INVALIDARGUMENTEXCEPTION_HPP
 #define NES_INVALIDARGUMENTEXCEPTION_HPP
 
-#include <string>
 #include <stdexcept>
+#include <string>
 
 namespace NES {
 
