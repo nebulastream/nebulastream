@@ -22,6 +22,7 @@
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <sstream>
 
 namespace NES {
@@ -32,6 +33,21 @@ WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWin
 const std::string WindowLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "WINDOW(" << id << ")";
+    return ss.str();
+}
+
+std::string WindowLogicalOperatorNode::getStringBasedSignature() {
+    std::stringstream ss;
+    auto windowType = windowDefinition->getWindowType();
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    if (windowDefinition->isKeyed()) {
+        ss << "WINDOW-BY-KEY(" << windowDefinition->getOnKey()->toString() << ",";
+    } else {
+        ss << "WINDOW(";
+    }
+    ss << "WINDOW-TYPE: " << windowType->toString() << ",";
+    ss << "AGGREGATION: " << windowAggregation->toString() << ")";
+    ss << "." << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
     return ss.str();
 }
 

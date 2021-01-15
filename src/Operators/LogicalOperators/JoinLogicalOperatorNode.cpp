@@ -43,17 +43,7 @@ std::string JoinLogicalOperatorNode::getStringBasedSignature() {
     ss << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
     ss << "RIGHT-KEY=" << joinDefinition->getRightJoinKey() << ",";
     ss << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
-
-    std::vector<std::string> fields;
-    for (auto& field : outputSchema->fields) {
-        fields.push_back(field->name);
-    }
-    std::sort(fields.begin(), fields.end());
-    for (auto field : fields) {
-        ss << " " << field << " ";
-    }
-    ss << ")";
-    ss << ".(" << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
+    ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
     ss << children[1]->as<LogicalOperatorNode>()->getStringBasedSignature();
     return ss.str();
 }
