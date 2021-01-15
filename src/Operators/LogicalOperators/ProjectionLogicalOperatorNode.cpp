@@ -16,8 +16,8 @@
 
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
@@ -54,15 +54,12 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
             NES_ERROR("Query: stream has to be an FieldAccessExpression but it was a " + expression->toString());
         }
         std::string fieldName;
-        if(expression->instanceOf<FieldRenameExpressionNode>())
-        {
+        if (expression->instanceOf<FieldRenameExpressionNode>()) {
             auto fieldAccess = expression->as<FieldRenameExpressionNode>();
             fieldAccess->inferStamp(inputSchema);
             fieldName = fieldAccess->getFieldName();
             NES_DEBUG("schema after in project=" << inputSchema->toString());
-        }
-        else
-        {
+        } else {
             auto fieldAccess = expression->as<FieldAccessExpressionNode>();
             fieldAccess->inferStamp(inputSchema);
             fieldName = fieldAccess->getFieldName();

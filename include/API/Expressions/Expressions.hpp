@@ -67,6 +67,7 @@ class ExpressionItem {
     ExpressionNodePtr getExpressionNode();
 
     ExpressionItem rename(std::string name);
+
   private:
     ExpressionNodePtr expression;
 };

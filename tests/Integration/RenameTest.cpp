@@ -49,7 +49,6 @@ class RenameTest : public testing::Test {
     std::string ipAddress = "127.0.0.1";
 };
 
-
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
     remove("test.out");
 
@@ -69,7 +68,8 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("RenameTest: Submit query");
-    string query = "Query::from(\"default_logical\").project(Attribute(\"id\").rename(\"NewName\")).sink(FileSinkDescriptor::create(\"test.out\"));";
+    string query = "Query::from(\"default_logical\").project(Attribute(\"id\").rename(\"NewName\")).sink(FileSinkDescriptor::"
+                   "create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -116,7 +116,6 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     EXPECT_TRUE(response == 0);
 }
 
-
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
     remove("test.out");
 
@@ -136,7 +135,8 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("RenameTest: Submit query");
-    string query = "Query::from(\"default_logical\").filter(Attribute(\"id\").rename(\"NewName\") < 2).sink(FileSinkDescriptor::create(\"test.out\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"default_logical\").filter(Attribute(\"id\").rename(\"NewName\") < "
+                   "2).sink(FileSinkDescriptor::create(\"test.out\", \"CSV_FORMAT\", \"APPEND\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -173,7 +173,6 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     EXPECT_TRUE(response == 0);
 }
 
-
 TEST_F(RenameTest, testCentralWindowEventTime) {
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
@@ -209,10 +208,10 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     remove(outputFilePath.c_str());
 
     NES_INFO("RenameTest: Submit query");
-    string query =
-        "Query::from(\"window\").windowByKey(Attribute(\"id\").rename(\"newId\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-        "Seconds(1)), Sum(Attribute(\"value\").rename(\"newValue\"))).sink(FileSinkDescriptor::create(\""
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\").rename(\"newId\"), "
+                   "TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
+                   "Seconds(1)), Sum(Attribute(\"value\").rename(\"newValue\"))).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -244,7 +243,6 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RenameTest: Test finished");
 }
-
 
 /**
  * Test deploying join with different streams
@@ -306,7 +304,7 @@ TEST_F(RenameTest, testJoinWithDifferentStreamTumblingWindow) {
     string query =
         R"(Query::from("window1").join(Query::from("window2"), Attribute("id1").rename("id1New"), Attribute("id2").rename("id2New"), TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 

@@ -16,9 +16,9 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <memory>
 #include <utility>
-#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 
 namespace NES {
 FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};

@@ -20,6 +20,7 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -39,7 +40,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 
 using namespace NES::API;
 using namespace NES::Windowing;
