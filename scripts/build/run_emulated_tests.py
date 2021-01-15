@@ -32,11 +32,11 @@ if __name__ == "__main__":
                     "with the existing file, outputting a unifiied diff if "
                     "there are any necessary changes")
     parser.add_argument("qemu_binary",
-                        help="Path to the clang-format binary")
+                        help="Path to the qemu binary")
     parser.add_argument("sysroot_dir",
-                        help="Path to the clang-format binary")
+                        help="Path to the sysroot")
     parser.add_argument("tests_dir",
-                        help="Path to the clang-format binary")
+                        help="Path to the tests")
     parser.add_argument("--quiet", default=False,
                         action="store_true",
                         help="If specified, only print errors")
