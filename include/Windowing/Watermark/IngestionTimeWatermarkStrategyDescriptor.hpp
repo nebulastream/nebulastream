@@ -29,6 +29,7 @@ class IngestionTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescrip
     static WatermarkStrategyDescriptorPtr create();
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
+    std::string toString() override;
 
   private:
     explicit IngestionTimeWatermarkStrategyDescriptor();

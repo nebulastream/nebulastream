@@ -38,6 +38,8 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
 
+    std::string toString() override;
+
   private:
     // Field where the watermark should be retrieved
     ExpressionItem onField;

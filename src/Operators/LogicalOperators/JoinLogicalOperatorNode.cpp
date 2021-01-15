@@ -20,6 +20,7 @@
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <z3++.h>
 
 namespace NES {
@@ -39,10 +40,9 @@ const std::string JoinLogicalOperatorNode::toString() const {
 
 std::string JoinLogicalOperatorNode::getStringBasedSignature() {
     std::stringstream ss;
-    ss << "JOIN(";
-    ss << joinDefinition;
-
-
+    ss << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
+    ss << "RIGHT-KEY=" << joinDefinition->getRightJoinKey() << ",";
+    ss << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
 
     std::vector<std::string> fields;
     for (auto& field : outputSchema->fields) {

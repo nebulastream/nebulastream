@@ -27,4 +27,6 @@ bool IngestionTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptor
     return other->instanceOf<IngestionTimeWatermarkStrategyDescriptor>();
 }
 
+std::string IngestionTimeWatermarkStrategyDescriptor::toString() { return "TYPE = INGESTION-TIME"; }
+
 }// namespace NES::Windowing

@@ -43,6 +43,10 @@ const std::string RenameStreamOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string RenameStreamOperatorNode::getStringBasedSignature() {
+    return children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+}
+
 bool RenameStreamOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
     //TODO: add magic here
