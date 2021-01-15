@@ -19,6 +19,13 @@ import subprocess
 import sys
 
 if __name__ == "__main__":
+    """ Runs all tests from the /tests/ folder, after
+    cmake is run. Needs a path for the qemu binary, sysroot
+    path, and the test binaries.
+    
+    We run the tests like so:
+        "qemu-aarch64 -L /path/to/libs path/to/compiled-tests".
+    """
     parser = argparse.ArgumentParser(
         description="Runs clang format on all of the source "
                     "files. If --fix is specified,  and compares the output "
@@ -38,12 +45,13 @@ if __name__ == "__main__":
 
     success = True
     failed_tests = []
-    for root, dirnames, filenames in os.walk(args.tests_dir):
+    for root, dirnames, filenames in os.walk(args.tests_dir): # all files in /build/tests
         for file in filenames:
-            if file.endswith(('-tests', '-test')):
+            if file.endswith(('-tests', '-test')): # only files that are actually tests
                 if not args.quiet:
                     print("Running {} with {}".format(file, args.qemu_binary))
                 try:
+                    # qemu-aarch64 -L /path/to/libs path/to/compiled-tests
                     stdout = subprocess.run([args.qemu_binary,
                                            "-L",
                                            args.sysroot_dir,
@@ -52,10 +60,10 @@ if __name__ == "__main__":
                     print(stdout)
                 except Exception as e:
                     success = False
-                    failed_tests.append(file)
-                    pass
+                    failed_tests.append(file) # report later
+                    pass # move to next, don't fail
 
     for failure in failed_tests:
-        print("Running {} with {} failed!".format(failure, args.qemu_binary))
+        print("Running {} with {} failed!".format(failure, args.qemu_binary)) # report failed tests
 
     sys.exit(success)
