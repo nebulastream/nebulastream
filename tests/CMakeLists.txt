@@ -355,6 +355,11 @@ add_executable(window-deployment-test "Integration/WindowDeploymentTest.cpp")
 target_link_libraries(window-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-deployment-test COMMAND window-deployment-test)
 
+### complexQueryTest ###
+add_executable(complex-query-test "Integration/ComplexQueryTest.cpp")
+target_link_libraries(complex-query-test nes ${GTEST_LIBRARIES})
+add_test(NAME complex-query-test COMMAND complex-query-test)
+
 ### AssignWatermarkTest ###
 #TODO: activate for testing
 add_executable(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
