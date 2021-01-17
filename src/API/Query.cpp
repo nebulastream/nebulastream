@@ -38,6 +38,8 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <iostream>
 #include <stdarg.h>
+#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
+
 namespace NES {
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
@@ -161,8 +163,8 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
     uint64_t allowedLateness = 0;
-    // check if query contain watermark assigner, and add if missing (as default behaviour)
-    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+    if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        NES_DEBUG("add default watermark strategy as non is provided");
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
@@ -173,16 +175,15 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
                                                              windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
-        //we have to extract the allowedLateness from the watermark strategy and put in the window definition
-        auto assigner = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
-        NES_ASSERT(assigner.size() == 1, "only one assigner is allowed");
-        if (assigner[0]->getWatermarkStrategyDescriptor()->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
-            auto eventTimeWatermarkStrategyDescriptor =
-                std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
-                    assigner[0]->getWatermarkStrategyDescriptor());
+        NES_DEBUG("add existing watermark strategy for window");
+        auto assigner = queryPlan->getRootOperators()[0]->as<WatermarkAssignerLogicalOperatorNode>();
+        if (auto eventTimeWatermarkStrategyDescriptor =
+            std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+                assigner->getWatermarkStrategyDescriptor())) {
             allowedLateness = eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime();
-        } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
-                       assigner[0]->getWatermarkStrategyDescriptor())) {
+        } else if (auto ingestionTimeWatermarkDescriptior =
+            std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
+                assigner->getWatermarkStrategyDescriptor())) {
             NES_WARNING("Note: ingestion time does not support allowed lateness yet");
         } else {
             NES_ERROR("cannot create watermark strategy from descriptor");
@@ -212,7 +213,8 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
 
     uint64_t allowedLateness = 0;
     // check if query contain watermark assigner, and add if missing (as default behaviour)
-    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+    if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        NES_DEBUG("add default watermark strategy as non is provided");
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
@@ -223,15 +225,15 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
                                                              windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
-        auto assigner = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
-        NES_ASSERT(assigner.size() == 1, "only one assigner is allowed");
+        NES_DEBUG("add existing watermark strategy for window");
+        auto assigner = queryPlan->getRootOperators()[0]->as<WatermarkAssignerLogicalOperatorNode>();
         if (auto eventTimeWatermarkStrategyDescriptor =
                 std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
-                    assigner[0]->getWatermarkStrategyDescriptor())) {
+                    assigner->getWatermarkStrategyDescriptor())) {
             allowedLateness = eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime();
         } else if (auto ingestionTimeWatermarkDescriptior =
                        std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
-                           assigner[0]->getWatermarkStrategyDescriptor())) {
+                           assigner->getWatermarkStrategyDescriptor())) {
             NES_WARNING("Note: ingestion time does not support allowed lateness yet");
         } else {
             NES_ERROR("cannot create watermark strategy from descriptor");

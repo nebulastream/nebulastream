@@ -46,9 +46,8 @@ class WindowSliceStore {
                 return i;
             }
         }
-        NES_ERROR("getSliceIndexByTs for ts=" << ts << " could not find a slice, this should not happen");
-        return -1;
-    }
+        NES_ASSERT(false,"getSliceIndexByTs for ts=" << ts << " could not find a slice, this should not happen");
+        }
 
     /**
      * @brief Appends a new slice to the meta data vector and intitalises a new partial aggregate with the default value.

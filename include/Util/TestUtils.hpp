@@ -46,9 +46,9 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static const uint64_t timeout = 60;//TODO:increase it again to 30
+    static const uint64_t timeout = 600;//TODO:increase it again to 30
 
-    /**
+    /**DistributeWindowRule
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
      * @param ptr to NodeEngine
      * @param queryId
