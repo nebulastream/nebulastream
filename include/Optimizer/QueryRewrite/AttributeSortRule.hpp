@@ -113,7 +113,8 @@ class AttributeSortRule : public BaseRefinementRule {
                                   ExpressionNodePtr updatedExpression);
 
     /**
-     * @brief Fetch the value of left most constant or name of left most field access expression within the input expression
+     * @brief Fetch the value of the left most constant expression or the name of the left most field access expression within
+     * the input expression. This information is then used for performing global sorting in case of a binary expression.
      * @param expression: the input expression
      * @return the name or value of field or constant expression
      */
