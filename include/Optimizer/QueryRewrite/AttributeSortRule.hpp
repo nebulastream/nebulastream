@@ -63,11 +63,11 @@ class AttributeSortRule : public BaseRefinementRule {
 
   private:
     /**
-     * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filer and map.
+     * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filter and map.
      * @param logicalOperator: the operator to be sorted
      * @return pointer to the updated expression
      */
-    ExpressionNodePtr sortAttributesInExpressions(ExpressionNodePtr expression);
+    ExpressionNodePtr sortAttributesInExpression(ExpressionNodePtr expression);
 
     /**
      * @brief Alphabetically sort the attributes within the arithmetic expression
@@ -84,13 +84,13 @@ class AttributeSortRule : public BaseRefinementRule {
     ExpressionNodePtr sortAttributesInLogicalExpressions(ExpressionNodePtr expression);
 
     /**
-     * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic expression of type ExpressionType
+     * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic expression of type
+     * ExpressionType. The fetched fields are then sorted alphabetically.
      * @param expression: the expression to be used
      * @return: vector of expression containing commutative field access or constant expression type
      */
     template<class ExpressionType>
     std::vector<ExpressionNodePtr> fetchCommutativeFields(ExpressionNodePtr expression) {
-
         std::vector<ExpressionNodePtr> commutativeFields;
         if (expression->instanceOf<FieldAccessExpressionNode>() || expression->instanceOf<ConstantValueExpressionNode>()) {
             commutativeFields.push_back(expression);
@@ -109,7 +109,7 @@ class AttributeSortRule : public BaseRefinementRule {
      * @param originalExpression: the original expression
      * @param updatedExpression: the updated expression
      */
-    bool replaceCommutativeFields(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
+    bool replaceCommutativeExpressions(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
                                   ExpressionNodePtr updatedExpression);
 
     /**
@@ -117,21 +117,7 @@ class AttributeSortRule : public BaseRefinementRule {
      * @param expression: the input expression
      * @return the name or value of field or constant expression
      */
-    std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression) {
-
-        ExpressionNodePtr startPoint = expression;
-        while (!(startPoint->instanceOf<FieldAccessExpressionNode>() || startPoint->instanceOf<ConstantValueExpressionNode>())) {
-            startPoint = startPoint->getChildren()[0]->as<ExpressionNode>();
-        }
-
-        if (startPoint->instanceOf<FieldAccessExpressionNode>()) {
-            return startPoint->template as<FieldAccessExpressionNode>()->getFieldName();
-        } else {
-            const ValueTypePtr& constantValue = startPoint->as<ConstantValueExpressionNode>()->getConstantValue();
-            auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-            return basicValueType->getValue();
-        }
-    }
+    std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
 };
 }// namespace NES
 #endif//NES_ATTRIBUTESORTRULE_HPP
