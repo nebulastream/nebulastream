@@ -506,7 +506,6 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context, V
 bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                    GeneratableWindowAggregationPtr generatableWindowAggregation,
                                                    PipelineContextPtr context, uint64_t windowOperatorIndex) {
-
     auto tf = getTypeFactory();
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);

@@ -22,6 +22,8 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
+
 #include <z3++.h>
 
 namespace NES {
@@ -41,7 +43,11 @@ bool CentralWindowOperator::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<CentralWindowOperator>()->getId() == id;
 }
 
-bool CentralWindowOperator::equal(const NodePtr rhs) const { return rhs->instanceOf<CentralWindowOperator>(); }
+bool CentralWindowOperator::equal(const NodePtr rhs) const {
+    return rhs->instanceOf<CentralWindowOperator>()
+        && rhs->as<WindowOperatorNode>()->getWindowDefinition() == this->getWindowDefinition();
+}
+
 
 OperatorNodePtr CentralWindowOperator::copy() {
     auto copy = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition, id);

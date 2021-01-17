@@ -51,6 +51,8 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
 
             if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
                 createCentralWindowOperator(windowOp);
+                NES_DEBUG("DistributeWindowRule::apply: central op " << queryPlan->toString());
+
             } else {
                 createDistributedWindowOperator(windowOp, queryPlan);
             }
@@ -65,8 +67,8 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
 }
 
 void DistributeWindowRule::createCentralWindowOperator(WindowOperatorNodePtr windowOp) {
-    NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp
-                                                                                               << " << windowOp->toString()");
+    NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp << " "
+                                                                                               << windowOp->toString());
     windowOp->getWindowDefinition()->setOriginId(windowOp->getId());
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     newWindowOp->setInputSchema(windowOp->getInputSchema());
