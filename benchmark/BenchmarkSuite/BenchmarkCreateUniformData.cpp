@@ -29,8 +29,8 @@ int main() {
     // Optimal mean would be 499.5 and optimal stddev would be 288.38
     // These values result from the fact that BenchmarkUtils::createUniformData provides uniform distribution in the range [0, 999]
 
-    double optimalMean = (0 + 999)/2.0;
-    double optimalStddev = (0 + 999)/std::sqrt(12.0);
+    double optimalMean = (0 + 999) / 2.0;
+    double optimalStddev = (0 + 999) / std::sqrt(12.0);
 
     std::ofstream file;
     file.open((fileName) + "_results.csv", std::ios_base::trunc);
@@ -44,7 +44,7 @@ int main() {
     BenchmarkUtils::createRangeVector<uint64_t>(allListSizes, 100, 10000, 100);
 
     for (auto listSize : allListSizes) {
-        
+
         double absMeanError = 0;
         double absStddev = 0;
         double maxMeanErrorMean = 0;
@@ -80,14 +80,14 @@ int main() {
         }
 
         file.open((fileName) + "_results.csv", std::ios_base::app);
-        file << cntListSize << "," << listSize << "," << (absMeanError/REPS) << "," << (absStddev/REPS) << "," << (maxMeanErrorMean) << "," << (maxMeanErrorStddev) << "\n";
+        file << cntListSize << "," << listSize << "," << (absMeanError / REPS) << "," << (absStddev / REPS) << ","
+             << (maxMeanErrorMean) << "," << (maxMeanErrorStddev) << "\n";
         file.close();
 
         ++cntListSize;
         std::cout << "\rListsize=" << listSize << " done [" << cntListSize << "/" << allListSizes.size() << "]";
         fflush(stdout);
     }
-
 
     return 0;
 }
