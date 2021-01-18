@@ -17,17 +17,25 @@
 #ifndef NES_DYNAMICROWLAYOUTFIELD_HPP
 #define NES_DYNAMICROWLAYOUTFIELD_HPP
 
-#include "DynamicRowLayoutBuffer.hpp"
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
+
 namespace NES::NodeEngine {
 
 template<typename T>
 class DynamicRowLayoutField {
 
   public:
-    DynamicRowLayoutField(DynamicRowLayoutBuffer& dynamicRowLayoutBuffer);
+    DynamicRowLayoutField(DynamicRowLayoutBuffer& dynamicRowLayoutBuffer, NES::NodeEngine::FIELD_SIZE fieldIndex,
+                          NES::NodeEngine::FIELD_SIZE recordSize);
+
+    T& operator[](size_t recordIndex);
 
   private:
     DynamicRowLayoutBuffer& dynamicRowLayoutBuffer;
+    NES::NodeEngine::FIELD_SIZE fieldIndex;
+    NES::NodeEngine::FIELD_SIZE recordSize;
+    T& basePointer;
 };
 
 

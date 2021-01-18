@@ -32,7 +32,7 @@ DynamicRowLayoutBuffer::DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_
     : DynamicLayoutBuffer(tupleBuffer, capacity), dynamicRowLayout(dynamicRowLayout) {}
 template<typename T>
 DynamicRowLayoutField<T>& DynamicRowLayoutBuffer::operator[](uint64_t fieldIndex) {
-    
+    NES_NOT_IMPLEMENTED();
 }
 
 }

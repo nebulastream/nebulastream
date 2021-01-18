@@ -15,5 +15,19 @@
 */
 
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-NES::NodeEngine::DynamicRowLayoutField::DynamicRowLayoutField(NES::NodeEngine::DynamicRowLayoutBuffer& dynamicRowLayoutBuffer)
-    : dynamicRowLayoutBuffer(dynamicRowLayoutBuffer) {}
+
+
+template<typename T>
+T& NES::NodeEngine::DynamicRowLayoutField<T>::operator[](size_t recordIndex) {
+    size_t address = basePointer + recordSize * recordIndex;
+    NES_NOT_IMPLEMENTED();
+}
+template<typename T>
+NES::NodeEngine::DynamicRowLayoutField<T>::DynamicRowLayoutField(NES::NodeEngine::DynamicRowLayoutBuffer& dynamicRowLayoutBuffer,
+                                                                 NES::NodeEngine::FIELD_SIZE fieldIndex,
+                                                                 NES::NodeEngine::FIELD_SIZE recordSize)
+    : dynamicRowLayoutBuffer(dynamicRowLayoutBuffer), fieldIndex(fieldIndex), recordSize(recordSize) {
+
+
+
+}
