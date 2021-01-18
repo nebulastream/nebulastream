@@ -581,19 +581,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                               "0,20000,12,7\n"
                               "0,20000,16,12\n";
 
-    std::ifstream ifsQ1(outputFilePath.c_str());
-    EXPECT_TRUE(ifsQ1.good());
-    std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));
-    NES_INFO("content Q1=" << contentQ1);
-    NES_INFO("expContent=" << expectedContent1);
-    EXPECT_EQ(contentQ1, expectedContent1);
-
-    std::ifstream ifsQ2(outputFilePath2.c_str());
-    EXPECT_TRUE(ifsQ2.good());
-    std::string contentQ2((std::istreambuf_iterator<char>(ifsQ2)), (std::istreambuf_iterator<char>()));
-    NES_INFO("content Q2=" << contentQ2);
-    NES_INFO("expContent=" << expectedContent2);
-    EXPECT_EQ(contentQ2, expectedContent2);
+    TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath);
+    TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2);
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
