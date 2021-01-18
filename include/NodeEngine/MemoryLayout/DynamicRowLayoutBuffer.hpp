@@ -17,9 +17,10 @@
 #ifndef NES_DYNAMICROWLAYOUTBUFFER_HPP
 #define NES_DYNAMICROWLAYOUTBUFFER_HPP
 
-#include <stdint.h>
+#include "DynamicRowLayoutField.hpp"
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <stdint.h>
 
 namespace NES::NodeEngine {
 
@@ -31,6 +32,9 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
     uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
     DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout);
+
+    template<typename T>
+    DynamicRowLayoutField<T>& operator[](uint64_t fieldIndex);
 
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
