@@ -494,7 +494,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
 }
 
 bool AttributeSortRule::replaceCommutativeExpressions(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
-                                                 ExpressionNodePtr updatedExpression) {
+                                                      ExpressionNodePtr updatedExpression) {
 
     auto binaryExpression = parentExpression->as<BinaryExpressionNode>();
 

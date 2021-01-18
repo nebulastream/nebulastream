@@ -110,7 +110,7 @@ class AttributeSortRule : public BaseRefinementRule {
      * @param updatedExpression: the updated expression
      */
     bool replaceCommutativeExpressions(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
-                                  ExpressionNodePtr updatedExpression);
+                                       ExpressionNodePtr updatedExpression);
 
     /**
      * @brief Fetch the value of the left most constant expression or the name of the left most field access expression within
