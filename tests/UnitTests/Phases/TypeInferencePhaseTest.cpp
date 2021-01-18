@@ -274,7 +274,9 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameinAssignment) {
     auto phase = TypeInferencePhase::create(streamCatalog);
     auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
     phase->execute(plan);
-    ASSERT_TRUE(maps[0]->getOutputSchema()->getIndex("f4") == 2);
+    NES_DEBUG("result schema is=" << maps[0]->getOutputSchema()->toString());
+    //we have to forbit the renaming of the attribute in the assignment statement of the map
+    ASSERT_NE(maps[0]->getOutputSchema()->getIndex("f4") , 2);
 }
 
 /**
