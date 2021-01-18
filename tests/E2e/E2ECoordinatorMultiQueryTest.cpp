@@ -566,13 +566,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent1 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                              "10000,20000,1,870\n"
-                              "5000,15000,1,570\n"
                               "0,10000,1,307\n"
                               "0,10000,4,6\n"
                               "0,10000,11,30\n"
                               "0,10000,12,7\n"
-                              "0,10000,16,12\n";
+                              "0,10000,16,12\n"
+                              "5000,15000,1,570\n"
+                              "10000,20000,1,870\n";
 
     string expectedContent2 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                               "0,20000,1,1177\n"

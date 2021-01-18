@@ -35,9 +35,8 @@ void SlidingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t l
                                                           << " lastWatermark=" << lastWatermark);
     for (long windowStart = lastStart; windowStart + size.getTime() >= lastWatermark && windowStart >= 0;
          windowStart -= slide.getTime()) {
-        if (windowStart >= 0
-            && ((windowStart + size.getTime())
-                < currentWatermark)) {//TODO we have to really find out if it is < or <= currentWatermark
+        //TODO we have to really find out if it is < or <= currentWatermark
+        if (windowStart >= 0 && ((windowStart + size.getTime()) < currentWatermark)) {
             NES_DEBUG("SlidingWindow::triggerWindows add window to be triggered = windowStart=" << windowStart);
             windows.emplace_back(windowStart, windowStart + size.getTime());
         }

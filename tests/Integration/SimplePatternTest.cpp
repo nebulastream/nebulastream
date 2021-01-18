@@ -323,8 +323,8 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
     string expectedContent = "+----------------------------------------------------+\n"
                              "|start:UINT64|end:UINT64|sensor_id:UINT64|quantity:UINT64|PatternId:INT32|\n"
                              "+----------------------------------------------------+\n"
-                             "|1543623600000|1543624500000|2000073|107|1|\n"
                              "|1543622400000|1543623300000|2000073|107|1|\n"
+                             "|1543623600000|1543624500000|2000073|107|1|\n"
                              "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());

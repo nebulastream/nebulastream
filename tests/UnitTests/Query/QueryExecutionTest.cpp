@@ -774,8 +774,8 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                   "+----------------------------------------------------+\n"
-                                  "|5|20|1|20|\n"
                                   "|0|15|1|10|\n"
+                                  "|5|20|1|20|\n"
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
@@ -855,8 +855,8 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                   "+----------------------------------------------------+\n"
-                                  "|4|8|1|10|\n"
                                   "|2|6|1|10|\n"
+                                  "|4|8|1|10|\n"
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
