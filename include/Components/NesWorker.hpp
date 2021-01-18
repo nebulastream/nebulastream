@@ -19,6 +19,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <GRPC/CallData.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <future>
@@ -33,10 +34,7 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::string localWorkerIp,
-                       uint16_t localWorkerRpcPort, uint16_t localWorkerZmqPort, NodeType type,
-                       uint16_t numberOfSlots = std::thread::hardware_concurrency(),
-                       uint16_t numWorkerThreads = DEFAULT_NUM_THREADS);
+    NesWorker(WorkerConfig* workerConfig, NodeType type);
 
     /**
      * @brief default dtor

@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
@@ -23,21 +24,17 @@
 #include <sstream>
 namespace NES {
 
-PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std::string sourceConfig, uint32_t sourceFrequency,
-                                                     uint32_t numberOfTuplesToProducePerBuffer, uint32_t numberOfBuffersToProduce,
-                                                     std::string physicalStreamName, std::string logicalStreamName,
-                                                     bool skipHeader) {
-    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency,
-                                                                       numberOfTuplesToProducePerBuffer, numberOfBuffersToProduce,
-                                                                       physicalStreamName, logicalStreamName, skipHeader));
+PhysicalStreamConfigPtr PhysicalStreamConfig::create(SourceConfig* sourceConfig) {
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceConfig));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
-                                           uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                           std::string physicalStreamName, std::string logicalStreamName, bool skipHeader)
-    : sourceType(sourceType), sourceConfig(sourceConfig), sourceFrequency(sourceFrequency),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProduce(numberOfBuffersToProduce),
-      physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), skipHeader(skipHeader){};
+PhysicalStreamConfig::PhysicalStreamConfig(SourceConfig* sourceConfig)
+    : sourceType(sourceConfig->getSourceType().getValue()), sourceConfig(sourceConfig->getSourceConfig().getValue()),
+      sourceFrequency(sourceConfig->getSourceFrequency().getValue()),
+      numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer().getValue()),
+      numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce().getValue()),
+      physicalStreamName(sourceConfig->getPhysicalStreamName().getValue()),
+      logicalStreamName(sourceConfig->getLogicalStreamName().getValue()), skipHeader(sourceConfig->getSkipHeader().getValue()){};
 
 const std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;

@@ -34,6 +34,8 @@
 #include <thread>
 
 //GRPC Includes
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Services/MonitoringService.hpp>
@@ -48,10 +50,10 @@ using grpc::Status;
 
 namespace NES {
 
-NesCoordinator::NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort, uint16_t numberOfSlots,
-                               bool enableQueryMerging)
-    : restIp(restIp), restPort(restPort), rpcIp(rpcIp), rpcPort(rpcPort), numberOfSlots(numberOfSlots), inherited0(),
-      inherited1() {
+NesCoordinator::NesCoordinator(CoordinatorConfig* coordinatorConfig)
+    : restIp(coordinatorConfig->getRestIp().getValue()), restPort(coordinatorConfig->getRestPort().getValue()),
+      rpcIp(coordinatorConfig->getCoordinatorIp().getValue()), rpcPort(coordinatorConfig->getRpcPort().getValue()),
+      numberOfSlots(coordinatorConfig->getNumberOfSlots().getValue()), numberOfSlots(numberOfSlots), inherited0(), inherited1() {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;
@@ -64,15 +66,11 @@ NesCoordinator::NesCoordinator(std::string restIp, uint16_t restPort, std::strin
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<QueryRequestQueue>();
     globalQueryPlan = GlobalQueryPlan::create();
-    queryRequestProcessorService =
-        std::make_shared<QueryRequestProcessorService>(globalExecutionPlan, topology, queryCatalog, globalQueryPlan,
-                                                       streamCatalog, workerRpcClient, queryRequestQueue, enableQueryMerging);
+    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(
+        globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
+        coordinatorConfig->getEnableQueryMerging().getValue());
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
-
-NesCoordinator::NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots,
-                               bool enableQueryMerging)
-    : NesCoordinator(ip, restPort, ip, rpcPort, numberOfSlots, enableQueryMerging) {}
 
 NesCoordinator::~NesCoordinator() {
     NES_DEBUG("NesCoordinator::~NesCoordinator()");
@@ -145,7 +143,10 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    worker = std::make_shared<NesWorker>(rpcIp, rpcPort, rpcIp, rpcPort + 1, rpcPort + 2, NodeType::Worker, numberOfSlots);
+    WorkerConfig* workerConfig = new WorkerConfig();
+    workerConfig->setRpcPort(rpcPort + 1);
+    workerConfig->setDataPort(rpcPort + 2);
+    worker = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //create the monitoring service, it can only be used if a NesWorker has started

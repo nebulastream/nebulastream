@@ -1,6 +1,21 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
-#include <Configs/ConfigOption.hpp>
-#include <Configs/ConfigOptions/SourceConfig.hpp>
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <string>
@@ -16,18 +31,23 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(string filePath) {
 
         NES_INFO("NesSourceConfig: Using config file with path: " << filePath << " .");
 
-        Yaml::Node config = *(new Yaml::Node());
+        Yaml::Node config;
         Yaml::Parse(config, filePath.c_str());
-
-        setSourceConfig(config["sourceConfig"].As<string>());
-        setSourceType(config["sourceType"].As<string>());
-        setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
-        setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
-        setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
-        setPhysicalStreamName(config["physicalStreamName"].As<string>());
-        setLogicalStreamName(config["logicalStreamName"].As<string>());
-        setSkipHeader(config["skipHeader"].As<bool>());
-        setLogLevel(config["logLevel"].As<string>());
+        try {
+            setSourceConfig(config["sourceConfig"].As<string>());
+            setSourceType(config["sourceType"].As<string>());
+            setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
+            setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
+            setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
+            setPhysicalStreamName(config["physicalStreamName"].As<string>());
+            setLogicalStreamName(config["logicalStreamName"].As<string>());
+            setSkipHeader(config["skipHeader"].As<bool>());
+            setLogLevel(config["logLevel"].As<string>());
+        } catch (exception& e) {
+            NES_ERROR("NesSourceConfig: Error while initializing configuration parameters from YAML file. Keeping default "
+                      "values.");
+            resetSourceOptions();
+        }
     } else {
         NES_ERROR("NesWorkerConfig: No file path was provided or file could not be found at " << filePath << ".");
         NES_INFO("Keeping default values for Coordinator Config.");
@@ -78,9 +98,9 @@ void SourceConfig::resetSourceOptions() {
 
 const ConfigOption<std::string>& NES::SourceConfig::getSourceType() const { return sourceType; }
 const ConfigOption<std::string>& NES::SourceConfig::getSourceConfig() const { return sourceConfig; }
-const ConfigOption<uint64_t>& NES::SourceConfig::getSourceFrequency() const { return sourceFrequency; }
-const ConfigOption<uint64_t>& NES::SourceConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
-const ConfigOption<uint16_t>& NES::SourceConfig::getNumberOfTuplesToProducePerBuffer() const {
+const ConfigOption<uint32_t>& NES::SourceConfig::getSourceFrequency() const { return sourceFrequency; }
+const ConfigOption<uint32_t>& NES::SourceConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+const ConfigOption<uint32_t>& NES::SourceConfig::getNumberOfTuplesToProducePerBuffer() const {
     return numberOfTuplesToProducePerBuffer;
 }
 const ConfigOption<std::string>& NES::SourceConfig::getPhysicalStreamName() const { return physicalStreamName; }
@@ -90,13 +110,13 @@ const ConfigOption<std::string>& NES::SourceConfig::getLogLevel() const { return
 
 void SourceConfig::setSourceType(const string& sourceType) { SourceConfig::sourceType.setValue(sourceType); }
 void SourceConfig::setSourceConfig(const string& sourceConfig) { SourceConfig::sourceConfig.setValue(sourceConfig); }
-void SourceConfig::setSourceFrequency(const uint64_t& sourceFrequency) {
+void SourceConfig::setSourceFrequency(const uint32_t& sourceFrequency) {
     SourceConfig::sourceFrequency.setValue(sourceFrequency);
 }
-void SourceConfig::setNumberOfBuffersToProduce(const uint64_t& numberOfBuffersToProduce) {
+void SourceConfig::setNumberOfBuffersToProduce(const uint32_t& numberOfBuffersToProduce) {
     SourceConfig::numberOfBuffersToProduce.setValue(numberOfBuffersToProduce);
 }
-void SourceConfig::setNumberOfTuplesToProducePerBuffer(const uint16_t& numberOfTuplesToProducePerBuffer) {
+void SourceConfig::setNumberOfTuplesToProducePerBuffer(const uint32_t& numberOfTuplesToProducePerBuffer) {
     SourceConfig::numberOfTuplesToProducePerBuffer.setValue(numberOfTuplesToProducePerBuffer);
 }
 void SourceConfig::setPhysicalStreamName(const string& physicalStreamName) {

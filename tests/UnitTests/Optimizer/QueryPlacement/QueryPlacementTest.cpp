@@ -17,6 +17,7 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -76,11 +77,13 @@ class QueryPlacementTest : public testing::Test {
         streamCatalog = std::make_shared<StreamCatalog>();
         streamCatalog->addLogicalStream(streamName, schema);
 
-        PhysicalStreamConfigPtr conf =
-            PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
-                                         /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                         /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
-                                         /**Logical Stream Name**/ "car");
+        SourceConfig* sourceConfig = new SourceConfig();
+        sourceConfig->setSourceFrequency(0);
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setLogicalStreamName("car");
+
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
         StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode1);
         StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode2);

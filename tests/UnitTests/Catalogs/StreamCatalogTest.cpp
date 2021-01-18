@@ -16,10 +16,10 @@
 
 #include "gtest/gtest.h"
 
-#include <iostream>
-
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <iostream>
 
 #include <API/Schema.hpp>
 #include <Topology/Topology.hpp>
@@ -36,6 +36,8 @@ const std::string defaultLogicalStreamName = "default_logical";
 /* - nesTopologyManager ---------------------------------------------------- */
 class StreamCatalogTest : public testing::Test {
   public:
+    SourceConfig* sourceConfig = new SourceConfig();
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup StreamCatalogTest test class." << std::endl; }
 
@@ -104,11 +106,14 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
-                                     /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    sourceConfig->resetSourceOptions();
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
@@ -131,11 +136,14 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    sourceConfig->resetSourceOptions();
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
@@ -192,11 +200,15 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "sensor", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    sourceConfig->resetSourceOptions();
+    sourceConfig->setSourceType("sensor");
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);

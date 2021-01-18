@@ -1,7 +1,21 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-#include <Configs/ConfigOption.hpp>
-#include <Configs/ConfigOptions/WorkerConfig.hpp>
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <string>
@@ -20,22 +34,29 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(string filePath) {
 
         Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
+        try {
+            setCoordinatorPort(config["coordinatorPort"].As<uint16_t>());
+            setRpcPort(config["rpcPort"].As<uint16_t>());
+            setDataPort(config["dataPort"].As<uint16_t>());
+            setLocalWorkerIp(config["localWorkerIp"].As<string>());
+            setCoordinatorIp(config["coordinatorIp"].As<string>());
+            setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
+            setNumWorkerThreads(config["numWorkerThreads"].As<bool>());
+            setParentId(config["parentId"].As<string>());
+            setLogLevel(config["logLevel"].As<string>());
+        } catch (exception& e) {
+            NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
+                      "values.");
+            resetWorkerOptions();
+        }
+    }
 
-        setCoordinatorPort(config["coordinatorPort"].As<uint16_t>());
-        setRpcPort(config["rpcPort"].As<uint16_t>());
-        setDataPort(config["dataPort"].As<uint16_t>());
-        setLocalWorkerIp(config["localWorkerIp"].As<string>());
-        setCoordinatorIp(config["coordinatorIp"].As<string>());
-        setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
-        setNumWorkerThreads(config["numWorkerThreads"].As<bool>());
-        setParentId(config["parentId"].As<string>());
-        setLogLevel(config["logLevel"].As<string>());
-    } else {
+    else {
         NES_ERROR("NesWorkerConfig: No file path was provided or file could not be found at " << filePath << ".");
-        NES_INFO("Keeping default values for Coordinator Config.");
+        NES_INFO("Keeping default values for Worker Config.");
     }
 }
-void WorkerConfig::overwriteConfigWithCommandLineInput(map<string,string> inputParams) {
+void WorkerConfig::overwriteConfigWithCommandLineInput(map<string, string> inputParams) {
     try {
 
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
@@ -94,7 +115,9 @@ void WorkerConfig::setDataPort(const uint16_t& dataPort) { WorkerConfig::dataPor
 const ConfigOption<uint16_t>& WorkerConfig::getNumberOfSlots() const { return numberOfSlots; }
 void WorkerConfig::setNumberOfSlots(const uint16_t& numberOfSlots) { WorkerConfig::numberOfSlots.setValue(numberOfSlots); }
 const ConfigOption<uint16_t>& WorkerConfig::getNumWorkerThreads() const { return numWorkerThreads; }
-void WorkerConfig::setNumWorkerThreads(const uint16_t& numWorkerThreads) { WorkerConfig::numWorkerThreads.setValue(numWorkerThreads); }
+void WorkerConfig::setNumWorkerThreads(const uint16_t& numWorkerThreads) {
+    WorkerConfig::numWorkerThreads.setValue(numWorkerThreads);
+}
 const ConfigOption<std::string>& WorkerConfig::getParentId() const { return parentId; }
 void WorkerConfig::setParentId(const string& parentId) { WorkerConfig::parentId.setValue(parentId); }
 const ConfigOption<std::string>& WorkerConfig::getLogLevel() const { return logLevel; }
