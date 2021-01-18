@@ -689,8 +689,8 @@ TEST_F(MultipleWindowsTest, testWindowThreeLevel) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                             "0,2000,24\n"
+    string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
+                             "0,2000,56\n"
                              "2000,4000,200\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));

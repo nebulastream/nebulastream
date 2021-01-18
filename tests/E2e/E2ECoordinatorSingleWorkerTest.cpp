@@ -363,12 +363,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
-    ifstream testFileOutput(testFile);
-    EXPECT_TRUE(testFileOutput.good());
-
-    std::ifstream ifs(testFile.c_str());
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
     string expectedContent =
         "id:INTEGER,metadata_generated:INTEGER,metadata_title:Char,metadata_id:Char,features_type:Char,features_properties_"
         "capacity:INTEGER,features_properties_efficiency:(Float),features_properties_mag:(Float),features_properties_time:"
@@ -408,9 +402,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
         "Stream,6eaafae1-475c-48b7-854d-4434a2146eef,Features,4653,0.733402,758787.000000,1262300400000,0,electricityGeneration,"
         "Point,6.627055,48.164005,d8fe578e-1e92-40d2-83bf-6a72e024d55a\n";
 
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+
+    TestUtils::checkOutputOrTimeout(expectedContent, testFile);
 
     int response = remove(testFile.c_str());
     EXPECT_TRUE(response == 0);
@@ -474,18 +467,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
-    NES_INFO("read file=" << outputFilePath);
-    ifstream outFile(outputFilePath);
-    EXPECT_TRUE(outFile.good());
-    std::string content((std::istreambuf_iterator<char>(outFile)), (std::istreambuf_iterator<char>()));
-    NES_INFO("content=" << content);
     string expectedContent = "sensor_id:Char,timestamp:INTEGER,velocity:(Float),quantity:INTEGER,PatternId:INTEGER\n"
                              "R2000073,1543624020000,102.629631,8,1\n"
                              "R2000070,1543625280000,108.166664,5,1\n";
 
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath);
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
@@ -545,11 +531,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
-    NES_INFO("read file=" << outputFilePath);
-    ifstream outFile(outputFilePath);
-    EXPECT_TRUE(outFile.good());
-    std::string content((std::istreambuf_iterator<char>(outFile)), (std::istreambuf_iterator<char>()));
-    NES_INFO("content=" << content);
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "0,10000,1,307\n"
                              "10000,20000,1,870\n"
@@ -557,10 +538,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
                              "0,10000,11,30\n"
                              "0,10000,12,7\n"
                              "0,10000,16,12\n";
-
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath);
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
@@ -619,11 +597,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
-    NES_INFO("read file=" << outputFilePath);
-    ifstream outFile(outputFilePath);
-    EXPECT_TRUE(outFile.good());
-    std::string content((std::istreambuf_iterator<char>(outFile)), (std::istreambuf_iterator<char>()));
-    NES_INFO("content=" << content);
     string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
                              "0,10000,1,307\n"
                              "0,10000,4,6\n"
@@ -633,9 +606,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
                              "5000,15000,1,570\n"
                              "10000,20000,1,870\n";
 
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath);
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
