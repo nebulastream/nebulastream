@@ -38,7 +38,7 @@ typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
  * @brief This rule currently only set the right number of join input edges
 
  */
-class DistributeJoinRule : public BaseRefinementRule {
+class DistributeJoinRule : public BaseRewriteRule {
   public:
     static DistributeJoinRulePtr create();
 

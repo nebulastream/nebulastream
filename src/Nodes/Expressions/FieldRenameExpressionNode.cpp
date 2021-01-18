@@ -47,9 +47,18 @@ const std::string FieldRenameExpressionNode::toString() const {
 }
 
 void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
-    // check if the access field is defined in the schema.
 
-    if (!schema->has(fieldName) && !schema->has(newFieldName)) {
+    //Detect if user has provided fully qualified name
+    if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        fieldName = schema->qualifyingName + fieldName;
+    }
+
+    if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        newFieldName = schema->qualifyingName + newFieldName;
+    }
+
+    // check if the access field is defined in the schema.
+    if (!schema->hasFullyQualifiedFieldName(fieldName) && !schema->hasFullyQualifiedFieldName(newFieldName)) {
         NES_THROW_RUNTIME_ERROR("FieldAccessExpression: the old field " + fieldName + " or new field " + newFieldName
                                 + " is not defined in the  schema " + schema->toString());
     } else {
