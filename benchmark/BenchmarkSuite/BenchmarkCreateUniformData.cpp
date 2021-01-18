@@ -19,6 +19,11 @@
 static std::string fileName = "create_uniform_data";
 
 using namespace NES::Benchmarking;
+
+/*
+ * This main calculates mean and stddev of BenchmarkUtils::createRangeVector. This is a sanity check as BenchmarkUtils::createRangeVector
+ * may contain only a small number of items
+ */
 int main() {
 
     // Optimal mean would be 499.5 and optimal stddev would be 288.38
@@ -49,12 +54,14 @@ int main() {
             std::list<uint64_t> keyList;
             BenchmarkUtils::createUniformData(keyList, listSize);
 
+            // Sum over all items in keyList for calculating mean
             uint64_t tmpSum = 0;
             for (auto it : keyList) {
                 tmpSum += it;
             }
             double mean = (double) tmpSum / keyList.size();
 
+            // (x - mean)^2 over all items in keyList for calculating stddev
             tmpSum = 0;
             for (auto it : keyList) {
                 tmpSum += std::pow(it - mean, 2);
@@ -67,7 +74,7 @@ int main() {
             maxMeanErrorMean = (std::abs(maxMeanErrorMean) > std::abs(curErrMean)) ? maxMeanErrorMean : curErrMean;
             maxMeanErrorStddev = (std::abs(maxMeanErrorStddev) > std::abs(curErrStddev)) ? maxMeanErrorStddev : curErrStddev;
 
-
+            // Sum over meanError and stddev to average over REPS
             absMeanError += curErrMean;
             absStddev += curErrStddev;
         }

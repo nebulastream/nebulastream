@@ -22,6 +22,11 @@ import numpy as np
 import os
 import math
 
+
+# This python script plots the throughput in bytes over different buffer sizes. 
+# For each number of workerthreads a own image is created
+
+
 class CustomSimpleDataPoint(object):
 	"""docstring for CustomSimpleDataPoint"""
 	def __init__(self, ingestionRate, workerThreads, tupleSize, yValue, yErr):
@@ -62,19 +67,20 @@ fileDataFrame = pd.read_csv(resultCsvFile)
 groups = fileDataFrame.groupby(by=["Ingestionrate", "WorkerThreads", "SchemaSize"], sort=True)
 allDataPoints = []
 
+# Converting from dataframe groups to CustomSimpleDataPoint as this helps plotting the data
 for i, ((ingestionRate, workerThreads, tupleSize), gbf) in enumerate(groups):
 	print("Ingestionrate {:e} has throughput of {:e} B/s with {} workerThreads".format(float(ingestionRate), gbf["BytesPerSecond"].mean(), workerThreads))
 	dataPoint = CustomSimpleDataPoint(ingestionRate, workerThreads, tupleSize, gbf["BytesPerSecond"].mean(), gbf["BytesPerSecond"].std())
 	allDataPoints.append(dataPoint)
 
 
-
+# Gets highest throughput of each group
 highestBytesPerSecondIngestrate = groups["BytesPerSecond"].mean().keys().to_list()[groups["BytesPerSecond"].mean().argmax()]
 highestAvgThrougput = groups["BytesPerSecond"].mean().max()
 avgHighestThroughputStr = f"Highest avg throughput of {highestAvgThrougput:e} B/s was achieved with (ingestionrate,workerThreads) of {highestBytesPerSecondIngestrate}"
 print2Log(avgHighestThroughputStr)
 
-# Get maximum throughput
+# Get maximum throughput over all datapoints
 overallHighestThroughput = fileDataFrame["BytesPerSecond"].max()
 overallHighestThroughputRow = str(fileDataFrame.iloc[fileDataFrame["BytesPerSecond"].argmax()].drop("BM_Name").to_dict())
 overallHighestThroughputStr = "Overall highest throughput of {:e} B/s was achieved with {}".format(overallHighestThroughput, overallHighestThroughputRow)
