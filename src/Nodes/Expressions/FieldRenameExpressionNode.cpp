@@ -48,6 +48,12 @@ const std::string FieldRenameExpressionNode::toString() const {
 
 void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
 
+    if (fieldName == newFieldName) {
+        NES_TRACE("FieldRenameExpressionNode: Both existing and new fields are same: existing: " + fieldName
+                  + " new field name: " + newFieldName);
+        return;
+    }
+
     //Detect if user has provided fully qualified name
     if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
         fieldName = schema->qualifyingName + fieldName;
