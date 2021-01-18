@@ -221,7 +221,6 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      */
     void setConfig(AbstractPhysicalStreamConfigPtr config);
 
-
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 

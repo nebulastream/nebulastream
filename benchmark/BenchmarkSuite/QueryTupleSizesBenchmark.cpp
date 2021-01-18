@@ -14,15 +14,15 @@
     limitations under the License.
 */
 
+#include "../../tests/util/DummySink.hpp"
+#include "../../tests/util/TestQuery.hpp"
 #include <filesystem>
 #include <iostream>
+#include <util/BenchmarkSchemas.hpp>
 #include <util/BenchmarkUtils.hpp>
 #include <util/SimpleBenchmarkSink.hpp>
 #include <util/SimpleBenchmarkSource.hpp>
-#include <util/BenchmarkSchemas.hpp>
 #include <vector>
-#include "../../tests/util/TestQuery.hpp"
-#include "../../tests/util/DummySink.hpp"
 
 using namespace NES;
 using namespace NES::Benchmarking;
@@ -55,14 +55,12 @@ int main() {
 
     // Size of one tupleBuffer which stores tuples
     std::vector<uint64_t> allBufferSizes;
-    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4*1024, 8*1024, 4 * 1024);
-
+    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4 * 1024, 8 * 1024, 4 * 1024);
 
     std::string benchmarkFolderName = "QueriesTupleSize_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName)) {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
     }
-
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
     for (auto benchmarkSchema : BenchmarkSchemas::getBenchmarkSchemas()) {
@@ -75,7 +73,6 @@ int main() {
             "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
     }
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
-
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
@@ -93,7 +90,6 @@ int main() {
         }
     }
     //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------
-
 
     return 0;
 }

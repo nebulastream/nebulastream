@@ -188,8 +188,6 @@ class SimpleBenchmarkSource : public DataSource {
             }
         }
 
-
-
         this->keyPos += curNumberOfTuplesPerBuffer;
         buf.setNumberOfTuples(curNumberOfTuplesPerBuffer);
 
@@ -204,9 +202,10 @@ class SimpleBenchmarkSource : public DataSource {
 
     virtual ~SimpleBenchmarkSource() = default;
 
-    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate,
-                                                         uint64_t operatorId, bool roundingNearestThousand = false) {
+    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
+                                                         NodeEngine::QueryManagerPtr queryManager, SchemaPtr& benchmarkSchema,
+                                                         uint64_t ingestionRate, uint64_t operatorId,
+                                                         bool roundingNearestThousand = false) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
         if (roundingNearestThousand) {
