@@ -24,13 +24,13 @@
  *
  ********************************************************/
 #include <Components/NesCoordinator.hpp>
-#include <Configs/ConfigOption.hpp>
-#include <Configs/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-#include <sys/stat.h>
 #include <map>
+#include <sys/stat.h>
 
 using namespace NES;
 using namespace std;
@@ -55,9 +55,8 @@ int main(int argc, const char* argv[]) {
 
     for (int i = 1; i < argc; ++i) {
         commandLineParams.insert(
-            pair<string,string>(
-                string(argv[i]).substr(0, string(argv[i]).find("=")),
-                string(argv[i]).substr(string(argv[i]).find("=")+1, string(argv[i]).length()-1)));
+            pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find("=")),
+                                 string(argv[i]).substr(string(argv[i]).find("=") + 1, string(argv[i]).length() - 1)));
     }
 
     auto configPath = commandLineParams.find("--configPath");
@@ -70,17 +69,16 @@ int main(int argc, const char* argv[]) {
     }
     NES::setLogLevel(NES::getStringAsDebugLevel(coordinatorConfig->getLogLevel().getValue()));
 
-    NES_INFO("creating coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig->getRestIp().getValue(), coordinatorConfig->getRestPort().getValue(),
-                                                                              coordinatorConfig->getCoordinatorIp().getValue(), coordinatorConfig->getRpcPort().getValue(),
-                                                                              coordinatorConfig->getNumberOfSlots().getValue(), coordinatorConfig->getEnableQueryMerging().getValue());
-
-    NES_INFO("start coordinator with RestIp=" << coordinatorConfig->getRestIp().getValue() << " restPort="
-                                                               << coordinatorConfig->getRestPort().getValue()
-                                              << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp().getValue() << " with rpc port "
-                                              << coordinatorConfig->getRpcPort().getValue()
+    NES_INFO("start coordinator with RestIp=" << coordinatorConfig->getRestIp().getValue()
+                                              << " restPort=" << coordinatorConfig->getRestPort().getValue()
+                                              << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp().getValue()
+                                              << " with rpc port " << coordinatorConfig->getRpcPort().getValue()
                                               << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots().getValue());
-        crd->startCoordinator(/**blocking**/ true);//blocking call
-        crd->stopCoordinator(true);
+
+    NES_INFO("creating coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+
+    crd->startCoordinator(/**blocking**/ true);//blocking call
+    crd->stopCoordinator(true);
     NES_INFO("coordinator started");
 }

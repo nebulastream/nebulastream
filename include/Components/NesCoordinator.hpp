@@ -17,6 +17,7 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
@@ -74,14 +75,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     typedef ErrorListener inherited1;
 
   public:
-    explicit NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort,
-                            uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
-
-    /**
-     * @brief Constructor where ip = restIp and rpcIp
-     */
-    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort,
-                   uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
+    explicit NesCoordinator(CoordinatorConfig* coordinatorConfig = new CoordinatorConfig());
 
     /**
      * @brief dtor

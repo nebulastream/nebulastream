@@ -26,9 +26,9 @@
 
 #include "boost/program_options.hpp"
 #include <Components/NesWorker.hpp>
-#include <Configs/ConfigOption.hpp>
-#include <Configs/ConfigOptions/WorkerConfig.hpp>
-#include <Configs/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <sys/stat.h>
@@ -59,20 +59,14 @@ int main(int argc, char** argv) {
 
     WorkerConfig* workerConfig = new WorkerConfig();
     SourceConfig* sourceConfig = new SourceConfig();
-
-    if (argc == 1) {
-        NES_INFO("NESWORKERSTARTER: Please specify at least the port you want to connect to");
-        NES_INFO("NESWORKERSTARTER: Basic Command Line Parameter");
-        return 0;
-    }
+    sourceConfig->setSourceType("NoSource");
 
     map<string, string> commandLineParams;
 
     for (int i = 1; i < argc; ++i) {
         commandLineParams.insert(
-            pair<string,string>(
-                string(argv[i]).substr(0, string(argv[i]).find("=")),
-                string(argv[i]).substr(string(argv[i]).find("=")+1, string(argv[i]).length()-1)));
+            pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find("=")),
+                                 string(argv[i]).substr(string(argv[i]).find("=") + 1, string(argv[i]).length() - 1)));
     }
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
@@ -90,23 +84,17 @@ int main(int argc, char** argv) {
     }
     NES::setLogLevel(NES::getStringAsDebugLevel(workerConfig->getLogLevel().getValue()));
 
-    NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort().getValue() << " localport=" << workerConfig->getDataPort().getValue() << " pid=" << getpid()
+    NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort().getValue() << " localport="
+                                                  << workerConfig->getDataPort().getValue() << " pid=" << getpid()
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort().getValue());
-    NesWorkerPtr wrk =
-        std::make_shared<NesWorker>(workerConfig->getCoordinatorIp().getValue(), workerConfig->getCoordinatorPort().getValue(),
-                                    workerConfig->getLocalWorkerIp().getValue(), workerConfig->getRpcPort().getValue(),
-                                    workerConfig->getDataPort().getValue(), workerConfig->getNumberOfSlots().getValue(),
-                                    NodeType::Sensor,// TODO what is this?!
-                                    workerConfig->getNumWorkerThreads().getValue());
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig,
+                                                   NodeType::Sensor// TODO what is this?!
+    );
 
     //register phy stream if necessary
     if (sourceConfig->getSourceType().getValue() != "NoSource") {
         NES_INFO("start with dedicated source=" << sourceConfig->getSourceType().getValue() << "\n");
-        PhysicalStreamConfigPtr conf =
-            PhysicalStreamConfig::create(sourceConfig->getSourceType().getValue(), sourceConfig->getSourceConfig().getValue(),
-                                         sourceConfig->getSourceFrequency().getValue(), sourceConfig->getNumberOfTuplesToProducePerBuffer().getValue(),
-                                         sourceConfig->getNumberOfBuffersToProduce().getValue(), sourceConfig->getPhysicalStreamName().getValue(),
-                                         sourceConfig->getLogicalStreamName().getValue(), sourceConfig->getSkipHeader().getValue());
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
         wrk->setWithRegister(conf);
     } else if (workerConfig->getParentId().getValue() != "-1") {

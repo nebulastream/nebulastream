@@ -18,6 +18,7 @@
 
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -48,9 +49,20 @@ namespace NES {
 
 class QueryTest : public testing::Test {
   public:
+    SourceConfig* sourceConfig = new SourceConfig();
+
     static void SetUpTestCase() {
         NES::setupLogging("QueryTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryTest test class.");
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() {
+        sourceConfig->setSourceConfig("");
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setNumberOfBuffersToProduce(3);
+        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setLogicalStreamName("test_stream");
     }
 
     static void TearDownTestCase() { std::cout << "Tear down QueryTest test class." << std::endl; }
@@ -62,11 +74,7 @@ TEST_F(QueryTest, testQueryFilter) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
@@ -95,11 +103,7 @@ TEST_F(QueryTest, testQueryFilter) {
 TEST_F(QueryTest, testQueryProjection) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
@@ -128,11 +132,7 @@ TEST_F(QueryTest, testQueryProjection) {
 TEST_F(QueryTest, testQueryTumblingWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
@@ -164,11 +164,7 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
 TEST_F(QueryTest, testQuerySlidingWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
 
@@ -203,11 +199,7 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
  */
 TEST_F(QueryTest, testQueryMerge) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);
@@ -232,11 +224,7 @@ TEST_F(QueryTest, testQueryMerge) {
  */
 TEST_F(QueryTest, testQueryJoin) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->addPhysicalStream("default_logical", sce);

@@ -1,6 +1,18 @@
-//
-// Created by eleicha on 06.01.21.
-//
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 
 #ifndef NES_CONFIGOPTION_HPP
 #define NES_CONFIGOPTION_HPP
@@ -15,10 +27,21 @@
 using namespace std;
 
 namespace NES {
-
+/**
+ * @brief Template for a ConfigOption object
+ * @tparam T template parameter, depends on ConfigOptions
+ */
 template<class T>
 class ConfigOption {
   public:
+    /**
+     * @brief Constructs a ConfigOption<T> object
+     * @param key the name of the object
+     * @param value the value of the object
+     * @param description default value of the object
+     * @param dataType data type of the object
+     * @param isList boolean indicating a list
+     */
     ConfigOption(std::string key, T value, string description, string dataType, bool isList);
 
     /**
@@ -26,6 +49,10 @@ class ConfigOption {
      */
     std::string toString();
 
+    /**
+     * @brief converts the value of this object into a string
+     * @return string of the value of this object
+     */
     string getValueAsString() const;
 
     /**
@@ -48,13 +75,25 @@ class ConfigOption {
        */
     bool getIsList();
 
+    /**
+     * @brief returns the data type of the value of this object
+     */
     string getDataType();
 
+    /**
+     * @brief sets the value
+     */
     void setValue(T value);
 
+    /**
+     * @brief get the description of this parameter
+     */
     const string& getDescription() const;
+
+    /**
+     * @brief get the default value of this parameter
+     */
     T getDefaultValue() const;
-    bool isList1() const;
 
   private:
     std::string key;
@@ -67,8 +106,7 @@ class ConfigOption {
 
 template<class T>
 ConfigOption<T>::ConfigOption(std::string key, T value, string description, string dataType, bool isList)
-    : key(key), value(value), defaultValue(value), description(description), dataType(dataType), isList(isList) {
-}
+    : key(key), value(value), defaultValue(value), description(description), dataType(dataType), isList(isList) {}
 
 template<typename T>
 string ConfigOption<T>::getValueAsString() const {
@@ -132,10 +170,6 @@ const string& ConfigOption<T>::getDescription() const {
 template<class T>
 T ConfigOption<T>::getDefaultValue() const {
     return defaultValue;
-}
-template<class T>
-bool ConfigOption<T>::isList1() const {
-    return isList;
 }
 
 }// namespace NES

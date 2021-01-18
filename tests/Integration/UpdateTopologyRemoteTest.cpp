@@ -17,6 +17,8 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -32,6 +34,8 @@ uint64_t rpcPort = 4000;
 
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
+    CoordinatorConfig* coordinatorConfig;
+    WorkerConfig* workerConfig;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
@@ -46,29 +50,39 @@ class UpdateTopologyRemoteTest : public testing::Test {
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
     }
 
-    void SetUp() { rpcPort = rpcPort + 30; }
+    void SetUp() {
+        coordinatorConfig->resetCoordinatorOptions();
+        workerConfig->resetWorkerOptions();
+        rpcPort = rpcPort + 30;
+        coordinatorConfig->setRpcPort(rpcPort);
+        workerConfig->setCoordinatorPort(rpcPort);
+    }
 
     static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
 };
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfSlots, false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("coordinator started successfully");
 
     NES_INFO("start worker");
     uint64_t node1RpcPort = port + 10;
-    NesWorkerPtr wrk =
-        std::make_shared<NesWorker>(ipAddress, port, ipAddress, node1RpcPort, port + 11, NodeType::Sensor, workerNumberOfSlots);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(node1RpcPort);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
     uint64_t node2RpcPort = port + 20;
-    NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>(ipAddress, port, ipAddress, node2RpcPort, port + 21, NodeType::Sensor, workerNumberOfSlots);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(node2RpcPort);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");
@@ -118,22 +132,26 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 }
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, coordinatorNumberOfSlots, false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("coordinator started successfully");
 
     NES_INFO("start worker");
     uint64_t node1RpcPort = port + 10;
-    NesWorkerPtr wrk =
-        std::make_shared<NesWorker>(ipAddress, port, ipAddress, node1RpcPort, port + 11, NodeType::Sensor, workerNumberOfSlots);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(node1RpcPort);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
     uint64_t node2RpcPort = port + 20;
-    NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>(ipAddress, port, ipAddress, node2RpcPort, port + 21, NodeType::Sensor, workerNumberOfSlots);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(node2RpcPort);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");

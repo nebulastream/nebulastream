@@ -18,6 +18,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
@@ -109,11 +110,16 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string physicalStreamName = "testStream";
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream");
+
+    SourceConfig* sourceConfig = new SourceConfig();
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setSourceConfig("testCSV.csv");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("testStream");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     auto nodeStats = NodeStats();
     uint64_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NodeType::Sensor);
