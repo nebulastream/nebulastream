@@ -62,6 +62,7 @@ std::string ProjectionLogicalOperatorNode::getStringBasedSignature() {
 
 bool ProjectionLogicalOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
+    NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString() << " this proj=" << toString());
     outputSchema = Schema::create();
     for (auto& exp : expressions) {
         auto expression = exp.getExpressionNode();
