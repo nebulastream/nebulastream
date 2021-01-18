@@ -117,8 +117,6 @@ class LogicalJoinDefinition {
     void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
 
-
-
   private:
     FieldAccessExpressionNodePtr leftJoinKeyType;
     FieldAccessExpressionNodePtr rightJoinKeyType;
