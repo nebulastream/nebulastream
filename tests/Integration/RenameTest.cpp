@@ -25,6 +25,9 @@
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 
 using namespace std;
 
@@ -34,14 +37,33 @@ static uint64_t rpcPort = 4000;
 
 class RenameTest : public testing::Test {
   public:
+    CoordinatorConfig* crdConf;
+    WorkerConfig* wrkConf;
+    SourceConfig* srcConf;
     static void SetUpTestCase() {
         NES::setupLogging("RenameTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup RenameTest test class.");
     }
 
     void SetUp() {
+        crdConf->resetCoordinatorOptions();
+        wrkConf->resetWorkerOptions();
+        srcConf->resetSourceOptions();
+
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+
+        crdConf->setRpcPort(rpcPort);
+        crdConf->setRestPort(restPort);
+
+        wrkConf->setCoordinatorPort(rpcPort);
+
+        srcConf->setSourceType("CSVSource");
+        srcConf->setSourceConfig("../tests/test_data/window.csv");
+        srcConf->setNumberOfTuplesToProducePerBuffer(3);
+        srcConf->setNumberOfBuffersToProduce(3);
+        srcConf->setPhysicalStreamName("test_stream");
+        srcConf->setLogicalStreamName("window");
     }
 
     void TearDown() { std::cout << "Tear down RenameTest class." << std::endl; }
@@ -54,13 +76,16 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
@@ -122,13 +147,16 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
@@ -178,13 +206,16 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
 //FIXME: Enabled while solving #1490
 TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
     NES_INFO("RenameTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
@@ -203,7 +234,7 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -253,19 +284,25 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
 //FIXME: Enabled while solving #1490
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     NES_INFO("RenameTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("RenameTest: Coordinator started successfully");
 
     NES_INFO("RenameTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
 
     NES_INFO("RenameTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("RenameTest: Worker2 started SUCCESSFULLY");
@@ -291,12 +328,19 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window2.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);

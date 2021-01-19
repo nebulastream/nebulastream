@@ -703,19 +703,25 @@ TEST_F(MergeDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");
@@ -734,12 +740,19 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->setPhysicalStreamName("physical_ruby");
+    sourceConfig->setLogicalStreamName("ruby");
     //register physical stream
     PhysicalStreamConfigPtr confStreamRuby =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
+        PhysicalStreamConfig::create(sourceConfig);
 
-    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
-                                                                             1, "physical_diamond", "diamond", false);
+    sourceConfig->setPhysicalStreamName("physical_diamond");
+    sourceConfig->setLogicalStreamName("diamond");
+
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);
@@ -852,19 +865,25 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");
@@ -883,12 +902,19 @@ TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->setPhysicalStreamName("physical_ruby");
+    sourceConfig->setLogicalStreamName("ruby");
     //register physical stream
     PhysicalStreamConfigPtr confStreamRuby =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
+        PhysicalStreamConfig::create(sourceConfig);
 
-    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
-                                                                             1, "physical_diamond", "diamond", false);
+    sourceConfig->setPhysicalStreamName("physical_diamond");
+    sourceConfig->setLogicalStreamName("diamond");
+
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);
@@ -970,19 +996,25 @@ TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");
@@ -1001,12 +1033,19 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOf
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->setPhysicalStreamName("physical_ruby");
+    sourceConfig->setLogicalStreamName("ruby");
     //register physical stream
     PhysicalStreamConfigPtr confStreamRuby =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
+        PhysicalStreamConfig::create(sourceConfig);
 
-    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
-                                                                             1, "physical_diamond", "diamond", false);
+    sourceConfig->setPhysicalStreamName("physical_diamond");
+    sourceConfig->setLogicalStreamName("diamond");
+
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);

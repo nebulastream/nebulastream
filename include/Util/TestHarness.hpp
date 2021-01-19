@@ -22,6 +22,9 @@
 #include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 /**
  * @brief This test harness wrap query deployment test in our test framework.
  */
@@ -29,6 +32,9 @@ namespace NES {
 
 class TestHarness {
   public:
+    CoordinatorConfig* crdConf;
+    WorkerConfig* wrkConf;
+    SourceConfig* srcConf;
     /*
          * @brief The constructor of TestHarness
          * @param numWorkers number of worker (each for one physical source) to be used in the test
@@ -38,7 +44,7 @@ class TestHarness {
         ipAddress = "127.0.0.1";
 
         NES_INFO("TestHarness: Start coordinator");
-        crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
         QueryServicePtr queryService = crd->getQueryService();
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -103,8 +109,10 @@ class TestHarness {
         sourceSchemas.push_back(schema);
 
         // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
-        auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress, crdPort + (workerPtrs.size() + 1) * 20,
-                                               crdPort + (workerPtrs.size() + 1) * 20 + 1, NodeType::Sensor);
+        wrkConf->setCoordinatorPort(crdPort);
+        wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
+        wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
+        auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         workerPtrs.push_back(wrk);
     }
