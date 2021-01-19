@@ -15,7 +15,9 @@
 */
 #include <Util/Logger.hpp>
 #include <Util/TestHarness.hpp>
+#include <algorithm>
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 namespace NES {
 
@@ -56,15 +58,28 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     testHarness.pushElement<Car>({71, 71, 71}, 0);
     testHarness.pushElement<Car>({21, 21, 21}, 0);
 
-    std::string output = testHarness.getOutput(1);
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
 
-    std::string expectedContent = "key:INTEGER,value:INTEGER,timestamp:INTEGER\n"
-                                  "40,40,40\n"
-                                  "30,30,30\n"
-                                  "71,71,71\n"
-                                  "21,21,21\n";
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const & rhs) const {
+            return (key == rhs.key &&
+                    value==rhs.value &&
+                    timestamp == rhs.timestamp);
+        }
+    };
 
-    ASSERT_EQ(expectedContent, output);
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
+
+    std::vector<Output> expectedOutput = {{40, 40, 40},
+                                                {21,21,21},
+                                                {30,30,30,},
+                                                {71, 71, 71}};
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 /*
@@ -178,7 +193,19 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0);
 
-    EXPECT_THROW(testHarness.getOutput(1), std::runtime_error);
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const & rhs) const {
+            return (key == rhs.key &&
+                    value==rhs.value &&
+                    timestamp == rhs.timestamp);
+        }
+    };
+    EXPECT_THROW(testHarness.getOutput<Output>(1), std::runtime_error);
 }
 
 /*

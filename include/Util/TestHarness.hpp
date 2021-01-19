@@ -116,7 +116,8 @@ class TestHarness {
          * then return the result of the query execution
          * @return output string
          */
-    std::string getOutput(uint64_t bufferToExpect) {
+    template<typename T>
+    std::vector<T> getOutput(uint64_t bufferToExpect) {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
                                     + std::to_string(physicalStreamNames.size())
@@ -146,12 +147,12 @@ class TestHarness {
         }
 
         // local fs
-        std::string filePath = "contTestOut.csv";
+        std::string filePath = "testHarness.out";
         remove(filePath.c_str());
 
         //register query
         std::string queryString =
-            operatorToTest + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+            operatorToTest + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
         QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
 
         auto globalQueryPlan = crd->getGlobalQueryPlan();
@@ -177,14 +178,22 @@ class TestHarness {
             NES_WARNING("TestHarness:ifs.good() returns false for query with id " + queryId << " file path=" + filePath);
         }
 
-        std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+        // check the length of the output file
+        ifs.seekg (0, ifs.end);
+        auto length = ifs.tellg();
+        ifs.seekg (0, ifs.beg);
+
+        // read the binary output as a vector of T
+        auto* buff = reinterpret_cast<char*>(malloc(length));
+        ifs.read(buff, length);
+        std::vector<T> actualOutput(reinterpret_cast<T*>(buff), reinterpret_cast<T*>(buff)+ length/sizeof(T));
 
         for (NesWorkerPtr wrk : workerPtrs) {
             wrk->stop(false);
         }
         crd->stopCoordinator(false);
 
-        return content;
+        return actualOutput;
     }
 
   private:
