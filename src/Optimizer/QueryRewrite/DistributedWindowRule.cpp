@@ -52,7 +52,6 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
             if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
                 createCentralWindowOperator(windowOp);
                 NES_DEBUG("DistributeWindowRule::apply: central op " << queryPlan->toString());
-
             } else {
                 createDistributedWindowOperator(windowOp, queryPlan);
             }

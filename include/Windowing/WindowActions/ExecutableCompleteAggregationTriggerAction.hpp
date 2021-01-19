@@ -148,22 +148,11 @@ class ExecutableCompleteAggregationTriggerAction
                                                                                   << " > lastWatermark=" << lastWatermark);
         }
 
-//        std::stringstream ss;
-//        ss << "windows before are=";
-//        for (auto& w : windows) {
-//            ss << " wB=" << w.getStartTs();
-//        }
-//
         //we have to sort the windows as the sliding window put them out in inverse order which produces failures with initializing windows
         sort(windows.begin(), windows.end(), [](const WindowState& lhs, const WindowState& rhs) {
             return lhs.getStartTs() < rhs.getStartTs();
         });
-//
-//        ss << "windows after are=";
-//        for (auto& w : windows) {
-//            ss << " wA=" << w.getStartTs();
-//        }
-//        NES_DEBUG("window stuff=" << ss.str());
+
         auto recordsPerWindow = std::vector<uint64_t>(windows.size(), 0);
 
         // allocate partial final aggregates for each window
@@ -200,8 +189,6 @@ class ExecutableCompleteAggregationTriggerAction
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
         if (windows.size() != 0) {
             uint64_t largestClosedWindow = 0;
-            //we have to read from the back to ensure that th smallest window first
-            //            for (int i = partialFinalAggregates.size() -1 ; i >= 0; i--) {
             for (int i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
                 largestClosedWindow = std::max(window.getEndTs(), largestClosedWindow);
