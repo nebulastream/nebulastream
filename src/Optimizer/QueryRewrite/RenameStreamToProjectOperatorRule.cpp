@@ -30,8 +30,6 @@ QueryPlanPtr RenameStreamToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
     auto renameStreamOperators = duplicateQueryPlan->getOperatorByType<RenameStreamOperatorNode>();
     //Iterate over all rename stream operators and convert them to project operator
     for (auto& renameStreamOperator : renameStreamOperators) {
-        //Infer schema for the rename stream operator
-        renameStreamOperator->inferSchema();
         //Convert the rename stream operator to project operator
         auto projectOperator = convert(renameStreamOperator);
         //Replace rename stream operator with the project operator
@@ -54,21 +52,18 @@ OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr opera
     std::vector<ExpressionItem> projectionAttributes;
     //Iterate over the input schema and add a new field rename expression
     for (auto field : inputSchema->fields) {
-        std::string& fieldName = field->name;
-
         //compute the new name for the field by added new stream name as field qualifier
-        std::string updatedFieldName;
-
+        std::string& updatedFieldName = field->name;
         //Check if the current field name consists a field qualifier
-        unsigned long separatorLocation = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
+        unsigned long separatorLocation = updatedFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
         if (separatorLocation != std::string::npos) {
-            updatedFieldName = fieldName.substr(separatorLocation, fieldName.length());
+            updatedFieldName = updatedFieldName.substr(separatorLocation, updatedFieldName.length());
         }
         //Add new stream name as field qualifier
         updatedFieldName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR + updatedFieldName;
 
         //Compute field access and field rename expression
-        auto fieldAccessExpression = FieldAccessExpressionNode::create(field->dataType, fieldName);
+        auto fieldAccessExpression = FieldAccessExpressionNode::create(field->dataType, field->name);
         auto fieldRenameExpression = FieldRenameExpressionNode::create(fieldAccessExpression, updatedFieldName);
         projectionAttributes.push_back(fieldRenameExpression);
     }
@@ -81,4 +76,4 @@ RenameStreamToProjectOperatorRulePtr RenameStreamToProjectOperatorRule::create()
     return std::make_shared<RenameStreamToProjectOperatorRule>(RenameStreamToProjectOperatorRule());
 }
 
-}// namespace NES::Optimizer
+}// namespace NES
