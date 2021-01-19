@@ -32,9 +32,8 @@ namespace NES {
 
 class TestHarness {
   public:
-    CoordinatorConfig* crdConf;
-    WorkerConfig* wrkConf;
-    SourceConfig* srcConf;
+    CoordinatorConfig* crdConf = new CoordinatorConfig();
+    WorkerConfig* wrkConf = new WorkerConfig();
     /*
          * @brief The constructor of TestHarness
          * @param numWorkers number of worker (each for one physical source) to be used in the test

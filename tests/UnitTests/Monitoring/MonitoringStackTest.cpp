@@ -55,7 +55,7 @@ class MonitoringStackTest : public testing::Test {
     NodeEngine::BufferManagerPtr bufferManager;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
-    CoordinatorConfig* crdConf;
+    CoordinatorConfig* crdConf = new CoordinatorConfig();
     WorkerConfig* wrkConf = new WorkerConfig();
 
     static void SetUpTestCase() {

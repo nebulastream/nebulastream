@@ -37,9 +37,9 @@ uint64_t rpcPort = 4000;
 
 class SimplePatternTest : public testing::Test {
   public:
-    CoordinatorConfig* coConf;
-    WorkerConfig* wrkConf;
-    SourceConfig* srcConf;
+    CoordinatorConfig* coConf = new CoordinatorConfig();
+    WorkerConfig* wrkConf = new WorkerConfig();
+    SourceConfig* srcConf = new SourceConfig();
 
     static void SetUpTestCase() {
         NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
@@ -47,9 +47,6 @@ class SimplePatternTest : public testing::Test {
     }
 
     void SetUp() {
-        coConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
-        srcConf->resetSourceOptions();
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
         coConf->setRpcPort(rpcPort);
@@ -67,6 +64,9 @@ class SimplePatternTest : public testing::Test {
  * Translation of a simple pattern (1 Stream) into a query
  */
 TEST_F(SimplePatternTest, testPatternWithFilter) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("SimplePatternTest: start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -112,6 +112,9 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
 TEST_F(SimplePatternTest, testPatternWithTestStream) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -195,6 +198,9 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
 TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -308,6 +314,9 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
 TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -392,6 +401,9 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
  * TODO: Ariane
  */
 TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -474,6 +486,9 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
  * Here, we test if we can use merge operator for patterns and create complex events with it
  */
 TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

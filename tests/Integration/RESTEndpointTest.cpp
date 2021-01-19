@@ -33,7 +33,7 @@ static uint64_t rpcPort = 4000;
 
 class RESTEndpointTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig;
+    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
     WorkerConfig* workerConfig = new WorkerConfig();
     static void SetUpTestCase() {
         NES::setupLogging("RESTEndpointTest.log", NES::LOG_DEBUG);
@@ -41,13 +41,8 @@ class RESTEndpointTest : public testing::Test {
     }
 
     void SetUp() {
-        coordinatorConfig->resetCoordinatorOptions();
-        workerConfig->resetWorkerOptions();
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-        coordinatorConfig->setRpcPort(rpcPort);
-        coordinatorConfig->setRestPort(restPort);
-        workerConfig->setCoordinatorPort(rpcPort);
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
@@ -56,6 +51,8 @@ class RESTEndpointTest : public testing::Test {
 };
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

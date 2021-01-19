@@ -40,9 +40,9 @@ static uint64_t rpcPort = 4000;
 
 class QueryDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfig* coConf;
-    WorkerConfig* wrkConf;
-    SourceConfig* srcConf;
+    CoordinatorConfig* coConf = new CoordinatorConfig();
+    WorkerConfig* wrkConf = new WorkerConfig();
+    SourceConfig* srcConf = new SourceConfig();
 
     static void SetUpTestCase() {
         NES::setupLogging("QueryDeploymentTest.log", NES::LOG_DEBUG);
@@ -50,9 +50,7 @@ class QueryDeploymentTest : public testing::Test {
     }
 
     void SetUp() {
-        coConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
-        srcConf->resetSourceOptions();
+
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
         coConf->setRpcPort(rpcPort);
@@ -69,6 +67,9 @@ class QueryDeploymentTest : public testing::Test {
  * Test deploying merge query with source on two different worker node using bottom up strategy.
  */
 TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -248,6 +249,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
 TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -424,6 +428,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorker) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -493,6 +500,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
  * @brief Test deploy query with print sink with one worker using top down strategy
  */
 TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -559,6 +569,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -653,6 +666,9 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -748,6 +764,9 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -817,6 +836,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -886,6 +908,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -923,6 +948,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -993,6 +1021,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -1092,6 +1123,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test1.out");
     remove("test2.out");
 
@@ -1216,6 +1250,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test1.out");
     remove("test2.out");
 
@@ -1349,6 +1386,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

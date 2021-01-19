@@ -37,18 +37,15 @@ uint64_t rpcPort = 4000;
 
 class MemorySourceIntegrationTest : public testing::Test {
   public:
-    CoordinatorConfig* crdConf;
-    WorkerConfig* wrkConf;
-    SourceConfig* srcConf;
+    CoordinatorConfig* crdConf = new CoordinatorConfig();
+    WorkerConfig* wrkConf = new WorkerConfig();
+    SourceConfig* srcConf = new SourceConfig();
     static void SetUpTestCase() {
         NES::setupLogging("MemorySourceIntegrationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MemorySourceIntegrationTest test class.");
     }
 
-    void SetUp() {         crdConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
-        srcConf->resetSourceOptions();
-
+    void SetUp() {
         rpcPort = rpcPort + 30;
 
         crdConf->setRpcPort(rpcPort);
@@ -60,6 +57,9 @@ class MemorySourceIntegrationTest : public testing::Test {
 
 /// This test checks that a deployed MemorySource can write M records spanning exactly N records
 TEST_F(MemorySourceIntegrationTest, testMemorySource) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -156,6 +156,9 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -253,6 +256,9 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 /// This test checks that a deployed MemorySource can write M records stored in N+1 buffers
 /// with the invariant that the N+1-th buffer is half full
 TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
