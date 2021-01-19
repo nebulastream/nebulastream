@@ -1474,7 +1474,6 @@ TEST_F(DeepTopologyHierarchyTest, testMergeThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Test finished");
 }
 
-
 /**
  * @brief This tests just outputs the default stream for a hierarchy of two levels where only leaves produce data
  * Topology:
@@ -1555,8 +1554,8 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testSimpleQueryWithTwoLevelTreeWithDe
         .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)), Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
         .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
-        .sink(FileSinkDescriptor::create(")" +
-        outputFilePath  + R"(", "CSV_FORMAT", "APPEND"));)";
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

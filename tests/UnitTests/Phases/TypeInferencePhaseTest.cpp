@@ -276,7 +276,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameinAssignment) {
     phase->execute(plan);
     NES_DEBUG("result schema is=" << maps[0]->getOutputSchema()->toString());
     //we have to forbit the renaming of the attribute in the assignment statement of the map
-    ASSERT_NE(maps[0]->getOutputSchema()->getIndex("f4") , 2);
+    ASSERT_NE(maps[0]->getOutputSchema()->getIndex("f4"), 2);
 }
 
 /**

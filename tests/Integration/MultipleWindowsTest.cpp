@@ -90,8 +90,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
         .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
         .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
-        .sink(FileSinkDescriptor::create(")" +
-        outputFilePath  + R"(", "CSV_FORMAT", "APPEND"));)";
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -119,7 +119,6 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("MultipleWindowsTest: Test finished");
 }
-
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
@@ -168,8 +167,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
         .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
         .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
-        .sink(FileSinkDescriptor::create(")" +
-        outputFilePath  + R"(", "CSV_FORMAT", "APPEND"));)";
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -202,7 +201,6 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("MultipleWindowsTest: Test finished");
 }
-
 
 /**
  * @brief test central sliding window and event time
@@ -243,8 +241,10 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
 
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = "Query::from(\"window\")"
-                   ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)), Sum(Attribute(\"value\")))"
-                   ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\")))"
+                   ".windowByKey(Attribute(\"id\"), "
+                   "SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)), Sum(Attribute(\"value\")))"
+                   ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5)), "
+                   "Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
@@ -285,7 +285,6 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("MultipleWindowsTest: Test finished");
 }
-
 
 /**
  * @brief test central sliding window and event time
@@ -333,8 +332,10 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = "Query::from(\"window\")"
-                   ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)), Sum(Attribute(\"value\")))"
-                   ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"end\")),Seconds(10),Seconds(5)), Sum(Attribute(\"value\")))"
+                   ".windowByKey(Attribute(\"id\"), "
+                   "SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)), Sum(Attribute(\"value\")))"
+                   ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"end\")),Seconds(10),Seconds(5)), "
+                   "Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
@@ -420,8 +421,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
         .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)), Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
         .windowByKey(Attribute("id"), SlidingWindow::of(EventTime(Attribute("start")),Seconds(1),Milliseconds(500)), Sum(Attribute("value")))
-        .sink(FileSinkDescriptor::create(")" +
-        outputFilePath  + R"(", "CSV_FORMAT", "APPEND"));)";
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -485,7 +486,6 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleWindowsTest: Worker2 started successfully");
 
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -512,8 +512,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     string query = R"(Query::from("window")
         .windowByKey(Attribute("id"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)), Sum(Attribute("value")))
         .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
-        .sink(FileSinkDescriptor::create(")" +
-        outputFilePath  + R"(", "CSV_FORMAT", "APPEND"));)";
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -553,7 +553,6 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Test finished");
 }
 
-
 /**
  * @brief Test all three windows in a row
  */
@@ -586,7 +585,6 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
     wrk2->registerLogicalStream("window", testSchemaFileName);
 
-
     PhysicalStreamConfigPtr conf =
         PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 10, 3, "test_stream", "window", false);
     wrk1->registerPhysicalStream(conf);
@@ -606,8 +604,8 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
         .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)), Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
         .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
-        .sink(FileSinkDescriptor::create(")" +
-        outputFilePath  + R"(", "CSV_FORMAT", "APPEND"));)";
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -643,6 +641,5 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     EXPECT_TRUE(retStopCord);
     NES_DEBUG("MultipleWindowsTest: Test finished");
 }
-
 
 }// namespace NES
