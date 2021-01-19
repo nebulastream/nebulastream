@@ -82,7 +82,7 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
             fieldName = fieldAccess->getFieldName();
         }
 
-        if (inputSchema->contains(fieldName)) {
+        if (inputSchema->hasFullyQualifiedFieldName(fieldName)) {
             outputSchema->addField(inputSchema->get(fieldName));
         } else {
             NES_ERROR("ProjectionLogicalOperatorNode::inferSchema(): expression not found=" << fieldName);

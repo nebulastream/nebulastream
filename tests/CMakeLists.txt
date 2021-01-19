@@ -329,6 +329,11 @@ add_executable(attribute-sort-rule-test "UnitTests/Optimizer/QueryRewrite/Attrib
 target_link_libraries(attribute-sort-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME attribute-sort-rule-test COMMAND attribute-sort-rule-test)
 
+### Attribute Sort Rule Test ###
+add_executable(rename-stream-to-project-operator-rule-test "UnitTests/Optimizer/QueryRewrite/RenameStreamToProjectOperatorRuleTest.cpp")
+target_link_libraries(rename-stream-to-project-operator-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME rename-stream-to-project-operator-rule-test COMMAND rename-stream-to-project-operator-rule-test)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

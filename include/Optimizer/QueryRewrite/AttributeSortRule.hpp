@@ -48,7 +48,7 @@ typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
  * 1. filter("c" * "b" > "d" + "a") => filter("a" + "d" < "b" * "c")
  * 2. filter("c" * "b" > "d" + "a" and "a" < "b") => filter("a" < "b" and "b" * "c" > "a" + "d")
  */
-class AttributeSortRule : public BaseRefinementRule {
+class AttributeSortRule : public BaseRewriteRule {
 
   public:
     static AttributeSortRulePtr create();
