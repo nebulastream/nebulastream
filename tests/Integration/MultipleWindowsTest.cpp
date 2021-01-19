@@ -554,4 +554,95 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
 }
 
 
+/**
+ * @brief Test all three windows in a row
+ */
+TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
+    NES_DEBUG("MultipleWindowsTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    NES_DEBUG("MultipleWindowsTest: Coordinator started successfully");
+
+    NES_DEBUG("MultipleWindowsTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
+    EXPECT_TRUE(retStart1);
+    NES_DEBUG("MultipleWindowsTest: Worker 1 started successfully");
+
+    NES_INFO("MultipleWindowsTest: Start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("MultipleWindowsTest: Worker2 started successfully");
+
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << window;
+    out.close();
+    wrk1->registerLogicalStream("window", testSchemaFileName);
+    wrk2->registerLogicalStream("window", testSchemaFileName);
+
+
+    PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 10, 3, "test_stream", "window", false);
+    wrk1->registerPhysicalStream(conf);
+
+    std::string outputFilePath = "testOutput.out";
+    remove(outputFilePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_DEBUG("MultipleWindowsTest: Submit query");
+
+    NES_DEBUG("MultipleWindowsTest: Submit query");
+    string query = R"(Query::from("window")
+        .filter(Attribute("id") < 15)
+        .windowByKey(Attribute("id"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)), Sum(Attribute("value")))
+        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)), Sum(Attribute("value")))
+        .filter(Attribute("id") < 10)
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .sink(FileSinkDescriptor::create(")" +
+        outputFilePath  + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
+                             "0,2000,6\n"
+                             "2000,4000,24\n"
+                             "4000,6000,20\n"
+                             "6000,8000,28\n"
+                             "8000,10000,36\n"
+                             "10000,12000,44\n"
+                             "12000,14000,52\n"
+                             "14000,16000,60\n"
+                             "16000,18000,68\n";
+
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_DEBUG("MultipleWindowsTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_DEBUG("MultipleWindowsTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("MultipleWindowsTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("MultipleWindowsTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_DEBUG("MultipleWindowsTest: Test finished");
+}
+
+
 }// namespace NES
