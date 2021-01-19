@@ -16,28 +16,30 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <chrono>
 #include <utility>
 namespace NES {
 
-DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency)
+DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency)
     : SourceDescriptor(std::move(schema)), numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
 
 DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                                 uint32_t frequency)
+                                                 uint64_t frequency)
     : SourceDescriptor(std::move(schema), std::move(streamName)), numbersOfBufferToProduce(numbersOfBufferToProduce),
       frequency(frequency) {}
 
 uint64_t DefaultSourceDescriptor::getNumbersOfBufferToProduce() const { return numbersOfBufferToProduce; }
 
-uint32_t DefaultSourceDescriptor::getFrequency() const { return frequency; }
+std::chrono::milliseconds DefaultSourceDescriptor::getFrequency() const { return frequency; }
+uint64_t DefaultSourceDescriptor::getFrequencyCount() const { return frequency.count(); }
 
-SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency) {
+SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency) {
     return std::make_shared<DefaultSourceDescriptor>(
         DefaultSourceDescriptor(std::move(schema), numbersOfBufferToProduce, frequency));
 }
 
 SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                                    uint32_t frequency) {
+                                                    uint64_t frequency) {
     return std::make_shared<DefaultSourceDescriptor>(
         DefaultSourceDescriptor(std::move(schema), std::move(streamName), numbersOfBufferToProduce, frequency));
 }
@@ -50,6 +52,6 @@ bool DefaultSourceDescriptor::equal(SourceDescriptorPtr other) {
 }
 
 std::string DefaultSourceDescriptor::toString() {
-    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(frequency) + ")";
+    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(frequency.count()) + "ms)";
 }
 }// namespace NES

@@ -32,6 +32,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Sources/YSBSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <chrono>
 
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
@@ -45,7 +46,7 @@ namespace NES {
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                                                   NodeEngine::QueryManagerPtr queryManager,
                                                                   OperatorId operatorId) {
-    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1, operatorId);
+    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1000, operatorId);
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -59,7 +60,7 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(Nod
                                                                              NodeEngine::QueryManagerPtr queryManager,
                                                                              OperatorId operatorId) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager,
-                                           queryManager, /**bufferCnt*/ 1, /*frequency*/ 1, operatorId);
+                                           queryManager, /**bufferCnt*/ 1, /*frequency*/ 1000, operatorId);
 }
 
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,

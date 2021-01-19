@@ -55,7 +55,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const DefaultSourcePtr defaultSourcePtr = std::dynamic_pointer_cast<DefaultSource>(dataSource);
             const SourceDescriptorPtr defaultSourceDescriptor =
                 DefaultSourceDescriptor::create(defaultSourcePtr->getSchema(), defaultSourcePtr->getNumBuffersToProcess(),
-                                                defaultSourcePtr->getGatheringInterval());
+                                                defaultSourcePtr->getGatheringIntervalCount());
             return defaultSourceDescriptor;
         }
         case BINARY_SOURCE: {
@@ -71,7 +71,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             const SourceDescriptorPtr csvSourceDescriptor = CsvSourceDescriptor::create(
                 csvSourcePtr->getSchema(), csvSourcePtr->getFilePath(), csvSourcePtr->getDelimiter(),
                 csvSourcePtr->getNumberOfTuplesToProducePerBuffer(), csvSourcePtr->getNumBuffersToProcess(),
-                csvSourcePtr->getGatheringInterval(), csvSourcePtr->getSkipHeader());
+                csvSourcePtr->getGatheringIntervalCount(), csvSourcePtr->getSkipHeader());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD

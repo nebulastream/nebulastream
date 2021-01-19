@@ -18,6 +18,7 @@
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <chrono>
 
 namespace NES {
 
@@ -57,7 +58,12 @@ class CsvSourceDescriptor : public SourceDescriptor {
     /**
      * @brief get the frequency of reading the csv file
      */
-    uint64_t getFrequency() const;
+    std::chrono::milliseconds getFrequency() const;
+
+    /**
+     * @brief get the frequency of reading the csv file as number of time units
+     */
+    uint64_t getFrequencyCount() const;
 
     /**
      * @brief get the value of the skipHeader
@@ -80,7 +86,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
     std::string delimiter;
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
-    uint64_t frequency;
+    std::chrono::milliseconds frequency;
     bool skipHeader;
 };
 

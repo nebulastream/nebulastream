@@ -25,6 +25,7 @@
 #include <Util/Logger.hpp>
 
 #include <Util/UtilityFunctions.hpp>
+#include <chrono>
 
 namespace NES {
 

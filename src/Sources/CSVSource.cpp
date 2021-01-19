@@ -23,6 +23,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <boost/algorithm/string.hpp>
+#include <chrono>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -35,7 +36,7 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0), skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
-    this->gatheringInterval = frequency;
+    this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();
 
     char* path = realpath(filePath.c_str(), NULL);
@@ -55,7 +56,7 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
         loopOnFile = false;
     }
 
-    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
+    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
                                       << numberOfTuplesToProducePerBuffer << "loopOnFile=" << loopOnFile);
 
@@ -80,7 +81,7 @@ std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
 
 const std::string CSVSource::toString() const {
     std::stringstream ss;
-    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval
+    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count() << "ms"
        << " numBuff=" << this->numBuffersToProcess << ")";
     return ss.str();
 }

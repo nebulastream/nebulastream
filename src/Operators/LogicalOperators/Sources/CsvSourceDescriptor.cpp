@@ -16,7 +16,8 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <utility>
+#include <chrono>
+
 namespace NES {
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
@@ -59,7 +60,8 @@ uint64_t CsvSourceDescriptor::getNumBuffersToProcess() const { return numBuffers
 
 uint64_t CsvSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
-uint64_t CsvSourceDescriptor::getFrequency() const { return frequency; }
+std::chrono::milliseconds CsvSourceDescriptor::getFrequency() const { return frequency; }
+uint64_t CsvSourceDescriptor::getFrequencyCount() const { return frequency.count(); }
 
 bool CsvSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<CsvSourceDescriptor>())
@@ -72,7 +74,7 @@ bool CsvSourceDescriptor::equal(SourceDescriptorPtr other) {
 
 std::string CsvSourceDescriptor::toString() {
     return "CsvSourceDescriptor(" + filePath + "," + delimiter + ", " + std::to_string(numBuffersToProcess) + ", "
-        + std::to_string(frequency) + ")";
+        + std::to_string(frequency.count()) + "ms)";
 }
 
 }// namespace NES

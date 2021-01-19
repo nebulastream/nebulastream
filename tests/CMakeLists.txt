@@ -351,6 +351,11 @@ add_executable(project-before-union-operator-rule-test "UnitTests/Optimizer/Quer
 target_link_libraries(project-before-union-operator-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME project-before-union-operator-rule-test COMMAND project-before-union-operator-rule-test)
 
+### Millisecond Interval Tests ###
+add_executable(millisecond-interval-tests "UnitTests/Source/MillisecondIntervalTest.cpp")
+target_link_libraries(millisecond-interval-tests nes ${GTEST_LIBRARIES})
+add_test(NAME millisecond-interval-tests COMMAND millisecond-interval-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
