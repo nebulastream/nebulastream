@@ -144,8 +144,12 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     WorkerConfig* workerConfig = new WorkerConfig();
+    workerConfig->setCoordinatorIp(rpcIp);
+    workerConfig->setLocalWorkerIp(rpcIp);
+    workerConfig->setCoordinatorPort(rpcPort);
     workerConfig->setRpcPort(rpcPort + 1);
     workerConfig->setDataPort(rpcPort + 2);
+    workerConfig->setNumberOfSlots(numberOfSlots);
     worker = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
