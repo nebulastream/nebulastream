@@ -25,6 +25,9 @@
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 
 using namespace std;
 
@@ -35,14 +38,33 @@ static uint64_t rpcPort = 4000;
 
 class JoinDeploymentTest : public testing::Test {
   public:
+    CoordinatorConfig* crdConf;
+    WorkerConfig* wrkConf;
+    SourceConfig* srcConf;
     static void SetUpTestCase() {
         NES::setupLogging("JoinDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup JoinDeploymentTest test class.");
     }
 
     void SetUp() {
+        crdConf->resetCoordinatorOptions();
+        wrkConf->resetWorkerOptions();
+        srcConf->resetSourceOptions();
+
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+
+        crdConf->setRpcPort(rpcPort);
+        crdConf->setRestPort(restPort);
+
+        wrkConf->setCoordinatorPort(rpcPort);
+
+        srcConf->setSourceType("CSVSource");
+        srcConf->setSourceConfig("../tests/test_data/window.csv");
+        srcConf->setNumberOfTuplesToProducePerBuffer(3);
+        srcConf->setNumberOfBuffersToProduce(2);
+        srcConf->setPhysicalStreamName("test_stream");
+        srcConf->setLogicalStreamName("window");
     }
 
     void TearDown() { std::cout << "Tear down JoinDeploymentTest class." << std::endl; }
@@ -57,19 +79,25 @@ class JoinDeploymentTest : public testing::Test {
 //TODO: prevent self join
 TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
@@ -88,10 +116,11 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window", true);
+        PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setPhysicalStreamName("test_stream2");
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream2", "window", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -145,19 +174,25 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
  * */
 TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
@@ -183,12 +218,15 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -243,19 +281,25 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
@@ -281,12 +325,15 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -341,19 +388,25 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
@@ -379,12 +432,15 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window2.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -439,19 +495,25 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
@@ -477,12 +539,16 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
+    srcConf->setSourceConfig("../tests/test_data/window3.csv");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window3.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -537,19 +603,25 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWindow) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
@@ -575,12 +647,20 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
+    srcConf->setSourceFrequency(0);
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 0, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setSourceFrequency(1);
+    srcConf->setNumberOfTuplesToProducePerBuffer(2);
+    srcConf->setNumberOfBuffersToProduce(3);
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window2.csv", 1, 2, 3, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -636,25 +716,38 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
  */
 TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, 16);
+    crdConf->setNumberOfSlots(16);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 8);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(8);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor, 8);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    wrkConf->setNumberOfSlots(8);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
 
     NES_INFO("JoinDeploymentTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor, 8);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    wrkConf->setNumberOfSlots(8);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("JoinDeploymentTest: Worker3 started SUCCESSFULLY");
@@ -680,12 +773,16 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window2.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
@@ -752,31 +849,48 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
  */
 TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, 8);
+    crdConf->setNumberOfSlots(8);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 8);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(8);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor, 8);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    wrkConf->setNumberOfSlots(8);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor, 8);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    wrkConf->setNumberOfSlots(8);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("JoinDeploymentTest: Worker3 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Sensor, 8);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    wrkConf->setNumberOfSlots(8);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_INFO("JoinDeploymentTest: Worker4 started successfully");
@@ -802,12 +916,16 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window2.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
@@ -890,19 +1008,25 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
@@ -928,12 +1052,16 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window2.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -993,19 +1121,25 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
  */
 TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
     NES_INFO("JoinDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
@@ -1031,12 +1165,16 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setLogicalStreamName("window1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", true);
+        PhysicalStreamConfig::create(srcConf);
+
+    srcConf->setLogicalStreamName("window2");
+    srcConf->setSourceConfig("../tests/test_data/window3.csv");
 
     PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window3.csv", 1, 3, 2, "test_stream", "window2", true);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);

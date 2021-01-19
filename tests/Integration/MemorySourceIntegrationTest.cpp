@@ -16,6 +16,9 @@
 
 #include <gtest/gtest.h>
 
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -34,12 +37,22 @@ uint64_t rpcPort = 4000;
 
 class MemorySourceIntegrationTest : public testing::Test {
   public:
+    CoordinatorConfig* crdConf;
+    WorkerConfig* wrkConf;
+    SourceConfig* srcConf;
     static void SetUpTestCase() {
         NES::setupLogging("MemorySourceIntegrationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MemorySourceIntegrationTest test class.");
     }
 
-    void SetUp() { rpcPort = rpcPort + 30; }
+    void SetUp() {         crdConf->resetCoordinatorOptions();
+        wrkConf->resetWorkerOptions();
+        srcConf->resetSourceOptions();
+
+        rpcPort = rpcPort + 30;
+
+        crdConf->setRpcPort(rpcPort);
+        wrkConf->setCoordinatorPort(rpcPort);}
 
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
@@ -48,7 +61,7 @@ class MemorySourceIntegrationTest : public testing::Test {
 /// This test checks that a deployed MemorySource can write M records spanning exactly N records
 TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
@@ -71,7 +84,10 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     streamCatalog->addLogicalStream("memory_stream", schema);
 
     NES_INFO("MemorySourceIntegrationTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
@@ -141,7 +157,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
@@ -164,7 +180,10 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     streamCatalog->addLogicalStream("memory_stream", schema);
 
     NES_INFO("MemorySourceIntegrationTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
@@ -235,7 +254,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 /// with the invariant that the N+1-th buffer is half full
 TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
@@ -258,8 +277,10 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
     streamCatalog->addLogicalStream("memory_stream", schema);
 
     NES_INFO("MemorySourceIntegrationTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
