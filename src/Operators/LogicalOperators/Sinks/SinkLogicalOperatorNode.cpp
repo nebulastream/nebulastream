@@ -61,11 +61,11 @@ bool SinkLogicalOperatorNode::inferSchema() {
     }
     inputSchema = childSchema->copy();
     outputSchema = childSchema->copy();
-    std::string& qualifyingName = outputSchema->qualifyingName;
+    auto qualifierName = outputSchema->getQualifierName();
     //Remove qualifier from field name
     for(auto& field : outputSchema->fields){
         std::string& fieldName = field->name;
-        field->name = fieldName.substr(fieldName.find(qualifyingName) + qualifyingName.length(), fieldName.length());
+        field->name = fieldName.substr(fieldName.find(qualifierName) + qualifierName.length(), fieldName.length());
     }
     return true;
 }

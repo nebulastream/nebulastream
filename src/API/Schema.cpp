@@ -51,7 +51,7 @@ SchemaPtr Schema::copyFields(SchemaPtr otherSchema) {
     for (AttributeFieldPtr attr : otherSchema->fields) {
         fields.push_back(AttributeField::create(attr->name, attr->dataType));
     }
-    this->qualifyingName = otherSchema->qualifyingName;
+    this->qualifierName = otherSchema->qualifierName;
     return copy();
 }
 
@@ -169,7 +169,7 @@ bool Schema::hasFieldName(const std::string& fieldName) {
     return std::any_of(fields.begin(), fields.end(), [&](const AttributeFieldPtr& field) {
         std::string& fullyQualifiedFieldName = field->name;
         auto unqualifiedFieldName = fullyQualifiedFieldName.substr(
-            fullyQualifiedFieldName.find(qualifyingName) + qualifyingName.length(), fullyQualifiedFieldName.length());
+            fullyQualifiedFieldName.find(qualifierName) + qualifierName.length(), fullyQualifiedFieldName.length());
         return unqualifiedFieldName == fieldName;
     });
 }
@@ -178,6 +178,13 @@ bool Schema::hasFullyQualifiedFieldName(const std::string& fullyQualifiedFieldNa
     return std::any_of(fields.begin(), fields.end(), [&fullyQualifiedFieldName](const auto& field) {
         return field->name == fullyQualifiedFieldName;
     });
+}
+
+const std::string& Schema::getQualifierName() const { return qualifierName; }
+
+void Schema::clear() {
+    fields.clear();
+    qualifierName.clear();
 }
 
 }// namespace NES

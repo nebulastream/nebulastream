@@ -66,7 +66,10 @@ bool UnaryOperatorNode::inferSchema() {
         }
     }
 
+    //Reset and reinitialize the input and output schemas
+    inputSchema->clear();
     inputSchema = inputSchema->copyFields(childSchema);
+    outputSchema->clear();
     outputSchema = outputSchema->copyFields(childSchema);
     return true;
 }

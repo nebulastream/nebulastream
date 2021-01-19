@@ -52,14 +52,14 @@ bool RenameStreamOperatorNode::inferSchema() {
     //TODO: add magic here
     //replace OldStreamName.Att1 to NewStreamName.Att1
 
-    outputSchema->qualifyingName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    outputSchema->setQualifierName(newStreamName);
     for (auto& field : outputSchema->fields) {
         auto& fieldName = field->name;
         unsigned long separatorLocation = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
         if (separatorLocation != std::string::npos) {
             fieldName = fieldName.substr(separatorLocation + 1, fieldName.length());
         }
-        field->name = outputSchema->qualifyingName + fieldName;
+        field->name = outputSchema->getQualifierName() + fieldName;
     }
 
     return true;
