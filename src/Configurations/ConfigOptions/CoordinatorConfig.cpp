@@ -69,7 +69,7 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(map<string, string> 
                 setRestIp(it->second);
             } else if (it->first == "--coordinatorIp") {
                 setCoordinatorIp(it->second);
-            } else if (it->first == "--rpcPort") {
+            } else if (it->first == "--coordinatorPort") {
                 setRpcPort(stoi(it->second));
             } else if (it->first == "--restPort") {
                 setRestPort(stoi(it->second));

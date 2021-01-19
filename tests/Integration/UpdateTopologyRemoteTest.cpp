@@ -34,8 +34,8 @@ uint64_t rpcPort = 4000;
 
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig;
-    WorkerConfig* workerConfig;
+    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
+    WorkerConfig* workerConfig = new WorkerConfig();
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
@@ -51,8 +51,6 @@ class UpdateTopologyRemoteTest : public testing::Test {
     }
 
     void SetUp() {
-        coordinatorConfig->resetCoordinatorOptions();
-        workerConfig->resetWorkerOptions();
         rpcPort = rpcPort + 30;
         coordinatorConfig->setRpcPort(rpcPort);
         workerConfig->setCoordinatorPort(rpcPort);
@@ -62,7 +60,8 @@ class UpdateTopologyRemoteTest : public testing::Test {
 };
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
-
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
@@ -132,6 +131,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 }
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);

@@ -38,18 +38,15 @@ static uint64_t rpcPort = 4000;
 
 class JoinDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfig* crdConf;
-    WorkerConfig* wrkConf;
-    SourceConfig* srcConf;
+    CoordinatorConfig* crdConf = new CoordinatorConfig();
+    WorkerConfig* wrkConf = new WorkerConfig();
+    SourceConfig* srcConf = new SourceConfig();
     static void SetUpTestCase() {
         NES::setupLogging("JoinDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup JoinDeploymentTest test class.");
     }
 
     void SetUp() {
-        crdConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
-        srcConf->resetSourceOptions();
 
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
@@ -59,12 +56,6 @@ class JoinDeploymentTest : public testing::Test {
 
         wrkConf->setCoordinatorPort(rpcPort);
 
-        srcConf->setSourceType("CSVSource");
-        srcConf->setSourceConfig("../tests/test_data/window.csv");
-        srcConf->setNumberOfTuplesToProducePerBuffer(3);
-        srcConf->setNumberOfBuffersToProduce(2);
-        srcConf->setPhysicalStreamName("test_stream");
-        srcConf->setLogicalStreamName("window");
     }
 
     void TearDown() { std::cout << "Tear down JoinDeploymentTest class." << std::endl; }
@@ -78,6 +69,11 @@ class JoinDeploymentTest : public testing::Test {
 //TODO: this test will be enabled once we have the renaming function using as
 //TODO: prevent self join
 TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -173,6 +169,11 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 * Test deploying join with same data and same schema
  * */
 TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -218,7 +219,13 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);
@@ -280,6 +287,11 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
  * Test deploying join with same data but different names in the schema
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -325,7 +337,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);
@@ -387,6 +406,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
  * Test deploying join with different streams
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -432,11 +456,19 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);
 
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
     srcConf->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 =
@@ -494,6 +526,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
  * Test deploying join with different streams
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -539,7 +576,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);
@@ -602,6 +646,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
  * Test deploying join with different streams and different Speed
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWindow) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -647,8 +696,15 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
     srcConf->setSourceFrequency(0);
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);
@@ -715,6 +771,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
  * Test deploying join with different three sources
  */
 TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     crdConf->setNumberOfSlots(16);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -773,7 +834,14 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);
@@ -848,6 +916,11 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
  * Test deploying join with different three sources
  */
 TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     crdConf->setNumberOfSlots(8);
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -916,7 +989,14 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);
@@ -1007,6 +1087,9 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
  * Test deploying join with different streams
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1052,7 +1135,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);
@@ -1120,6 +1210,9 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
  * Test deploying join with different streams
  */
 TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1165,7 +1258,14 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(true);
+
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream =
         PhysicalStreamConfig::create(srcConf);

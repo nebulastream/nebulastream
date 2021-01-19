@@ -40,9 +40,9 @@ uint64_t rpcPort = 4000;
 
 class ContinuousSourceTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig;
-    WorkerConfig* workerConfig;
-    SourceConfig* sourceConfig;
+    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
+    WorkerConfig* workerConfig = new WorkerConfig();
+    SourceConfig* sourceConfig = new SourceConfig();
 
     static void SetUpTestCase() {
         NES::setupLogging("ContinuousSourceTest.log", NES::LOG_DEBUG);
@@ -50,9 +50,6 @@ class ContinuousSourceTest : public testing::Test {
     }
 
     void SetUp() {
-        coordinatorConfig->resetCoordinatorOptions();
-        workerConfig->resetWorkerOptions();
-        sourceConfig->resetSourceOptions();
 
         rpcPort = rpcPort + 30;
 
@@ -68,6 +65,11 @@ class ContinuousSourceTest : public testing::Test {
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -170,6 +172,11 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -230,6 +237,11 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -290,6 +302,11 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -409,6 +426,11 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -528,6 +550,11 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -596,6 +623,11 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1205,6 +1237,11 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
  * */
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1443,6 +1480,10 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
 
 TEST_F(ContinuousSourceTest, testYSB) {
 
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     //TODO: writing of csv file works, now make test green
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -1459,13 +1500,13 @@ TEST_F(ContinuousSourceTest, testYSB) {
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(5);
+    sourceConfig->setSourceType("YSBSource");
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(5);
+    sourceConfig->setNumberOfBuffersToProduce(2);
     sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("exdra");
+    sourceConfig->setLogicalStreamName("ysb");
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);

@@ -39,18 +39,15 @@ static uint64_t rpcPort = 4000;
 
 class MergeDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig;
-    WorkerConfig* workerConfig;
-    SourceConfig* sourceConfig;
+    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
+    WorkerConfig* workerConfig = new WorkerConfig();
+    SourceConfig* sourceConfig = new SourceConfig();
     static void SetUpTestCase() {
         NES::setupLogging("MergeDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MergeDeploymentTest test class.");
     }
 
     void SetUp() {
-        coordinatorConfig->resetCoordinatorOptions();
-        workerConfig->resetWorkerOptions();
-        sourceConfig->resetSourceOptions();
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
         coordinatorConfig->setRpcPort(rpcPort);
@@ -68,6 +65,9 @@ class MergeDeploymentTest : public testing::Test {
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -248,6 +248,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -428,6 +431,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -609,6 +615,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDif
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -702,6 +711,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -864,6 +876,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -995,6 +1010,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

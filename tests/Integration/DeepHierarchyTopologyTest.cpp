@@ -36,9 +36,9 @@ static uint64_t rpcPort = 4000;
 
 class DeepTopologyHierarchyTest : public testing::Test {
   public:
-    CoordinatorConfig* coConf;
-    WorkerConfig* wrkConf;
-    SourceConfig* srcConf;
+    CoordinatorConfig* coConf = new CoordinatorConfig();
+    WorkerConfig* wrkConf = new WorkerConfig();
+    SourceConfig* srcConf = new SourceConfig();
 
     static void SetUpTestCase() {
         NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
@@ -46,9 +46,6 @@ class DeepTopologyHierarchyTest : public testing::Test {
     }
 
     void SetUp() {
-        coConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
-        srcConf->resetSourceOptions();
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
         coConf->setRpcPort(rpcPort);
@@ -670,8 +667,8 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
@@ -1094,6 +1091,7 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
+    srcConf->resetSourceOptions();
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/testCSV.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
@@ -1419,7 +1417,15 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     wrk10->replaceParent(1, 4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(nullptr);
+    srcConf->resetSourceOptions();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+
     wrk7->registerPhysicalStream(conf);
     wrk8->registerPhysicalStream(conf);
     wrk9->registerPhysicalStream(conf);

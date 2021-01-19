@@ -37,19 +37,15 @@ static uint64_t rpcPort = 4000;
 
 class RenameTest : public testing::Test {
   public:
-    CoordinatorConfig* crdConf;
-    WorkerConfig* wrkConf;
-    SourceConfig* srcConf;
+    CoordinatorConfig* crdConf = new CoordinatorConfig();
+    WorkerConfig* wrkConf = new WorkerConfig();
+    SourceConfig* srcConf = new SourceConfig();
     static void SetUpTestCase() {
         NES::setupLogging("RenameTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup RenameTest test class.");
     }
 
     void SetUp() {
-        crdConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
-        srcConf->resetSourceOptions();
-
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
@@ -57,13 +53,6 @@ class RenameTest : public testing::Test {
         crdConf->setRestPort(restPort);
 
         wrkConf->setCoordinatorPort(rpcPort);
-
-        srcConf->setSourceType("CSVSource");
-        srcConf->setSourceConfig("../tests/test_data/window.csv");
-        srcConf->setNumberOfTuplesToProducePerBuffer(3);
-        srcConf->setNumberOfBuffersToProduce(3);
-        srcConf->setPhysicalStreamName("test_stream");
-        srcConf->setLogicalStreamName("window");
     }
 
     void TearDown() { std::cout << "Tear down RenameTest class." << std::endl; }
@@ -73,6 +62,9 @@ class RenameTest : public testing::Test {
 
 //FIXME: Enabled while solving #1490
 TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
@@ -144,6 +136,9 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
 
 //FIXME: Enabled while solving #1490
 TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
@@ -205,6 +200,9 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
 
 //FIXME: Enabled while solving #1490
 TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -232,6 +230,12 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
         PhysicalStreamConfig::create(srcConf);
@@ -283,6 +287,9 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
  */
 //FIXME: Enabled while solving #1490
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -328,6 +335,10 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window1");
     srcConf->setNumberOfBuffersToProduce(2);
     srcConf->setSkipHeader(true);
