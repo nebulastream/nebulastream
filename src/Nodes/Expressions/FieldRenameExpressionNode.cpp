@@ -56,11 +56,11 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
 
     //Detect if user has provided fully qualified name
     if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        fieldName = schema->qualifyingName + fieldName;
+        fieldName = schema->getQualifierName() + fieldName;
     }
 
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        newFieldName = schema->qualifyingName + newFieldName;
+        newFieldName = schema->getQualifierName() + newFieldName;
     }
 
     // check if the access field is defined in the schema.

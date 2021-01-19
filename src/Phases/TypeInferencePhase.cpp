@@ -59,10 +59,10 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                                         + " could not be found in the StreamCatalog");
             }
 
-            schema->setQualifyingName(streamName);
+            schema->setQualifierName(streamName);
             //perform attribute name resolution
             for (auto& field : schema->fields) {
-                field->name = schema->qualifyingName + field->name;
+                field->name = schema->getQualifierName() + field->name;
             }
             sourceDescriptor->setSchema(schema);
             NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName
