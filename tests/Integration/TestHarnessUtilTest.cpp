@@ -85,98 +85,122 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
 /*
  * Testing testHarness utility using one logical source and two physical sources
  */
-//TODO: disabled because the order from which source the tuples in the result are coming is not deterministic (issue #1442)
-//TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
-//    struct Car {
-//        uint32_t key;
-//        uint32_t value;
-//        uint64_t timestamp;
-//    };
-//
-//    auto carSchema = Schema::create()
-//        ->addField("key", DataTypeFactory::createUInt32())
-//        ->addField("value", DataTypeFactory::createUInt32())
-//        ->addField("timestamp", DataTypeFactory::createUInt64());
-//
-//    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
-//
-//    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-//    TestHarness testHarness = TestHarness(queryWithFilterOperator);
-//
-//    testHarness.addSource("car", carSchema, "car1");
-//    testHarness.addSource("car", carSchema, "car2");
-//
-//    ASSERT_EQ(testHarness.getWorkerCount(), 2);
-//
-//    testHarness.pushElement<Car>({40,40,40},0);
-//    testHarness.pushElement<Car>({30,30,30},0);
-//    testHarness.pushElement<Car>({71,71,71},1);
-//    testHarness.pushElement<Car>({21,21,21},1);
-//
-//    std::string output = testHarness.getOutput(1);
-//
-//    std::string expectedContent = "key:INTEGER,value:INTEGER,timestamp:INTEGER\n"
-//                                  "40,40,40\n"
-//                                  "30,30,30\n"
-//                                  "71,71,71\n"
-//                                  "21,21,21\n";
-//
-//    EXPECT_EQ(expectedContent, output);
-//}
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+
+    testHarness.addSource("car", carSchema, "car1");
+    testHarness.addSource("car", carSchema, "car2");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+
+    testHarness.pushElement<Car>({40,40,40},0);
+    testHarness.pushElement<Car>({30,30,30},0);
+    testHarness.pushElement<Car>({71,71,71},1);
+    testHarness.pushElement<Car>({21,21,21},1);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const & rhs) const {
+            return (key == rhs.key &&
+                    value==rhs.value &&
+                    timestamp == rhs.timestamp);
+        }
+    };
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
+
+    std::vector<Output> expectedOutput = {{40, 40, 40},
+                                          {21,21,21},
+                                          {30,30,30,},
+                                          {71, 71, 71}};
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
 
 /*
  * Testing testHarness utility using two logical source with one physical source each
  */
-//TODO: disabled because the order from which source the tuples in the result are coming is not deterministic (issue #1442)
-//TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
-//    struct Car {
-//        uint32_t key;
-//        uint32_t value;
-//        uint64_t timestamp;
-//    };
-//
-//    struct Truck {
-//        uint32_t key;
-//        uint32_t value;
-//        uint64_t timestamp;
-//    };
-//
-//    auto carSchema = Schema::create()
-//        ->addField("key", DataTypeFactory::createUInt32())
-//        ->addField("value", DataTypeFactory::createUInt32())
-//        ->addField("timestamp", DataTypeFactory::createUInt64());
-//
-//    auto truckSchema = Schema::create()
-//        ->addField("key", DataTypeFactory::createUInt32())
-//        ->addField("value", DataTypeFactory::createUInt32())
-//        ->addField("timestamp", DataTypeFactory::createUInt64());
-//
-//    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
-//    ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
-//
-//    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
-//    TestHarness testHarness = TestHarness(queryWithFilterOperator);
-//
-//    testHarness.addSource("car", carSchema, "car1");
-//    testHarness.addSource("truck", truckSchema, "truck1");
-//
-//    ASSERT_EQ(testHarness.getWorkerCount(), 2);
-//
-//    testHarness.pushElement<Car>({40,40,40},0);
-//    testHarness.pushElement<Car>({30,30,30},0);
-//    testHarness.pushElement<Truck>({71,71,71},1);
-//    testHarness.pushElement<Truck>({21,21,21},1);
-//
-//    std::string output = testHarness.getOutput(1);
-//
-//    std::string expectedContent = "key:INTEGER,value:INTEGER,timestamp:INTEGER\n"
-//                                  "40,40,40\n"
-//                                  "30,30,30\n"
-//                                  "71,71,71\n"
-//                                  "21,21,21\n";
-//
-//    EXPECT_EQ(expectedContent, output);
-//}
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    struct Truck {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto truckSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+
+    testHarness.addSource("car", carSchema, "car1");
+    testHarness.addSource("truck", truckSchema, "truck1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+
+    testHarness.pushElement<Car>({40,40,40},0);
+    testHarness.pushElement<Car>({30,30,30},0);
+    testHarness.pushElement<Truck>({71,71,71},1);
+    testHarness.pushElement<Truck>({21,21,21},1);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const & rhs) const {
+            return (key == rhs.key &&
+                    value==rhs.value &&
+                    timestamp == rhs.timestamp);
+        }
+    };
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
+
+    std::vector<Output> expectedOutput = {{40, 40, 40},
+                                          {21,21,21},
+                                          {30,30,30,},
+                                          {71, 71, 71}};
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
 
 /*
  * Testing test harness without source (should not work)
