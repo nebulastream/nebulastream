@@ -62,6 +62,9 @@ class UpdateTopologyRemoteTest : public testing::Test {
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
+
+    coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
+
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
