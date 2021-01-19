@@ -18,6 +18,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_YSBSOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <chrono>
 
 namespace NES {
 
@@ -38,7 +39,8 @@ class YSBSourceDescriptor : public SourceDescriptor {
 
     uint64_t getNumBuffersToProcess() const;
     uint64_t getNumberOfTuplesToProducePerBuffer() const;
-    uint64_t getFrequency() const;
+    std::chrono::milliseconds getFrequency() const;
+    uint64_t getFrequencyCount() const;
 
   private:
     explicit YSBSourceDescriptor(uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency);
@@ -49,7 +51,7 @@ class YSBSourceDescriptor : public SourceDescriptor {
   private:
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
-    uint64_t frequency;
+    std::chrono::milliseconds frequency;
 };
 
 typedef std::shared_ptr<YSBSourceDescriptor> YSBSourceDescriptorPtr;

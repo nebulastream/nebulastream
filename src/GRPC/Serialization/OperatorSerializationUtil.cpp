@@ -885,7 +885,7 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr s
                   "SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor");
         auto defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
-        defaultSerializedSourceDescriptor.set_frequency(defaultSourceDescriptor->getFrequency());
+        defaultSerializedSourceDescriptor.set_frequency(defaultSourceDescriptor->getFrequencyCount());
         defaultSerializedSourceDescriptor.set_numbufferstoprocess(defaultSourceDescriptor->getNumbersOfBufferToProduce());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(defaultSourceDescriptor->getSchema(),
@@ -909,7 +909,7 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr s
         auto csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         csvSerializedSourceDescriptor.set_filepath(csvSourceDescriptor->getFilePath());
-        csvSerializedSourceDescriptor.set_frequency(csvSourceDescriptor->getFrequency());
+        csvSerializedSourceDescriptor.set_frequency(csvSourceDescriptor->getFrequencyCount());
         csvSerializedSourceDescriptor.set_delimiter(csvSourceDescriptor->getDelimiter());
         csvSerializedSourceDescriptor.set_numberoftuplestoproduceperbuffer(
             csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer());

@@ -15,9 +15,12 @@
 */
 
 #include <cassert>
+#include <chrono>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <random>
+#include <thread>
 
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
@@ -118,7 +121,7 @@ bool DataSource::stop() {
 
 bool DataSource::isRunning() { return running; }
 
-void DataSource::setGatheringInterval(uint64_t interval) { this->gatheringInterval = interval; }
+void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
 void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
@@ -135,7 +138,7 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
     }
 
     auto ts = std::chrono::system_clock::now();
-    std::chrono::seconds lastTimeStampSec = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch());
+    std::chrono::milliseconds lastTimeStampMillis = std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch());
 
     NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType());
     if (numBuffersToProcess == 0) {
@@ -145,38 +148,42 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
 
+    auto oneSecInMillis = std::chrono::milliseconds(1000);
+    auto zeroSecInMillis = std::chrono::milliseconds(0);
+
     uint64_t cnt = 0;
     while (running) {
         bool recNow = false;
         auto tsNow = std::chrono::system_clock::now();
-        std::chrono::seconds nowInSec = std::chrono::duration_cast<std::chrono::seconds>(tsNow.time_since_epoch());
+        std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
 
         //this check checks if the gathering interval is less than one second or it is a ZMQ_Source, in both cases we do not need to create a watermark-only buffer
-        if (gatheringInterval <= 1 || type == ZMQ_SOURCE) {
+        if (gatheringInterval <= oneSecInMillis || type == ZMQ_SOURCE) {
             NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type=" << getType());
-            if (gatheringInterval == 0 || lastTimeStampSec != nowInSec) {
+            if (gatheringInterval == zeroSecInMillis || lastTimeStampMillis != nowInMillis) {
                 NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval="
-                          << gatheringInterval << " tsNow=" << lastTimeStampSec.count() << " now=" << nowInSec.count());
+                          << gatheringInterval.count() << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
                 recNow = true;
-                lastTimeStampSec = nowInSec;
+                lastTimeStampMillis = nowInMillis;
             } else {
-                NES_DEBUG("lastTimeStampSec=" << lastTimeStampSec.count() << "nowInSec=" << nowInSec.count());
+                NES_DEBUG("lastTimeStampMillis=" << lastTimeStampMillis.count() << "nowInMillis=" << nowInMillis.count());
             }
         } else {
             NES_DEBUG("DataSource::runningRoutine check for specific source type");
             //check each second
-            if (nowInSec != lastTimeStampSec) {                 //we are in another second
-                if (nowInSec.count() % gatheringInterval == 0) {//produce a regular buffer
+            if (nowInMillis != lastTimeStampMillis) {                 //we are in another interval
+                if (std::fabs(std::fmod(nowInMillis.count(), gatheringInterval.count())) < std::numeric_limits<double>::epsilon() ||
+                    std::fmod(nowInMillis.count(), gatheringInterval.count()) == 0) {//produce a regular buffer
                     NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                     recNow = true;
                 }
-                lastTimeStampSec = nowInSec;
+                lastTimeStampMillis = nowInMillis;
             }
         }
 
         //repeat test
         if (!recNow) {
-            sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
 
@@ -214,6 +221,10 @@ std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
 
 uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
-uint64_t DataSource::getGatheringInterval() const { return gatheringInterval; }
+std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
+uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
+
+bool DataSource::getIsLeftSide() const { return isLeftSide; }
+void DataSource::setIsLeftSide(bool isLeftSide) { DataSource::isLeftSide = isLeftSide; }
 
 }// namespace NES

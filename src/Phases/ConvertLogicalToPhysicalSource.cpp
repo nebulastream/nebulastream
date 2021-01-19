@@ -54,7 +54,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         const DefaultSourceDescriptorPtr defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         return createDefaultDataSourceWithSchemaForVarBuffers(defaultSourceDescriptor->getSchema(), bufferManager, queryManager,
                                                               defaultSourceDescriptor->getNumbersOfBufferToProduce(),
-                                                              defaultSourceDescriptor->getFrequency(), operatorId);
+                                                              defaultSourceDescriptor->getFrequencyCount(), operatorId);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Binary File source");
         const BinarySourceDescriptorPtr binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
@@ -66,7 +66,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
                                    csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
                                    csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
+                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequencyCount(),
                                    csvSourceDescriptor->getSkipHeader(), operatorId);
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
@@ -108,7 +108,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ysb source");
         const YSBSourceDescriptorPtr ysbSourceDescriptor = sourceDescriptor->as<YSBSourceDescriptor>();
         return createYSBSource(bufferManager, queryManager, ysbSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                               ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequency(), operatorId);
+                               ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequencyCount(), operatorId);
     } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();

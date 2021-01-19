@@ -18,6 +18,7 @@
 #define INCLUDE_ADAPTIVESOURCE_H_
 
 #include <Sources/DataSource.hpp>
+#include <chrono>
 
 namespace NES {
 
@@ -64,7 +65,7 @@ class AdaptiveSource : public DataSource {
      */
     virtual void decideNewGatheringInterval() = 0;
 
-    uint64_t lastGatheringTimeStamp;
+    std::chrono::milliseconds lastGatheringTimeStamp;
 };
 
 typedef std::shared_ptr<AdaptiveSource> AdaptiveSourcePtr;

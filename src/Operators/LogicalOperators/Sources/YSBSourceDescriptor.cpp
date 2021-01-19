@@ -47,11 +47,12 @@ uint64_t YSBSourceDescriptor::getNumBuffersToProcess() const { return numBuffers
 
 uint64_t YSBSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 
-uint64_t YSBSourceDescriptor::getFrequency() const { return frequency; }
+std::chrono::milliseconds YSBSourceDescriptor::getFrequency() const { return frequency; }
+uint64_t YSBSourceDescriptor::getFrequencyCount() const { return frequency.count(); }
 
 std::string YSBSourceDescriptor::toString() {
     return "YSBSourceDescriptor(" + std::to_string(numberOfTuplesToProducePerBuffer) + "," + ", "
-        + std::to_string(numBuffersToProcess) + ", " + std::to_string(frequency) + ")";
+        + std::to_string(numBuffersToProcess) + ", " + std::to_string(frequency.count()) + "ms)";
 }
 
 bool YSBSourceDescriptor::equal(SourceDescriptorPtr other) {
