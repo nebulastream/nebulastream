@@ -229,7 +229,8 @@ QueryPlanPtr QueryPlan::copy() {
             if (operatorIdToOperatorMap[parentOperatorId]) {
                 NES_TRACE("QueryPlan: Found the parent operator. Adding as parent to the current operator.");
                 parentOperator = operatorIdToOperatorMap[parentOperatorId];
-                operatorNode->addParent(parentOperator);
+                auto copyOfOperatorNode = operatorIdToOperatorMap[operatorNode->getId()];
+                copyOfOperatorNode->addParent(parentOperator);
             } else {
                 NES_ERROR("QueryPlan: unable to find the parent operator. This should not have occurred!");
                 return nullptr;
