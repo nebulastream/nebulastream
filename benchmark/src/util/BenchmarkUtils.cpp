@@ -148,11 +148,10 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     recordStatistics(statisticsVec, nodeEngine);
 
     NES_WARNING("Stopping query...");
-    for (auto src : benchmarkSource) {
-        src->stop();
-    }
-
-    benchmarkSink->shutdown();
+//    benchmarkSink->shutdown();
+//    for (auto src : benchmarkSource) {
+//        src->stop();
+//    }
     nodeEngine->stopQuery(1);
     NES_WARNING("Query was stopped!");
 
