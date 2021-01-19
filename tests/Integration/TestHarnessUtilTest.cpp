@@ -15,7 +15,6 @@
 */
 #include <Util/Logger.hpp>
 #include <Util/TestHarness.hpp>
-#include <algorithm>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
