@@ -66,8 +66,8 @@ bool UnaryOperatorNode::inferSchema() {
         }
     }
 
-    inputSchema = childSchema->copy();
-    outputSchema = childSchema->copy();
+    inputSchema = inputSchema->copyFields(childSchema);
+    outputSchema = outputSchema->copyFields(childSchema);
     return true;
 }
 }// namespace NES
