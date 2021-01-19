@@ -44,6 +44,7 @@ class SimpleBenchmarkSource : public DataSource {
     uint64_t ingestionRate;
     uint64_t keyPos = 0;
     uint64_t curNumberOfTuplesPerBuffer;
+    uint64_t maxNumberOfPeriods;
     std::shared_ptr<NodeEngine::MemoryLayout> rowLayout;
 
   public:
@@ -59,6 +60,7 @@ class SimpleBenchmarkSource : public DataSource {
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
         this->rowLayout = NodeEngine::createRowLayout(schema);
         this->curNumberOfTuplesPerBuffer = this->numberOfTuplesPerBuffer;
+        this->maxNumberOfPeriods = std::ceil((double)BenchmarkUtils::runSingleExperimentSeconds / (double)BenchmarkUtils::periodLengthInSeconds);
         BenchmarkUtils::createUniformData(keyList, curNumberOfTuplesPerBuffer);
     }
 
@@ -87,12 +89,13 @@ class SimpleBenchmarkSource : public DataSource {
 
             auto optBuf = receiveData();
             uint64_t nextPeriodStartTime = 0;
-            while (isRunning()) {
+            uint64_t curPeriod = 0;
+            while ((curPeriod++) < maxNumberOfPeriods && isRunning()) {
                 auto startTimeSendBuffers =
                     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
                 uint64_t cntTuples = 0;
-                while (cntTuples < numberOfTuplesPerPeriod) {
+                while (cntTuples < numberOfTuplesPerPeriod && isRunning()) {
 
                     //if ((numberOfTuplesPerPeriod - cntTuples) < numberOfTuplesPerBuffer) curNumberOfTuplesPerBuffer = numberOfTuplesPerPeriod - cntTuples;
                     //else curNumberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
@@ -134,6 +137,7 @@ class SimpleBenchmarkSource : public DataSource {
                         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                             .count();
                 }
+                NES_WARNING("SimpleBenchmarkSource: Done with period " << curPeriod << " of " << maxNumberOfPeriods);
             }
         } else {
             NES_FATAL_ERROR("No Source for Sink detected!!!");
