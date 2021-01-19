@@ -14,9 +14,9 @@
 
 add_source_nes(
         AttributeSortRule.cpp
-        BaseRefinementRule.cpp
         FilterPushDownRule.cpp
         LogicalSourceExpansionRule.cpp
         DistributedWindowRule.cpp
         DistributedJoinRule.cpp
+        RenameStreamToProjectOperatorRule.cpp
 )

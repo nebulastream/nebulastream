@@ -84,7 +84,7 @@ typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePt
  * logical source truck has two physical sources: i.e. truck1 and truck2
  *
  */
-class LogicalSourceExpansionRule : public BaseRefinementRule {
+class LogicalSourceExpansionRule : public BaseRewriteRule {
   public:
     static LogicalSourceExpansionRulePtr create(StreamCatalogPtr);
 
