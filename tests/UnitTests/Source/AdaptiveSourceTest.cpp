@@ -93,9 +93,10 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
      * @brief naively increment the gathering interval
      */
     void decideNewGatheringInterval() override {
-        NES_DEBUG("Old sampling interval: " << this->gatheringInterval);
-        ++this->gatheringInterval;
-        NES_DEBUG("New sampling interval: " << this->gatheringInterval);
+        auto oldIntervalMillis = this->gatheringInterval.count();
+        NES_DEBUG("Old sampling interval: " << oldIntervalMillis << "ms");
+        this->setGatheringInterval(std::chrono::milliseconds(oldIntervalMillis + 1000));
+        NES_DEBUG("New sampling interval: " << this->gatheringInterval.count() << "ms");
     };
 };
 
@@ -128,7 +129,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
         auto optBuf = source->receiveData();
     }
 
-    ASSERT_NE(initialGatheringInterval, source->getGatheringInterval());
+    ASSERT_NE(initialGatheringInterval, source->getGatheringIntervalCount());
     ASSERT_TRUE(nodeEngine->stop());
 }
 
