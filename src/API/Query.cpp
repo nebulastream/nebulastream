@@ -32,13 +32,13 @@
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
 
+#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <iostream>
 #include <stdarg.h>
-#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 
 namespace NES {
 
@@ -178,12 +178,12 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
         NES_DEBUG("add existing watermark strategy for window");
         auto assigner = queryPlan->getRootOperators()[0]->as<WatermarkAssignerLogicalOperatorNode>();
         if (auto eventTimeWatermarkStrategyDescriptor =
-            std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
-                assigner->getWatermarkStrategyDescriptor())) {
+                std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(
+                    assigner->getWatermarkStrategyDescriptor())) {
             allowedLateness = eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime();
         } else if (auto ingestionTimeWatermarkDescriptior =
-            std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
-                assigner->getWatermarkStrategyDescriptor())) {
+                       std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(
+                           assigner->getWatermarkStrategyDescriptor())) {
             NES_WARNING("Note: ingestion time does not support allowed lateness yet");
         } else {
             NES_ERROR("cannot create watermark strategy from descriptor");
