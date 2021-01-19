@@ -60,7 +60,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     const std::string toString() const override {
         std::stringstream ss;
         ss << "ADAPTIVE_CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath
-           << " gatherInterval=" << this->getGatheringInterval() << " numBuff=" << this->numBuffersToProcess << ")";
+           << " gatherInterval=" << this->getGatheringIntervalCount() << "ms, numBuff=" << this->numBuffersToProcess << ")";
         return ss.str();
     };
 
@@ -119,7 +119,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
     SchemaPtr schema = Schema::create()->addField("temperature", UINT32);
 
     uint64_t num_of_buffers = 1;
-    uint64_t initialGatheringInterval = 4;
+    uint64_t initialGatheringInterval = 4000;
 
     const DataSourcePtr source = createMockCSVAdaptiveSource(
         schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file);
