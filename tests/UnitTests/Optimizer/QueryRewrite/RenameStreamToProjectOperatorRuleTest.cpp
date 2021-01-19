@@ -26,6 +26,7 @@
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -36,6 +37,7 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
+    StreamCatalogPtr streamCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -44,24 +46,23 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() { schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64); }
+    void SetUp() { schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32); }
 
     /* Will be called before a test is executed. */
     void TearDown() { NES_INFO("Setup RenameStreamToProjectOperatorRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down RenameStreamToProjectOperatorRuleTest test class."); }
+
+    void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
+        NES_INFO("Setup FilterPushDownTest test case.");
+        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+        streamCatalog->addPhysicalStream("src", sce);
+        streamCatalog->addLogicalStream("src", schema);
+    }
 };
-
-void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
-    NES_INFO("Setup FilterPushDownTest test case.");
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
-}
 
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAttributeSortRuleForMapOperator1) {
 
@@ -75,21 +76,26 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAttributeSortRuleForMapOperato
     auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
     ASSERT_TRUE(!renameStreamOperators.empty());
 
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan);
+
     auto renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
     auto updatedQueryPlan = renameStreamToProjectOperatorRule->apply(queryPlan);
+
+    typeInferencePhase->execute(updatedQueryPlan);
 
     renameStreamOperators = updatedQueryPlan->getOperatorByType<RenameStreamOperatorNode>();
     ASSERT_TRUE(renameStreamOperators.empty());
 
     auto projectOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    ASSERT_TRUE(!renameStreamOperators.empty());
+    ASSERT_TRUE(!projectOperators.empty());
 
-//    auto rootOperators = queryPlan->getRootOperators();
-//    EXPECT_TRUE(rootOperators.size() == 1);
-//    auto expectedSignature =
-//        "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined])).SOURCE(src)";
-//    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-//    EXPECT_EQ(expectedSignature, actualSignature);
+    //    auto rootOperators = queryPlan->getRootOperators();
+    //    EXPECT_TRUE(rootOperators.size() == 1);
+    //    auto expectedSignature =
+    //        "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined])).SOURCE(src)";
+    //    auto actualSignature = rootOperators[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    //    EXPECT_EQ(expectedSignature, actualSignature);
 }
 
 //TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator2) {
