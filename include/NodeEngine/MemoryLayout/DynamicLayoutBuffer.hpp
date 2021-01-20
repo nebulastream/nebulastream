@@ -40,6 +40,8 @@ class DynamicLayoutBuffer {
     virtual uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) = 0;
     uint64_t getCapacity() { return capacity; }
     uint64_t getNumberOfRecords() {return numberOfRecords; }
+    TupleBuffer& getTupleBuffer() { return tupleBuffer; }
+
 
   protected:
     TupleBuffer& tupleBuffer;

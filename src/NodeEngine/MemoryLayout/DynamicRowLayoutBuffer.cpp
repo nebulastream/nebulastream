@@ -30,9 +30,6 @@ uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthFiel
 }
 DynamicRowLayoutBuffer::DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout)
     : DynamicLayoutBuffer(tupleBuffer, capacity), dynamicRowLayout(dynamicRowLayout) {}
-template<typename T>
-DynamicRowLayoutField<T>& DynamicRowLayoutBuffer::operator[](uint64_t fieldIndex) {
-    NES_NOT_IMPLEMENTED();
-}
+
 
 }

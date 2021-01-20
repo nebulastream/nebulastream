@@ -22,13 +22,13 @@
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 
 #include <gtest/gtest.h>
 
 #include <cstdlib>
 #include <iostream>
 #include <vector>
-
 
 namespace NES::NodeEngine {
 class DynamicMemoryLayoutTest : public testing::Test {
@@ -214,5 +214,40 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultipleR
 
     ASSERT_EQ(mappedColumnLayout->getNumberOfRecords(), NUM_TUPLES);
 }
+
+TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutField) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+
+    DynamicRowLayoutPtr rowLayout;
+    ASSERT_NO_THROW(rowLayout = DynamicRowLayout::create(schema, true));
+    ASSERT_NE(rowLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    DynamicRowLayoutBufferPtr mappedRowLayout;
+    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
+    ASSERT_NE(mappedRowLayout, nullptr);
+
+    size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+
+    std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
+    for (size_t i = 0; i < NUM_TUPLES; ++i) {
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(i, 1000+i, 2000+i);
+        allTuples.emplace_back(writeRecord);
+        mappedRowLayout->pushRecord(writeRecord);
+    }
+
+    auto field0 = DynamicRowLayoutField<uint8_t>::create(0, mappedRowLayout);
+    auto field1 = DynamicRowLayoutField<uint16_t>::create(1, mappedRowLayout);
+    auto field2 = DynamicRowLayoutField<uint32_t>::create(2, mappedRowLayout);
+
+    for (size_t i = 0; i < NUM_TUPLES; ++i) {
+        ASSERT_EQ(std::get<0>(allTuples[i]), field0[i]);
+        ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
+        ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
+    }
+}
+
 
 }// namespace NES

@@ -17,24 +17,19 @@
 #ifndef NES_DYNAMICROWLAYOUTBUFFER_HPP
 #define NES_DYNAMICROWLAYOUTBUFFER_HPP
 
-#include "DynamicRowLayoutField.hpp"
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <stdint.h>
 
 namespace NES::NodeEngine {
 
-class DynamicRowLayoutBuffer;
-typedef std::unique_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
-typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
+
 
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
     uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
     DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout);
-
-    template<typename T>
-    DynamicRowLayoutField<T>& operator[](uint64_t fieldIndex);
+    NES::NodeEngine::FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
 
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
@@ -123,6 +118,9 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   private:
     DynamicRowLayoutPtr dynamicRowLayout;
 };
+
+typedef std::unique_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
+typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
 
 
 template<typename... Types>
