@@ -306,7 +306,7 @@ std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbu
             else{
                 ss << ",";
                 //Adding time stamp
-                auto time =  std::to_string( std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count());
+                auto time =  std::to_string( std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count());
                // outputFile.write((char*)time.c_str(),time.size());
                 ss << time.c_str();
             }
