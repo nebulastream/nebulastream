@@ -18,6 +18,7 @@
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 
 #include <Phases/QueryRewritePhase.hpp>
 
@@ -32,11 +33,13 @@ QueryRewritePhase::QueryRewritePhase(StreamCatalogPtr streamCatalog) {
     logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
     distributeWindowRule = DistributeWindowRule::create();
     distributeJoinRule = DistributeJoinRule::create();
+    renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
 }
 
 QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
 
 QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
+    queryPlan = renameStreamToProjectOperatorRule->apply(queryPlan);
     queryPlan = filterPushDownRule->apply(queryPlan);
     queryPlan = logicalSourceExpansionRule->apply(queryPlan);
     queryPlan = distributeJoinRule->apply(queryPlan);
