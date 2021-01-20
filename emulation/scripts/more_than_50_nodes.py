@@ -23,9 +23,11 @@ from mininet.log import info, setLogLevel
 
 """
 Create a topology with a UserSwitch, so more than 50 nodes
-can connect at the same time.
+can connect at the same time. The Containernet ctor uses
+a switch of type UserSwitch.
 """
 setLogLevel('info')
+# use of new switch as parameter to the ctor here
 net = Containernet(controller=Controller, switch=UserSwitch)
 
 info('*** Adding controller\n')
