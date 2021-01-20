@@ -52,6 +52,7 @@ class TypeInferencePhase {
      * @param QueryPlanPtr the query plan
      * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
      * @return QueryPlanPtr
+     * @throws TypeInferenceException
      */
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 

@@ -21,6 +21,7 @@
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Phases/QueryMergerPhase.hpp>
@@ -160,6 +161,10 @@ void QueryRequestProcessorService::start() {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (QueryDeploymentException& ex) {
                     NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
+                    queryUndeploymentPhase->execute(queryId);
+                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                } catch (TypeInferenceException& ex) {
+                    NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
                     queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (InvalidQueryStatusException& ex) {
