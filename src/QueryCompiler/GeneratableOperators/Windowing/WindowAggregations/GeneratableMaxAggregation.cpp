@@ -33,11 +33,10 @@ GeneratableMaxAggregation::create(Windowing::WindowAggregationDescriptorPtr aggr
 }
 
 void GeneratableMaxAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
-                                                   StructDeclaration inputStruct, BinaryOperatorStatement inputRef) {
-    auto varDeclInput =
-        inputStruct.getVariableDeclaration(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
-    auto ifStatement = IF(partialRef < inputRef.accessRef(VarRefStatement(varDeclInput)),
-                          assign(partialRef, inputRef.accessRef(VarRefStatement(varDeclInput))));
+                                                   RecordHandlerPtr recordHandler) {
+    auto fieldReference = recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+    auto ifStatement = IF(partialRef < *fieldReference,
+                          partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
 }
 }// namespace NES

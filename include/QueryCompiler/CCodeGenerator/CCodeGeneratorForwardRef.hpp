@@ -58,6 +58,19 @@ typedef std::shared_ptr<Statement> StatementPtr;
 class FunctionCallStatement;
 typedef std::shared_ptr<FunctionCallStatement> FunctionCallStatementPtr;
 
+class VarRefStatement;
+typedef std::shared_ptr<VarRefStatement> VarRefStatementPtr;
+
+class VariableDeclaration;
+typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
+
+class ExpressionStatment;
+typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
+
+
+class RecordHandler;
+typedef std::shared_ptr<RecordHandler> RecordHandlerPtr;
+
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATORFORWARDREF_HPP_

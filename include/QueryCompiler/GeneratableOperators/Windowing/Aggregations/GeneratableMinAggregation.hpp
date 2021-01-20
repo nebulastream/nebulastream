@@ -36,7 +36,7 @@ class GeneratableMinAggregation : public GeneratableWindowAggregation {
      * @param inputRef input value reference
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement,
-                            StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+                            RecordHandlerPtr recordHandler) override;
 };
 
 }// namespace NES

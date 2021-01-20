@@ -32,11 +32,12 @@ GeneratableSumAggregation::create(Windowing::WindowAggregationDescriptorPtr aggr
 }
 
 void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
-                                                   StructDeclaration inputStruct, BinaryOperatorStatement inputRef) {
-    auto varDeclInput =
-        inputStruct.getVariableDeclaration(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
-    auto sum = partialRef + inputRef.accessRef(VarRefStatement(varDeclInput));
+                                                   RecordHandlerPtr recordHandler) {
+
+    auto fieldReference = recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+
+    auto sum = partialRef + *fieldReference;
     auto updatedPartial = partialRef.assign(sum);
-    currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
+    currentCode->addStatement(updatedPartial.copy());
 }
 }// namespace NES

@@ -23,7 +23,7 @@
 
 namespace NES {
 
-PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity) { this->code = std::make_shared<GeneratedCode>(); }
+PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity), recordHandler(RecordHandler::create()) { this->code = std::make_shared<GeneratedCode>(); }
 
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
@@ -31,6 +31,10 @@ BlockScopeStatementPtr PipelineContext::createSetupScope() { return setupScopes.
 BlockScopeStatementPtr PipelineContext::createStartScope() { return startScopes.emplace_back(BlockScopeStatement::create()); }
 
 bool PipelineContext::hasNextPipeline() const { return this->nextPipelines.size() != 0; }
+
+RecordHandlerPtr PipelineContext::getRecordHandler() {
+    return this->recordHandler;
+}
 
 const std::vector<PipelineContextPtr>& PipelineContext::getNextPipelineContexts() const { return this->nextPipelines; }
 
