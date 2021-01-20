@@ -157,7 +157,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerSameSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWithFileOutputTwoWorkerSameSource) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
@@ -244,7 +244,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWithFileOutputTwoWorkerDifferentSource) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidSimplePatternWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
@@ -347,7 +347,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     //TODO result content does not end up in file?
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
@@ -444,7 +444,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     string coordinatorRPCPort = std::to_string(rpcPort);
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);

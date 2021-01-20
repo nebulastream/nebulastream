@@ -53,6 +53,9 @@ class RESTEndpointTest : public testing::Test {
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

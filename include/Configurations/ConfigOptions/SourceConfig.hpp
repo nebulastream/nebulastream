@@ -133,13 +133,13 @@ class SourceConfig {
         "string", false);
 
     ConfigOption<uint32_t> sourceFrequency =
-        ConfigOption("sourceFrequency", uint32_t(1), "Sampling frequency of the source.", "uint64_t", false);
+        ConfigOption("sourceFrequency", uint32_t(1), "Sampling frequency of the source.", "uint32_t", false);
 
     ConfigOption<uint32_t> numberOfBuffersToProduce =
-        ConfigOption("numberOfBuffersToProduce", uint32_t(1), "Number of buffers to produce.", "uint64_t", false);
+        ConfigOption("numberOfBuffersToProduce", uint32_t(1), "Number of buffers to produce.", "uint32_t", false);
 
     ConfigOption<uint32_t> numberOfTuplesToProducePerBuffer = ConfigOption(
-        "numberOfTuplesToProducePerBuffer", uint32_t(1), "Number of tuples to produce per buffer.", "uint16_t", false);
+        "numberOfTuplesToProducePerBuffer", uint32_t(1), "Number of tuples to produce per buffer.", "uint32_t", false);
 
     ConfigOption<std::string> physicalStreamName =
         ConfigOption("physicalStreamName", std::string("default_physical"), "Physical name of the stream.", "string", false);

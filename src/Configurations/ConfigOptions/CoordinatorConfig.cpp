@@ -64,7 +64,6 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(map<string, string> 
     try {
 
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
-            NES_INFO("NesCoordinatorConfig: Using command line input parameter " << it->first << " with value " << it->second);
             if (it->first == "--restIp") {
                 setRestIp(it->second);
             } else if (it->first == "--coordinatorIp") {

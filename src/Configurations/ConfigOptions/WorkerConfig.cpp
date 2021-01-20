@@ -60,7 +60,6 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(map<string, string> input
     try {
 
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
-            NES_INFO("NesWorkerConfig: Using command line input parameter " << it->first << " with value " << it->second);
             if (it->first == "--localWorkerIp") {
                 setLocalWorkerIp(it->second);
             } else if (it->first == "--coordinatorIp") {
