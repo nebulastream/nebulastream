@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES {
 
@@ -54,10 +55,10 @@ NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamC
  * such as deploying, undeploying, starting, and stopping.
  *
  */
-class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_shared_from_this<NodeEngine>, public ErrorListener {
+class NodeEngine : public Network::ExchangeProtocolListener, public NES::detail::virtual_enable_shared_from_this<NodeEngine>, public ErrorListener {
 
     typedef Network::ExchangeProtocolListener inherited0;
-    typedef std::enable_shared_from_this<NodeEngine> inherited1;
+    typedef virtual_enable_shared_from_this<NodeEngine> inherited1;
     typedef ErrorListener inherited2;
 
     static constexpr auto DEFAULT_NUM_BUFFERS = 1024;

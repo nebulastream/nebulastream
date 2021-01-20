@@ -24,7 +24,9 @@
 
 namespace NES {
 
-SharedLibrary::SharedLibrary(void* _shared_lib) : shared_lib_(_shared_lib) { assert(shared_lib_ != NULL); }
+SharedLibrary::SharedLibrary(void* _shared_lib) : shared_lib(_shared_lib) {
+    NES_ASSERT(shared_lib != nullptr, "Shared lib is null");
+}
 
 SharedLibrary::~SharedLibrary() {
     NES_DEBUG("~SharedLibrary()");
@@ -34,7 +36,7 @@ SharedLibrary::~SharedLibrary() {
 }
 
 void* SharedLibrary::getSymbol(const std::string& mangeled_symbol_name) const {
-    auto symbol = dlsym(shared_lib_, mangeled_symbol_name.c_str());
+    auto symbol = dlsym(shared_lib, mangeled_symbol_name.c_str());
     auto error = dlerror();
 
     if (error) {

@@ -42,7 +42,7 @@ class SharedLibrary {
 
   private:
     SharedLibrary(void* shared_lib);
-    void* shared_lib_;
+    void* shared_lib;
 };
 
 }// namespace NES

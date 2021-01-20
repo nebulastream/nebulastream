@@ -89,7 +89,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId)
-    : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>(), config(config),
+    : inherited0(), inherited1(), inherited2(), config(config),
       nodeEngineId(nodeEngineId) {
 
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
@@ -165,6 +165,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
+        NodeEnginePtr self = this->inherited1::shared_from_this();
+
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {
             auto operatorId = sources->getId();
@@ -174,25 +176,28 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
                 sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
             }
             auto legacySource =
-                ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, this->inherited1::shared_from_this());
+                ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, self);
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }
 
         // Translate all operator sink to the physical sink and add them to the query plan
+
         for (const auto& sink : sinkOperators) {
+            NES_ASSERT2(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
             auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(
-                schema, sinkDescriptor, this->inherited1::shared_from_this(), querySubPlanId);
+                schema, sinkDescriptor, self, querySubPlanId);
             qepBuilder.addSink(legacySink);
-            NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
+            NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
 
         return registerQueryInNodeEngine(qepBuilder.build());
     } catch (std::exception& error) {
         NES_ERROR("Error while building query execution plan " << error.what());
+        NES_ASSERT2(false, "Error while building query execution plan " << error.what());
         return false;
     }
 }
