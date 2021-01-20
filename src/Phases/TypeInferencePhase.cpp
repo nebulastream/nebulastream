@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/StreamCatalog.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
@@ -36,50 +37,57 @@ TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog)
 }
 
 QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
-    // first we have to check if all source operators have a correct source descriptors
-    auto sources = queryPlan->getSourceOperators();
+    try {
+        // first we have to check if all source operators have a correct source descriptors
+        auto sources = queryPlan->getSourceOperators();
 
-    if (!sources.empty() && !streamCatalog) {
-        NES_WARNING("TypeInferencePhase: No StreamCatalog specified!");
-    }
-
-    for (auto source : sources) {
-        auto sourceDescriptor = source->getSourceDescriptor();
-
-        // if the source descriptor is only a logical stream source we have to replace it with the correct
-        // source descriptor form the catalog.
-        if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-            auto streamName = sourceDescriptor->getStreamName();
-            SchemaPtr schema = Schema::create();
-            try {
-                auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
-                schema = schema->copyFields(originalSchema);
-            } catch (std::exception& e) {
-                NES_THROW_RUNTIME_ERROR("TypeInferencePhase: The logical stream " + streamName
-                                        + " could not be found in the StreamCatalog");
-            }
-
-            auto qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-            schema->setQualifierName(qualifierName);
-            //perform attribute name resolution
-            for (auto& field : schema->fields) {
-                field->name = schema->getQualifierName() + field->name;
-            }
-            sourceDescriptor->setSchema(schema);
-            NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName
-                                                                                 << " with schema: " << schema->toString());
+        if (!sources.empty() && !streamCatalog) {
+            NES_WARNING("TypeInferencePhase: No StreamCatalog specified!");
         }
-    }
-    // now we have to infer the input and output schemas for the whole query.
-    // to this end we call at each sink the infer method to propagate the schemata across the whole query.
-    auto sinks = queryPlan->getSinkOperators();
-    for (auto& sink : sinks) {
-        if (!sink->inferSchema()) {
-            return nullptr;
+
+        for (auto source : sources) {
+            auto sourceDescriptor = source->getSourceDescriptor();
+
+            // if the source descriptor is only a logical stream source we have to replace it with the correct
+            // source descriptor form the catalog.
+            if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
+                auto streamName = sourceDescriptor->getStreamName();
+                SchemaPtr schema = Schema::create();
+                try {
+                    auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
+                    schema = schema->copyFields(originalSchema);
+                } catch (std::exception& e) {
+                    NES_ERROR("TypeInferencePhase: The logical stream " << streamName
+                                                                        << " could not be found in the StreamCatalog");
+                    throw Exception("TypeInferencePhase: The logical stream " + streamName
+                                    + " could not be found in the StreamCatalog");
+                }
+
+                auto qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+                schema->setQualifierName(qualifierName);
+                //perform attribute name resolution
+                for (auto& field : schema->fields) {
+                    field->name = schema->getQualifierName() + field->name;
+                }
+                sourceDescriptor->setSchema(schema);
+                NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName
+                                                                                     << " with schema: " << schema->toString());
+            }
         }
+        // now we have to infer the input and output schemas for the whole query.
+        // to this end we call at each sink the infer method to propagate the schemata across the whole query.
+        auto sinks = queryPlan->getSinkOperators();
+        for (auto& sink : sinks) {
+            if (!sink->inferSchema()) {
+                return nullptr;
+            }
+        }
+        NES_DEBUG("TypeInferencePhase: we inferred all schemas");
+        return queryPlan;
+    } catch (Exception& e) {
+        NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase " << e.what());
+        throw TypeInferenceException(e.what());
     }
-    NES_DEBUG("TypeInferencePhase: we inferred all schemas");
-    return queryPlan;
 }
 
 }// namespace NES
