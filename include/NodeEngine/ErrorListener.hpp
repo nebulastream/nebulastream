@@ -17,13 +17,14 @@
 #define NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_
 
 #include <memory>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES {
 
 /**
  * @brief This is an error interceptor suitable for signals and exceptions
  */
-class ErrorListener : public std::enable_shared_from_this<ErrorListener> {
+class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListener> {
   public:
     /**
      * @brief onFatalError shall be called when a signal is caught

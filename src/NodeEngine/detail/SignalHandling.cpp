@@ -22,6 +22,50 @@
 #include <memory>
 #include <mutex>
 
+#if defined(__GNUC__)
+extern "C" {
+void __cxa_throw(void* ex, std::type_info* info, void(_GLIBCXX_CDTOR_CALLABI* dest)(void*)) __attribute__((__noreturn__)) {
+    static void (*rethrow_func)(void*, std::type_info*, void (_GLIBCXX_CDTOR_CALLABI*)(void*)) =
+        (void (*)(void*, std::type_info*, void (_GLIBCXX_CDTOR_CALLABI*)(void*))) dlsym(RTLD_NEXT, "__cxa_throw");
+    auto* exception_name = reinterpret_cast<const std::type_info*>(info)->name();
+    int status;
+    std::unique_ptr<char, void (*)(void*)> real_exception_name(abi::__cxa_demangle(exception_name, 0, 0, &status), &std::free);
+    if (status == 0) {
+        auto str = std::string("zmq::error_t");
+        if (str.compare(reinterpret_cast<const char*>(real_exception_name.get())) == 0) {
+            rethrow_func(ex, info, dest);
+            return;
+        }
+        NES_ERROR("Exception " << real_exception_name.get());
+    }
+    auto callstack = NES::collectAndPrintStacktrace();
+    NES_ERROR("Exceptioin raised at " << callstack);
+    rethrow_func(ex, info, dest);
+}
+}
+#elif defined(__clang__)
+extern "C" {
+void __cxa_throw(void* ex, std::type_info* info, void(_GLIBCXX_CDTOR_CALLABI* dest)(void*)) __attribute__((__noreturn__)) {
+    static void (*rethrow_func)(void*, std::type_info*, void (_GLIBCXX_CDTOR_CALLABI*)(void*)) =
+        (void (*)(void*, std::type_info*, void (_GLIBCXX_CDTOR_CALLABI*)(void*))) dlsym(RTLD_NEXT, "__cxa_throw");
+    auto* exception_name = reinterpret_cast<const std::type_info*>(info)->name();
+    int status;
+    std::unique_ptr<char, void (*)(void*)> real_exception_name(abi::__cxa_demangle(exception_name, 0, 0, &status), &std::free);
+    if (status == 0) {
+        auto str = std::string("zmq::error_t");
+        if (str.compare(reinterpret_cast<const char*>(real_exception_name.get())) == 0) {
+            rethrow_func(ex, info, dest);
+            return;
+        }
+        NES_ERROR("Exception " << real_exception_name.get());
+    }
+    auto callstack = NES::collectAndPrintStacktrace();
+    NES_ERROR("Exceptioin raised at " << callstack);
+    rethrow_func(ex, info, dest);
+}
+}
+#endif
+
 namespace NES::NodeEngine {
 
 /// this mutex protected the globalErrorListeners vector
@@ -40,6 +84,7 @@ void invokeErrorHandlers(const std::string buffer, std::string&& stacktrace) {
     for (auto& listener : globalErrorListeners) {
         listener->onException(exception, stacktrace);
     }
+    std::exit(1);
 }
 
 /**
