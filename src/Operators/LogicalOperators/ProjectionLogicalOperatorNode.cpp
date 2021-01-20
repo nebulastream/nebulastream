@@ -64,11 +64,13 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
     NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString()
                             << " this proj=" << toString());
-    outputSchema = Schema::create();
+    outputSchema->clear();
+    outputSchema->setQualifierName(inputSchema->getQualifierName());
     for (auto& exp : expressions) {
         auto expression = exp.getExpressionNode();
         if (!expression->instanceOf<FieldAccessExpressionNode>()) {
             NES_ERROR("Query: stream has to be an FieldAccessExpression but it was a " + expression->toString());
+
         }
         std::string fieldName;
         if (expression->instanceOf<FieldRenameExpressionNode>()) {

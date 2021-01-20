@@ -59,7 +59,8 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                                         + " could not be found in the StreamCatalog");
             }
 
-            schema->setQualifierName(streamName);
+            auto qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+            schema->setQualifierName(qualifierName);
             //perform attribute name resolution
             for (auto& field : schema->fields) {
                 field->name = schema->getQualifierName() + field->name;
