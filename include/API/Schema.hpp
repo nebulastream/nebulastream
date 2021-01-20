@@ -165,7 +165,7 @@ class Schema {
      * @brief Set the qualifier name of the schema used for schema name resolution
      * @param qualifierName : the qualifier name without name separator
      */
-    void setQualifierName(std::string qualifierName) { this->qualifierName = qualifierName + ATTRIBUTE_NAME_SEPARATOR; };
+    void setQualifierName(std::string qualifierName);
 
     /**
      * @brief Get the qualifier name for the schema

@@ -187,4 +187,6 @@ void Schema::clear() {
     qualifierName.clear();
 }
 
+void Schema::setQualifierName(std::string qualifierName) { this->qualifierName = qualifierName; }
+
 }// namespace NES
