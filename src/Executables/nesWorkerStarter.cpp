@@ -96,10 +96,10 @@ int main(int argc, char** argv) {
         NES_INFO("start with dedicated source=" << sourceConfig->getSourceType().getValue() << "\n");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-        NES_INFO("NESWORKERSTARTER: Source Config type =" << sourceConfig->getSourceType().getValue() << " Config ="
-                                                          << sourceConfig->getSourceConfig().getValue() << " physicalStreamName="
+        NES_INFO("NESWORKERSTARTER: Source Config type = " << sourceConfig->getSourceType().getValue() << " Config = "
+                                                          << sourceConfig->getSourceConfig().getValue() << " physicalStreamName = "
                                                           << sourceConfig->getPhysicalStreamName().getValue()
-                                                          << " logicalStreamName=" << sourceConfig->getLogicalStreamName().getValue());
+                                                          << " logicalStreamName = " << sourceConfig->getLogicalStreamName().getValue());
 
         wrk->setWithRegister(conf);
     } else if (workerConfig->getParentId().getValue() != "-1") {

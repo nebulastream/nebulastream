@@ -57,7 +57,6 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(string filePath) {
 void SourceConfig::overwriteConfigWithCommandLineInput(map<string, string> inputParams) {
     try {
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
-            NES_INFO("NesWorkerConfig: Using command line input parameter " << it->first << " with value " << it->second);
             if (it->first == "--sourceType") {
                 setSourceType(it->second);
             } else if (it->first == "--sourceConfig") {
