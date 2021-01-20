@@ -585,9 +585,8 @@ void segkiller() {
     char** p = reinterpret_cast<char**>(42);
     *p = "segmentation fault now";
 }
-}// namespace detail
 
-TEST_F(EngineTest, testExceptionCrash) {
+void assertKiller() {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
       public:
         using NodeEngine::NodeEngine;
@@ -604,6 +603,11 @@ TEST_F(EngineTest, testExceptionCrash) {
     };
     auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31340);
     NES_ASSERT(false, "this will fail now with a NesRuntimeException");
+}
+}// namespace detail
+
+TEST_F(EngineTest, testExceptionCrash) {
+    EXPECT_EXIT(detail::assertKiller(), testing::ExitedWithCode(1), "");
 }
 
 TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {

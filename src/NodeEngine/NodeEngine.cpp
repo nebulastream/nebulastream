@@ -487,9 +487,8 @@ void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal " << signalNumber << " callstack " << callstack);
+    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::cerr << "NodeEngine failed fatally" << std::endl; // it's necessary for testing and it wont harm us to write to stderr
-    std::exit(1);
 }
 
 void NodeEngine::onException(const std::shared_ptr<std::exception> exception, std::string callstack) {

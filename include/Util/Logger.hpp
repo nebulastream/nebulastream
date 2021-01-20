@@ -204,6 +204,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << TEXT;                                                                              \
                 NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+                std::exit(1);                                                                                                    \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -222,6 +223,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << TEXT;                                                                              \
                 NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+                std::exit(1);                                                                                                    \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -237,18 +239,20 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << __VA_ARGS__;                                                                       \
                 NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
+                std::exit(1);                                                                                                    \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
 
-#define NES_THROW_RUNTIME_ERROR(...)                                                                                            \
+#define NES_THROW_RUNTIME_ERROR(...)                                                                                             \
     do {                                                                                                                         \
         auto __stacktrace = collectAndPrintStacktrace();                                                                         \
         std::stringbuf __buffer;                                                                                                 \
         std::ostream __os(&__buffer);                                                                                            \
-        __os << __VA_ARGS__;                                                                                                            \
-        NES_FATAL_ERROR(__VA_ARGS__);                                                                                                   \
+        __os << __VA_ARGS__;                                                                                                     \
+        NES_FATAL_ERROR(__VA_ARGS__);                                                                                            \
         NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                           \
+        std::exit(1);                                                                                                            \
     } while (0)
 
 static void setupLogging(std::string logFileName, DebugLevel level) {

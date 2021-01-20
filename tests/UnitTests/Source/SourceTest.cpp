@@ -105,17 +105,25 @@ class SourceTest : public testing::Test {
     void SetUp() {
         NES::setupLogging("SourceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup SourceTest test class.");
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down SourceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
 
-    void TearDown() {}
+    void TearDown() {
+        nodeEngine->stop();
+        nodeEngine = nullptr;
+    }
+
+
+    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
 };
 
 TEST_F(SourceTest, testBinarySource) {
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
 
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
 
@@ -156,7 +164,7 @@ TEST_F(SourceTest, testBinarySource) {
 
 TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
@@ -210,7 +218,7 @@ TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
 
 TEST_F(SourceTest, testCSVSourceWithLoopOverFile) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
@@ -241,7 +249,7 @@ TEST_F(SourceTest, testCSVSourceWithLoopOverFile) {
 
 TEST_F(SourceTest, testCSVSourceWatermark) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
@@ -284,7 +292,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
 
 TEST_F(SourceTest, testCSVSourceIntTypes) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
 
     std::string path_to_file = "../tests/test_data/every-int.csv";
 
@@ -366,7 +374,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
 
     std::string path_to_file = "../tests/test_data/every-float.csv";
 
@@ -409,7 +417,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 
 TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/every-boolean.csv";
 
     const std::string& del = ",";
@@ -452,7 +460,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 
 TEST_F(SourceTest, testSenseSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
 
     std::string testUDFS("...");
     createSenseSourceFuncPtr funcPtr = &createSenseSource;
@@ -480,7 +488,7 @@ TEST_F(SourceTest, testSenseSource) {
 
 TEST_F(SourceTest, testYSBSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
 
     uint64_t numBuffers = 2;
     uint64_t numTuples = 30;
@@ -508,7 +516,7 @@ TEST_F(SourceTest, testYSBSource) {
 
 TEST_F(SourceTest, testMonitoringSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
 
     uint64_t numBuffers = 2;
 
