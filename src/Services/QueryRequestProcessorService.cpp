@@ -165,7 +165,6 @@ void QueryRequestProcessorService::start() {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (TypeInferenceException& ex) {
                     NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
-                    queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (InvalidQueryStatusException& ex) {
                     NES_ERROR("QueryRequestProcessingService InvalidQueryStatusException: " << ex.what());

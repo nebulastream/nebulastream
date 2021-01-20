@@ -22,4 +22,5 @@ add_source_nes(
         InvalidQueryStatusException.cpp
         QueryUndeploymentException.cpp
         GlobalQueryPlanUpdateException.cpp
+        TypeInferenceException.cpp
 )

@@ -15,10 +15,10 @@
 */
 
 #include <API/Schema.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
@@ -69,26 +69,30 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
     for (auto& exp : expressions) {
         auto expression = exp.getExpressionNode();
         if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-            NES_ERROR("Query: stream has to be an FieldAccessExpression but it was a " + expression->toString());
-
+            NES_ERROR("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression but it was a "
+                      + expression->toString());
+            throw TypeInferenceException(
+                "ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression but it was a "
+                + expression->toString());
         }
-        std::string fieldName;
+
+        //Infer schema of the field expression
+        expression->inferStamp(inputSchema);
+
+        // Build the output schema
+        auto fieldName = expression->as<FieldAccessExpressionNode>()->getFieldName();
+
+        //Check the type of expression and add the field to the output schema
         if (expression->instanceOf<FieldRenameExpressionNode>()) {
             auto fieldAccess = expression->as<FieldRenameExpressionNode>();
-            fieldAccess->inferStamp(inputSchema);
-            fieldName = fieldAccess->getFieldName();
-            NES_DEBUG("schema after in project=" << inputSchema->toString());
+            auto newFieldName = fieldAccess->getNewFieldName();
+            auto dataType = fieldAccess->getStamp();
+            outputSchema->addField(newFieldName, dataType);
         } else {
             auto fieldAccess = expression->as<FieldAccessExpressionNode>();
-            fieldAccess->inferStamp(inputSchema);
-            fieldName = fieldAccess->getFieldName();
-        }
-
-        if (inputSchema->hasFullyQualifiedFieldName(fieldName)) {
-            outputSchema->addField(inputSchema->get(fieldName));
-        } else {
-            NES_ERROR("ProjectionLogicalOperatorNode::inferSchema(): expression not found=" << fieldName);
-            return false;
+            auto fieldName = fieldAccess->getFieldName();
+            auto dataType = fieldAccess->getStamp();
+            outputSchema->addField(fieldName, dataType);
         }
     }
     return true;

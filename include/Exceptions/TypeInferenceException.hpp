@@ -17,6 +17,9 @@
 #ifndef NES_TYPEINFERENCEEXCEPTION_HPP
 #define NES_TYPEINFERENCEEXCEPTION_HPP
 
+#include <stdexcept>
+#include <string>
+
 namespace NES {
 /**
  * @brief This class is used for raising exceptions in the type inference phase
