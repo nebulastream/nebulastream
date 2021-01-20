@@ -35,6 +35,7 @@ class DynamicRowLayout : public DynamicMemoryLayout {
     std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
     const std::vector<FIELD_SIZE>& getFieldOffSets() const;
 
+
   private:
     std::vector<FIELD_OFFSET> fieldOffSets;
 };

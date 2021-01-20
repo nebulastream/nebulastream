@@ -17,27 +17,49 @@
 #ifndef NES_DYNAMICROWLAYOUTFIELD_HPP
 #define NES_DYNAMICROWLAYOUTFIELD_HPP
 
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 
 namespace NES::NodeEngine {
+
+class DynamicRowLayoutBuffer;
 
 template<typename T>
 class DynamicRowLayoutField {
 
-  public:
-    DynamicRowLayoutField(DynamicRowLayoutBuffer& dynamicRowLayoutBuffer, NES::NodeEngine::FIELD_SIZE fieldIndex,
-                          NES::NodeEngine::FIELD_SIZE recordSize);
 
-    T& operator[](size_t recordIndex);
+  public:
+    static inline DynamicRowLayoutField<T> create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer);
+    inline T operator[](size_t recordIndex);
 
   private:
-    DynamicRowLayoutBuffer& dynamicRowLayoutBuffer;
+    DynamicRowLayoutField(DynamicRowLayoutBufferPtr& dynamicRowLayoutBuffer, T* basePointer, NES::NodeEngine::FIELD_SIZE fieldIndex,
+                          NES::NodeEngine::FIELD_SIZE recordSize) : dynamicRowLayoutBuffer(dynamicRowLayoutBuffer), fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer) {};
+
+
+    DynamicRowLayoutBufferPtr& dynamicRowLayoutBuffer;
     NES::NodeEngine::FIELD_SIZE fieldIndex;
     NES::NodeEngine::FIELD_SIZE recordSize;
-    T& basePointer;
+    T* basePointer;
 };
 
+template class DynamicRowLayoutField<int8_t>;
+template class DynamicRowLayoutField<uint8_t>;
+template class DynamicRowLayoutField<uint16_t>;
+template class DynamicRowLayoutField<uint32_t>;
+
+template<typename T>
+inline NES::NodeEngine::DynamicRowLayoutField<T> NES::NodeEngine::DynamicRowLayoutField<T>::create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer) {
+    T* basePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<T>()[0]) + layoutBuffer->calcOffset(0, fieldIndex);
+    return DynamicRowLayoutField<T>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
+}
+
+template<typename T>
+inline T NES::NodeEngine::DynamicRowLayoutField<T>::operator[](size_t recordIndex) {
+    T* address = basePointer + recordSize * recordIndex;
+    NES_DEBUG("DynamicRowLayout: address = " << address << " basePointer = " << basePointer);
+    return *(address);
+}
 
 }
 

@@ -45,6 +45,7 @@ class DynamicMemoryLayout {
     bool isCheckBoundaryFieldChecks() const;
     uint64_t getRecordSize() const;
     const std::vector<FIELD_SIZE>& getFieldSizes() const;
+
   protected:
 
     explicit DynamicMemoryLayout();
