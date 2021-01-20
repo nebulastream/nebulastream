@@ -17,5 +17,5 @@
 #include <Exceptions/TypeInferenceException.hpp>
 
 namespace NES {
-QueryUndeploymentException::QueryUndeploymentException(std::string message) : std::runtime_error(message) {}
+TypeInferenceException::TypeInferenceException(std::string message) : std::runtime_error(message) {}
 }// namespace NES

@@ -32,7 +32,7 @@ class FieldRenameExpressionNode : public FieldAccessExpressionNode {
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
 
-    const std::string getFieldName();
+    const std::string getNewFieldName();
 
     /**
     * @brief Infers the stamp of the expression given the current schema.

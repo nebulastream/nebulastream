@@ -514,20 +514,20 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
     auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
-    SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFullyQualifiedFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFullyQualifiedFieldName("default_logical$f1"));
-
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
     ASSERT_TRUE(sourceOutputSchema->hasFullyQualifiedFieldName("default_logical$f2"));
     ASSERT_TRUE(sourceOutputSchema->hasFullyQualifiedFieldName("default_logical$f1"));
 
+    SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
+    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(filterOutputSchema->hasFullyQualifiedFieldName("default_logical$f2"));
+    ASSERT_TRUE(filterOutputSchema->hasFullyQualifiedFieldName("default_logical$f1"));
+
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
     ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(projectOutputSchema->hasFullyQualifiedFieldName("x$f3"));
-    ASSERT_TRUE(projectOutputSchema->hasFullyQualifiedFieldName("x$f4"));
+    ASSERT_TRUE(projectOutputSchema->hasFullyQualifiedFieldName("default_logical$f3"));
+    ASSERT_TRUE(projectOutputSchema->hasFullyQualifiedFieldName("default_logical$f4"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
     ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
