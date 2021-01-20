@@ -95,9 +95,16 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         replaced = false;
         children.clear();
         parents.clear();
+
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+        nodeEngine = NodeEngine::create("127.0.0.1", 30000, streamConf);
     }
 
-    void TearDown() { NES_DEBUG("Tear down TranslateToGeneratableOperatorPhaseTest Test."); }
+    void TearDown() {
+        NES_DEBUG("Tear down TranslateToGeneratableOperatorPhaseTest Test.");
+        nodeEngine->stop();
+        nodeEngine = nullptr;
+    }
 
   protected:
     bool removed;
@@ -114,6 +121,8 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};
+
+    NodeEngine::NodeEnginePtr nodeEngine;
 };
 
 TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
@@ -131,7 +140,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
     filter->addChild(sourceOp);
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto engine = NodeEngine::create("127.0.0.1", 30000, streamConf);
+    auto engine = this->nodeEngine;
     ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
@@ -162,7 +171,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     windowOperator->addChild(sourceOp);
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto engine = NodeEngine::create("127.0.0.1", 30000, streamConf);
+    auto engine = this->nodeEngine;
     ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
 

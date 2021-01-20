@@ -91,7 +91,7 @@ void nesTerminateHandler() {
             listener->onException(currentException, stacktrace);
         }
     }
-    std::exit(-1);
+    std::exit(1);
 }
 
 /// called when an exception is not caught in our code
@@ -115,7 +115,7 @@ void nesUnexpectedException() {
             listener->onException(currentException, stacktrace);
         }
     }
-    std::exit(-1);
+    std::exit(1);
 }
 
 struct ErrorHandlerLoader {

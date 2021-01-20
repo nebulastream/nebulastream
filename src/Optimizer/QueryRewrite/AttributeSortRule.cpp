@@ -78,6 +78,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(ExpressionNodePt
         return expression;
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the expression: " + expression->toString());
+    return nullptr;
 }
 
 ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression) {
@@ -253,6 +254,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the arithmetical expression node: "
                             + expression->toString());
+    return nullptr;
 }
 
 ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(ExpressionNodePtr expression) {
@@ -491,6 +493,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
         return NegateExpressionNode::create(updatedChildExpression);
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for the logical expression node: " + expression->toString());
+    return nullptr;
 }
 
 bool AttributeSortRule::replaceCommutativeExpressions(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,

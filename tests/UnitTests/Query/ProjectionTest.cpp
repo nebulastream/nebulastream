@@ -74,15 +74,22 @@ class ProjectionTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
+        auto streamConf = PhysicalStreamConfig::create();
+        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_DEBUG("ProjectionTest: Tear down ProjectionTest test case."); }
+    void TearDown() {
+        NES_DEBUG("ProjectionTest: Tear down ProjectionTest test case.");
+        nodeEngine->stop();
+        nodeEngine = nullptr;
+    }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("ProjectionTest: Tear down ProjectionTest test class."); }
 
     SchemaPtr testSchema;
+    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
 };
 
 /**
