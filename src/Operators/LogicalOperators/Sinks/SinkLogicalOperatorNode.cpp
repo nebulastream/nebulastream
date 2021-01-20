@@ -43,24 +43,7 @@ bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
 };
 
 bool SinkLogicalOperatorNode::inferSchema() {
-    // We assume that all children operators have the same output schema otherwise this plan is not valid
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->inferSchema()) {
-            return false;
-        }
-    }
-    if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("UnaryOperatorNode: this node should have at least one child operator");
-    }
-    auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("UnaryOperatorNode: infer schema failed. The schema has to be the same across all child operators.");
-            return false;
-        }
-    }
-    inputSchema = childSchema->copy();
-    outputSchema = childSchema->copy();
+    UnaryOperatorNode::inferSchema();
     auto qualifierName = outputSchema->getQualifierName();
     //Remove qualifier from field name
     for(auto& field : outputSchema->fields){
