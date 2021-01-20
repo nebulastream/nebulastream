@@ -29,6 +29,7 @@
 #include <boost/algorithm/string.hpp>
 #include <chrono>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <sys/socket.h>
@@ -94,9 +95,10 @@ void NettySource::fillSocket(TupleBuffer& buf) {
         physicalTypes.push_back(physicalField);
     }
 
+    std::regex validity("^[a-zA-Z0-9,]+$");
     int sock = 0, valread;
     struct sockaddr_in serv_addr;
-    char* hello = "0:persons\n";
+    char* hello = "0:bids\n";
     char buffer[1024] = {0};
     std::stringstream readStream;
     bool readData = true;
@@ -121,7 +123,7 @@ void NettySource::fillSocket(TupleBuffer& buf) {
     send(sock, hello, strlen(hello), 0);
     uint64_t tupCnt = 0;
     while (readData) {
-
+        buf.setNumberOfTuples(0);
         bzero(buffer, BUFFER_SIZE);
 
         valread = read(sock, buffer, BUFFER_SIZE);
@@ -151,10 +153,10 @@ void NettySource::fillSocket(TupleBuffer& buf) {
                 tupCnt = 0;
             }
 
-            if (tokens.size() > 2 && !tokens[2].empty() && !tokens[0].empty() && !tokens[1].empty()
-                && std::stoull(tokens[2].c_str()) > 0) {
+
+            if (std::regex_match(parsed[i].c_str(),validity) && tokens.size() == 5 && !tokens[2].empty() && !tokens[0].empty() && !tokens[1].empty()) {
                 tokens.push_back(std::to_string(
-                    std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count()));
+                    std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count()));
                 uint64_t offset = 0;
                 for (uint64_t j = 0; j < schema->getSize(); j++) {
                     auto field = physicalTypes[j];
@@ -228,6 +230,7 @@ void NettySource::fillSocket(TupleBuffer& buf) {
         }
 
     }
+
 
     buf.setNumberOfTuples(tupCnt);
     NES_TRACE("NettySource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));

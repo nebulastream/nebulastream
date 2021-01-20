@@ -516,6 +516,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
     NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
+
     coordinatorProc.terminate();
 }
 
@@ -608,9 +609,20 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     /*  schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->addField(\\\"userId\\\", UINT64)->addField(createField(\\\"movieId\\\", UINT64))->"
               "addField(createField(\\\"rating\\\", UINT64))->addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"time1\\\", UINT64));\"}";
 */
-    schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->addField(\\\"userId\\\", "
+    /*schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->addField(\\\"userId\\\", "
               "UINT64)->addField(\\\"name\\\", DataTypeFactory::createFixedChar(32))->"
-              "addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"time1\\\", UINT64));\"}";
+              "addField(createField(\\\"timestamp\\\", UINT64))->addField(createField(\\\"time1\\\", UINT64));\"}";*/
+
+
+    schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->"
+              "addField(createField(\\\"eventTime\\\", UINT64))->"
+              "addField(\\\"auctionId\\\", DataTypeFactory::createFixedChar(32))->"
+              "addField(\\\"personId\\\", ""DataTypeFactory::createFixedChar(32))->"
+              "addField(\\\"bidId\\\", DataTypeFactory::createFixedChar(32))->"
+              "addField(createField(\\\"bidPrice\\\", UINT64))->"
+              "addField(createField(\\\"processingTime\\\", UINT64));\"}";
+
+
 
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
@@ -743,5 +755,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
     coordinatorProc.terminate();
 }
+
 
 }// namespace NES
