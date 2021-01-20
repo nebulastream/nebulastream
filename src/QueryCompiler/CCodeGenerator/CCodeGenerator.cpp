@@ -953,34 +953,36 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // int64_t key = windowTuples[recordIndex].key;
     //TODO this is an ugly hack because we cannot create empty VariableDeclaration and we want it outide the if/else
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key");
-    if (context->arity == PipelineContext::BinaryLeft) {
-        keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()),
-                                                             joinDef->getLeftJoinKey()->getFieldName());
+    auto recordHandler = context->getRecordHandler();
 
-        NES_ASSERT(context->code->structDeclaratonInputTuples.size() > 0, "invalid input tuple");
-        auto keyVariableAttributeDeclaration =
-            context->code->structDeclaratonInputTuples[0].getVariableDeclaration(joinDef->getLeftJoinKey()->getFieldName());
+    if (context->arity == PipelineContext::BinaryLeft) {
+        auto joinKeyFieldName = joinDef->getLeftJoinKey()->getFieldName();
+        keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()),
+                                                             joinKeyFieldName);
+
+        NES_ASSERT(recordHandler->hasAttribute(joinKeyFieldName), "join key is not defined on iput tuple");
+
+        auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
+
         auto keyVariableAttributeStatement =
             VarDeclStatement(keyVariableDeclaration)
-                .assign(
-                    VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                        VarRef(keyVariableAttributeDeclaration)));
-        context->code->currentCodeInsertionPoint->addStatement(
-            std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
+                .assign(joinKeyReference);
+        context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     } else {
+        auto joinKeyFieldName = joinDef->getRightJoinKey()->getFieldName();
+
         keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getRightJoinKey()->getStamp()),
                                                              joinDef->getRightJoinKey()->getFieldName());
 
-        NES_ASSERT(context->code->structDeclaratonInputTuples.size() > 0, "invalid input tuple");
-        auto keyVariableAttributeDeclaration =
-            context->code->structDeclaratonInputTuples[0].getVariableDeclaration(joinDef->getRightJoinKey()->getFieldName());
+        NES_ASSERT(recordHandler->hasAttribute(joinKeyFieldName), "join key is not defined on iput tuple");
+
+        auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
+
+
         auto keyVariableAttributeStatement =
             VarDeclStatement(keyVariableDeclaration)
-                .assign(
-                    VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                        VarRef(keyVariableAttributeDeclaration)));
-        context->code->currentCodeInsertionPoint->addStatement(
-            std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
+                .assign(joinKeyReference);
+        context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     }
 
     // get key handle for current key
@@ -990,8 +992,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
     auto keyHandlerVariableStatement =
         VarDeclStatement(keyHandlerVariableDeclaration).assign(VarRef(windowStateVarDeclaration).accessPtr(getKeyStateVariable));
-    context->code->currentCodeInsertionPoint->addStatement(
-        std::make_shared<BinaryOperatorStatement>(keyHandlerVariableStatement));
+    context->code->currentCodeInsertionPoint->addStatement(keyHandlerVariableStatement.copy());
 
     // access window slice state from state variable via key
     // auto windowState = key_value_handle.value();
@@ -1000,8 +1001,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
-    context->code->currentCodeInsertionPoint->addStatement(
-        std::make_shared<BinaryOperatorStatement>(windowStateVariableStatement));
+    context->code->currentCodeInsertionPoint->addStatement(windowStateVariableStatement.copy());
 
     // get current timestamp
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
@@ -1009,18 +1009,15 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         //      auto current_ts = NES::Windowing::getTsFromClock();
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
-        context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
+        context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
         //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
-        auto tsVariableDeclaration = context->code->structDeclaratonInputTuples[0].getVariableDeclaration(
-            joinDef->getWindowType()->getTimeCharacteristic()->getField()->name);
+        auto tsVariableReference = recordHandler->getAttribute(joinDef->getWindowType()->getTimeCharacteristic()->getField()->name);
+
         auto tsVariableDeclarationStatement =
             VarDeclStatement(currentTimeVariableDeclaration)
-                .assign(
-                    VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                        VarRef(tsVariableDeclaration)));
-        context->code->currentCodeInsertionPoint->addStatement(
-            std::make_shared<BinaryOperatorStatement>(tsVariableDeclarationStatement));
+                .assign(tsVariableReference);
+        context->code->currentCodeInsertionPoint->addStatement(tsVariableDeclarationStatement.copy());
     }
 
     // auto lock = std::unique_lock(stateVariable->mutex());
@@ -1060,7 +1057,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     joinStateCall.addParameter(
         VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]);
     auto getJoinStateCall = VarRef(windowStateVariableDeclaration).accessPtr(joinStateCall);
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(getJoinStateCall));
+    context->code->currentCodeInsertionPoint->addStatement(getJoinStateCall.copy());
 
     // joinHandler->trigger();
     switch (joinDef->getTriggerPolicy()->getPolicyType()) {

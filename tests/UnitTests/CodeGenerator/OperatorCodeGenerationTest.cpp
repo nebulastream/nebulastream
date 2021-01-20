@@ -1068,7 +1068,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 /**
  * @brief This test generates a window slicer
  */
-TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {
+TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
