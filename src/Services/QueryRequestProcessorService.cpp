@@ -80,6 +80,9 @@ void QueryRequestProcessorService::start() {
                                  << queryId << " status=" << queryCatalogEntry.getQueryStatusAsString());
                         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
+                        NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                        queryPlan = typeInferencePhase->execute(queryPlan);
+
                         NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                         queryPlan = queryRewritePhase->execute(queryPlan);
                         if (!queryPlan) {
