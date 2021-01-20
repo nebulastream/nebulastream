@@ -1003,6 +1003,69 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 }
 
 /**
+ * @brief This test generates a map predicate, which manipulates the input buffer content
+ */
+TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
+    auto streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+
+    /* prepare objects for test */
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = CCodeGenerator::create();
+    auto context = PipelineContext::create();
+    context->pipelineName = "1";
+    auto inputSchema = source->getSchema();
+    auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
+
+    /* generate code for writing result tuples to output buffer */
+    auto outputSchema = Schema::create()
+        ->addField("id", DataTypeFactory::createInt32())
+        ->addField("valueSmall", DataTypeFactory::createInt16())
+        ->addField("valueFloat", DataTypeFactory::createFloat())
+        ->addField("valueDouble", DataTypeFactory::createDouble())
+        ->addField(mappedValue)
+        ->addField("valueChar", DataTypeFactory::createChar())
+        ->addField("text", DataTypeFactory::createFixedChar(12));
+
+    codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
+
+    //predicate definition
+    codeGenerator->generateCodeForMap(mappedValue, createPredicate((inputSchema->get(2) * inputSchema->get(3)) + 2), context);
+    codeGenerator->generateCodeForMap(mappedValue, createPredicate((outputSchema->get(4) * inputSchema->get(3))), context);
+
+    /* generate code for writing result tuples to output buffer */
+    codeGenerator->generateCodeForEmit(outputSchema, context);
+
+    /* compile code to pipeline stage */
+    auto stage = codeGenerator->compile(context);
+
+    /* prepare input tuple buffer */
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    NodeEngine::WorkerContext wctx{0};
+
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(),
+                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+
+    stage->setup(*queryContext.get());
+    stage->start(*queryContext.get());
+    stage->execute(inputBuffer, *queryContext.get(), wctx);
+
+    auto resultBuffer = queryContext->buffers[0];
+
+    auto inputLayout = NodeEngine::createRowLayout(inputSchema);
+    auto outputLayout = NodeEngine::createRowLayout(outputSchema);
+    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+        auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/ 2)->read(inputBuffer);
+        auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 3)->read(inputBuffer);
+        auto reference = ((floatValue * doubleValue) + 2)*doubleValue;
+        auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 4)->read(resultBuffer);
+        EXPECT_EQ(reference, mapedValue);
+    }
+}
+
+/**
  * @brief This test generates a window slicer
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationJoin) {

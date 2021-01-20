@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #include <API/Schema.hpp>
+#include <QueryCompiler/RecordHandler.hpp>
 
 namespace NES::Windowing {
 
@@ -66,6 +67,8 @@ class PipelineContext {
     void addNextPipeline(PipelineContextPtr nextPipeline);
     bool hasNextPipeline() const;
 
+    RecordHandlerPtr getRecordHandler();
+
     /**
      * @brief Appends a new operator handler and returns the handler index.
      * The index enables runtime lookups.
@@ -82,6 +85,7 @@ class PipelineContext {
     std::vector<BlockScopeStatementPtr> getStartScopes();
 
   private:
+    RecordHandlerPtr recordHandler;
     std::vector<PipelineContextPtr> nextPipelines;
     std::vector<BlockScopeStatementPtr> setupScopes;
     std::vector<BlockScopeStatementPtr> startScopes;
