@@ -106,7 +106,7 @@ class ConfigOption {
 
 template<class T>
 ConfigOption<T>::ConfigOption(std::string key, T value, string description, string dataType, bool isList)
-    : key(key), value(value), defaultValue(value), description(description), dataType(dataType), isList(isList) {}
+    : key(key), description(description), value(value), defaultValue(value), dataType(dataType), isList(isList) {}
 
 template<typename T>
 string ConfigOption<T>::getValueAsString() const {
