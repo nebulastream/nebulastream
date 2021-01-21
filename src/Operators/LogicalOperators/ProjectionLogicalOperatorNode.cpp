@@ -80,20 +80,17 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
         expression->inferStamp(inputSchema);
 
         // Build the output schema
-        auto fieldName = expression->as<FieldAccessExpressionNode>()->getFieldName();
+        auto fieldAccess = expression->as<FieldAccessExpressionNode>();
+        auto fieldName = fieldAccess->getFieldName();
+        auto dataType = fieldAccess->getStamp();
 
         //Check the type of expression and add the field to the output schema
         if (expression->instanceOf<FieldRenameExpressionNode>()) {
-            auto fieldAccess = expression->as<FieldRenameExpressionNode>();
-            auto newFieldName = fieldAccess->getNewFieldName();
-            auto dataType = fieldAccess->getStamp();
-            outputSchema->addField(newFieldName, dataType);
-        } else {
-            auto fieldAccess = expression->as<FieldAccessExpressionNode>();
-            auto fieldName = fieldAccess->getFieldName();
-            auto dataType = fieldAccess->getStamp();
-            outputSchema->addField(fieldName, dataType);
+            auto fieldRename = expression->as<FieldRenameExpressionNode>();
+            fieldName = fieldRename->getNewFieldName();
+            dataType = fieldRename->getStamp();
         }
+        outputSchema->addField(fieldName, dataType);
     }
     return true;
 }

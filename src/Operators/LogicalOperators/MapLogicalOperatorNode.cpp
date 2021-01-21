@@ -52,13 +52,13 @@ bool MapLogicalOperatorNode::inferSchema() {
     if (outputSchema->hasFullyQualifiedFieldName(fieldName)) {
         // The assigned field is part of the current schema.
         // Thus we check if it has the correct type.
+        NES_TRACE("MAP Logical Operator: the field " << fieldName << " is already in the schema, so we updated its type.");
         outputSchema->replaceField(fieldName, assignedField->getStamp());
-        NES_DEBUG("MAP Logical Operator: the field " << fieldName << " is already of the schema, so we updated its type.");
     } else {
         // The assigned field is not part of the current schema.
         // Thus we extend the schema by the new attribute.
+        NES_TRACE("MAP Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
         outputSchema->addField(fieldName, assignedField->getStamp());
-        NES_DEBUG("MAP Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
     }
     return true;
 }

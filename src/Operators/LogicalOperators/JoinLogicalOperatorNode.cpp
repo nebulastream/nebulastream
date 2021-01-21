@@ -52,34 +52,50 @@ Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { re
 
 bool JoinLogicalOperatorNode::inferSchema() {
     BinaryOperatorNode::inferSchema();
+    outputSchema->clear();
+
     auto child1 = getChildren()[0]->as<LogicalOperatorNode>();
     auto schema1 = child1->getOutputSchema();
-    joinDefinition->getLeftJoinKey()->inferStamp(leftInputSchema);
+    FieldAccessExpressionNodePtr leftJoinKey = joinDefinition->getLeftJoinKey();
+    auto leftJoinKeyName = leftJoinKey->getFieldName();
+    if (leftInputSchema->hasFullyQualifiedFieldName(leftJoinKeyName) || leftInputSchema->hasFieldName(leftJoinKeyName)) {
+        leftJoinKey->inferStamp(leftInputSchema);
+    }
+
+    FieldAccessExpressionNodePtr rightJoinKey = joinDefinition->getRightJoinKey();
+    auto rightJoinKeyName = leftJoinKey->getFieldName();
+    if (rightInputSchema->hasFullyQualifiedFieldName(rightJoinKeyName) || rightInputSchema->hasFieldName(rightJoinKeyName)) {
+        rightJoinKey->inferStamp(rightInputSchema);
+    }
 
     outputSchema = Schema::create()
                        ->addField(createField("start", UINT64))
-                       ->addField(createField("end", UINT64))
-                       ->addField(AttributeField::create("key", joinDefinition->getLeftJoinKey()->getStamp()));
+                       ->addField(createField("end", UINT64));
+
 
     // create dynamic fields to store all fields from left and right streams
-    for (auto field : schema1->fields) {
-        outputSchema = outputSchema->addField("left_" + field->name, field->getDataType());
+    for (auto field : leftInputSchema->fields) {
+        outputSchema->addField(field->name, field->getDataType());
     }
 
-    if (getChildren().size() >= 2) {
-        auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
-
-        auto schema2 = child2->getOutputSchema();
-
-        // infer the data type of the key field.
-        joinDefinition->getRightJoinKey()->inferStamp(rightInputSchema);
-
-        for (auto field : schema2->fields) {
-            outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
-        }
-    } else {
-        NES_THROW_RUNTIME_ERROR("infer self join not allowed");
+    for (auto field : rightInputSchema->fields) {
+        outputSchema->addField(field->name, field->getDataType());
     }
+//
+//    if (getChildren().size() >= 2) {
+//        auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
+//
+//        auto schema2 = child2->getOutputSchema();
+//
+//        // infer the data type of the key field.
+//        joinDefinition->getRightJoinKey()->inferStamp(rightInputSchema);
+//
+//        for (auto field : schema2->fields) {
+//            outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
+//        }
+//    } else {
+//        NES_THROW_RUNTIME_ERROR("infer self join not allowed");
+//    }
 
     joinDefinition->updateOutputDefinition(outputSchema);
     return true;
