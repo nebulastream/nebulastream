@@ -133,6 +133,12 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      */
     GlobalQueryPlanPtr getGlobalQueryPlan();
 
+    /**
+     * @brief Get the instance of Coordinator Engine
+     * @return Global query plan
+     */
+    CoordinatorEnginePtr getCoordinatorEngine();
+
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient

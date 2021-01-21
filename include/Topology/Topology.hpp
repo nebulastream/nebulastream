@@ -188,6 +188,13 @@ class Topology {
     std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
                                                   std::vector<TopologyNodePtr> destinationNodes);
 
+    /*
+     * @brief find a list of topology with given IP address
+     * @param ip: the IP address
+     * @return returns a vector of nodes that have the given IP address
+     */
+    std::vector<TopologyNodePtr> findNodeWithIp(std::string ipAddress);
+
     ~Topology();
 
   private:

@@ -325,6 +325,8 @@ bool Topology::nodeExistsWithIpAndPort(std::string ipAddress, uint32_t grpcPort)
     return false;
 }
 
+
+
 TopologyNodePtr Topology::getRoot() {
     std::unique_lock lock(topologyLock);
     return rootNode;
@@ -545,6 +547,19 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(std::vector<TopologyNode
     }
 
     return findNodesBetween(commonAncestorForChildren, commonChildForParents);
+}
+std::vector<TopologyNodePtr> Topology::findNodeWithIp(std::string ipAddress) {
+    BreadthFirstNodeIterator bfsIterator(rootNode);
+    std::vector<TopologyNodePtr> result;
+    for (auto itr = bfsIterator.begin(); itr != bfsIterator.end(); ++itr) {
+        auto physicalNode = (*itr)->as<TopologyNode>();
+        if (physicalNode->getIpAddress() == ipAddress) {
+            NES_TRACE("Topology: Found a physical node " << physicalNode->toString() << " with ip " << ipAddress << ".");
+            result.push_back(physicalNode);
+        }
+    }
+    return result;
+
 }
 
 }// namespace NES

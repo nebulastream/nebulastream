@@ -17,6 +17,7 @@
 #pragma once
 
 #include <REST/Controller/BaseController.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <cpprest/http_msg.h>
 
 /*
@@ -29,10 +30,12 @@
 #undef U
 
 namespace NES {
+class NesCoordinator;
+typedef std::weak_ptr<NesCoordinator> NesCoordinatorWeakPtr;
 
 class TopologyController : public BaseController {
   public:
-    explicit TopologyController(TopologyPtr topology);
+    explicit TopologyController(TopologyPtr topology, NesCoordinatorWeakPtr coordinator);
 
     ~TopologyController() = default;
     /**
@@ -41,9 +44,15 @@ class TopologyController : public BaseController {
      * @param message : the user message
      */
     void handleGet(std::vector<utility::string_t> paths, web::http::http_request message);
-
+/**
+     * Handling the POST requests for the query
+     * @param path : the url of the rest request
+     * @param message : the user message
+     */
+    void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
   private:
     TopologyPtr topology;
+    NesCoordinatorWeakPtr coordinator;
 };
 
 typedef std::shared_ptr<TopologyController> TopologyControllerPtr;

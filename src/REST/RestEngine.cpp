@@ -39,7 +39,7 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coo
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
     monitoringController = std::make_shared<MonitoringController>(monitoringService);
-    topologyController = std::make_shared<TopologyController>(topology);
+    topologyController = std::make_shared<TopologyController>(topology, coordinator);
 }
 
 RestEngine::~RestEngine() { NES_DEBUG("~RestEngine()"); }
@@ -109,6 +109,8 @@ void RestEngine::handlePost(http_request message) {
         } else if (paths[0] == "monitoring") {
             monitoringController->handlePost(paths, message);
             return;
+        } else if (paths[0] == "topology") {
+            topologyController->handlePost(paths, message);
         }
     }
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));

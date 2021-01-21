@@ -17,11 +17,8 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -29,11 +26,9 @@
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;

@@ -260,4 +260,6 @@ MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringS
 
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
 
+CoordinatorEnginePtr NesCoordinator::getCoordinatorEngine() { return coordinatorEngine; }
+
 }// namespace NES
