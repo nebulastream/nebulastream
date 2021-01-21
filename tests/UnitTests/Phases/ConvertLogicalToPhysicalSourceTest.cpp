@@ -92,7 +92,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalS
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/ 1);
+    SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/ 1000);
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(1, sourceDescriptor, engine);
     EXPECT_EQ(senseSource->getType(), DEFAULT_SOURCE);
 }

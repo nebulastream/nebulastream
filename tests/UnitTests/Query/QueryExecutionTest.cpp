@@ -395,7 +395,7 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 1,
-                                             /*frequency*/ 1, /*varyWatermark*/ true);
+                                             /*frequency*/ 1000, /*varyWatermark*/ true);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -468,7 +468,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
-        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1000);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -554,7 +554,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
-                                             /*frequency*/ 1, true, true, 30);
+                                             /*frequency*/ 1000, true, true, 30);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -633,7 +633,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
-        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1000);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
