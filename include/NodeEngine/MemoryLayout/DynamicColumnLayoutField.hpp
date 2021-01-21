@@ -32,21 +32,21 @@ class DynamicColumnLayoutField {
 
   private:
   public:
-    DynamicColumnLayoutField(uint8_t* basePointer) : basePointer(basePointer) {};
+    DynamicColumnLayoutField(T* basePointer) : basePointer(basePointer) {};
   private:
-    uint8_t* basePointer;
+    T* basePointer;
 };
 
 template<typename T>
 inline NES::NodeEngine::DynamicColumnLayoutField<T> NES::NodeEngine::DynamicColumnLayoutField<T>::create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer) {
-    uint8_t* basePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex);
+    T* basePointer = reinterpret_cast<T*>(&(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex));
     NES_DEBUG("DynamicRowLayout: basePointer = " << std::hex << basePointer);
     return DynamicColumnLayoutField<T>(basePointer);
 }
 
 template<typename T>
 inline T NES::NodeEngine::DynamicColumnLayoutField<T>::operator[](size_t recordIndex) {
-    return *(reinterpret_cast<T*>(basePointer) + recordIndex);
+    return *(basePointer + recordIndex);
 }
 
 }
