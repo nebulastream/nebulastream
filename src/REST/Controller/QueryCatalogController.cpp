@@ -135,6 +135,43 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 }
             })
             .wait();
+    } else if (path[1] == "getQueryStatistics") {
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+              try {
+                  NES_DEBUG("getQueryStatistics called");
+
+                  std::string userRequest(body.begin(), body.end());
+                  json::value req = json::value::parse(userRequest);
+                  uint64_t queryId = req.at("queryId").as_integer();
+                  NES_DEBUG("getQueryStatistics payload=" << queryId);
+
+                  SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+
+                  //Prepare the response
+                  json::value result{};
+                  std::string queryStatistics;
+                  if (auto shared_back_reference = coordinator.lock()) {
+                      queryStatistics = shared_back_reference->getQueryStatistics(sharedQueryId)[0]->getQueryStatisticsAsString();
+                  }
+                  NES_DEBUG("getQueryStatistics queryStatistics=" << queryStatistics);
+
+                  result["queryStatistics"] = json::value::string(queryStatistics);
+
+                  successMessageImpl(message, result);
+                  return;
+              } catch (const std::exception& exc) {
+                  NES_ERROR("QueryCatalogController: handleGet -getQueryStatistics: Exception occurred while fetching "
+                            "the number of buffers:"
+                                << exc.what());
+                  handleException(message, exc);
+                  return;
+              } catch (...) {
+                  RuntimeUtils::printStackTrace();
+                  internalServerErrorImpl(message);
+              }
+            })
+            .wait();
     } else if (path[1] == "status") {
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
