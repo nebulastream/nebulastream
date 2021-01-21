@@ -619,3 +619,113 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
 }
+
+TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowAJoinOperator) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupSensorNodeAndStreamCatalog(streamCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query subQuery = Query::from("car");
+
+    Query query = Query::from("truck")
+                    .join(&subQuery, Attribute("id1"),Attribute("id2"),SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+                    .map(Attribute("value") = 80)
+                    .filter(Attribute("id") > 45)
+                    .sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr joinOperator = (*itr);
+    ++itr;
+    const NodePtr wmaOperatorSQ = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSQ = (*itr);
+    ++itr;
+    const NodePtr wmaOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr srcOperatorPQ = (*itr);
+
+    // Execute
+    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperatorPQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(joinOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(wmaOperatorSQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(wmaOperatorPQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+}
+
+TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowAJoinOperatorWithBlockingMap) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    setupSensorNodeAndStreamCatalog(streamCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query subQuery = Query::from("car");
+
+    Query query = Query::from("truck")
+        .join(&subQuery, Attribute("id1"),Attribute("id2"),SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+        .map(Attribute("id") = 80)
+        .filter(Attribute("id") > 45)
+        .sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr joinOperator = (*itr);
+    ++itr;
+    const NodePtr wmaOperatorSQ = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSQ = (*itr);
+    ++itr;
+    const NodePtr wmaOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr srcOperatorPQ = (*itr);
+
+    // Execute
+    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    //EXPECT_ANY_THROW((*itr));
+}

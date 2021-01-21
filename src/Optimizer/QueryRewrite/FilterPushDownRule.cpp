@@ -14,18 +14,25 @@
     limitations under the License.
 */
 
+#include <API/Windowing.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 #include <queue>
 
 namespace NES {
@@ -73,6 +80,8 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
     while (!nodesToProcess.empty()) {
 
         static bool isFilterAboveAMergeOperator{false};
+        static bool isFilterAboveAJoinOperator{false};
+        //isFilterAboveAJoinOperator = isFilterAboveAMergeOperator;
         NES_INFO("FilterPushDownRule: Get first operator for processing");
         NodePtr node = nodesToProcess.front();
         nodesToProcess.pop_front();
@@ -101,12 +110,14 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
                     isFilterAboveAMergeOperator = false;
                     continue;
-                } else if (!(filterOperator->removeAndJoinParentAndChildren()
-                             && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
+                }
+                if (!(filterOperator->removeAndJoinParentAndChildren()
+                      && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                 }
+                isFilterAboveAJoinOperator = false; //ToDo::Move this
                 continue;
             }
         } else if (node->instanceOf<MapLogicalOperatorNode>()) {
@@ -116,7 +127,18 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
             if (predicateFieldManipulated) {
                 OperatorNodePtr copyOptr = filterOperator->duplicate();
-                if (!(copyOptr->removeAndJoinParentAndChildren() && node->insertBetweenThisAndParentNodes(copyOptr))) {
+                std::vector<NodePtr> parentsOfNode = node->as<OperatorNode>()->getParents();
+                NodePtr nodeExists;
+                for (auto&& currentNode : parentsOfNode) {
+                    if (copyOptr->equal(currentNode)) {
+                        nodeExists = currentNode;
+                    }
+                }
+                if (nodeExists!= nullptr) {
+                    NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+                    break;
+                    //continue;
+                } else if (!(copyOptr->removeAndJoinParentAndChildren() && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
@@ -137,7 +159,48 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             std::copy(childrenOfMergeOP.begin(), childrenOfMergeOP.end(), std::front_inserter(nodesToProcess));
             std::sort(nodesToProcess.begin(),
                       nodesToProcess.end());//To ensure consistency in nodes traversed below a merge operator
-        }
+
+        } else if (node->instanceOf<JoinLogicalOperatorNode>()) {
+            isFilterAboveAJoinOperator = true;
+            //node->as<JoinLogicalOperatorNode>->as<Join::LogicalJoinDefinition>->as<FieldAccessExpressionNode>.
+            uint64_t leftSrcId,rightSrcId;
+            std::vector<NodePtr> childrenOfJoinOP,childrenLeftOfJoinOP,childrenRightOfJoinOP;
+            for (auto& childOfJoinOP : node->getChildren()) {
+                if (childOfJoinOP->as<OperatorNode>()->getIsLeftOperator()) {
+                    //std::front_inserter(nodesToProcess);
+                    //childOfJoinOP->as<OperatorNode>()->getId();
+                    for (auto& sourceLeftOfJoinOP : childOfJoinOP->getNodesByType<SourceLogicalOperatorNode>()) {
+                    //if(childOfJoinOP->instanceOf<SourceLogicalOperatorNode>()){
+                        leftSrcId = sourceLeftOfJoinOP->as<OperatorNode>()->getId();
+                    }
+                    childrenLeftOfJoinOP.insert(childrenLeftOfJoinOP.end(),childOfJoinOP);
+                }else{
+                    for (auto& sourceRightOfJoinOP : childOfJoinOP->getNodesByType<SourceLogicalOperatorNode>()) {
+                        rightSrcId = sourceRightOfJoinOP->as<OperatorNode>()->getId();
+                    }
+                    childrenRightOfJoinOP.insert(childrenRightOfJoinOP.end(),childOfJoinOP);
+                }
+            }
+
+            if(rightSrcId<leftSrcId){
+                std::copy(childrenRightOfJoinOP.begin(), childrenRightOfJoinOP.end(), std::back_inserter(nodesToProcess));
+            }else{
+                std::copy(childrenLeftOfJoinOP.begin(), childrenLeftOfJoinOP.end(), std::back_inserter(nodesToProcess));
+            }
+
+        } else if (node->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+
+            std::vector<NodePtr> children = node->getChildren();
+            WatermarkAssignerLogicalOperatorNodePtr wmLogicalOperatorNodePtr = node->as<WatermarkAssignerLogicalOperatorNode>();
+            //const WatermarkStrategyDescriptorPtr wmDescriptor = wmLogicalOperatorNodePtr->getWatermarkStrategyDescriptor();
+            std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
+        } /*else if (node->instanceOf<WindowLogicalOperatorNode>()) {
+
+            std::vector<NodePtr> children = node->getChildren();
+            WindowLogicalOperatorNodePtr windowLogicalOperatorNodePtr = node->as<WindowLogicalOperatorNode>();
+            const Windowing::LogicalWindowDefinitionPtr  windowDefinition = windowLogicalOperatorNodePtr->getWindowDefinition();
+            std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
+        }*/
     }
 
     NES_INFO("FilterPushDownRule: Remove all parents can children of the filter operator");
