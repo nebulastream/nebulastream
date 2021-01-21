@@ -23,6 +23,7 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <NodeEngine/MemoryLayout/DynamicColumnLayoutField.hpp>
 
 #include <gtest/gtest.h>
 
@@ -241,6 +242,41 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutField) {
     auto field0 = DynamicRowLayoutField<uint8_t>::create(0, mappedRowLayout);
     auto field1 = DynamicRowLayoutField<uint16_t>::create(1, mappedRowLayout);
     auto field2 = DynamicRowLayoutField<uint32_t>::create(2, mappedRowLayout);
+
+    for (size_t i = 0; i < NUM_TUPLES; ++i) {
+        ASSERT_EQ(std::get<0>(allTuples[i]), field0[i]);
+        ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
+        ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
+    }
+}
+
+TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutField) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+
+    DynamicColumnLayoutPtr columnLayout;
+    ASSERT_NO_THROW(columnLayout = DynamicColumnLayout::create(schema, true));
+    ASSERT_NE(columnLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    DynamicColumnLayoutBufferPtr mappedColumnLayout;
+    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
+    ASSERT_NE(mappedColumnLayout, nullptr);
+
+    size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+
+    std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
+    for (size_t i = 0; i < NUM_TUPLES; i++) {
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
+        allTuples.emplace_back(writeRecord);
+        mappedColumnLayout->pushRecord(writeRecord);
+    }
+
+
+    auto field0 = DynamicColumnLayoutField<uint8_t>::create(0, mappedColumnLayout);
+    auto field1 = DynamicColumnLayoutField<uint16_t>::create(1, mappedColumnLayout);
+    auto field2 = DynamicColumnLayoutField<uint32_t>::create(2, mappedColumnLayout);
 
     for (size_t i = 0; i < NUM_TUPLES; ++i) {
         ASSERT_EQ(std::get<0>(allTuples[i]), field0[i]);

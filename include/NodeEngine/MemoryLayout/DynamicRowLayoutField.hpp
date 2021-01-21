@@ -22,7 +22,6 @@
 
 namespace NES::NodeEngine {
 
-class DynamicRowLayoutBuffer;
 
 template<typename T>
 class DynamicRowLayoutField {
@@ -41,11 +40,6 @@ class DynamicRowLayoutField {
     NES::NodeEngine::FIELD_SIZE recordSize;
     uint8_t* basePointer;
 };
-
-//template class DynamicRowLayoutField<int8_t>;
-//template class DynamicRowLayoutField<uint8_t>;
-//template class DynamicRowLayoutField<uint16_t>;
-//template class DynamicRowLayoutField<uint32_t>;
 
 template<typename T>
 inline NES::NodeEngine::DynamicRowLayoutField<T> NES::NodeEngine::DynamicRowLayoutField<T>::create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer) {
