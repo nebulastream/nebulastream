@@ -174,7 +174,7 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecord
     ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedColumnLayout, nullptr);
 
-    std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(1, 2, 3);
+    std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
     mappedColumnLayout->pushRecord(writeRecord);
 
     std::tuple<uint8_t, uint16_t, uint32_t> readRecord = mappedColumnLayout->readRecord<uint8_t, uint16_t, uint32_t>(0);
@@ -201,7 +201,7 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultipleR
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     for (size_t i = 0; i < NUM_TUPLES; i++) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(i, 1000+i, 2000+i);
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
         mappedColumnLayout->pushRecord(writeRecord);
     }
@@ -233,7 +233,7 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutField) {
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     for (size_t i = 0; i < NUM_TUPLES; ++i) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(i+5, 1000+i, 2000+i);
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
         mappedRowLayout->pushRecord(writeRecord);
     }
