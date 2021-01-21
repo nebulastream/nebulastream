@@ -33,32 +33,37 @@ class DynamicRowLayoutField {
     inline T operator[](size_t recordIndex);
 
   private:
-    DynamicRowLayoutField(DynamicRowLayoutBufferPtr& dynamicRowLayoutBuffer, T* basePointer, NES::NodeEngine::FIELD_SIZE fieldIndex,
+    DynamicRowLayoutField(DynamicRowLayoutBufferPtr& dynamicRowLayoutBuffer, uint8_t* basePointer, NES::NodeEngine::FIELD_SIZE fieldIndex,
                           NES::NodeEngine::FIELD_SIZE recordSize) : dynamicRowLayoutBuffer(dynamicRowLayoutBuffer), fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer) {};
 
 
     DynamicRowLayoutBufferPtr& dynamicRowLayoutBuffer;
     NES::NodeEngine::FIELD_SIZE fieldIndex;
     NES::NodeEngine::FIELD_SIZE recordSize;
-    T* basePointer;
+    uint8_t* basePointer;
 };
 
-template class DynamicRowLayoutField<int8_t>;
-template class DynamicRowLayoutField<uint8_t>;
-template class DynamicRowLayoutField<uint16_t>;
-template class DynamicRowLayoutField<uint32_t>;
+//template class DynamicRowLayoutField<int8_t>;
+//template class DynamicRowLayoutField<uint8_t>;
+//template class DynamicRowLayoutField<uint16_t>;
+//template class DynamicRowLayoutField<uint32_t>;
 
 template<typename T>
 inline NES::NodeEngine::DynamicRowLayoutField<T> NES::NodeEngine::DynamicRowLayoutField<T>::create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer) {
-    T* basePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<T>()[0]) + layoutBuffer->calcOffset(0, fieldIndex);
+    uint8_t* basePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex);
+    NES_DEBUG("DynamicRowLayout: basePointer = " << std::hex << basePointer);
     return DynamicRowLayoutField<T>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
 }
 
 template<typename T>
 inline T NES::NodeEngine::DynamicRowLayoutField<T>::operator[](size_t recordIndex) {
-    T* address = basePointer + recordSize * recordIndex;
-    NES_DEBUG("DynamicRowLayout: address = " << address << " basePointer = " << basePointer);
-    return *(address);
+    uint8_t* address = basePointer + recordSize * recordIndex;
+    NES_DEBUG("DynamicRowLayout: address = " << std::hex << address << " basePointer = " << std::hex << basePointer);
+    NES_DEBUG("DynamicRowLayout: address[0] = " << std::hex << static_cast<int>(*(address+0)));
+    NES_DEBUG("DynamicRowLayout: address[1] = " << std::hex << static_cast<int>(*(address+1)));
+    NES_DEBUG("DynamicRowLayout: address[2] = " << std::hex << static_cast<int>(*(address+2)));
+
+    return (*reinterpret_cast<T*>(address));
 }
 
 }

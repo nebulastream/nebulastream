@@ -233,7 +233,7 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutField) {
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     for (size_t i = 0; i < NUM_TUPLES; ++i) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(i, 1000+i, 2000+i);
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(i+5, 1000+i, 2000+i);
         allTuples.emplace_back(writeRecord);
         mappedRowLayout->pushRecord(writeRecord);
     }
