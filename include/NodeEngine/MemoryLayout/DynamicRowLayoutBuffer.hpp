@@ -30,7 +30,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
     DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout);
     NES::NodeEngine::FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
-
+    const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout->getFieldOffSets(); }
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
      * @tparam Types
@@ -44,76 +44,6 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @param record
      */
     template<typename... Types> void pushRecord(std::tuple<Types...> record);
-  private:
-    /**
-     * @brief This function writes a record/tuple in a row layout via a template recursion.
-     * @tparam I
-     * @tparam Tp
-     * @param t
-     * @param address
-     * @param ithRecord
-     * @param fieldSizes
-     * @return ithRecord tuple/record
-     */
-    template<std::size_t I = 0, typename... Tp>
-    inline typename std::enable_if<I == sizeof...(Tp), void>::type
-    writeTupleToBufferRowWise(std::tuple<Tp...>& t, unsigned char* address, FieldSizesPtr fieldSizes) {
-        ((void)t);
-        ((void)address);
-        ((void)fieldSizes);
-    }
-
-    /**
-     * @brief This function writes a record/tuple in a row layout via a template recursion.
-     * @tparam I
-     * @tparam Tp
-     * @param t
-     * @param address
-     * @param ithRecord
-     * @param fieldSizes
-     * @return ithRecord tuple/record
-     */
-    template<std::size_t I = 0, typename... Tp>
-    inline typename std::enable_if<I < sizeof...(Tp), void>::type
-    writeTupleToBufferRowWise(std::tuple<Tp...>& t, unsigned char* address, FieldSizesPtr fieldSizes) {
-        memcpy(address, &std::get<I>(t), fieldSizes->at(I));
-        writeTupleToBufferRowWise<I + 1, Tp...>(t, address + fieldSizes->at(I), fieldSizes);
-    }
-
-    /**
-     * @brief This function reads ithRecord in a row layout via a template recursion.
-     * @tparam I
-     * @tparam Tp
-     * @param t
-     * @param address
-     * @param ithRecord
-     * @param fieldSizes
-     * @return ithRecord tuple/record
-     */
-    template<std::size_t I = 0, typename... Tp>
-    inline typename std::enable_if<I == sizeof...(Tp), void>::type
-    readTupleFromBufferRowWise(std::tuple<Tp...>& t, unsigned char* address, FieldSizesPtr fieldSizes) {
-        ((void)t);
-        ((void)address);
-        ((void)fieldSizes);
-    }
-
-    /**
-     * @brief This function reads ithRecord in a row layout via a template recursion.
-     * @tparam I
-     * @tparam Tp
-     * @param t
-     * @param address
-     * @param ithRecord
-     * @param fieldSizes
-     * @return ithRecord tuple/record
-     */
-    template<std::size_t I = 0, typename... Tp>
-    inline typename std::enable_if<I < sizeof...(Tp), void>::type
-    readTupleFromBufferRowWise(std::tuple<Tp...>& t, unsigned char* address, FieldSizesPtr fieldSizes) {
-        memcpy(&std::get<I>(t), address, fieldSizes->at(I));
-        readTupleFromBufferRowWise<I + 1, Tp...>(t, address + fieldSizes->at(I), fieldSizes);
-    }
 
   private:
     DynamicRowLayoutPtr dynamicRowLayout;
