@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -614,11 +615,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto query = Query::from("default_logical")
-        .filter(Attribute("f2") < 42)
-        .project(Attribute("f1").rename("default_logical$f3"), Attribute("f2").rename("f4"))
-        .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
-        .as("x")
-        .sink(FileSinkDescriptor::create(""));
+                     .filter(Attribute("f2") < 42)
+                     .project(Attribute("f1").rename("default_logical$f3"), Attribute("f2").rename("f4"))
+                     .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
+                     .as("x")
+                     .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
     auto phase = TypeInferencePhase::create(streamCatalog);
@@ -661,4 +662,146 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     ASSERT_TRUE(sinkOutputSchema->hasFullyQualifiedFieldName("f4"));
 }
 
+/**
+ * @brief In this test we test the type inference for query with Merge, Stream Rename and Project operators with fully qualified stream name
+ */
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQualifiedNamesAndMergeOperator) {
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("f1", BasicType::INT32);
+    inputSchema->addField("f2", BasicType::INT8);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    auto subQuery = Query::from("default_logical");
+
+    auto query = Query::from("default_logical")
+                     .merge(&subQuery)
+                     .filter(Attribute("f2") < 42)
+                     .project(Attribute("f1").rename("default_logical$f3"), Attribute("f2").rename("f4"))
+                     .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
+                     .as("x")
+                     .sink(FileSinkDescriptor::create(""));
+    auto plan = query.getQueryPlan();
+
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    plan = phase->execute(plan);
+    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto mergeOperator = plan->getOperatorByType<MergeLogicalOperatorNode>();
+    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
+    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+
+    SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
+    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(sourceOutputSchema->hasFullyQualifiedFieldName("default_logical$f2"));
+    ASSERT_TRUE(sourceOutputSchema->hasFullyQualifiedFieldName("default_logical$f1"));
+
+    SchemaPtr mergeOutputSchema = mergeOperator[0]->getOutputSchema();
+    ASSERT_TRUE(mergeOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(mergeOutputSchema->hasFullyQualifiedFieldName("default_logical$f2"));
+    ASSERT_TRUE(mergeOutputSchema->hasFullyQualifiedFieldName("default_logical$f1"));
+
+    SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
+    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(filterOutputSchema->hasFullyQualifiedFieldName("default_logical$f2"));
+    ASSERT_TRUE(filterOutputSchema->hasFullyQualifiedFieldName("default_logical$f1"));
+
+    SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
+    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(projectOutputSchema->hasFullyQualifiedFieldName("default_logical$f3"));
+    ASSERT_TRUE(projectOutputSchema->hasFullyQualifiedFieldName("default_logical$f4"));
+
+    SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
+    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(mapOutputSchema->hasFullyQualifiedFieldName("default_logical$f3"));
+    ASSERT_TRUE(mapOutputSchema->hasFullyQualifiedFieldName("default_logical$f4"));
+
+    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
+    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(renameStreamOutputSchema->hasFullyQualifiedFieldName("x$f3"));
+    ASSERT_TRUE(renameStreamOutputSchema->hasFullyQualifiedFieldName("x$f4"));
+
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(sinkOutputSchema->hasFullyQualifiedFieldName("x$f3"));
+    ASSERT_TRUE(sinkOutputSchema->hasFullyQualifiedFieldName("x$f4"));
+}
+
+/**
+ * @brief In this test we test the type inference for query with Join, Stream Rename and Project operators with fully qualified stream name
+ */
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQualifiedNamesAndJoinOperator) {
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("f1", BasicType::INT32);
+    inputSchema->addField("f2", BasicType::INT8);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+    auto subQuery = Query::from("default_logical").as("x");
+    auto query = Query::from("default_logical")
+                     .as("y")
+                     .join(&subQuery, Attribute("f1"), Attribute("f1"), windowType1)
+                     .filter(Attribute("f2") < 42)
+                     .project(Attribute("f1").rename("default_logical$f3"), Attribute("f2").rename("f4"))
+                     .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
+                     .as("x")
+                     .sink(FileSinkDescriptor::create(""));
+    auto plan = query.getQueryPlan();
+
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    plan = phase->execute(plan);
+    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
+    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+
+    SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
+    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(sourceOutputSchema->hasFullyQualifiedFieldName("default_logical$f2"));
+    ASSERT_TRUE(sourceOutputSchema->hasFullyQualifiedFieldName("default_logical$f1"));
+
+    SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
+    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(filterOutputSchema->hasFullyQualifiedFieldName("default_logical$f2"));
+    ASSERT_TRUE(filterOutputSchema->hasFullyQualifiedFieldName("default_logical$f1"));
+
+    SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
+    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(projectOutputSchema->hasFullyQualifiedFieldName("default_logical$f3"));
+    ASSERT_TRUE(projectOutputSchema->hasFullyQualifiedFieldName("default_logical$f4"));
+
+    SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
+    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(mapOutputSchema->hasFullyQualifiedFieldName("default_logical$f3"));
+    ASSERT_TRUE(mapOutputSchema->hasFullyQualifiedFieldName("default_logical$f4"));
+
+    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
+    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(renameStreamOutputSchema->hasFullyQualifiedFieldName("x$f3"));
+    ASSERT_TRUE(renameStreamOutputSchema->hasFullyQualifiedFieldName("x$f4"));
+
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(sinkOutputSchema->hasFullyQualifiedFieldName("x$f3"));
+    ASSERT_TRUE(sinkOutputSchema->hasFullyQualifiedFieldName("x$f4"));
+}
 }// namespace NES

@@ -44,12 +44,6 @@ bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 bool SinkLogicalOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
-    auto qualifierName = outputSchema->getQualifierName();
-    //Remove qualifier from field name
-    for(auto& field : outputSchema->fields){
-        std::string& fieldName = field->name;
-        field->name = fieldName.substr(fieldName.find(qualifierName) + qualifierName.length(), fieldName.length());
-    }
     return true;
 }
 

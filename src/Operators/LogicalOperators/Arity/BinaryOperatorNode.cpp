@@ -15,6 +15,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 
 namespace NES {
@@ -54,47 +55,53 @@ SchemaPtr BinaryOperatorNode::getRightInputSchema() const { return rightInputSch
 SchemaPtr BinaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
 bool BinaryOperatorNode::inferSchema() {
-    // We assume that all children operators have the same output schema otherwise this plan is not valid
+
+    //Check the number of child operators
+    if (children.size() < 2) {
+        NES_ERROR("BinaryOperatorNode: this operator should have at least two child operators");
+        throw TypeInferenceException("BinaryOperatorNode: this node should have at least two child operators");
+    }
+
+    // Infer schema of all child operators
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->inferSchema()) {
-            return false;
+            NES_ERROR("BinaryOperatorNode: failed inferring the schema of the child operator");
+            throw TypeInferenceException("BinaryOperatorNode: failed inferring the schema of the child operator");
         }
     }
-    if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("BinaryOperatorNode: this node should have at least one child operator");
-    }
 
-    //due to source expansion, an operator at this stage can have more than one children
-    if (children.size() >= 2) {
-        //TODO: think about checking also if all left/right have the same schema
-        //find first left
-        for (auto& leftOp : children) {
-            if (leftOp->as<OperatorNode>()->getIsLeftOperator()) {
-                leftInputSchema = leftOp->as<OperatorNode>()->getOutputSchema();
-                break;
+    //Identify different type of schemas from children operators
+    std::map<std::string, SchemaPtr> binaryOperatorSchemaMap;
+    for (auto& child : children) {
+        auto childOutputSchema = child->as<OperatorNode>()->getOutputSchema();
+        std::string qualifierName = childOutputSchema->getQualifierName();
+        if (binaryOperatorSchemaMap.find(qualifierName) == binaryOperatorSchemaMap.end()) {
+            binaryOperatorSchemaMap[qualifierName] = childOutputSchema;
+        } else {
+            auto matchedSchema = binaryOperatorSchemaMap[qualifierName];
+            if (!matchedSchema->equals(childOutputSchema)) {
+                throw TypeInferenceException(
+                    "BinaryOperatorNode: Found schema with same qualifier with different schemas. Qualifier name: "
+                    + qualifierName + " Matched schema name: " + matchedSchema->toString()
+                    + " Input schema name: " + childOutputSchema->toString());
             }
         }
-
-        //find first right
-        for (auto& rightOp : children) {
-            if (!rightOp->as<OperatorNode>()->getIsLeftOperator()) {
-                rightInputSchema = rightOp->as<OperatorNode>()->getOutputSchema();
-                break;
-            }
-        }
-        NES_ASSERT(leftInputSchema, "no left input for join");
-        NES_ASSERT(rightInputSchema, "no left input for join");
-    } else if (children.size() == 1) {
-        NES_THROW_RUNTIME_ERROR("self join not implemented");
-        //special case of self join
-        leftInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-        rightInputSchema = children[0]->as<OperatorNode>()->getOutputSchema();
     }
 
+    //validate that only two different type of schema were present
+    if (binaryOperatorSchemaMap.size() != 2) {
+        throw TypeInferenceException("BinaryOperatorNode: Found " + std::to_string(binaryOperatorSchemaMap.size())
+                                     + " distinct schemas but expected only 2.");
+    }
+
+    //Assign left and right schema from schema defined in binary schema map
+    auto schemaIterator = binaryOperatorSchemaMap.begin();
+    leftInputSchema->clear();
+    leftInputSchema->copyFields(schemaIterator->second);
+    schemaIterator++;
+    rightInputSchema->clear();
+    rightInputSchema->copyFields(schemaIterator->second);
     NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
-
-    //TODO: this is only temporary and we need a solution to detect which schema is the final schema
-    outputSchema = leftInputSchema;
     return true;
 }
 
