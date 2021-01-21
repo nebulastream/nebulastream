@@ -577,7 +577,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
-        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1000);
 
     auto query = TestQuery::from(windowSource->getSchema()).project(Attribute("ts"), Attribute("empty"), Attribute("key"));
     // 2. dd window operator:

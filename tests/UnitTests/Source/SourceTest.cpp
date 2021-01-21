@@ -170,7 +170,7 @@ TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
-    uint64_t frequency = 1;
+    uint64_t frequency = 1000;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -226,7 +226,7 @@ TEST_F(SourceTest, testCSVSourceWithLoopOverFile) {
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
-    uint64_t frequency = 1;
+    uint64_t frequency = 1000;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -260,7 +260,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
 
     const std::string& del = ",";
     uint64_t num = 1;
-    uint64_t frequency = 3;
+    uint64_t frequency = 3000;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -304,7 +304,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
     const std::string& del = ",";
     uint64_t num = 1;
-    uint64_t frequency = 1;
+    uint64_t frequency = 1000;
     SchemaPtr schema = Schema::create()
                            ->addField("uint64", UINT64)
                            ->addField("int64", INT64)
@@ -386,7 +386,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 
     const std::string& del = ",";
     uint64_t num = 1;
-    uint64_t frequency = 1;
+    uint64_t frequency = 1000;
     SchemaPtr schema = Schema::create()->addField("float64", FLOAT64)->addField("float32", FLOAT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
@@ -428,7 +428,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 
     const std::string& del = ",";
     uint64_t num = 1;
-    uint64_t frequency = 1;
+    uint64_t frequency = 1000;
     SchemaPtr schema = Schema::create()
                            ->addField("false", BOOLEAN)
                            ->addField("true", BOOLEAN)
