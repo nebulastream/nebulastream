@@ -33,7 +33,7 @@ class TestHarnessUtilTest : public testing::Test {
 /*
  * Testing testHarness utility using one logical source and one physical source
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithSingleSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -499,7 +499,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
 /*
  * Testing test harness without source (should not work)
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithNoSources) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -525,7 +525,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
 /*
  * Testing test harness pushing element to non-existent source (should not work)
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToNonExsistentSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -542,7 +542,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
 /*
  * Testing test harness pushing element push to wrong source (should not work)
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
