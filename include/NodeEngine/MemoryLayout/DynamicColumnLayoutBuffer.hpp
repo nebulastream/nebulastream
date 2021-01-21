@@ -34,7 +34,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
   public:
     uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
     DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayoutPtr dynamicColLayout, std::vector<COL_OFFSET_SIZE> columnOffsets);
-
+    const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout->getFieldSizes(); }
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
      * @tparam Types
