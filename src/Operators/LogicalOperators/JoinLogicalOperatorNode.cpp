@@ -52,7 +52,16 @@ std::string JoinLogicalOperatorNode::getStringBasedSignature() {
 Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { return joinDefinition; }
 
 bool JoinLogicalOperatorNode::inferSchema() {
-    BinaryOperatorNode::inferSchema();
+
+    if (!BinaryOperatorNode::inferSchema()) {
+        return false;
+    }
+
+    //validate that only two different type of schema were present
+    if (distinctSchemas.size() != 2) {
+        throw TypeInferenceException("BinaryOperatorNode: Found " + std::to_string(distinctSchemas.size())
+                                     + " distinct schemas but expected 2 distinct schemas.");
+    }
 
     //reset left and right schema
     leftInputSchema->clear();

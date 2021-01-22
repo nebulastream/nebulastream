@@ -43,7 +43,9 @@ bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
 };
 
 bool SinkLogicalOperatorNode::inferSchema() {
-    UnaryOperatorNode::inferSchema();
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
     return true;
 }
 

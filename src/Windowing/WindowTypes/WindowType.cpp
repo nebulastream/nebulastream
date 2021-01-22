@@ -14,6 +14,11 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
+#include <Util/Logger.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <utility>
@@ -27,5 +32,17 @@ TimeCharacteristicPtr WindowType::getTimeCharacteristic() const { return this->t
 bool WindowType::isSlidingWindow() { return false; }
 
 bool WindowType::isTumblingWindow() { return false; }
+
+bool WindowType::inferStamp(SchemaPtr schema) {
+    auto fieldName = timeCharacteristic->getField()->name;
+    auto existingField = schema->hasFieldName(fieldName);
+    if (existingField) {
+        timeCharacteristic->getField()->name = existingField->name;
+        return false;
+    }
+
+    NES_ERROR("TumblingWindow using a non existing time field " + fieldName);
+    throw InvalidFieldException("TumblingWindow using a non existing time field " + fieldName);
+}
 
 }// namespace NES::Windowing

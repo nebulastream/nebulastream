@@ -76,6 +76,8 @@ bool WindowLogicalOperatorNode::inferSchema() {
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
     windowAggregation->inferStamp(inputSchema);
+    auto windowType = windowDefinition->getWindowType();
+    windowType->inferStamp(inputSchema);
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.

@@ -62,7 +62,7 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
         }
     }
 
-    virtual bool inferSchema(SchemaPtr schema) = 0;
+    virtual bool inferStamp(SchemaPtr schema) = 0;
 };
 }// namespace NES::Windowing
 

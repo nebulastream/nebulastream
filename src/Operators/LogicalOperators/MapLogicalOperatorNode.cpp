@@ -39,7 +39,10 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 bool MapLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
-    UnaryOperatorNode::inferSchema();
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
+
     // use the default input schema to calculate the out schema of this operator.
     mapExpression->inferStamp(getInputSchema());
 
