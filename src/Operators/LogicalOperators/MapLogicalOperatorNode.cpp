@@ -55,7 +55,7 @@ bool MapLogicalOperatorNode::inferSchema() {
         // The assigned field is not part of the current schema.
         // Thus we extend the schema by the new attribute.
         NES_TRACE("MAP Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
-        outputSchema->addField("_$" + fieldName, assignedField->getStamp());
+        outputSchema->addField(fieldName, assignedField->getStamp());
     }
     return true;
 }
