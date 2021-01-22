@@ -42,7 +42,9 @@ GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schema, OperatorId 
     if (!schema) {
         NES_ERROR("GeneratableMergeOperator invalid schema");
     }
-    setInputSchema(schema);
+    //FIXME: As part of #1467
+    setLeftInputSchema(schema);
+    setRightInputSchema(schema);
     setOutputSchema(schema);
 }
 

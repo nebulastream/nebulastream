@@ -81,6 +81,13 @@ bool BinaryOperatorNode::inferSchema() {
             distinctSchemas.push_back(childOutputSchema);
         }
     }
+
+    //validate that only two different type of schema were present
+    if (distinctSchemas.size() > 2) {
+        throw TypeInferenceException("BinaryOperatorNode: Found " + std::to_string(distinctSchemas.size())
+                                     + " distinct schemas but expected 2 or less distinct schemas.");
+    }
+
     return true;
 }
 
