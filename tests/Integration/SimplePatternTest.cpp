@@ -420,7 +420,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
 /* 6.Test
  * Here, we test if we can use merge operator for patterns and create complex events with it
  */
-TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
+TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

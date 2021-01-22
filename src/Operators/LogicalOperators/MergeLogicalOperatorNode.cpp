@@ -45,33 +45,30 @@ bool MergeLogicalOperatorNode::inferSchema() {
     if (!BinaryOperatorNode::inferSchema()) {
         return false;
     }
-    if (getChildren().size() < 2) {
-        NES_THROW_RUNTIME_ERROR("MergeLogicalOperator: merge need two child operators.");
-    }
 
-    std::vector<SchemaPtr> schemas;
-    for (auto& child : children) {
-        if (child->instanceOf<UnaryOperatorNode>()) {
-            auto op = child->as<UnaryOperatorNode>();
-            schemas.push_back(op->getOutputSchema());
-        }
-    }
-
-    //test if all schemas are the same
-    if (!all_of(schemas.begin(), schemas.end(), [&](SchemaPtr i) {
-            return i->equals(schemas[0]);
-        })) {
-        NES_ERROR("MergeLogicalOperator: the two input streams have different schema.");
-        return false;
+    leftInputSchema->clear();
+    rightInputSchema->clear();
+    if (distinctSchemas.size() == 1) {
+        leftInputSchema->copyFields(distinctSchemas[0]);
+        rightInputSchema->copyFields(distinctSchemas[0]);
     } else {
-        return true;
+        leftInputSchema->copyFields(distinctSchemas[0]);
+        rightInputSchema->copyFields(distinctSchemas[1]);
+        //FIXME: This requires fixing and can be done as part of 1467
+        NES_ERROR("Merge with distinct input schemas is not handled yet!");
+        return false;
     }
+
+    //Copy the schema of left input
+    outputSchema->clear();
+    outputSchema->copyFields(leftInputSchema);
+    return true;
 }
 
 OperatorNodePtr MergeLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMergeOperator(id);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
+    copy->setLeftInputSchema(leftInputSchema);
+    copy->setRightInputSchema(rightInputSchema);
     return copy;
 }
 
