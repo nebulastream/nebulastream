@@ -21,6 +21,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -51,7 +52,6 @@ SchemaPtr Schema::copyFields(SchemaPtr otherSchema) {
     for (AttributeFieldPtr attr : otherSchema->fields) {
         fields.push_back(AttributeField::create(attr->name, attr->dataType));
     }
-    this->qualifierName = otherSchema->qualifierName;
     return copy();
 }
 
@@ -119,7 +119,7 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
         return true;
     } else {
         for (AttributeFieldPtr attr : fields) {
-            if (!(schema->hasFullyQualifiedFieldName(attr->name) && schema->get(attr->name)->isEqual(attr))) {
+            if (!(schema->get(attr->name)->isEqual(attr))) {
                 return false;
             }
         }
@@ -165,28 +165,28 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
     }
 }
 
-bool Schema::hasFieldName(const std::string& fieldName) {
-    return std::any_of(fields.begin(), fields.end(), [&](const AttributeFieldPtr& field) {
+AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
+    //Iterate over all qualifiers and look for field with fully qualified name
+    std::vector<AttributeFieldPtr> matchedFields;
+    for (auto& field : fields) {
         std::string& fullyQualifiedFieldName = field->name;
-        auto unqualifiedFieldName = fullyQualifiedFieldName.substr(
-            fullyQualifiedFieldName.find(qualifierName) + qualifierName.length(), fullyQualifiedFieldName.length());
-        return unqualifiedFieldName == fieldName;
-    });
+        bool found =
+            fullyQualifiedFieldName.compare(fullyQualifiedFieldName.length() - fieldName.length(), fieldName.length(), fieldName);
+        if (found) {
+            matchedFields.push_back(field);
+        }
+    }
+    //Check how many matching fields were found and raise appropriate exception
+    if (matchedFields.size() == 1) {
+        return matchedFields[0];
+    } else if (matchedFields.size() > 1) {
+        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
+        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+    }
+    return nullptr;
 }
-
-bool Schema::hasFullyQualifiedFieldName(const std::string& fullyQualifiedFieldName) {
-    return std::any_of(fields.begin(), fields.end(), [&fullyQualifiedFieldName](const auto& field) {
-        return field->name == fullyQualifiedFieldName;
-    });
-}
-
-const std::string& Schema::getQualifierName() const { return qualifierName; }
 
 void Schema::clear() {
     fields.clear();
-    qualifierName.clear();
 }
-
-void Schema::setQualifierName(std::string qualifierName) { this->qualifierName = qualifierName; }
-
 }// namespace NES

@@ -15,6 +15,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
@@ -52,26 +53,42 @@ Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { re
 
 bool JoinLogicalOperatorNode::inferSchema() {
     BinaryOperatorNode::inferSchema();
-    outputSchema->clear();
 
-    auto child1 = getChildren()[0]->as<LogicalOperatorNode>();
-    auto schema1 = child1->getOutputSchema();
+    //reset left and right schema
+    leftInputSchema->clear();
+    rightInputSchema->clear();
+
+    //Find the schema for left join key
     FieldAccessExpressionNodePtr leftJoinKey = joinDefinition->getLeftJoinKey();
     auto leftJoinKeyName = leftJoinKey->getFieldName();
-    if (leftInputSchema->hasFullyQualifiedFieldName(leftJoinKeyName) || leftInputSchema->hasFieldName(leftJoinKeyName)) {
-        leftJoinKey->inferStamp(leftInputSchema);
+    for (auto& schema : distinctSchemas) {
+        if (schema->hasFieldName(leftJoinKeyName)) {
+            leftInputSchema->copyFields(schema);
+            leftJoinKey->inferStamp(leftInputSchema);
+            break;
+        }
     }
 
+    //Find the schema for right join key
     FieldAccessExpressionNodePtr rightJoinKey = joinDefinition->getRightJoinKey();
     auto rightJoinKeyName = leftJoinKey->getFieldName();
-    if (rightInputSchema->hasFullyQualifiedFieldName(rightJoinKeyName) || rightInputSchema->hasFieldName(rightJoinKeyName)) {
-        rightJoinKey->inferStamp(rightInputSchema);
+    for (auto& schema : distinctSchemas) {
+        if (schema->hasFieldName(rightJoinKeyName)) {
+            rightInputSchema->copyFields(schema);
+            rightJoinKey->inferStamp(rightInputSchema);
+        }
     }
 
-    outputSchema = Schema::create()
-                       ->addField(createField("start", UINT64))
-                       ->addField(createField("end", UINT64));
+    //Check that both left and right schema should be different
+    if (rightInputSchema->equals(leftInputSchema, false)) {
+        throw TypeInferenceException("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
+    }
 
+    NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
+
+    //Reset output schema and add fields from left and right input schema
+    outputSchema->clear();
+    outputSchema->addField(createField("_$start", UINT64))->addField(createField("_$end", UINT64));
 
     // create dynamic fields to store all fields from left and right streams
     for (auto field : leftInputSchema->fields) {
@@ -81,21 +98,6 @@ bool JoinLogicalOperatorNode::inferSchema() {
     for (auto field : rightInputSchema->fields) {
         outputSchema->addField(field->name, field->getDataType());
     }
-//
-//    if (getChildren().size() >= 2) {
-//        auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
-//
-//        auto schema2 = child2->getOutputSchema();
-//
-//        // infer the data type of the key field.
-//        joinDefinition->getRightJoinKey()->inferStamp(rightInputSchema);
-//
-//        for (auto field : schema2->fields) {
-//            outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
-//        }
-//    } else {
-//        NES_THROW_RUNTIME_ERROR("infer self join not allowed");
-//    }
 
     joinDefinition->updateOutputDefinition(outputSchema);
     return true;

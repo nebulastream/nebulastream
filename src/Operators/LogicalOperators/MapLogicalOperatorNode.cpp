@@ -46,7 +46,7 @@ bool MapLogicalOperatorNode::inferSchema() {
     auto assignedField = mapExpression->getField();
     std::string fieldName = assignedField->getFieldName();
     if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        fieldName = inputSchema->getQualifierName() + fieldName;
+        fieldName = inputSchema->getQualifierNames() + fieldName;
     }
 
     if (outputSchema->hasFullyQualifiedFieldName(fieldName)) {

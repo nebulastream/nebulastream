@@ -64,10 +64,9 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                 }
 
                 auto qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-                schema->setQualifierName(qualifierName);
                 //perform attribute name resolution
                 for (auto& field : schema->fields) {
-                    field->name = schema->getQualifierName() + field->name;
+                    field->name = qualifierName + field->name;
                 }
                 sourceDescriptor->setSchema(schema);
                 NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName
