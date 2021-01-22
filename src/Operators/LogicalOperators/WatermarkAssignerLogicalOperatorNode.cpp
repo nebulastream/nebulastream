@@ -16,6 +16,8 @@
 
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 
@@ -41,6 +43,7 @@ std::string WatermarkAssignerLogicalOperatorNode::getStringBasedSignature() {
 bool WatermarkAssignerLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<WatermarkAssignerLogicalOperatorNode>()->getId() == id;
 }
+
 bool WatermarkAssignerLogicalOperatorNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator = rhs->as<WatermarkAssignerLogicalOperatorNode>();
@@ -48,6 +51,7 @@ bool WatermarkAssignerLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
+
 OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
     copy->setInputSchema(inputSchema);
@@ -58,6 +62,12 @@ OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
 
 Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::getWatermarkStrategyDescriptor() const {
     return watermarkStrategyDescriptor;
+}
+
+bool WatermarkAssignerLogicalOperatorNode::inferSchema() {
+    UnaryOperatorNode::inferSchema();
+    watermarkStrategyDescriptor->inferSchema(inputSchema);
+    return true;
 }
 
 }// namespace NES

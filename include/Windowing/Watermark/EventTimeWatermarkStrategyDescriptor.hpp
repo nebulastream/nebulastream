@@ -17,6 +17,7 @@
 #ifndef NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
 #define NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
 
+#include "EventTimeWatermarkGenerator.hpp"
 #include <API/Expressions/Expressions.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -39,6 +40,8 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
 
     std::string toString() override;
+
+    bool inferSchema(SchemaPtr schema) override;
 
   private:
     // Field where the watermark should be retrieved
