@@ -15,9 +15,7 @@
 */
 
 #include <State/StateManager.hpp>
-
 #include <benchmark/benchmark.h>
-#include <boost/math/distributions/skew_normal.hpp>
 #include <random>
 
 namespace NES {
@@ -157,16 +155,14 @@ static void BM_Statemanager_KeyRange_Skewed_Distribution(benchmark::State& state
     std::random_device rd;
     std::default_random_engine noise_generator;
 
-    auto skew_norm_dist = boost::math::skew_normal_distribution<double>(1, 0.25, -15);
+    auto skew_norm_dist = std::lognormal_distribution<double>(0, 1);
     std::uniform_real_distribution<double> uniform_dist(0, 1);
+
 
     for (auto singleState : state) {
         for (int64_t i = 0; i < numberOfUpdates; ++i) {
             state.PauseTiming();
-            noise_generator.seed(rd());
-            auto probability = uniform_dist(noise_generator);
-
-            double singleQuantile = std::max(std::min(boost::math::quantile(skew_norm_dist, probability), 1.0), 0.0);
+            double singleQuantile = std::max(std::min(skew_norm_dist(noise_generator), 1.0), 0.0);
             uint32_t key = uint32_t(singleQuantile * numberOfKeys);
             uint32_t value = rand();
             state.ResumeTiming();
@@ -191,18 +187,16 @@ static void BM_Statemanager_KeyRange_Skewed_Distribution_KeyVec(benchmark::State
     int64_t numberOfKeys = state.range(1);
 
     std::random_device rd;
-    std::default_random_engine noise_generator;
+    std::mt19937 generator(rd());
 
-    auto skew_norm_dist = boost::math::skew_normal_distribution<double>(1, 0.25, -15);
+    auto skew_norm_dist = std::lognormal_distribution<double>(0, 1);
     std::uniform_real_distribution<double> uniform_dist(0, 1);
 
     std::vector<uint32_t> keyVec;
 
     for (int64_t i = 0; i < numberOfUpdates; ++i) {
-        noise_generator.seed(rd());
-        auto probability = uniform_dist(noise_generator);
 
-        double singleQuantile = std::max(std::min(boost::math::quantile(skew_norm_dist, probability), 1.0), 0.0);
+        double singleQuantile = std::max(std::min(skew_norm_dist(generator), 1.0), 0.0);
         uint32_t key = uint32_t(singleQuantile * numberOfKeys);
         keyVec.push_back(key);
     }
@@ -262,16 +256,14 @@ static void BM_Multithreaded_Key_Updates(benchmark::State& state) {
     } else if (distributionType == 2) {
         // skewed distribution
         std::random_device rd;
-        std::default_random_engine noise_generator;
+        std::mt19937 generator(rd());
 
-        auto skew_norm_dist = boost::math::skew_normal_distribution<double>(1, 0.25, -15);
+        auto skew_norm_dist = std::lognormal_distribution<double>(0, 1);
         std::uniform_real_distribution<double> uniform_dist(0, 1);
 
         for (int64_t i = 0; i < numberOfUpdates; ++i) {
-            noise_generator.seed(rd());
-            auto probability = uniform_dist(noise_generator);
 
-            double singleQuantile = std::max(std::min(boost::math::quantile(skew_norm_dist, probability), 1.0), 0.0);
+            double singleQuantile = std::max(std::min(skew_norm_dist(generator), 1.0), 0.0);
             uint32_t key = uint32_t(singleQuantile * numberOfKeys);
             keyVec.push_back(key);
         }
