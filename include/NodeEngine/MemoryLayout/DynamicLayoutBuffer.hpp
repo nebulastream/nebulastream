@@ -46,7 +46,7 @@ class DynamicLayoutBuffer {
   protected:
     TupleBuffer& tupleBuffer;
     uint64_t capacity;
-    uint64_t numberOfRecords;
+    uint64_t numberOfRecords = 0;
 };
 }
 

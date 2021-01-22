@@ -65,6 +65,7 @@ void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(address, &args, fieldSizes[I]), address = address + fieldSizes[I], ++I), ...);}, record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
+    NES_DEBUG("DynamicRowLayoutBuffer: numberOfRecords = " << numberOfRecords);
 }
 
 template<bool boundaryChecks, typename... Types>

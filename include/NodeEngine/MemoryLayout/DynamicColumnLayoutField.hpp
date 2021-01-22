@@ -27,7 +27,7 @@ class DynamicColumnLayoutField {
 
   public:
     static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer);
-    inline T operator[](size_t recordIndex);
+    inline T& operator[](size_t recordIndex);
 
   private:
   public:
@@ -47,7 +47,7 @@ inline NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks> NES::NodeEng
 }
 
 template <class T, bool boundaryChecks>
-inline T NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
+inline T& NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
     if (boundaryChecks) NES_VERIFY(recordIndex < dynamicColumnLayoutBuffer->getCapacity(), "recordIndex out of bounds!" << dynamicColumnLayoutBuffer->getCapacity() << " >= " << recordIndex);
 
     return *(basePointer + recordIndex);
