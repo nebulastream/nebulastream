@@ -21,7 +21,7 @@
 
 namespace NES {
 
-MergeLogicalOperatorNode::MergeLogicalOperatorNode(OperatorId id) : UnaryOperatorNode(id) {}
+MergeLogicalOperatorNode::MergeLogicalOperatorNode(OperatorId id) : BinaryOperatorNode(id) {}
 
 bool MergeLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<MergeLogicalOperatorNode>()->getId() == id;
@@ -42,7 +42,7 @@ std::string MergeLogicalOperatorNode::getStringBasedSignature() {
 }
 
 bool MergeLogicalOperatorNode::inferSchema() {
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!BinaryOperatorNode::inferSchema()) {
         return false;
     }
     if (getChildren().size() < 2) {

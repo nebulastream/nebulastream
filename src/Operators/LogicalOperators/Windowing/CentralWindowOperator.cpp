@@ -23,6 +23,7 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 
 #include <z3++.h>
 
@@ -64,14 +65,16 @@ bool CentralWindowOperator::inferSchema() {
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
     windowAggregation->inferStamp(inputSchema);
+    auto windowType = windowDefinition->getWindowType();
+    windowType->inferStamp(inputSchema);
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);
         outputSchema =
             Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
+                ->addField(createField("_$start", UINT64))
+                ->addField(createField("_$end", UINT64))
                 ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
                                                   windowDefinition->getOnKey()->getStamp()))
                 ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
@@ -81,8 +84,8 @@ bool CentralWindowOperator::inferSchema() {
         // infer the data type of the key field.
         outputSchema =
             Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
+                ->addField(createField("_$start", UINT64))
+                ->addField(createField("_$end", UINT64))
                 ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
                                                   windowAggregation->on()->getStamp()));
         return true;

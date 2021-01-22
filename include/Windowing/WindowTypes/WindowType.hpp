@@ -63,6 +63,13 @@ class WindowType {
 
     virtual std::string toString() = 0;
 
+    /**
+     * @brief Infer stamp of the window type
+     * @param schema : the schema of the window
+     * @return true if success else false
+     */
+    bool inferStamp(SchemaPtr schema);
+
   protected:
     TimeCharacteristicPtr timeCharacteristic;
 };

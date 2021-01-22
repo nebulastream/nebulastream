@@ -61,5 +61,4 @@ std::string SlidingWindow::toString() {
     ss << std::endl;
     return ss.str();
 }
-
 }// namespace NES::Windowing

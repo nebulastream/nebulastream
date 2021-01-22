@@ -17,7 +17,7 @@
 #ifndef Merge_LOGICAL_OPERATOR_NODE_HPP
 #define Merge_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -25,7 +25,7 @@ namespace NES {
 /**
  * @brief Merge operator, which contains an expression as a predicate.
  */
-class MergeLogicalOperatorNode : public UnaryOperatorNode {
+class MergeLogicalOperatorNode : public BinaryOperatorNode {
   public:
     explicit MergeLogicalOperatorNode(OperatorId id);
     ~MergeLogicalOperatorNode() = default;

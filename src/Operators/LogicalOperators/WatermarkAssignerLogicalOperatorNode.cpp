@@ -66,7 +66,7 @@ Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::
 
 bool WatermarkAssignerLogicalOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
-    watermarkStrategyDescriptor->inferSchema(inputSchema);
+    watermarkStrategyDescriptor->inferStamp(inputSchema);
     return true;
 }
 

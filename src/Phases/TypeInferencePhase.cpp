@@ -70,7 +70,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         auto sinks = queryPlan->getSinkOperators();
         for (auto& sink : sinks) {
             if (!sink->inferSchema()) {
-                return nullptr;
+                throw Exception("TypeInferencePhase: Failed!");
             }
         }
         NES_DEBUG("TypeInferencePhase: we inferred all schemas");
