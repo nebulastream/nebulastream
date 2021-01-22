@@ -26,7 +26,7 @@
 #include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -69,8 +69,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source =
-        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f1") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -78,24 +81,20 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     plan->appendOperatorAsNewRoot(map);
     plan->appendOperatorAsNewRoot(sink);
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
-
     auto phase = TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(plan);
 
     // we just access the old references
+    auto expectedInputSchema = Schema::create();
+    expectedInputSchema->addField("default_logical$f1", BasicType::INT32);
+    expectedInputSchema->addField("default_logical$f2", BasicType::INT8);
 
-    ASSERT_TRUE(source->getOutputSchema()->equals(inputSchema));
+    ASSERT_TRUE(source->getOutputSchema()->equals(expectedInputSchema));
 
     auto mappedSchema = Schema::create();
-    mappedSchema->addField("f1", BasicType::INT32);
-    mappedSchema->addField("f2", BasicType::INT8);
-    mappedSchema->addField("f3", BasicType::INT8);
+    mappedSchema->addField("default_logical$f1", BasicType::INT32);
+    mappedSchema->addField("default_logical$f2", BasicType::INT8);
+    mappedSchema->addField("_$f3", BasicType::INT8);
 
     ASSERT_TRUE(map->getOutputSchema()->equals(mappedSchema));
     ASSERT_TRUE(sink->getOutputSchema()->equals(mappedSchema));
@@ -112,12 +111,6 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
                      .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
-
     auto phase = TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
@@ -135,8 +128,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source =
-        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f3") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -145,12 +137,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     plan->appendOperatorAsNewRoot(sink);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
     auto phase = TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
@@ -160,27 +146,18 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
  */
 TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
-
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-
     auto query = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto phase = TypeInferencePhase::create(streamCatalog);
-
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
     auto resultSchema = Schema::create()
-                            ->addField("id", BasicType::UINT32)
-                            ->addField("value", BasicType::UINT64)
-                            ->addField("f3", BasicType::UINT32);
+                            ->addField("default_logical$id", BasicType::UINT32)
+                            ->addField("default_logical$value", BasicType::UINT64)
+                            ->addField("_$f3", BasicType::UINT32);
 
     NES_INFO(sink->getOutputSchema()->toString());
 
@@ -192,15 +169,6 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
  */
 TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
 
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
-
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-
     Query subQuery = Query::from("default_logical");
     auto query = Query::from("default_logical")
                      .merge(&subQuery)
@@ -208,18 +176,17 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto phase = TypeInferencePhase::create(streamCatalog);
-
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
     auto resultSchema = Schema::create()
-                            ->addField("id", BasicType::UINT32)
-                            ->addField("value", BasicType::UINT64)
-                            ->addField("f3", BasicType::UINT32);
+                            ->addField("default_logical$id", BasicType::UINT32)
+                            ->addField("default_logical$value", BasicType::UINT64)
+                            ->addField("_$f3", BasicType::UINT32);
 
     NES_INFO(sink->getOutputSchema()->toString());
-
     ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));
 }
 
@@ -232,8 +199,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source =
-        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = Attribute("f3").rename("f5") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -261,8 +227,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source =
-        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = Attribute("f3") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -290,8 +255,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameinAssignment) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source =
-        LogicalOperatorFactory::createSourceOperator(DefaultSourceDescriptor::create(inputSchema, "default_logical", 0, 0));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -300,12 +264,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameinAssignment) {
     plan->appendOperatorAsNewRoot(sink);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
     auto phase = TypeInferencePhase::create(streamCatalog);
     auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
     phase->execute(plan);
@@ -325,11 +283,6 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
-
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -376,11 +329,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
-
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -435,11 +383,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStream) {
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
-
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
                      .map(Attribute("f1") = Attribute("f1") + 2)
@@ -492,11 +435,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
-
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -558,11 +496,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
-
     auto query = Query::from("default_logical")
                      .filter(Attribute("default_logical$f2") < 42)
                      .map(Attribute("f1") = Attribute("f2") + 2)
@@ -608,11 +541,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
-
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -673,11 +601,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
-
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto subQuery = Query::from("default_logical");
 
@@ -748,18 +671,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
-
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto subQuery = Query::from("default_logical").as("x");
     auto query = Query::from("default_logical")
                      .as("y")
                      .join(&subQuery, Attribute("f1"), Attribute("f1"), windowType1)
                      .filter(Attribute("x$f2") < 42)
-                     .project(Attribute("f1").rename("default_logical$f3"), Attribute("y$f2").rename("f4"))
+                     .project(Attribute("x$f1").rename("default_logical$f3"), Attribute("y$f2").rename("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
@@ -791,12 +709,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
     ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
     ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
+    ASSERT_TRUE(projectOutputSchema->hasFieldName("y$f4"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
     ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
     ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
+    ASSERT_TRUE(mapOutputSchema->hasFieldName("y$f4"));
 
     SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
     ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
