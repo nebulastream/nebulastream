@@ -46,7 +46,7 @@ template <class T, bool boundaryChecks>
 inline NES::NodeEngine::DynamicRowLayoutField<T, boundaryChecks> NES::NodeEngine::DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer) {
     if (boundaryChecks) NES_VERIFY(layoutBuffer->getFieldOffSets().size() > fieldIndex, "fieldIndex out of bounds!" << layoutBuffer->getFieldOffSets().size() << " >= " << fieldIndex);
 
-    uint8_t* basePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex);
+    uint8_t* basePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
     NES_DEBUG("DynamicRowLayout: basePointer = " << std::hex << basePointer);
     return DynamicRowLayoutField<T, boundaryChecks>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
 }
