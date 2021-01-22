@@ -44,6 +44,12 @@ class FieldAccessExpressionNode : public ExpressionNode {
     const std::string getFieldName();
 
     /**
+     * @brief Updated field name
+     * @param fieldName : the new name of the field
+     */
+    void updateFieldName(std::string fieldName);
+
+    /**
     * @brief Infers the stamp of the expression given the current schema.
     * @param SchemaPtr
     */

@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
@@ -61,6 +62,19 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
 
     // field access
     auto field = getField();
+
+    //Update the field name with fully qualified field name
+    auto fieldName = field->getFieldName();
+    auto existingField = schema->hasFieldName(fieldName);
+    if (existingField) {
+        field->updateFieldName(existingField->name);
+    } else {
+        //Since this is a new field add the undefined schema qualifier to the field if not added already
+        if (fieldName.find(Schema::UNDEFINED_SCHEMA_QUALIFIER) == std::string::npos) {
+            field->updateFieldName(Schema::UNDEFINED_SCHEMA_QUALIFIER + fieldName);
+        }
+    }
+
     if (field->getStamp()->isUndefined()) {
         // if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());

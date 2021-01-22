@@ -82,9 +82,9 @@ bool WindowLogicalOperatorNode::inferSchema() {
         windowDefinition->getOnKey()->inferStamp(inputSchema);
         outputSchema =
             Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField(createField("cnt", UINT64))
+                ->addField(createField("_$start", UINT64))
+                ->addField(createField("_$end", UINT64))
+                ->addField(createField("_$cnt", UINT64))
                 ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
                                                   windowDefinition->getOnKey()->getStamp()))
                 ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),

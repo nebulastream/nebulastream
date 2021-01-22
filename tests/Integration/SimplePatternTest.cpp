@@ -146,7 +146,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     //TODO Patternname waiting for String support in map operator
 
     string expectedContent = "+----------------------------------------------------+\n"
-                             "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
+                             "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|_$PatternId:INT32|\n"
                              "+----------------------------------------------------+\n"
                              "|R2000073|1543624020000|102.629631|8|1|\n"
                              "|R2000070|1543625280000|108.166664|5|1|\n"
@@ -321,7 +321,7 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
     //TODO Patternname waiting for String support in map operator
 
     string expectedContent = "+----------------------------------------------------+\n"
-                             "|start:UINT64|end:UINT64|sensor_id:UINT64|quantity:UINT64|PatternId:INT32|\n"
+                             "|QnV$start:UINT64|QnV$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
                              "+----------------------------------------------------+\n"
                              "|1543622400000|1543623300000|2000073|107|1|\n"
                              "|1543623600000|1543624500000|2000073|107|1|\n"
@@ -396,7 +396,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     //TODO Patternname waiting for String support in map operator
 
     string expectedContent = "+----------------------------------------------------+\n"
-                             "|sensor_id:CHAR|timestamp:UINT64|velocity:FLOAT32|quantity:UINT64|PatternId:INT32|\n"
+                             "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
                              "+----------------------------------------------------+\n"
                              "|R2000073|1543624020000|102.629631|8|1|\n"
                              "|R2000070|1543625280000|108.166664|5|1|\n"
