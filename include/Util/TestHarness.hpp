@@ -79,6 +79,11 @@ class TestHarness {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
+        // check if record may span multiple buffers
+        NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
+                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize=" << bufferSize
+                                                                                                 << " recordSize=" << schema->getSchemaSizeInBytes());
+
         // Check if logical stream already exists
         if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
@@ -212,6 +217,8 @@ class TestHarness {
 
     uint64_t restPort = 8081;
     uint64_t rpcPort = 4000;
+    // default bufferSize
+    uint64_t bufferSize = 4096;
 };
 
 typedef std::shared_ptr<TestHarness> TestHarnessPtr;
