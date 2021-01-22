@@ -272,7 +272,6 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
 
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
-
     OperatorNodePtr op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;

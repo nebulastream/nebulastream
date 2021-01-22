@@ -17,6 +17,7 @@
 #ifndef NES_INGESTIONTIMEWATERMARKDESCRIPTOR_HPP
 #define NES_INGESTIONTIMEWATERMARKDESCRIPTOR_HPP
 
+#include "EventTimeWatermarkGenerator.hpp"
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing {
@@ -30,6 +31,13 @@ class IngestionTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescrip
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
     std::string toString() override;
+
+    /**
+     * @brief Infer schema of watermark strategy descriptor
+     * @param schema : the schema to be used for inferring the types
+     * @return true if success else false
+     */
+    bool inferSchema(SchemaPtr schema) override;
 
   private:
     explicit IngestionTimeWatermarkStrategyDescriptor();

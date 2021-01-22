@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#include <Exceptions/InvalidFieldException.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing {
@@ -43,6 +45,19 @@ std::string EventTimeWatermarkStrategyDescriptor::toString() {
     ss << "FIELD =" << onField.getExpressionNode() << ",";
     ss << "ALLOWED-LATENESS =" << allowedLateness.toString();
     return std::string();
+}
+
+bool EventTimeWatermarkStrategyDescriptor::inferSchema(SchemaPtr schema) {
+    auto fieldAccessExpression = onField.getExpressionNode()->as<FieldAccessExpressionNode>();
+    auto fieldName = fieldAccessExpression->getFieldName();
+    //Check if the field exists in the schema
+    auto existingField = schema->hasFieldName(fieldName);
+    if (existingField) {
+        fieldAccessExpression->updateFieldName(existingField->name);
+        return true;
+    }
+    NES_ERROR("EventTimeWaterMark is using a non existing field " + fieldName);
+    throw InvalidFieldException("EventTimeWaterMark is using a non existing field " + fieldName);
 }
 
 }// namespace NES::Windowing

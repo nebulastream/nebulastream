@@ -29,4 +29,6 @@ bool IngestionTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptor
 
 std::string IngestionTimeWatermarkStrategyDescriptor::toString() { return "TYPE = INGESTION-TIME"; }
 
+bool IngestionTimeWatermarkStrategyDescriptor::inferSchema(SchemaPtr) { return true; }
+
 }// namespace NES::Windowing

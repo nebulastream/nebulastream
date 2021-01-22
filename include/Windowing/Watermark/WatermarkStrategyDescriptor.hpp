@@ -17,6 +17,7 @@
 #ifndef NES_WATERMARKSTRATEGYDESCRIPTOR_HPP
 #define NES_WATERMARKSTRATEGYDESCRIPTOR_HPP
 
+#include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 
@@ -60,6 +61,8 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
             throw std::bad_cast();
         }
     }
+
+    virtual bool inferSchema(SchemaPtr schema) = 0;
 };
 }// namespace NES::Windowing
 
