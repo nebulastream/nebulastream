@@ -419,8 +419,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f3"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f4"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f3"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f4"));
 }
 
 /**
@@ -758,8 +758,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto query = Query::from("default_logical")
                      .as("y")
                      .join(&subQuery, Attribute("f1"), Attribute("f1"), windowType1)
-                     .filter(Attribute("f2") < 42)
-                     .project(Attribute("f1").rename("default_logical$f3"), Attribute("f2").rename("f4"))
+                     .filter(Attribute("x$f2") < 42)
+                     .project(Attribute("f1").rename("default_logical$f3"), Attribute("y$f2").rename("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
@@ -780,9 +780,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    ASSERT_TRUE(filterOutputSchema->fields.size() == 6);
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("x$f2"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("x$f1"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("y$f2"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("y$f1"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("_$start"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("_$end"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
     ASSERT_TRUE(projectOutputSchema->fields.size() == 2);

@@ -53,16 +53,8 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
                 auto streamName = sourceDescriptor->getStreamName();
                 SchemaPtr schema = Schema::create();
-                try {
-                    auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
-                    schema = schema->copyFields(originalSchema);
-                } catch (std::exception& e) {
-                    NES_ERROR("TypeInferencePhase: The logical stream " << streamName
-                                                                        << " could not be found in the StreamCatalog");
-                    throw Exception("TypeInferencePhase: The logical stream " + streamName
-                                    + " could not be found in the StreamCatalog");
-                }
-
+                auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
+                schema = schema->copyFields(originalSchema);
                 auto qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
                 //perform attribute name resolution
                 for (auto& field : schema->fields) {

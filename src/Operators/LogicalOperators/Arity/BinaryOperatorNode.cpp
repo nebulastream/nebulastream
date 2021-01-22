@@ -74,20 +74,18 @@ bool BinaryOperatorNode::inferSchema() {
     //Identify different type of schemas from children operators
     for (auto& child : children) {
         auto childOutputSchema = child->as<OperatorNode>()->getOutputSchema();
-
         auto found = std::find_if(distinctSchemas.begin(), distinctSchemas.end(), [&](SchemaPtr distinctSchema) {
             return childOutputSchema->equals(distinctSchema, false);
         });
-
         if (found == distinctSchemas.end()) {
-            distinctSchemas.push_back(*found);
+            distinctSchemas.push_back(childOutputSchema);
         }
     }
 
     //validate that only two different type of schema were present
     if (distinctSchemas.size() != 2) {
         throw TypeInferenceException("BinaryOperatorNode: Found " + std::to_string(distinctSchemas.size())
-                                     + " distinct schemas but expected only 2.");
+                                     + " distinct schemas but expected 2 distinct schemas.");
     }
     return true;
 }
