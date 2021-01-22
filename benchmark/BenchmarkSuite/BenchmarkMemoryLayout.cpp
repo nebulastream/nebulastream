@@ -1,0 +1,230 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <API/Schema.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <benchmark/benchmark.h>
+
+namespace NES::Benchmarking {
+
+static std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager;
+static std::shared_ptr<NES::NodeEngine::MemoryLayout> rowLayout;
+static std::shared_ptr<NES::NodeEngine::MemoryLayout> columnLayout;
+
+
+static void BM_WriteRecordsRowLayout(benchmark::State& state) {
+    SchemaPtr schema = Schema::create()
+                           ->addField("t1", BasicType::UINT8)
+                           ->addField("t2", BasicType::UINT16)
+                           ->addField("t3", BasicType::UINT32);
+
+    bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    rowLayout = NodeEngine::createRowLayout(schema);
+    auto buf = bufferManager->getBufferBlocking();
+    size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
+
+    for (auto singleState : state) {
+        auto fields = schema->fields;
+        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+            for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+                auto value = 1;
+                auto dataType = fields[fieldIndex]->getDataType();
+                auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+                if (physicalType->isBasicType()) {
+                    auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                    if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                        rowLayout->getValueField<char>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                        rowLayout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                        rowLayout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                        rowLayout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                        rowLayout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                        rowLayout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                        rowLayout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                        rowLayout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                        rowLayout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                        rowLayout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                        rowLayout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
+                    } else {
+                        NES_DEBUG("BenchmarkMemoryLayout: Field is not supported!");
+                    }
+                } else {
+                    NES_DEBUG("BenchmarkMemoryLayout: Field is not a basic type!");
+                }
+            }
+        }
+    }
+
+    state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
+}
+
+static void BM_WriteRecordsCustomRowLayout(benchmark::State& state) {
+    SchemaPtr schema = Schema::create()
+        ->addField("t1", BasicType::UINT8)
+        ->addField("t2", BasicType::UINT16)
+        ->addField("t3", BasicType::UINT32);
+
+    bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    rowLayout = NodeEngine::createRowLayout(schema);
+    auto buf = bufferManager->getBufferBlocking();
+    size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
+
+    for (auto singleState : state) {
+        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+            auto value = 1;
+            rowLayout->getValueField<uint8_t>(recordIndex, 0)->write(buf, value);
+            rowLayout->getValueField<uint16_t>(recordIndex, 1)->write(buf, value);
+            rowLayout->getValueField<uint32_t>(recordIndex, 2)->write(buf, value);
+        }
+    }
+
+    state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
+}
+
+static void BM_ReadRecordsCustomRowLayout(benchmark::State& state) {
+    SchemaPtr schema = Schema::create()
+        ->addField("t1", BasicType::UINT8)
+        ->addField("t2", BasicType::UINT16)
+        ->addField("t3", BasicType::UINT32);
+
+    bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    rowLayout = NodeEngine::createRowLayout(schema);
+    auto buf = bufferManager->getBufferBlocking();
+    size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
+    auto value = 1;
+    for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+        rowLayout->getValueField<uint8_t>(recordIndex, 0)->write(buf, value);
+        rowLayout->getValueField<uint16_t>(recordIndex, 1)->write(buf, value);
+        rowLayout->getValueField<uint32_t>(recordIndex, 2)->write(buf, value);
+    }
+
+    for (auto singleState : state) {
+        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+            auto field0 = rowLayout->getFieldPointer<uint8_t>(buf, recordIndex,0);
+            auto field1 = rowLayout->getFieldPointer<uint16_t>(buf, recordIndex,1);
+            auto field2 = rowLayout->getFieldPointer<uint32_t>(buf, recordIndex,2);
+            if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+            if (field1[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+            if (field2[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+        }
+    }
+
+    state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
+}
+
+static void BM_ReadRecordsRowLayout(benchmark::State& state) {
+    SchemaPtr schema = Schema::create()
+        ->addField("t1", BasicType::UINT8)
+        ->addField("t2", BasicType::UINT16)
+        ->addField("t3", BasicType::UINT32);
+
+    bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    rowLayout = NodeEngine::createRowLayout(schema);
+    auto buf = bufferManager->getBufferBlocking();
+    size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
+
+    auto value = 1;
+    for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+        rowLayout->getValueField<uint8_t>(recordIndex, 0)->write(buf, value);
+        rowLayout->getValueField<uint16_t>(recordIndex, 1)->write(buf, value);
+        rowLayout->getValueField<uint32_t>(recordIndex, 2)->write(buf, value);
+    }
+
+    for (auto singleState : state) {
+        auto fields = schema->fields;
+        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+            for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+                auto dataType = fields[fieldIndex]->getDataType();
+                auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+                if (physicalType->isBasicType()) {
+                    auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                    if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                        auto field0 = rowLayout->getFieldPointer<char>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                        auto field0 = rowLayout->getFieldPointer<uint8_t>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                        auto field0 = rowLayout->getFieldPointer<uint16_t>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                        auto field0 = rowLayout->getFieldPointer<uint32_t>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                        auto field0 = rowLayout->getFieldPointer<uint64_t>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                        auto field0 = rowLayout->getFieldPointer<int8_t>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                        auto field0 = rowLayout->getFieldPointer<int16_t>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                        auto field0 = rowLayout->getFieldPointer<int32_t>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                        auto field0 = rowLayout->getFieldPointer<int64_t>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                        auto field0 = rowLayout->getFieldPointer<float>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                        auto field0 = rowLayout->getFieldPointer<double>(buf, recordIndex, fieldIndex);
+                        if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+                    } else {
+                        NES_DEBUG("BenchmarkMemoryLayout: Field is not supported!");
+                    }
+                } else {
+                    NES_DEBUG("BenchmarkMemoryLayout: Field is not a basic type!");
+                }
+            }
+        }
+    }
+
+    state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
+}
+
+
+BENCHMARK(BM_WriteRecordsRowLayout);
+BENCHMARK(BM_WriteRecordsCustomRowLayout);
+BENCHMARK(BM_ReadRecordsRowLayout);
+BENCHMARK(BM_ReadRecordsCustomRowLayout);
+
+
+// A benchmark main is needed
+int main(int argc, char** argv) {
+    NESLogger->removeAllAppenders();
+    NES::setupLogging("BenchmarkMemoryLayout.log", NES::LOG_DEBUG);
+
+    benchmark::Initialize(&argc, argv);
+    benchmark::RunSpecifiedBenchmarks();
+    return 0;
+}
+}
