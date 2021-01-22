@@ -65,7 +65,6 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
     NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString()
                             << " this proj=" << toString());
     outputSchema->clear();
-    outputSchema->addQualifierName(inputSchema->getQualifierNames());
     for (auto& exp : expressions) {
         auto expression = exp.getExpressionNode();
         if (!expression->instanceOf<FieldAccessExpressionNode>()) {

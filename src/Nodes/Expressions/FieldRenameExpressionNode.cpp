@@ -17,6 +17,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
@@ -49,39 +50,28 @@ const std::string FieldRenameExpressionNode::toString() const {
 }
 
 void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
-
-
-
     //Detect if user has provided fully qualified name
-    if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        fieldName = schema->getQualifierNames() + fieldName;
+    auto fieldAttribute = schema->hasFieldName(fieldName);
+    if (!fieldAttribute) {
+        throw InvalidFieldException("Original field with name " + fieldName + " does not exists in the schema "
+                                    + schema->toString());
     }
 
-    //Detect if user has provided fully qualified nam
-    if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        newFieldName = schema->getQualifierNames() + newFieldName;
+    auto newFieldAttribute = schema->hasFieldName(newFieldName);
+    if (newFieldAttribute) {
+        NES_ERROR("FieldRenameExpressionNode: The new field name" + newFieldName + " already exists in the input schema "
+                  + schema->toString() + ". Can't use the name of an existing field.");
+        throw InvalidFieldException("New field with name " + newFieldName + " already exists in the schema "
+                                    + schema->toString());
     }
 
     if (fieldName == newFieldName) {
         NES_WARNING("FieldRenameExpressionNode: Both existing and new fields are same: existing: " + fieldName
                     + " new field name: " + newFieldName);
-    } else if (schema->hasFullyQualifiedFieldName(newFieldName)) {
-        NES_ERROR("FieldRenameExpressionNode: The new field name" + newFieldName + " already exists in the input schema "
-                  + schema->toString() + ". Can't use the name of existing field.");
-        throw TypeInferenceException("FieldRenameExpressionNode: The new field name" + newFieldName
-                                     + " already exists in the input schema " + schema->toString());
     }
 
-    // check if the access field is defined in the schema.
-    if (!schema->hasFullyQualifiedFieldName(fieldName)) {
-        NES_ERROR("FieldAccessExpression: the old field " + fieldName + " is not defined in the Input schema "
-                  + schema->toString());
-        throw TypeInferenceException("FieldAccessExpression: the old field " + fieldName + " is not defined in the Input schema "
-                                     + schema->toString());
-    }
     // assign the stamp of this field access with the type of this field.
-    auto field = schema->get(fieldName);
-    stamp = field->getDataType();
+    stamp = fieldAttribute->getDataType();
 }
 
 ExpressionNodePtr FieldRenameExpressionNode::copy() {

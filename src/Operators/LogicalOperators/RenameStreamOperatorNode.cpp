@@ -52,7 +52,6 @@ bool RenameStreamOperatorNode::inferSchema() {
     UnaryOperatorNode::inferSchema();
     //Update output schema by changing the qualifier and corresponding attribute names
     auto newQualifierName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    outputSchema->addQualifierName(newQualifierName);
     for (auto& field : outputSchema->fields) {
         //Extract field name without qualifier
         auto& fieldName = field->name;
@@ -61,7 +60,7 @@ bool RenameStreamOperatorNode::inferSchema() {
             fieldName = fieldName.substr(separatorLocation + 1, fieldName.length());
         }
         //Add new qualifier name to the field and update the field name
-        field->name = outputSchema->getQualifierNames() + fieldName;
+        field->name = newQualifierName + fieldName;
     }
     return true;
 }
