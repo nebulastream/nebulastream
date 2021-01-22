@@ -202,6 +202,84 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
 }
 
 /*
+ * Testing testHarness utility for query with a window operator
+ */
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value"))))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+
+    testHarness.addSource("car", carSchema, "car1");
+    testHarness.addSource("car", carSchema, "car2");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+    testHarness.pushElement<Car>({1, 1, 1000}, 0);
+    testHarness.pushElement<Car>({12, 1, 1001}, 0);
+    testHarness.pushElement<Car>({4, 1, 1002}, 0);
+    testHarness.pushElement<Car>({1, 2, 2000}, 0);
+    testHarness.pushElement<Car>({11, 2, 2001}, 0);
+    testHarness.pushElement<Car>({16, 2, 2002}, 0);
+    testHarness.pushElement<Car>({1, 3, 3000}, 0);
+    testHarness.pushElement<Car>({11, 3, 3001}, 0);
+    testHarness.pushElement<Car>({1, 3, 3003}, 0);
+    testHarness.pushElement<Car>({1, 3, 3200}, 0);
+    testHarness.pushElement<Car>({1, 4, 4000}, 0);
+    testHarness.pushElement<Car>({1, 5, 5000}, 0);
+
+    testHarness.pushElement<Car>({1, 1, 1000}, 1);
+    testHarness.pushElement<Car>({12, 1, 1001}, 1);
+    testHarness.pushElement<Car>({4, 1, 1002}, 1);
+    testHarness.pushElement<Car>({1, 2, 2000}, 1);
+    testHarness.pushElement<Car>({11, 2, 2001}, 1);
+    testHarness.pushElement<Car>({16, 2, 2002}, 1);
+    testHarness.pushElement<Car>({1, 3, 3000}, 1);
+    testHarness.pushElement<Car>({11, 3, 3001}, 1);
+    testHarness.pushElement<Car>({1, 3, 3003}, 1);
+    testHarness.pushElement<Car>({1, 3, 3200}, 1);
+    testHarness.pushElement<Car>({1, 4, 4000}, 1);
+    testHarness.pushElement<Car>({1, 5, 5000}, 1);
+
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        uint32_t key;
+        uint32_t value;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && start == rhs.start && end == rhs.end); }
+    };
+
+    // TODO: Can we remove the requirement to provide bufferToExpect?
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(3);
+    // TODO: Why the result is like that?
+    std::vector<Output> expectedOutput = {{1000, 2000, 1, 2},
+                                          {2000, 3000, 1, 0},
+                                          {3000, 4000, 1, 4},
+                                          {4000, 5000, 1, 0},
+                                          {1000, 2000, 4, 2},
+                                          {2000, 3000, 11, 4},
+                                          {3000, 4000, 11, 0},
+                                          {1000, 2000, 12, 2},
+                                          {2000, 3000, 16, 4},};
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
  * Testing test harness without source (should not work)
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
