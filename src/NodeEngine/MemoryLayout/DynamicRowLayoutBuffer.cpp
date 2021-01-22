@@ -25,7 +25,7 @@ uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthFiel
     if (boundaryChecks) NES_VERIFY(jthField < fieldOffSets.size(), "jthField" << jthField << " is larger than fieldOffsets.size() " << fieldOffSets.size());
 
     auto offSet = (ithRecord * recordSize) + fieldOffSets[jthField];
-    NES_DEBUG("DynamicColumnLayoutBuffer.calcOffset: offSet = " << offSet);
+    NES_DEBUG("DynamicRowLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }
 DynamicRowLayoutBuffer::DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout)

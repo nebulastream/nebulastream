@@ -13,7 +13,6 @@
 # limitations under the License.
 # Google Benchmark Framework ----------------------------------------------------
 
-
 if (NES_BUILD_BENCHMARKS)
     message("---Building benchmarks...")
     include(ExternalProject)
@@ -118,8 +117,17 @@ if (NES_BUILD_BENCHMARKS)
     target_sources(e2e-select-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME e2e-select-benchmark COMMAND e2e-select-benchmark)
 
-    add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
+    ### Memory Layout Benchmark ###
+    add_executable(memory-layout-benchmark "BenchmarkSuite/BenchmarkMemoryLayout.cpp")
+    target_link_libraries(memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME memory-layout-benchmark COMMAND memory-layout-benchmark --benchmark_out=memory-layout-benchmark.log --benchmark_out_format=json)
 
+    ### Dynamic Memory Layout Benchmark ###
+    add_executable(dynamic-memory-layout-benchmark "BenchmarkSuite/BenchmarkDynamicMemoryLayout.cpp")
+    target_link_libraries(dynamic-memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
+
+    add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
     message("---Done building benchmarks")
 
 
