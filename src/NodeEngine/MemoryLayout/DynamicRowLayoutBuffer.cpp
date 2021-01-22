@@ -18,11 +18,11 @@
 
 namespace NES::NodeEngine {
 
-uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField) {
+uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) {
 
     auto fieldOffSets = dynamicRowLayout->getFieldOffSets();
     auto recordSize = dynamicRowLayout->getRecordSize();
-    NES_VERIFY(jthField < fieldOffSets.size(), "jthField" << jthField << " is larger than fieldOffsets.size() " << fieldOffSets.size());
+    if (boundaryChecks) NES_VERIFY(jthField < fieldOffSets.size(), "jthField" << jthField << " is larger than fieldOffsets.size() " << fieldOffSets.size());
 
     auto offSet = (ithRecord * recordSize) + fieldOffSets[jthField];
     NES_DEBUG("DynamicColumnLayoutBuffer.calcOffset: offSet = " << offSet);

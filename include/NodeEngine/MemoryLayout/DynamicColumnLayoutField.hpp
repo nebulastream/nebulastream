@@ -39,16 +39,16 @@ class DynamicColumnLayoutField {
 
 template <class T, bool boundaryChecks>
 inline NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks> NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer) {
-    if (boundaryChecks) NES_VERIFY(layoutBuffer->getFieldSizes().size() > fieldIndex, "fieldIndex out of bounds! " << layoutBuffer->getFieldSizes().size() << " >= " << fieldIndex);
+    if (boundaryChecks) NES_VERIFY(fieldIndex < layoutBuffer->getFieldSizes().size(), "fieldIndex out of bounds! " << layoutBuffer->getFieldSizes().size() << " >= " << fieldIndex);
 
-    T* basePointer = reinterpret_cast<T*>(&(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex));
+    T* basePointer = reinterpret_cast<T*>(&(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks));
     NES_DEBUG("DynamicRowLayout: basePointer = " << std::hex << basePointer);
     return DynamicColumnLayoutField<T, boundaryChecks>(basePointer, layoutBuffer);
 }
 
 template <class T, bool boundaryChecks>
 inline T NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
-    if (boundaryChecks) NES_VERIFY(dynamicColumnLayoutBuffer->getCapacity() > recordIndex, "recordIndex out of bounds!" << dynamicColumnLayoutBuffer->getCapacity() << " >= " << recordIndex);
+    if (boundaryChecks) NES_VERIFY(recordIndex < dynamicColumnLayoutBuffer->getCapacity(), "recordIndex out of bounds!" << dynamicColumnLayoutBuffer->getCapacity() << " >= " << recordIndex);
 
     return *(basePointer + recordIndex);
 }

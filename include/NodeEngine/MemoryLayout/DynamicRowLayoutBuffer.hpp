@@ -27,7 +27,7 @@ namespace NES::NodeEngine {
 
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField) override;
+    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) override;
     DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout);
     NES::NodeEngine::FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
     const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout->getFieldOffSets(); }
@@ -36,14 +36,16 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @tparam Types
      * @param record
      */
-    template<typename... Types> std::tuple<Types...> readRecord(uint64_t recordIndex);
+    template<bool boundaryChecks, typename... Types>
+    std::tuple<Types...> readRecord(uint64_t recordIndex);
 
     /**
      * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
      * @tparam Types
      * @param record
      */
-    template<typename... Types> void pushRecord(std::tuple<Types...> record);
+    template<bool boundaryChecks, typename... Types>
+    void pushRecord(std::tuple<Types...> record);
 
   private:
     DynamicRowLayoutPtr dynamicRowLayout;
@@ -53,28 +55,26 @@ typedef std::unique_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
 typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
 
 
-template<typename... Types>
+template<bool boundaryChecks, typename... Types>
 void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
-    uint64_t offSet = calcOffset(numberOfRecords, 0);
+    uint64_t offSet = calcOffset(numberOfRecords, 0, boundaryChecks);
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
     auto fieldSizes = dynamicRowLayout->getFieldSizes();
     auto address = &(byteBuffer[offSet]);
     size_t I = 0;
-//    writeTupleToBufferRowWise(record, &(byteBuffer[offSet]), fieldSizes);
     std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(address, &args, fieldSizes[I]), address = address + fieldSizes[I], ++I), ...);}, record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
 }
 
-template<typename... Types>
+template<bool boundaryChecks, typename... Types>
 std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
-    uint64_t offSet = calcOffset(recordIndex, 0);
+    uint64_t offSet = calcOffset(recordIndex, 0, boundaryChecks);
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
 
     std::tuple<Types...> retTuple;
     auto fieldSizes = dynamicRowLayout->getFieldSizes();
 
-//    readTupleFromBufferRowWise(retTuple, &(byteBuffer[offSet]), fieldSizes);
     auto address = &(byteBuffer[offSet]);
     size_t I = 0;
     std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(&args, address, fieldSizes[I]), address = address + fieldSizes[I], ++I), ...);}, retTuple);
