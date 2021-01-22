@@ -56,6 +56,7 @@ SchemaPtr BinaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
 bool BinaryOperatorNode::inferSchema() {
 
+    distinctSchemas.clear();
     //Check the number of child operators
     if (children.size() < 2) {
         NES_ERROR("BinaryOperatorNode: this operator should have at least two child operators");
@@ -71,37 +72,23 @@ bool BinaryOperatorNode::inferSchema() {
     }
 
     //Identify different type of schemas from children operators
-    std::map<std::string, SchemaPtr> binaryOperatorSchemaMap;
     for (auto& child : children) {
         auto childOutputSchema = child->as<OperatorNode>()->getOutputSchema();
-        std::string qualifierName = childOutputSchema->getQualifierName();
-        if (binaryOperatorSchemaMap.find(qualifierName) == binaryOperatorSchemaMap.end()) {
-            binaryOperatorSchemaMap[qualifierName] = childOutputSchema;
-        } else {
-            auto matchedSchema = binaryOperatorSchemaMap[qualifierName];
-            if (!matchedSchema->equals(childOutputSchema)) {
-                throw TypeInferenceException(
-                    "BinaryOperatorNode: Found schema with same qualifier with different schemas. Qualifier name: "
-                    + qualifierName + " Matched schema name: " + matchedSchema->toString()
-                    + " Input schema name: " + childOutputSchema->toString());
-            }
+
+        auto found = std::find_if(distinctSchemas.begin(), distinctSchemas.end(), [&](SchemaPtr distinctSchema) {
+            return childOutputSchema->equals(distinctSchema, false);
+        });
+
+        if (found == distinctSchemas.end()) {
+            distinctSchemas.push_back(*found);
         }
     }
 
     //validate that only two different type of schema were present
-    if (binaryOperatorSchemaMap.size() != 2) {
-        throw TypeInferenceException("BinaryOperatorNode: Found " + std::to_string(binaryOperatorSchemaMap.size())
+    if (distinctSchemas.size() != 2) {
+        throw TypeInferenceException("BinaryOperatorNode: Found " + std::to_string(distinctSchemas.size())
                                      + " distinct schemas but expected only 2.");
     }
-
-    //Assign left and right schema from schema defined in binary schema map
-    auto schemaIterator = binaryOperatorSchemaMap.begin();
-    leftInputSchema->clear();
-    leftInputSchema->copyFields(schemaIterator->second);
-    schemaIterator++;
-    rightInputSchema->clear();
-    rightInputSchema->copyFields(schemaIterator->second);
-    NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
     return true;
 }
 

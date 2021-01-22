@@ -90,6 +90,7 @@ class BinaryOperatorNode : public LogicalOperatorNode {
     SchemaPtr leftInputSchema;
     SchemaPtr rightInputSchema;
     SchemaPtr outputSchema;
+    std::vector<SchemaPtr> distinctSchemas;
 };
 
 }// namespace NES

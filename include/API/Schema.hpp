@@ -96,19 +96,10 @@ class Schema {
 
     /**
      * @brief Checks if an attribute with the input field name is defined in the schema
-     * @warning: a field name with $ sign may produce incorrect result
-     * @param fieldName: the field name
-     * @return bool: true if present else false
+     * @param fieldName: fully or partly qualified field name
+     * @return AttributeFieldPtr: pointer to attribute field if present else null pointer
      */
-    bool hasFieldName(const std::string& fieldName);
-
-    /**
-     * @brief Checks if an attribute with the input field name is defined in the schema or not
-     * @warning: a field name with $ sign may produce incorrect result
-     * @param fullyQualifiedFieldName: the input fully qualified filed name
-     * @return bool: true if present else false
-     */
-    bool hasFullyQualifiedFieldName(const std::string& fullyQualifiedFieldName);
+    AttributeFieldPtr hasFieldName(const std::string& fieldName);
 
     /**
      * @brief Checks if attribute field name is defined in the schema and returns its index.
@@ -161,17 +152,17 @@ class Schema {
 
     const std::string toString() const;
 
-    /**
-     * @brief Set the qualifier name of the schema used for schema name resolution
-     * @param qualifierName : the qualifier name without name separator
-     */
-    void setQualifierName(std::string qualifierName);
-
-    /**
-     * @brief Get the qualifier name for the schema
-     * @return the qualifier name
-     */
-    const std::string& getQualifierName() const;
+//    /**
+//     * @brief Set the qualifier name of the schema used for schema name resolution
+//     * @param qualifierName : the qualifier name without name separator
+//     */
+//    void addQualifierName(std::string qualifierName);
+//
+//    /**
+//     * @brief Get the qualifier name for the schema
+//     * @return the qualifier name
+//     */
+//    const std::vector<std::string>& getQualifierNames() const;
 
     /**
      * @brief Remove all fields and qualifying name
@@ -179,9 +170,9 @@ class Schema {
     void clear();
 
     std::vector<AttributeFieldPtr> fields;
-
-  private:
-    std::string qualifierName;
+//
+//  private:
+//    std::vector<std::string> qualifierNames;
 };
 
 AttributeFieldPtr createField(std::string name, BasicType type);

@@ -55,7 +55,7 @@ void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
         stamp = field->getDataType();
         return;
     } else if(schema->hasFieldName(fieldName)) {
-        fieldName = schema->getQualifierName() + fieldName;
+        fieldName = schema->getQualifierNames() + fieldName;
         auto field = schema->get(fieldName);
         stamp = field->getDataType();
         return;

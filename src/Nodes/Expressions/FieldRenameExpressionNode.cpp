@@ -54,12 +54,12 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
 
     //Detect if user has provided fully qualified name
     if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        fieldName = schema->getQualifierName() + fieldName;
+        fieldName = schema->getQualifierNames() + fieldName;
     }
 
     //Detect if user has provided fully qualified nam
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        newFieldName = schema->getQualifierName() + newFieldName;
+        newFieldName = schema->getQualifierNames() + newFieldName;
     }
 
     if (fieldName == newFieldName) {
