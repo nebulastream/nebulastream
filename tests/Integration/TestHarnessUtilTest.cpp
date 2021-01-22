@@ -15,8 +15,8 @@
 */
 #include <Util/Logger.hpp>
 #include <Util/TestHarness.hpp>
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 namespace NES {
 
@@ -63,19 +63,19 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
         uint64_t timestamp;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const & rhs) const {
-            return (key == rhs.key &&
-                    value==rhs.value &&
-                    timestamp == rhs.timestamp);
-        }
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
 
     std::vector<Output> expectedOutput = {{40, 40, 40},
-                                                {21,21,21},
-                                                {30,30,30,},
-                                                {71, 71, 71}};
+                                          {21, 21, 21},
+                                          {
+                                              30,
+                                              30,
+                                              30,
+                                          },
+                                          {71, 71, 71}};
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -92,9 +92,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -106,10 +106,10 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
-    testHarness.pushElement<Car>({40,40,40},0);
-    testHarness.pushElement<Car>({30,30,30},0);
-    testHarness.pushElement<Car>({71,71,71},1);
-    testHarness.pushElement<Car>({21,21,21},1);
+    testHarness.pushElement<Car>({40, 40, 40}, 0);
+    testHarness.pushElement<Car>({30, 30, 30}, 0);
+    testHarness.pushElement<Car>({71, 71, 71}, 1);
+    testHarness.pushElement<Car>({21, 21, 21}, 1);
 
     struct Output {
         uint32_t key;
@@ -117,18 +117,18 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
         uint64_t timestamp;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const & rhs) const {
-            return (key == rhs.key &&
-                    value==rhs.value &&
-                    timestamp == rhs.timestamp);
-        }
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
 
     std::vector<Output> expectedOutput = {{40, 40, 40},
-                                          {21,21,21},
-                                          {30,30,30,},
+                                          {21, 21, 21},
+                                          {
+                                              30,
+                                              30,
+                                              30,
+                                          },
                                           {71, 71, 71}};
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -152,14 +152,14 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto truckSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                           ->addField("key", DataTypeFactory::createUInt32())
+                           ->addField("value", DataTypeFactory::createUInt32())
+                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
@@ -172,10 +172,10 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
-    testHarness.pushElement<Car>({40,40,40},0);
-    testHarness.pushElement<Car>({30,30,30},0);
-    testHarness.pushElement<Truck>({71,71,71},1);
-    testHarness.pushElement<Truck>({21,21,21},1);
+    testHarness.pushElement<Car>({40, 40, 40}, 0);
+    testHarness.pushElement<Car>({30, 30, 30}, 0);
+    testHarness.pushElement<Truck>({71, 71, 71}, 1);
+    testHarness.pushElement<Truck>({21, 21, 21}, 1);
 
     struct Output {
         uint32_t key;
@@ -183,18 +183,18 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
         uint64_t timestamp;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const & rhs) const {
-            return (key == rhs.key &&
-                    value==rhs.value &&
-                    timestamp == rhs.timestamp);
-        }
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
 
     std::vector<Output> expectedOutput = {{40, 40, 40},
-                                          {21,21,21},
-                                          {30,30,30,},
+                                          {21, 21, 21},
+                                          {
+                                              30,
+                                              30,
+                                              30,
+                                          },
                                           {71, 71, 71}};
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -222,11 +222,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
         uint64_t timestamp;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const & rhs) const {
-            return (key == rhs.key &&
-                    value==rhs.value &&
-                    timestamp == rhs.timestamp);
-        }
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
     EXPECT_THROW(testHarness.getOutput<Output>(1), std::runtime_error);
 }

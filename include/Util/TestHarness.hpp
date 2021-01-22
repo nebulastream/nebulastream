@@ -179,14 +179,14 @@ class TestHarness {
         }
 
         // check the length of the output file
-        ifs.seekg (0, ifs.end);
+        ifs.seekg(0, ifs.end);
         auto length = ifs.tellg();
-        ifs.seekg (0, ifs.beg);
+        ifs.seekg(0, ifs.beg);
 
         // read the binary output as a vector of T
         auto* buff = reinterpret_cast<char*>(malloc(length));
         ifs.read(buff, length);
-        std::vector<T> actualOutput(reinterpret_cast<T*>(buff), reinterpret_cast<T*>(buff)+ length/sizeof(T));
+        std::vector<T> actualOutput(reinterpret_cast<T*>(buff), reinterpret_cast<T*>(buff) + length / sizeof(T));
 
         for (NesWorkerPtr wrk : workerPtrs) {
             wrk->stop(false);
