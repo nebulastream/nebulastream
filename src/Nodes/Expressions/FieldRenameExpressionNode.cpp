@@ -51,6 +51,7 @@ const std::string FieldRenameExpressionNode::toString() const {
 
 void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
     //Detect if user has provided fully qualified name
+    FieldAccessExpressionNode::inferStamp(schema);
     auto fieldAttribute = schema->hasFieldName(fieldName);
     if (!fieldAttribute) {
         throw InvalidFieldException("Original field with name " + fieldName + " does not exists in the schema "
@@ -63,6 +64,11 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
                   + schema->toString() + ". Can't use the name of an existing field.");
         throw InvalidFieldException("New field with name " + newFieldName + " already exists in the schema "
                                     + schema->toString());
+    }
+
+    //Check if the new field is already fully qualified if not then make it fully qualified
+    if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        newFieldName = fieldName.substr(0, fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
     }
 
     if (fieldName == newFieldName) {

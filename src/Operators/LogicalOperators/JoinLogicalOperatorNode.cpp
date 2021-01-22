@@ -61,17 +61,20 @@ bool JoinLogicalOperatorNode::inferSchema() {
     //Find the schema for left join key
     FieldAccessExpressionNodePtr leftJoinKey = joinDefinition->getLeftJoinKey();
     auto leftJoinKeyName = leftJoinKey->getFieldName();
-    for (auto& schema : distinctSchemas) {
-        if (schema->hasFieldName(leftJoinKeyName)) {
-            leftInputSchema->copyFields(schema);
+    for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
+        if ((*itr)->hasFieldName(leftJoinKeyName)) {
+            leftInputSchema->copyFields(*itr);
             leftJoinKey->inferStamp(leftInputSchema);
+            //remove the schema from distinct schema list
+            distinctSchemas.erase(itr);
             break;
         }
+        itr++;
     }
 
     //Find the schema for right join key
     FieldAccessExpressionNodePtr rightJoinKey = joinDefinition->getRightJoinKey();
-    auto rightJoinKeyName = leftJoinKey->getFieldName();
+    auto rightJoinKeyName = rightJoinKey->getFieldName();
     for (auto& schema : distinctSchemas) {
         if (schema->hasFieldName(rightJoinKeyName)) {
             rightInputSchema->copyFields(schema);
@@ -79,8 +82,23 @@ bool JoinLogicalOperatorNode::inferSchema() {
         }
     }
 
+    //Check if left input schema was identified
+    if (!leftInputSchema) {
+        NES_ERROR("JoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : "
+                  + leftJoinKeyName);
+        throw TypeInferenceException("JoinLogicalOperatorNode: Left input schema is not initialized.");
+    }
+
+    //Check if right input schema was identified
+    if (!rightInputSchema) {
+        NES_ERROR("JoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : "
+                  + rightJoinKeyName);
+        throw TypeInferenceException("JoinLogicalOperatorNode: Right input schema is not initialized.");
+    }
+
     //Check that both left and right schema should be different
     if (rightInputSchema->equals(leftInputSchema, false)) {
+        NES_ERROR("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
         throw TypeInferenceException("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
     }
 
@@ -88,7 +106,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();
-    outputSchema->addField(createField("_$start", UINT64))->addField(createField("_$end", UINT64));
+    outputSchema->addField(createField("_$start", UINT64));
+    outputSchema->addField(createField("_$end", UINT64));
 
     // create dynamic fields to store all fields from left and right streams
     for (auto field : leftInputSchema->fields) {

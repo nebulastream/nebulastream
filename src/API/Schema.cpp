@@ -118,8 +118,9 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
         }
         return true;
     } else {
-        for (AttributeFieldPtr attr : fields) {
-            if (!(schema->get(attr->name)->isEqual(attr))) {
+        for (AttributeFieldPtr fieldAttribute : fields) {
+            auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->name);
+            if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
                 return false;
             }
         }
@@ -170,10 +171,12 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     std::vector<AttributeFieldPtr> matchedFields;
     for (auto& field : fields) {
         std::string& fullyQualifiedFieldName = field->name;
-        bool found =
-            fullyQualifiedFieldName.compare(fullyQualifiedFieldName.length() - fieldName.length(), fieldName.length(), fieldName);
-        if (found) {
-            matchedFields.push_back(field);
+        if (fieldName.length() <= fullyQualifiedFieldName.length()) {
+            auto startingPos = fullyQualifiedFieldName.length() - fieldName.length();
+            auto found = fullyQualifiedFieldName.compare(startingPos, fieldName.length(), fieldName);
+            if (found == 0) {
+                matchedFields.push_back(field);
+            }
         }
     }
     //Check how many matching fields were found and raise appropriate exception
@@ -186,7 +189,5 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     return nullptr;
 }
 
-void Schema::clear() {
-    fields.clear();
-}
+void Schema::clear() { fields.clear(); }
 }// namespace NES
