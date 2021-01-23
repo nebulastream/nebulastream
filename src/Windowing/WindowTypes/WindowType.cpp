@@ -34,15 +34,19 @@ bool WindowType::isSlidingWindow() { return false; }
 bool WindowType::isTumblingWindow() { return false; }
 
 bool WindowType::inferStamp(SchemaPtr schema) {
-    auto fieldName = timeCharacteristic->getField()->name;
-    auto existingField = schema->hasFieldName(fieldName);
-    if (existingField) {
-        timeCharacteristic->getField()->name = existingField->name;
-        return false;
-    }
 
-    NES_ERROR("TumblingWindow using a non existing time field " + fieldName);
-    throw InvalidFieldException("TumblingWindow using a non existing time field " + fieldName);
+    if (timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
+        auto fieldName = timeCharacteristic->getField()->name;
+        auto existingField = schema->hasFieldName(fieldName);
+        if (existingField) {
+            timeCharacteristic->getField()->name = existingField->name;
+            return false;
+        }
+
+        NES_ERROR("TumblingWindow using a non existing time field " + fieldName);
+        throw InvalidFieldException("TumblingWindow using a non existing time field " + fieldName);
+    }
+    return true;
 }
 
 }// namespace NES::Windowing

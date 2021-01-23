@@ -138,7 +138,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
 /*
  * Testing testHarness utility using two logical source with one physical source each
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
     struct Car {
         uint32_t key;
         uint32_t value;

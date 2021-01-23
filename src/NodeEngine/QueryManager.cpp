@@ -141,7 +141,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             queryMapToOperatorId[qep->getQueryId()].push_back(source->getOperatorId());
             if (isBinaryOperator) {
                 NES_ASSERT(qep->getPipelines().size() >= 2, "Binary operator must have at least two pipelines");
-                if (source->getIsLeftSide()) {
+                if (true) {
                     NES_DEBUG("QueryManager: isleftSide" << qep << " to Source" << source->getOperatorId());
                     operatorIdToPipelineStage[source->getOperatorId()] = 1;
                 } else {
