@@ -496,8 +496,8 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     std::cerr << "NodeEngine failed fatally" << std::endl; // it's necessary for testing and it wont harm us to write to stderr
 }
 
-void NodeEngine::onException(const std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR("onException: exception=" << exception->what() << " callstack=\n" << callstack);
+void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
+    NES_ERROR("onFatalException: exception=" << exception->what() << " callstack=\n" << callstack);
     // TODO make this work next sprint
 //    stop(true);
 //    std::exit(1);

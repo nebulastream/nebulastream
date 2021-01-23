@@ -34,11 +34,11 @@ class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListen
     virtual void onFatalError(int signalNumber, std::string) = 0;
 
     /**
-     * @brief onException shall be called when an exception is caught
+     * @brief onFatalException shall be called when an exception is caught
      * @param exception the caught exception
      * @param stacktrace the stacktrace of the error
      */
-    virtual void onException(const std::shared_ptr<std::exception>, std::string) = 0;
+    virtual void onFatalException(const std::shared_ptr<std::exception>, std::string) = 0;
 };
 
 }

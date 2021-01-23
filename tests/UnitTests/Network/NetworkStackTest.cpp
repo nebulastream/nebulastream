@@ -60,16 +60,16 @@ class NetworkStackTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("NetworkStackTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup NetworkStackTest test class.");
+        NES_INFO("SetUpTestCase NetworkStackTest");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down NetworkStackTest class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("TearDownTestCase NetworkStackTest."); }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override { NES_INFO("Setup NetworkStackTest test case."); }
+    void SetUp() override { NES_INFO("Setup NetworkStackTest"); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down NetworkStackTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("TearDown NetworkStackTest"); }
 };
 
 class TestSink : public SinkMedium {
@@ -633,6 +633,9 @@ TEST_F(NetworkStackTest, testNetworkSource) {
     ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionCounter(nesPartition), 0);
     ASSERT_TRUE(networkSource->stop());
     ASSERT_FALSE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
+    nodeEngine->stop();
+    networkSource = nullptr;
+    nodeEngine = nullptr;
 }
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
@@ -650,6 +653,9 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
                                                      nodeEngine->getBufferManager(), nullptr);
 
     ASSERT_TRUE(networkSource->stop());
+    nodeEngine->stop();
+    networkSource.reset();
+    nodeEngine.reset();
 }
 
 template<typename MockedNodeEngine, typename... ExtraParameters>
@@ -668,6 +674,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         return std::make_shared<MockedNodeEngine>(std::move(streamConf), std::move(bufferManager), std::move(queryManager),
                                                   std::move(networkManagerCreator), std::move(partitionManager),
                                                   std::move(compiler), std::forward<ExtraParameters>(extraParams)...);
+
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
@@ -771,6 +778,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
     }
     ASSERT_EQ(bufferCnt, numSendingThreads * totalNumBuffer);
     ASSERT_FALSE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
+    nodeEngine->stop();
+    nodeEngine = nullptr;
 }
 
 TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {

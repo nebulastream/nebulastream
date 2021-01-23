@@ -82,7 +82,7 @@ void invokeErrorHandlers(const std::string buffer, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     auto exception = std::make_shared<NesRuntimeException>(buffer);
     for (auto& listener : globalErrorListeners) {
-        listener->onException(exception, stacktrace);
+        listener->onFatalException(exception, stacktrace);
     }
     std::exit(1);
 }
@@ -133,7 +133,7 @@ void nesTerminateHandler() {
     {
         std::unique_lock lock(globalErrorListenerMutex);
         for (auto& listener : globalErrorListeners) {
-            listener->onException(currentException, stacktrace);
+            listener->onFatalException(currentException, stacktrace);
         }
     }
     std::exit(1);
@@ -157,7 +157,7 @@ void nesUnexpectedException() {
     {
         std::unique_lock lock(globalErrorListenerMutex);
         for (auto& listener : globalErrorListeners) {
-            listener->onException(currentException, stacktrace);
+            listener->onFatalException(currentException, stacktrace);
         }
     }
     std::exit(1);

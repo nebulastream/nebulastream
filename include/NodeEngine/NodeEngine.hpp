@@ -108,7 +108,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public NES::detail:
      * @param exception
      * @param callstack
      */
-    void onException(const std::shared_ptr<std::exception> exception, std::string callstack) override;
+    void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override;
 
     /**
      * @brief deploy registers and starts a query

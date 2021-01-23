@@ -597,7 +597,7 @@ void assertKiller() {
                                   uint64_t nodeEngineId)
             : NodeEngine(config, std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
 
-        void onException(const std::shared_ptr<std::exception> exception, std::string) override {
+        void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             ASSERT_TRUE(strcmp(exception->what(), "Failed assertion on false error message: this will fail now with a NesRuntimeException") == 0);
         }
     };
@@ -620,7 +620,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   uint64_t nodeEngineId)
             : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
 
-        void onException(const std::shared_ptr<std::exception> exception, std::string) override {
+        void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             auto str = exception->what();
             NES_ERROR(str);
             ASSERT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
@@ -676,7 +676,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   uint64_t nodeEngineId)
             : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
 
-        void onException(const std::shared_ptr<std::exception> exception, std::string) override {
+        void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             auto str = exception->what();
             NES_ERROR(str);
             ASSERT_TRUE(strcmp(str, "Unknown exception caught") == 0);

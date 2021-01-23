@@ -234,7 +234,7 @@ namespace Yaml
     * @see Exception
     *
     */
-    class OperationException : public Exception
+    class OperationFatalException : public Exception
     {
 
     public:
@@ -245,7 +245,7 @@ namespace Yaml
         * @param message Exception message.
         *
         */
-        OperationException(const std::string & message);
+        OperationFatalException(const std::string & message);
 
     };
 
@@ -596,7 +596,7 @@ namespace Yaml
     *
     * @throw InternalException  An internal error occurred.
     * @throw ParsingException   Invalid input YAML data.
-    * @throw OperationException If filename or buffer pointer is invalid.
+    * @throw OperationFatalException If filename or buffer pointer is invalid.
     *
     */
     void Parse(Node & root, const char * filename);
@@ -645,7 +645,7 @@ namespace Yaml
     * @param config     Serialization configurations.
     *
     * @throw InternalException  An internal error occurred.
-    * @throw OperationException If filename or buffer pointer is invalid.
+    * @throw OperationFatalException If filename or buffer pointer is invalid.
     *                           If config is invalid.
     *
     */
