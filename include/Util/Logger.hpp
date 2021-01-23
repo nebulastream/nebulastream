@@ -192,6 +192,10 @@ namespace NodeEngine {
 void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 }
 }// namespace NES
+
+/// I am aware that we do not like __ before variable names but here we need them
+/// to avoid name collions, e.g., __buffer, __stacktrace
+/// that should not be a problem because of the scope, however, better be safe than sorry :P
 #ifdef NES_DEBUG
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \

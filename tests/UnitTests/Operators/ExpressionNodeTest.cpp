@@ -32,6 +32,9 @@ namespace NES {
 
 class ExpressionNodeTest : public testing::Test {
   public:
+
+    static void SetUpTestCase() { setupLogging(); }
+
     void SetUp() {}
 
     void TearDown() { NES_DEBUG("Tear down ExpressionNodeTest Test."); }

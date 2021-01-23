@@ -47,7 +47,7 @@ void NegateExpressionNode::inferStamp(SchemaPtr schema) {
     ExpressionNode::inferStamp(schema);
     // check if children stamp is correct
     if (!child()->isPredicate()) {
-        NES_THROW_RUNTIME_ERROR("Negate Expression Node: the stamp of child must be boolean, but was: "
+        throw std::logic_error("Negate Expression Node: the stamp of child must be boolean, but was: "
                                 + child()->getStamp()->toString());
     }
 }

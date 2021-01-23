@@ -184,7 +184,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         // Translate all operator sink to the physical sink and add them to the query plan
 
         for (const auto& sink : sinkOperators) {
-            NES_ASSERT2(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
+            NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
@@ -197,7 +197,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         return registerQueryInNodeEngine(qepBuilder.build());
     } catch (std::exception& error) {
         NES_ERROR("Error while building query execution plan " << error.what());
-        NES_ASSERT2(false, "Error while building query execution plan " << error.what());
+        NES_ASSERT(false, "Error while building query execution plan " << error.what());
         return false;
     }
 }
@@ -208,7 +208,7 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
     NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId
                                                              << " querySubPlanId =" << querySubPlanId);
-    NES_ASSERT2(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
+    NES_ASSERT(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         auto found = queryIdToQuerySubPlanIds.find(queryId);
         if (found == queryIdToQuerySubPlanIds.end()) {
