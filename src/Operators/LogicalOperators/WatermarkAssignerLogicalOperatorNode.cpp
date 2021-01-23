@@ -16,8 +16,6 @@
 
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 
@@ -64,7 +62,9 @@ Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::
 }
 
 bool WatermarkAssignerLogicalOperatorNode::inferSchema() {
-    UnaryOperatorNode::inferSchema();
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
     watermarkStrategyDescriptor->inferStamp(inputSchema);
     return true;
 }

@@ -56,8 +56,9 @@ OperatorNodePtr CentralWindowOperator::copy() {
     return copy;
 }
 bool CentralWindowOperator::inferSchema() {
-
-    WindowOperatorNode::inferSchema();
+    if (!WindowOperatorNode::inferSchema()) {
+        return false;
+    }
     // infer the default input and output schema
     NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema "
               << inputSchema->toString());

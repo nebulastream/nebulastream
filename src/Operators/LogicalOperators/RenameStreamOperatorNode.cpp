@@ -48,8 +48,9 @@ std::string RenameStreamOperatorNode::getStringBasedSignature() {
 }
 
 bool RenameStreamOperatorNode::inferSchema() {
-
-    UnaryOperatorNode::inferSchema();
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
     //Update output schema by changing the qualifier and corresponding attribute names
     auto newQualifierName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (auto& field : outputSchema->fields) {

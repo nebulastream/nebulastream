@@ -68,7 +68,9 @@ OperatorNodePtr WindowLogicalOperatorNode::copy() {
 }
 
 bool WindowLogicalOperatorNode::inferSchema() {
-    WindowOperatorNode::inferSchema();
+    if (!WindowOperatorNode::inferSchema()) {
+        return false;
+    }
     // infer the default input and output schema
     NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema "
               << inputSchema->toString());
