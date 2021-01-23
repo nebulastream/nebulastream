@@ -43,6 +43,7 @@ QueryCompilerPtr QueryCompiler::create() { return std::make_shared<QueryCompiler
  */
 
 void QueryCompiler::compile(GeneratedQueryExecutionPlanBuilder& qepBuilder, OperatorNodePtr queryPlan) {
+    NES_DEBUG("Generate code for query plan " + queryPlan->toString());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
     queryPlan->as<GeneratableOperator>()->produce(codeGenerator, context);

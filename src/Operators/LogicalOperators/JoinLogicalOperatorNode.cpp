@@ -113,6 +113,10 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
     NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
 
+    //Infer stamp of window definition
+    auto windowType = joinDefinition->getWindowType();
+    windowType->inferStamp(leftInputSchema);
+
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();
     outputSchema->addField(createField("_$start", UINT64));
