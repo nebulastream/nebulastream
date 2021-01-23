@@ -86,7 +86,7 @@ InternalException::InternalException(const std::string& message) : Exception(mes
 
 ParsingException::ParsingException(const std::string& message) : Exception(message, ParsingError) {}
 
-OperationException::OperationException(const std::string& message) : Exception(message, OperationError) {}
+OperationFatalException::OperationFatalException(const std::string& message) : Exception(message, OperationError) {}
 
 class TypeImp {
 
@@ -1590,7 +1590,7 @@ class ParseImp {
 void Parse(Node& root, const char* filename) {
     std::ifstream f(filename, std::ifstream::binary);
     if (f.is_open() == false) {
-        throw OperationException(g_ErrorCannotOpenFile);
+        throw OperationFatalException(g_ErrorCannotOpenFile);
     }
 
     f.seekg(0, f.end);
@@ -1640,7 +1640,7 @@ void Serialize(const Node& root, const char* filename, const SerializeConfig& co
 
     std::ofstream f(filename);
     if (f.is_open() == false) {
-        throw OperationException(g_ErrorCannotOpenFile);
+        throw OperationFatalException(g_ErrorCannotOpenFile);
     }
 
     f.write(stream.str().c_str(), stream.str().size());
@@ -1801,7 +1801,7 @@ static void SerializeLoop(const Node& node, std::iostream& stream, bool useLevel
 
 void Serialize(const Node& root, std::iostream& stream, const SerializeConfig& config) {
     if (config.SpaceIndentation < 2) {
-        throw OperationException(g_ErrorIndentation);
+        throw OperationFatalException(g_ErrorIndentation);
     }
 
     SerializeLoop(root, stream, false, 0, config);
