@@ -101,7 +101,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 
     NES_INFO("JoinDeploymentTest: Submit query");
     string query =
-        R"(Query::from("window").join(Query::from("window"), Attribute("id"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
+        R"(Query::from("window").as("w1").join(Query::from("window").as("w2"), Attribute("id"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -113,8 +113,8 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_value:INTEGER,left_id:INTEGER,left_timestamp:INTEGER,"
-                             "right_value:INTEGER,right_id:INTEGER,right_timestamp:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,key:INTEGER,w1$value:INTEGER,w1$id:INTEGER,w1$timestamp:INTEGER,"
+                             "w2$value:INTEGER,w2$id:INTEGER,w2$timestamp:INTEGER\n"
                              "1000,2000,4,1,4,1002,1,4,1002\n"
                              "1000,2000,12,1,12,1001,1,12,1001\n"
                              "2000,3000,1,2,1,2000,2,1,2000\n"
