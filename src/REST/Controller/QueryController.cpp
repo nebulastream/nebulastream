@@ -60,6 +60,25 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                 internalServerErrorImpl(message);
             }
         });
+    } else if (path[1] == "operator-placement") {
+        NES_INFO("QueryController:: operator-placement");
+        message.extract_string(true).then([this, message](utility::string_t body) {
+          try {
+              // get the queryId from user input
+              string userRequest(body.begin(), body.end());
+
+              //Prepare the response
+              json::value restResponse{};
+              restResponse["operator-placement"] = json::value::string(globalExecutionPlan->getAsString());
+              successMessageImpl(message, restResponse);
+
+              successMessageImpl(message, restResponse);
+              return;
+          } catch (...) {
+              RuntimeUtils::printStackTrace();
+              internalServerErrorImpl(message);
+          }
+        });
     } else if (path[1] == "query-plan") {
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
