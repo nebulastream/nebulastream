@@ -116,33 +116,16 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
     if (rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());
-            op->setIsLeftOperator(false);
             rhsQueryPlan->appendOperatorAsNewRoot(op);
-            auto childs = op->getAndFlattenAllChildren(false);
-            for (auto& child : childs) {
-                child->as<OperatorNode>()->setIsLeftOperator(false);
-            }
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
                 Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0),
                 windowType->getTimeCharacteristic()->getTimeUnit()));
-            op->setIsLeftOperator(false);
             rhsQueryPlan->appendOperatorAsNewRoot(op);
-            auto childs = op->getAndFlattenAllChildren(false);
-            NES_DEBUG("set false for op id=" << op->getId());
-            for (auto& child : childs) {
-                child->as<OperatorNode>()->setIsLeftOperator(false);
-                NES_DEBUG("set false child for op id=" << child->as<OperatorNode>()->getId());
-            }
         }
     } else {
         auto op = rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
         NES_ASSERT(op.size() == 1, "Only one watermark assigner is allowed per pipeline");
-        op[0]->setIsLeftOperator(false);
-        auto childs = op[0]->getAndFlattenAllChildren(false);
-        for (auto& child : childs) {
-            child->as<OperatorNode>()->setIsLeftOperator(false);
-        }
     }
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges

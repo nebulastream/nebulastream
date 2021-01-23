@@ -41,10 +41,12 @@ QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
         NES_DEBUG("DistributeJoinRule::apply: found " << joinOps.size() << " join operators");
         for (auto& joinOp : joinOps) {
             NES_DEBUG("DistributeJoinRule::apply: join operator " << joinOp->toString());
+            auto leftInputSchema = joinOp->getLeftInputSchema();
             uint64_t edgesLeft = 0;
             uint64_t edgesRight = 0;
             for (auto& child : joinOp->getChildren()) {
-                if (child->as<OperatorNode>()->getIsLeftOperator()) {
+                auto childOperator = child->as<OperatorNode>();
+                if (childOperator->getOutputSchema()->equals(leftInputSchema, false)) {
                     edgesLeft++;
                 } else {
                     edgesRight++;

@@ -211,7 +211,5 @@ std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
 uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
 uint64_t DataSource::getGatheringInterval() const { return gatheringInterval; }
-bool DataSource::getIsLeftSide() const { return isLeftSide; }
-void DataSource::setIsLeftSide(bool isLeftSide) { DataSource::isLeftSide = isLeftSide; }
 
 }// namespace NES
