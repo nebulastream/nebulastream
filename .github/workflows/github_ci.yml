@@ -26,6 +26,10 @@ jobs:
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.7.0
+        with:
+          access_token: ${{ github.token }}
       - name: Run tests
         run: |
           docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
