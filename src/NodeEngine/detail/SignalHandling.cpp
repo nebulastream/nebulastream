@@ -22,6 +22,8 @@
 #include <memory>
 #include <mutex>
 
+/// the above code is experimental! Use it only if you know what you are doing and what the above code does!
+#ifdef NES_INTERCEPT_EXCEPTION
 #if defined(__GNUC__)
 extern "C" {
 void __cxa_throw(void* ex, std::type_info* info, void(_GLIBCXX_CDTOR_CALLABI* dest)(void*)) __attribute__((__noreturn__)) {
@@ -65,7 +67,7 @@ void __cxa_throw(void* ex, std::type_info* info, void(_GLIBCXX_CDTOR_CALLABI* de
 }
 }
 #endif
-
+#endif
 namespace NES::NodeEngine {
 
 /// this mutex protected the globalErrorListeners vector
