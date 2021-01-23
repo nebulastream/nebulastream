@@ -46,7 +46,6 @@ class YSBSource : public DefaultSource {
             ->addField("event_type", UINT64)
             ->addField("current_ms", UINT64)
             ->addField("ip", UINT64)
-
             ->addField("d1", UINT64)
             ->addField("d2", UINT64)
             ->addField("d3", UINT32)

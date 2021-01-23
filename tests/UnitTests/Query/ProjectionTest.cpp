@@ -70,9 +70,9 @@ class ProjectionTest : public testing::Test {
     void SetUp() {
         // create test input buffer
         testSchema = Schema::create()
-                         ->addField("id", BasicType::INT64)
-                         ->addField("one", BasicType::INT64)
-                         ->addField("value", BasicType::INT64);
+                         ->addField("test$id", BasicType::INT64)
+                         ->addField("test$one", BasicType::INT64)
+                         ->addField("test$value", BasicType::INT64);
     }
 
     /* Will be called before a test is executed. */
@@ -174,10 +174,10 @@ class WindowSource : public NES::DefaultSource {
                                 const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false,
                                 bool decreaseTime = false, int64_t timestamp = 5) {
         auto windowSchema = Schema::create()
-                                ->addField("key", BasicType::INT64)
-                                ->addField("value", BasicType::INT64)
-                                ->addField("ts", BasicType::UINT64)
-                                ->addField("empty", BasicType::UINT64);
+                                ->addField("test$key", BasicType::INT64)
+                                ->addField("test$value", BasicType::INT64)
+                                ->addField("test$ts", BasicType::UINT64)
+                                ->addField("test$empty", BasicType::UINT64);
         return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
                                               varyWatermark, decreaseTime, timestamp);
     }

@@ -185,9 +185,9 @@ target_link_libraries(logical-operator-node-tests nes ${GTEST_LIBRARIES})
 add_test(NAME logical-operator-node-tests COMMAND logical-operator-node-tests)
 
 # ExpressionNodeTest
-add_executable(predicate-node-tests "UnitTests/Operators/ExpressionNodeTest.cpp")
-target_link_libraries(predicate-node-tests nes ${GTEST_LIBRARIES})
-add_test(NAME predicate-node-tests COMMAND predicate-node-tests)
+add_executable(expression-node-test "UnitTests/Operators/ExpressionNodeTest.cpp")
+target_link_libraries(expression-node-test nes ${GTEST_LIBRARIES})
+add_test(NAME expression-node-test COMMAND expression-node-test)
 
 # QueryTest
 add_executable(query-tests "UnitTests/Catalogs/QueryTest.cpp")

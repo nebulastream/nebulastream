@@ -296,9 +296,11 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
 };
 
 const DataSourcePtr createWindowTestDataSource(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
-    DataSourcePtr source(std::make_shared<WindowTestingDataGeneratorSource>(
-        Schema::create()->addField("key", DataTypeFactory::createUInt64())->addField("value", DataTypeFactory::createUInt64()),
-        bPtr, dPtr, 10));
+    DataSourcePtr source(
+        std::make_shared<WindowTestingDataGeneratorSource>(Schema::create()
+                                                               ->addField("window$key", DataTypeFactory::createUInt64())
+                                                               ->addField("window$value", DataTypeFactory::createUInt64()),
+                                                           bPtr, dPtr, 10));
     return source;
 }
 
@@ -446,11 +448,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
 
     auto trigger = OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
+    auto windowDefinition =
+        LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64), sum,
+                                        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
 
@@ -483,11 +486,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
+    auto windowDefinition =
+        LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64), sum,
+                                        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
@@ -501,10 +505,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", UINT64)
-                                  ->addField("value", UINT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField("window$key", UINT64)
+                                  ->addField("window$value", UINT64);
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDefinition, windowOutputSchema);
@@ -545,12 +549,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    auto windowDefinition =
-        LogicalWindowDefinition::create(Attribute("key", BasicType::UINT64), sum,
-                                        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value")), Seconds(10)),
-                                        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
+    auto windowDefinition = LogicalWindowDefinition::create(
+        Attribute("window$key", BasicType::UINT64), sum,
+        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value")), Seconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
@@ -563,10 +567,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", UINT64)
-                                  ->addField("value", UINT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField("window$key", UINT64)
+                                  ->addField("window$value", UINT64);
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDefinition, windowOutputSchema);
@@ -606,11 +610,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTime
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("value"), Seconds()), Seconds(10)),
+        Attribute("window$key", BasicType::UINT64), sum,
+        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value"), Seconds()), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
@@ -624,10 +628,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTime
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", UINT64)
-                                  ->addField("value", UINT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField("window$key", UINT64)
+                                  ->addField("window$value", UINT64);
 
     // init window handler
 
@@ -673,10 +677,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
-    auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", BasicType::UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
+    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+    auto windowDefinition =
+        LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64), sum,
+                                        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
 
     auto aggregate =
         TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
@@ -691,10 +696,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", UINT64)
-                                  ->addField("value", UINT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField("window$key", UINT64)
+                                  ->addField("window$value", UINT64);
     // init window handler
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
@@ -730,9 +735,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
-                      ->addField(createField("start", UINT64))
-                      ->addField(createField("end", UINT64))
-                      ->addField(createField("cnt", UINT64))
+                      ->addField(createField("_$start", UINT64))
+                      ->addField(createField("_$end", UINT64))
+                      ->addField(createField("_$cnt", UINT64))
                       ->addField(createField("key", UINT64))
                       ->addField("value", UINT64);
 
@@ -762,8 +767,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
                                   ->addField("key", UINT64)
                                   ->addField("value", UINT64);
 
@@ -1083,22 +1088,22 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     auto distrType = DistributionCharacteristic::createCompleteWindowType();
     Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
-        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
-        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "window$key")->as<FieldAccessExpressionNode>(),
+        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "window$key")->as<FieldAccessExpressionNode>(),
         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)), distrType, triggerPolicy, triggerAction,
         1, 1);
 
     joinDef->updateStreamTypes(input_schema, input_schema);
 
     auto outputSchema = Schema::create()
-                            ->addField(createField("start", UINT64))
-                            ->addField(createField("end", UINT64))
-                            ->addField(AttributeField::create("key", joinDef->getLeftJoinKey()->getStamp()));
+                            ->addField(createField("_$start", UINT64))
+                            ->addField(createField("_$end", UINT64))
+                            ->addField(AttributeField::create("window$key", joinDef->getLeftJoinKey()->getStamp()));
     for (auto field : input_schema->fields) {
-        outputSchema = outputSchema->addField("left_" + field->name, field->getDataType());
+        outputSchema = outputSchema->addField(field->name, field->getDataType());
     }
     for (auto field : input_schema->fields) {
-        outputSchema = outputSchema->addField("right_" + field->name, field->getDataType());
+        outputSchema = outputSchema->addField(field->name, field->getDataType());
     }
     joinDef->updateOutputDefinition(outputSchema);
     auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
