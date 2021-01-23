@@ -156,9 +156,6 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
                               .setQuerySubPlanId(querySubPlanId)
                               .addOperatorQueryPlan(generatableOperatorPlan);
 
-        std::vector<WindowOperatorNodePtr> winOps = generatableOperatorPlan->getNodesByType<WindowOperatorNode>();
-        std::vector<JoinLogicalOperatorNodePtr> joinOps = generatableOperatorPlan->getNodesByType<JoinLogicalOperatorNode>();
-
         std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
@@ -172,7 +169,6 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             }
             auto legacySource =
                 ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, shared_from_this());
-            legacySource->setIsLeftSide(sourceDescriptor->getIsLeftOperator());
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }

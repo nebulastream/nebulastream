@@ -79,21 +79,20 @@ bool WindowLogicalOperatorNode::inferSchema() {
     auto windowType = windowDefinition->getWindowType();
     windowType->inferStamp(inputSchema);
 
+    //Construct output schema
+    outputSchema->clear();
+    outputSchema = outputSchema->addField(createField("_$start", UINT64))
+                       ->addField(createField("_$end", UINT64))
+                       ->addField(createField("_$cnt", UINT64));
+
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema =
-            Schema::create()
-                ->addField(createField("_$start", UINT64))
-                ->addField(createField("_$end", UINT64))
-                ->addField(createField("_$cnt", UINT64))
-                ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
-                                                  windowDefinition->getOnKey()->getStamp()))
-                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
-        return true;
-    } else {
-        NES_THROW_RUNTIME_ERROR("WindowLogicalOperatorNode : type inference for non keyed streams is not supported");
+        outputSchema->addField(
+            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
     }
+    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+                                                  windowAggregation->on()->getStamp()));
+    return true;
 }
 }// namespace NES

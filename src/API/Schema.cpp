@@ -168,12 +168,17 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
 
 AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     //Iterate over all qualifiers and look for field with fully qualified name
+    auto stringToMatch = fieldName;
+    if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        stringToMatch = ATTRIBUTE_NAME_SEPARATOR + fieldName;
+    }
+
     std::vector<AttributeFieldPtr> matchedFields;
     for (auto& field : fields) {
         std::string& fullyQualifiedFieldName = field->name;
-        if (fieldName.length() <= fullyQualifiedFieldName.length()) {
-            auto startingPos = fullyQualifiedFieldName.length() - fieldName.length();
-            auto found = fullyQualifiedFieldName.compare(startingPos, fieldName.length(), fieldName);
+        if (stringToMatch.length() <= fullyQualifiedFieldName.length()) {
+            auto startingPos = fullyQualifiedFieldName.length() - stringToMatch.length();
+            auto found = fullyQualifiedFieldName.compare(startingPos, stringToMatch.length(), stringToMatch);
             if (found == 0) {
                 matchedFields.push_back(field);
             }
