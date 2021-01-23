@@ -114,7 +114,7 @@ TEST_F(DeepTopologyHierarchyTest, testOutputAndAllSensors) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -272,7 +272,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -437,7 +437,7 @@ TEST_F(DeepTopologyHierarchyTest, testOutputAndNoSensors) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -585,7 +585,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -775,7 +775,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -1003,7 +1003,7 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "val3:INTEGER\n"
+    string expectedContent = "testStream$val3:INTEGER\n"
                              "3\n"
                              "4\n"
                              "3\n"
@@ -1194,7 +1194,7 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "1000,2000,1,68\n"
                              "2000,3000,2,112\n";
 
@@ -1265,7 +1265,7 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testMergeThreeLevel) {
+TEST_F(DeepTopologyHierarchyTest, DISABLED_testMergeThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1380,7 +1380,7 @@ TEST_F(DeepTopologyHierarchyTest, testMergeThreeLevel) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "car$id:INTEGER,car$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -1561,7 +1561,7 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testSimpleQueryWithTwoLevelTreeWithDe
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,value:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$value:INTEGER\n"
                              "0,2000,56\n"
                              "2000,4000,200\n";
 
