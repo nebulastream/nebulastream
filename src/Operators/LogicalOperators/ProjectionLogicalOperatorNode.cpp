@@ -61,7 +61,9 @@ std::string ProjectionLogicalOperatorNode::getStringBasedSignature() {
 }
 
 bool ProjectionLogicalOperatorNode::inferSchema() {
-    UnaryOperatorNode::inferSchema();
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
     NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString()
                             << " this proj=" << toString());
     outputSchema->clear();

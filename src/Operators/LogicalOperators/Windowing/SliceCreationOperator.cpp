@@ -56,7 +56,9 @@ OperatorNodePtr SliceCreationOperator::copy() {
     return copy;
 }
 bool SliceCreationOperator::inferSchema() {
-    WindowOperatorNode::inferSchema();
+    if (!WindowOperatorNode::inferSchema()) {
+        return false;
+    }
     // infer the default input and output schema
     NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema "
               << inputSchema->toString());
@@ -65,28 +67,20 @@ bool SliceCreationOperator::inferSchema() {
     auto windowAggregation = windowDefinition->getWindowAggregation();
     windowAggregation->inferStamp(inputSchema);
 
+    //Construct output schema
+    outputSchema->clear();
+    outputSchema = outputSchema->addField(createField("_$start", UINT64))
+                       ->addField(createField("_$end", UINT64))
+                       ->addField(createField("_$cnt", UINT64));
+
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema =
-            Schema::create()
-                ->addField(createField("_$start", UINT64))
-                ->addField(createField("_$end", UINT64))
-                ->addField(createField("_$cnt", UINT64))
-                ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
-                                                  windowDefinition->getOnKey()->getStamp()))
-                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
-        return true;
-    } else {
-        outputSchema =
-            Schema::create()
-                ->addField(createField("_$start", UINT64))
-                ->addField(createField("_$end", UINT64))
-                ->addField(createField("_$cnt", UINT64))
-                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
-        return true;
+        outputSchema->addField(
+            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
     }
+    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+                                                  windowAggregation->on()->getStamp()));
+    return true;
 }
 }// namespace NES

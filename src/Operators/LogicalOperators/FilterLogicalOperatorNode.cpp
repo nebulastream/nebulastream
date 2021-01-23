@@ -50,7 +50,9 @@ std::string FilterLogicalOperatorNode::getStringBasedSignature() {
 }
 
 bool FilterLogicalOperatorNode::inferSchema() {
-    UnaryOperatorNode::inferSchema();
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
     predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
