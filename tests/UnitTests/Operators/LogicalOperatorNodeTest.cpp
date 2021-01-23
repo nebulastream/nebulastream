@@ -924,12 +924,14 @@ TEST_F(LogicalOperatorNodeTest, as) {
     FilterLogicalOperatorNodePtr _filterOp1 = base2->as<FilterLogicalOperatorNode>();
 }
 
+
+
 TEST_F(LogicalOperatorNodeTest, asBadCast) {
     NodePtr base2 = sourceOp;
     try {
         FilterLogicalOperatorNodePtr _filterOp1 = base2->as<FilterLogicalOperatorNode>();
         FAIL();
-    } catch (const std::runtime_error& e) {
+    } catch (const std::exception& e) {
         SUCCEED();
     }
 }
