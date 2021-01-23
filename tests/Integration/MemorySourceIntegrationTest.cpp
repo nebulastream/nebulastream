@@ -77,7 +77,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     constexpr auto memAreaSize = 1 * 1024 * 1024;// 1 MB
-    constexpr aut bufferSizeInNodeEngine = 4096;// TODO load this from config!
+    constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
     auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));

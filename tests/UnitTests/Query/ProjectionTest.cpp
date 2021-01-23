@@ -279,7 +279,7 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 
 TEST_F(ProjectionTest, projectionQueryCorrectField) {
     auto streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -339,7 +339,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 
 TEST_F(ProjectionTest, projectionQueryWrongField) {
     auto streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -399,7 +399,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
 TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     auto streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -459,7 +459,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 }
 TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     auto streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -478,7 +478,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
 
 TEST_F(ProjectionTest, projectNotExistingField) {
     auto streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -498,7 +498,7 @@ TEST_F(ProjectionTest, projectNotExistingField) {
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -579,7 +579,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -626,7 +626,6 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
             uint64_t expectedBuf = 20;
 
             PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-            auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
             auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                              nodeEngine->getQueryManager(), 1);
@@ -663,7 +662,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     uint64_t expectedBuf = 20;
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager(), 1);
