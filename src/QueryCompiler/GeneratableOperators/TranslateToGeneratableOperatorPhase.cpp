@@ -75,8 +75,10 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
-        auto scanOperator = GeneratableScanOperator::create(unaryOperator->getInputSchema(), unaryOperator->getOutputSchema());
+        auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
+        //Use left Schema for creating the input schema
+        auto scanOperator =
+            GeneratableScanOperator::create(binaryOperator->getLeftInputSchema(), binaryOperator->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableMergeOperator::create(operatorNode->as<MergeLogicalOperatorNode>());
         scanOperator->addChild(childOperator);

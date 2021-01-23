@@ -63,7 +63,7 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
 }
 
 TEST_F(ExpressionNodeTest, attributeStampInference) {
-    auto schema = Schema::create()->addField("f1", INT8);
+    auto schema = Schema::create()->addField("test$f1", INT8);
 
     auto attribute = Attribute("f1").getExpressionNode();
     // check if the attribute field is initially undefined
@@ -83,10 +83,10 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
 
 TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
     auto schema = Schema::create()
-                      ->addField("f1", INT8)
-                      ->addField("f2", INT64)
-                      ->addField("f3", FLOAT64)
-                      ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
+                      ->addField("test$f1", INT8)
+                      ->addField("test$f2", INT64)
+                      ->addField("test$f3", FLOAT64)
+                      ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto addExpression = Attribute("f1") + 10;
     ASSERT_TRUE(addExpression->getStamp()->isUndefined());
@@ -111,10 +111,10 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
 
 TEST_F(ExpressionNodeTest, inferPredicateTest) {
     auto schema = Schema::create()
-                      ->addField("f1", INT8)
-                      ->addField("f2", INT64)
-                      ->addField("f3", BOOLEAN)
-                      ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
+                      ->addField("test$f1", INT8)
+                      ->addField("test$f2", INT64)
+                      ->addField("test$f3", BOOLEAN)
+                      ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto equalsExpression = Attribute("f1") == 10;
     equalsExpression->inferStamp(schema);
@@ -146,10 +146,10 @@ TEST_F(ExpressionNodeTest, inferPredicateTest) {
 
 TEST_F(ExpressionNodeTest, inferAssertionTest) {
     auto schema = Schema::create()
-                      ->addField("f1", INT8)
-                      ->addField("f2", INT64)
-                      ->addField("f3", BOOLEAN)
-                      ->addField("f3", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
+                      ->addField("test$f1", INT8)
+                      ->addField("test$f2", INT64)
+                      ->addField("test$f3", BOOLEAN)
+                      ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto assertion = Attribute("f1") = 10 * (33 + Attribute("f1"));
     assertion->inferStamp(schema);

@@ -664,9 +664,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
  */
 TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQualifiedNamesAndJoinOperator) {
 
-    auto inputSchema = Schema::create();
-    inputSchema->addField("f1", BasicType::INT32);
-    inputSchema->addField("f2", BasicType::INT8);
+    auto inputSchema =
+        Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
@@ -693,16 +692,19 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(sourceOutputSchema->fields.size() == 3);
     ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
     ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$ts"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 6);
+    ASSERT_TRUE(filterOutputSchema->fields.size() == 8);
     ASSERT_TRUE(filterOutputSchema->hasFieldName("x$f2"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("x$f1"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("x$ts"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("y$f2"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("y$f1"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("y$ts"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("_$start"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("_$end"));
 

@@ -70,9 +70,9 @@ class QueryExecutionTest : public testing::Test {
     void SetUp() {
         // create test input buffer
         testSchema = Schema::create()
-                         ->addField("id", BasicType::INT64)
-                         ->addField("one", BasicType::INT64)
-                         ->addField("value", BasicType::INT64);
+                         ->addField("test$id", BasicType::INT64)
+                         ->addField("test$one", BasicType::INT64)
+                         ->addField("test$value", BasicType::INT64);
     }
 
     /* Will be called before a test is executed. */
@@ -174,9 +174,9 @@ class WindowSource : public NES::DefaultSource {
                                 const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false,
                                 bool decreaseTime = false, int64_t timestamp = 5) {
         auto windowSchema = Schema::create()
-                                ->addField("key", BasicType::INT64)
-                                ->addField("value", BasicType::INT64)
-                                ->addField("ts", BasicType::UINT64);
+                                ->addField("test$key", BasicType::INT64)
+                                ->addField("test$value", BasicType::INT64)
+                                ->addField("test$ts", BasicType::UINT64);
         return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
                                               varyWatermark, decreaseTime, timestamp);
     }
@@ -473,17 +473,17 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
-    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
+    auto windowType = TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(10));
 
     query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField(createField("key", INT64))
-                                  ->addField("value", INT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField(createField("test$key", INT64))
+                                  ->addField("test$value", INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
@@ -962,8 +962,24 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
     int numBuf = 1;
     int numTup = 50;
 
+    auto updatedYSBSchema = Schema::create()
+                                ->addField("ysb$user_id", UINT64)
+                                ->addField("ysb$page_id", UINT64)
+                                ->addField("ysb$campaign_id", UINT64)
+                                ->addField("ysb$ad_type", UINT64)
+                                ->addField("ysb$event_type", UINT64)
+                                ->addField("ysb$current_ms", UINT64)
+                                ->addField("ysb$ip", UINT64)
+                                ->addField("ysb$d1", UINT64)
+                                ->addField("ysb$d2", UINT64)
+                                ->addField("ysb$d3", UINT32)
+                                ->addField("ysb$d4", UINT16);
+
     auto ysbSource =
         std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, 1);
+
+    ysbSource->getSchema()->clear();
+    ysbSource->getSchema()->copyFields(updatedYSBSchema);
 
     //TODO: make query work
     auto query = TestQuery::from(ysbSource->getSchema())
@@ -973,8 +989,8 @@ TEST_F(QueryExecutionTest, ysbQueryTest) {
                      .sink(DummySink::create());
 
     auto ysbResultSchema = Schema::create()
-                               ->addField(createField("start", UINT64))
-                               ->addField(createField("end", UINT64))
+                               ->addField(createField("_$start", UINT64))
+                               ->addField(createField("_$end", UINT64))
                                ->addField(createField("key", INT64))
                                ->addField("value", INT64);
     auto testSink = TestSink::create(/*expected result buffer*/ numBuf, ysbResultSchema, nodeEngine->getBufferManager());

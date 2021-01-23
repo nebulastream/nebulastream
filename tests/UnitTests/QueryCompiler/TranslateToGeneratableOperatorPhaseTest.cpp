@@ -18,11 +18,9 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
@@ -47,7 +45,6 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
@@ -69,11 +66,6 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
 
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-        sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
-        SchemaPtr schema = sPtr->getSchema();
-        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0u);
-
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
         pred3 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
@@ -82,7 +74,7 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
         pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
-        sourceOp = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
+        sourceOp = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
         filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
