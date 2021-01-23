@@ -70,7 +70,8 @@ ExpressionItem ExpressionItem::rename(std::string newName) {
         NES_ERROR("Renaming is only allowed on Field Access Attributes");
         NES_NOT_IMPLEMENTED();
     }
-    return FieldRenameExpressionNode::create(expression, newName);
+    auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
+    return FieldRenameExpressionNode::create(fieldAccessExpression->getFieldName(), newName, fieldAccessExpression->getStamp());
 }
 
 FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionItem assignItem) {
