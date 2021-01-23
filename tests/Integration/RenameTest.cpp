@@ -87,7 +87,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "+----------------------------------------------------+\n"
-                             "|NewName:UINT32|\n"
+                             "|default_logical$NewName:UINT32|\n"
                              "+----------------------------------------------------+\n"
                              "|1|\n"
                              "|1|\n"
@@ -135,8 +135,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("RenameTest: Submit query");
-    string query = "Query::from(\"default_logical\").filter(Attribute(\"id\").rename(\"NewName\") < "
-                   "2).sink(FileSinkDescriptor::create(\"test.out\", \"CSV_FORMAT\", \"APPEND\"));";
+    std::string query = R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").rename("NewName"), Attribute("value")).sink(FileSinkDescriptor::create("test.out", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -147,7 +146,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    string expectedContent = "NewName:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$NewName:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -220,7 +219,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,newId:INTEGER,newValue:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$newId:INTEGER,window$newValue:INTEGER\n"
                              "1000,2000,1,1\n"
                              "2000,3000,1,2\n"
                              "1000,2000,4,1\n"
@@ -314,7 +313,7 @@ TEST_F(RenameTest, testJoinWithDifferentStreamTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_win1:INTEGER,left_id1New:INTEGER,left_timestamp:INTEGER,"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,left_win1:INTEGER,left_id1New:INTEGER,left_timestamp:INTEGER,"
                              "right_win2:INTEGER,right_id2New:INTEGER,right_timestamp:INTEGER\n"
                              "1000,2000,4,1,4,1002,3,4,1102\n"
                              "1000,2000,4,1,4,1002,3,4,1112\n"
