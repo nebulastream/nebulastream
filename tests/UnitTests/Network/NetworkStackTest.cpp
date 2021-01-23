@@ -777,9 +777,9 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     SchemaPtr schema = Schema::create()
-                           ->addField("id", DataTypeFactory::createInt64())
-                           ->addField("one", DataTypeFactory::createInt64())
-                           ->addField("value", DataTypeFactory::createInt64());
+                           ->addField("test$id", DataTypeFactory::createInt64())
+                           ->addField("test$one", DataTypeFactory::createInt64())
+                           ->addField("test$value", DataTypeFactory::createInt64());
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);

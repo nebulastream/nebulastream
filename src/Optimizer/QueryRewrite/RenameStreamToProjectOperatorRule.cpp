@@ -60,7 +60,7 @@ OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr opera
             updatedFieldName = updatedFieldName.substr(separatorLocation, updatedFieldName.length());
         }
         //Add new stream name as field qualifier
-        updatedFieldName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR + updatedFieldName;
+        updatedFieldName = newStreamName + updatedFieldName;
 
         //Compute field access and field rename expression
         auto fieldAccessExpression = FieldAccessExpressionNode::create(field->dataType, field->name);

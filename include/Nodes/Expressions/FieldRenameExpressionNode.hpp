@@ -24,10 +24,15 @@ namespace NES {
  */
 class FieldRenameExpressionNode : public FieldAccessExpressionNode {
   public:
+
     /**
-    * @brief Create typed field read.
-    */
-    static ExpressionNodePtr create(ExpressionNodePtr expression, std::string newFieldName);
+     * @brief Create FieldRename Expression node
+     * @param fieldName : name of the field
+     * @param newFieldName : new name of the field
+     * @param datatype : the data type
+     * @return pointer to the FieldRenameExpressionNode
+     */
+    static ExpressionNodePtr create(std::string fieldName, std::string newFieldName, DataTypePtr datatype);
 
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
@@ -50,7 +55,7 @@ class FieldRenameExpressionNode : public FieldAccessExpressionNode {
     explicit FieldRenameExpressionNode(FieldRenameExpressionNode* other);
 
   private:
-    FieldRenameExpressionNode(ExpressionNodePtr expression, std::string newFieldName);
+    FieldRenameExpressionNode(std::string fieldName, std::string newFieldName, DataTypePtr datatype);
     /**
      * @brief Name of the field want to access.
      */
