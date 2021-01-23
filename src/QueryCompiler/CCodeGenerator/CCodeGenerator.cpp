@@ -565,7 +565,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
 
     // Read key value from record
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "key");
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), "_$key");
     auto recordHandler = context->getRecordHandler();
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()->getFieldName());
@@ -899,7 +899,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // Read key value from record
     // int64_t key = windowTuples[recordIndex].key;
     //TODO this is an ugly hack because we cannot create empty VariableDeclaration and we want it outide the if/else
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key");
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "_$key");
     auto recordHandler = context->getRecordHandler();
 
     if (context->arity == PipelineContext::BinaryLeft) {
@@ -1087,7 +1087,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     //        int64_t key = windowTuples[recordIndex].key;
 
     //TODO this is not nice but we cannot create an empty one or a ptr
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key");
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "_$key");
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(window->getOnKey()->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
@@ -1118,14 +1118,14 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         std::make_shared<BinaryOperatorStatement>(windowStateVariableStatement));
 
     // get current timestamp
-    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "start");
-    auto recordStartAttributeRef = context->getRecordHandler()->getAttribute("start");
+    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "_$start");
+    auto recordStartAttributeRef = context->getRecordHandler()->getAttribute("_$start");
 
     if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
-        currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "start");
+        currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "_$start");
         auto tsVariableDeclarationStatement =
             VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef->copy());
         context->code->currentCodeInsertionPoint->addStatement(tsVariableDeclarationStatement.copy());
@@ -1138,8 +1138,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
     // get current timestamp
-    auto currentCntVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "cnt");
-    auto recordCntFieldRef = context->getRecordHandler()->getAttribute("cnt");
+    auto currentCntVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "_$cnt");
+    auto recordCntFieldRef = context->getRecordHandler()->getAttribute("_$cnt");
     auto getCurrentCntStatement = VarDeclStatement(currentCntVariable).assign(recordCntFieldRef);
     context->code->currentCodeInsertionPoint->addStatement(getCurrentCntStatement.copy());
 
