@@ -24,7 +24,7 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode(uint64_t id) : id(id), isLeftOperator(true) { NES_INFO("Creating Operator " << id); }
+OperatorNode::OperatorNode(uint64_t id) : id(id) { NES_INFO("Creating Operator " << id); }
 
 uint64_t OperatorNode::getId() const { return id; }
 
@@ -162,7 +162,4 @@ NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
     }
     return nullptr;
 }
-bool OperatorNode::getIsLeftOperator() const { return isLeftOperator; }
-void OperatorNode::setIsLeftOperator(bool isLeftOperator) { OperatorNode::isLeftOperator = isLeftOperator; }
-
 }// namespace NES

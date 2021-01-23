@@ -56,7 +56,6 @@ OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setIsLeftOperator(isLeftOperator);
     return copy;
 }
 

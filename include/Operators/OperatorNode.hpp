@@ -134,18 +134,6 @@ class OperatorNode : public Node {
     */
     virtual bool isExchangeOperator() const = 0;
 
-    /**
-     * @brief get if is left operator
-     * @return bool
-     */
-    bool getIsLeftOperator() const;
-
-    /**
-     * @brief set is leftOperato
-     * @param isLeftOperator
-     */
-    void setIsLeftOperator(bool isLeftOperator);
-
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
@@ -165,8 +153,6 @@ class OperatorNode : public Node {
      * @brief Unique Identifier of the operator within a query.
      */
     u_int64_t id;
-
-    bool isLeftOperator;
 };
 
 }// namespace NES
