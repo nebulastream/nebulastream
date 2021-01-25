@@ -120,7 +120,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     EXPECT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -222,7 +222,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     EXPECT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "sensor_id:Char,timestamp:INTEGER,velocity:(Float),quantity:INTEGER,PatternId:INTEGER\n"
+    string expectedContent = "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
                              "R2000073,1543624020000,102.629631,8,1\n"
                              "R2000070,1543625280000,108.166664,5,1\n"
                              "R2000073,1543624020000,102.629631,8,1\n"
@@ -420,7 +420,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     EXPECT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,614\n"
                              "10000,20000,1,1740\n"
                              "0,10000,4,12\n"

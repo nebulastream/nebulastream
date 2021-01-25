@@ -123,7 +123,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -222,7 +222,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId3, 1, std::to_string(restPort)));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -343,11 +343,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
-    string expectedContent1 = "sensor_id:Char,timestamp:INTEGER,velocity:(Float),quantity:INTEGER,PatternId:INTEGER\n"
+    string expectedContent1 = "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
                               "R2000073,1543624020000,102.629631,8,1\n"
                               "R2000070,1543625280000,108.166664,5,1\n";
 
-    string expectedContent2 = "sensor_id:Char,timestamp:INTEGER,velocity:(Float),quantity:INTEGER,PatternId:INTEGER\n"
+    string expectedContent2 = "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
                               "R2000073,1543622760000,63.277779,11,1\n"
                               "R2000073,1543622940000,66.222221,12,1\n"
                               "R2000073,1543623000000,74.666664,11,1\n"
@@ -453,7 +453,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
-    string expectedContent1 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+    string expectedContent1 = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,10000,1,307\n"
                               "10000,20000,1,870\n"
                               "0,10000,4,6\n"
@@ -461,7 +461,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
                               "0,10000,12,7\n"
                               "0,10000,16,12\n";
 
-    string expectedContent2 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+    string expectedContent2 = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,20000,1,1177\n"
                               "0,20000,4,6\n"
                               "0,20000,11,30\n"
@@ -565,7 +565,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
-    string expectedContent1 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+    string expectedContent1 = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,10000,1,307\n"
                               "0,10000,4,6\n"
                               "0,10000,11,30\n"

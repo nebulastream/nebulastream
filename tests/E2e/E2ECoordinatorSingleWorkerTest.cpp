@@ -154,7 +154,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::ifstream ifs(outputFilePath.c_str());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -225,7 +225,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(outFile.good());
     std::string content((std::istreambuf_iterator<char>(outFile)), (std::istreambuf_iterator<char>()));
     NES_INFO("content=" << content);
-    std::string expected = "id:INTEGER,value:INTEGER\n"
+    std::string expected = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                            "1,1\n"
                            "1,1\n"
                            "1,1\n"
@@ -294,7 +294,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::ifstream ifs(outputFilePath.c_str());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "id:INTEGER,value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -364,10 +364,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     string expectedContent =
-        "id:INTEGER,metadata_generated:INTEGER,metadata_title:Char,metadata_id:Char,features_type:Char,features_properties_"
-        "capacity:INTEGER,features_properties_efficiency:(Float),features_properties_mag:(Float),features_properties_time:"
-        "INTEGER,features_properties_updated:INTEGER,features_properties_type:Char,features_geometry_type:Char,features_geometry_"
-        "coordinates_longitude:(Float),features_geometry_coordinates_latitude:(Float),features_eventId :Char\n"
+        "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:Char,exdra$metadata_id:Char,exdra$features_type:Char,exdra$features_properties_"
+        "capacity:INTEGER,exdra$features_properties_efficiency:(Float),exdra$features_properties_mag:(Float),exdra$features_properties_time:"
+        "INTEGER,exdra$features_properties_updated:INTEGER,exdra$features_properties_type:Char,exdra$features_geometry_type:Char,exdra$features_geometry_"
+        "coordinates_longitude:(Float),exdra$features_geometry_coordinates_latitude:(Float),exdra$features_eventId :Char\n"
         "1,1262343610000,Wind Turbine Data Generated for Nebula "
         "Stream,b94c4bbf-6bab-47e3-b0f6-92acac066416,Features,736,0.363738,112464.007812,1262300400000,0,electricityGeneration,"
         "Point,8.221581,52.322945,982050ee-a8cb-4a7a-904c-a4c45e0c9f10\n"
@@ -466,7 +466,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
-    string expectedContent = "sensor_id:Char,timestamp:INTEGER,velocity:(Float),quantity:INTEGER,PatternId:INTEGER\n"
+    string expectedContent = "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
                              "R2000073,1543624020000,102.629631,8,1\n"
                              "R2000070,1543625280000,108.166664,5,1\n";
 
@@ -530,7 +530,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
-    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,307\n"
                              "10000,20000,1,870\n"
                              "0,10000,4,6\n"
@@ -596,7 +596,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
-    string expectedContent = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,307\n"
                              "0,10000,4,6\n"
                              "0,10000,11,30\n"
