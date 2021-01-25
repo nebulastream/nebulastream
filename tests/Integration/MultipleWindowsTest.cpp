@@ -268,7 +268,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
                              "0,10000,4,6\n"
                              "0,10000,11,30\n"
                              "0,10000,12,7\n"
-                             "0,10000,16,12\n";
+                             "0,10000,16,12\n"
+                             "5000,15000,1,570\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -356,10 +357,16 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 
     string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,194\n"
+                             "5000,15000,1,614\n"
+                             "10000,20000,1,1140\n"
                              "0,10000,4,12\n"
+                             "5000,15000,4,12\n"
                              "0,10000,11,60\n"
+                             "5000,15000,11,60\n"
                              "0,10000,12,14\n"
-                             "0,10000,16,24\n";
+                             "5000,15000,12,14\n"
+                             "0,10000,16,24\n"
+                             "5000,15000,16,24\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
