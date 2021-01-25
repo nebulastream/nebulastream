@@ -43,6 +43,10 @@ class TestHarness {
         ipAddress = "127.0.0.1";
 
         NES_INFO("TestHarness: Start coordinator");
+        crdConf->resetCoordinatorOptions();
+        crdConf->setCoordinatorIp(ipAddress);
+        crdConf->setRestPort(restPort);
+        crdConf->setRpcPort(rpcPort);
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
         QueryServicePtr queryService = crd->getQueryService();
@@ -108,6 +112,7 @@ class TestHarness {
         sourceSchemas.push_back(schema);
 
         // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
+        wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
         wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
         wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
