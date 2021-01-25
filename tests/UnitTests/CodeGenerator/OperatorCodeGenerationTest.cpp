@@ -866,10 +866,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
-                      ->addField(createField("start", UINT64))
-                      ->addField(createField("end", UINT64))
-                      ->addField(createField("cnt", UINT64))
-                      ->addField(createField("key", UINT64))
+                      ->addField(createField("_$start", UINT64))
+                      ->addField(createField("_$end", UINT64))
+                      ->addField(createField("_$cnt", UINT64))
+                      ->addField(createField("_$key", UINT64))
                       ->addField("value", UINT64);
 
     auto codeGenerator = CCodeGenerator::create();
@@ -882,7 +882,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
+        Attribute("_$key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
 
     auto aggregate =
