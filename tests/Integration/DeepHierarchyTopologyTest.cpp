@@ -1570,8 +1570,9 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$value:INTEGER\n"
-                             "0,2000,56\n"
-                             "2000,4000,200\n";
+                             "0,2000,96\n"
+                             "2000,4000,176\n"
+                             "4000,6000,168\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

@@ -41,7 +41,7 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
     template<class ValueType>
     std::shared_ptr<BasicPhysicalField<ValueType>> asValueField() {
         if (!isFieldOfValueType<ValueType>()) {
-            NES_FATAL_ERROR("This field is not of that type");
+            NES_FATAL_ERROR("This field is not of that type " << typeid(ValueType).name());
             throw IllegalArgumentException("This field is not of that type");
         }
         return std::static_pointer_cast<BasicPhysicalField<ValueType>>(this->shared_from_this());
