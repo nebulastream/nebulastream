@@ -23,11 +23,11 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <cstdint>
 #include <list>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
+#include <NodeEngine/QueryManager.hpp>
 
 #if __linux
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/QueryManager.hpp>
 #include <sys/syscall.h>
 #endif
 
@@ -139,9 +139,67 @@ class SimpleBenchmarkSource : public DataSource {
                 }
                 NES_WARNING("SimpleBenchmarkSource: Done with period " << curPeriod << " of " << maxNumberOfPeriods);
             }
+            NES_INFO("SimpleBenchmarkSource: Source is not running anymore or is done with periods!");
+
+            optBuf = createEndOfBenchmarkBuffer();
+
+            if (optBuf.has_value()) {
+                // here we got a valid buffer
+                auto& buf = optBuf.value();
+                queryManager->addWork(this->operatorId, buf);
+            }
+            NES_WARNING("SimpleBenchmarkSource: Sent last buffer for endOfBenchmark!");
         } else {
             NES_FATAL_ERROR("No Source for Sink detected!!!");
         }//end of if source not empty
+    }
+
+    std::optional<NodeEngine::TupleBuffer> createEndOfBenchmarkBuffer() {
+        auto buf = this->bufferManager->getBufferBlocking();
+
+        auto fields = schema->fields;
+        for (uint64_t recordIndex = 0; recordIndex < curNumberOfTuplesPerBuffer; recordIndex++) {
+            for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+                auto value = -1;
+                auto dataType = fields[fieldIndex]->getDataType();
+                auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+                if (physicalType->isBasicType()) {
+                    auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                    if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                        rowLayout->getValueField<char>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                        rowLayout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                        rowLayout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                        rowLayout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                        rowLayout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                        rowLayout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                        rowLayout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                        rowLayout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                        rowLayout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                        rowLayout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                        rowLayout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
+                    } else {
+                        NES_DEBUG("This data source only generates data for numeric fields");
+                    }
+                } else {
+                    NES_DEBUG("This data source only generates data for numeric fields");
+                }
+            }
+        }
+
+        buf.setNumberOfTuples(curNumberOfTuplesPerBuffer);
+
+        NES_WARNING("SimpleBenchmarkSource: created last buffer for endOfBenchmark!!!");
+        return buf;
     }
 
     std::optional<NodeEngine::TupleBuffer> receiveData() override {
