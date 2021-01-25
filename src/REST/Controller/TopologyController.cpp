@@ -105,6 +105,44 @@ void TopologyController::handlePost(std::vector<utility::string_t> path, web::ht
                   return;
               }
             }).wait();
+    } else if (path[1] == "replace-parent") {
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+              try {
+                  std::string userRequest(body.begin(), body.end());
+
+                  json::value req = json::value::parse(userRequest);
+                  json::array links = req.at("links").as_array();
+                  // for each link in the request body: parse the child and parent then connect using add parent
+                  bool isSuccess = true;
+                  for (int i=0; i<links.size(); i++){
+                      json::value link = links.at(i);
+                      // assume there is 1:1 mapping between IP and ID
+                      uint64_t oldparentId = topology->findNodeWithIp(link.at("oldparent").as_string())[0]->getId();
+                      uint64_t newparentId = topology->findNodeWithIp(link.at("newparent").as_string())[0]->getId();
+                      uint64_t childId = topology->findNodeWithIp(link.at("child").as_string())[0]->getId();
+                      bool changed = false;
+                      bool removed = coordinator.lock()->getCoordinatorEngine()->removeParent(childId, oldparentId);
+                      if (removed) {
+                          bool added = coordinator.lock()->getCoordinatorEngine()->addParent(childId, newparentId);
+                          if (added) {
+                              changed = true;
+                          }
+                      }
+                      isSuccess = isSuccess && changed;
+                  }
+
+                  //Prepare the response
+                  json::value result{};
+                  result["Success"] = json::value::boolean(isSuccess);
+                  successMessageImpl(message, result);
+                  return;
+              } catch (...) {
+                  std::cout << "Exception occurred removing parent.";
+                  internalServerErrorImpl(message);
+                  return;
+              }
+            }).wait();
     }
 }
 

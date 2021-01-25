@@ -16,6 +16,7 @@
 
 #include <NodeEngine/QueryStatistics.hpp>
 #include <sstream>
+#include <chrono>
 namespace NES::NodeEngine {
 
 const std::atomic<uint64_t> QueryStatistics::getProcessedTasks() const { return processedTasks.load(); }
@@ -46,11 +47,15 @@ void QueryStatistics::setProcessedBuffers(const std::atomic<uint64_t>& processed
 }
 
 std::string QueryStatistics::getQueryStatisticsAsString() {
+    auto tsNow = std::chrono::system_clock::now();
+    std::chrono::milliseconds gatheringTs = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
+
     std::stringstream ss;
     ss << "processedTasks=" << processedTasks;
     ss << " processedTuple=" << processedTuple;
     ss << " processedBuffers=" << processedBuffers;
     ss << " processedWatermarks=" << processedWatermarks;
+    ss << " gatheringTs=" << gatheringTs.count();
     return ss.str();
 }
 }// namespace NES::NodeEngine
