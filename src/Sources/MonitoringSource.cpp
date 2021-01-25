@@ -33,10 +33,7 @@ MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatal
                                    const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
     : DefaultSource(Schema::create(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       monitoringPlan(monitoringPlan), metricGroup(monitoringPlan->createMetricGroup(metricCatalog)) {
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    metricGroup->getSample(schema, tupleBuffer);
-    tupleBuffer.release();
+    schema = metricGroup->createGroupSchema();
     NES_INFO("MonitoringSources: Created with schema:\n" << schema->toString());
 }
 
