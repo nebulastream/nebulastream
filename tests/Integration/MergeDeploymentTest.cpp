@@ -54,7 +54,8 @@ class MergeDeploymentTest : public testing::Test {
 /**
  * Test deploying merge query with source on two different worker node using bottom up strategy.
  */
-TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -216,7 +217,8 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -378,7 +380,8 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -540,7 +543,8 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -614,7 +618,8 @@ TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
  * Case: 2 filter operators are above a merge operator and will be pushed down towards both of the available sources.
  *       2 filter operators are already below merge operator and need to be pushed down normally towards its respective source.
  */
-TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -762,7 +767,8 @@ TEST_F(MergeDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
  * Case: 1 filter operator is above a merge operator and will be pushed down towards both of the available sources.
  *       1 filter operator is already below merge operator and needs to be pushed down normally towards its own source.
  */
-TEST_F(MergeDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -879,7 +885,8 @@ TEST_F(MergeDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
  * Case: 2 filter operators are already below merge operator and needs to be pushed down normally towards their respective source.
  *       Here the filters don't need to be pushed down over an existing merge operator.
  */
-TEST_F(MergeDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
