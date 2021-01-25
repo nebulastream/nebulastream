@@ -188,10 +188,10 @@ class ExecutableCompleteAggregationTriggerAction
 
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
         if (windows.size() != 0) {
-            uint64_t largestClosedWindow = 0;
+            int64_t largestClosedWindow = 0;
             for (int i = 0; i < partialFinalAggregates.size(); i++) {
                 auto& window = windows[i];
-                largestClosedWindow = std::max(window.getEndTs(), largestClosedWindow);
+                largestClosedWindow = std::max((int64_t)window.getEndTs(), largestClosedWindow);
                 auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
                 NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                           << this->windowDefinition->getDistributionType()->toString() << "): write i=" << i << " key=" << key
@@ -229,7 +229,11 @@ class ExecutableCompleteAggregationTriggerAction
             NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): remove slices until=" << currentWatermark);
             //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
-            store->removeSlicesUntil(largestClosedWindow - slideSize);
+            if(largestClosedWindow != 0)
+            {
+                store->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t)slideSize));
+            }
+
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
             NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()

@@ -84,6 +84,30 @@ class WindowedJoinSliceListStore {
     }
 
     /**
+ * @brief Remove slices between index 0 and pos.
+ * @param pos the position till we want to remove slices.
+ */
+    inline void removeSlicesUntil(uint64_t watermark) {
+        std::vector<SliceMetaData>::iterator itSlice = sliceMetaData.begin();
+        auto itAggs = content.begin();
+        for (; itSlice != sliceMetaData.end(); ++itSlice) {
+            if (itSlice->getEndTs() > watermark) {
+                break;
+            } else {
+                NES_DEBUG("WindowedJoinSliceListStore removeSlicesUntil: watermark="
+                              << watermark << " from slice endts=" << itSlice->getEndTs() << " sliceMetaData size="
+                              << sliceMetaData.size() << " content size=" << content.size());
+            }
+            itAggs++;
+        }
+
+        sliceMetaData.erase(sliceMetaData.begin(), itSlice);
+        content.erase(content.begin(), itAggs);
+        NES_DEBUG("WindowedJoinSliceListStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
+                                                                                  << " content=" << content.size());
+    }
+
+    /**
      * @brief Add a slice to the store
      * @param slice the slice to add
      */

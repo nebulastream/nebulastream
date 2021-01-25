@@ -430,7 +430,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
+TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -574,8 +574,9 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+                              "0,10000,1,614\n"
                              "5000,15000,1,1140\n"
-                             "0,10000,1,614\n"
+                             "10000,20000,1,1740\n"
                              "0,10000,4,12\n"
                              "0,10000,11,60\n"
                              "0,10000,12,14\n"
@@ -894,8 +895,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$value:INTEGER\n"
+                             "0,10000,724\n"
                              "5000,15000,1140\n"
-                             "0,10000,724\n";
+                             "10000,20000,1740\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

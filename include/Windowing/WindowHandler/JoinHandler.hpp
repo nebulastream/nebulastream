@@ -41,8 +41,7 @@ class JoinHandler : public AbstractJoinHandler {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
-        lastWatermarkLeft = 0;
-        lastWatermarkRight = 0;
+        lastWatermark = 0;
         NES_TRACE("Created join handler");
     }
 
@@ -103,47 +102,39 @@ class JoinHandler : public AbstractJoinHandler {
         auto watermarkRight = getMinWatermark(rightSide);
 
         NES_DEBUG("JoinHandler: run for watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
-                                                        << " lastWatermarkLeft=" << lastWatermarkLeft
-                                                        << " lastWatermarkRight=" << lastWatermarkRight);
+                                                        << " lastWatermark=" << lastWatermark);
         //In the following, find out the minimal watermark among the buffers/stores to know where
         // we have to start the processing from so-called lastWatermark
         // we cannot use 0 as this will create a lot of unnecessary windows
-        if (lastWatermarkLeft == 0) {
-            lastWatermarkLeft = std::numeric_limits<uint64_t>::max();
+        if (lastWatermark == 0) {
+            lastWatermark = std::numeric_limits<uint64_t>::max();
             for (auto& it : leftJoinState->rangeAll()) {
                 std::unique_lock innerLock(it.second->mutex());// sorry we have to lock here too :(
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
-                    lastWatermarkLeft = std::min(lastWatermarkLeft, slices[0].getStartTs());
+                    lastWatermark = std::min(lastWatermark, slices[0].getStartTs());
                 }
             }
-            NES_DEBUG("JoinHandler: set lastWatermarkLeft to min value of stores=" << lastWatermarkLeft);
-        }
-
-        if (lastWatermarkRight == 0) {
-            lastWatermarkRight = std::numeric_limits<uint64_t>::max();
             for (auto& it : rightJoinState->rangeAll()) {
                 std::unique_lock innerLock(it.second->mutex());// sorry we have to lock here too :(
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
-                    lastWatermarkRight = std::min(lastWatermarkRight, slices[0].getStartTs());
+                    lastWatermark = std::min(lastWatermark, slices[0].getStartTs());
                 }
             }
-            NES_DEBUG("JoinHandler: set lastWatermarkRight to min value of stores=" << lastWatermarkRight);
+            NES_DEBUG("JoinHandler: set lastWatermarkLeft to min value of stores=" << lastWatermark);
         }
 
-        NES_DEBUG("JoinHandler: run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
-                                                               << " lastWatermarkLeft=" << lastWatermarkLeft
-                                                               << " lastWatermarkRight=" << lastWatermarkRight);
-        lock.unlock();
-        executableJoinAction->doAction(leftJoinState, rightJoinState, watermarkLeft, watermarkRight, lastWatermarkLeft,
-                                       lastWatermarkRight);
-        lock.lock();
 
-        NES_DEBUG("JoinHandler:  set lastWatermarkLeft to=" << std::max(watermarkLeft, lastWatermarkLeft));
-        lastWatermarkLeft = std::max(watermarkLeft, lastWatermarkLeft);
-        NES_DEBUG("JoinHandler:  set lastWatermarkRight to=" << std::max(watermarkRight, lastWatermarkRight));
-        lastWatermarkRight = std::max(watermarkRight, lastWatermarkRight);
+        NES_DEBUG("JoinHandler: run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
+                                                               << " lastWatermark=" << lastWatermark);
+        lock.unlock();
+
+        auto minMinWatermark = std::min(watermarkLeft, watermarkRight);
+        executableJoinAction->doAction(leftJoinState, rightJoinState, minMinWatermark, lastWatermark);
+        lock.lock();
+        NES_DEBUG("JoinHandler: set lastWatermarkLeft to=" << minMinWatermark);
+        lastWatermark = minMinWatermark;
     }
 
     /**
