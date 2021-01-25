@@ -16,13 +16,13 @@
 
 #include <gtest/gtest.h>
 
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/YSBSource.hpp>
 #include <Util/Logger.hpp>
@@ -49,7 +49,8 @@ class MemorySourceIntegrationTest : public testing::Test {
         rpcPort = rpcPort + 30;
 
         crdConf->setRpcPort(rpcPort);
-        wrkConf->setCoordinatorPort(rpcPort);}
+        wrkConf->setCoordinatorPort(rpcPort);
+    }
 
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
@@ -286,7 +287,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 

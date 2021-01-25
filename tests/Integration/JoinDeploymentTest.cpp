@@ -18,6 +18,9 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -25,9 +28,6 @@
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 
 using namespace std;
 
@@ -55,7 +55,6 @@ class JoinDeploymentTest : public testing::Test {
         crdConf->setRestPort(restPort);
 
         wrkConf->setCoordinatorPort(rpcPort);
-
     }
 
     void TearDown() { std::cout << "Tear down JoinDeploymentTest class." << std::endl; }
@@ -111,12 +110,10 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setPhysicalStreamName("test_stream2");
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -227,13 +224,11 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     srcConf->setLogicalStreamName("window1");
     srcConf->setSkipHeader(true);
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -346,13 +341,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -465,14 +458,12 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
     srcConf->setLogicalStreamName("window2");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -585,14 +576,12 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window3.csv");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -706,8 +695,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
@@ -715,8 +703,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     srcConf->setNumberOfTuplesToProducePerBuffer(2);
     srcConf->setNumberOfBuffersToProduce(3);
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -843,14 +830,12 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
@@ -998,14 +983,12 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
@@ -1144,14 +1127,12 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -1267,14 +1248,12 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setLogicalStreamName("window2");
     srcConf->setSourceConfig("../tests/test_data/window3.csv");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);

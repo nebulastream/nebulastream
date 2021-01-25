@@ -758,8 +758,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
     sourceConfig->setPhysicalStreamName("physical_ruby");
     sourceConfig->setLogicalStreamName("ruby");
     //register physical stream
-    PhysicalStreamConfigPtr confStreamRuby =
-        PhysicalStreamConfig::create(sourceConfig);
+    PhysicalStreamConfigPtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
 
     sourceConfig->setPhysicalStreamName("physical_diamond");
     sourceConfig->setLogicalStreamName("diamond");
@@ -923,8 +922,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
     sourceConfig->setPhysicalStreamName("physical_ruby");
     sourceConfig->setLogicalStreamName("ruby");
     //register physical stream
-    PhysicalStreamConfigPtr confStreamRuby =
-        PhysicalStreamConfig::create(sourceConfig);
+    PhysicalStreamConfigPtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
 
     sourceConfig->setPhysicalStreamName("physical_diamond");
     sourceConfig->setLogicalStreamName("diamond");
@@ -1057,8 +1055,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOf
     sourceConfig->setPhysicalStreamName("physical_ruby");
     sourceConfig->setLogicalStreamName("ruby");
     //register physical stream
-    PhysicalStreamConfigPtr confStreamRuby =
-        PhysicalStreamConfig::create(sourceConfig);
+    PhysicalStreamConfigPtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
 
     sourceConfig->setPhysicalStreamName("physical_diamond");
     sourceConfig->setLogicalStreamName("diamond");
