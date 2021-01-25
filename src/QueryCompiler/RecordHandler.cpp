@@ -29,6 +29,7 @@ bool RecordHandler::hasAttribute(std::string name) { return this->statementMap.c
 
 ExpressionStatmentPtr RecordHandler::getAttribute(std::string name) {
     NES_ASSERT(hasAttribute(name), "RecordHandler: Attribute name: " << name << " is not registered.");
-    return this->statementMap[name]; }
+    return this->statementMap[name];
+}
 
 }// namespace NES

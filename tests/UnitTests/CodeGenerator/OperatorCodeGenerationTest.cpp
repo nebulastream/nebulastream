@@ -1019,13 +1019,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
-        ->addField("id", DataTypeFactory::createInt32())
-        ->addField("valueSmall", DataTypeFactory::createInt16())
-        ->addField("valueFloat", DataTypeFactory::createFloat())
-        ->addField("valueDouble", DataTypeFactory::createDouble())
-        ->addField(mappedValue)
-        ->addField("valueChar", DataTypeFactory::createChar())
-        ->addField("text", DataTypeFactory::createFixedChar(12));
+                            ->addField("id", DataTypeFactory::createInt32())
+                            ->addField("valueSmall", DataTypeFactory::createInt16())
+                            ->addField("valueFloat", DataTypeFactory::createFloat())
+                            ->addField("valueDouble", DataTypeFactory::createDouble())
+                            ->addField(mappedValue)
+                            ->addField("valueChar", DataTypeFactory::createChar())
+                            ->addField("text", DataTypeFactory::createFixedChar(12));
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
 
@@ -1059,7 +1059,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/ 2)->read(inputBuffer);
         auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 3)->read(inputBuffer);
-        auto reference = ((floatValue * doubleValue) + 2)*doubleValue;
+        auto reference = ((floatValue * doubleValue) + 2) * doubleValue;
         auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 4)->read(resultBuffer);
         EXPECT_EQ(reference, mapedValue);
     }

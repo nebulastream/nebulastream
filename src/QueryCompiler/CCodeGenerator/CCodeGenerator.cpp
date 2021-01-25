@@ -904,16 +904,14 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     if (context->arity == PipelineContext::BinaryLeft) {
         auto joinKeyFieldName = joinDef->getLeftJoinKey()->getFieldName();
-        keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()),
-                                                             joinKeyFieldName);
+        keyVariableDeclaration =
+            VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName);
 
         NES_ASSERT(recordHandler->hasAttribute(joinKeyFieldName), "join key is not defined on iput tuple");
 
         auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
 
-        auto keyVariableAttributeStatement =
-            VarDeclStatement(keyVariableDeclaration)
-                .assign(joinKeyReference);
+        auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(joinKeyReference);
         context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     } else {
         auto joinKeyFieldName = joinDef->getRightJoinKey()->getFieldName();
@@ -924,9 +922,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         NES_ASSERT(recordHandler->hasAttribute(joinKeyFieldName), "join key is not defined on iput tuple");
 
         auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
-        auto keyVariableAttributeStatement =
-            VarDeclStatement(keyVariableDeclaration)
-                .assign(joinKeyReference);
+        auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(joinKeyReference);
         context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     }
 
@@ -957,11 +953,10 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
         //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
-        auto tsVariableReference = recordHandler->getAttribute(joinDef->getWindowType()->getTimeCharacteristic()->getField()->name);
+        auto tsVariableReference =
+            recordHandler->getAttribute(joinDef->getWindowType()->getTimeCharacteristic()->getField()->name);
 
-        auto tsVariableDeclarationStatement =
-            VarDeclStatement(currentTimeVariableDeclaration)
-                .assign(tsVariableReference);
+        auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(tsVariableReference);
         context->code->currentCodeInsertionPoint->addStatement(tsVariableDeclarationStatement.copy());
     }
 
