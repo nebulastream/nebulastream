@@ -52,12 +52,11 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
     }
 
-    virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_TRACE("~ExecutableNestedLoopJoinTriggerAction()"); }
+    virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction()"); }
 
     bool doAction(StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
                   StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
-                  uint64_t currentWatermarkLeft, uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft,
-                  uint64_t lastWatermarkRight) override {
+                  uint64_t currentWatermark, uint64_t lastWatermark) override {
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
@@ -80,7 +79,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
                         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: found join pair for key " << leftHashTable.first);
                         joinWindows(leftHashTable.first, leftHashTable.second, rightHashTable.second, tupleBuffer,
-                                    currentWatermarkLeft, currentWatermarkRight, lastWatermarkLeft, lastWatermarkRight);
+                                    currentWatermark, lastWatermark);
                     }
                 }
             }
@@ -101,58 +100,20 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
     std::string toString() override { return "ExecutableNestedLoopJoinTriggerAction"; }
 
-    uint64_t getWatermark(Windowing::WindowSliceStore<KeyType>* store) {
-        auto windowType = joinDefinition->getWindowType();
-        auto windowTimeType = windowType->getTimeCharacteristic();
-        auto watermark = store->getMinWatermark();
-
-        // the window type adds result windows to the windows vectors
-        if (store->getLastWatermark() == 0) {
-            if (windowType->isTumblingWindow()) {
-                auto* tumbWindow = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: successful cast to TumblingWindow");
-                auto initWatermark =
-                    watermark < tumbWindow->getSize().getTime() ? 0 : watermark - tumbWindow->getSize().getTime();
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::getWatermark(TumblingWindow): getLastWatermark was 0 set to="
-                          << initWatermark);
-                store->setLastWatermark(initWatermark);
-            } else if (windowType->isSlidingWindow()) {
-                auto* slidWindow = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: successful cast to SlidingWindow");
-                auto initWatermark =
-                    watermark < slidWindow->getSize().getTime() ? 0 : watermark - slidWindow->getSize().getTime();
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:: getLastWatermark was 0 set to=" << initWatermark);
-                store->setLastWatermark(initWatermark);
-            } else {
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: Unknown WindowType; LastWatermark was 0 and "
-                          "remains 0");
-            }
-        } else {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::updateWaterMark: last watermark is="
-                      << store->getLastWatermark() << " for watermark=" << watermark);
-        }
-        return watermark;
-    }
-
     /**
      * @brief Execute the joining of all possible slices and join pairs for a given key
      * @param key the target key of the join
      * @param leftStore left content of the state
      * @param rightStore right content of the state
      * @param tupleBuffer the output buffer
-     * @param currentWatermarkLeft current watermark on the left side
-     * @param currentWatermarkRight current watermark on the right side
-     * @param lastWatermarkLeft last watermark on the left side
-     * @param lastWatermarkRight last watermark on the right side
+     * @param currentWatermark current watermark on the left side and right side
+     * @param lastWatermark last watermark on the left side and right side
      */
     void joinWindows(KeyType key, Windowing::WindowedJoinSliceListStore<InputTypeLeft>* leftStore,
                      Windowing::WindowedJoinSliceListStore<InputTypeRight>* rightStore, NodeEngine::TupleBuffer& tupleBuffer,
-                     uint64_t currentWatermarkLeft, uint64_t currentWatermarkRight, uint64_t lastWatermarkLeft,
-                     uint64_t lastWatermarkRight) {
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore  watermark is="
-                  << currentWatermarkLeft << " lastwatermark=" << lastWatermarkLeft);
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:rightStore  watermark is="
-                  << currentWatermarkRight << " lastwatermark=" << lastWatermarkRight);
+                     uint64_t currentWatermark, uint64_t lastWatermark) {
+        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction::joinWindows:leftStore currentWatermark is="
+                  << currentWatermark << " lastWatermark=" << lastWatermark);
 
         if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
@@ -164,45 +125,47 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto leftLock = std::unique_lock(leftStore->mutex());
         auto listLeft = leftStore->getAppendList();
         auto slicesLeft = leftStore->getSliceMetadata();
-        NES_TRACE("content left side for key=" << key);
+        NES_DEBUG("content left side for key=" << key);
         size_t id = 0;
         for (auto& left : slicesLeft) {
-            NES_TRACE("left start=" << left.getStartTs() << " left end=" << left.getEndTs() << " id=" << id++);
+            NES_DEBUG("left start=" << left.getStartTs() << " left end=" << left.getEndTs() << " id=" << id++);
         }
 
-        NES_TRACE("ExecutableNestedLoopJoinTriggerAction:leftStore trigger " << windows.size() << " windows, on "
+        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger " << windows.size() << " windows, on "
                                                                              << slicesLeft.size() << " slices");
         for (uint64_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
-            NES_TRACE("ExecutableNestedLoopJoinTriggerAction:leftStore trigger sliceid="
+            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger sliceid="
                       << sliceId << " start=" << slicesLeft[sliceId].getStartTs() << " end=" << slicesLeft[sliceId].getEndTs());
         }
+
+        uint64_t slideSize = joinDefinition->getWindowType()->getSize().getTime();
 
         auto rightLock = std::unique_lock(leftStore->mutex());
         auto slicesRight = rightStore->getSliceMetadata();
         auto listRight = rightStore->getAppendList();
-        NES_TRACE("content right side for key=" << key);
+        NES_DEBUG("content right side for key=" << key);
         id = 0;
         for (auto& right : slicesRight) {
-            NES_TRACE("right start=" << right.getStartTs() << " right end=" << right.getEndTs() << " id=" << id++);
+            NES_DEBUG("right start=" << right.getStartTs() << " right end=" << right.getEndTs() << " id=" << id++);
         }
 
-        if (currentWatermarkLeft > lastWatermarkLeft) {
-            NES_DEBUG("joinWindows trigger because currentWatermarkLeft=" << currentWatermarkLeft
-                                                                          << " > lastWatermarkLeft=" << lastWatermarkLeft);
-            joinDefinition->getWindowType()->triggerWindows(windows, lastWatermarkLeft, currentWatermarkLeft);//watermark
-            NES_DEBUG(
-                "ExecutableNestedLoopJoinTriggerAction: trigger Complete or combining window for windows=" << windows.size());
+        if (currentWatermark > lastWatermark) {
+            NES_DEBUG("joinWindows trigger because currentWatermark=" << currentWatermark << " > lastWatermark=" << lastWatermark);
+            joinDefinition->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);
         } else {
-            NES_DEBUG("aggregateWindows No trigger because NOT currentWatermarkLeft="
-                      << currentWatermarkLeft << " > lastWatermarkLeft=" << lastWatermarkLeft);
+            NES_DEBUG("aggregateWindows No trigger because NOT currentWatermark="
+                      << currentWatermark << " > lastWatermark=" << lastWatermark);
         }
 
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger Complete or combining window for slices="
                   << slicesLeft.size() << " windows=" << windows.size());
-        std::vector<size_t> toDelete;
+        int64_t largestClosedWindow = 0;
+
         for (size_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
             for (size_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
+                largestClosedWindow = std::max((int64_t) window.getEndTs(), largestClosedWindow);
+
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: window.getStartTs()="
                           << window.getStartTs() << " slices[sliceId].getStartTs()=" << slicesLeft[sliceId].getStartTs()
@@ -214,7 +177,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
                     if (slicesLeft[sliceId].getStartTs() == slicesRight[sliceId].getStartTs()
                         && slicesLeft[sliceId].getEndTs() == slicesRight[sliceId].getEndTs()) {
-                        NES_TRACE("size left=" << listLeft[sliceId].size() << " size right=" << listRight[sliceId].size());
+                        NES_DEBUG("size left=" << listLeft[sliceId].size() << " size right=" << listRight[sliceId].size());
                         for (auto& left : listLeft[sliceId]) {
                             for (auto& right : listRight[sliceId]) {
                                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction: write key="
@@ -232,21 +195,14 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                             }
                         }
                         tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
-                        toDelete.emplace_back(sliceId);
                     }
                 }
+                NES_DEBUG("largestClosedWindow=" << largestClosedWindow << " slideSize=" << slideSize);
+                if (largestClosedWindow != 0) {
+                    //                    leftStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
+                    //                    rightStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
+                }
             }
-        }
-        // we need to delete joined slices from right to left to avoid altering the indexing
-        // imagine we have 4 slices and we want to delete the 1-st (index 0) and the 4-th (index 3) ones.
-        // if we delete left to right, as soon as we delete index 0 then index 3 becomes invalid.
-        // if we delete right to left, deleting index 3 won't mess up with the item in position 0.
-        std::sort(toDelete.begin(), toDelete.end(), std::greater<>());
-        for (auto sliceId : toDelete) {
-            listLeft.erase(listLeft.begin() + sliceId);
-            listRight.erase(listRight.begin() + sliceId);
-            slicesLeft.erase(slicesLeft.begin() + sliceId);
-            slicesRight.erase(slicesRight.begin() + sliceId);
         }
     }
 
