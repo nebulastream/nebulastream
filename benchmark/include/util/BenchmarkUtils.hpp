@@ -17,6 +17,7 @@
 #ifndef NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
 #define NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
 
+#include "SimpleBenchmarkSink.hpp"
 #include <API/Query.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
@@ -109,7 +110,7 @@ class BenchmarkUtils {
      */
 
     static void runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
-                             NES::DataSinkPtr benchmarkSink, NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
+                             std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink, NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
 };
 
 #define BM_AddBenchmarkCustomBufferSize(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString,          \
@@ -150,7 +151,8 @@ class BenchmarkUtils {
                                     sources.push_back(thisSource);                                                               \
                                 }                                                                                                \
                                                                                                                                  \
-                                DataSinkPtr thisSink = (benchmarkSink);                                                          \
+                                /*DataSinkPtr thisSink = (benchmarkSink);*/                                                      \
+                                std::shared_ptr<Benchmarking::SimpleBenchmarkSink> thisSink = (benchmarkSink);                   \
                                 SchemaPtr thisSchema = (benchmarkSchema);                                                        \
                                 Query thisQuery = (benchmarkQuery);                                                              \
                                 BenchmarkUtils::runBenchmark(statisticsVec, sources, thisSink, nodeEngine, thisQuery);           \
