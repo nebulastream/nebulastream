@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
     WorkerConfig* workerConfig = new WorkerConfig();
     SourceConfig* sourceConfig = new SourceConfig();
     sourceConfig->setSourceType("NoSource");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
 
     map<string, string> commandLineParams;
 

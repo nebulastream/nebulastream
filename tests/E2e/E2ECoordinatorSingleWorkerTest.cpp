@@ -319,7 +319,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithFileOutputExdraUseCase) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     NES_INFO(" start coordinator");
     std::string testFile = "exdra.csv";
     remove(testFile.c_str());
@@ -418,7 +418,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithF
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingSimplePattern) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingSimplePattern.out";
     remove(outputFilePath.c_str());
@@ -482,7 +482,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingSimplePattern) {
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithTumblingWindowFileOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
@@ -549,7 +549,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithT
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryWithSlidingWindowFileOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());

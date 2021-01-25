@@ -22,7 +22,7 @@
 #include <sys/stat.h>
 
 namespace NES {
-SourceConfig::SourceConfig() { NES_INFO("NesSourceConfig: Init source config object."); }
+SourceConfig::SourceConfig() { NES_INFO("NesSourceConfig: Init source config object with default values."); }
 
 void SourceConfig::overwriteConfigWithYAMLFileInput(string filePath) {
 
