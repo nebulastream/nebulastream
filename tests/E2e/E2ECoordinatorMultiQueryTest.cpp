@@ -50,7 +50,10 @@ uint16_t timeout = 5;
 
 class E2ECoordinatorMultiQueryTest : public testing::Test {
   public:
-    static void SetUpTestCase() { NES_INFO("Setup E2e test class."); }
+    static void SetUpTestCase() {
+        NES::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup E2e test class.");
+    }
 
     void SetUp() {
         rpcPort += 10;
@@ -343,19 +346,21 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoPatternsWithFileOutput) {
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
-    string expectedContent1 = "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
-                              "R2000073,1543624020000,102.629631,8,1\n"
-                              "R2000070,1543625280000,108.166664,5,1\n";
+    string expectedContent1 =
+        "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
+        "R2000073,1543624020000,102.629631,8,1\n"
+        "R2000070,1543625280000,108.166664,5,1\n";
 
-    string expectedContent2 = "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
-                              "R2000073,1543622760000,63.277779,11,1\n"
-                              "R2000073,1543622940000,66.222221,12,1\n"
-                              "R2000073,1543623000000,74.666664,11,1\n"
-                              "R2000073,1543623480000,62.444443,13,1\n"
-                              "R2000073,1543624200000,64.611115,12,1\n"
-                              "R2000073,1543624260000,68.407410,11,1\n"
-                              "R2000073,1543625040000,56.666668,11,1\n"
-                              "R2000073,1543625400000,62.333332,11,1\n";
+    string expectedContent2 =
+        "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
+        "R2000073,1543622760000,63.277779,11,1\n"
+        "R2000073,1543622940000,66.222221,12,1\n"
+        "R2000073,1543623000000,74.666664,11,1\n"
+        "R2000073,1543623480000,62.444443,13,1\n"
+        "R2000073,1543624200000,64.611115,12,1\n"
+        "R2000073,1543624260000,68.407410,11,1\n"
+        "R2000073,1543625040000,56.666668,11,1\n"
+        "R2000073,1543625400000,62.333332,11,1\n";
 
     std::ifstream ifsQ1(pathPattern1.c_str());
     EXPECT_TRUE(ifsQ1.good());
