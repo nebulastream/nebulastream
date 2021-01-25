@@ -18,6 +18,9 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -25,9 +28,6 @@
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
 
 using namespace std;
 
@@ -237,8 +237,7 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -344,14 +343,12 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     srcConf->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     srcConf->setSourceConfig("../tests/test_data/window2.csv");
     srcConf->setLogicalStreamName("window2");
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);

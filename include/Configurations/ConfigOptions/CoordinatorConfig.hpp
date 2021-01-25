@@ -115,11 +115,10 @@ class CoordinatorConfig {
     * @brief set the value for logLevel with the appropriate data format
     */
     void setLogLevel(const string& logLevel);
-/**
+    /**
  * @brief definition of options and information for coordinator config options
  */
   private:
-
     ConfigOption<std::string> restIp =
         ConfigOption("restIp", std::string("127.0.0.1"), "NES ip of the REST server.", "string", false);
 

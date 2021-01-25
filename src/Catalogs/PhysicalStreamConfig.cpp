@@ -34,9 +34,9 @@ PhysicalStreamConfig::PhysicalStreamConfig(SourceConfig* sourceConfig)
       numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer().getValue()),
       numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce().getValue()),
       physicalStreamName(sourceConfig->getPhysicalStreamName().getValue()),
-      logicalStreamName(sourceConfig->getLogicalStreamName().getValue()), skipHeader(sourceConfig->getSkipHeader().getValue()){
+      logicalStreamName(sourceConfig->getLogicalStreamName().getValue()), skipHeader(sourceConfig->getSkipHeader().getValue()) {
     NES_INFO("PhysicalStreamConfig: Created source with config: " << this->toString());
-                                                                          };
+};
 
 const std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;
