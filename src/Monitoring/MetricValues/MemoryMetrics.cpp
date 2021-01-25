@@ -93,6 +93,10 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     return output;
 }
 
+SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) {
+    return MemoryMetrics::getSchema(prefix);
+}
+
 bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
     return TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM && SHARED_RAM == rhs.SHARED_RAM
         && BUFFER_RAM == rhs.BUFFER_RAM && FREE_SWAP == rhs.FREE_SWAP && TOTAL_HIGH == rhs.TOTAL_HIGH

@@ -76,6 +76,13 @@ class MemoryMetrics {
  */
 void serialize(const MemoryMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
+/**
+ * @brief Class specific getSchema() method
+ * @param metric
+ * @return the SchemaPtr
+ */
+SchemaPtr getSchema(const MemoryMetrics& metric, const std::string& prefix);
+
 typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
 }// namespace NES
 

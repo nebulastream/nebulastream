@@ -65,6 +65,13 @@ typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
  */
 void serialize(const DiskMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
+/**
+ * @brief Class specific getSchema() method for DiskMetrics
+ * @param metric
+ * @return the SchemaPtr
+ */
+SchemaPtr getSchema(const DiskMetrics& metric, const std::string& prefix);
+
 }// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_DISCMETRICS_HPP_

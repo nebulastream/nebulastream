@@ -27,6 +27,8 @@ class Schema;
 class TupleBuffer;
 class MonitoringPlan;
 
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 /**
  * A MetricGroup is a named container for Metrics and further metric subgroups.
  *
@@ -69,7 +71,13 @@ class MetricGroup {
      * @param schema
      * @param buf
      */
-    void getSample(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf);
+    void getSample(SchemaPtr schema, NodeEngine::TupleBuffer& buf);
+
+    /**
+     * @brief Returns the schema of the class.
+     * @return the schema
+     */
+    SchemaPtr createGroupSchema();
 
   private:
     MetricGroup();

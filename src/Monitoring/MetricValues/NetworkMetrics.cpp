@@ -77,11 +77,26 @@ void serialize(const NetworkMetrics& metrics, SchemaPtr schema, NodeEngine::Tupl
     auto layout = NodeEngine::createRowLayout(schema);
     layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getInterfaceNum());
 
-    for (int i = 0; i < metrics.getInterfaceNum(); i++) {
+    for (uint64_t i = 0; i < metrics.getInterfaceNum(); i++) {
         serialize(metrics.getNetworkValue(i), schema, buf,
                   prefix + "Intfs[" + std::to_string(i + 1) + "]_"
                       + UtilityFunctions::trim(metrics.getNetworkValue(i).interfaceName) + "_");
     }
 }
+
+SchemaPtr getSchema(const NetworkMetrics& metrics, const std::string& prefix) {
+    auto schema = Schema::create();
+    schema->addField(prefix + "INTERFACE_NO", BasicType::UINT16);
+
+    for (uint64_t i = 0; i < metrics.getInterfaceNum(); i++) {
+        auto interfacePrefix = prefix + "Intfs[" + std::to_string(i + 1) + "]_"
+            + UtilityFunctions::trim(metrics.getNetworkValue(i).interfaceName) + "_";
+
+        schema->copyFields(NetworkValues::getSchema(interfacePrefix));
+    }
+
+    return schema;
+}
+
 
 }// namespace NES
