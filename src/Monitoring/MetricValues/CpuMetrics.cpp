@@ -85,4 +85,21 @@ void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuf
     }
 }
 
+SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix) {
+    auto schema = Schema::create();
+    schema->addField(prefix + "CORE_NO", BasicType::UINT16);
+
+    //add schema for total
+    schema->copyFields(CpuValues::getSchema(prefix + "CPU[TOTAL]_"));
+
+    //add schema for each core
+    for (int i = 0; i < metrics.getNumCores(); i++) {
+        auto corePrefix = prefix + "CPU[" + std::to_string(i + 1) + "]_";
+        schema->copyFields(CpuValues::getSchema(corePrefix));
+    }
+
+    return schema;
+}
+
+
 }// namespace NES

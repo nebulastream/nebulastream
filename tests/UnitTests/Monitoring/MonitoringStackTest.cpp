@@ -208,6 +208,37 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     ASSERT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
+TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
+    MetricGroupPtr metricGroup = MetricGroup::create();
+
+    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+
+    // add with simple data types
+    metricGroup->add("simpleInt_", 1);
+
+    // add cpu stats
+    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
+
+    // add network stats
+    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
+
+    // add disk stats
+    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
+
+    // add mem stats
+    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto schema = Schema::create();
+    metricGroup->getSample(schema, tupleBuffer);
+
+    ASSERT_EQ(schema->toString(), metricGroup->createGroupSchema()->toString());
+}
+
+
 TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     auto cpuStats = MetricUtils::CPUStats();
 

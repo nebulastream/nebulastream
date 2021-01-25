@@ -27,7 +27,8 @@ MetricGroup::MetricGroup() { NES_INFO("MetricGroup: Ctor called"); }
 std::shared_ptr<MetricGroup> MetricGroup::create() { return std::make_shared<MetricGroup>(MetricGroup()); }
 
 bool MetricGroup::add(const std::string& desc, const Metric& metric) {
-    return metricMap.insert(std::make_pair(desc, metric)).second;
+    auto out = metricMap.insert(std::make_pair(desc, metric)).second;
+    return out;
 }
 
 bool MetricGroup::remove(const std::string& name) { return metricMap.erase(name); }
@@ -36,7 +37,16 @@ void MetricGroup::getSample(std::shared_ptr<Schema> schema, NodeEngine::TupleBuf
     NES_DEBUG("MetricGroup: Collecting sample via serialize(..)");
     for (auto const& x : metricMap) {
         serialize(x.second, schema, buf, x.first);
+        NES_DEBUG("MetricGroup: Serialized " + x.first + ". New schema for buffer " + schema->toString());
     }
+}
+
+SchemaPtr MetricGroup::createGroupSchema() {
+    auto outputSchema = Schema::create();
+    for (auto const& x : metricMap) {
+        outputSchema->copyFields(getSchema(x.second, x.first));
+    }
+    return outputSchema;
 }
 
 }// namespace NES

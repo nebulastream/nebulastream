@@ -83,6 +83,14 @@ class CpuMetrics {
  */
 void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
+/**
+ * @brief Class specific getSchema() method
+ * @param metric
+ * @return the SchemaPtr
+ */
+SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);
+
+
 }// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_

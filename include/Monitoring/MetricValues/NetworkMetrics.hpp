@@ -66,6 +66,13 @@ class NetworkMetrics {
  */
 void serialize(const NetworkMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
+/**
+ * @brief Class specific getSchema() method for NetworkMetrics
+ * @param metric
+ * @return the SchemaPtr
+ */
+SchemaPtr getSchema(const NetworkMetrics& metric, const std::string& prefix);
+
 }// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
