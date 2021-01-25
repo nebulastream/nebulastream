@@ -102,7 +102,8 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     std::scoped_lock lock(queryMutex, statisticsMutex);
 
     bool isBinaryOperator = false;
-    for (auto& pipeline : qep->getPipelines()) {
+    auto executablePipelines = qep->getPipelines();
+    for (auto& pipeline : executablePipelines) {
         switch (pipeline->getArity()) {
             case Unary: {
                 break;
@@ -140,14 +141,23 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
             queryMapToOperatorId[qep->getQueryId()].push_back(source->getOperatorId());
             if (isBinaryOperator) {
-                NES_ASSERT(qep->getPipelines().size() >= 2, "Binary operator must have at least two pipelines");
-                if (true) {
-                    NES_DEBUG("QueryManager: isleftSide" << qep << " to Source" << source->getOperatorId());
-                    operatorIdToPipelineStage[source->getOperatorId()] = 1;
-                } else {
-                    NES_DEBUG("QueryManager: isrightSide" << qep << " to Source" << source->getOperatorId());
-                    operatorIdToPipelineStage[source->getOperatorId()] = 0;
+                NES_ASSERT(executablePipelines.size() >= 2, "Binary operator must have at least two pipelines");
+                SchemaPtr sourceSchema = source->getSchema();
+                for (uint64_t i = 0; i < qep->getNumberOfPipelines(); i++) {
+                    auto pipelineInputSchema = executablePipelines[i]->getInputSchema();
+                    if (pipelineInputSchema->equals(sourceSchema)) {
+                        operatorIdToPipelineStage[source->getOperatorId()] = i;
+                        break;
+                    }
                 }
+
+                //                if (true) {
+                //                    NES_DEBUG("QueryManager: isleftSide" << qep << " to Source" << source->getOperatorId());
+                //                    operatorIdToPipelineStage[source->getOperatorId()] = 1;
+                //                } else {
+                //                    NES_DEBUG("QueryManager: isrightSide" << qep << " to Source" << source->getOperatorId());
+                //                    operatorIdToPipelineStage[source->getOperatorId()] = 0;
+                //                }
             }
             NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << source->getOperatorId());
         }
@@ -330,7 +340,7 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
         },
         std::vector<Execution::OperatorHandlerPtr>());
     auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
-                                                          nullptr, true);
+                                                          nullptr, nullptr, nullptr, true);
     {
         std::unique_lock lock(workMutex);
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {

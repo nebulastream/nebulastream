@@ -28,10 +28,10 @@ namespace NES::NodeEngine::Execution {
 ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId qepId,
                                        ExecutablePipelineStagePtr executablePipelineStage,
                                        PipelineExecutionContextPtr pipelineExecutionContext, ExecutablePipelinePtr nextPipeline,
-                                       bool reconfiguration)
+                                       SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration)
     : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
-      nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)),
-      reconfiguration(reconfiguration) {
+      nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)), inputSchema(inputSchema),
+      outputSchema(outputSchema), reconfiguration(reconfiguration) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
@@ -75,11 +75,15 @@ PipelineStageArity ExecutablePipeline::getArity() { return executablePipelineSta
 ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
                                                  ExecutablePipelineStagePtr executablePipelineStage,
                                                  PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline,
-                                                 bool reconfiguration) {
+                                                 SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration) {
     return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
-                                                nextPipeline, reconfiguration);
+                                                nextPipeline, inputSchema, outputSchema, reconfiguration);
 }
 
 ExecutablePipeline::~ExecutablePipeline() { NES_DEBUG("~ExecutablePipeline(" + std::to_string(pipelineStageId) + ")"); }
+
+const SchemaPtr& ExecutablePipeline::getInputSchema() const { return inputSchema; }
+
+const SchemaPtr& ExecutablePipeline::getOutputSchema() const { return outputSchema; }
 
 }// namespace NES::NodeEngine::Execution
