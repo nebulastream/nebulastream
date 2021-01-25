@@ -698,7 +698,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$ts"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 8);
+    ASSERT_TRUE(filterOutputSchema->fields.size() == 9);
     ASSERT_TRUE(filterOutputSchema->hasFieldName("x$f2"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("x$f1"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("x$ts"));
@@ -707,6 +707,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     ASSERT_TRUE(filterOutputSchema->hasFieldName("y$ts"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("_$start"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("_$end"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("_$key"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
     ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
