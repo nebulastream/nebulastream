@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_RECORDHANDLER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_RECORDHANDLER_HPP_
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
-#include <string>
 #include <map>
+#include <string>
 namespace NES {
 
 /**
@@ -27,7 +27,6 @@ namespace NES {
  */
 class RecordHandler {
   public:
-
     static RecordHandlerPtr create();
 
     /**

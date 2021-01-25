@@ -33,10 +33,10 @@ GeneratableMinAggregation::create(Windowing::WindowAggregationDescriptorPtr aggr
 
 void GeneratableMinAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
                                                    RecordHandlerPtr recordHandler) {
-    auto fieldReference = recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+    auto fieldReference =
+        recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
 
-    auto ifStatement = IF(partialRef > *fieldReference,
-                          partialRef.assign(fieldReference));
+    auto ifStatement = IF(partialRef > *fieldReference, partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
 }
 }// namespace NES

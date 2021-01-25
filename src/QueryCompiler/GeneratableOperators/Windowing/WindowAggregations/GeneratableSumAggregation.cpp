@@ -34,7 +34,8 @@ GeneratableSumAggregation::create(Windowing::WindowAggregationDescriptorPtr aggr
 void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
                                                    RecordHandlerPtr recordHandler) {
 
-    auto fieldReference = recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+    auto fieldReference =
+        recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
 
     auto sum = partialRef + *fieldReference;
     auto updatedPartial = partialRef.assign(sum);

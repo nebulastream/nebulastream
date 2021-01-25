@@ -43,8 +43,12 @@ UserAPIExpressionPtr Predicate::copy() const { return std::make_shared<Predicate
 const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const {
     if (functionCallOverload.empty()) {
         if (bracket)
-            return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)), op, *(right->generateCode(code, recordHandler)), BRACKETS).copy();
-        return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)), op, *(right->generateCode(code, recordHandler))).copy();
+            return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)), op,
+                                           *(right->generateCode(code, recordHandler)), BRACKETS)
+                .copy();
+        return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)), op,
+                                       *(right->generateCode(code, recordHandler)))
+            .copy();
     } else {
         FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
         expr.addParameter(left->generateCode(code, recordHandler));
@@ -66,9 +70,9 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES:
 const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, NES::RecordHandlerPtr recordHandler) const {
     if (attribute) {
         //checks if the predicate field is contained in the current stream record.
-        if(recordHandler->hasAttribute(attribute->name)){
+        if (recordHandler->hasAttribute(attribute->name)) {
             return recordHandler->getAttribute(attribute->name);
-        }else{
+        } else {
             NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from record handler!");
         }
     } else if (value) {
