@@ -826,8 +826,8 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_win1:INTEGER,left_id1:INTEGER,left_timestamp:INTEGER,"
-                             "right_win2:INTEGER,right_id2:INTEGER,right_timestamp:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
                              "1000,2000,4,1,4,1002,3,4,1102\n"
                              "1000,2000,4,1,4,1002,3,4,1112\n"
                              "1000,2000,4,1,4,1002,3,4,1102\n"
@@ -947,8 +947,8 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_win1:INTEGER,left_id1:INTEGER,left_timestamp:INTEGER,"
-                             "right_win2:INTEGER,right_id2:INTEGER,right_timestamp:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
                              "500,1500,4,1,4,1002,3,4,1102\n"
                              "500,1500,4,1,4,1002,3,4,1112\n"
                              "500,1500,12,1,12,1001,5,12,1011\n"
@@ -1047,8 +1047,8 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "start:INTEGER,end:INTEGER,key:INTEGER,left_win:INTEGER,left_id1:INTEGER,left_timestamp:INTEGER,"
-                             "right_id2:INTEGER,right_timestamp:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$id2:INTEGER,window2$timestamp:INTEGER\n"
                              "500,1500,4,1,4,1002,4,1002\n"
                              "500,1500,12,1,12,1001,12,1001\n"
                              "1500,2500,1,2,1,2000,1,2000\n"
