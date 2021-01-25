@@ -43,7 +43,6 @@ QueryCompilerPtr QueryCompiler::create() { return std::make_shared<QueryCompiler
  */
 
 void QueryCompiler::compile(GeneratedQueryExecutionPlanBuilder& qepBuilder, OperatorNodePtr queryPlan) {
-    NES_DEBUG("Generate code for query plan " + queryPlan->toString());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
     queryPlan->as<GeneratableOperator>()->produce(codeGenerator, context);
@@ -59,14 +58,17 @@ class PipelineStageHolder {
     std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
     std::set<uint32_t> producers;
     std::set<uint32_t> consumers;
+    SchemaPtr inputSchema;
+    SchemaPtr outputSchema;
 
   public:
     PipelineStageHolder() = default;
 
     PipelineStageHolder(uint32_t currentStageId, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                        const std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
+                        const std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers, SchemaPtr inputSchema,
+                        SchemaPtr outputSchema)
         : currentStageId(currentStageId), executablePipelineStage(std::move(executablePipelineStage)),
-          operatorHandlers(std::move(operatorHandlers)) {
+          operatorHandlers(std::move(operatorHandlers)), inputSchema(inputSchema), outputSchema(outputSchema) {
         // nop
     }
 };
@@ -90,8 +92,12 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
                 NES_ERROR("Cannot compile pipeline:" << currContext->code);
                 NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
             }
-            accumulator[currentPipelineStateId] =
-                PipelineStageHolder(currentPipelineStateId, executablePipelineStage, currContext->getOperatorHandlers());
+
+            auto inputSchema = currContext->inputSchema;
+            auto resultSchema = currContext->resultSchema;
+
+            accumulator[currentPipelineStateId] = PipelineStageHolder(
+                currentPipelineStateId, executablePipelineStage, currContext->getOperatorHandlers(), inputSchema, resultSchema);
             if (consumerPipelineStateId >= 0) {
                 accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }
@@ -164,9 +170,9 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 },
                 holder.operatorHandlers);
         }
-        auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(stageId, builder.getQuerySubPlanId(),
-                                                                          holder.executablePipelineStage, executionContext,
-                                                                          pipelines[*holder.consumers.begin()]);
+        auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(
+            stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext,
+            pipelines[*holder.consumers.begin()], holder.inputSchema, holder.outputSchema);
 
         builder.addPipeline(pipeline);
         pipelines[stageId] = pipeline;

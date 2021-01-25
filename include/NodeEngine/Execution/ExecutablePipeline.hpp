@@ -31,8 +31,9 @@ namespace NES::NodeEngine::Execution {
  */
 class ExecutablePipeline {
   public:
-    ExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
-                       PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline, bool reconfiguration);
+    explicit ExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
+                                PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline,
+                                SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -47,7 +48,8 @@ class ExecutablePipeline {
     static ExecutablePipelinePtr create(uint32_t pipelineId, const QuerySubPlanId querySubPlanId,
                                         ExecutablePipelineStagePtr executablePipelineStage,
                                         PipelineExecutionContextPtr pipelineContext,
-                                        const ExecutablePipelinePtr nextPipelineStage, bool reconfiguration = false);
+                                        const ExecutablePipelinePtr nextPipelineStage, SchemaPtr inputSchema,
+                                        SchemaPtr outputSchema, bool reconfiguration = false);
 
     /**
      * @brief Execute a pipeline stage
@@ -107,6 +109,18 @@ class ExecutablePipeline {
      */
     PipelineStageArity getArity();
 
+    /**
+     * @brief Get input schema of the pipeline
+     * @return pointer to the input schema
+     */
+    const SchemaPtr& getInputSchema() const;
+
+    /**
+     * @brief Get output schema of the pipeline
+     * @return pointer to the output schema
+     */
+    const SchemaPtr& getOutputSchema() const;
+
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;
@@ -114,6 +128,8 @@ class ExecutablePipeline {
     ExecutablePipelinePtr nextPipeline;
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
+    SchemaPtr inputSchema;
+    SchemaPtr outputSchema;
 };
 
 }// namespace NES::NodeEngine::Execution

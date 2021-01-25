@@ -953,8 +953,24 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
         //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
+
+        //Extract the name of the window field used for time characteristics
+        std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->name;
+        if (context->arity == PipelineContext::BinaryRight) {
+            //Extract the schema of the right side
+            auto rightSchema = joinDef->getRightStreamType();
+            //Extract the field name without attribute name resolution
+            auto trimmedWindowFieldName =
+                windowTimeStampFieldName.substr(windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR), windowTimeStampFieldName.length());
+            //Extract the first field from right schema and trim it to find the schema qualifier for the right side
+            std::string firstRightField = rightSchema->fields[0]->name;
+            auto schemaQualifierName = firstRightField.substr(0, firstRightField.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+            //Construct window field name after adding schema qualifier
+            windowTimeStampFieldName = schemaQualifierName + trimmedWindowFieldName;
+        }
+
         auto tsVariableReference =
-            recordHandler->getAttribute(joinDef->getWindowType()->getTimeCharacteristic()->getField()->name);
+            recordHandler->getAttribute(windowTimeStampFieldName);
 
         auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(tsVariableReference);
         context->code->currentCodeInsertionPoint->addStatement(tsVariableDeclarationStatement.copy());
