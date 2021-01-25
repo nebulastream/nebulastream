@@ -33,9 +33,9 @@ class RecordHandler {
     /**
      * @brief Registers a new attribute to the record handler.
      * @param name attribute name.
-     * @param variable reference to the variable.
+     * @param variableAccessStatement reference to the statement that generates this attribute.
      */
-    void registerAttribute(std::string name, ExpressionStatmentPtr variable);
+    void registerAttribute(std::string name, ExpressionStatmentPtr variableAccessStatement);
 
     /**
      * @brief Checks a specific attribute was already registered.
@@ -51,7 +51,7 @@ class RecordHandler {
     ExpressionStatmentPtr getAttribute(std::string name);
 
   private:
-    std::map<std::string, ExpressionStatmentPtr> variableMap;
+    std::map<std::string, ExpressionStatmentPtr> statementMap;
 };
 
 }// namespace NES

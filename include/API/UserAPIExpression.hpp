@@ -54,7 +54,7 @@ typedef std::shared_ptr<Field> FieldPtr;
 class UserAPIExpression {
   public:
     virtual ~UserAPIExpression(){};
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr handler) const = 0;
+    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const = 0;
     virtual const std::string toString() const = 0;
     virtual UserAPIExpressionPtr copy() const = 0;
     virtual bool equals(const UserAPIExpression& rhs) const = 0;
@@ -67,7 +67,7 @@ class Predicate : public UserAPIExpression {
     Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right,
               bool bracket = true);
 
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr handler) const override;
+    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const override;
     virtual const std::string toString() const override;
     virtual UserAPIExpressionPtr copy() const override;
     bool equals(const UserAPIExpression& rhs) const override;
@@ -103,7 +103,7 @@ class PredicateItem : public UserAPIExpression {
     PredicateItem(char val);
     PredicateItem(const char* val);
 
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr handler) const override;
+    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const override;
     virtual const std::string toString() const override;
     virtual UserAPIExpressionPtr copy() const override;
 

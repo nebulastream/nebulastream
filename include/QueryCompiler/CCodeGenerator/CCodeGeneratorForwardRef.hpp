@@ -67,7 +67,6 @@ typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
 class ExpressionStatment;
 typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
 
-
 class RecordHandler;
 typedef std::shared_ptr<RecordHandler> RecordHandlerPtr;
 

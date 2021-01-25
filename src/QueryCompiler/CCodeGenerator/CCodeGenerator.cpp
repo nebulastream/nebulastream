@@ -231,20 +231,6 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, UserAPIExpressi
 
     auto code = context->code;
     auto tf = getTypeFactory();
-    /*auto varDeclarationResultTuples = VariableDeclaration::create(
-       tf->createPointer(tf->createUserDefinedType(code->structDeclarationResultTuple)), "resultTuples");
-
-    auto declaredMapVar = getVariableDeclarationForField(code->structDeclarationResultTuple, field);
-    if (!declaredMapVar) {
-        context->resultSchema->addField(field);
-        context->code->structDeclarationResultTuple.addField(VariableDeclaration::create(field->dataType, field->name));
-        declaredMapVar = getVariableDeclarationForField(code->structDeclarationResultTuple, field);
-    }
-    code->override_fields.push_back(declaredMapVar);
-    auto varMapI = code->structDeclarationResultTuple.getVariableDeclaration(field->name);
-    auto callVar =
-        VarRef(varDeclarationResultTuples)[VarRef(code->varDeclarationNumberOfResultTuples)].accessRef(VarRef(varMapI));
-        */
 
     // Check if the assignment value is new or if we have to create it
     auto mapExpression = pred->generateCode(code, context->getRecordHandler());
@@ -328,45 +314,6 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
             code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
         }
     }
-    /*
-
-    for (uint64_t i = 0; i < context->resultSchema->getSize(); ++i) {
-        auto resultField = context->resultSchema->get(i);
-        auto variableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, resultField);
-        if (!variableDeclaration) {
-            NES_ERROR("CodeGenerator: Could not extract field " << resultField->toString() << " from struct "
-                                                                << structDeclarationResultTuple.getTypeName());
-            NES_DEBUG("CodeGenerator: W>");
-        }
-        auto varDeclarationInput = getVariableDeclarationForField(code->structDeclarationResultTuple, resultField);
-        if (varDeclarationInput) {
-            bool override = false;
-            for (uint64_t j = 0; j < code->override_fields.size(); j++) {
-                if (code->override_fields.at(j)->getIdentifierName().compare(varDeclarationInput->getIdentifierName()) == 0) {
-                    override = true;
-                    break;
-                }
-            }
-            if (!override) {
-                auto varDeclarationField = getVariableDeclarationForField(structDeclarationResultTuple, resultField);
-                if (!varDeclarationField) {
-                    NES_ERROR("Could not extract field " << resultField->toString() << " from struct "
-                                                         << structDeclarationResultTuple.getTypeName());
-                    NES_DEBUG("W>");
-                }
-                //context->code->variableDeclarations.push_back(*varDeclarationField);
-                AssignmentStatment as = {varDeclResultTuple,
-                                         *(varDeclarationField),
-                                         code->varDeclarationNumberOfResultTuples,
-                                         code->varDeclarationInputTuples,
-                                         *(varDeclarationField),
-                                         *(code->varDeclarationRecordIndex)};
-                auto copyFieldStatement = varDeclarationField->getDataType()->getStmtCopyAssignment(as);
-                code->currentCodeInsertionPoint->addStatement(copyFieldStatement);
-            }
-        }
-
-    }*/
 
     // increment number of tuples in buffer -> ++numberOfResultTuples;
     code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
@@ -977,8 +924,6 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         NES_ASSERT(recordHandler->hasAttribute(joinKeyFieldName), "join key is not defined on iput tuple");
 
         auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
-
-
         auto keyVariableAttributeStatement =
             VarDeclStatement(keyVariableDeclaration)
                 .assign(joinKeyReference);
