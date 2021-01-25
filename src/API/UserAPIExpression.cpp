@@ -63,25 +63,14 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES:
     }
 }
 
-const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, NES::RecordHandlerPtr handler) const {
+const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, NES::RecordHandlerPtr recordHandler) const {
     if (attribute) {
         //checks if the predicate field is contained in the current stream record.
-        if(handler->hasAttribute(attribute->name)){
-            return handler->getAttribute(attribute->name);
+        if(recordHandler->hasAttribute(attribute->name)){
+            return recordHandler->getAttribute(attribute->name);
         }else{
-            NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from StructDeclaration!");
+            NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from record handler!");
         }
-        /*for (auto& it : code->structDeclaratonInputTuples) {
-            if (it.containsField(attribute->name, attribute->getDataType())) {
-                // creates a new variable declaration for the predicate field.
-                VariableDeclaration var_decl_attr = it.getVariableDeclaration(attribute->name);
-                return ((VarRef(code->varDeclarationInputTuples)[VarRef(*code->varDeclarationRecordIndex)])
-                            .accessRef(VarRef(var_decl_attr)))
-                    .copy();
-            } else {
-                NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from StructDeclaration!");
-            }
-        }*/
     } else if (value) {
         // todo remove if compiler refactored
         auto tf = CompilerTypesFactory();

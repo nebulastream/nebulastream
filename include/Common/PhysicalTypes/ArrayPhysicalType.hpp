@@ -84,7 +84,6 @@ class ArrayPhysicalType : public PhysicalType {
   private:
     const uint64_t length;
     const PhysicalTypePtr physicalComponentType;
-
 };
 
 }// namespace NES

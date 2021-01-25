@@ -14,25 +14,21 @@
     limitations under the License.
 */
 #include <QueryCompiler/RecordHandler.hpp>
+#include <Util/Logger.hpp>
 
-namespace NES{
+namespace NES {
 
-RecordHandlerPtr RecordHandler::create() {
-    return std::make_shared<RecordHandler>();
+RecordHandlerPtr RecordHandler::create() { return std::make_shared<RecordHandler>(); }
+
+void RecordHandler::registerAttribute(std::string name, ExpressionStatmentPtr variableAccessStatement) {
+    NES_ASSERT(!hasAttribute(name), "RecordHandler:Attribute name: " << name << " should not be already registered.");
+    this->statementMap[name] = variableAccessStatement;
 }
 
-void RecordHandler::registerAttribute(std::string name, ExpressionStatmentPtr variable){
-    if(!hasAttribute(name)){
-        this->variableMap[name] = variable;
-    }
-}
-
-bool RecordHandler::hasAttribute(std::string name) {
-    return this->variableMap.count(name) == 1;
-}
+bool RecordHandler::hasAttribute(std::string name) { return this->statementMap.count(name) == 1; }
 
 ExpressionStatmentPtr RecordHandler::getAttribute(std::string name) {
-    return this->variableMap[name];
-}
+    NES_ASSERT(hasAttribute(name), "RecordHandler: Attribute name: " << name << " is not registered.");
+    return this->statementMap[name]; }
 
-}
+}// namespace NES
