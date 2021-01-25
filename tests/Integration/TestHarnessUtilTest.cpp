@@ -33,7 +33,7 @@ class TestHarnessUtilTest : public testing::Test {
 /*
  * Testing testHarness utility using one logical source and one physical source
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithSingleSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -83,7 +83,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
 /*
  * Testing testHarness utility using one logical source and two physical sources
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
     struct Car {
         uint32_t key;
         uint32_t value;

@@ -35,6 +35,9 @@ static uint64_t rpcPort = 4000;
 
 class MultipleWindowsTest : public testing::Test {
   public:
+    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
+    WorkerConfig* workerConfig = new WorkerConfig();
+    SourceConfig* srcConf = new SourceConfig();
     static void SetUpTestCase() {
         NES::setupLogging("MultipleWindowsTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultipleWindowsTest test class.");
@@ -43,6 +46,11 @@ class MultipleWindowsTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+
+        coordinatorConfig->setRpcPort(rpcPort);
+        coordinatorConfig->setRestPort(restPort);
+
+        workerConfig->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { std::cout << "Tear down MultipleWindowsTest class." << std::endl; }
@@ -51,17 +59,25 @@ class MultipleWindowsTest : public testing::Test {
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
-    NES_INFO("MultipleWindowsTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
+    NES_INFO("AssignWatermarkTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    NES_INFO("MultipleWindowsTest: Coordinator started successfully");
+    NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 
-    NES_INFO("MultipleWindowsTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NES_INFO("AssignWatermarkTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleWindowsTest: Worker1 started successfully");
+    NES_INFO("AssignWatermarkTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -75,9 +91,15 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -121,20 +143,34 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    coordinatorConfig->setNumberOfSlots(12);
+    workerConfig->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("MultipleWindowsTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, 12);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 12);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    workerConfig->setNumberOfSlots(12);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor, 12);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    workerConfig->setNumberOfSlots(12);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleWindowsTest: Worker2 started successfully");
@@ -151,9 +187,15 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
@@ -206,17 +248,25 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("MultipleWindowsTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleWindowsTest: Worker 1 started successfully");
+    NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -230,9 +280,15 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfBuffersToProduce(1);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", false);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -291,24 +347,34 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("MultipleWindowsTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleWindowsTest: Worker 1 started successfully");
+    NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleWindowsTest: Worker 2 started successfully");
-
+    NES_INFO("MultipleWindowsTest: Worker2 started successfully");
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
@@ -321,9 +387,15 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfBuffersToProduce(1);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 0, 1, "test_stream", "window", false);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
@@ -389,14 +461,22 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("MultipleWindowsTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -413,9 +493,15 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(10);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 10, 3, "test_stream", "window", false);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -475,20 +561,31 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
     NES_INFO("MultipleWindowsTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MultipleWindowsTest: Coordinator started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleWindowsTest: Worker2 started successfully");
@@ -505,9 +602,15 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 5, 3, "test_stream", "window", false);
+        PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
@@ -564,20 +667,31 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
  * @brief Test all three windows in a row
  */
 TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
-    NES_DEBUG("MultipleWindowsTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0);
-    NES_DEBUG("MultipleWindowsTest: Coordinator started successfully");
 
-    NES_DEBUG("MultipleWindowsTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
+    NES_INFO("MultipleWindowsTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("MultipleWindowsTest: Coordinator started successfully");
+
+    NES_INFO("MultipleWindowsTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("MultipleWindowsTest: Worker 1 started successfully");
+    NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 20);
+    workerConfig->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleWindowsTest: Worker2 started successfully");
@@ -592,8 +706,15 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
     wrk2->registerLogicalStream("window", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(10);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
+
     PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 10, 3, "test_stream", "window", false);
+        PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testOutput.out";
