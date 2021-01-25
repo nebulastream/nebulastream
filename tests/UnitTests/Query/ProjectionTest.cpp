@@ -18,6 +18,7 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
@@ -612,35 +613,38 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
 // P3 = [P1|P2] -> merge -> SINK
 // So, merge is a blocking window_scan with two children.
 TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
-    // created buffer per source * number of sources
-    uint64_t expectedBuf = 20;
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    EXPECT_THROW(
+        {// created buffer per source * number of sources
+            uint64_t expectedBuf = 20;
 
-    auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1);
+            PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+            auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
-    auto query1 = TestQuery::from(testSource1->getSchema());
+            auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+                                                                             nodeEngine->getQueryManager(), 1);
 
-    query1 = query1.filter(Attribute("id") < 5);
+            auto query1 = TestQuery::from(testSource1->getSchema());
 
-    // creating P2
-    auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1);
-    auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5).project(Attribute("id"));
+            query1 = query1.filter(Attribute("id") < 5);
 
-    // creating P3
-    // merge does not change schema
-    SchemaPtr ptr = std::make_shared<Schema>(testSchema);
-    auto mergedQuery = query2.merge(&query1).sink(DummySink::create());
+            // creating P2
+            auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+                                                                             nodeEngine->getQueryManager(), 1);
+            auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5).project(Attribute("id"));
 
-    auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
+            // creating P3
+            // merge does not change schema
+            SchemaPtr ptr = std::make_shared<Schema>(testSchema);
+            auto mergedQuery = query2.merge(&query1).sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+            auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
 
-    auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
-    EXPECT_EQ(queryPlan, nullptr);
+            auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+
+            auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
+        },
+        TypeInferenceException);
 }
 
 // P1 = Source1 -> filter1
