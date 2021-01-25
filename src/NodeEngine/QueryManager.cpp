@@ -147,17 +147,8 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                     auto pipelineInputSchema = executablePipelines[i]->getInputSchema();
                     if (pipelineInputSchema->equals(sourceSchema)) {
                         operatorIdToPipelineStage[source->getOperatorId()] = i;
-                        break;
                     }
                 }
-
-                //                if (true) {
-                //                    NES_DEBUG("QueryManager: isleftSide" << qep << " to Source" << source->getOperatorId());
-                //                    operatorIdToPipelineStage[source->getOperatorId()] = 1;
-                //                } else {
-                //                    NES_DEBUG("QueryManager: isrightSide" << qep << " to Source" << source->getOperatorId());
-                //                    operatorIdToPipelineStage[source->getOperatorId()] = 0;
-                //                }
             }
             NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << source->getOperatorId());
         }
