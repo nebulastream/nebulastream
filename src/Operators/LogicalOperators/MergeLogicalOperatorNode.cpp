@@ -15,6 +15,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
@@ -54,9 +55,13 @@ bool MergeLogicalOperatorNode::inferSchema() {
     } else {
         leftInputSchema->copyFields(distinctSchemas[0]);
         rightInputSchema->copyFields(distinctSchemas[1]);
-        //FIXME: This requires fixing and can be done as part of 1467
-        NES_ERROR("Merge with distinct input schemas is not handled yet!");
-        return false;
+    }
+
+    if (!leftInputSchema->hasEqualTypes(rightInputSchema)) {
+        NES_ERROR("Found Schema mismatch for left and right schema types. Left schema " + leftInputSchema->toString()
+                  + " and Right schema " + rightInputSchema->toString());
+        throw TypeInferenceException("Found Schema mismatch for left and right schema types. Left schema "
+                                     + leftInputSchema->toString() + " and Right schema " + rightInputSchema->toString());
     }
 
     //Copy the schema of left input

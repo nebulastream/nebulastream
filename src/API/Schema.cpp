@@ -128,6 +128,22 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
     }
 }
 
+bool Schema::hasEqualTypes(SchemaPtr otherSchema) {
+    auto otherFields = otherSchema->fields;
+    if (otherFields.size() != fields.size()) {
+        return false;
+    }
+
+    for (uint32_t i = 0; i< fields.size(); i++) {
+        auto thisField = fields.at(i);
+        auto otherField = otherFields.at(i);
+        if (!thisField->dataType->isEquals(otherField->dataType)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 const std::string Schema::toString() const {
     std::stringstream ss;
     for (auto& f : fields) {
@@ -195,4 +211,6 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
 }
 
 void Schema::clear() { fields.clear(); }
+
+
 }// namespace NES

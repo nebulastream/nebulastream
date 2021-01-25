@@ -120,37 +120,39 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
         // source already exists, add qep to source set if not there
-        if (operatorIdToQueryMap.find(source->getOperatorId()) != operatorIdToQueryMap.end()) {
-            if (operatorIdToQueryMap[source->getOperatorId()].find(qep) == operatorIdToQueryMap[source->getOperatorId()].end()) {
+        OperatorId sourceOperatorID = source->getOperatorId();
+        if (operatorIdToQueryMap.find(sourceOperatorID) != operatorIdToQueryMap.end()) {
+            if (operatorIdToQueryMap[sourceOperatorID].find(qep) == operatorIdToQueryMap[sourceOperatorID].end()) {
                 // qep not found in list, add it
-                NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getOperatorId());
-                operatorIdToQueryMap[source->getOperatorId()].insert(qep);
+                NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << sourceOperatorID);
+                operatorIdToQueryMap[sourceOperatorID].insert(qep);
                 queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
                 //                NES_DEBUG("QueryManager: Join QEP already found " << qep << " to Source" << source->getOperatorId() << " add pipeline stage 1");
                 //                operatorIdToPipelineStage[source->getOperatorId()] = 1;
             } else {
-                NES_DEBUG("QueryManager: Source " << source->getOperatorId() << " and QEP already exist.");
+                NES_DEBUG("QueryManager: Source " << sourceOperatorID << " and QEP already exist.");
                 return false;
             }
             // source does not exist, add source and unordered_set containing the qep
         } else {
-            NES_DEBUG("QueryManager: Source " << source->getOperatorId() << " not found. Creating new element with with qep "
-                                              << qep);
+            NES_DEBUG("QueryManager: Source " << sourceOperatorID << " not found. Creating new element with with qep " << qep);
             std::unordered_set<Execution::ExecutableQueryPlanPtr> qepSet = {qep};
-            operatorIdToQueryMap[source->getOperatorId()] = qepSet;
+            operatorIdToQueryMap[sourceOperatorID] = qepSet;
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
-            queryMapToOperatorId[qep->getQueryId()].push_back(source->getOperatorId());
+            queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorID);
             if (isBinaryOperator) {
                 NES_ASSERT(executablePipelines.size() >= 2, "Binary operator must have at least two pipelines");
                 SchemaPtr sourceSchema = source->getSchema();
                 for (uint64_t i = 0; i < qep->getNumberOfPipelines(); i++) {
                     auto pipelineInputSchema = executablePipelines[i]->getInputSchema();
                     if (pipelineInputSchema->equals(sourceSchema)) {
-                        operatorIdToPipelineStage[source->getOperatorId()] = i;
+                        NES_ASSERT(operatorIdToPipelineStage.count(sourceOperatorID) == 0,
+                                   "Found existing entry for the source operator " + sourceOperatorID);
+                        operatorIdToPipelineStage[sourceOperatorID] = i;
                     }
                 }
             }
-            NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << source->getOperatorId());
+            NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << sourceOperatorID);
         }
     }
     NES_DEBUG("operatorIdToPipelineStage mapping:");
