@@ -77,7 +77,20 @@ class TopologyNode : public Node {
      */
     uint32_t getDataPort() const;
 
-    std::string toString() const override;
+    /**
+     * @brief Get maintenance flag where 1 represents marked for maintenance
+     * @return bool
+     */
+    bool getMaintenanceFlag() const;
+
+    /**
+     * @brief sets maintenance flag where 1 represents marked for maintenance
+     * @param flag
+     */
+    void setMaintenanceFlag(bool flag);
+
+
+    const std::string toString() const override;
 
     /**
      * @brief Create a shallow copy of the physical node i.e. without copying the parent and child nodes
@@ -140,6 +153,8 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
+    NodeStatsPtr nodeStats;
+    bool maintenanceFlag;
 
     /**
      * @brief A field to store a map of node properties
