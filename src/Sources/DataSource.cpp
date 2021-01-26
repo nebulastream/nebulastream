@@ -171,7 +171,7 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
             //check each second
             if (nowInMillis != lastTimeStampMillis) {                 //we are in another interval
                 if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval ||
-                    (nowInMillis - lastTimeStampMillis).count() % gatheringInterval.count() == 0) {//produce a regular buffer
+                    ((nowInMillis - lastTimeStampMillis) % gatheringInterval).count() == 0) {//produce a regular buffer
                     NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                     recNow = true;
                 }
