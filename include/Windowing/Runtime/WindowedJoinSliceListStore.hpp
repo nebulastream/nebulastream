@@ -95,8 +95,8 @@ class WindowedJoinSliceListStore {
                 break;
             } else {
                 NES_DEBUG("WindowedJoinSliceListStore removeSlicesUntil: watermark="
-                              << watermark << " from slice endts=" << itSlice->getEndTs() << " sliceMetaData size="
-                              << sliceMetaData.size() << " content size=" << content.size());
+                          << watermark << " from slice endts=" << itSlice->getEndTs()
+                          << " sliceMetaData size=" << sliceMetaData.size() << " content size=" << content.size());
             }
             itAggs++;
         }
@@ -104,7 +104,7 @@ class WindowedJoinSliceListStore {
         sliceMetaData.erase(sliceMetaData.begin(), itSlice);
         content.erase(content.begin(), itAggs);
         NES_DEBUG("WindowedJoinSliceListStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
-                                                                                  << " content=" << content.size());
+                                                                                            << " content=" << content.size());
     }
 
     /**
