@@ -53,7 +53,7 @@ class OPCSourceTest : public testing::Test {
         test_schema = Schema::create()->addField("var", UINT32);
 
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-        auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
+        nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
@@ -64,7 +64,11 @@ class OPCSourceTest : public testing::Test {
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() { NES_DEBUG("OPCSOURCETEST::TearDown() Tear down OPCSourceTest"); }
+    void TearDown() {
+        nodeEngine->stop();
+        nodeEngine.reset();
+        NES_DEBUG("OPCSOURCETEST::TearDown() Tear down OPCSourceTest");
+    }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("OPCSOURCETEST::TearDownTestCases() Tear down OPCSourceTest test class."); }
@@ -129,6 +133,7 @@ class OPCSourceTest : public testing::Test {
 
     static void stopServer() { running = false; }
 
+    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
     NodeEngine::BufferManagerPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
     SchemaPtr test_schema;

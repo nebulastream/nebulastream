@@ -43,6 +43,8 @@ namespace NES {
 
 class OPCSinkTest : public testing::Test {
   public:
+    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::setupLogging("OPCSinkTest.log", NES::LOG_DEBUG);
@@ -52,10 +54,16 @@ class OPCSinkTest : public testing::Test {
     void SetUp() {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         test_schema = Schema::create()->addField("var", UINT32);
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+        nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() { NES_DEBUG("OPCSINKTEST::TearDown() Tear down OPCSourceTest"); }
+    void TearDown() {
+        nodeEngine->stop();
+        nodeEngine.reset();
+        NES_DEBUG("OPCSINKTEST::TearDown() Tear down OPCSourceTest");
+    }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("OPCSINKTEST::TearDownTestCases() Tear down OPCSourceTest test class."); }
@@ -133,9 +141,6 @@ class OPCSinkTest : public testing::Test {
  * Tests basic set up of OPC sink
  */
 TEST_F(OPCSinkTest, OPCSourceInit) {
-
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
     SUCCEED();
 }
@@ -144,9 +149,6 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
  * Test if schema, OPC server url, and node index are the same
  */
 TEST_F(OPCSinkTest, OPCSourcePrint) {
-
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
     std::string expected = "OPC_SINK";
     EXPECT_EQ(opcSink->toString(), expected);
@@ -165,8 +167,6 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     });
     t1.detach();
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
     auto test_schema = Schema::create()->addField("var", UINT32);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     NodeEngine::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
