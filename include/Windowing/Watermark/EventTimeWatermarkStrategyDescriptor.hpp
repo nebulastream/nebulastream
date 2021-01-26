@@ -17,8 +17,8 @@
 #ifndef NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
 #define NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
 
-#include "EventTimeWatermarkGenerator.hpp"
 #include <API/Expressions/Expressions.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkGenerator.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
