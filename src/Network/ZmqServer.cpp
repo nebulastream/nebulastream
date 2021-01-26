@@ -64,7 +64,12 @@ ZmqServer::~ZmqServer() {
     if (future.valid()) {
         // we have an error
         try {
-            future.get();
+            bool gracefullyClosed = future.get();
+            if (gracefullyClosed) {
+                NES_DEBUG("ZmqServer: gracefully closed on " << hostname << ":" << port);
+            } else {
+                NES_DEBUG("ZmqServer: non gracefully closed on " << hostname << ":" << port);
+            }
         } catch (std::exception& e) {
             NES_ERROR("ZmqServer: Server failed to start due to " << e.what());
             throw;
@@ -95,7 +100,6 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
 
     for (int i = 0; i < numHandlerThreads; ++i) {
         handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
-            std::string thName = "DataSrc-" + i;
             setThreadName("zmq-evt-%d", i);
             messageHandlerEventLoop(barrier, i);
         }));
@@ -122,6 +126,8 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
             // handle
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
+                dispatcherSocket.close();
+                frontendSocket.close();
                 NES_INFO("ZmqServer: Shutdown completed! address: "
                          << "tcp://" + hostname + ":" + std::to_string(port));
             } else {
@@ -143,7 +149,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
     }
 
     if (shutdownComplete) {
-        errorPromise.set_value(false);
+        errorPromise.set_value(true);
     }
 }
 
@@ -229,11 +235,12 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
         }
     } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
+            dispatcherSocket.close();
             NES_DEBUG("ZmqServer: Handler #" << index << " closed on server " << hostname << ":" << port);
         } else {
             errorPromise.set_exception(std::current_exception());
             NES_ERROR("ZmqServer: event loop " << index << " got " << err.what());
-            throw;
+            std::rethrow_exception(std::current_exception());
         }
     }
 }
