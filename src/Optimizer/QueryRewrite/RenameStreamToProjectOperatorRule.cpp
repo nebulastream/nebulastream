@@ -25,7 +25,7 @@
 namespace NES {
 
 QueryPlanPtr RenameStreamToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
-    NES_INFO("RenameStreamToProjectOperatorRule: ");
+    NES_DEBUG("RenameStreamToProjectOperatorRule: Convert all Rename Stream operator to the project operator");
     auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
     //Iterate over all rename stream operators and convert them to project operator
     for (auto& renameStreamOperator : renameStreamOperators) {
@@ -34,15 +34,13 @@ QueryPlanPtr RenameStreamToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
         //Replace rename stream operator with the project operator
         renameStreamOperator->replace(projectOperator);
         //Assign the project operator the id of as operator
-        auto operatorId = renameStreamOperator->getId();
-        projectOperator->setId(operatorId);
+        projectOperator->setId(renameStreamOperator->getId());
     }
     //Return updated query plan
     return queryPlan;
 }
 
 OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr operatorNode) {
-
     //Fetch the new stream name and input schema for the as operator
     auto renameStreamOperator = operatorNode->as<RenameStreamOperatorNode>();
     auto newStreamName = renameStreamOperator->getNewStreamName();
