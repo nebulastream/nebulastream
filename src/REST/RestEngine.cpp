@@ -146,6 +146,11 @@ void RestEngine::handlePost(http_request request) {
             udfCatalogController->handlePost(paths, request);
             return;
         }
+        else if(paths[0] == "topology") {
+            topologyController->handlePost(paths, message);
+            return;
+
+        }
     }
     returnDefaultUnknownEndpointResponse(request);
 }
