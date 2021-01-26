@@ -127,7 +127,6 @@ class JoinHandler : public AbstractJoinHandler {
             NES_DEBUG("JoinHandler: set lastWatermarkLeft to min value of stores=" << lastWatermark);
         }
 
-
         NES_DEBUG("JoinHandler: run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
                                                                << " lastWatermark=" << lastWatermark);
         lock.unlock();

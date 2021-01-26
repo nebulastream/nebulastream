@@ -574,7 +574,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                              "0,10000,1,614\n"
+                             "0,10000,1,614\n"
                              "5000,15000,1,1140\n"
                              "10000,20000,1,1740\n"
                              "0,10000,4,12\n"
