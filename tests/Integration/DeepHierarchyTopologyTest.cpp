@@ -1485,7 +1485,7 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testMergeThreeLevel) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorker) {
+TEST_F(DeepTopologyHierarchyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorker) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
