@@ -150,11 +150,12 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         }
 
         if (currentWatermark > lastWatermark) {
-            NES_DEBUG("joinWindows trigger because currentWatermark=" << currentWatermark << " > lastWatermark=" << lastWatermark);
+            NES_DEBUG("joinWindows trigger because currentWatermark=" << currentWatermark
+                                                                      << " > lastWatermark=" << lastWatermark);
             joinDefinition->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);
         } else {
-            NES_DEBUG("aggregateWindows No trigger because NOT currentWatermark="
-                      << currentWatermark << " > lastWatermark=" << lastWatermark);
+            NES_DEBUG("aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
+                                                                                  << " > lastWatermark=" << lastWatermark);
         }
 
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger Complete or combining window for slices="
@@ -199,8 +200,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 }
                 NES_DEBUG("largestClosedWindow=" << largestClosedWindow << " slideSize=" << slideSize);
                 if (largestClosedWindow != 0) {
-                    //                    leftStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
-                    //                    rightStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
+                    leftStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
+                    rightStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
                 }
             }
         }
