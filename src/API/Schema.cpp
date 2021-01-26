@@ -130,10 +130,12 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
 
 bool Schema::hasEqualTypes(SchemaPtr otherSchema) {
     auto otherFields = otherSchema->fields;
+    //Check if the number of filed are same or not
     if (otherFields.size() != fields.size()) {
         return false;
     }
 
+    //Iterate over all fields and check in both schema at same index that they have same attribute type
     for (uint32_t i = 0; i< fields.size(); i++) {
         auto thisField = fields.at(i);
         auto otherField = otherFields.at(i);
@@ -183,16 +185,23 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
 }
 
 AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
-    //Iterate over all qualifiers and look for field with fully qualified name
+
+    //Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        //Add only attribute name separator
+        //caution: adding the fully qualified name may result in undesired behavior
+        //E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
+        //system should throw invalid field exception
         stringToMatch = ATTRIBUTE_NAME_SEPARATOR + fieldName;
     }
 
+    //Iterate over all fields and look for field which fully qualified name
     std::vector<AttributeFieldPtr> matchedFields;
     for (auto& field : fields) {
         std::string& fullyQualifiedFieldName = field->name;
         if (stringToMatch.length() <= fullyQualifiedFieldName.length()) {
+            //Check if the field name ends with the input field name
             auto startingPos = fullyQualifiedFieldName.length() - stringToMatch.length();
             auto found = fullyQualifiedFieldName.compare(startingPos, stringToMatch.length(), stringToMatch);
             if (found == 0) {

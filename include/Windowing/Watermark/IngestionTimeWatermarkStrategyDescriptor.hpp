@@ -17,8 +17,8 @@
 #ifndef NES_INGESTIONTIMEWATERMARKDESCRIPTOR_HPP
 #define NES_INGESTIONTIMEWATERMARKDESCRIPTOR_HPP
 
-#include "EventTimeWatermarkGenerator.hpp"
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkGenerator.hpp>
 
 namespace NES::Windowing {
 

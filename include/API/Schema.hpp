@@ -164,27 +164,12 @@ class Schema {
 
     const std::string toString() const;
 
-    //    /**
-    //     * @brief Set the qualifier name of the schema used for schema name resolution
-    //     * @param qualifierName : the qualifier name without name separator
-    //     */
-    //    void addQualifierName(std::string qualifierName);
-    //
-    //    /**
-    //     * @brief Get the qualifier name for the schema
-    //     * @return the qualifier name
-    //     */
-    //    const std::vector<std::string>& getQualifierNames() const;
-
     /**
      * @brief Remove all fields and qualifying name
      */
     void clear();
 
     std::vector<AttributeFieldPtr> fields;
-    //
-    //  private:
-    //    std::vector<std::string> qualifierNames;
 };
 
 AttributeFieldPtr createField(std::string name, BasicType type);
