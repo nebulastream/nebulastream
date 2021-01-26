@@ -32,7 +32,7 @@ NetworkManager::NetworkManager(const std::string& hostname, uint16_t port, Excha
     if (success) {
         NES_INFO("NetworkManager: Server started successfully");
     } else {
-        NES_THROW_RUNTIME_ERROR("NetworkManager: Server failed to start");
+        NES_THROW_RUNTIME_ERROR("NetworkManager: Server failed to start on " << hostname << ":" << port);
     }
 }
 

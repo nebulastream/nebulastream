@@ -1028,7 +1028,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    auto nodeEngine = this->nodeEngine;
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
