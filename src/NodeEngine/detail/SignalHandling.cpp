@@ -23,6 +23,7 @@
 #include <mutex>
 
 /// the above code is experimental! Use it only if you know what you are doing and what the above code does!
+/// to learn more please read: https://monoinfinito.wordpress.com/2013/02/19/c-exceptions-under-the-hood-3-an-abi-to-appease-the-linker/
 #ifdef NES_INTERCEPT_EXCEPTION
 #if defined(__GNUC__)
 extern "C" {
