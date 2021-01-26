@@ -57,7 +57,7 @@ class SimpleBenchmarkSink : public SinkMedium {
         bool endOfBenchmark = true;
 
         auto fields = getSchemaPtr()->fields;
-        for (uint64_t recordIndex = 0; recordIndex < input_buffer.getNumberOfTuples(); recordIndex++) {
+        for (uint64_t recordIndex = 0; recordIndex < 1; recordIndex++) {
             auto dataType = fields[fieldIndex]->getDataType();
             auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
             if (physicalType->isBasicType()) {
