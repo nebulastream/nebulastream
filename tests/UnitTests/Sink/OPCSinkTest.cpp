@@ -179,7 +179,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();
     nodeEngine->stop();
-    auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31337, conf);
+    auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31338, PhysicalStreamConfig::create());
     auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId,
                                      user, password, 1);
     auto tuple_buffer = opcSource->receiveData();
