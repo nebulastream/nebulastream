@@ -276,7 +276,9 @@ bool QueryManager::deregisterQuery(Execution::ExecutableQueryPlanPtr qep) {
     return succeed;
 }
 
-bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr qep) {
+bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
+    NES_NOT_IMPLEMENTED();
+#if 0
     NES_DEBUG("QueryManager::failQuery: query" << qep);
     bool ret = true;
     {
@@ -318,6 +320,7 @@ bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr qep) {
         addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, this), true);
     }
     return ret;
+#endif
 }
 
 bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
