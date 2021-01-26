@@ -24,7 +24,6 @@ namespace NES {
  */
 class FieldRenameExpressionNode : public FieldAccessExpressionNode {
   public:
-
     /**
      * @brief Create FieldRename Expression node
      * @param fieldName : name of the field

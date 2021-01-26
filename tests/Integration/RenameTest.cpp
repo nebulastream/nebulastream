@@ -137,7 +137,8 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("RenameTest: Submit query");
-    std::string query = R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").rename("NewName"), Attribute("value")).sink(FileSinkDescriptor::create("test.out", "CSV_FORMAT", "APPEND"));)";
+    std::string query =
+        R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").rename("NewName"), Attribute("value")).sink(FileSinkDescriptor::create("test.out", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -317,13 +318,14 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1New:INTEGER,window1$timestamp:INTEGER,"
-                             "window2$win2:INTEGER,window2$id2New:INTEGER,window2$timestamp:INTEGER\n"
-                             "1000,2000,4,1,4,1002,3,4,1102\n"
-                             "1000,2000,4,1,4,1002,3,4,1112\n"
-                             "1000,2000,12,1,12,1001,5,12,1011\n"
-                             "2000,3000,1,2,1,2000,2,1,2010\n"
-                             "2000,3000,11,2,11,2001,2,11,2301\n";
+    string expectedContent =
+        "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1New:INTEGER,window1$timestamp:INTEGER,"
+        "window2$win2:INTEGER,window2$id2New:INTEGER,window2$timestamp:INTEGER\n"
+        "1000,2000,4,1,4,1002,3,4,1102\n"
+        "1000,2000,4,1,4,1002,3,4,1112\n"
+        "1000,2000,12,1,12,1001,5,12,1011\n"
+        "2000,3000,1,2,1,2000,2,1,2010\n"
+        "2000,3000,11,2,11,2001,2,11,2301\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("RenameTest: Remove query");

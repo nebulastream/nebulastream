@@ -1320,13 +1320,14 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSc
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window$value:INTEGER,window$id:INTEGER,window$timestamp:INTEGER,"
-                             "window2$value:INTEGER,window2$id:INTEGER,window2$timestamp:INTEGER\n"
-                             "1000,2000,4,1,4,1002,1,4,1002\n"
-                             "1000,2000,12,1,12,1001,1,12,1001\n"
-                             "2000,3000,1,2,1,2000,2,1,2000\n"
-                             "2000,3000,11,2,11,2001,2,11,2001\n"
-                             "2000,3000,16,2,16,2002,2,16,2002\n";
+    string expectedContent =
+        "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window$value:INTEGER,window$id:INTEGER,window$timestamp:INTEGER,"
+        "window2$value:INTEGER,window2$id:INTEGER,window2$timestamp:INTEGER\n"
+        "1000,2000,4,1,4,1002,1,4,1002\n"
+        "1000,2000,12,1,12,1001,1,12,1001\n"
+        "2000,3000,1,2,1,2000,2,1,2000\n"
+        "2000,3000,11,2,11,2001,2,11,2001\n"
+        "2000,3000,16,2,16,2002,2,16,2002\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("QueryDeploymentTest: Remove query");

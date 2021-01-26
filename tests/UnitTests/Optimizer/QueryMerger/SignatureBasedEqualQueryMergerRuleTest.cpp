@@ -1611,7 +1611,8 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
  * with EventTimeWatermarkStrategy.
  */
 //TODO: To be fixed by #1502
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingEqualQueriesWithMergeOperatorsAndMultipleDistinctWatermarkAssigner) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest,
+       DISABLED_testMergingEqualQueriesWithMergeOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(

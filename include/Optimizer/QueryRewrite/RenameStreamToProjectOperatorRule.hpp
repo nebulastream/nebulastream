@@ -45,6 +45,6 @@ class RenameStreamToProjectOperatorRule : public BaseRewriteRule {
     OperatorNodePtr convert(OperatorNodePtr operatorNode);
 };
 
-}// namespace NES::Optimizer
+}// namespace NES
 
 #endif//NES_RENAMESTREAMTOPROJECTOPERATORRULE_HPP
