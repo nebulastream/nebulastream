@@ -222,11 +222,12 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidSimplePatternWithFileOut
     EXPECT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
-                             "R2000073,1543624020000,102.629631,8,1\n"
-                             "R2000070,1543625280000,108.166664,5,1\n"
-                             "R2000073,1543624020000,102.629631,8,1\n"
-                             "R2000070,1543625280000,108.166664,5,1\n";
+    string expectedContent =
+        "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
+        "R2000073,1543624020000,102.629631,8,1\n"
+        "R2000070,1543625280000,108.166664,5,1\n"
+        "R2000073,1543624020000,102.629631,8,1\n"
+        "R2000070,1543625280000,108.166664,5,1\n";
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
