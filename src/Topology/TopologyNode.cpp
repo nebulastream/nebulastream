@@ -38,6 +38,10 @@ NodeStats TopologyNode::getNodeStats() { return nodeStats; }
 
 uint16_t TopologyNode::getAvailableResources() { return resources - usedResources; }
 
+bool TopologyNode::getMaintenanceFlag() const {return maintenanceFlag;};
+
+void TopologyNode::setMaintenanceFlag(bool flag) {this->maintenanceFlag=flag;}
+
 void TopologyNode::increaseResources(uint16_t freedCapacity) {
     NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
     NES_ASSERT(freedCapacity <= usedResources,

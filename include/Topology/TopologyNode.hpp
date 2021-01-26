@@ -87,6 +87,19 @@ class TopologyNode : public Node {
      */
     uint32_t getDataPort() const;
 
+    /**
+     * @brief Get maintenance flag where 1 represents marked for maintenance
+     * @return bool
+     */
+    bool getMaintenanceFlag() const;
+
+    /**
+     * @brief sets maintenance flag where 1 represents marked for maintenance
+     * @param flag
+     */
+    void setMaintenanceFlag(bool flag);
+
+
     const std::string toString() const override;
 
     /**
@@ -109,6 +122,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     NodeStats nodeStats;
+    bool maintenanceFlag;
 
     //FIXME: as part of the issue #955 A potential solution for adding network link properties
     //    std::vector<LinkPropertiesPtr> inputLinks;
