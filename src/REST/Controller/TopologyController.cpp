@@ -41,4 +41,17 @@ void TopologyController::handleGet(std::vector<utility::string_t> paths, http_re
     return;
 }
 
+void TopologyController::handlePost(std::vector<utility::string_t> paths, http_request message) {
+    NES_DEBUG("TopologyController: POST Topology");
+
+    topology->print();
+    if (paths.size() == 1) {
+        web::json::value topologyJson = UtilityFunctions::getTopologyAsJson(topology->getRoot());
+        successMessageImpl(message, topologyJson);
+        return;
+    }
+    resourceNotFoundImpl(message);
+    return;
+}
+
 }// namespace NES
