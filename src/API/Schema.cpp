@@ -49,15 +49,15 @@ uint64_t Schema::getSchemaSizeInBytes() const {
 }
 
 SchemaPtr Schema::copyFields(SchemaPtr otherSchema) {
-    for (AttributeFieldPtr attr : otherSchema->fields) {
-        fields.push_back(AttributeField::create(attr->name, attr->dataType));
+    for (AttributeFieldPtr attribute : otherSchema->fields) {
+        fields.push_back(attribute->copy());
     }
     return copy();
 }
 
-SchemaPtr Schema::addField(AttributeFieldPtr field) {
-    if (field) {
-        fields.push_back(AttributeField::create(field->name, field->dataType));
+SchemaPtr Schema::addField(AttributeFieldPtr attribute) {
+    if (attribute) {
+        fields.push_back(attribute->copy());
     }
     return copy();
 }
@@ -136,7 +136,7 @@ bool Schema::hasEqualTypes(SchemaPtr otherSchema) {
     }
 
     //Iterate over all fields and check in both schema at same index that they have same attribute type
-    for (uint32_t i = 0; i< fields.size(); i++) {
+    for (uint32_t i = 0; i < fields.size(); i++) {
         auto thisField = fields.at(i);
         auto otherField = otherFields.at(i);
         if (!thisField->dataType->isEquals(otherField->dataType)) {
@@ -220,6 +220,5 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
 }
 
 void Schema::clear() { fields.clear(); }
-
 
 }// namespace NES

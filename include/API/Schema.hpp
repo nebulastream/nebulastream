@@ -66,10 +66,10 @@ class Schema {
 
     /**
      * @brief appends a AttributeField to the schema and returns a copy of this schema.
-     * @param field
+     * @param attribute
      * @return a copy of this schema.
      */
-    SchemaPtr addField(AttributeFieldPtr field);
+    SchemaPtr addField(AttributeFieldPtr attribute);
 
     /**
     * @brief appends a field with a basic type to the schema and returns a copy of this schema.
