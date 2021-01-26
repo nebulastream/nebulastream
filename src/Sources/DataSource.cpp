@@ -224,7 +224,4 @@ uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess
 std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
 uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
 
-bool DataSource::getIsLeftSide() const { return isLeftSide; }
-void DataSource::setIsLeftSide(bool isLeftSide) { DataSource::isLeftSide = isLeftSide; }
-
 }// namespace NES
