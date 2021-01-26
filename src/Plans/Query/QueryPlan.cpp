@@ -200,21 +200,15 @@ void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
 
 QueryPlanPtr QueryPlan::copy() {
     NES_INFO("QueryPlan: make copy of this query plan");
-
-    // Following explain the next algorithm:
     // 1. We start by copying the root operators of this query plan to the queue of operators to be processed
-    // 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
-    // 3. We push the copy of the children operators to the queue of operators to be processed.
-    // 4. Every time we encounter an operator, we check in the map if the operator with same id already exists.
-    // 5. We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
-    // 6. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
-
     std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
     std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
     while (!operatorsToProcess.empty()) {
         auto operatorNode = operatorsToProcess.front()->as<OperatorNode>();
         operatorsToProcess.pop_front();
         uint64_t operatorId = operatorNode->getId();
+        // 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
+        // 3. We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
         if (operatorIdToOperatorMap[operatorId]) {
             NES_TRACE("QueryPlan: Operator was processed previously");
             operatorNode = operatorIdToOperatorMap[operatorId];
@@ -223,6 +217,7 @@ QueryPlanPtr QueryPlan::copy() {
             operatorIdToOperatorMap[operatorId] = operatorNode->copy();
         }
 
+        // 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
         for (const auto& parentNode : operatorNode->getParents()) {
             auto parentOperator = parentNode->as<OperatorNode>();
             uint64_t parentOperatorId = parentOperator->getId();
@@ -238,6 +233,7 @@ QueryPlanPtr QueryPlan::copy() {
         }
 
         NES_TRACE("QueryPlan: add the child global query nodes for further processing.");
+        // 5. We push the children operators to the queue of operators to be processed.
         for (const auto& childrenOperator : operatorNode->getChildren()) {
             operatorsToProcess.push_back(childrenOperator);
         }
