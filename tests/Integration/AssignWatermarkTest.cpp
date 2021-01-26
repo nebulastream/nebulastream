@@ -373,7 +373,6 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
 
     string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "500,1500,1,18\n"
-                             "500,1500,1,18\n"
                              "1000,2000,1,36\n"
                              "1500,2500,1,90\n"
                              "2000,3000,1,72\n"

@@ -91,6 +91,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                       << tupleBuffer.getNumberOfTuples()
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
+
             //forward buffer to next  pipeline stage
             executionContext->dispatchBuffer(tupleBuffer);
         }
@@ -125,16 +126,16 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto leftLock = std::unique_lock(leftStore->mutex());
         auto listLeft = leftStore->getAppendList();
         auto slicesLeft = leftStore->getSliceMetadata();
-        NES_DEBUG("content left side for key=" << key);
+        NES_TRACE("content left side for key=" << key);
         size_t id = 0;
         for (auto& left : slicesLeft) {
-            NES_DEBUG("left start=" << left.getStartTs() << " left end=" << left.getEndTs() << " id=" << id++);
+            NES_TRACE("left start=" << left.getStartTs() << " left end=" << left.getEndTs() << " id=" << id++);
         }
 
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger " << windows.size() << " windows, on "
+        NES_TRACE("ExecutableNestedLoopJoinTriggerAction:leftStore trigger " << windows.size() << " windows, on "
                                                                              << slicesLeft.size() << " slices");
         for (uint64_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction:leftStore trigger sliceid="
+            NES_TRACE("ExecutableNestedLoopJoinTriggerAction:leftStore trigger sliceid="
                       << sliceId << " start=" << slicesLeft[sliceId].getStartTs() << " end=" << slicesLeft[sliceId].getEndTs());
         }
 
@@ -143,10 +144,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto rightLock = std::unique_lock(leftStore->mutex());
         auto slicesRight = rightStore->getSliceMetadata();
         auto listRight = rightStore->getAppendList();
-        NES_DEBUG("content right side for key=" << key);
+        NES_TRACE("content right side for key=" << key);
         id = 0;
         for (auto& right : slicesRight) {
-            NES_DEBUG("right start=" << right.getStartTs() << " right end=" << right.getEndTs() << " id=" << id++);
+            NES_TRACE("right start=" << right.getStartTs() << " right end=" << right.getEndTs() << " id=" << id++);
         }
 
         if (currentWatermark > lastWatermark) {
