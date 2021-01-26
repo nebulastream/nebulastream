@@ -90,32 +90,6 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
 
     LogicalJoinDefinitionPtr getJoinDefinition() { return joinDefinition; }
 
-//    /**
-//     * @brief Gets the last processed watermark
-//     * @param side
-//     * @return watermark
-//     */
-//    [[nodiscard]] uint64_t getLastWatermark(JoinSides side) const {
-//        switch (side) {
-//            case leftSide: return lastWatermarkLeft;
-//            case rightSide: return lastWatermarkRight;
-//            default: NES_ERROR("getLastWatermark: invalid side"); return 0;
-//        }
-//    }
-
-//    /**
-//     * @brief Sets the last watermark
-//     * @param lastWatermark
-//     * @param side
-//     */
-//    void setLastWatermark(uint64_t lastWatermark, JoinSides side) {
-//        switch (side) {
-//            case leftSide: lastWatermarkLeft = lastWatermark; break;
-//            case rightSide: lastWatermarkRight = lastWatermark; break;
-//            default: NES_ERROR("setLastWatermark: invalid side");
-//        }
-//    }
-
     /**
      * @brief Gets the maximal processed ts per origin id.
      * @param originId

@@ -112,6 +112,7 @@ class JoinHandler : public AbstractJoinHandler {
                 std::unique_lock innerLock(it.second->mutex());// sorry we have to lock here too :(
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
+                    //the first slice is usually the lowest one as they are sorted
                     lastWatermark = std::min(lastWatermark, slices[0].getStartTs());
                 }
             }
@@ -119,6 +120,7 @@ class JoinHandler : public AbstractJoinHandler {
                 std::unique_lock innerLock(it.second->mutex());// sorry we have to lock here too :(
                 auto slices = it.second->getSliceMetadata();
                 if (!slices.empty()) {
+                    //the first slice is usually the lowest one as they are sorted
                     lastWatermark = std::min(lastWatermark, slices[0].getStartTs());
                 }
             }
