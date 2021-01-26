@@ -74,9 +74,10 @@ void AdaptiveSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, 
         auto tsNow = std::chrono::system_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
 
-        if (gatheringInterval == zeroSecInMillis ||
-            (lastGatheringTimeStamp != nowInMillis && (std::fabs(std::fmod(nowInMillis.count(), gatheringInterval.count())) < std::numeric_limits<double>::epsilon() ||
-                                                       std::fmod(nowInMillis.count(), gatheringInterval.count()) == 0))) {
+        if (gatheringInterval == zeroSecInMillis
+            || (lastGatheringTimeStamp != nowInMillis
+                && (nowInMillis - lastGatheringTimeStamp <= this->gatheringInterval
+                    || (nowInMillis - lastGatheringTimeStamp % this->gatheringInterval).count() == 0))) {
             lastGatheringTimeStamp = nowInMillis;
             if (cnt < numBuffersToProcess) {
                 auto optBuf = this->receiveData();
