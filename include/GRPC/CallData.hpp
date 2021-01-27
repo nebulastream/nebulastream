@@ -32,6 +32,7 @@ class CallData {
 
     void Proceed() {
         if (status_ == CREATE) {
+            NES_DEBUG("RequestInSyncInCreate=" << request_.DebugString());
             // Make this instance progress to the PROCESS state.
             status_ = PROCESS;
 
@@ -42,6 +43,7 @@ class CallData {
             // the memory address of this CallData instance.
 //            service_->RegisterQuery(&ctx_, &request_, &responder_, cq_, cq_, this);
         } else if (status_ == PROCESS) {
+            NES_DEBUG("RequestInSyncInProcees=" << request_.DebugString());
             // Spawn a new CallData instance to serve new clients while we process
             // the one for this CallData. The instance will deallocate itself as
             // part of its FINISH state.
@@ -54,6 +56,7 @@ class CallData {
             status_ = FINISH;
             responder_.Finish(reply_, Status::OK, this);
         } else {
+            NES_DEBUG("RequestInSyncInFinish=" << request_.DebugString());
             GPR_ASSERT(status_ == FINISH);
             // Once in the FINISH state, deallocate ourselves (CallData).
             delete this;
