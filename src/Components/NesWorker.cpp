@@ -73,6 +73,7 @@ void NesWorker::HandleRpcs(WorkerRPCServer::Service& service) {
         // The return value of Next should always be checked. This return value
         // tells us whether there is any kind of event or cq_ is shutting down.
         bool ret = cq->Next(&tag, &ok);
+        NES_DEBUG("HandleRpcs got item from queue with ret=" << ret);
         if(!ret)
         {
             //we are going to shut down
