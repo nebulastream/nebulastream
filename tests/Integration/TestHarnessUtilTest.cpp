@@ -187,11 +187,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
 
     std::vector<Output> expectedOutput = {{40, 40, 40},
                                           {21, 21, 21},
-                                          {
-                                              30,
-                                              30,
-                                              30,
-                                          },
+                                          {30,30,30,},
                                           {71, 71, 71}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
@@ -344,6 +340,52 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
                                           {1000, 2000, 4, 4, 1002, 4, 1112},
                                           {1000, 2000, 12, 12, 1001, 12, 1011},
                                           {2000, 3000, 11, 11, 2001, 11, 2301}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
+ * Testing testHarness utility for a query with map operator
+ */
+TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    testHarness.pushElement<Car>({40, 40, 40}, 0);
+    testHarness.pushElement<Car>({30, 30, 30}, 0);
+    testHarness.pushElement<Car>({71, 71, 71}, 0);
+    testHarness.pushElement<Car>({21, 21, 21}, 0);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
+    };
+
+    std::vector<Output> expectedOutput = {{40, 1600, 40},
+                                          {21, 441, 21},
+                                          {30,900,30,},
+                                          {71, 5041, 71}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
