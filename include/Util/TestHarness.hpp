@@ -123,13 +123,13 @@ class TestHarness {
          * @return output string
          */
     template<typename T>
-    std::vector<T> getOutput(uint64_t bufferToExpect) {
+    std::vector<T> getOutput(uint64_t numberOfContentToExpect) {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
                                     + std::to_string(physicalStreamNames.size())
                                     + " number of added logical streams = " + std::to_string(logicalStreamNames.size())
                                     + " number of added workers = " + std::to_string(workerPtrs.size())
-                                    + " buffers to expect = " + std::to_string(bufferToExpect));
+                                    + " number of content to expect = " + std::to_string(numberOfContentToExpect));
         }
 
         QueryServicePtr queryService = crd->getQueryService();
@@ -166,9 +166,9 @@ class TestHarness {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
         }
 
-        if (!TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, bufferToExpect)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: checkCompleteOrTimeout returns false: queryId=" + std::to_string(queryId)
-                                    + " number of buffers to expect=" + std::to_string(bufferToExpect));
+        if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath)) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false "
+                                    "number of buffers to expect=" + std::to_string(numberOfContentToExpect));
         }
 
         NES_INFO("QueryDeploymentTest: Remove query");

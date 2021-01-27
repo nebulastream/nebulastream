@@ -66,8 +66,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
-
     std::vector<Output> expectedOutput = {{40, 40, 40},
                                           {21, 21, 21},
                                           {
@@ -76,6 +74,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
                                               30,
                                           },
                                           {71, 71, 71}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -120,7 +119,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
 
     std::vector<Output> expectedOutput = {{40, 40, 40},
                                           {21, 21, 21},
@@ -130,6 +128,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
                                               30,
                                           },
                                           {71, 71, 71}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -186,8 +185,6 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(1);
-
     std::vector<Output> expectedOutput = {{40, 40, 40},
                                           {21, 21, 21},
                                           {
@@ -196,6 +193,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
                                               30,
                                           },
                                           {71, 71, 71}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -225,6 +223,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     testHarness.addSource("car", carSchema, "car2");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
+
     testHarness.pushElement<Car>({1, 1, 1000}, 0);
     testHarness.pushElement<Car>({12, 1, 1001}, 0);
     testHarness.pushElement<Car>({4, 1, 1002}, 0);
@@ -262,9 +261,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && start == rhs.start && end == rhs.end); }
     };
 
-    // TODO: Can we remove the requirement to provide bufferToExpect?
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(3);
-
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 2},
                                           {2000, 3000, 1, 0},
                                           {3000, 4000, 1, 4},
@@ -274,6 +270,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
                                           {3000, 4000, 11, 0},
                                           {1000, 2000, 12, 2},
                                           {2000, 3000, 16, 4},};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -284,24 +281,20 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     struct Window1 {
-//        uint32_t win1;
         uint64_t id1;
         uint64_t timestamp;
     };
 
     struct Window2 {
-//        uint32_t win2;
         uint64_t id2;
         uint64_t timestamp;
     };
 
     auto window1Schema = Schema::create()
-//        ->addField("win1", DataTypeFactory::createUInt32())
         ->addField("id1", DataTypeFactory::createUInt64())
         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window2Schema = Schema::create()
-//        ->addField("win2", DataTypeFactory::createUInt32())
         ->addField("id2", DataTypeFactory::createUInt64())
         ->addField("timestamp", DataTypeFactory::createUInt64());
 
@@ -349,12 +342,11 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     };
     uint64_t  sizeOfOutput = sizeof(Output);
     NES_DEBUG("TestHarness: size of output " << sizeOfOutput);
-    // TODO: Can we remove the requirement to provide bufferToExpect?
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(2);
     std::vector<Output> expectedOutput = {{1000, 2000, 4, 4, 1002, 4, 1102},
                                           {1000, 2000, 4, 4, 1002, 4, 1112},
                                           {1000, 2000, 12, 12, 1001, 12, 1011},
                                           {2000, 3000, 11, 11, 2001, 11, 2301}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -441,8 +433,4 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
 
     EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 0), NesRuntimeException);
 }
-
-
-
-//TODO: more test using window, merge, or join operator (issue #1443)
 }// namespace NES

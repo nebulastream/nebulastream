@@ -434,6 +434,51 @@ class TestUtils {
     }
 
     /**
+  * @brief Check if the query result was produced
+  * @param expectedContent
+  * @param outputFilePath
+  * @return true if successful
+  */
+    template<typename T>
+    static bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent, string outputFilePath) {
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            sleep(1);
+            NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file " << outputFilePath);
+            std::ifstream ifs(outputFilePath);
+            if (ifs.good() && ifs.is_open()) {
+                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: file " << outputFilePath << " open and good");
+                std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+                // check the length of the output file
+                ifs.seekg(0, ifs.end);
+                auto length = ifs.tellg();
+                ifs.seekg(0, ifs.beg);
+
+                // read the binary output as a vector of T
+                auto* buff = reinterpret_cast<char*>(malloc(length));
+                ifs.read(buff, length);
+                std::vector<T> currentContent(reinterpret_cast<T*>(buff), reinterpret_cast<T*>(buff) + length / sizeof(T));
+                uint64_t currentContentSize = currentContent.size();
+
+                ifs.close();
+                free(buff);
+
+                if (expectedNumberOfContent != currentContentSize) {
+                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines "
+                                  << expectedNumberOfContent << " not reached yet with " << currentContent.size() << " lines content=" << content);
+                    continue;
+                } else {
+                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected number of content");
+                    return true;
+                }
+            }
+        }
+        NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: expected result not reached within set timeout content");
+        return false;
+    }
+
+    /**
    * @brief Check if a outputfile is created
    * @param expectedContent
    * @param outputFilePath
