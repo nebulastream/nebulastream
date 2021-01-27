@@ -180,8 +180,9 @@ int main(int argc, char** argv) {
     NES_INFO("NESWORKERSTARTER: Start with port=" << rpcPort << " localport=" << rpcPort << " pid=" << getpid()
                                                   << " coordinatorPort=" << coordinatorPort);
     NesWorkerPtr wrk =
-        std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort, dataPort, numberOfSlots,
-                                    NodeType::Sensor,// TODO what is this?!
+        std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort, dataPort,
+                                    NodeType::Sensor,
+                                    numberOfSlots,
                                     numWorkerThreads);
 
     //register phy stream if necessary
