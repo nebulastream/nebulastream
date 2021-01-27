@@ -16,6 +16,7 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
+#include <API/Schema.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
