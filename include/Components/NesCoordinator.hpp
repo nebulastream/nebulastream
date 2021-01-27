@@ -24,6 +24,9 @@
 #include <grpcpp/server_builder.h>
 #include <string>
 #include <thread>
+#include <Util/VirtualEnableSharedFromThis.hpp>
+#include <NodeEngine/ErrorListener.hpp>
+
 namespace NES {
 class QueryRequestQueue;
 typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
@@ -64,7 +67,10 @@ typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
-class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
+class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
+    typedef detail::virtual_enable_shared_from_this<NesCoordinator> inherited0;
+    typedef ErrorListener inherited1;
+
   public:
     explicit NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort,
                             uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
@@ -132,6 +138,9 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      * @return Global query plan
      */
     GlobalQueryPlanPtr getGlobalQueryPlan();
+
+    void onFatalError(int signalNumber, std::string string) override;
+    void onFatalException(const std::shared_ptr<std::exception> ptr, std::string string) override;
 
   private:
     /**
