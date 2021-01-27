@@ -84,7 +84,8 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, std::vector<ExecutionNod
         NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress);
 
         for (auto& querySubPlan : querySubPlans) {
-            bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
+//            bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
+            bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan);
             if (success) {
                 NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
             } else {
