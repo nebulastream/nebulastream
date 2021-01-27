@@ -113,7 +113,7 @@ void nesErrorHandler(int signal) {
             listener->onFatalError(signal, stacktrace);
         }
     }
-    std::exit(-1);
+    std::exit(1);
 }
 
 /// called when std::terminate() is invoked
