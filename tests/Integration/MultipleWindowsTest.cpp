@@ -474,7 +474,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Test finished");
 }
 
-TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
+TEST_F(MultipleWindowsTest, DISABLED_testTwoDistributedTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
