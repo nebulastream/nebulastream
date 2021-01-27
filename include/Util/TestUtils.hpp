@@ -46,7 +46,7 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static const uint64_t timeout = 60;//TODO:increase it again to 30
+    static constexpr uint64_t timeout = 60;
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
@@ -243,9 +243,8 @@ class TestUtils {
      * @param queryCatalog: the catalog to look into for status change
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog) {
+    static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog, std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout)) {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
-        auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
 
         NES_DEBUG("TestUtils: Keep checking the status of query " << queryId << " untill a fixed time out");
