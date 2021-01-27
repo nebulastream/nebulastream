@@ -16,6 +16,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/runtime_utils.hpp>
+#include <REST/runtime_utils.hpp>
+#include <REST/std_service.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -153,6 +155,85 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     NES_ERROR("TopologyController::handlePost:removeParent: Exception occurred while trying to remove parent."
                               "for a node "
                               << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                    return;
+                }
+            })
+            .wait();
+    } else if (path[1] == "mark") {
+
+        NES_DEBUG("TopologyController: handlePost -mark: REST received request to mark node for maintenance "
+                  << message.to_string());
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    NES_DEBUG("TopologyController: handlePost -mark: Start trying to mark nodes for maintenance");
+                    //Parse IDs of nodes to mark for maintenance
+                    std::string payload(body.begin(), body.end());
+                    NES_DEBUG("TopologyController: handlePost -mark: userRequest: " << payload);
+                    json::value req = json::value::parse(payload);
+                    NES_DEBUG("TopologyController: handlePost -mark: Json Parse Value: " << req);
+
+                    //TODO: handle multiple IDs
+
+                    uint64_t id = req.at("ids").as_integer();
+
+                    bool unmark = req.at("unmark").as_bool();
+
+                    auto node = topology->findNodeWithId(id);
+
+                    bool checkFlag;
+
+                    if (unmark) {
+
+                        NES_DEBUG("TopologyController: handlePost -mark: Unmark node for maintenance: " << id);
+
+                        //TODO: iterate over container of IDs and set all their flags
+
+                        node->setMaintenanceFlag(false);
+                        checkFlag = node->getMaintenanceFlag();
+
+                        //TODO: make sure all nodes have been succesfully marked
+                        NES_DEBUG("TopologyController: handlePost -mark: Successfully unmarked node ?" << !checkFlag);
+                        //Prepare the response
+
+                    }
+
+                    else {
+
+                        NES_DEBUG("TopologyController: handlePost -mark: ID marked for maintenance " << id);
+
+                        //TODO: iterate over container of IDs and set all their flags
+
+                        node->setMaintenanceFlag(true);
+                        checkFlag = node->getMaintenanceFlag();
+
+                        //TODO: make sure all nodes have been succesfully marked
+                        NES_DEBUG("TopologyController: handlePost -mark: Successfully marked node ?" << checkFlag);
+                        //Prepare the response
+                    }
+
+                    //TODO: format for many nodes
+                    json::value result{};
+
+                    if (unmark) {
+                        result["Success"] = json::value::boolean(!checkFlag);
+                        result["Id"] = json::value::number(id);
+                    } else {
+                        result["Success"] = json::value::boolean(checkFlag);
+                        result["Id"] = json::value::number(id);
+                    }
+                    successMessageImpl(message, result);
+                    return;
+
+                } catch (const std::exception& exc) {
+                    NES_ERROR(
+                        "TopologyController: handlePost -mark: Exception occurred while trying to mark node for maintenance "
+                        << exc.what());
                     handleException(message, exc);
                     return;
                 } catch (...) {
