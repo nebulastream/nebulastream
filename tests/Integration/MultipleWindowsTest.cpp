@@ -571,7 +571,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testThreeDifferentWindows) {
     NES_DEBUG("MultipleWindowsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleWindowsTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, 1, NodeType::Worker);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("MultipleWindowsTest: Worker 1 started successfully");
