@@ -51,6 +51,8 @@ void NES::SyntacticQueryValidation::handleException(const std::exception& ex){
     } else {
         clean_error_message = error_message.substr(start_idx, end_idx-start_idx); 
     }
+
+    clean_error_message = "SyntacticQueryValidation:\n" + clean_error_message;
     
     NES_THROW_RUNTIME_ERROR(clean_error_message + "\n");
 }

@@ -43,15 +43,28 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
     
     sourceValidityCheck(queryPlan, streamCatalog);
 
-    typeInferencePhase->execute(queryPlan);
-    signatureInferencePhase->execute(queryPlan);
+    try {
+        typeInferencePhase->execute(queryPlan);
+        signatureInferencePhase->execute(queryPlan);
+    } catch(std::runtime_error& e) {
+        std::string errorMessage = e.what();
+        if(errorMessage.find("FieldAccessExpression:") != std::string::npos){
+            // handle nonexistend field
+            NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: " + errorMessage + "\n");
+        }
 
+        NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: " + errorMessage + "\n");
+    }
     z3::solver solver(*context);
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
 
     for (int i = 0; i < filterOperators.size(); i++) {
         Optimizer::QuerySignaturePtr qsp = filterOperators[i]->getSignature();
         solver.add(*(qsp->getConditions()));
+    }
+
+    if(solver.check() == z3::unsat){
+        NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: Unsatisfiable Query\n");
     }
 
     return solver.check() != z3::unsat;
@@ -70,7 +83,7 @@ void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPl
 
             if(!isLogicalStreamInCatalog(streamName, allLogicalStreams)){
                 NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: The logical stream " + streamName
-                                        + " could not be found in the StreamCatalog");
+                                        + " could not be found in the StreamCatalog\n");
             }
         }
     }

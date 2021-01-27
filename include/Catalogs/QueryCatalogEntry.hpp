@@ -120,6 +120,7 @@ class QueryCatalogEntry {
     std::string queryPlacementStrategy;
     QueryPlanPtr queryPlanPtr;
     QueryStatus queryStatus;
+    std::string faliureReason;
 };
 typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
 }// namespace NES

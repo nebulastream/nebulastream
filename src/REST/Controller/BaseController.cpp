@@ -190,6 +190,14 @@ void BaseController::handleException(const web::http::http_request& message, con
         // handle error caused by failure in deleting a query
         errorResponse["message"] = json::value::string(exceptionMsg);
         this->badRequestImpl(message, errorResponse);
+    } else if (std::string(exceptionMsg).find("SyntacticQueryValidation") != std::string::npos) {
+        // handle error caused by Syntactic Query Validation
+        errorResponse["message"] = json::value::string(exceptionMsg);
+        this->badRequestImpl(message, errorResponse);
+    } else if (std::string(exceptionMsg).find("SemanticQueryValidation") != std::string::npos) {
+        // handle error caused by Semantic Query Validation
+        errorResponse["message"] = json::value::string(exceptionMsg);
+        this->badRequestImpl(message, errorResponse);
     } else {
         this->internalServerErrorImpl(message);
     }
