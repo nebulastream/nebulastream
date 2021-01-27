@@ -15,7 +15,7 @@
 */
 
 #include <Components/NesWorker.hpp>
-#include <GRPC/WorkerRPCServer.hpp>
+#include <GRPC/CallData.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <signal.h>
@@ -61,14 +61,33 @@ bool NesWorker::setWithParent(std::string parentId) {
     return true;
 }
 
+void NesWorker::HandleRpcs(WorkerRPCServer::Service& service) {
+    // Spawn a new CallData instance to serve new clients.
+    new CallData(&service, cq.get());
+    void* tag;// uniquely identifies a request.
+    bool ok;
+    while (true) {
+        // Block waiting to read the next event from the completion queue. The
+        // event is uniquely identified by its tag, which in this case is the
+        // memory address of a CallData instance.
+        // The return value of Next should always be checked. This return value
+        // tells us whether there is any kind of event or cq_ is shutting down.
+        cq->Next(&tag, &ok);
+        GPR_ASSERT(ok);
+        static_cast<CallData*>(tag)->Proceed();
+    }
+}
+
 void NesWorker::buildAndStartGRPCServer(std::promise<bool>& prom) {
     WorkerRPCServer service(nodeEngine);
     ServerBuilder builder;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
+    cq = builder.AddCompletionQueue();
     rpcServer = builder.BuildAndStart();
     prom.set_value(true);
     NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress);
+    HandleRpcs(service);
     rpcServer->Wait();
     NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
 }
@@ -146,6 +165,7 @@ NodeEngine::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
     if (!stopped) {
+        cq->Shutdown();
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
 

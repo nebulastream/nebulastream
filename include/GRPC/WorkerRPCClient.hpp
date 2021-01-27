@@ -23,11 +23,13 @@
 #include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <string>
+#include <thread>
 
 using grpc::Channel;
+using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
+using grpc::CompletionQueue;
 using grpc::Status;
-
 namespace NES {
 
 class OperatorNode;
@@ -44,34 +46,30 @@ typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+
 class WorkerRPCClient {
 
   public:
     WorkerRPCClient();
     ~WorkerRPCClient();
 
-    /**
-    * @brief deploy registers and starts a query
-    * @param queryId
-    * @param new query plan as eto
-    * @return true if succeeded, else false
-    */
-    bool deployQuery(std::string address, std::string executableTransferObject);
+    void AsyncCompleteRpc();
 
     /**
-     * @brief undeploy stops and undeploy a query
-     * @param queryId to undeploy
-     * @return true if succeeded, else false
-     */
-    bool undeployQuery(std::string address, QueryId queryId);
+        * @brief register a query
+        * @param address: address of node where query plan need to be registered
+        * @param query plan to register
+        * @return true if succeeded, else false
+        */
+    bool registerQuery(std::string address, QueryPlanPtr queryPlan);
 
     /**
     * @brief register a query
-    * @param address: addres of node where query plan need to be registered
+    * @param address: address of node where query plan need to be registered
     * @param query plan to register
     * @return true if succeeded, else false
     */
-    bool registerQuery(std::string address, QueryPlanPtr queryPlan);
+    bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan);
 
     /**
      * @brief ungregisters a query
@@ -105,6 +103,8 @@ class WorkerRPCClient {
     SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, NodeEngine::TupleBuffer& buf);
 
   private:
+    CompletionQueue cq;
+    std::thread waitingThread;
 };
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
