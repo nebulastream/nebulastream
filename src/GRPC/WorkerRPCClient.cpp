@@ -26,50 +26,8 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-struct AsyncClientCall {
-    // Container for the data we expect from the server.
-    RegisterQueryReply reply;
-
-    // Context for the client. It could be used to convey extra information to
-    // the server and/or tweak certain RPC behaviors.
-    ClientContext context;
-
-    // Storage for the status of the RPC upon completion.
-    Status status;
-
-    std::unique_ptr<ClientAsyncResponseReader<RegisterQueryReply>> response_reader;
-};
-
-// Loop while listening for completed responses.
-// Prints out the response from the server.
-void WorkerRPCClient::AsyncCompleteRpc() {
-    void* got_tag;
-    bool ok = false;
-
-    // Block until the next result is available in the completion queue "cq".
-    NES_DEBUG("initalized async ");
-    while (cq.Next(&got_tag, &ok)) {
-        NES_DEBUG("Async got something");
-        // The tag in this example is the memory location of the call object
-        AsyncClientCall* call = static_cast<AsyncClientCall*>(got_tag);
-
-        // Verify that the request was completed successfully. Note that "ok"
-        // corresponds solely to the request for updates introduced by Finish().
-        GPR_ASSERT(ok);
-
-        if (call->status.ok())
-            std::cout << "Greeter received: " << call->reply.DebugString() << std::endl;
-        else
-            std::cout << "RPC failed" << std::endl;
-
-        // Once we're complete, deallocate the call object.
-        delete call;
-    }
-}
-
 WorkerRPCClient::WorkerRPCClient() {
     NES_DEBUG("WorkerRPCClient()");
-//    waitingThread = std::thread(&WorkerRPCClient::AsyncCompleteRpc, this);
 }
 
 WorkerRPCClient::~WorkerRPCClient() { NES_DEBUG("~WorkerRPCClient()"); }
@@ -82,6 +40,7 @@ bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan)
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
+
     // serialize query plan.
     auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     request.set_allocated_queryplan(serializedQueryPlan);
@@ -105,7 +64,7 @@ bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan)
     }
 }
 
-bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr queryPlan) {
+bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueue& cq) {
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId
@@ -126,98 +85,21 @@ bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr query
 
     // Call object to store rpc data
     AsyncClientCall* call = new AsyncClientCall;
+
+    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
+    // an instance to store in "call" but does not actually start the RPC
+    // Because we are using the asynchronous API, we need to hold on to
+    // the "call" instance in order to get updates on the ongoing RPC.
     call->response_reader = workerStub->PrepareAsyncRegisterQuery(&call->context, request, &cq);
 
+    // StartCall initiates the RPC call
     call->response_reader->StartCall();
 
+    // Request that, upon completion of the RPC, "reply" be updated with the
+    // server's response; "status" with the indication of whether the operation
+    // was successful. Tag the request with the memory address of the call object.
     call->response_reader->Finish(&call->reply, &call->status, (void*) call);
-    void* got_tag;
-    bool ok = false;
-    // Block until the next result is available in the completion queue "cq".
-    while (cq.Next(&got_tag, &ok)) {
-        // The tag in this example is the memory location of the call object
-        AsyncClientCall* call = static_cast<AsyncClientCall*>(got_tag);
 
-        // Verify that the request was completed successfully. Note that "ok"
-        // corresponds solely to the request for updates introduced by Finish().
-        GPR_ASSERT(ok);
-
-        if (call->status.ok())
-        {
-            std::cout << "Greeter received: " << call->reply.DebugString() << std::endl;
-            return true;
-        }
-        else
-        {
-            std::cout << "RPC failed" << std::endl;
-            return false;
-        }
-
-        // Once we're complete, deallocate the call object.
-        delete call;
-    }
-
-    // Act upon the status of the actual RPC.
-    if (call->status.ok()) {
-        return true;
-    } else {
-        return false;
-    }
-
-    //
-    //    // stub_->PrepareAsyncSayHello() creates an RPC object, returning
-    //    // an instance to store in "call" but does not actually start the RPC
-    //    // Because we are using the asynchronous API, we need to hold on to
-    //    // the "call" instance in order to get updates on the ongoing RPC.
-    //    std::unique_ptr<ClientAsyncResponseReader<RegisterQueryReply>> rpc(
-    //        workerStub->PrepareAsyncRegisterQuery(&context, request, &cq));
-    //
-    //    // StartCall initiates the RPC call
-    //    rpc->StartCall();
-    //
-    //    // Storage for the status of the RPC upon completion.
-    ////    Status status;
-    //
-    //    // Request that, upon completion of the RPC, "reply" be updated with the
-    //    // server's response; "status" with the indication of whether the operation
-    //    // was successful. Tag the request with the integer 1.
-    //    rpc->Finish(&reply, &status, (void*) 1);
-
-    //
-    //    void* got_tag;
-    //    bool ok = false;
-    //    // Block until the next result is available in the completion queue "cq".
-    //    while (cq.Next(&got_tag, &ok)) {
-    //        // The tag in this example is the memory location of the call object
-    //
-    //        // Verify that the request was completed successfully. Note that "ok"
-    //        // corresponds solely to the request for updates introduced by Finish().
-    //        GPR_ASSERT(ok);
-    //
-    //
-    //        NES_DEBUG("CQ got an element");
-    //    }
-    //
-    //    // Block until the next result is available in the completion queue "cq".
-    //    // The return value of Next should always be checked. This return value
-    //    // tells us whether there is any kind of event or the cq_ is shutting down.
-    //    GPR_ASSERT(cq.Next(&got_tag, &ok));
-    //
-    //    // Verify that the result from "cq" corresponds, by its tag, our previous
-    //    // request.
-    //    GPR_ASSERT(got_tag == (void*) 1);
-    //    // ... and that the request was completed successfully. Note that "ok"
-    //    // corresponds solely to the request for updates introduced by Finish().
-    //    GPR_ASSERT(ok);
-    //
-    //    if (status.ok()) {
-    //        NES_DEBUG("WorkerRPCClient::registerQuery: status ok return success=" << reply.success());
-    //        return reply.success();
-    //    } else {
-    //        NES_DEBUG(" WorkerRPCClient::registerQuery error="
-    //                  << status.error_code() << ": " << status.error_message());
-    //        throw Exception("Error while WorkerRPCClient::registerQuery");
-    //    }
     return true;
 }
 
