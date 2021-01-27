@@ -32,8 +32,7 @@ namespace NES {
 
 class TestHarness {
   public:
-    CoordinatorConfig* crdConf = new CoordinatorConfig();
-    WorkerConfig* wrkConf = new WorkerConfig();
+
     /*
          * @brief The constructor of TestHarness
          * @param numWorkers number of worker (each for one physical source) to be used in the test
@@ -47,7 +46,7 @@ class TestHarness {
         crdConf->setCoordinatorIp(ipAddress);
         crdConf->setRestPort(restPort);
         crdConf->setRpcPort(rpcPort);
-        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+        crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
         QueryServicePtr queryService = crd->getQueryService();
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -265,6 +264,8 @@ class TestHarness {
   private:
     enum TestHarnessSourceType { CSVSource, MemorySource };
 
+    CoordinatorConfig* crdConf = new CoordinatorConfig();
+    WorkerConfig* wrkConf = new WorkerConfig();
     NesCoordinatorPtr crd;
     uint64_t crdPort;
     std::string ipAddress;

@@ -542,6 +542,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToNonExsistentSource) {
 /*
  * Testing test harness pushing element push to wrong source (should not work)
  */
+//FIXME: Enabled while solving #1467
 TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
     struct Car {
         uint32_t key;
