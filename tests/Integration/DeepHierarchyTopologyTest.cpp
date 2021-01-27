@@ -59,7 +59,7 @@ class DeepTopologyHierarchyTest : public testing::Test {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testOutputAndAllSensors) {
+TEST_F(DeepTopologyHierarchyTest, DISABLED_testOutputAndAllSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -382,7 +382,7 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testSimpleQueryWithTwoLevelTreeWithDe
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testOutputAndNoSensors) {
+TEST_F(DeepTopologyHierarchyTest, DISABLED_testOutputAndNoSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -680,7 +680,7 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testSimpleQueryWithTwoLevelTreeWithDe
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
+TEST_F(DeepTopologyHierarchyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, 12);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -886,7 +886,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
+TEST_F(DeepTopologyHierarchyTest, DISABLED_testSelectProjectThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1082,7 +1082,7 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
+TEST_F(DeepTopologyHierarchyTest, DISABLED_testWindowThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
