@@ -50,7 +50,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
-    testHarness.addSource("car", carSchema, "car1");
+    testHarness.addMemorySource("car", carSchema, "car1");
 
     testHarness.pushElement<Car>({40, 40, 40}, 0);
     testHarness.pushElement<Car>({30, 30, 30}, 0);
@@ -100,8 +100,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
-    testHarness.addSource("car", carSchema, "car1");
-    testHarness.addSource("car", carSchema, "car2");
+    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.addMemorySource("car", carSchema, "car2");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
@@ -166,8 +166,8 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
     std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
-    testHarness.addSource("car", carSchema, "car1");
-    testHarness.addSource("truck", truckSchema, "truck1");
+    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.addMemorySource("truck", truckSchema, "truck1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
@@ -219,8 +219,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     std::string queryWithWindowOperator = R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator);
 
-    testHarness.addSource("car", carSchema, "car1");
-    testHarness.addSource("car", carSchema, "car2");
+    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.addMemorySource("car", carSchema, "car2");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
@@ -304,8 +304,8 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     std::string queryWithJoinOperator = R"(Query::from("window1").join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(queryWithJoinOperator);
 
-    testHarness.addSource("window1", window1Schema, "window1");
-    testHarness.addSource("window2", window2Schema, "window2");
+    testHarness.addMemorySource("window1", window1Schema, "window1");
+    testHarness.addMemorySource("window2", window2Schema, "window2");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
@@ -340,12 +340,111 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
                     && right_id2 == rhs.right_id2 && right_timestamp == rhs.right_timestamp);
         }
     };
-    uint64_t  sizeOfOutput = sizeof(Output);
-    NES_DEBUG("TestHarness: size of output " << sizeOfOutput);
     std::vector<Output> expectedOutput = {{1000, 2000, 4, 4, 1002, 4, 1102},
                                           {1000, 2000, 4, 4, 1002, 4, 1112},
                                           {1000, 2000, 12, 12, 1001, 12, 1011},
                                           {2000, 3000, 11, 11, 2001, 11, 2301}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
+ * Testing test harness CSV source
+ */
+TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+
+    // Content ov testCSV.csv:
+    // 1,2,3
+    // 1,2,4
+    // 4,3,6
+    //register physical stream
+    PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/testCSV.csv", 1, 3, 1, "car", "car", false);
+    testHarness.addCSVSource(conf, carSchema);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp);
+        }
+    };
+    std::vector<Output> expectedOutput = {{1, 2, 3},{1, 2, 4}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
+ * Testing test harness CSV source and memory source
+ */
+TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+
+    // Content ov testCSV.csv:
+    // 1,2,3
+    // 1,2,4
+    // 4,3,6
+    //register physical stream
+    PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/testCSV.csv", 1, 3, 1, "car", "car", false);
+    testHarness.addCSVSource(conf, carSchema);
+
+    // add a memory source
+    testHarness.addMemorySource("car", carSchema, "carMem");
+
+    // push two elements to the memory source
+    testHarness.pushElement<Car>({1,8,8},1);
+    testHarness.pushElement<Car>({1,9,9},1);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp);
+        }
+    };
+    std::vector<Output> expectedOutput = {{1, 2, 3},{1, 2, 4},{1,9,9},{1,8,8}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -426,8 +525,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
-    testHarness.addSource("car", carSchema, "car1");
-    testHarness.addSource("truck", truckSchema, "truck1");
+    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.addMemorySource("truck", truckSchema, "truck1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
