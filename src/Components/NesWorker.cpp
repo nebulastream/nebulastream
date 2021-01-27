@@ -72,8 +72,11 @@ void NesWorker::HandleRpcs(WorkerRPCServer::Service& service) {
         // memory address of a CallData instance.
         // The return value of Next should always be checked. This return value
         // tells us whether there is any kind of event or cq_ is shutting down.
-        cq->Next(&tag, &ok);
-        GPR_ASSERT(ok);
+        bool ret = cq->Next(&tag, &ok);
+        if(!ret)
+        {
+            return;
+        }
         static_cast<CallData*>(tag)->Proceed();
     }
 }
