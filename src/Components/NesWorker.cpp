@@ -75,6 +75,7 @@ void NesWorker::HandleRpcs(WorkerRPCServer::Service& service) {
         bool ret = cq->Next(&tag, &ok);
         if(!ret)
         {
+            //we are going to shut down
             return;
         }
         static_cast<CallData*>(tag)->Proceed();
@@ -90,7 +91,9 @@ void NesWorker::buildAndStartGRPCServer(std::promise<bool>& prom) {
     rpcServer = builder.BuildAndStart();
     prom.set_value(true);
     NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress);
+    //this call is already blocking
     HandleRpcs(service);
+    //TODO: check if we still need this
     rpcServer->Wait();
     NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
 }
@@ -168,7 +171,9 @@ NodeEngine::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
     if (!stopped) {
+        //shut down the async queue
         cq->Shutdown();
+
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
 

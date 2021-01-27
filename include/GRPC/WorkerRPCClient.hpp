@@ -47,6 +47,20 @@ class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 
+struct AsyncClientCall {
+    // Container for the data we expect from the server.
+    RegisterQueryReply reply;
+
+    // Context for the client. It could be used to convey extra information to
+    // the server and/or tweak certain RPC behaviors.
+    ClientContext context;
+
+    // Storage for the status of the RPC upon completion.
+    Status status;
+
+    std::unique_ptr<ClientAsyncResponseReader<RegisterQueryReply>> response_reader;
+};
+
 class WorkerRPCClient {
 
   public:
@@ -69,7 +83,7 @@ class WorkerRPCClient {
     * @param query plan to register
     * @return true if succeeded, else false
     */
-    bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan);
+    bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueue& cq);
 
     /**
      * @brief ungregisters a query
@@ -103,8 +117,6 @@ class WorkerRPCClient {
     SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, NodeEngine::TupleBuffer& buf);
 
   private:
-    CompletionQueue cq;
-    std::thread waitingThread;
 };
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
