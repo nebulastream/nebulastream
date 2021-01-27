@@ -38,6 +38,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/QueryRequestQueue.hpp>
+#include <exception>
 
 namespace NES {
 
@@ -185,8 +186,8 @@ void QueryRequestProcessorService::start() {
             }
         }
         NES_WARNING("QueryProcessingService: Terminated");
-    } catch (...) {
-        NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries.");
+    } catch (std::exception& ex) {
+        NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
         shutDown();
     }
 }
