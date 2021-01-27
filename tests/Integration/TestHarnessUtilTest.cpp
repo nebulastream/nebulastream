@@ -224,7 +224,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
-    EXPECT_THROW(testHarness.getOutput<Output>(1), std::runtime_error);
+    EXPECT_THROW(testHarness.getOutput<Output>(1), NesRuntimeException);
 }
 
 /*
@@ -241,7 +241,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0);
-    EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), std::runtime_error);
+    EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), NesRuntimeException);
 }
 
 /*
@@ -280,7 +280,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
-    EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 0), std::runtime_error);
+    EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 0), NesRuntimeException);
 }
 
 //TODO: more test using window, merge, or join operator (issue #1443)

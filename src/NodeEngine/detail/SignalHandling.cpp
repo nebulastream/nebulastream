@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/NesRuntimeException.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/internal/backtrace.hpp>
 #include <Util/Logger.hpp>
@@ -83,7 +84,7 @@ static std::vector<std::shared_ptr<ErrorListener>> globalErrorListeners;
  */
 void invokeErrorHandlers(const std::string buffer, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
-    auto exception = std::make_shared<NesRuntimeException>(buffer);
+    auto exception = std::make_shared<NesRuntimeException>(buffer, stacktrace);
     for (auto& listener : globalErrorListeners) {
         listener->onFatalException(exception, stacktrace);
     }

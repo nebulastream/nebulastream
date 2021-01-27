@@ -252,7 +252,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
         std::ostream __os(&__buffer);                                                                                            \
         __os << __VA_ARGS__;                                                                                                     \
         NES_FATAL_ERROR(__VA_ARGS__);                                                                                            \
-        NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                           \
+        throw NesRuntimeException(__buffer.str(), std::move(__stacktrace));                                                      \
     } while (0)
 
 namespace NES {
