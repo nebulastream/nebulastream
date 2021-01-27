@@ -34,7 +34,7 @@ class DynamicColumnLayoutField {
     DynamicColumnLayoutField(T* basePointer, DynamicColumnLayoutBufferPtr& dynamicColumnLayoutBuffer) : basePointer(basePointer), dynamicColumnLayoutBuffer(dynamicColumnLayoutBuffer) {};
   private:
     T* basePointer;
-    const DynamicColumnLayoutBufferPtr& dynamicColumnLayoutBuffer;
+    DynamicColumnLayoutBufferPtr& dynamicColumnLayoutBuffer;
 };
 
 template <class T, bool boundaryChecks>

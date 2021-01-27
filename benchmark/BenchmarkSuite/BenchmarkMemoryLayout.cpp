@@ -33,8 +33,7 @@ static std::shared_ptr<NES::NodeEngine::MemoryLayout> columnLayout;
 static void BM_WriteRecordsRowLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
                            ->addField("t1", BasicType::UINT8)
-                           ->addField("t2", BasicType::UINT16)
-                           ->addField("t3", BasicType::UINT32);
+                           ->addField("t2", BasicType::UINT16);
 
     bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     rowLayout = NodeEngine::createRowLayout(schema);
@@ -45,7 +44,7 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
         auto fields = schema->fields;
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-                auto value = 1;
+                const auto value = 1;
                 auto dataType = fields[fieldIndex]->getDataType();
                 auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
                 if (physicalType->isBasicType()) {
@@ -88,8 +87,7 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
 static void BM_WriteRecordsCustomRowLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+        ->addField("t2", BasicType::UINT16);
 
     bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     rowLayout = NodeEngine::createRowLayout(schema);
@@ -98,10 +96,9 @@ static void BM_WriteRecordsCustomRowLayout(benchmark::State& state) {
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            auto value = 1;
+            const auto value = 1;
             rowLayout->getValueField<uint8_t>(recordIndex, 0)->write(buf, value);
             rowLayout->getValueField<uint16_t>(recordIndex, 1)->write(buf, value);
-            rowLayout->getValueField<uint32_t>(recordIndex, 2)->write(buf, value);
         }
     }
 
@@ -111,28 +108,24 @@ static void BM_WriteRecordsCustomRowLayout(benchmark::State& state) {
 static void BM_ReadRecordsCustomRowLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+        ->addField("t2", BasicType::UINT16);
 
     bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
-    auto value = 1;
+    const auto value = 1;
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         rowLayout->getValueField<uint8_t>(recordIndex, 0)->write(buf, value);
         rowLayout->getValueField<uint16_t>(recordIndex, 1)->write(buf, value);
-        rowLayout->getValueField<uint32_t>(recordIndex, 2)->write(buf, value);
     }
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             auto field0 = rowLayout->getFieldPointer<uint8_t>(buf, recordIndex,0);
             auto field1 = rowLayout->getFieldPointer<uint16_t>(buf, recordIndex,1);
-            auto field2 = rowLayout->getFieldPointer<uint32_t>(buf, recordIndex,2);
             if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
             if (field1[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
-            if (field2[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
         }
     }
 
@@ -142,8 +135,7 @@ static void BM_ReadRecordsCustomRowLayout(benchmark::State& state) {
 static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+        ->addField("t2", BasicType::UINT16);
 
     bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     rowLayout = NodeEngine::createRowLayout(schema);
@@ -154,7 +146,6 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         rowLayout->getValueField<uint8_t>(recordIndex, 0)->write(buf, value);
         rowLayout->getValueField<uint16_t>(recordIndex, 1)->write(buf, value);
-        rowLayout->getValueField<uint32_t>(recordIndex, 2)->write(buf, value);
     }
 
     for (auto singleState : state) {
@@ -211,11 +202,11 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-
-BENCHMARK(BM_WriteRecordsRowLayout);
-BENCHMARK(BM_WriteRecordsCustomRowLayout);
-BENCHMARK(BM_ReadRecordsRowLayout);
-BENCHMARK(BM_ReadRecordsCustomRowLayout);
+#define REPETITIONS 20
+BENCHMARK(BM_WriteRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteRecordsCustomRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsCustomRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 
 // A benchmark main is needed

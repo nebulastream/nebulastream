@@ -68,7 +68,6 @@ void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     size_t I = 0;
     auto fieldAddress = address + calcOffset(numberOfRecords, I, boundaryChecks);
     std::apply([&I, &address, &fieldAddress, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(numberOfRecords, I, boundaryChecks), memcpy(fieldAddress, &args, fieldSizes[I]), ++I), ...);}, record);
-
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
 }
 
