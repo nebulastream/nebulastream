@@ -37,8 +37,8 @@ class DynamicRowLayoutField {
                           NES::NodeEngine::FIELD_SIZE recordSize) : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), dynamicRowLayoutBuffer(dynamicRowLayoutBuffer) {};
 
 
-    NES::NodeEngine::FIELD_SIZE fieldIndex;
-    NES::NodeEngine::FIELD_SIZE recordSize;
+    const NES::NodeEngine::FIELD_SIZE fieldIndex;
+    const NES::NodeEngine::FIELD_SIZE recordSize;
     uint8_t* basePointer;
     const DynamicRowLayoutBufferPtr& dynamicRowLayoutBuffer;
 };

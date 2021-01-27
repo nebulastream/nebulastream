@@ -31,8 +31,7 @@ namespace NES::Benchmarking {
 static void BM_WriteRecordsRowLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
                             ->addField("t1", BasicType::UINT8)
-                            ->addField("t2", BasicType::UINT16)
-                            ->addField("t3", BasicType::UINT32);
+                            ->addField("t2", BasicType::UINT16);
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -44,8 +43,8 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
         NodeEngine::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicRowLayout::create(schema, false);
         NodeEngine::DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<NodeEngine::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
         state.ResumeTiming();
+        std::tuple<uint8_t, uint16_t> writeRecord(1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(1, 1, 1);
             mappedRowLayout->pushRecord<false>(writeRecord);
         }
     }
@@ -55,8 +54,7 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
 static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
                            ->addField("t1", BasicType::UINT8)
-                           ->addField("t2", BasicType::UINT16)
-                           ->addField("t3", BasicType::UINT32);
+                           ->addField("t2", BasicType::UINT16);
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -65,19 +63,17 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     NodeEngine::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicRowLayout::create(schema, false);
     NodeEngine::DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<NodeEngine::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
 
-    uint8_t value = 1;
+    const auto value = 1;
+    std::tuple<uint8_t, uint16_t> writeRecord(value, value);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(value, value, value);
         mappedRowLayout->pushRecord<false>(writeRecord);
     }
 
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            std::tuple<uint8_t, uint16_t, uint32_t> readRecord = mappedRowLayout->readRecord<false, uint8_t, uint16_t, uint32_t>(recordIndex);
-            if (std::get<0>(readRecord) != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
-            if (std::get<1>(readRecord) != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
-            if (std::get<2>(readRecord) != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+            std::tuple<uint8_t, uint16_t> readRecord = mappedRowLayout->readRecord<false, uint8_t, uint16_t>(recordIndex);
+            ((void)readRecord);
         }
     }
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
@@ -86,8 +82,7 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
 static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+        ->addField("t2", BasicType::UINT16);
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -99,8 +94,8 @@ static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
         NodeEngine::DynamicColumnLayoutPtr columnLayout = NodeEngine::DynamicColumnLayout::create(schema, false);
         NodeEngine::DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<NodeEngine::DynamicColumnLayoutBuffer>(static_cast<NodeEngine::DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
         state.ResumeTiming();
+        std::tuple<uint8_t, uint16_t> writeRecord(1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(1, 1, 1);
             mappedColumnLayout->pushRecord<false>(writeRecord);
         }
     }
@@ -110,8 +105,7 @@ static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
 static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+        ->addField("t2", BasicType::UINT16);
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -120,19 +114,17 @@ static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
     NodeEngine::DynamicColumnLayoutPtr columnLayout = NodeEngine::DynamicColumnLayout::create(schema, false);
     NodeEngine::DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<NodeEngine::DynamicColumnLayoutBuffer>(static_cast<NodeEngine::DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
 
-    uint8_t value = 1;
+    const auto value = 1;
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(value, value, value);
+        std::tuple<uint8_t, uint16_t> writeRecord(value, value);
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
 
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            std::tuple<uint8_t, uint16_t, uint32_t> readRecord = mappedColumnLayout->readRecord<false, uint8_t, uint16_t, uint32_t>(recordIndex);
-            if (std::get<0>(readRecord) != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
-            if (std::get<1>(readRecord) != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
-            if (std::get<2>(readRecord) != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+            std::tuple<uint8_t, uint16_t> readRecord = mappedColumnLayout->readRecord<false, uint8_t, uint16_t>(recordIndex);
+            ((void)readRecord);
         }
     }
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
@@ -141,8 +133,7 @@ static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
 static void BM_ReadFieldRowLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+        ->addField("t2", BasicType::UINT16);
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -151,18 +142,20 @@ static void BM_ReadFieldRowLayout(benchmark::State& state) {
     NodeEngine::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicRowLayout::create(schema, false);
     NodeEngine::DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<NodeEngine::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
 
-    uint8_t value = 1;
+    const auto value = 1;
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(value, value, value);
+        std::tuple<uint8_t, uint16_t> writeRecord(value, value);
         mappedRowLayout->pushRecord<false>(writeRecord);
     }
 
     auto field0 = NES::NodeEngine::DynamicRowLayoutField<uint8_t, false>::create(0, mappedRowLayout);
+    uint8_t tmp;
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+            tmp = field0[recordIndex];
         }
     }
+    NES_DEBUG("BenchmarkkDynamicMemory: tmp = " << tmp);
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
@@ -179,27 +172,28 @@ static void BM_ReadFieldColumnLayout(benchmark::State& state) {
     NodeEngine::DynamicColumnLayoutPtr columnLayout = NodeEngine::DynamicColumnLayout::create(schema, false);
     NodeEngine::DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<NodeEngine::DynamicColumnLayoutBuffer>(static_cast<NodeEngine::DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
 
-    uint8_t value = 1;
+    const auto value = 1;
+    std::tuple<uint8_t, uint16_t> writeRecord(value, value);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(value, value, value);
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
 
 
     auto field0 = NES::NodeEngine::DynamicColumnLayoutField<uint8_t, false>::create(0, mappedColumnLayout);
+    uint8_t tmp;
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            if (field0[recordIndex] != value) NES_ERROR("BenchmarkMemoryLayout: wrong value");
+            tmp = field0[recordIndex];
         }
     }
+    NES_DEBUG("BenchmarkkDynamicMemory: tmp = " << tmp);
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
 static void BM_WriteFieldRowLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+        ->addField("t2", BasicType::UINT16);
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -208,9 +202,9 @@ static void BM_WriteFieldRowLayout(benchmark::State& state) {
     NodeEngine::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicRowLayout::create(schema, false);
     NodeEngine::DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<NodeEngine::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
 
-    uint8_t value = 1;
+    const auto value = 1;
+    std::tuple<uint8_t, uint16_t> writeRecord(value, value);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(value, value, value);
         mappedRowLayout->pushRecord<false>(writeRecord);
     }
 
@@ -226,8 +220,7 @@ static void BM_WriteFieldRowLayout(benchmark::State& state) {
 static void BM_WriteFieldColumnLayout(benchmark::State& state) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+        ->addField("t2", BasicType::UINT16);
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -236,9 +229,9 @@ static void BM_WriteFieldColumnLayout(benchmark::State& state) {
     NodeEngine::DynamicColumnLayoutPtr columnLayout = NodeEngine::DynamicColumnLayout::create(schema, false);
     NodeEngine::DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<NodeEngine::DynamicColumnLayoutBuffer>(static_cast<NodeEngine::DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
 
-    uint8_t value = 1;
+    const auto value = 1;
+    std::tuple<uint8_t, uint16_t> writeRecord(value, value);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(value, value, value);
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
 
@@ -252,16 +245,16 @@ static void BM_WriteFieldColumnLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-// Register benchmark
-BENCHMARK(BM_WriteRecordsRowLayout);
-BENCHMARK(BM_ReadRecordsRowLayout);
-BENCHMARK(BM_WriteRecordsColumnLayout);
-BENCHMARK(BM_ReadRecordsColumnLayout);
+#define REPETITIONS 20
+BENCHMARK(BM_WriteRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteRecordsColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
-BENCHMARK(BM_WriteFieldRowLayout);
-BENCHMARK(BM_ReadFieldRowLayout);
-BENCHMARK(BM_WriteFieldColumnLayout);
-BENCHMARK(BM_ReadFieldColumnLayout);
+BENCHMARK(BM_WriteFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 
 // A benchmark main is needed
