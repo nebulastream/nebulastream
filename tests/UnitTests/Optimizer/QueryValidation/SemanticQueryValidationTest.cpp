@@ -29,85 +29,83 @@ namespace NES {
 class SemanticQueryValidationTest : public testing::Test {
   public:
     void SetUp() {
-        NES::setupLogging("SemanticQueryValidationTest.log", NES::LOG_DEBUG);
+        NES::setupLogging("SemanticQueryValidationTest.log", NES::LOG_NONE);
         NES_INFO("Setup SemanticQueryValidationTest class.");
     }
     void TearDown() { NES_INFO("Tear down SemanticQueryValidationTest class."); }
+
+    void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
+
+    void CallValidation(std::string queryString){
+        PrintQString(queryString);
+        SemanticQueryValidation semanticQueryValidation;
+        QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
+        filterQuery->sink(FileSinkDescriptor::create(""));
+        semanticQueryValidation.isSatisfiable(filterQuery);
+    }
+
+    void TestForException(std::string queryString){
+    try {
+        CallValidation(queryString);
+    } catch(std::runtime_error& e) {
+        std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
+        std::cout << e.what();
+        SUCCEED();
+        return;
+    }
+    std::cout << std::endl << "VALID QUERY:" << std::endl;
+    FAIL();
+    }
 };
 
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithSingleFilter) {
     NES_INFO("Satisfiable Query with single filter");
 
-    SemanticQueryValidation semanticQueryValidation;
-
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"value\") < 10); "
         ;
     
-    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-    filterQuery->sink(FileSinkDescriptor::create(""));
-
-    ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), true);
+    CallValidation(queryString);
 }
 
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLogicalExpression) {
     NES_INFO("Satisfiable Query with logical expression");
 
-    SemanticQueryValidation semanticQueryValidation;
-
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"value\") > 10 && Attribute(\"value\") < 100); "
         ;
     
-    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-    filterQuery->sink(FileSinkDescriptor::create(""));
-
-    ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), true);
+    CallValidation(queryString);
 }
 
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLogicalExpression) {
     NES_INFO("Unatisfiable Query with logical expression");
 
-    SemanticQueryValidation semanticQueryValidation;
-
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"value\") < 10 && Attribute(\"value\") > 100); "
         ;
     
-    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-    filterQuery->sink(FileSinkDescriptor::create(""));
-
-    ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), false);
+    TestForException(queryString);
 }
 
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithMultipleFilters) {
     NES_INFO("Satisfiable Query with multiple filters");
 
-    SemanticQueryValidation semanticQueryValidation;
-
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10).filter(Attribute(\"value\") > 10); "
         ;
     
-    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-    filterQuery->sink(FileSinkDescriptor::create(""));
-
-    ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), true);
+    CallValidation(queryString);
 }
 
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithMultipleFilters) {
     NES_INFO("Unsatisfiable Query with multiple filters");
 
-    SemanticQueryValidation semanticQueryValidation;
-
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10).filter(Attribute(\"value\") > 10).filter(Attribute(\"id\") < 10); "
         ;
     
-    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-    filterQuery->sink(FileSinkDescriptor::create(""));
-
-    ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), false);
+    TestForException(queryString);
 }
 
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
@@ -126,7 +124,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
 
     filterQuery->sink(FileSinkDescriptor::create(""));
     
-    ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), true);
+    semanticQueryValidation.isSatisfiable(filterQuery);
 }
 
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
@@ -145,55 +143,37 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     
     filterQuery->sink(FileSinkDescriptor::create(""));
 
-    ASSERT_EQ(semanticQueryValidation.isSatisfiable(filterQuery), false);
+    try {
+        semanticQueryValidation.isSatisfiable(filterQuery);
+    } catch(std::runtime_error& e) {
+        std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
+        std::cout << e.what();
+        SUCCEED();
+        return;
+    }
+    std::cout << std::endl << "VALID QUERY:" << std::endl;
+    FAIL();
 }
 
 
 TEST_F(SemanticQueryValidationTest, invalidLogicalStreamTest) {
     NES_INFO("Invalid logical stream");
 
-    SemanticQueryValidation semanticQueryValidation;
-
     std::string queryString =
         "Query::from(\"nonexistent_logical\").filter(Attribute(\"id\") > 100).filter(Attribute(\"value\") < 10); "
         ;
     
-    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-    filterQuery->sink(FileSinkDescriptor::create(""));
-
-    try {
-        semanticQueryValidation.isSatisfiable(filterQuery);
-    } catch(std::runtime_error& e) {
-        std::cout << e.what();
-        SUCCEED();
-        return;
-    }
-
-    FAIL();
+    TestForException(queryString);
 }
 
 TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
     NES_INFO("Invalid attributes in logical stream");
 
-    SemanticQueryValidation semanticQueryValidation;
-
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"nonex_1\") > 100).filter(Attribute(\"nonex_2\") < 10); "
         ;
     
-    QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
-    filterQuery->sink(FileSinkDescriptor::create(""));
-
-    try {
-        semanticQueryValidation.isSatisfiable(filterQuery);
-    } catch(std::runtime_error& e) {
-        std::cout << e.what();
-        SUCCEED();
-        return;
-    }
-
-    FAIL();
-
+    TestForException(queryString);
 }
 
 }// namespace NES

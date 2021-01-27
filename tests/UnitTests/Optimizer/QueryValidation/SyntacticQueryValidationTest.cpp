@@ -27,20 +27,25 @@ namespace NES {
 class SyntacticQueryValidationTest : public testing::Test {
   public:
     void SetUp() {
-        NES::setupLogging("SyntacticQueryValidationTest.log", NES::LOG_DEBUG);
+        NES::setupLogging("SyntacticQueryValidationTest.log", NES::LOG_NONE);
         NES_INFO("Setup SyntacticQueryValidationTest class.");
     }
     void TearDown() { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
+
+    void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
     
     void TestForException(std::string queryString){
     try {
+        PrintQString(queryString);
         SyntacticQueryValidation syntacticQueryValidation;
         syntacticQueryValidation.isValid(queryString);
     } catch(std::runtime_error& e) {
+        std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
         std::cout << e.what();
         SUCCEED();
         return;
     }
+    std::cout << std::endl << "VALID QUERY:" << std::endl;
     FAIL();
     }
 };

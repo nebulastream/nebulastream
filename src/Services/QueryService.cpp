@@ -24,6 +24,8 @@
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/QueryRequestQueue.hpp>
+#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 
 namespace NES {
 
@@ -37,6 +39,12 @@ QueryService::~QueryService() { NES_DEBUG("~QueryService()"); }
 uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
+
+    NES_INFO("QueryService: Executing Syntactic validation");
+    SyntacticQueryValidation syntacticQueryValidation;
+    syntacticQueryValidation.isValid(queryString);
+
+    NES_INFO("QueryService: Validating placement strategy");
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
         NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
         throw InvalidArgumentException("placementStrategyName", placementStrategyName);
@@ -46,6 +54,11 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
+
+    NES_INFO("QueryService: Executing Semantic validation");
+    SemanticQueryValidation semanticQueryValidation;
+    semanticQueryValidation.isSatisfiable(query);
+
     NES_INFO("QueryService: Queuing the query for the execution");
     QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
     if (entry) {
