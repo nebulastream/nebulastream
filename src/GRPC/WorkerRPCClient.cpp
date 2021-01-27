@@ -175,7 +175,7 @@ bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
         NES_DEBUG("WorkerRPCClient::stopQuery: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_DEBUG(" WorkerRPCClient::stopQuery "
+        NES_ERROR(" WorkerRPCClient::stopQuery "
                   "error="
                   << status.error_code() << ": " << status.error_message());
         throw Exception("Error while WorkerRPCClient::stopQuery");
