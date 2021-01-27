@@ -1806,15 +1806,6 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
-    //register logical stream
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("car", testSchemaFileName);
-    wrk1->registerLogicalStream("truck", testSchemaFileName);
-
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     wrkConf->resetWorkerOptions();
     wrkConf->setCoordinatorPort(port);
