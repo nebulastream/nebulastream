@@ -32,7 +32,6 @@ namespace NES {
 
 class TestHarness {
   public:
-
     /*
          * @brief The constructor of TestHarness
          * @param numWorkers number of worker (each for one physical source) to be used in the test
