@@ -29,13 +29,22 @@ class NesRuntimeException : virtual public std::exception {
     std::string errorMessage;///< Error message
 
   public:
-    /** Constructor (C++ STL string, int, int).
+    /** Constructor
      *  @param msg The error message
-     *  @param err_num Error number
-     *  @param err_off Error offset
+     *  @param stacktrace Error stacktrace
      */
-    explicit NesRuntimeException(const std::string& msg) : errorMessage(msg) {
-        // nop
+    explicit NesRuntimeException(const std::string& msg, std::string&& stacktrace) : errorMessage(msg) {
+        errorMessage.append(":: callstack:\n");
+        errorMessage.append(std::move(stacktrace));
+    }
+
+    /** Constructor
+    *  @param msg The error message
+    *  @param stacktrace Error stacktrace
+    */
+    explicit NesRuntimeException(const std::string& msg, const std::string& stacktrace) : errorMessage(msg) {
+        errorMessage.append(":: callstack:\n");
+        errorMessage.append(stacktrace);
     }
 
     /** Destructor.
