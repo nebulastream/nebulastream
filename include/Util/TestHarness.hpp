@@ -71,24 +71,21 @@ class TestHarness {
     }
 
     /*
-         * @brief add a source to be used in the test
-         * @param logical stream name
-         * @param schema schema of the source
-         * @param physical stream name
-         */
-    void addSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-
+     * @brief check the schema size of the logical stream and if it already exists
+     * @param logical stream name
+     * @param schema schema of the source
+     * @param physical stream name
+     */
+    void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
         // check if record may span multiple buffers
         NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize=" << bufferSize
-                                                                                                 << " recordSize=" << schema->getSchemaSizeInBytes());
+                                                                                                              << " recordSize=" << schema->getSchemaSizeInBytes());
 
         // Check if logical stream already exists
         if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
-                      << logicalStreamName);
+                          << logicalStreamName);
             crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
         } else {
             // Check if it has the same schema
@@ -110,6 +107,34 @@ class TestHarness {
                                                crdPort + (workerPtrs.size() + 1) * 20 + 1, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         workerPtrs.push_back(wrk);
+    }
+
+    /*
+         * @brief add a memory source to be used in the test
+         * @param logical stream name
+         * @param schema schema of the source
+         * @param physical stream name
+         */
+    void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
+        checkAndAddSource(logicalStreamName, schema, physicalStreamName);
+
+        csvSourceConfs.push_back(nullptr);
+
+        std::vector<uint8_t*> currentSourceRecords;
+        records.push_back(currentSourceRecords);
+    }
+
+    /*
+         * @brief add a csv source to be used in the test
+         * @param logical stream name
+         * @param schema schema of the source
+         * @param physical stream name
+         * @param csvSourceConf physical stream configuration for the csv source
+         */
+    void addCSVSource( PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema) {
+        checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema, csvSourceConf->getPhysicalStreamName());
+
+        csvSourceConfs.push_back(csvSourceConf);
 
         std::vector<uint8_t*> currentSourceRecords;
         records.push_back(currentSourceRecords);
@@ -137,19 +162,25 @@ class TestHarness {
 
         // add value collected by the record vector to the memory source
         for (int i = 0; i < sourceSchemas.size(); ++i) {
-            auto currentSourceNumOfRecords = records.at(i).size();
-            auto tupleSize = sourceSchemas.at(i)->getSchemaSizeInBytes();
-            auto memAreaSize = currentSourceNumOfRecords * tupleSize;
-            auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
+             if(csvSourceConfs[i]) {
+                 // use the given csv source
+                 workerPtrs[i]->registerPhysicalStream(csvSourceConfs[i]);
+             } else {
+                 // create and populate memory source
+                 auto currentSourceNumOfRecords = records.at(i).size();
+                 auto tupleSize = sourceSchemas.at(i)->getSchemaSizeInBytes();
+                 auto memAreaSize = currentSourceNumOfRecords * tupleSize;
+                 auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
-            auto currentRecords = records.at(i);
-            for (int j = 0; j < currentSourceNumOfRecords; ++j) {
-                memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
-            }
+                 auto currentRecords = records.at(i);
+                 for (int j = 0; j < currentSourceNumOfRecords; ++j) {
+                     memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
+                 }
 
-            AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-                "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
-            workerPtrs[i]->registerPhysicalStream(conf);
+                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
+                     "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
+                 workerPtrs[i]->registerPhysicalStream(conf);
+             }
         }
 
         // local fs
@@ -224,6 +255,7 @@ class TestHarness {
     std::vector<SchemaPtr> sourceSchemas;
     std::vector<std::string> physicalStreamNames;
     std::vector<std::string> logicalStreamNames;
+    std::vector<PhysicalStreamConfigPtr> csvSourceConfs;
 
     uint64_t restPort = 8081;
     uint64_t rpcPort = 4000;
