@@ -59,6 +59,7 @@ class ExecutableQueryPlan {
 
     /**
      * @brief Fail the query plan and free all associated resources.
+     * @return not defined yet
      */
     bool fail();
 

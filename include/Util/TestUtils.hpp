@@ -241,6 +241,7 @@ class TestUtils {
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
      * @param queryId : the query id to check for
      * @param queryCatalog: the catalog to look into for status change
+     * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
     static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog, std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout)) {

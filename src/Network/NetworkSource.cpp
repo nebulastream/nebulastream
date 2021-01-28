@@ -34,7 +34,6 @@ NetworkSource::~NetworkSource() { NES_DEBUG("NetworkSink: Destroying NetworkSour
 
 std::optional<NodeEngine::TupleBuffer> NetworkSource::receiveData() {
     NES_THROW_RUNTIME_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
-    return {};
 }
 
 SourceType NetworkSource::getType() const { return NETWORK_SOURCE; }

@@ -33,19 +33,13 @@ class NesRuntimeException : virtual public std::exception {
      *  @param msg The error message
      *  @param stacktrace Error stacktrace
      */
-    explicit NesRuntimeException(const std::string& msg, std::string&& stacktrace) : errorMessage(msg) {
-        errorMessage.append(":: callstack:\n");
-        errorMessage.append(std::move(stacktrace));
-    }
+    explicit NesRuntimeException(const std::string& msg, std::string&& stacktrace);
 
     /** Constructor
     *  @param msg The error message
     *  @param stacktrace Error stacktrace
     */
-    explicit NesRuntimeException(const std::string& msg, const std::string& stacktrace) : errorMessage(msg) {
-        errorMessage.append(":: callstack:\n");
-        errorMessage.append(stacktrace);
-    }
+    explicit NesRuntimeException(const std::string& msg, const std::string& stacktrace);
 
     /** Destructor.
      *  Virtual to allow for subclassing.
@@ -57,7 +51,7 @@ class NesRuntimeException : virtual public std::exception {
      *  is in possession of the Except object. Callers must
      *  not attempt to free the memory.
      */
-    virtual const char* what() const throw() { return errorMessage.c_str(); }
+    virtual const char* what() const throw();
 };
 
 }// namespace NES
