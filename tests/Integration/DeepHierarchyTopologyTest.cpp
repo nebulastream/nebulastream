@@ -1782,7 +1782,7 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testMergeThreeLevel) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
+TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
