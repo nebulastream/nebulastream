@@ -23,6 +23,10 @@
 
 namespace NES {
 
+/**
+ * @brief Exception to be used to report errors and stacktraces
+ * This is meant to be used for NES-related errors, wrap std exceptions with their own stacktrace, etc..
+ */
 class NesRuntimeException : virtual public std::exception {
 
   protected:

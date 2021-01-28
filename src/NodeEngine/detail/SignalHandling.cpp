@@ -105,6 +105,7 @@ void nesUnexpectedException() {
         if (unknown) {
             std::rethrow_exception(unknown);
         } else {
+            throw std::runtime_error("Unknown invalid exception caught");
         }
     } catch (const std::exception& e) {// for proper `std::` exceptions
         currentException = std::make_shared<std::exception>(e);

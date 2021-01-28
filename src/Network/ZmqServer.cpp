@@ -68,7 +68,7 @@ ZmqServer::~ZmqServer() {
             if (gracefullyClosed) {
                 NES_DEBUG("ZmqServer: gracefully closed on " << hostname << ":" << port);
             } else {
-                NES_DEBUG("ZmqServer: non gracefully closed on " << hostname << ":" << port);
+                NES_WARNING("ZmqServer: non gracefully closed on " << hostname << ":" << port);
             }
         } catch (std::exception& e) {
             NES_ERROR("ZmqServer: Server failed to start due to " << e.what());

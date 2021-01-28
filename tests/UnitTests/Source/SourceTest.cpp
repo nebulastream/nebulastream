@@ -103,13 +103,17 @@ typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr, NodeEngin
 class SourceTest : public testing::Test {
   public:
     void SetUp() {
-        NES::setupLogging("SourceTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup SourceTest test class.");
+
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
         this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
+
+    static void SetUpTestCase() {
+        NES::setupLogging("SourceTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup SourceTest test class.");
+    }
 
     void TearDown() {
         nodeEngine->stop();
