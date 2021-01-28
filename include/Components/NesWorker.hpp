@@ -18,11 +18,10 @@
 #define INCLUDE_COMPONENTS_NESWORKER_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <future>
-#include <GRPC/CallData.hpp>
-
 
 namespace NES {
 

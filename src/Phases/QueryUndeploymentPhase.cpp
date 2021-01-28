@@ -81,7 +81,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
 bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
     NES_DEBUG("QueryUndeploymentPhase:stopQuery queryId=" << queryId);
     //NOTE: the uncommented lines below have to be activated for async calls
-//    std::map<CompletionQueuePtr, uint64_t> completionQueues;
+    //    std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
     for (ExecutionNodePtr executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
@@ -100,7 +100,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNod
             NES_ERROR("QueryUndeploymentPhase::stopQuery " << queryId << " to " << rpcAddress << "  failed");
             return false;
         }
-//        completionQueues[queueForExecutionNode] = 1;
+        //        completionQueues[queueForExecutionNode] = 1;
     }
 
     // activate below for async calls
