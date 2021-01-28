@@ -262,6 +262,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
+    DataSinkPtr getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sinkOperator, NodeEnginePtr selfPtr);
 
     AbstractPhysicalStreamConfigPtr config;
     NodeStatsProviderPtr nodeStatsProvider;
@@ -275,7 +276,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool isReleased;
     std::recursive_mutex engineMutex;
     uint64_t nodeEngineId;
-    DataSinkPtr getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sinkOperator);
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
