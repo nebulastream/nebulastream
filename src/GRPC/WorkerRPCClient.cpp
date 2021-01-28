@@ -102,7 +102,7 @@ bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr query
 }
 
 bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, ClientModes mode) {
-    NES_DEBUG("checkAsyncResult for mode=" << mode);
+    NES_DEBUG("start checkAsyncResult for mode=" << mode << " for " << queues.size() << " queues");
     bool result = true;
     for (auto& queue : queues) {
         //wait for all deploys to come back

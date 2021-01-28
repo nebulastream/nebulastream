@@ -90,8 +90,8 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNod
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryUndeploymentPhase::stopQuery at execution node with id=" << executionNode->getId()
                                                                                  << " and IP=" << rpcAddress);
-//        bool success = workerRPCClient->stopQuery(rpcAddress, queryId);
-        bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, *queue);
+        bool success = workerRPCClient->stopQuery(rpcAddress, queryId);
+        //        bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, *queue);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::stopQuery " << queryId << " to " << rpcAddress << " successful");
         } else {
@@ -101,9 +101,12 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNod
         queues[queue] = 1;
     }
 
-    bool result = workerRPCClient->checkAsyncResult(queues, WorkerRPCClient::Stop);
-    NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id " << queryId << " success=" << result);
-    return result;
+    //    bool result = workerRPCClient->checkAsyncResult(queues, WorkerRPCClient::Stop);
+    //    NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id " << queryId << " success=" << result);
+    //    return result;
+
+    NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id " << queryId << " success");
+    return true;
 }
 
 bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
