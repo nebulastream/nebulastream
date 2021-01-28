@@ -186,7 +186,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
 
         for (const auto& sink : sinkOperators) {
             NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
-            DataSinkPtr legacySink = getPhysicalSink(querySubPlanId, sink);
+            DataSinkPtr legacySink = getPhysicalSink(querySubPlanId, sink, self);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
@@ -198,13 +198,13 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         return false;
     }
 }
-DataSinkPtr NodeEngine::getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sinkOperator) {
+DataSinkPtr NodeEngine::getPhysicalSink(QueryId querySubPlanId, const SinkLogicalOperatorNodePtr& sinkOperator,
+                                        NodeEnginePtr seltPtr) {
     auto sinkDescriptor = sinkOperator->getSinkDescriptor();
     auto schema = sinkOperator->getOutputSchema();
     auto operatorId = sinkOperator->getId();
     // todo use the correct schema
-    auto legacySink =
-        ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId, operatorId);
+    auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, seltPtr, querySubPlanId, operatorId);
     return legacySink;
 }
 
@@ -214,12 +214,13 @@ bool NodeEngine::reconfigureQueryInNodeEngine(QueryPlanPtr queryPlan) {
 
 bool NodeEngine::addSinks(std::vector<SinkLogicalOperatorNodePtr> sinkOperators, QueryId queryId, QuerySubPlanId querySubPlanId) {
     std::unique_lock lock(engineMutex);
+    NodeEnginePtr self = this->inherited1::shared_from_this();
     NES_DEBUG("NodeEngine: updateSinks=" << queryId);
     if (deployedQEPs.find(querySubPlanId) != deployedQEPs.end()) {
         std::vector<DataSinkPtr> sinks;
         sinks.reserve(sinkOperators.size());
         for (const auto& sinkOperator : sinkOperators) {
-            const auto& sink = getPhysicalSink(querySubPlanId, sinkOperator);
+            const auto& sink = getPhysicalSink(querySubPlanId, sinkOperator, self);
             sinks.push_back(sink);
             NES_DEBUG("AddSinks:: add sink" << sink->toString());
         }

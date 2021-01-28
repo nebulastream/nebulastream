@@ -644,7 +644,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     DataSourcePtr source =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
+    DataSinkPtr sink = createTextFileSink(sch, 0, 2, engine, filePath, true);
     builder.addSource(source);
     builder.addSink(sink);
     builder.setQueryId(testQueryId);
@@ -696,7 +696,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     DataSourcePtr source =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
+    DataSinkPtr sink = createTextFileSink(sch, 0, 2, engine, filePath, true);
     builder.addSource(source);
     builder.addSink(sink);
     builder.setQueryId(testQueryId);
