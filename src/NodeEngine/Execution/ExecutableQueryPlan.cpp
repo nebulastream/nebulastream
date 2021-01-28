@@ -47,8 +47,6 @@ ExecutableQueryPlan::~ExecutableQueryPlan() {
 
 bool ExecutableQueryPlan::stop() {
     bool ret = true;
-    //    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId << " " << querySubPlanId);
-
     auto expected = Running;
     if (qepStatus.compare_exchange_strong(expected, Stopped)) {
         NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
@@ -68,8 +66,6 @@ bool ExecutableQueryPlan::stop() {
 
 bool ExecutableQueryPlan::fail() {
     bool ret = true;
-    //    NES_ASSERT(qepStatus == Running, "QueryPlan is created but not executing " << queryId << " " << querySubPlanId);
-
     auto expected = Running;
     if (qepStatus.compare_exchange_strong(expected, ErrorState)) {
         NES_DEBUG("QueryExecutionPlan: fail " << queryId << " " << querySubPlanId);

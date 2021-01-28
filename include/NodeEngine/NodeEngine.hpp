@@ -56,7 +56,7 @@ NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamC
  *
  */
 class NodeEngine : public Network::ExchangeProtocolListener, public NES::detail::virtual_enable_shared_from_this<NodeEngine>, public ErrorListener {
-
+    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
     typedef Network::ExchangeProtocolListener inherited0;
     typedef virtual_enable_shared_from_this<NodeEngine> inherited1;
     typedef ErrorListener inherited2;

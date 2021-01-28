@@ -24,4 +24,5 @@ add_source_nes(
         QueryNotFoundException.cpp
         QueryUndeploymentException.cpp
         TypeInferenceException.cpp
+        NesRuntimeException.cpp
 )

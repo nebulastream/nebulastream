@@ -97,10 +97,12 @@ class ZmqServer : public boost::noncopyable {
     ExchangeProtocol& exchangeProtocol;
     NodeEngine::BufferManagerPtr bufferManager;
 
-    /// error management done using 3 values
-    /// true: gracefully closed
-    /// false: not gracefully closed
-    /// exception: error
+    /**
+     * @brief error management done using 3 values
+     *   true: gracefully closed
+     *   false: not gracefully closed
+     *   exception: error
+     */
     std::promise<bool> errorPromise;
 
 };

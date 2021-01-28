@@ -68,6 +68,8 @@ class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
+    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
+
     typedef detail::virtual_enable_shared_from_this<NesCoordinator> inherited0;
     typedef ErrorListener inherited1;
 
