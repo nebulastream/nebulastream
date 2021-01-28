@@ -56,7 +56,7 @@ int main() {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
-    auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
+    auto benchmarkSchema = Schema::create()->addField("test$key", BasicType::INT16)->addField("test$value", BasicType::INT16);
     BM_AddBenchmark(
         "BM_SimpleMapQuery",
         TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
