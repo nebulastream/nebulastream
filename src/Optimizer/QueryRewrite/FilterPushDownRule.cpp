@@ -81,14 +81,12 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
         static bool isFilterAboveAMergeOperator{false};
         static bool isFilterAboveAJoinOperator{false};
-        //isFilterAboveAJoinOperator = isFilterAboveAMergeOperator;
         NES_INFO("FilterPushDownRule: Get first operator for processing");
         NodePtr node = nodesToProcess.front();
         nodesToProcess.pop_front();
 
-        if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
-            || node->instanceOf<FilterLogicalOperatorNode>()) {
-
+        if (node->instanceOf<SourceLogicalOperatorNode>()|| node->instanceOf<FilterLogicalOperatorNode>())
+        {
             NES_INFO("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
 
             if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {
@@ -137,7 +135,6 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                 if (nodeExists!= nullptr) {
                     NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
                     break;
-                    //continue;
                 } else if (!(copyOptr->removeAndJoinParentAndChildren() && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
@@ -162,18 +159,19 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
         } else if (node->instanceOf<JoinLogicalOperatorNode>()) {
             isFilterAboveAJoinOperator = true;
-            //node->as<JoinLogicalOperatorNode>->as<Join::LogicalJoinDefinition>->as<FieldAccessExpressionNode>.
             uint64_t leftSrcId,rightSrcId;
             std::vector<NodePtr> childrenOfJoinOP,childrenLeftOfJoinOP,childrenRightOfJoinOP;
+            auto leftInputSchema = node->as<JoinLogicalOperatorNode>()->getLeftInputSchema();
+            bool isLeft = true; //FixMe: compare operator  children to the left correctly after isLeftOperator was removed
             for (auto& childOfJoinOP : node->getChildren()) {
-                if (childOfJoinOP->as<OperatorNode>()->getIsLeftOperator()) {
-                    //std::front_inserter(nodesToProcess);
-                    //childOfJoinOP->as<OperatorNode>()->getId();
+                //if (childOfJoinOP->as<OperatorNode>()->getIsLeftOperator()) {
+                //if (childOfJoinOP->as<OperatorNode>()->getOutputSchema()->equals(leftInputSchema, false)) {
+                if (isLeft) {
                     for (auto& sourceLeftOfJoinOP : childOfJoinOP->getNodesByType<SourceLogicalOperatorNode>()) {
-                    //if(childOfJoinOP->instanceOf<SourceLogicalOperatorNode>()){
                         leftSrcId = sourceLeftOfJoinOP->as<OperatorNode>()->getId();
                     }
                     childrenLeftOfJoinOP.insert(childrenLeftOfJoinOP.end(),childOfJoinOP);
+                    isLeft = false;
                 }else{
                     for (auto& sourceRightOfJoinOP : childOfJoinOP->getNodesByType<SourceLogicalOperatorNode>()) {
                         rightSrcId = sourceRightOfJoinOP->as<OperatorNode>()->getId();
@@ -194,13 +192,43 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             WatermarkAssignerLogicalOperatorNodePtr wmLogicalOperatorNodePtr = node->as<WatermarkAssignerLogicalOperatorNode>();
             //const WatermarkStrategyDescriptorPtr wmDescriptor = wmLogicalOperatorNodePtr->getWatermarkStrategyDescriptor();
             std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
-        } /*else if (node->instanceOf<WindowLogicalOperatorNode>()) {
+        } else if (node->instanceOf<WindowLogicalOperatorNode>()) {
 
-            std::vector<NodePtr> children = node->getChildren();
-            WindowLogicalOperatorNodePtr windowLogicalOperatorNodePtr = node->as<WindowLogicalOperatorNode>();
-            const Windowing::LogicalWindowDefinitionPtr  windowDefinition = windowLogicalOperatorNodePtr->getWindowDefinition();
-            std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
-        }*/
+            auto windowOpDef = node->as<WindowLogicalOperatorNode>()->getWindowDefinition();
+            if(windowOpDef->isKeyed()){
+                auto keyField = windowOpDef->getOnKey();
+            } //ToDo:Check where it is necessary
+            auto windowAggregateFieldName = windowOpDef->getWindowAggregation()->on()->as<FieldAccessExpressionNode>()->getFieldName();
+            bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, windowAggregateFieldName);
+
+            if (predicateFieldManipulated) {
+                OperatorNodePtr copyOptr = filterOperator->duplicate();
+                std::vector<NodePtr> parentsOfNode = node->as<OperatorNode>()->getParents();
+                NodePtr nodeExists;
+                for (auto&& currentNode : parentsOfNode) {
+                    if (copyOptr->equal(currentNode)) {
+                        nodeExists = currentNode;
+                    }
+                }
+                if (nodeExists!= nullptr) {
+                    NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+                    break;
+                    //continue;
+                } else if (!(copyOptr->removeAndJoinParentAndChildren() && node->insertBetweenThisAndParentNodes(copyOptr))) {
+
+                    NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
+                    throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
+                }
+                continue;
+            } else {
+                std::vector<NodePtr> children = node->getChildren();
+                if (isFilterAboveAMergeOperator) {//To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
+                    std::copy(children.begin(), children.end(), std::front_inserter(nodesToProcess));
+                } else {
+                    std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
+                }
+            }
+        }
     }
 
     NES_INFO("FilterPushDownRule: Remove all parents can children of the filter operator");
