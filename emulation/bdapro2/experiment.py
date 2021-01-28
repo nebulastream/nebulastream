@@ -28,7 +28,7 @@ class Config:
 
 
 def flat_topology(config: Config):
-    def f(net: Containernet) -> (Containernet, int, Iterable[NodeMessage]):
+    def f(net: Containernet) -> (Containernet, int, List[NodeMessage]):
         next(ips)
         config.coordinator_ip = next(ips)
         nodes: List[NodeMessage] = []
