@@ -194,7 +194,7 @@ class BenchmarkUtils {
 #define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
     {                                                                                                                            \
         auto bufferSize = 4096;                                                                                                  \
-        auto numBuffers = 1024;                                                                                                  \
+        auto numBuffers = 10;                                                                                                    \
         BM_AddBenchmarkCustomBufferSize(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString,          \
                                         customCSVOutputs);                                                                       \
     }

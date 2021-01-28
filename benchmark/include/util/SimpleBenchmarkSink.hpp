@@ -42,6 +42,7 @@ class SimpleBenchmarkSink : public SinkMedium {
                     break;
                 }
             }
+            promiseSet = false;
         };
 
     static std::shared_ptr<SimpleBenchmarkSink> create(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) {
@@ -55,6 +56,8 @@ class SimpleBenchmarkSink : public SinkMedium {
 
         currentTuples += input_buffer.getNumberOfTuples();
         bool endOfBenchmark = true;
+
+        if (promiseSet) return true;
 
         auto fields = getSchemaPtr()->fields;
         uint64_t recordIndex = 1;
@@ -114,9 +117,10 @@ class SimpleBenchmarkSink : public SinkMedium {
         }
 
 //         NES_WARNING("SimpleBenchmarkSink: endOfBenchmark = " << endOfBenchmark << " with " << input_buffer.getNumberOfTuples() << " number of tuples!");
-        if (endOfBenchmark && input_buffer.getNumberOfTuples() > 0) {
+        if (endOfBenchmark && input_buffer.getNumberOfTuples() > 0 && !promiseSet) {
             NES_WARNING("SimpleBenchmarkSink: setting promise to true!");
              completed.set_value(endOfBenchmark);
+             promiseSet = true;
         }
 
 
@@ -161,6 +165,7 @@ class SimpleBenchmarkSink : public SinkMedium {
         resultBuffers.clear();
     }
 
+    bool promiseSet = false;
     uint64_t fieldIndex = 0;
     uint64_t currentTuples = 0;
     std::vector<NodeEngine::TupleBuffer> resultBuffers;
