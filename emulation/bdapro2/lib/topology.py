@@ -1,5 +1,5 @@
 from time import sleep
-from typing import Callable, Tuple, Iterable
+from typing import Callable, Tuple, List
 
 from mininet.cli import CLI
 from mininet.log import info
@@ -13,9 +13,9 @@ class Topology:
     def __init__(self):
         self.net = None
         self.topology_size: int = 0
-        self.workers: Iterable[NodeMessage] = []
+        self.workers: List[NodeMessage] = []
 
-    def create_topology(self, topology: Callable[[Containernet], Tuple[Containernet, int, Iterable[NodeMessage]]]):
+    def create_topology(self, topology: Callable[[Containernet], Tuple[Containernet, int, List[NodeMessage]]]):
         net = Containernet(controller=Controller)
         info('*** Adding controller\n')
         net.addController('c0')
@@ -35,13 +35,13 @@ class Topology:
             except Exception as e:
                 print("Failed to connect to REST service of coordinator: ", e)
 
-            if current_size == self.topology_size:
+            if current_size == len(self.workers):
                 print(f"Completed: Received monitoring data from coordinator for nodes {current_size}")
                 complete = True
                 break
             else:
                 print(
-                    f"Waiting: Received monitoring data from coordinator for nodes {current_size} but expecting {self.topology_size}")
+                    f"Waiting: Received monitoring data from coordinator for nodes {current_size} but expecting {len(self.workers)}")
                 sleep(5)
         return complete
 
