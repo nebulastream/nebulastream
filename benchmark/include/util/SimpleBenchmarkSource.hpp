@@ -158,8 +158,8 @@ class SimpleBenchmarkSource : public DataSource {
         auto buf = this->bufferManager->getBufferBlocking();
 
         auto fields = schema->fields;
-        for (uint64_t recordIndex = 0; recordIndex < curNumberOfTuplesPerBuffer; recordIndex++) {
-            for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+        for (uint64_t recordIndex = 0; recordIndex < curNumberOfTuplesPerBuffer; ++recordIndex) {
+            for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); ++fieldIndex) {
                 auto dataType = fields[fieldIndex]->getDataType();
                 auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
                 if (physicalType->isBasicType()) {
