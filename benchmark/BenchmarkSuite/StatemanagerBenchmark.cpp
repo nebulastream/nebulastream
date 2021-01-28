@@ -155,14 +155,13 @@ static void BM_Statemanager_KeyRange_Skewed_Distribution(benchmark::State& state
     std::random_device rd;
     std::default_random_engine noise_generator;
 
-    auto skew_norm_dist = std::lognormal_distribution<double>(0, 1);
+    auto skewNormDist = std::lognormal_distribution<double>(0, 1);
     std::uniform_real_distribution<double> uniform_dist(0, 1);
-
 
     for (auto singleState : state) {
         for (int64_t i = 0; i < numberOfUpdates; ++i) {
             state.PauseTiming();
-            double singleQuantile = std::max(std::min(skew_norm_dist(noise_generator), 1.0), 0.0);
+            double singleQuantile = std::max(std::min(skewNormDist(noise_generator), 1.0), 0.0);
             uint32_t key = uint32_t(singleQuantile * numberOfKeys);
             uint32_t value = rand();
             state.ResumeTiming();
@@ -189,14 +188,14 @@ static void BM_Statemanager_KeyRange_Skewed_Distribution_KeyVec(benchmark::State
     std::random_device rd;
     std::mt19937 generator(rd());
 
-    auto skew_norm_dist = std::lognormal_distribution<double>(0, 1);
+    auto skewNormDist = std::lognormal_distribution<double>(0, 1);
     std::uniform_real_distribution<double> uniform_dist(0, 1);
 
     std::vector<uint32_t> keyVec;
 
     for (int64_t i = 0; i < numberOfUpdates; ++i) {
 
-        double singleQuantile = std::max(std::min(skew_norm_dist(generator), 1.0), 0.0);
+        double singleQuantile = std::max(std::min(skewNormDist(generator), 1.0), 0.0);
         uint32_t key = uint32_t(singleQuantile * numberOfKeys);
         keyVec.push_back(key);
     }
