@@ -103,6 +103,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, std::vector<ExecutionNod
 
 bool QueryDeploymentPhase::startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
+    //TODO: check if one queue can be used among multiple connections
     std::map<CompletionQueuePtr, uint64_t> queues;
 
     for (ExecutionNodePtr executionNode : executionNodes) {

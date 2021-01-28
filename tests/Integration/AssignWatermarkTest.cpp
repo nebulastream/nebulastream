@@ -380,7 +380,7 @@ TEST_F(AssignWatermarkTest, DISABLED_testWatermarkAssignmentDistributedSlidingWi
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO("AssignWatermarkTest: Remove query");
+    NES_DEBUG("AssignWatermarkTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
