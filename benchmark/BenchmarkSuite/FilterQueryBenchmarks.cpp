@@ -56,7 +56,7 @@ int main() {
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
     }
 
-    auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
+    auto benchmarkSchema = Schema::create()->addField("test$key", BasicType::INT16)->addField("test$value", BasicType::INT16);
 
     //-----------------------------------------Start of BM_SimpleFilterQuery----------------------------------------------------------------------------------------------
     std::vector<uint64_t> allSelectivities;
