@@ -1,6 +1,7 @@
 # IDE specific Files
 .idea
 .settings
+*.iml
 
 # Build files
 build
@@ -13,3 +14,4 @@ docker/executableImage/resources/NebulaStream*.deb
 
 # Python virtual environment
 venv
+__pycache__/
