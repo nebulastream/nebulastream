@@ -531,14 +531,14 @@ TEST_F(MultipleWindowsTest, DISABLED_testTwoDistributedTumblingAndSlidingWindows
 
     string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,2000,1,8\n"
-                             "2000,4000,1,48\n"
-                             "4000,6000,1,40\n"
                              "0,2000,4,4\n"
                              "0,2000,11,4\n"
-                             "2000,4000,11,16\n"
                              "0,2000,12,4\n"
                              "0,2000,16,4\n"
-                             "2000,4000,16,4\n";
+                             "2000,4000,1,52\n"
+                             "4000,6000,1,40\n"
+                             "2000,4000,11,20\n"
+                             "2000,4000,16,8\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
