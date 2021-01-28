@@ -65,7 +65,7 @@ void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
     // Spawn a new CallData instance to serve new clients.
     new CallData(&service, completionQueue.get());
     void* tag;// uniquely identifies a request.
-    bool ok;//
+    bool ok;  //
     while (true) {
         // Block waiting to read the next event from the completion queue. The
         // event is uniquely identified by its tag, which in this case is the
@@ -74,8 +74,7 @@ void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
         // tells us whether there is any kind of event or completionQueue is shutting down.
         bool ret = completionQueue->Next(&tag, &ok);
         NES_DEBUG("handleRpcs got item from queue with ret=" << ret);
-        if(!ret)
-        {
+        if (!ret) {
             //we are going to shut down
             return;
         }

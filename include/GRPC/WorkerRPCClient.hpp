@@ -52,7 +52,6 @@ enum RpcClientModes { Register, Unregister, Start, Stop };
 
 class WorkerRPCClient {
   public:
-
     template<typename ReplayType>
     struct AsyncClientCall {
         // Container for the data we expect from the server.

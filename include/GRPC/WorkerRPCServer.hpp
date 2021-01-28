@@ -45,5 +45,4 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     NodeEngine::NodeEnginePtr nodeEngine;
 };
 
-
 }// namespace NES
