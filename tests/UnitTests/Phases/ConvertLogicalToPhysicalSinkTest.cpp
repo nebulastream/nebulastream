@@ -52,8 +52,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create("file.log", "CSV_FORMAT", "APPEND");
-    DataSinkPtr fileOutputSink =
-        ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
+    DataSinkPtr fileOutputSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
     EXPECT_EQ(fileOutputSink->toString(), "FILE_SINK");
 }
 
@@ -61,8 +60,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create("127.0.0.1", 2000);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-    DataSinkPtr zmqSink =
-        ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
+    DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
     EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK");
 }
 #ifdef ENABLE_KAFKA_BUILD
@@ -78,8 +76,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSin
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-    DataSinkPtr printSink =
-        ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
+    DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
     EXPECT_EQ(printSink->toString(), "PRINT_SINK");
 }
 
@@ -90,8 +87,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
     SinkDescriptorPtr sinkDescriptor =
         Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 1);
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-    DataSinkPtr networkSink =
-        ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
+    DataSinkPtr networkSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
     EXPECT_EQ(networkSink->toString(), "NETWORK_SINK");
 }
 

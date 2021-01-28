@@ -32,7 +32,6 @@ namespace NES {
 
 class ExpressionNodeTest : public testing::Test {
   public:
-
     static void SetUpTestCase() { setupLogging(); }
 
     void SetUp() {}

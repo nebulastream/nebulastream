@@ -120,7 +120,6 @@ class SourceTest : public testing::Test {
         nodeEngine = nullptr;
     }
 
-
     NodeEngine::NodeEnginePtr nodeEngine{nullptr};
 };
 

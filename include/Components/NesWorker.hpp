@@ -32,9 +32,10 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::string localWorkerIp, uint16_t localWorkerRpcPort,
-              uint16_t localWorkerZmqPort, NodeType type, uint16_t numberOfSlots = std::thread::hardware_concurrency(),
-              uint16_t numWorkerThreads = DEFAULT_NUM_THREADS);
+    explicit NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::string localWorkerIp,
+                       uint16_t localWorkerRpcPort, uint16_t localWorkerZmqPort, NodeType type,
+                       uint16_t numberOfSlots = std::thread::hardware_concurrency(),
+                       uint16_t numWorkerThreads = DEFAULT_NUM_THREADS);
 
     /**
      * @brief default dtor

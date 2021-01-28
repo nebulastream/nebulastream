@@ -50,7 +50,7 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     if (commonStamp->isUndefined()) {
         // the common stamp was not valid -> in this case the common stamp is undefined.
         throw std::logic_error("ArithmeticalExpressionNode: " + commonStamp->toString()
-                                + " is not supported by arithmetical expressions");
+                               + " is not supported by arithmetical expressions");
     }
 
     stamp = commonStamp;

@@ -43,9 +43,7 @@ class DeepTopologyHierarchyTest : public testing::Test {
         restPort = restPort + 2;
     }
 
-    void TearDown() {
-        NES_DEBUG("TearDown DeepTopologyHierarchyTest test class.");
-    }
+    void TearDown() { NES_DEBUG("TearDown DeepTopologyHierarchyTest test class."); }
     std::string ipAddress = "127.0.0.1";
 };
 
@@ -755,7 +753,8 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
-    NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor, 12);
+    NesWorkerPtr wrk10 =
+        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor, 12);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
     wrk10->replaceParent(1, 4);

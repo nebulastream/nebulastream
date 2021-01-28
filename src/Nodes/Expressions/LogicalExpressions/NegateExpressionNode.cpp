@@ -48,7 +48,7 @@ void NegateExpressionNode::inferStamp(SchemaPtr schema) {
     // check if children stamp is correct
     if (!child()->isPredicate()) {
         throw std::logic_error("Negate Expression Node: the stamp of child must be boolean, but was: "
-                                + child()->getStamp()->toString());
+                               + child()->getStamp()->toString());
     }
 }
 ExpressionNodePtr NegateExpressionNode::copy() { return std::make_shared<NegateExpressionNode>(NegateExpressionNode(this)); }

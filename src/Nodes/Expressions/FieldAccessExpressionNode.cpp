@@ -59,7 +59,7 @@ void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
         return;
     }
     throw std::logic_error("FieldAccessExpression: the field " + fieldName + " is not defined in the  schema "
-                            + schema->toString());
+                           + schema->toString());
 }
 
 ExpressionNodePtr FieldAccessExpressionNode::copy() {

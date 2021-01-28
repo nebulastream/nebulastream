@@ -18,14 +18,14 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <GRPC/WorkerRPCClient.hpp>
+#include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
 #include <thread>
-#include <Util/VirtualEnableSharedFromThis.hpp>
-#include <NodeEngine/ErrorListener.hpp>
 
 namespace NES {
 class QueryRequestQueue;
