@@ -118,8 +118,7 @@ class TestHarness {
     void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
         checkAndAddSource(logicalStreamName, schema, physicalStreamName);
 
-        csvSourceConfs.push_back(nullptr);
-
+        sourceTypes.push_back(MemorySource);
         std::vector<uint8_t*> currentSourceRecords;
         records.push_back(currentSourceRecords);
     }
@@ -135,6 +134,7 @@ class TestHarness {
         checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema, csvSourceConf->getPhysicalStreamName());
 
         csvSourceConfs.push_back(csvSourceConf);
+        sourceTypes.push_back(CSVSource);
 
         std::vector<uint8_t*> currentSourceRecords;
         records.push_back(currentSourceRecords);
@@ -161,17 +161,18 @@ class TestHarness {
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
         // add value collected by the record vector to the memory source
-        for (int i = 0; i < sourceSchemas.size(); ++i) {
-             if(csvSourceConfs[i]) {
+        for (int i = 0; i < sourceTypes.size(); ++i) {
+             if(sourceTypes[i] == CSVSource) {
                  // use the given csv source
                  workerPtrs[i]->registerPhysicalStream(csvSourceConfs[i]);
-             } else {
+             } else if (sourceTypes[i] == MemorySource) {
                  // create and populate memory source
                  auto currentSourceNumOfRecords = records.at(i).size();
                  auto tupleSize = sourceSchemas.at(i)->getSchemaSizeInBytes();
                  auto memAreaSize = currentSourceNumOfRecords * tupleSize;
                  auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
+                 std::shared_ptr<uint8_t> alt;
                  auto currentRecords = records.at(i);
                  for (int j = 0; j < currentSourceNumOfRecords; ++j) {
                      memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
@@ -180,6 +181,8 @@ class TestHarness {
                  AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
                      "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
                  workerPtrs[i]->registerPhysicalStream(conf);
+             } else {
+                 NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" + std::to_string(sourceTypes[i]));
              }
         }
 
@@ -243,6 +246,11 @@ class TestHarness {
     }
 
   private:
+    enum TestHarnessSourceType {
+        CSVSource,
+        MemorySource
+    };
+
     NesCoordinatorPtr crd;
     uint64_t crdPort;
     std::string ipAddress;
@@ -256,6 +264,7 @@ class TestHarness {
     std::vector<std::string> physicalStreamNames;
     std::vector<std::string> logicalStreamNames;
     std::vector<PhysicalStreamConfigPtr> csvSourceConfs;
+    std::vector<TestHarnessSourceType> sourceTypes;
 
     uint64_t restPort = 8081;
     uint64_t rpcPort = 4000;
