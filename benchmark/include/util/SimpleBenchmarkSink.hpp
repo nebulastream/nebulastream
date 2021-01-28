@@ -57,72 +57,60 @@ class SimpleBenchmarkSink : public SinkMedium {
         bool endOfBenchmark = true;
 
         auto fields = getSchemaPtr()->fields;
-        for (uint64_t recordIndex = 0; recordIndex < 1; recordIndex++) {
-            auto dataType = fields[fieldIndex]->getDataType();
-            auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
-            if (physicalType->isBasicType()) {
-                auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
-                    if (*rowLayout->getFieldPointer<char>(input_buffer, recordIndex, fieldIndex) != (char) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
-                    if (*rowLayout->getFieldPointer<uint8_t>(input_buffer, recordIndex, fieldIndex) != (uint8_t) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
-                    if (*rowLayout->getFieldPointer<uint16_t>(input_buffer, recordIndex, fieldIndex) != (uint16_t) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
-                    if (*rowLayout->getFieldPointer<uint32_t>(input_buffer, recordIndex, fieldIndex) != (uint32_t) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
-                    if (*rowLayout->getFieldPointer<uint64_t>(input_buffer, recordIndex, fieldIndex) != (uint64_t) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
-                    if (*rowLayout->getFieldPointer<int8_t>(input_buffer, recordIndex, fieldIndex) != (int8_t) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
-                    if (*rowLayout->getFieldPointer<int16_t>(input_buffer, recordIndex, fieldIndex) != (int16_t) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
-                    if (*rowLayout->getFieldPointer<int32_t>(input_buffer, recordIndex, fieldIndex) != (int32_t) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
-                    if (*rowLayout->getFieldPointer<int64_t>(input_buffer, recordIndex, fieldIndex) != (int64_t) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
-                    if (*rowLayout->getFieldPointer<float>(input_buffer, recordIndex, fieldIndex) != (float) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
-                    if (*rowLayout->getFieldPointer<double>(input_buffer, recordIndex, fieldIndex) != (double) -1) {
-                        endOfBenchmark = false;
-                        break;
-                    }
-                } else {
-                    NES_DEBUG("This data sink only generates data for numeric fields");
+        uint64_t recordIndex = 1;
+        auto dataType = fields[fieldIndex]->getDataType();
+        auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+        if (physicalType->isBasicType()) {
+            auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+            if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                if (*rowLayout->getFieldPointer<char>(input_buffer, recordIndex, fieldIndex) != (char) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                if (*rowLayout->getFieldPointer<uint8_t>(input_buffer, recordIndex, fieldIndex) != (uint8_t) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                if (*rowLayout->getFieldPointer<uint16_t>(input_buffer, recordIndex, fieldIndex) != (uint16_t) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                if (*rowLayout->getFieldPointer<uint32_t>(input_buffer, recordIndex, fieldIndex) != (uint32_t) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                if (*rowLayout->getFieldPointer<uint64_t>(input_buffer, recordIndex, fieldIndex) != (uint64_t) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                if (*rowLayout->getFieldPointer<int8_t>(input_buffer, recordIndex, fieldIndex) != (int8_t) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                if (*rowLayout->getFieldPointer<int16_t>(input_buffer, recordIndex, fieldIndex) != (int16_t) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                if (*rowLayout->getFieldPointer<int32_t>(input_buffer, recordIndex, fieldIndex) != (int32_t) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                if (*rowLayout->getFieldPointer<int64_t>(input_buffer, recordIndex, fieldIndex) != (int64_t) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                if (*rowLayout->getFieldPointer<float>(input_buffer, recordIndex, fieldIndex) != (float) -1) {
+                    endOfBenchmark = false;
+                }
+            } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                if (*rowLayout->getFieldPointer<double>(input_buffer, recordIndex, fieldIndex) != (double) -1) {
+                    endOfBenchmark = false;
                 }
             } else {
-                NES_DEBUG("This data sink only generates data for numeric fields");
+                NES_DEBUG("This data sink only accepts data for numeric fields");
             }
+        } else {
+            NES_DEBUG("This data sink only accepts data for numeric fields");
         }
 
 //         NES_WARNING("SimpleBenchmarkSink: endOfBenchmark = " << endOfBenchmark << " with " << input_buffer.getNumberOfTuples() << " number of tuples!");
