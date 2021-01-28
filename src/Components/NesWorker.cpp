@@ -15,7 +15,6 @@
 */
 
 #include <Components/NesWorker.hpp>
-#include <GRPC/CallData.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <signal.h>

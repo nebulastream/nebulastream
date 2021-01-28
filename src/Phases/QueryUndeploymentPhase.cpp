@@ -127,7 +127,7 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, std::vector<Executio
         NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id=" << executionNode->getId()
                                                                                            << " and IP=" << rpcAddress);
         //        bool success = workerRPCClient->unregisterQuery(rpcAddress, queryId);
-        bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, queryId, *queueForExecutionNode);
+        bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, queryId, queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::undeployQuery query " << queryId << " to " << rpcAddress << " successful");
         } else {

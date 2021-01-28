@@ -19,9 +19,10 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/WorkerRPCServer.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <future>
+#include <GRPC/CallData.hpp>
+
 
 namespace NES {
 
