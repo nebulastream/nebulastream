@@ -16,6 +16,9 @@
 
 #ifndef NES_SRC_GRPC_CALLDATA_HPP_
 #define NES_SRC_GRPC_CALLDATA_HPP_
+//#include <GRPC/WorkerRPCServer.hpp>
+//class WorkerRPCServer;
+#include <GRPC/WorkerRPCServer.hpp>
 
 namespace NES {
 
@@ -27,43 +30,17 @@ namespace NES {
  */
 class CallData {
   public:
-    CallData(WorkerRPCServer::Service* service, grpc_impl::ServerCompletionQueue* cq)
-        : service(service), completionQueue(cq), responder(&ctx), status(CREATE) {
-        // Invoke the serving logic right away.
-        proceed();
-    }
+    /**
+     * @brief Constructor for the Call Data
+     * @param service server to listen on
+     * @param cq queue to listen on
+     */
+    CallData(WorkerRPCServer::Service* service, grpc_impl::ServerCompletionQueue* cq);
 
-    void proceed() {
-        if (status == CREATE) {
-            NES_DEBUG("RequestInSyncInCreate=" << request.DebugString());
-            // Make this instance progress to the PROCESS state.
-            status = PROCESS;
-
-            // As part of the initial CREATE state, we *request* that the system
-            // start processing requests. In this request, "this" acts are
-            // the tag uniquely identifying the request (so that different CallData
-            // instances can serve different requests concurrently), in this case
-            // the memory address of this CallData instance.
-        } else if (status == PROCESS) {
-            NES_DEBUG("RequestInSyncInProcees=" << request.DebugString());
-            // Spawn a new CallData instance to serve new clients while we process
-            // the one for this CallData. The instance will deallocate itself as
-            // part of its FINISH state.
-            new CallData(service, completionQueue);
-            service->RegisterQuery(&ctx, &request, &reply);
-
-            // And we are done! Let the gRPC runtime know we've finished, using the
-            // memory address of this instance as the uniquely identifying tag for
-            // the event.
-            status = FINISH;
-            responder.Finish(reply, Status::OK, this);
-        } else {
-            NES_DEBUG("RequestInSyncInFinish=" << request.DebugString());
-            NES_ASSERT(status == FINISH, "RequestInSyncInFinish failed");
-            // Once in the FINISH state, deallocate ourselves (CallData).
-            delete this;
-        }
-    }
+    /**
+    * @brief Run method to process the call data through it different stages
+    */
+    void proceed();
 
   private:
     // The means of communication with the gRPC runtime for an asynchronous

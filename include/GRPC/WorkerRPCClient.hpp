@@ -87,7 +87,7 @@ class WorkerRPCClient {
     * @param query plan to register
     * @return true if succeeded, else false
     */
-    bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueue& cq);
+    bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueuePtr cq);
 
     /**
      * @brief ungregisters a query
@@ -101,7 +101,7 @@ class WorkerRPCClient {
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQueryAsync(std::string address, QueryId queryId, CompletionQueue& cq);
+    bool unregisterQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
      * @brief method to start a already deployed query
@@ -117,7 +117,7 @@ class WorkerRPCClient {
       * @param queryId to start
       * @return bool indicating success
       */
-    bool startQueryAsyn(std::string address, QueryId queryId, CompletionQueue& cq);
+    bool startQueryAsyn(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
      * @brief method to stop a query
@@ -131,7 +131,7 @@ class WorkerRPCClient {
      * @param queryId to stop
      * @return bool indicating success
      */
-    bool stopQueryAsync(std::string address, QueryId queryId, CompletionQueue& cq);
+    bool stopQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.

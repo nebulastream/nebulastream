@@ -62,7 +62,7 @@ bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan)
     }
 }
 
-bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueue& cq) {
+bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueuePtr cq) {
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::registerQueryAsync address=" << address << " queryId=" << queryId
@@ -88,7 +88,7 @@ bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr query
     // an instance to store in "call" but does not actually start the RPC
     // Because we are using the asynchronous API, we need to hold on to
     // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncRegisterQuery(&call->context, request, &cq);
+    call->responseReader = workerStub->PrepareAsyncRegisterQuery(&call->context, request, cq.get());
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
@@ -144,7 +144,7 @@ bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> qu
     NES_DEBUG("checkAsyncResult for mode=" << mode << " succeed");
     return result;
 }
-bool WorkerRPCClient::unregisterQueryAsync(std::string address, QueryId queryId, CompletionQueue& cq) {
+bool WorkerRPCClient::unregisterQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq) {
     NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address=" << address << " queryId=" << queryId);
 
     UnregisterQueryRequest request;
@@ -163,7 +163,7 @@ bool WorkerRPCClient::unregisterQueryAsync(std::string address, QueryId queryId,
     // an instance to store in "call" but does not actually start the RPC
     // Because we are using the asynchronous API, we need to hold on to
     // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncUnregisterQuery(&call->context, request, &cq);
+    call->responseReader = workerStub->PrepareAsyncUnregisterQuery(&call->context, request, cq.get());
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
@@ -225,7 +225,7 @@ bool WorkerRPCClient::startQuery(std::string address, QueryId queryId) {
     }
 }
 
-bool WorkerRPCClient::startQueryAsyn(std::string address, QueryId queryId, CompletionQueue& cq) {
+bool WorkerRPCClient::startQueryAsyn(std::string address, QueryId queryId, CompletionQueuePtr cq) {
     NES_DEBUG("WorkerRPCClient::startQueryAsync address=" << address << " queryId=" << queryId);
 
     StartQueryRequest request;
@@ -244,7 +244,7 @@ bool WorkerRPCClient::startQueryAsyn(std::string address, QueryId queryId, Compl
     // an instance to store in "call" but does not actually start the RPC
     // Because we are using the asynchronous API, we need to hold on to
     // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncStartQuery(&call->context, request, &cq);
+    call->responseReader = workerStub->PrepareAsyncStartQuery(&call->context, request, cq.get());
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
@@ -281,7 +281,7 @@ bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
     }
 }
 
-bool WorkerRPCClient::stopQueryAsync(std::string address, QueryId queryId, CompletionQueue& cq) {
+bool WorkerRPCClient::stopQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq) {
     NES_DEBUG("WorkerRPCClient::stopQueryAsync address=" << address << " queryId=" << queryId);
 
     StopQueryRequest request;
@@ -300,7 +300,7 @@ bool WorkerRPCClient::stopQueryAsync(std::string address, QueryId queryId, Compl
     // an instance to store in "call" but does not actually start the RPC
     // Because we are using the asynchronous API, we need to hold on to
     // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncStopQuery(&call->context, request, &cq);
+    call->responseReader = workerStub->PrepareAsyncStopQuery(&call->context, request, cq.get());
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
