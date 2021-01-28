@@ -922,7 +922,7 @@ class StackTraceImpl<system_tag::current_tag> : public StackTraceImplHolder {
     // We have to load the machine type from the image info
     // So we first initialize the resolver, and it tells us this info
     void set_machine_type(DWORD machine_type) { machine_type_ = machine_type; }
-    void set_context(CONTEXT* ctx) { ctx_ = ctx; }
+    void set_context(CONTEXT* ctx) { ctx = ctx; }
     void set_thread_handle(HANDLE handle) { thd_ = handle; }
 
     NOINLINE
@@ -934,9 +934,9 @@ class StackTraceImpl<system_tag::current_tag> : public StackTraceImplHolder {
             return 0;
         }
 
-        if (!ctx_) {
-            ctx_ = &localCtx;
-            RtlCaptureContext(ctx_);
+        if (!ctx) {
+            ctx = &localCtx;
+            RtlCaptureContext(ctx);
         }
 
         if (!thd_) {
@@ -953,13 +953,13 @@ class StackTraceImpl<system_tag::current_tag> : public StackTraceImplHolder {
         s.AddrFrame.Mode = AddrModeFlat;
         s.AddrPC.Mode = AddrModeFlat;
 #ifdef _M_X64
-        s.AddrPC.Offset = ctx_->Rip;
-        s.AddrStack.Offset = ctx_->Rsp;
-        s.AddrFrame.Offset = ctx_->Rbp;
+        s.AddrPC.Offset = ctx->Rip;
+        s.AddrStack.Offset = ctx->Rsp;
+        s.AddrFrame.Offset = ctx->Rbp;
 #else
-        s.AddrPC.Offset = ctx_->Eip;
-        s.AddrStack.Offset = ctx_->Esp;
-        s.AddrFrame.Offset = ctx_->Ebp;
+        s.AddrPC.Offset = ctx->Eip;
+        s.AddrStack.Offset = ctx->Esp;
+        s.AddrFrame.Offset = ctx->Ebp;
 #endif
 
         if (!machine_type_) {
@@ -973,7 +973,7 @@ class StackTraceImpl<system_tag::current_tag> : public StackTraceImplHolder {
         for (;;) {
             // NOTE: this only works if PDBs are already loaded!
             SetLastError(0);
-            if (!StackWalk64(machine_type_, process, thd_, &s, ctx_, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL))
+            if (!StackWalk64(machine_type_, process, thd_, &s, ctx, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL))
                 break;
 
             if (s.AddrReturn.Offset == 0)
@@ -1005,7 +1005,7 @@ class StackTraceImpl<system_tag::current_tag> : public StackTraceImplHolder {
   private:
     DWORD machine_type_ = 0;
     HANDLE thd_ = 0;
-    CONTEXT* ctx_ = nullptr;
+    CONTEXT* ctx = nullptr;
 };
 
 #endif

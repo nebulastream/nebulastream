@@ -48,6 +48,8 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 typedef std::shared_ptr<CompletionQueue> CompletionQueuePtr;
 
+enum RpcClientModes { Register, Unregister, Start, Stop };
+
 class WorkerRPCClient {
   public:
 
@@ -65,8 +67,6 @@ class WorkerRPCClient {
 
         std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
     };
-
-    enum ClientModes { Register, Unregister, Start, Stop };
 
     WorkerRPCClient();
     ~WorkerRPCClient();
@@ -142,7 +142,13 @@ class WorkerRPCClient {
      */
     SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, NodeEngine::TupleBuffer& buf);
 
-    bool checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, ClientModes mode);
+    /**
+     * @brief This functions loops over all queues and wait for the async calls return
+     * @param queues
+     * @param mode
+     * @return true if all calls returned
+     */
+    bool checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, RpcClientModes mode);
 
   private:
 };

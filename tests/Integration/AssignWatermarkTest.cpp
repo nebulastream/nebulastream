@@ -304,7 +304,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
 /*
  * @brief test event time watermark for distributed sliding window with 50 ms allowed lateness
  */
-TEST_F(AssignWatermarkTest, DISABLED_testWatermarkAssignmentDistributedSlidingWindow) {
+TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
