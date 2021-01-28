@@ -16,7 +16,6 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <GRPC/WorkerRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <signal.h>

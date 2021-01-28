@@ -53,7 +53,7 @@ namespace NES {
 NesCoordinator::NesCoordinator(CoordinatorConfig* coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp().getValue()), restPort(coordinatorConfig->getRestPort().getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp().getValue()), rpcPort(coordinatorConfig->getRpcPort().getValue()),
-      numberOfSlots(coordinatorConfig->getNumberOfSlots().getValue()), numberOfSlots(numberOfSlots), inherited0(), inherited1() {
+      numberOfSlots(coordinatorConfig->getNumberOfSlots().getValue()), inherited0(), inherited1() {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;
