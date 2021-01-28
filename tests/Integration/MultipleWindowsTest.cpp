@@ -474,7 +474,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Test finished");
 }
 
-TEST_F(MultipleWindowsTest, DISABLED_testTwoDistributedTumblingAndSlidingWindows) {
+TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -563,7 +563,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testTwoDistributedTumblingAndSlidingWindows
 /**
  * @brief Test all three windows in a row
  */
-TEST_F(MultipleWindowsTest, DISABLED_testThreeDifferentWindows) {
+TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     NES_DEBUG("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -618,7 +618,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testThreeDifferentWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$value:INTEGER\n"
                              "0,2000,6\n"
                              "2000,4000,24\n"
                              "4000,6000,20\n"

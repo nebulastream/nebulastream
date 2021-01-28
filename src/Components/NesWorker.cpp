@@ -61,26 +61,27 @@ bool NesWorker::setWithParent(std::string parentId) {
     return true;
 }
 
-void NesWorker::HandleRpcs(WorkerRPCServer::Service& service) {
+void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
     //TODO: somehow we need this although it is not called at all
     // Spawn a new CallData instance to serve new clients.
-    new CallData(&service, cq.get());
+    new CallData(&service, completionQueue.get());
     void* tag;// uniquely identifies a request.
-    bool ok;
+    bool ok;//
     while (true) {
         // Block waiting to read the next event from the completion queue. The
         // event is uniquely identified by its tag, which in this case is the
         // memory address of a CallData instance.
         // The return value of Next should always be checked. This return value
-        // tells us whether there is any kind of event or cq_ is shutting down.
-        bool ret = cq->Next(&tag, &ok);
-        NES_DEBUG("HandleRpcs got item from queue with ret=" << ret);
+        // tells us whether there is any kind of event or completionQueue is shutting down.
+        bool ret = completionQueue->Next(&tag, &ok);
+        NES_DEBUG("handleRpcs got item from queue with ret=" << ret);
         if(!ret)
         {
             //we are going to shut down
             return;
         }
-        static_cast<CallData*>(tag)->Proceed();
+        NES_ASSERT(ok, "handleRpcs got invalid message");
+        static_cast<CallData*>(tag)->proceed();
     }
 }
 
@@ -89,13 +90,12 @@ void NesWorker::buildAndStartGRPCServer(std::promise<bool>& prom) {
     ServerBuilder builder;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
-    cq = builder.AddCompletionQueue();
+    completionQueue = builder.AddCompletionQueue();
     rpcServer = builder.BuildAndStart();
     prom.set_value(true);
     NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress);
     //this call is already blocking
-    HandleRpcs(service);
-    //TODO: check if we still need this
+    handleRpcs(service);
     rpcServer->Wait();
     NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
 }
@@ -174,8 +174,7 @@ bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
     if (!stopped) {
         //shut down the async queue
-        cq->Shutdown();
-
+        completionQueue->Shutdown();
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
 

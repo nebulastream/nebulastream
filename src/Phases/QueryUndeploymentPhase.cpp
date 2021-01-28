@@ -80,10 +80,11 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
 
 bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
     NES_DEBUG("QueryUndeploymentPhase:stopQuery queryId=" << queryId);
-    std::map<CompletionQueuePtr, uint64_t> queues;
+    //NOTE: the uncommented lines below have to be activated for async calls
+//    std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
     for (ExecutionNodePtr executionNode : executionNodes) {
-        CompletionQueuePtr queue = std::make_shared<CompletionQueue>();
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
         const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
@@ -91,16 +92,18 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNod
         NES_DEBUG("QueryUndeploymentPhase::stopQuery at execution node with id=" << executionNode->getId()
                                                                                  << " and IP=" << rpcAddress);
         bool success = workerRPCClient->stopQuery(rpcAddress, queryId);
-        //        bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, *queue);
+        //stop is currently sync because we need the end of stream message
+        //bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, *queue);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::stopQuery " << queryId << " to " << rpcAddress << " successful");
         } else {
             NES_ERROR("QueryUndeploymentPhase::stopQuery " << queryId << " to " << rpcAddress << "  failed");
             return false;
         }
-        queues[queue] = 1;
+//        completionQueues[queueForExecutionNode] = 1;
     }
 
+    // activate below for async calls
     //    bool result = workerRPCClient->checkAsyncResult(queues, WorkerRPCClient::Stop);
     //    NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id " << queryId << " success=" << result);
     //    return result;
@@ -112,10 +115,10 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNod
 bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
     NES_DEBUG("QueryUndeploymentPhase::undeployQuery queryId=" << queryId);
 
-    std::map<CompletionQueuePtr, uint64_t> queues;
+    std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
     for (ExecutionNodePtr executionNode : executionNodes) {
-        CompletionQueuePtr queue = std::make_shared<CompletionQueue>();
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
         const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
@@ -124,7 +127,7 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, std::vector<Executio
         NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id=" << executionNode->getId()
                                                                                            << " and IP=" << rpcAddress);
         //        bool success = workerRPCClient->unregisterQuery(rpcAddress, queryId);
-        bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, queryId, *queue);
+        bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, queryId, *queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::undeployQuery query " << queryId << " to " << rpcAddress << " successful");
         } else {
@@ -132,9 +135,9 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, std::vector<Executio
             return false;
         }
 
-        queues[queue] = 1;
+        completionQueues[queueForExecutionNode] = 1;
     }
-    bool result = workerRPCClient->checkAsyncResult(queues, WorkerRPCClient::Unregister);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, Unregister);
     NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id " << queryId << " success=" << result);
     return result;
 }

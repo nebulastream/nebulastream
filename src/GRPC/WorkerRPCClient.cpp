@@ -101,7 +101,7 @@ bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr query
     return true;
 }
 
-bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, ClientModes mode) {
+bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode=" << mode << " for " << queues.size() << " queues");
     bool result = true;
     for (auto& queue : queues) {
@@ -109,7 +109,7 @@ bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> qu
         void* got_tag;
         bool ok = false;
         uint64_t cnt = 0;
-        // Block until the next result is available in the completion queue "cq".
+        // Block until the next result is available in the completion queue "completionQueue".
         while (cnt != queue.second && queue.first->Next(&got_tag, &ok)) {
             // The tag in this example is the memory location of the call object
             bool status = false;
@@ -134,8 +134,7 @@ bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> qu
             }
 
             if (!status) {
-                NES_ERROR("Deployment RPC failed");
-                result = false;
+                NES_THROW_RUNTIME_ERROR("Deployment RPC failed, a scheduled async call for mode" << mode << " failed");
             }
 
             // Once we're complete, deallocate the call object.
