@@ -166,7 +166,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
         startServer(p);
     });
     t1.detach();
-
+    p.get_future().wait();
     auto test_schema = Schema::create()->addField("var", UINT32);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     NodeEngine::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -183,7 +183,6 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId,
                                      user, password, 1);
     auto tuple_buffer = opcSource->receiveData();
-    stopServer();
     uint64_t value = 0;
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) Received value is: " << *(uint32_t*) tuple_buffer->getBuffer());
@@ -193,6 +192,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
                                                                                    << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
     nodeEngine1->stop();
+    stopServer();
 }
 }// namespace NES
 #endif
