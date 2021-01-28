@@ -17,23 +17,23 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
-#include <NodeEngine/ErrorListener.hpp>
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
+#include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
 #include <pthread.h>
 #include <string>
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
-#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES {
 
@@ -55,7 +55,9 @@ NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamC
  * such as deploying, undeploying, starting, and stopping.
  *
  */
-class NodeEngine : public Network::ExchangeProtocolListener, public NES::detail::virtual_enable_shared_from_this<NodeEngine>, public ErrorListener {
+class NodeEngine : public Network::ExchangeProtocolListener,
+                   public NES::detail::virtual_enable_shared_from_this<NodeEngine>,
+                   public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
     typedef Network::ExchangeProtocolListener inherited0;
     typedef virtual_enable_shared_from_this<NodeEngine> inherited1;

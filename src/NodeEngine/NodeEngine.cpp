@@ -89,8 +89,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId)
-    : inherited0(), inherited1(), inherited2(), config(config),
-      nodeEngineId(nodeEngineId) {
+    : inherited0(), inherited1(), inherited2(), config(config), nodeEngineId(nodeEngineId) {
 
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
@@ -175,8 +174,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
                 sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
             }
-            auto legacySource =
-                ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, self);
+            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, self);
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }
@@ -188,8 +186,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(
-                schema, sinkDescriptor, self, querySubPlanId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, self, querySubPlanId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
@@ -493,7 +490,7 @@ void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
-    std::cerr << "NodeEngine failed fatally" << std::endl; // it's necessary for testing and it wont harm us to write to stderr
+    std::cerr << "NodeEngine failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
 }
 
 void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {

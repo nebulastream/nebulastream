@@ -13,11 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Logger.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <REST/NetworkUtils.hpp>
 #include <REST/RestEngine.hpp>
-
+#include <Util/Logger.hpp>
 
 #include "REST/Controller/BaseController.hpp"
 #include "REST/Controller/QueryController.hpp"

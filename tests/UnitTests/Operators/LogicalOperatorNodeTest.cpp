@@ -924,8 +924,6 @@ TEST_F(LogicalOperatorNodeTest, as) {
     FilterLogicalOperatorNodePtr _filterOp1 = base2->as<FilterLogicalOperatorNode>();
 }
 
-
-
 TEST_F(LogicalOperatorNodeTest, asBadCast) {
     NodePtr base2 = sourceOp;
     try {

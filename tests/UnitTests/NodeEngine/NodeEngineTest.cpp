@@ -118,9 +118,9 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         };
         auto compiler = createDefaultQueryCompiler();
 
-        auto mockEngine = std::make_shared<MockedNodeEngine>(
-            std::move(streamConf), std::move(bufferManager), std::move(queryManager), std::move(networkManagerCreator),
-            std::move(partitionManager), std::move(compiler), 0);
+        auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(streamConf), std::move(bufferManager),
+                                                             std::move(queryManager), std::move(networkManagerCreator),
+                                                             std::move(partitionManager), std::move(compiler), 0);
         NES::NodeEngine::installGlobalErrorListener(mockEngine);
         return mockEngine;
     } catch (std::exception& err) {
@@ -595,10 +595,13 @@ void assertKiller() {
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
                                   uint64_t nodeEngineId)
-            : NodeEngine(config, std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
+            : NodeEngine(config, std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager),
+                         std::move(compiler), nodeEngineId) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
-            ASSERT_TRUE(strcmp(exception->what(), "Failed assertion on false error message: this will fail now with a NesRuntimeException") == 0);
+            ASSERT_TRUE(strcmp(exception->what(),
+                               "Failed assertion on false error message: this will fail now with a NesRuntimeException")
+                        == 0);
         }
     };
     auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31340);
@@ -606,9 +609,7 @@ void assertKiller() {
 }
 }// namespace detail
 
-TEST_F(EngineTest, testExceptionCrash) {
-    EXPECT_EXIT(detail::assertKiller(), testing::ExitedWithCode(1), "");
-}
+TEST_F(EngineTest, testExceptionCrash) { EXPECT_EXIT(detail::assertKiller(), testing::ExitedWithCode(1), ""); }
 
 TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
@@ -618,7 +619,8 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
                                   uint64_t nodeEngineId)
-            : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
+            : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit),
+                         std::move(partitionManager), std::move(compiler), nodeEngineId) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             auto str = exception->what();
@@ -630,13 +632,11 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     };
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {
       public:
-
         uint32_t execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
             NES_DEBUG("Going to throw exception");
-            throw std::runtime_error("Catch me if you can!"); // :P
+            throw std::runtime_error("Catch me if you can!");// :P
         }
     };
-
 
     auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
 
@@ -664,7 +664,6 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     ASSERT_TRUE(engine->stop());
 }
 
-
 TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
       public:
@@ -674,7 +673,8 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
                                   uint64_t nodeEngineId)
-            : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager), std::move(compiler), nodeEngineId) {}
+            : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit),
+                         std::move(partitionManager), std::move(compiler), nodeEngineId) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             auto str = exception->what();

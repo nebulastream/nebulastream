@@ -50,7 +50,8 @@ namespace NES {
 
 NesCoordinator::NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort, uint16_t numberOfSlots,
                                bool enableQueryMerging)
-    : restIp(restIp), restPort(restPort), rpcIp(rpcIp), rpcPort(rpcPort), numberOfSlots(numberOfSlots), inherited0(), inherited1() {
+    : restIp(restIp), restPort(restPort), rpcIp(rpcIp), rpcPort(rpcPort), numberOfSlots(numberOfSlots), inherited0(),
+      inherited1() {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;
@@ -154,8 +155,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
-    restServer = std::make_shared<RestServer>(restIp, restPort, this->inherited0::weak_from_this(), queryCatalog, streamCatalog, topology,
-                                              globalExecutionPlan, queryService, monitoringService, globalQueryPlan);
+    restServer = std::make_shared<RestServer>(restIp, restPort, this->inherited0::weak_from_this(), queryCatalog, streamCatalog,
+                                              topology, globalExecutionPlan, queryService, monitoringService, globalQueryPlan);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking

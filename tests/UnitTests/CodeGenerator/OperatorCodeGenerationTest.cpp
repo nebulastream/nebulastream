@@ -100,7 +100,6 @@ class OperatorCodeGenerationTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
 
-
     NodeEngine::NodeEnginePtr nodeEngine{nullptr};
 };
 

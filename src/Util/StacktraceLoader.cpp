@@ -31,7 +31,7 @@ std::string collectAndPrintStacktrace() {
     std::stringbuf buffer;
     std::ostream os(&buffer);
     printer.print(stackTrace, os);
-//    NES_ERROR("Stacktrace:\n " << buffer.str());
+    //    NES_ERROR("Stacktrace:\n " << buffer.str());
     return buffer.str();
 }
 

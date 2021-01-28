@@ -244,7 +244,8 @@ class TestUtils {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog, std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout)) {
+    static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog,
+                                    std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout)) {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
         auto start_timestamp = std::chrono::system_clock::now();
 
@@ -427,7 +428,8 @@ class TestUtils {
                 }
             }
         }
-        NES_ERROR("checkOutputOrTimeout: expected (" << count << ") result not reached (" << found << ") within set timeout content");
+        NES_ERROR("checkOutputOrTimeout: expected (" << count << ") result not reached (" << found
+                                                     << ") within set timeout content");
         return false;
     }
 

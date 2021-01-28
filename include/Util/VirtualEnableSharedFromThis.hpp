@@ -36,7 +36,7 @@ struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this
         return std::dynamic_pointer_cast<T>(virtual_enable_shared_from_this_base::weak_from_this().lock());
     }
 };
-}
+}// namespace detail
 }// namespace NES
 
 #endif//NES_INCLUDE_UTIL_VIRTUALENABLESHAREDFROMTHIS_HPP_

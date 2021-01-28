@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_
 #define NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_
 
-#include <memory>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -41,6 +41,6 @@ class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListen
     virtual void onFatalException(const std::shared_ptr<std::exception>, std::string) = 0;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_NODEENGINE_ERRORLISTENER_HPP_
