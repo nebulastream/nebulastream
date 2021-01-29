@@ -182,6 +182,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
         case 1: benchmarkSchema = benchmarkSchemaI16; break;
         case 2: benchmarkSchema = benchmarkSchemaI32; break;
         case 3: benchmarkSchema = benchmarkSchemaI64; break;
+        case 4: benchmarkSchema = benchmarkSchemaCacheLine; break;
         default: break;
     }
 
@@ -274,6 +275,7 @@ static void BM_CustomFilling(benchmark::State& state) {
         case 1: benchmarkSchema = benchmarkSchemaI16; break;
         case 2: benchmarkSchema = benchmarkSchemaI32; break;
         case 3: benchmarkSchema = benchmarkSchemaI64; break;
+        case 4: benchmarkSchema = benchmarkSchemaCacheLine; break;
         default: break;
     }
 
@@ -334,7 +336,7 @@ static void BM_CustomFilling(benchmark::State& state) {
         }
         case 4: {
             for (auto singleState : state) {
-                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI64);
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleCacheLine);
                 auto tupleIt = buffer.getBuffer<TupleCacheLine>();
                 for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
                     tupleIt[i].key = 42;
