@@ -128,7 +128,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
                 shutdownComplete = true;
                 dispatcherSocket.close();
                 frontendSocket.close();
-                NES_INFO("ZmqServer: Shutdown completed! address: "
+                NES_INFO("ZmqServer: Frontend: Shutdown completed! address: "
                          << "tcp://" + hostname + ":" + std::to_string(port));
             } else {
                 NES_ERROR("ZmqServer: " << zmqError.what());

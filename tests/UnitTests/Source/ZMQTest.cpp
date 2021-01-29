@@ -41,12 +41,16 @@ using namespace NES;
 class ZMQTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup ZMQTest test class."); }
+    static void SetUpTestCase() {
+        NES::setupLogging("ZMQTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("Setup ZMQTest test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() {
         NES_DEBUG("Setup ZMQTest test case.");
-        NES::setupLogging("ZMQTest.log", NES::LOG_DEBUG);
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+        nodeEngine = NodeEngine::create("127.0.0.1", 3000, conf);
 
         address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":") + std::to_string(LOCAL_PORT);
 
@@ -58,7 +62,11 @@ class ZMQTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_DEBUG("Setup ZMQTest test case."); }
+    void TearDown() {
+        nodeEngine->stop();
+        nodeEngine.reset();
+        NES_DEBUG("Setup ZMQTest test case.");
+    }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down ZMQTest test class."); }
@@ -69,13 +77,12 @@ class ZMQTest : public testing::Test {
     SchemaPtr test_schema;
     uint64_t test_data_size;
     std::array<uint32_t, 8> test_data;
+
+    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
 };
 
 /* - ZeroMQ Data Source ---------------------------------------------------- */
 TEST_F(ZMQTest, testZmqSourceReceiveData) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 3000, conf);
-
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto zmq_source =
@@ -122,7 +129,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
 }
 
 /* - ZeroMQ Data Sink ------------------------------------------------------ */
-TEST_F(ZMQTest, testZmqSinkSendData) {
+TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
 
     return;
     //FIXME: this test makes no sense, redo it
@@ -182,7 +189,7 @@ TEST_F(ZMQTest, testZmqSinkSendData) {
 }
 
 /* - ZeroMQ Data Sink to ZeroMQ Data Source  ------------------------------- */
-TEST_F(ZMQTest, testZmqSinkToSource) {
+TEST_F(ZMQTest, DISABLED_testZmqSinkToSource) {
 
     /**
   //FIXME: this test makes no sense, redo it
