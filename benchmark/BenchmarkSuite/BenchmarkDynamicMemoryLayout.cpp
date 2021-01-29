@@ -25,13 +25,28 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <benchmark/benchmark.h>
 
+
 namespace NES::Benchmarking {
 
+#define benchmarkSchemaCacheLine (Schema::create()->addField("key", BasicType::INT32)                                         \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32))
 
 static void BM_WriteRecordsRowLayout(benchmark::State& state) {
-    SchemaPtr schema = Schema::create()
-                            ->addField("t1", BasicType::UINT8)
-                            ->addField("t2", BasicType::UINT16);
+    SchemaPtr schema = benchmarkSchemaCacheLine;
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -52,9 +67,7 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
 }
 
 static void BM_ReadRecordsRowLayout(benchmark::State& state) {
-    SchemaPtr schema = Schema::create()
-                           ->addField("t1", BasicType::UINT8)
-                           ->addField("t2", BasicType::UINT16);
+    SchemaPtr schema = benchmarkSchemaCacheLine;
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -80,9 +93,7 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
 }
 
 static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
-    SchemaPtr schema = Schema::create()
-        ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16);
+    SchemaPtr schema = benchmarkSchemaCacheLine;
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -103,9 +114,7 @@ static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
 }
 
 static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
-    SchemaPtr schema = Schema::create()
-        ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16);
+    SchemaPtr schema = benchmarkSchemaCacheLine;
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -131,9 +140,7 @@ static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
 }
 
 static void BM_ReadFieldRowLayout(benchmark::State& state) {
-    SchemaPtr schema = Schema::create()
-        ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16);
+    SchemaPtr schema = benchmarkSchemaCacheLine;
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -160,10 +167,7 @@ static void BM_ReadFieldRowLayout(benchmark::State& state) {
 }
 
 static void BM_ReadFieldColumnLayout(benchmark::State& state) {
-    SchemaPtr schema = Schema::create()
-        ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16)
-        ->addField("t3", BasicType::UINT32);
+    SchemaPtr schema = benchmarkSchemaCacheLine;
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -191,9 +195,7 @@ static void BM_ReadFieldColumnLayout(benchmark::State& state) {
 }
 
 static void BM_WriteFieldRowLayout(benchmark::State& state) {
-    SchemaPtr schema = Schema::create()
-        ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16);
+    SchemaPtr schema = benchmarkSchemaCacheLine;
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -218,9 +220,7 @@ static void BM_WriteFieldRowLayout(benchmark::State& state) {
 }
 
 static void BM_WriteFieldColumnLayout(benchmark::State& state) {
-    SchemaPtr schema = Schema::create()
-        ->addField("t1", BasicType::UINT8)
-        ->addField("t2", BasicType::UINT16);
+    SchemaPtr schema = benchmarkSchemaCacheLine;
 
     std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
