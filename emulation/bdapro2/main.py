@@ -1,12 +1,14 @@
+import logging
 from ipaddress import IPv4Network
 from logging import info
-from signal import signal, SIGINT
+from signal import signal, SIGINT, SIGTERM
 from typing import Iterable, List
 
 # noinspection PyUnresolvedReferences
 import mininet.node  # https://github.com/mininet/mininet/issues/546 for why import is needed.
 from attr import dataclass
 from mininet.link import TCLink
+from mininet.log import setLogLevel
 from mininet.net import Containernet
 
 from lib.topology import Topology
@@ -22,12 +24,12 @@ ips: Iterable[str] = (str(addr) for addr in IPv4Network('10.220.1.0/24').hosts()
 class Config:
     coordinator_port: int = 4000
     coordinator_ip: str = ""
-    total_workers: int = 5
-    workers_producing: int = 3
+    total_workers: int = 2
+    workers_producing: int = 2
     physical_stream_prefix: str = ""
     producer_options: str = f"--sourceType=YSBSource " \
-                            f"--numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=10 " \
-                            f"--sourceFrequency=1 --logicalStreamName=ysb"
+                            f"--numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20 " \
+                            f"--sourceFrequency=10 --logicalStreamName=ysb"
 
 
 def flat_topology(config: Config):
@@ -35,30 +37,31 @@ def flat_topology(config: Config):
         config.coordinator_ip = next(ips)
         nodes: List[NodeCmd] = []
         crd = net.addDocker('crd', ip=config.coordinator_ip, dimage="bdapro/query-merging", ports=[8081, 4000],
-                            port_bindings={8081: 8081, 4000: 4000}, volumes=["/tmp/logs:/logs"])
+                            port_bindings={8081: 8081, 4000: 4000}, volumes=["/tmp/logs:/logs"], cpuset_cpus="4")
         nodes.append(NodeCmd(crd, NodeType.Coordinator, config.coordinator_ip,
-                             f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} --logLevel"
-                             f"=LOG_DEBUG"))
+                             f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} --numberOfSlots"
+                             f"=8 --logLevel=LOG_DEBUG --enableQueryMerging=true"))
         for i in range(0, config.workers_producing):
             worker_ip = next(ips)
             worker = net.addDocker(f"wp{i}", ip=worker_ip,
                                    dimage="bdapro/query-merging",
-                                   volumes=["/tmp/logs:/logs"]
+                                   volumes=["/tmp/logs:/logs"],
+                                   cpuset_cpus="1",
                                    )
-
             worker_cmd = f"{WORKER} --logLevel=LOG_DEBUG --coordinatorPort={config.coordinator_port}" \
                          f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} " \
-                         f"--physicalStreamName={config.physical_stream_prefix}-{i} {config.producer_options} "
+                         f"--numberOfSlots=8 --physicalStreamName={config.physical_stream_prefix}-{i} {config.producer_options} "
             nodes.append(NodeCmd(worker, NodeType.Sensor, worker_ip, worker_cmd))
 
         for i in range(0, config.total_workers - config.workers_producing):
             worker_ip = next(ips)
             worker = net.addDocker(f"wb{i}", ip=worker_ip,
                                    dimage="bdapro/query-merging",
-                                   volumes=["/tmp/logs:/logs"]
+                                   volumes=["/tmp/logs:/logs"],
+                                   cpuset_cpus="1"
                                    )
             worker_cmd = f"{WORKER} --logLevel=LOG_DEBUG --coordinatorPort={config.coordinator_port}" \
-                         f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip}"
+                         f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} --numberOfSlots=8"
             nodes.append(NodeCmd(worker, NodeType.Worker, worker_ip, worker_cmd))
 
         info('*** Adding switches\n')
@@ -72,14 +75,17 @@ def flat_topology(config: Config):
     return f
 
 
-def handler_fn(topology: Topology):
-    def f(signal_received, frame):
-        # Handle any cleanup here
-        print('SIGINT or CTRL-C detected. Exiting gracefully')
-        topology.stop_emulation()
-        exit(0)
+class GracefulKiller:
 
-    return f
+    def __init__(self, topology: Topology):
+        self._topology = topology
+        signal(SIGINT, self.exit_gracefully)
+        signal(SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self, signum, frame):
+        print('SIGINT or CTRL-C detected. Exiting gracefully', flush=True)
+        self._topology.stop_emulation()
+        exit(0)
 
 
 def construct_hierarchy(topology: Topology):
@@ -98,7 +104,7 @@ def main(hierarchy: bool = False):
         topology.create_topology(flat_topology(topology_config))
         topology.start_emulation()
         topology.wait_until_topology_is_complete(60)
-        signal(SIGINT, handler_fn(topology))
+        GracefulKiller(topology)
         if hierarchy:
             print("Constructing Hierarchy")
             construct_hierarchy(topology)
@@ -112,4 +118,6 @@ def main(hierarchy: bool = False):
 
 
 if __name__ == '__main__':
+    setLogLevel('debug')
+    logging.basicConfig(level=logging.DEBUG)
     main(False)
