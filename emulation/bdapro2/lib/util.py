@@ -24,6 +24,8 @@ def request_monitoring_data():
 def add_parent_topology(child_id: int, parent_id: int):
     print(f"Adding {parent_id} as parent for {child_id}")
     topology_add_parent_url = f"{NES_BASE_URL}/topology/addParent"
-    resp = requests.post(topology_add_parent_url, {"childId": str(child_id), "parentId": str(parent_id)})
+    resp = requests.post(topology_add_parent_url,
+                         json={"childId": str(child_id), "parentId": str(parent_id)})
     if resp.status_code != 200:
-        raise RuntimeError(f"Could not add node {parent_id} as parent for {child_id}:  {str(resp.text)}")
+        raise RuntimeError(
+            f"Could not add node {parent_id} as parent for {child_id}: Response Code: {resp.status_code}  {resp.text}")

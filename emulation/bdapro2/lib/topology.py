@@ -14,6 +14,7 @@ class Topology:
         self.net = None
         self.topology_size: int = 0
         self.workers: List[NodeMessage] = []
+        self._stopped: bool = True
 
     def create_topology(self, topology: Callable[[Containernet], Tuple[Containernet, int, List[NodeMessage]]]):
         net = Containernet(controller=Controller)
@@ -50,10 +51,13 @@ class Topology:
 
     def start_emulation(self):
         self.net.start()
+        self._stopped = True
         for worker in self.workers:
             worker.node.sendCmd(worker.cmd)
             print(f"Executed CMD {worker.cmd} and on Worker {worker.node.name}")
 
     def stop_emulation(self):
-        self._start_cli()
-        self.net.stop()
+        if not self._stopped:
+            self._start_cli()
+            self.net.stop()
+            self._stopped = True
