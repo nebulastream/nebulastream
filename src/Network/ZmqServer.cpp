@@ -126,8 +126,8 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
             // handle
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
-                dispatcherSocket.close();
-                frontendSocket.close();
+//                dispatcherSocket.close();
+//                frontendSocket.close();
                 NES_INFO("ZmqServer: Frontend: Shutdown completed! address: "
                          << "tcp://" + hostname + ":" + std::to_string(port));
             } else {
@@ -235,7 +235,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
         }
     } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
-            dispatcherSocket.close();
+//            dispatcherSocket.close();
             NES_DEBUG("ZmqServer: Handler #" << index << " closed on server " << hostname << ":" << port);
         } else {
             errorPromise.set_exception(std::current_exception());
