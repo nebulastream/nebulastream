@@ -1,6 +1,6 @@
 from ipaddress import IPv4Network
 from logging import info
-from time import sleep
+from signal import signal, SIGINT
 from typing import Iterable, List
 
 # noinspection PyUnresolvedReferences
@@ -29,7 +29,6 @@ class Config:
 
 def flat_topology(config: Config):
     def f(net: Containernet) -> (Containernet, int, List[NodeMessage]):
-        next(ips)
         config.coordinator_ip = next(ips)
         nodes: List[NodeMessage] = []
         crd = net.addDocker('crd', ip=config.coordinator_ip, dimage="bdapro/query-merging", ports=[8081, 4000],
@@ -37,7 +36,6 @@ def flat_topology(config: Config):
         nodes.append(NodeMessage(crd,
                                  f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} --logLevel=LOG_DEBUG"))
         for i in range(0, config.workers_producing):
-            next(ips)
             worker_ip = next(ips)
             worker = net.addDocker('wp' + str(i), ip=worker_ip,
                                    dimage="bdapro/query-merging",
@@ -50,7 +48,6 @@ def flat_topology(config: Config):
             nodes.append(NodeMessage(worker, worker_cmd))
 
         for i in range(0, config.total_workers - config.workers_producing):
-            next(ips)
             worker_ip = next(ips)
             worker = net.addDocker('wb' + str(i), ip=worker_ip,
                                    dimage="bdapro/query-merging",
@@ -71,14 +68,26 @@ def flat_topology(config: Config):
     return f
 
 
+def handler_fn(topology: Topology):
+    def f(signal_received, frame):
+        # Handle any cleanup here
+        print('SIGINT or CTRL-C detected. Exiting gracefully')
+        topology.stop_emulation()
+        exit(0)
+
+    return f
+
+
 def main():
     topology = Topology()
     topology.create_topology(flat_topology(Config()))
     topology.start_emulation()
     topology.wait_until_topology_is_complete(60)
-    print("Started")
-    sleep(1000)
-    topology.stop_emulation()
+    signal(SIGINT, handler_fn(topology))
+    print("Emulation Running. Press CTRL-C to exit.", flush=True)
+    while True:
+        # Do nothing and hog CPU forever until SIGINT received.
+        pass
 
 
 if __name__ == '__main__':

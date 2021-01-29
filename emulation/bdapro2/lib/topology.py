@@ -45,7 +45,7 @@ class Topology:
                 sleep(5)
         return complete
 
-    def start_cli(self):
+    def _start_cli(self):
         CLI(self.net)
 
     def start_emulation(self):
@@ -55,4 +55,5 @@ class Topology:
             print(f"Executed CMD {worker.cmd} and on Worker {worker.node.name}")
 
     def stop_emulation(self):
+        self._start_cli()
         self.net.stop()
