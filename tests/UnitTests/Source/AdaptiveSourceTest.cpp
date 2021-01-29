@@ -50,12 +50,15 @@ struct __attribute__((packed)) inputRow {
 class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
     MockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                          uint64_t initialGatheringInterval, std::string filePath)
-        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1), filePath(filePath){};
+                          uint64_t initialGatheringInterval, std::string filePath, uint64_t intervalIncrease)
+        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1), filePath(filePath) {
+        this->intervalIncrease = std::chrono::milliseconds(intervalIncrease);
+    };
 
     ~MockCSVAdaptiveSource() = default;
 
     std::string filePath;
+    std::chrono::milliseconds intervalIncrease;
 
     const std::string toString() const override {
         std::stringstream ss;
@@ -95,19 +98,20 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     void decideNewGatheringInterval() override {
         auto oldIntervalMillis = this->gatheringInterval.count();
         NES_DEBUG("Old sampling interval: " << oldIntervalMillis << "ms");
-        this->setGatheringInterval(std::chrono::milliseconds(oldIntervalMillis + 1000));
+        this->setGatheringInterval(std::chrono::milliseconds(oldIntervalMillis + intervalIncrease.count()));
         NES_DEBUG("New sampling interval: " << this->gatheringInterval.count() << "ms");
     };
 };
 
 const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                                 NodeEngine::QueryManagerPtr queryManager, uint64_t initialGatheringInterval,
-                                                std::string filePath) {
-    return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager, initialGatheringInterval, filePath);
+                                                std::string filePath, uint64_t intervalIncrease) {
+    return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager, initialGatheringInterval, filePath,
+                                                   intervalIncrease);
 }
 
 /**
- * @brief start a source and check that interval has changed
+ * @brief start a source and check that interval has changed, increase by +1 sec
  * @component AdaptiveSampler::decideNewGatheringInterval()
  * @result true, if source starts, changes interval, and stops
  */
@@ -123,13 +127,44 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
     uint64_t initialGatheringInterval = 4000;
 
     const DataSourcePtr source = createMockCSVAdaptiveSource(
-        schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file);
+        schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file, 1000);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
     }
 
     ASSERT_NE(initialGatheringInterval, source->getGatheringIntervalCount());
+    ASSERT_TRUE(nodeEngine->stop());
+}
+
+/**
+ * @brief start a source and check that interval has changed, increase +0.1 sec
+ * @component AdaptiveSampler::decideNewGatheringInterval()
+ * @result true, if source starts, changes interval, interval has increased by increments
+ * of 0.1 seconds (100ms), and stops
+ */
+TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
+
+    std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
+
+    SchemaPtr schema = Schema::create()->addField("temperature", UINT32);
+
+    uint64_t num_of_buffers = 1;
+    uint64_t initialGatheringInterval = 350;
+    uint64_t intervalIncrease = 100;
+
+    const DataSourcePtr source = createMockCSVAdaptiveSource(
+        schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file, intervalIncrease);
+
+    while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
+        auto optBuf = source->receiveData();
+    }
+
+    ASSERT_TRUE(source->getGatheringIntervalCount() > initialGatheringInterval);
+    ASSERT_TRUE(source->getGatheringIntervalCount() < 1000); // we don't control how much the change will be
+    ASSERT_EQ((source->getGatheringIntervalCount() - initialGatheringInterval) % intervalIncrease, 0);
     ASSERT_TRUE(nodeEngine->stop());
 }
 
