@@ -29,12 +29,25 @@ typedef std::unique_ptr<DynamicColumnLayoutBuffer> DynamicColumnLayoutBufferPtr;
 typedef uint64_t COL_OFFSET_SIZE;
 typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
 
+/**
+ * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
+ * Additionally, it adds a std::vector of columnOffsets which is useful for calcOffset().
+ */
 class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
 
   public:
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) override;
     DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayoutPtr dynamicColLayout, std::vector<COL_OFFSET_SIZE> columnOffsets);
     const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout->getFieldSizes(); }
+
+    /**
+     * @brief This function calculates the offset in the associated buffer for ithRecord and jthField
+     * @param ithRecord
+     * @param jthField
+     * @param boundaryChecks
+     * @return
+     */
+    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) override;
+
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
      * @tparam Types

@@ -24,13 +24,24 @@
 namespace NES::NodeEngine {
 
 
-
+/**
+ * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
+ */
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) override;
     DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout);
     NES::NodeEngine::FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
     const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout->getFieldOffSets(); }
+
+    /**
+     * @brief This function calculates the offset in the associated buffer for ithRecord and jthField
+     * @param ithRecord
+     * @param jthField
+     * @param boundaryChecks
+     * @return
+     */
+    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) override;
+
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
      * @tparam Types

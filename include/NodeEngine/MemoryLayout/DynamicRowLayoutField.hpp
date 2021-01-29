@@ -22,7 +22,11 @@
 
 namespace NES::NodeEngine {
 
-
+/**
+ * @brief This class is used for handling fields in a given DynamicColumnLayoutBuffer. It also overrides the operator[] for a more user friendly access of records for a predefined field.
+ * @tparam T
+ * @tparam boundaryChecks
+ */
 template <class T, bool boundaryChecks>
 class DynamicRowLayoutField {
 

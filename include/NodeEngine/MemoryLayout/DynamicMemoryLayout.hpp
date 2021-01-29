@@ -26,7 +26,10 @@ class DynamicMemoryLayout;
 typedef std::shared_ptr<DynamicMemoryLayout> DynamicMemoryLayoutPtr;
 typedef uint64_t FIELD_SIZE;
 
-
+/**
+ * @brief This abstract class is the base class for DynamicRowLayout and DynamicColumnLayout.
+ * As the base class, it has multiple methods or members that are usefull for both a row and column layout.
+ */
 class DynamicMemoryLayout {
 
   public:

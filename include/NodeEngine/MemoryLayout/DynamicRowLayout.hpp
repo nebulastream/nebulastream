@@ -23,6 +23,9 @@
 
 namespace NES::NodeEngine {
 
+/**
+ * @brief This class derives from DynamicMemoryLayout. It implements abstract map() function as well as adding fieldOffsets as a new member
+ */
 class DynamicRowLayout;
 typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
 typedef uint64_t FIELD_OFFSET;

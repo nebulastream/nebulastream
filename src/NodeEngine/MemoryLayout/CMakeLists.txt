@@ -23,7 +23,6 @@ add_source_nes(
         DynamicColumnLayout.cpp
         DynamicRowLayout.cpp
         DynamicMemoryLayout.cpp
-        DynamicLayoutBuffer.cpp
         DynamicRowLayoutBuffer.cpp
         DynamicColumnLayoutBuffer.cpp
 )
