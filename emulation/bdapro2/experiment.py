@@ -10,7 +10,7 @@ from mininet.link import TCLink
 from mininet.net import Containernet
 
 from lib.topology import Topology
-from lib.util import NodeMessage
+from lib.util import NodeMessage, add_parent_topology
 
 COORDINATOR = '/opt/local/nebula-stream/nesCoordinator'
 
@@ -80,14 +80,18 @@ def handler_fn(topology: Topology):
 
 def main():
     topology = Topology()
-    topology.create_topology(flat_topology(Config()))
-    topology.start_emulation()
-    topology.wait_until_topology_is_complete(60)
-    signal(SIGINT, handler_fn(topology))
-    print("Emulation Running. Press CTRL-C to exit.", flush=True)
-    while True:
-        # Do nothing and hog CPU forever until SIGINT received.
-        pass
+    try:
+        topology.create_topology(flat_topology(Config()))
+        topology.start_emulation()
+        topology.wait_until_topology_is_complete(60)
+        signal(SIGINT, handler_fn(topology))
+        print("Emulation Running. Press CTRL-C to exit.", flush=True)
+        add_parent_topology(3, 2)
+        while True:
+            # Do nothing and hog CPU forever until SIGINT received.
+            pass
+    finally:
+        topology.stop_emulation()
 
 
 if __name__ == '__main__':
