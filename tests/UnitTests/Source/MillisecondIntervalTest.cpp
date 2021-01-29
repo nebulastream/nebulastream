@@ -19,30 +19,43 @@
 #include <thread>
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <Services/QueryService.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
 
+uint64_t rpcPort = 4000;
+
 class MillisecondIntervalTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("FractionedIntervalTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup FractionedIntervalTest test class.");
+        NES::setupLogging("MillisecondIntervalTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup MillisecondIntervalTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down FractionedIntervalTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down MillisecondIntervalTest test class."); }
 
-    void SetUp() override { NES_INFO("Setup FractionedIntervalTest class."); }
+    void SetUp() override {
+        rpcPort = rpcPort + 40;
+        NES_INFO("Setup FractionedIntervalTest class.");
+    }
 
-    void TearDown() override { NES_INFO("Tear down FractionedIntervalTest test case."); }
+    void TearDown() override { NES_INFO("Tear down MillisecondIntervalTest test case."); }
+
+    std::string ipAddress = "127.0.0.1";
+    uint64_t restPort = 8081;
 
 };// FractionedIntervalTest
 
-TEST_F(MillisecondIntervalTest, testCSVSourceWithLoopOverFile) {
+TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
@@ -72,6 +85,61 @@ TEST_F(MillisecondIntervalTest, testCSVSourceWithLoopOverFile) {
     EXPECT_EQ(source->getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numberOfBuffers);
     EXPECT_EQ(source->getGatheringIntervalCount(), frequency);
+}
+
+TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
+    NES_INFO("MillisecondIntervalTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
+
+    NES_INFO("MillisecondIntervalTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
+
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    std::string testSchemaFileName = "testSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk1->registerLogicalStream("testStream", testSchemaFileName);
+
+    PhysicalStreamConfigPtr conf =
+        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
+            /**Source Frequency**/ 550, /**Number Of Tuples To Produce Per Buffer**/ 1,
+            /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
+            /**Logical Stream Name**/ "testStream", false);
+
+    //register physical stream
+    wrk1->registerPhysicalStream(conf);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    //register query
+    std::string queryString =
+        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(PrintSinkDescriptor::create());";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+
+    NES_INFO("MillisecondIntervalTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    bool retStopWrk = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
 }
 
 }//namespace NES
