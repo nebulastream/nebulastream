@@ -30,6 +30,22 @@ namespace NES::Benchmarking {
 #define benchmarkSchemaI16 (Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16))
 #define benchmarkSchemaI32 (Schema::create()->addField("key", BasicType::INT32)->addField("value", BasicType::INT32))
 #define benchmarkSchemaI64 (Schema::create()->addField("key", BasicType::INT64)->addField("value", BasicType::INT64))
+#define benchmarkSchemaCacheLine (Schema::create()->addField("key", BasicType::INT32)                                         \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32)                                                \
+                                         ->addField("value", BasicType::INT32))
 
 struct TupleI8 {
     uint8_t key;
@@ -48,6 +64,25 @@ struct TupleI64 {
     int64_t value;
 };
 
+struct TupleCacheLine {
+    int32_t key;
+    int32_t value1;
+    int32_t value2;
+    int32_t value3;
+    int32_t value4;
+    int32_t value5;
+    int32_t value6;
+    int32_t value7;
+    int32_t value8;
+    int32_t value9;
+    int32_t value10;
+    int32_t value11;
+    int32_t value12;
+    int32_t value13;
+    int32_t value14;
+    int32_t value15;
+};
+
 /**
  * @brief In this version, the rowLayout will be created for every tuple insertion
   * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64
@@ -59,6 +94,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
         case 1: benchmarkSchema = benchmarkSchemaI16; break;
         case 2: benchmarkSchema = benchmarkSchemaI32; break;
         case 3: benchmarkSchema = benchmarkSchemaI64; break;
+        case 4: benchmarkSchema = benchmarkSchemaCacheLine; break;
         default: break;
     }
 
@@ -97,7 +133,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
             }
             break;
         }
-        default: {
+        case 3: {
             for (auto singleState : state) {
                 for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
                     NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int64_t>(i, 0)->write(buffer, 42);
@@ -106,6 +142,30 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
             }
             break;
         }
+        case 4: {
+            for (auto singleState : state) {
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 0)->write(buffer, 42);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 1)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 2)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 3)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 4)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 5)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 6)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 7)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 8)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 9)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 10)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 11)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 12)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 13)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 14)->write(buffer, 1);
+                    NodeEngine::createRowLayout(benchmarkSchema)->getValueField<int32_t>(i, 15)->write(buffer, 1);
+                }
+            }
+            break;
+        }
+        default: break;
     }
 
     state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
@@ -162,7 +222,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
             }
             break;
         }
-        default: {
+        case 3: {
             for (auto singleState : state) {
                 auto rowLayout = NodeEngine::createRowLayout(benchmarkSchema);
                 for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
@@ -172,6 +232,31 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
             }
             break;
         }
+        case 4: {
+            for (auto singleState : state) {
+                auto rowLayout = NodeEngine::createRowLayout(benchmarkSchema);
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; ++i) {
+                    rowLayout->getValueField<int32_t>(i, 0)->write(buffer, 42);
+                    rowLayout->getValueField<int32_t>(i, 1)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 2)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 3)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 4)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 5)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 6)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 7)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 8)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 9)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 10)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 11)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 12)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 13)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 14)->write(buffer, 1);
+                    rowLayout->getValueField<int32_t>(i, 15)->write(buffer, 1);
+                }
+            }
+            break;
+        }
+        default: break;
     }
 
     state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
@@ -247,6 +332,31 @@ static void BM_CustomFilling(benchmark::State& state) {
             }
             break;
         }
+        case 4: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI64);
+                auto tupleIt = buffer.getBuffer<TupleCacheLine>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value1 = 1;
+                    tupleIt[i].value2 = 1;
+                    tupleIt[i].value3 = 1;
+                    tupleIt[i].value4 = 1;
+                    tupleIt[i].value5 = 1;
+                    tupleIt[i].value6 = 1;
+                    tupleIt[i].value7 = 1;
+                    tupleIt[i].value8 = 1;
+                    tupleIt[i].value9 = 1;
+                    tupleIt[i].value10 = 1;
+                    tupleIt[i].value11 = 1;
+                    tupleIt[i].value12 = 1;
+                    tupleIt[i].value13 = 1;
+                    tupleIt[i].value14 = 1;
+                    tupleIt[i].value15 = 1;
+                }
+            }
+            break;
+        }
         default:
             break;
     }
@@ -256,9 +366,9 @@ static void BM_CustomFilling(benchmark::State& state) {
 
 #define REPETITIONS 20
 /* Just for using it with  */
-BENCHMARK(BM_DefaultFilling_V1)->DenseRange(0, 0, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_DefaultFilling_V2)->DenseRange(0, 0, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_CustomFilling)->DenseRange(0, 0, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_DefaultFilling_V1)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_DefaultFilling_V2)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_CustomFilling)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 //BENCHMARK(BM_DefaultFilling_V1)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 //BENCHMARK(BM_DefaultFilling_V2)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
