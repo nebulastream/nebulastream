@@ -58,7 +58,10 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
         NodeEngine::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicRowLayout::create(schema, false);
         NodeEngine::DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<NodeEngine::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
         state.ResumeTiming();
-        std::tuple<uint8_t, uint16_t> writeRecord(1, 1);
+        std::tuple<int32_t, int32_t, int32_t, int32_t,
+                   int32_t, int32_t, int32_t, int32_t,
+                   int32_t, int32_t, int32_t, int32_t,
+                   int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             mappedRowLayout->pushRecord<false>(writeRecord);
         }
@@ -76,8 +79,10 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     NodeEngine::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicRowLayout::create(schema, false);
     NodeEngine::DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<NodeEngine::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
 
-    const auto value = 1;
-    std::tuple<uint8_t, uint16_t> writeRecord(value, value);
+    std::tuple<int32_t, int32_t, int32_t, int32_t,
+        int32_t, int32_t, int32_t, int32_t,
+        int32_t, int32_t, int32_t, int32_t,
+        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         mappedRowLayout->pushRecord<false>(writeRecord);
     }
@@ -85,7 +90,13 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            std::tuple<uint8_t, uint16_t> readRecord = mappedRowLayout->readRecord<false, uint8_t, uint16_t>(recordIndex);
+            std::tuple<int32_t, int32_t, int32_t, int32_t,
+                        int32_t, int32_t, int32_t, int32_t,
+                        int32_t, int32_t, int32_t, int32_t,
+                        int32_t, int32_t, int32_t, int32_t> readRecord = mappedRowLayout->readRecord<false, int32_t, int32_t, int32_t, int32_t,
+                                                                                                    int32_t, int32_t, int32_t, int32_t,
+                                                                                                    int32_t, int32_t, int32_t, int32_t,
+                                                                                                    int32_t, int32_t, int32_t, int32_t>(recordIndex);
             ((void)readRecord);
         }
     }
@@ -105,7 +116,10 @@ static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
         NodeEngine::DynamicColumnLayoutPtr columnLayout = NodeEngine::DynamicColumnLayout::create(schema, false);
         NodeEngine::DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<NodeEngine::DynamicColumnLayoutBuffer>(static_cast<NodeEngine::DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
         state.ResumeTiming();
-        std::tuple<uint8_t, uint16_t> writeRecord(1, 1);
+        std::tuple<int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             mappedColumnLayout->pushRecord<false>(writeRecord);
         }
@@ -123,16 +137,24 @@ static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
     NodeEngine::DynamicColumnLayoutPtr columnLayout = NodeEngine::DynamicColumnLayout::create(schema, false);
     NodeEngine::DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<NodeEngine::DynamicColumnLayoutBuffer>(static_cast<NodeEngine::DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
 
-    const auto value = 1;
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<uint8_t, uint16_t> writeRecord(value, value);
+        std::tuple<int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
 
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            std::tuple<uint8_t, uint16_t> readRecord = mappedColumnLayout->readRecord<false, uint8_t, uint16_t>(recordIndex);
+            std::tuple< int32_t, int32_t, int32_t, int32_t,
+                        int32_t, int32_t, int32_t, int32_t,
+                        int32_t, int32_t, int32_t, int32_t,
+                        int32_t, int32_t, int32_t, int32_t> readRecord = mappedColumnLayout->readRecord<false,  int32_t, int32_t, int32_t, int32_t,
+                                                                                                        int32_t, int32_t, int32_t, int32_t,
+                                                                                                        int32_t, int32_t, int32_t, int32_t,
+                                                                                                        int32_t, int32_t, int32_t, int32_t>(recordIndex);
             ((void)readRecord);
         }
     }
@@ -149,20 +171,21 @@ static void BM_ReadFieldRowLayout(benchmark::State& state) {
     NodeEngine::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicRowLayout::create(schema, false);
     NodeEngine::DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<NodeEngine::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
 
-    const auto value = 1;
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<uint8_t, uint16_t> writeRecord(value, value);
+        std::tuple<int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t,
+            int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         mappedRowLayout->pushRecord<false>(writeRecord);
     }
 
-    auto field0 = NES::NodeEngine::DynamicRowLayoutField<uint8_t, false>::create(0, mappedRowLayout);
-    uint8_t tmp;
+    auto field0 = NES::NodeEngine::DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            tmp = field0[recordIndex];
+            int32_t tmp = field0[recordIndex];
+            if (tmp != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp != 1");
         }
     }
-    NES_DEBUG("BenchmarkkDynamicMemory: tmp = " << tmp);
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
@@ -176,21 +199,22 @@ static void BM_ReadFieldColumnLayout(benchmark::State& state) {
     NodeEngine::DynamicColumnLayoutPtr columnLayout = NodeEngine::DynamicColumnLayout::create(schema, false);
     NodeEngine::DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<NodeEngine::DynamicColumnLayoutBuffer>(static_cast<NodeEngine::DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
 
-    const auto value = 1;
-    std::tuple<uint8_t, uint16_t> writeRecord(value, value);
+    std::tuple<int32_t, int32_t, int32_t, int32_t,
+                int32_t, int32_t, int32_t, int32_t,
+                int32_t, int32_t, int32_t, int32_t,
+                int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
 
 
-    auto field0 = NES::NodeEngine::DynamicColumnLayoutField<uint8_t, false>::create(0, mappedColumnLayout);
-    uint8_t tmp;
+    auto field0 = NES::NodeEngine::DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            tmp = field0[recordIndex];
+            int32_t tmp = field0[recordIndex];
+            if (tmp != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp != 1");
         }
     }
-    NES_DEBUG("BenchmarkkDynamicMemory: tmp = " << tmp);
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
@@ -204,13 +228,7 @@ static void BM_WriteFieldRowLayout(benchmark::State& state) {
     NodeEngine::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicRowLayout::create(schema, false);
     NodeEngine::DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<NodeEngine::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
 
-    const auto value = 1;
-    std::tuple<uint8_t, uint16_t> writeRecord(value, value);
-    for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedRowLayout->pushRecord<false>(writeRecord);
-    }
-
-    auto field0 = NES::NodeEngine::DynamicRowLayoutField<uint8_t, false>::create(0, mappedRowLayout);
+    auto field0 = NES::NodeEngine::DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             field0[recordIndex] = 2;
@@ -229,14 +247,7 @@ static void BM_WriteFieldColumnLayout(benchmark::State& state) {
     NodeEngine::DynamicColumnLayoutPtr columnLayout = NodeEngine::DynamicColumnLayout::create(schema, false);
     NodeEngine::DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<NodeEngine::DynamicColumnLayoutBuffer>(static_cast<NodeEngine::DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
 
-    const auto value = 1;
-    std::tuple<uint8_t, uint16_t> writeRecord(value, value);
-    for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedColumnLayout->pushRecord<false>(writeRecord);
-    }
-
-
-    auto field0 = NES::NodeEngine::DynamicColumnLayoutField<uint8_t, false>::create(0, mappedColumnLayout);
+    auto field0 = NES::NodeEngine::DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             field0[recordIndex] = 2;
