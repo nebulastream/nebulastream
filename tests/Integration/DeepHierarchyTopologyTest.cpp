@@ -34,7 +34,7 @@ namespace NES {
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
-class DeepTopologyHierarchyTest : public testing::Test {
+class DeepHierarchyTopologyTest : public testing::Test {
   public:
     CoordinatorConfig* coConf = new CoordinatorConfig();
     WorkerConfig* wrkConf = new WorkerConfig();
@@ -67,7 +67,7 @@ class DeepTopologyHierarchyTest : public testing::Test {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testOutputAndAllSensors) {
+TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -240,7 +240,7 @@ TEST_F(DeepTopologyHierarchyTest, testOutputAndAllSensors) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
+TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -441,7 +441,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testOutputAndNoSensors) {
+TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -604,7 +604,7 @@ TEST_F(DeepTopologyHierarchyTest, testOutputAndNoSensors) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
+TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -620,7 +620,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     wrkConf->setNumberOfSlots(1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
@@ -794,7 +794,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
+TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -814,7 +814,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     wrkConf->setNumberOfSlots(1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
@@ -1057,7 +1057,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -1291,7 +1291,7 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -1519,7 +1519,7 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, DISABLED_testMergeThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, DISABLED_testMergeThreeLevel) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -1782,7 +1782,7 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testMergeThreeLevel) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
+TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
