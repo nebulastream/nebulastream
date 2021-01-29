@@ -22,7 +22,9 @@
 
 namespace NES::NodeEngine {
 
-
+/**
+ * @brief This class derives from DynamicMemoryLayout. It implements abstract map() function
+ */
 class DynamicColumnLayout;
 typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
 

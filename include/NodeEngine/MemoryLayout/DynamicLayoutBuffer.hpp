@@ -25,7 +25,10 @@ namespace NES::NodeEngine {
 typedef uint64_t FIELD_SIZE;
 typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
 
-
+/**
+ * @brief This abstract class is the base class for DynamicRowLayoutBuffer and DynamicColumnLayoutBuffer.
+ * As the base class, it has multiple methods or members that are useful for both derived classes.
+ */
 class DynamicLayoutBuffer {
 
   public:
