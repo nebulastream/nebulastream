@@ -69,9 +69,8 @@ rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
 sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
 ./b2 install -j2 toolset=gcc-arm64 --prefix=/opt/sysroots/aarch64-linux-gnu/usr) || cd .. || rm -rf boost
 
-RUN cd && git clone https://github.com/open62541/open62541.git && \
-git submodule update --init --recursive && \
-cd open62541 && mkdir -p build && cd build && \
+RUN cd && git clone https://github.com/open62541/open62541.git && cd open62541 && \
+git submodule update --init --recursive && mkdir -p build && cd build && \
 cmake .. -DBUILD_SHARED_LIBS=1 \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DUA_NAMESPACE_ZERO=FULL \
