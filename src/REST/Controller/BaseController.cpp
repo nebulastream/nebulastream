@@ -131,6 +131,10 @@ void BaseController::handleException(const web::http::http_request& message, con
             } else if (paths[1] == "query") {
                 errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
             }
+        } else if (paths[0] == "topology") {
+            if (paths[1] == "addParent") {
+                errorResponse["detail"] = json::value::string("Parameter childId and parentId must be provided");
+            }
         }
         this->badRequestImpl(message, errorResponse);
 
@@ -184,6 +188,10 @@ void BaseController::handleException(const web::http::http_request& message, con
 
     } else if (std::string(exceptionMsg).find("Could not delete query with id") != std::string::npos) {
         // handle error caused by failure in deleting a query
+        errorResponse["message"] = json::value::string(exceptionMsg);
+        this->badRequestImpl(message, errorResponse);
+    } else if (std::string(exceptionMsg).find("Could not add parent for node in topology") != std::string::npos) {
+        // handle error caused by failure in adding a parent for a node in topology
         errorResponse["message"] = json::value::string(exceptionMsg);
         this->badRequestImpl(message, errorResponse);
     } else {

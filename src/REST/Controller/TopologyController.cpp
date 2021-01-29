@@ -16,6 +16,7 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/TopologyController.hpp>
+#include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -38,6 +39,75 @@ void TopologyController::handleGet(std::vector<utility::string_t> paths, http_re
         return;
     }
     resourceNotFoundImpl(message);
+    return;
+}
+
+void TopologyController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
+    if (path[1] == "addParent") {
+
+        NES_DEBUG("TopologyController: handlePost -addParent: REST received request to add parent for a node"
+                  << message.to_string());
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    NES_DEBUG("TopologyController: handlePost -addParent: Start trying to add new parent for a node");
+                    //Prepare Input query from user string
+                    std::string payload(body.begin(), body.end());
+                    NES_DEBUG("TopologyController: handlePost -addParent: userRequest: " << payload);
+                    json::value req = json::value::parse(payload);
+                    NES_DEBUG("TopologyController: handlePost -addParent: Json Parse Value: " << req);
+                    uint64_t childId = std::stoull(req.at("childId").as_string());
+                    uint64_t parentId = std::stoull(req.at("parentId").as_string());
+
+                    NES_DEBUG("TopologyController: handlePost -addParent: childId=" << childId << " parentId=" << parentId);
+
+                    if (childId == parentId) {
+                        throw Exception("Could not add parent for node in topology: childId and parentId must not be same.");
+                    }
+
+                    TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
+                    if (!childPhysicalNode) {
+                        throw Exception("Could not add parent for node in topology: Node with childId=" + std::to_string(childId)
+                                        + " not found.");
+                    }
+                    NES_DEBUG("TopologyController: handlePost -addParent: childId: " << childId << " exists");
+
+                    TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
+                    if (!parentPhysicalNode) {
+                        throw Exception("Could not add parent for node in topology: Node with parentId=" + std::to_string(childId)
+                                        + " not found.");
+                    }
+                    NES_DEBUG("TopologyController: handlePost -addParent: sensorParent node: " << childId << " exists");
+
+                    bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
+                    if (added) {
+                        NES_DEBUG("TopologyController: handlePost -addParent: created link successfully new topology is=");
+                        topology->print();
+                    } else {
+                        NES_ERROR("TopologyController: handlePost -addParent: Failed");
+                    }
+
+                    //Prepare the response
+                    json::value result{};
+                    result["Success"] = json::value::boolean(added);
+                    successMessageImpl(message, result);
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR(
+                        "TopologyController: handlePost -addParent: Exception occurred while trying to add parent for a node "
+                        << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                    return;
+                }
+            })
+            .wait();
+    } else {
+        resourceNotFoundImpl(message);
+    }
     return;
 }
 
