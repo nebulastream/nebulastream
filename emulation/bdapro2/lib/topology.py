@@ -1,7 +1,6 @@
 from time import sleep
 from typing import Callable, Tuple, List
 
-from mininet.cli import CLI
 from mininet.log import info
 from mininet.net import Containernet
 from mininet.node import Controller
@@ -46,18 +45,18 @@ class Topology:
                 sleep(5)
         return complete
 
-    def _start_cli(self):
-        CLI(self.net)
-
     def start_emulation(self):
         self.net.start()
         self._stopped = False
         for worker in self.nodes:
-            worker.node.sendCmd(worker.cmd)
+            # Redirect output or else containernet waits for it, preventing shutdown.
+            worker.node.cmdPrint(f"/entrypoint-containernet.sh {worker.cmd} > /nes-runtime.log 2>&1 &")
             print(f"Executed CMD {worker.cmd} and on Worker {worker.node.name}")
 
     def stop_emulation(self):
         if not self._stopped:
-            self._start_cli()
+            print("Attempting to stop emulation.", flush=True)
+            print("Starting network stop.", flush=True)
             self.net.stop()
+            print("Network stopped.", flush=True)
             self._stopped = True
