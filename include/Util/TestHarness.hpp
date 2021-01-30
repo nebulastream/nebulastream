@@ -172,7 +172,6 @@ class TestHarness {
                  auto memAreaSize = currentSourceNumOfRecords * tupleSize;
                  auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
-                 std::shared_ptr<uint8_t> alt;
                  auto currentRecords = records.at(i);
                  for (int j = 0; j < currentSourceNumOfRecords; ++j) {
                      memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
