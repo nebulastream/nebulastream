@@ -32,6 +32,7 @@ TopologyController::TopologyController(TopologyPtr topology) : topology(topology
 void TopologyController::handleGet(std::vector<utility::string_t> paths, http_request message) {
     NES_DEBUG("TopologyController: GET Topology");
 
+    //TODO: ignore nodes marked for maintenance
     topology->print();
     if (paths.size() == 1) {
         web::json::value topologyJson = UtilityFunctions::getTopologyAsJson(topology->getRoot());
@@ -44,6 +45,7 @@ void TopologyController::handleGet(std::vector<utility::string_t> paths, http_re
 
 void TopologyController::handlePost(std::vector<utility::string_t> paths, http_request message) {
     NES_DEBUG("TopologyController: POST Topology");
+
 
     topology->print();
     if (paths[1] == "mark") {
@@ -79,6 +81,8 @@ void TopologyController::handlePost(std::vector<utility::string_t> paths, http_r
 
                       //TODO: iterate over container of IDs and set all their flags
 
+                      //TODO: make thread safe
+
                       node->setMaintenanceFlag(false);
                       checkFlag = node->getMaintenanceFlag();
 
@@ -107,12 +111,12 @@ void TopologyController::handlePost(std::vector<utility::string_t> paths, http_r
                   json::value result{};
 
                   if(unmark){
-                      result["Success"] = json::value::boolean(!checkFlag);
-                      result["Id"]      =json::value::number(id);
+                      result["Successful mark"] = json::value::boolean(!checkFlag);
+                      result["Node Id"]      =json::value::number(id);
                   }
                   else {
-                      result["Success"] = json::value::boolean(checkFlag);
-                      result["Id"] = json::value::number(id);
+                      result["Successful unmark"] = json::value::boolean(checkFlag);
+                      result["Node Id"] = json::value::number(id);
 
 
                   }
