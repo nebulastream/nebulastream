@@ -17,21 +17,18 @@
 #ifndef NES_DYNAMICCOLUMNLAYOUTBUFFER_HPP
 #define NES_DYNAMICCOLUMNLAYOUTBUFFER_HPP
 
-#include "DynamicColumnLayout.hpp"
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <stdint.h>
 
-namespace NES::NodeEngine {
-
-class DynamicColumnLayoutBuffer;
-typedef std::unique_ptr<DynamicColumnLayoutBuffer> DynamicColumnLayoutBufferPtr;
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 typedef uint64_t COL_OFFSET_SIZE;
-typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
 
 /**
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
- * Additionally, it adds a std::vector of columnOffsets which is useful for calcOffset().
+ * Additionally, it adds a std::vector of columnOffsets which is useful for calcOffset(). As the name suggests, it is a columnar storage and as such it serializes all fields.
  */
 class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
 
@@ -46,10 +43,11 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
      * @param boundaryChecks
      * @return
      */
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) override;
+    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) override;
 
     /**
-     * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
+     * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
+     * This function will memcpy every field into a predeclared tuple via std::apply(). The tuple will then be returned.
      * @tparam Types
      * @param record
      */
@@ -58,6 +56,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
 
     /**
      * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
+     * This function will memcpy every field from record to the associated buffer via std::apply()
      * @tparam Types
      * @param record
      */
@@ -78,9 +77,13 @@ void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     auto fieldSizes = dynamicColLayout->getFieldSizes();
 
     auto address = &(byteBuffer[0]);
-    size_t I = 0;
-    auto fieldAddress = address + calcOffset(numberOfRecords, I, boundaryChecks);
-    std::apply([&I, &address, &fieldAddress, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(numberOfRecords, I, boundaryChecks), memcpy(fieldAddress, &args, fieldSizes[I]), ++I), ...);}, record);
+    size_t tupleIndex = 0;
+    auto fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks);
+    std::apply([&tupleIndex, &address, &fieldAddress, fieldSizes, this](auto&&... args) {
+        ((fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks),
+          memcpy(fieldAddress, &args, fieldSizes[tupleIndex]), ++tupleIndex), ...);
+    }, record);
+
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
 }
 
@@ -92,9 +95,12 @@ std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex)
     auto fieldSizes = dynamicColLayout->getFieldSizes();
 
     auto address = &(byteBuffer[0]);
-    size_t I = 0;
+    size_t tupleIndex = 0;
     unsigned char* fieldAddress;
-    std::apply([&I, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {((fieldAddress = address + calcOffset(recordIndex, I, boundaryChecks), memcpy(&args, fieldAddress, fieldSizes[I]), ++I), ...);}, retTuple);
+    std::apply([&tupleIndex, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {
+        ((fieldAddress = address + calcOffset(recordIndex, tupleIndex, boundaryChecks),
+          memcpy(&args, fieldAddress, fieldSizes[tupleIndex]), ++tupleIndex), ...);
+    }, retTuple);
 
 
     return retTuple;

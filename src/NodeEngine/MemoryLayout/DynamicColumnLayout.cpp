@@ -19,7 +19,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
     this->checkBoundaryFieldChecks = checkBoundaries;

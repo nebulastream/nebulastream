@@ -20,7 +20,7 @@
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 class DynamicMemoryLayout;
 typedef std::shared_ptr<DynamicMemoryLayout> DynamicMemoryLayoutPtr;

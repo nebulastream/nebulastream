@@ -15,7 +15,8 @@
 */
 
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
-namespace NES::NodeEngine {
+
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 bool DynamicMemoryLayout::isCheckBoundaryFieldChecks() const { return checkBoundaryFieldChecks; }
 uint64_t DynamicMemoryLayout::getRecordSize() const { return recordSize; }

@@ -15,6 +15,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
@@ -31,7 +32,7 @@
 #include <iostream>
 #include <vector>
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 class DynamicMemoryLayoutTest : public testing::Test {
   public:
     BufferManagerPtr bufferManager;

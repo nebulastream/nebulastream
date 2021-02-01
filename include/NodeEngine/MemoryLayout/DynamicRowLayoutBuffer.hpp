@@ -17,11 +17,12 @@
 #ifndef NES_DYNAMICROWLAYOUTBUFFER_HPP
 #define NES_DYNAMICROWLAYOUTBUFFER_HPP
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <stdint.h>
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 
 /**
@@ -30,7 +31,7 @@ namespace NES::NodeEngine {
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
     DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout);
-    NES::NodeEngine::FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
+    FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
     const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout->getFieldOffSets(); }
 
     /**
@@ -40,10 +41,11 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @param boundaryChecks
      * @return
      */
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) override;
+    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) override;
 
     /**
-     * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer
+     * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
+     * This function will memcpy every field into a predeclared tuple via std::apply(). The tuple will then be returned.
      * @tparam Types
      * @param record
      */
@@ -52,6 +54,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
     /**
      * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
+     * This function will memcpy every field from record to the associated buffer via std::apply()
      * @tparam Types
      * @param record
      */
@@ -62,8 +65,6 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     DynamicRowLayoutPtr dynamicRowLayout;
 };
 
-typedef std::unique_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
-typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
 
 
 template<bool boundaryChecks, typename... Types>
