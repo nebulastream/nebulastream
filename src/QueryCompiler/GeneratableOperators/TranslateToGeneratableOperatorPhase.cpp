@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 
 #include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableSlicingWindowOperator.hpp>
@@ -98,7 +99,9 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         generatableParentOperator->addChild(watermarkAssignerOperator);
         return watermarkAssignerOperator;
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
-        return generatableParentOperator;
+        auto childOperator = GeneratableProjectionOperator::create(operatorNode->as<ProjectionLogicalOperatorNode>());
+        generatableParentOperator->addChild(childOperator);
+        return childOperator;
     } else {
         NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: "
                         << operatorNode->toString());

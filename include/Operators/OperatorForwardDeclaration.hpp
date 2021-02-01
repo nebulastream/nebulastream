@@ -40,7 +40,7 @@ typedef std::shared_ptr<MergeLogicalOperatorNode> MergeLogicalOperatorNodePtr;
 class ExpressionItem;
 
 class ProjectionLogicalOperatorNode;
-typedef std::shared_ptr<ProjectionLogicalOperatorNode> LogicalProjectionOperatorPtr;
+typedef std::shared_ptr<ProjectionLogicalOperatorNode> ProjectionLogicalOperatorNodePtr;
 
 class MapLogicalOperatorNode;
 typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;

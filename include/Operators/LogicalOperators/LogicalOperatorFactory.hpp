@@ -54,7 +54,7 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorNodePtr
     */
-    static UnaryOperatorNodePtr createProjectionOperator(std::vector<ExpressionItem> expressions,
+    static UnaryOperatorNodePtr createProjectionOperator(std::vector<ExpressionNodePtr> expressions,
                                                          OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**

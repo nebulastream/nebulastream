@@ -46,7 +46,7 @@ OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr opera
     auto newStreamName = renameStreamOperator->getNewStreamName();
     auto inputSchema = renameStreamOperator->getInputSchema();
 
-    std::vector<ExpressionItem> projectionAttributes;
+    std::vector<ExpressionNodePtr> projectionAttributes;
     //Iterate over the input schema and add a new field rename expression
     for (auto field : inputSchema->fields) {
         //compute the new name for the field by added new stream name as field qualifier
@@ -61,7 +61,8 @@ OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr opera
         updatedFieldName = newStreamName + updatedFieldName;
 
         //Compute field access and field rename expression
-        auto fieldRenameExpression = FieldRenameExpressionNode::create(fieldName, updatedFieldName, field->dataType);
+        auto originalField = FieldAccessExpressionNode::create(field->getDataType(), fieldName);
+        auto fieldRenameExpression = FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
         projectionAttributes.push_back(fieldRenameExpression);
     }
     //Construct a new project operator

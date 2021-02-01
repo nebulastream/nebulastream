@@ -95,10 +95,12 @@ class Query {
      */
     template<typename... Args>
     Query& project(Args&&... args) {
-        SchemaPtr schema = Schema::create();
-        std::vector<ExpressionItem> vec({std::forward<Args>(args)...});
-
-        OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(vec);
+        std::vector<ExpressionNodePtr> expressions;
+        std::vector<ExpressionItem> expressionItems({std::forward<Args>(args)...});
+        for(ExpressionItem item : expressionItems){
+            expressions.push_back(item.getExpressionNode());
+        }
+        OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
         queryPlan->appendOperatorAsNewRoot(op);
         return *this;
     }

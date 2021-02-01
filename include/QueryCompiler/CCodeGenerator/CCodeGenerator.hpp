@@ -41,6 +41,14 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) override;
 
     /**
+     * @brief Code generation for a projection, which depends on a particular input schema.
+     * @param projectExpressions The projection expression nodes.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    bool generateCodeForProjection(std::vector<ExpressionNodePtr> projectExpressions, PipelineContextPtr context) override;
+
+    /**
     * @brief Code generation for a filter operator, which depends on a particular filter predicate.
     * @param predicate The filter predicate, which selects input records.
     * @param context The context of the current pipeline.

@@ -17,7 +17,6 @@
 #ifndef PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 #define PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 
-#include <API/UserAPIExpression.hpp>
 #include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
@@ -28,7 +27,7 @@ namespace NES {
  */
 class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
   public:
-    explicit ProjectionLogicalOperatorNode(std::vector<ExpressionItem> expressions, OperatorId id);
+    explicit ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, OperatorId id);
     ~ProjectionLogicalOperatorNode() = default;
 
     /**
@@ -47,11 +46,11 @@ class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
 
-    std::vector<ExpressionItem> getExpressions();
+    std::vector<ExpressionNodePtr> getExpressions();
     std::string getStringBasedSignature() override;
 
   private:
-    std::vector<ExpressionItem> expressions;
+    std::vector<ExpressionNodePtr> expressions;
 };
 
 }// namespace NES
