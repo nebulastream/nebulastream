@@ -45,6 +45,7 @@ class Topology:
                 print(
                     f"Waiting: Received monitoring data from coordinator for nodes {current_size} but expecting {len(self.nodes)}")
                 sleep(5)
+
         return complete
 
     def start_emulation(self):

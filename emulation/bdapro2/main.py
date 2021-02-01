@@ -37,6 +37,7 @@ class Config(YamlDataClassConfig):
     log_level: str = "debug"
     docker_image: str = "nebulastream/nes-executable-image"
     hierarchy_mapping: Optional[Dict[str, Set[str]]] = None
+    topology_creation_timeout: int = 60
 
 
 def flat_topology(config: Config):
@@ -126,7 +127,10 @@ def main(config: Config):
     try:
         topology.create_topology(flat_topology(CONFIG))
         topology.start_emulation()
-        topology.wait_until_topology_is_complete(60)
+        setup_complete = topology.wait_until_topology_is_complete(config.topology_creation_timeout)
+        if not setup_complete:
+            print(f"Failure: Topology could not be instantiated after {config.topology_creation_timeout} seconds!")
+            return
         GracefulKiller(topology)
         if config.hierarchy:
             print("Constructing Hierarchy")
