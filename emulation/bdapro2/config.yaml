@@ -18,6 +18,7 @@ producer_options: >-
   --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
   --sourceFrequency=10 --logicalStreamName=ysb
 log_level: "error"
+docker_image: "bdapro/query-merging"
 hierarchy: True
 hierarchy_mapping:
   "W-0":

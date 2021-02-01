@@ -32,8 +32,10 @@ class Config(YamlDataClassConfig):
     workers_producing: int = None
     physical_stream_prefix: str = None
     producer_options: str = None
+    coordinator_options: Optional[str] = None
     hierarchy: bool = None
     log_level: str = "debug"
+    docker_image: str = "nebulastream/nes-executable-image"
     hierarchy_mapping: Optional[Dict[str, Set[str]]] = None
 
 
@@ -41,7 +43,7 @@ def flat_topology(config: Config):
     def f(net: Containernet) -> (Containernet, int, List[NodeCmd]):
         config.coordinator_ip = next(ips)
         nodes: List[NodeCmd] = []
-        crd = net.addDocker('crd', ip=config.coordinator_ip, dimage="bdapro/query-merging", ports=[8081, 4000],
+        crd = net.addDocker('crd', ip=config.coordinator_ip, dimage=config.docker_image, ports=[8081, 4000],
                             port_bindings={8081: 8081, 4000: 4000}, volumes=["/tmp/logs:/logs"], cpuset_cpus="4")
         nodes.append(NodeCmd(crd, NodeType.Coordinator, config.coordinator_ip,
                              f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} --numberOfSlots"
@@ -49,7 +51,7 @@ def flat_topology(config: Config):
         for i in range(0, config.workers_producing):
             worker_ip = next(ips)
             worker = net.addDocker(f"{SENSOR_WORKER_PREFIX}-{i}", ip=worker_ip,
-                                   dimage="bdapro/query-merging",
+                                   dimage=config.docker_image,
                                    volumes=["/tmp/logs:/logs"],
                                    cpuset_cpus="1",
                                    )
@@ -61,7 +63,7 @@ def flat_topology(config: Config):
         for i in range(0, config.total_workers - config.workers_producing):
             worker_ip = next(ips)
             worker = net.addDocker(f"{WORKER_PREFIX}-{i}", ip=worker_ip,
-                                   dimage="bdapro/query-merging",
+                                   dimage=config.docker_image,
                                    volumes=["/tmp/logs:/logs"],
                                    cpuset_cpus="1"
                                    )
