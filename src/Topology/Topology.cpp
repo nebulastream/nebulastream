@@ -32,6 +32,11 @@ TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()
 bool Topology::addNewPhysicalNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode) {
     std::unique_lock lock(topologyLock);
     uint64_t newNodeId = newNode->getId();
+
+    //find(newNodeId) will either return an Iterator where newNodeId matches the Id n indexOnNodeIds
+    //or return indexOnNodeIds.end()
+    //this if clause is for the case that there is no match on Ids, meaning that node isnt registered yet
+
     if (indexOnNodeIds.find(newNodeId) == indexOnNodeIds.end()) {
         NES_INFO("Topology: Adding New Node " << newNode->toString() << " to the catalog of nodes.");
         indexOnNodeIds[newNodeId] = newNode;
@@ -49,7 +54,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
         NES_WARNING("Topology: The physical node " << nodeToRemove << " doesn't exists in the system.");
         return false;
     }
-
+    //assuming no root node has been created (nullptr) !rootnode returns true
     if (!rootNode) {
         NES_WARNING("Topology: No root node exists in the topology");
         return false;
@@ -224,22 +229,30 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
                                std::vector<TopologyNodePtr> searchedNodes,
                                std::map<uint64_t, TopologyNodePtr>& uniqueNodes) {
 
+
+
+
     NES_TRACE("Topology: check if test node is one of the searched node");
     auto found = std::find_if(searchedNodes.begin(), searchedNodes.end(), [&](const TopologyNodePtr& searchedNode) {
         return searchedNode->getId() == testNode->getId();
     });
 
+
+    //if testNode is a destination node
     if (found != searchedNodes.end()) {
         NES_DEBUG("Topology: found the destination node");
+        //if uniqueNodes doesnt contain the test Node
         if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
             NES_TRACE("Topology: Insert the information about the test node in the unique node map");
             const TopologyNodePtr copyOfTestNode = testNode->copy();
             uniqueNodes[testNode->getId()] = copyOfTestNode;
         }
         NES_TRACE("Topology: Insert the information about the test node in the unique node map");
+
         return uniqueNodes[testNode->getId()];
     }
-
+    //test node is not a destination node ==> fond == searchedNodes.end();
+    //if test node is not destination node, get test nodes parents
     std::vector<NodePtr> parents = testNode->getParents();
     if (parents.empty()) {
         NES_WARNING("Topology: reached end of the tree but destination node not found.");
@@ -264,6 +277,11 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
         }
     }
     return foundNode;
+
+
+
+
+
 }
 
 std::string Topology::toString() {

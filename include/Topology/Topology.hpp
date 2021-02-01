@@ -45,6 +45,7 @@ class Topology {
 
     /**
      * @brief Get the root node of the topology
+     * @details literally just a getter for the member variable rootNode
      * @return root of the topology
      */
     TopologyNodePtr getRoot();
@@ -53,6 +54,9 @@ class Topology {
      * @brief This method will add the new node as child to the provided parent node
      * @param parent : the pointer to the parent physical node
      * @param newNode : the new physical node.
+     * @details Doesnt instantiate a node but adds an already existing node called newNode as child to parent
+     * If newNode not yet in indexOnNodeIds (a catalogue of nodes that topology is aware of), add to index
+     * then call addChild(newNode)
      * @return true if successful
      */
     bool addNewPhysicalNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode);
@@ -60,6 +64,9 @@ class Topology {
     /**
      * @brief This method will remove a given physical node
      * @param nodeToRemove : the node to be removed
+     * @details Checks if node is not in catalogue and not root node(return false).
+     * Then calls rootNode->remove(nodeToRemove) which returns a bool
+     * If true remove node from IndexOnNodeIds
      * @return true if successful
      */
     bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);

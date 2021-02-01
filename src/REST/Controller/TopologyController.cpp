@@ -16,7 +16,6 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/runtime_utils.hpp>
-#include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -74,7 +73,8 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                                         + std::to_string(parentId) + " not found.");
                     }
 
-                    bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
+
+bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
                     if (added) {
                         NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
                         topology->print();
@@ -194,8 +194,10 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
 
                         //TODO: iterate over container of IDs and set all their flags
 
-                        node->setMaintenanceFlag(false);
-                        checkFlag = node->getMaintenanceFlag();
+                        //TODO: make thread safe
+
+                      node->setMaintenanceFlag(false);
+                      checkFlag = node->getMaintenanceFlag();
 
                         //TODO: make sure all nodes have been succesfully marked
                         NES_DEBUG("TopologyController: handlePost -mark: Successfully unmarked node ?" << !checkFlag);
@@ -221,11 +223,11 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     json::value result{};
 
                     if (unmark) {
-                        result["Success"] = json::value::boolean(!checkFlag);
-                        result["Id"] = json::value::number(id);
+                        result["Successful mark"] = json::value::boolean(!checkFlag);
+                        result["Node Id"] = json::value::number(id);
                     } else {
-                        result["Success"] = json::value::boolean(checkFlag);
-                        result["Id"] = json::value::number(id);
+                        result["Successful unmark"] = json::value::boolean(checkFlag);
+                        result["Node Id"] = json::value::number(id);
                     }
                     successMessageImpl(message, result);
                     return;

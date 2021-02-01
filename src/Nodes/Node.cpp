@@ -52,7 +52,7 @@ bool Node::addChild(const NodePtr newNode) {
     }
     // checks if current new node is not part of children
     if (vectorContainsTheNode(children, newNode)) {
-        NES_DEBUG("Node: the node is already part of its children so skip add chld operation.");
+        NES_DEBUG("Node: the node is already part of its children so skip add child operation.");
         return false;
     }
     // add the node to the children
@@ -468,6 +468,7 @@ bool Node::vectorContainsTheNode(std::vector<NodePtr> const& nodes, NES::NodePtr
  * Note that, operators with same description are not necessarily the same object.
  * @param nodes
  * @param nodeToFind
+ * @details && means r-value of refrence. R values dont have a memory address. In this context it means the address itself is passed
  * @return
  */
 NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind) {

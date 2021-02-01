@@ -36,6 +36,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @brief adds a newNode as a child to the current newNode.
      * @note Duplicates inside the children are not ignored.
      * @note A newNode cannot be in its own child.
+     * @details this allows us to add duplicate child nodes
      * @param newNode
      */
     bool addChildWithEqual(NodePtr const& newNode);
@@ -44,6 +45,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @brief adds a newNode as a child to the current newNode.
      * @note Duplicates inside the children are ignored.
      * @note  A newNode cannot be in its own child.
+     * @details virtual: declared in a base (Node) class and overridden in a derived class (OperatorNode)
      * @param newNode
      */
     virtual bool addChild(NodePtr newNode);
@@ -79,10 +81,12 @@ class Node : public std::enable_shared_from_this<Node> {
     void removeChildren();
 
     /**
-     * @brief replace an old node with new now
+     * @brief replace an old node with new node
      * 1) old node is the child of current node, remove old node
-     *    from current nodes's children and add new node to current noed's
+     *    from current nodes's children and add new node to current node's
      *    children. If old node has children, unionWith the children of old nodes
+     *    from current nodes's children and add new node to current nodes
+     *    children. If old node has children, merge the children of old nodes
      *    and new nodes's children. If there's duplicated children among old nodes and
      *    new nodes's children, the children in new noeds will overwrite that
      *    inside old noeds's.
