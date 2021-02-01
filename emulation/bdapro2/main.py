@@ -1,15 +1,17 @@
 import logging
 from ipaddress import IPv4Network
 from logging import info
+from pathlib import Path
 from signal import signal, SIGINT, SIGTERM
 from typing import Iterable, List
 
 # noinspection PyUnresolvedReferences
 import mininet.node  # https://github.com/mininet/mininet/issues/546 for why import is needed.
-from attr import dataclass
+from dataclasses import dataclass
 from mininet.link import TCLink
 from mininet.log import setLogLevel
 from mininet.net import Containernet
+from yamldataclassconfig.config import YamlDataClassConfig
 
 from lib.topology import Topology
 from lib.util import NodeCmd, add_parent_topology, NodeType, get_node_ips
@@ -21,15 +23,15 @@ ips: Iterable[str] = (str(addr) for addr in IPv4Network('10.220.1.0/24').hosts()
 
 
 @dataclass
-class Config:
+class Config(YamlDataClassConfig):
     coordinator_port: int = 4000
     coordinator_ip: str = ""
-    total_workers: int = 2
-    workers_producing: int = 2
-    physical_stream_prefix: str = ""
-    producer_options: str = f"--sourceType=YSBSource " \
-                            f"--numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20 " \
-                            f"--sourceFrequency=10 --logicalStreamName=ysb"
+    total_workers: int = None
+    workers_producing: int = None
+    physical_stream_prefix: str = None
+    producer_options: str = None
+    hierarchy: bool = None
+    log_level: str = "debug"
 
 
 def flat_topology(config: Config):
@@ -96,16 +98,14 @@ def construct_hierarchy(topology: Topology):
         add_parent_topology(node_ips.get(producers[i]), node_ips.get(workers[i]))
 
 
-def main(hierarchy: bool = False):
+def main(config: Config):
     topology = Topology()
-    topology_config = Config()
-    topology_config.physical_stream_prefix = "ysb"
     try:
-        topology.create_topology(flat_topology(topology_config))
+        topology.create_topology(flat_topology(CONFIG))
         topology.start_emulation()
         topology.wait_until_topology_is_complete(60)
         GracefulKiller(topology)
-        if hierarchy:
+        if config.hierarchy:
             print("Constructing Hierarchy")
             construct_hierarchy(topology)
         print("Emulation Running. Press CTRL-C to exit.", flush=True)
@@ -118,6 +118,8 @@ def main(hierarchy: bool = False):
 
 
 if __name__ == '__main__':
-    setLogLevel('debug')
-    logging.basicConfig(level=logging.DEBUG)
-    main(False)
+    CONFIG: Config = Config()
+    CONFIG.load(f"{Path(__file__).parent}/config.yaml", path_is_absolute=True)
+    setLogLevel(CONFIG.log_level)
+    logging.basicConfig(level=CONFIG.log_level.upper())
+    main(config=CONFIG)

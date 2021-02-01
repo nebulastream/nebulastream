@@ -1,0 +1,8 @@
+FROM containernet/containernet:latest
+ADD containernet-entrypoint.sh /containernet-entrypoint.sh
+
+ENV LANG=C.UTF-8
+
+RUN pip3 install click yamldataclassconfig
+
+ENTRYPOINT ["bash", "/containernet-entrypoint.sh"]
