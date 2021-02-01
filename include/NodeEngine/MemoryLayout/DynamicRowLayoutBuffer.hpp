@@ -30,9 +30,9 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
  */
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
-    DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayoutPtr dynamicRowLayout);
-    FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
-    const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout->getFieldOffSets(); }
+    DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayout& dynamicRowLayout);
+    FIELD_SIZE getRecordSize() { return dynamicRowLayout.getRecordSize(); }
+    const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout.getFieldOffSets(); }
 
     /**
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
@@ -62,7 +62,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     void pushRecord(std::tuple<Types...> record);
 
   private:
-    DynamicRowLayoutPtr dynamicRowLayout;
+    const DynamicRowLayout& dynamicRowLayout;
 };
 
 
@@ -71,7 +71,7 @@ template<bool boundaryChecks, typename... Types>
 void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     uint64_t offSet = calcOffset(numberOfRecords, 0, boundaryChecks);
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
-    auto fieldSizes = dynamicRowLayout->getFieldSizes();
+    auto fieldSizes = dynamicRowLayout.getFieldSizes();
     auto address = &(byteBuffer[offSet]);
     size_t I = 0;
     std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(address, &args, fieldSizes[I]), address = address + fieldSizes[I], ++I), ...);}, record);
@@ -86,7 +86,7 @@ std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
 
     std::tuple<Types...> retTuple;
-    auto fieldSizes = dynamicRowLayout->getFieldSizes();
+    auto fieldSizes = dynamicRowLayout.getFieldSizes();
 
     auto address = &(byteBuffer[offSet]);
     size_t I = 0;

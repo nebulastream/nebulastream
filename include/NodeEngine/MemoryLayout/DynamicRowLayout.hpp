@@ -17,6 +17,7 @@
 #ifndef NES_DYNAMICROWLAYOUT_HPP
 #define NES_DYNAMICROWLAYOUT_HPP
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 
@@ -24,8 +25,7 @@
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
 
-class DynamicRowLayout;
-typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
+
 typedef uint64_t FIELD_OFFSET;
 
 /**
