@@ -253,7 +253,13 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
     }
     //test node is not a destination node ==> fond == searchedNodes.end();
     //if test node is not destination node, get test nodes parents
+    //filer parents of all nodes marked for maintenance
     std::vector<NodePtr> parents = testNode->getParents();
+    parents.erase(std::remove_if(parents.begin(),parents.end(),
+                                 [](NodePtr parent) {
+      return parent->as<TopologyNode>()->getMaintenanceFlag();
+    }),parents.end());
+
     if (parents.empty()) {
         NES_WARNING("Topology: reached end of the tree but destination node not found.");
         return nullptr;

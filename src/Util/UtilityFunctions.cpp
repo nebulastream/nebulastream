@@ -268,6 +268,7 @@ web::json::value Util::getTopologyAsJson(TopologyNodePtr root) {
         currentNodeJsonValue["id"] = web::json::value::number(currentNode->getId());
         currentNodeJsonValue["available_resources"] = web::json::value::number(currentNode->getAvailableResources());
         currentNodeJsonValue["ip_address"] = web::json::value::string(currentNode->getIpAddress());
+        currentNodeJsonValue["marked_for_maintenance"] = web::json::value::boolean(currentNode->getMaintenanceFlag());
 
         for (const auto& child : currentNode->getChildren()) {
             // Add edge information for current topology node
