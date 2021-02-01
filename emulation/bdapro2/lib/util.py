@@ -42,6 +42,16 @@ def add_parent_topology(child_id: int, parent_id: int):
             f"Could not add node {parent_id} as parent for {child_id}: Response Code: {resp.status_code}  {resp.text}")
 
 
+def remove_parent_topology(child_id: int, parent_id: int):
+    print(f"Remove {parent_id} as parent for {child_id}")
+    topology_add_parent_url = f"{NES_BASE_URL}/topology/removeParent"
+    resp = requests.post(topology_add_parent_url,
+                         json={"childId": str(child_id), "parentId": str(parent_id)})
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"Could not remove node {parent_id} as parent for {child_id}: Response Code: {resp.status_code}  {resp.text}")
+
+
 def get_node_ips() -> Dict[str, int]:
     """
     Fetch IP address to node ID mapping.
