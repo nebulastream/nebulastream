@@ -44,7 +44,7 @@ def flat_topology(config: Config):
         config.coordinator_ip = next(ips)
         nodes: List[NodeCmd] = []
         crd = net.addDocker('crd', ip=config.coordinator_ip, dimage=config.docker_image, ports=[8081, 4000],
-                            port_bindings={8081: 8081, 4000: 4000}, volumes=["/tmp/logs:/logs"], cpuset_cpus="4")
+                            port_bindings={8081: 8081, 4000: 4000}, volumes=["/tmp/logs:/logs"])
         nodes.append(NodeCmd(crd, NodeType.Coordinator, config.coordinator_ip,
                              f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} --numberOfSlots"
                              f"=8 --logLevel=LOG_DEBUG --enableQueryMerging=true"))
@@ -53,7 +53,6 @@ def flat_topology(config: Config):
             worker = net.addDocker(f"{SENSOR_WORKER_PREFIX}-{i}", ip=worker_ip,
                                    dimage=config.docker_image,
                                    volumes=["/tmp/logs:/logs"],
-                                   cpuset_cpus="1",
                                    )
             worker_cmd = f"{WORKER} --logLevel=LOG_DEBUG --coordinatorPort={config.coordinator_port}" \
                          f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} " \
@@ -65,7 +64,6 @@ def flat_topology(config: Config):
             worker = net.addDocker(f"{WORKER_PREFIX}-{i}", ip=worker_ip,
                                    dimage=config.docker_image,
                                    volumes=["/tmp/logs:/logs"],
-                                   cpuset_cpus="1"
                                    )
             worker_cmd = f"{WORKER} --logLevel=LOG_DEBUG --coordinatorPort={config.coordinator_port}" \
                          f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} --numberOfSlots=8"
