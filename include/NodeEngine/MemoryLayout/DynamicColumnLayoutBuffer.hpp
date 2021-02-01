@@ -33,8 +33,8 @@ typedef uint64_t COL_OFFSET_SIZE;
 class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
 
   public:
-    DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayoutPtr dynamicColLayout, std::vector<COL_OFFSET_SIZE> columnOffsets);
-    const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout->getFieldSizes(); }
+    DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayout& dynamicColLayout, std::vector<COL_OFFSET_SIZE> columnOffsets);
+    const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout.getFieldSizes(); }
 
     /**
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
@@ -66,7 +66,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
 
   private:
     std::vector<COL_OFFSET_SIZE> columnOffsets;
-    DynamicColumnLayoutPtr dynamicColLayout;
+    const DynamicColumnLayout& dynamicColLayout;
 };
 
 
@@ -74,7 +74,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
 template<bool boundaryChecks, typename... Types>
 void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
-    auto fieldSizes = dynamicColLayout->getFieldSizes();
+    auto fieldSizes = dynamicColLayout.getFieldSizes();
 
     auto address = &(byteBuffer[0]);
     size_t tupleIndex = 0;
@@ -92,7 +92,7 @@ std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex)
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
 
     std::tuple<Types...> retTuple;
-    auto fieldSizes = dynamicColLayout->getFieldSizes();
+    auto fieldSizes = dynamicColLayout.getFieldSizes();
 
     auto address = &(byteBuffer[0]);
     size_t tupleIndex = 0;

@@ -314,9 +314,9 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
     auto field1 = DynamicRowLayoutField<uint16_t, true>::create(1, mappedRowLayout);
     auto field2 = DynamicRowLayoutField<uint32_t, true>::create(2, mappedRowLayout);
 
-    ASSERT_ANY_THROW((DynamicRowLayoutField<uint32_t, true>::create(3, mappedRowLayout)));
-    ASSERT_ANY_THROW((DynamicRowLayoutField<uint32_t, true>::create(4, mappedRowLayout)));
-    ASSERT_ANY_THROW((DynamicRowLayoutField<uint32_t, true>::create(5, mappedRowLayout)));
+    ASSERT_THROW((DynamicRowLayoutField<uint32_t, true>::create(3, mappedRowLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((DynamicRowLayoutField<uint32_t, true>::create(4, mappedRowLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((DynamicRowLayoutField<uint32_t, true>::create(5, mappedRowLayout)), NES::NesRuntimeException);
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -324,13 +324,13 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
         ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
         ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
     }
-    ASSERT_ANY_THROW(field0[i]);
-    ASSERT_ANY_THROW(field1[i]);
-    ASSERT_ANY_THROW(field2[i]);
+    ASSERT_THROW(field0[i], NES::NesRuntimeException);
+    ASSERT_THROW(field1[i], NES::NesRuntimeException);
+    ASSERT_THROW(field2[i], NES::NesRuntimeException);
 
-    ASSERT_ANY_THROW(field0[++i]);
-    ASSERT_ANY_THROW(field1[i]);
-    ASSERT_ANY_THROW(field2[i]);
+    ASSERT_THROW(field0[++i], NES::NesRuntimeException);
+    ASSERT_THROW(field1[i], NES::NesRuntimeException);
+    ASSERT_THROW(field2[i], NES::NesRuntimeException);
 }
 
 TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
@@ -360,9 +360,9 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
     auto field0 = DynamicColumnLayoutField<uint8_t, true>::create(0, mappedColumnLayout);
     auto field1 = DynamicColumnLayoutField<uint16_t, true>::create(1, mappedColumnLayout);
     auto field2 = DynamicColumnLayoutField<uint32_t, true>::create(2, mappedColumnLayout);
-    ASSERT_ANY_THROW((DynamicColumnLayoutField<uint8_t, true>::create(3, mappedColumnLayout)));
-    ASSERT_ANY_THROW((DynamicColumnLayoutField<uint16_t, true>::create(4, mappedColumnLayout)));
-    ASSERT_ANY_THROW((DynamicColumnLayoutField<uint32_t, true>::create(5, mappedColumnLayout)));
+    ASSERT_THROW((DynamicColumnLayoutField<uint8_t, true>::create(3, mappedColumnLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((DynamicColumnLayoutField<uint16_t, true>::create(4, mappedColumnLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((DynamicColumnLayoutField<uint32_t, true>::create(5, mappedColumnLayout)), NES::NesRuntimeException);
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -370,13 +370,14 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
         ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
         ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
     }
-    ASSERT_ANY_THROW(field0[i]);
-    ASSERT_ANY_THROW(field1[i]);
-    ASSERT_ANY_THROW(field2[i]);
 
-    ASSERT_ANY_THROW(field0[++i]);
-    ASSERT_ANY_THROW(field1[i]);
-    ASSERT_ANY_THROW(field2[i]);
+    ASSERT_THROW(field0[i], NES::NesRuntimeException);
+    ASSERT_THROW(field1[i], NES::NesRuntimeException);
+    ASSERT_THROW(field2[i], NES::NesRuntimeException);
+
+    ASSERT_THROW(field0[++i], NES::NesRuntimeException);
+    ASSERT_THROW(field1[i], NES::NesRuntimeException);
+    ASSERT_THROW(field2[i], NES::NesRuntimeException);
 }
 
 TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
@@ -407,9 +408,21 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
     auto field1 = DynamicRowLayoutField<uint16_t, false>::create(1, mappedRowLayout);
     auto field2 = DynamicRowLayoutField<uint32_t, false>::create(2, mappedRowLayout);
 
-    ASSERT_NO_THROW((DynamicRowLayoutField<uint32_t, false>::create(3, mappedRowLayout)));
-    ASSERT_NO_THROW((DynamicRowLayoutField<uint32_t, false>::create(4, mappedRowLayout)));
-    ASSERT_NO_THROW((DynamicRowLayoutField<uint32_t, false>::create(5, mappedRowLayout)));
+    try {
+        DynamicRowLayoutField<uint32_t, false>::create(3, mappedRowLayout);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        DynamicRowLayoutField<uint32_t, false>::create(4, mappedRowLayout);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        DynamicRowLayoutField<uint32_t, false>::create(5, mappedRowLayout);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -417,13 +430,36 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
         ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
         ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
     }
-    ASSERT_NO_THROW(field0[i]);
-    ASSERT_NO_THROW(field1[i]);
-    ASSERT_NO_THROW(field2[i]);
 
-    ASSERT_NO_THROW(field0[++i]);
-    ASSERT_NO_THROW(field1[i]);
-    ASSERT_NO_THROW(field2[i]);
+    try {
+        ((void)field0[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field2[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field2[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field0[++i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field1[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field2[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
 }
 
 TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
@@ -453,10 +489,20 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
     auto field1 = DynamicColumnLayoutField<uint16_t, false>::create(1, mappedColumnLayout);
     auto field2 = DynamicColumnLayoutField<uint32_t, false>::create(2, mappedColumnLayout);
 
-    ASSERT_NO_THROW((DynamicColumnLayoutField<uint32_t, false>::create(3, mappedColumnLayout)));
-    ASSERT_NO_THROW((DynamicColumnLayoutField<uint32_t, false>::create(4, mappedColumnLayout)));
-    ASSERT_NO_THROW((DynamicColumnLayoutField<uint32_t, false>::create(5, mappedColumnLayout)));
-    ASSERT_NO_THROW((DynamicColumnLayoutField<uint32_t, false>::create(5, mappedColumnLayout)));
+    try {
+        DynamicColumnLayoutField<uint32_t, false>::create(3, mappedColumnLayout);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        DynamicColumnLayoutField<uint32_t, false>::create(4, mappedColumnLayout);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        DynamicColumnLayoutField<uint32_t, false>::create(5, mappedColumnLayout);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -464,13 +510,36 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
         ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
         ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
     }
-    ASSERT_NO_THROW(field0[i]);
-    ASSERT_NO_THROW(field1[i]);
-    ASSERT_NO_THROW(field2[i]);
 
-    ASSERT_NO_THROW(field0[++i]);
-    ASSERT_NO_THROW(field1[i]);
-    ASSERT_NO_THROW(field2[i]);
+    try {
+        ((void)field0[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field2[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field2[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field0[++i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field1[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
+
+    try {
+        ((void)field2[i]);
+    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
+    catch (Exception& e) { ASSERT_TRUE(true); }
 }
 
 

@@ -55,7 +55,6 @@ std::unique_ptr<DynamicLayoutBuffer> DynamicColumnLayout::map(TupleBuffer& tuple
         columnOffsets.emplace_back(offsetCounter);
         offsetCounter += (*it) * capacity;
     }
-    return std::make_unique<DynamicColumnLayoutBuffer>(tupleBuffer, capacity,
-                                                       std::make_shared<DynamicColumnLayout>(*this), columnOffsets);
+    return std::make_unique<DynamicColumnLayoutBuffer>(tupleBuffer, capacity, *this, columnOffsets);
 }
 }

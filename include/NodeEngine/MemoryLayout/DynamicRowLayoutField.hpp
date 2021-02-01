@@ -50,21 +50,20 @@ class DynamicRowLayoutField {
 
 template <class T, bool boundaryChecks>
 inline DynamicRowLayoutField<T, boundaryChecks> DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer) {
-    if (boundaryChecks) {
-        NES_VERIFY(layoutBuffer->getFieldOffSets().size() > fieldIndex, "fieldIndex out of bounds!" << layoutBuffer->getFieldOffSets().size() << " >= " << fieldIndex);
+    if (boundaryChecks && fieldIndex >= layoutBuffer->getFieldOffSets().size()) {
+        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds!" << layoutBuffer->getFieldOffSets().size() << " >= " << fieldIndex);
     }
 
     auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]);
     auto offSet = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
     auto basePointer = bufferBasePointer + offSet;
-    NES_DEBUG("DynamicRowLayout: basePointer = " << std::hex << basePointer);
     return DynamicRowLayoutField<T, boundaryChecks>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
 }
 
 template <class T, bool boundaryChecks>
 inline T& DynamicRowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
-    if (boundaryChecks) {
-        NES_VERIFY(dynamicRowLayoutBuffer->getCapacity() > recordIndex, "recordIndex out of bounds!" << dynamicRowLayoutBuffer->getCapacity() << " >= " << recordIndex);
+    if (boundaryChecks && recordIndex >= dynamicRowLayoutBuffer->getCapacity()) {
+        NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << dynamicRowLayoutBuffer->getCapacity() << " >= " << recordIndex);
     }
 
     return *reinterpret_cast<T*>(basePointer + recordSize * recordIndex);

@@ -85,14 +85,20 @@ typedef std::shared_ptr<PipelineExecutionContext> PipelineExecutionContextPtr;
 }// namespace Execution
 
 namespace DynamicMemoryLayout {
-class DynamicColumnLayout;
-typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
-
 class DynamicRowLayoutBuffer;
 typedef std::unique_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
 
 class DynamicColumnLayoutBuffer;
 typedef std::unique_ptr<DynamicColumnLayoutBuffer> DynamicColumnLayoutBufferPtr;
+
+class DynamicMemoryLayout;
+typedef std::shared_ptr<DynamicMemoryLayout> DynamicMemoryLayoutPtr;
+
+class DynamicColumnLayout;
+typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
+
+class DynamicRowLayout;
+typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
 
 }// namespace DynamicMemoryLayout
 

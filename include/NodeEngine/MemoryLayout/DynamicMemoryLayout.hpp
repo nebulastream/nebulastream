@@ -17,13 +17,13 @@
 #ifndef NES_DYNAMICMEMORYLAYOUT_HPP
 #define NES_DYNAMICMEMORYLAYOUT_HPP
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-class DynamicMemoryLayout;
-typedef std::shared_ptr<DynamicMemoryLayout> DynamicMemoryLayoutPtr;
+
 typedef uint64_t FIELD_SIZE;
 
 /**
