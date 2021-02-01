@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import sleep
 from typing import Callable, Tuple, List
 
@@ -14,6 +15,7 @@ class Topology:
         self.topology_size: int = 0
         self.nodes: List[NodeCmd] = []
         self._stopped: bool = True
+        self._start_time: str = '{date:%Y%m%d%H%M%S}'.format(date=datetime.now())
 
     def create_topology(self, topology: Callable[[Containernet], Tuple[Containernet, int, List[NodeCmd]]]):
         net = Containernet(controller=Controller)
@@ -50,7 +52,9 @@ class Topology:
         self._stopped = False
         for worker in self.nodes:
             # Redirect output or else containernet waits for it, preventing shutdown.
-            worker.node.cmdPrint(f"/entrypoint-containernet.sh {worker.cmd} > /nes-runtime.log 2>&1 &")
+            logfile_name = f"{worker.node.name}-{worker.ip}-nes-runtime.log"
+            worker.node.cmdPrint(
+                f"/entrypoint-containernet.sh {worker.cmd} > /logs/{self._start_time}_{logfile_name} 2>&1 &")
             print(f"Executed CMD {worker.cmd} and on Worker {worker.node.name}")
 
     def stop_emulation(self):
