@@ -1,0 +1,8 @@
+total_workers: 3
+workers_producing: 2
+physical_stream_prefix: "ysb"
+producer_options: >-
+  --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
+  --sourceFrequency=10 --logicalStreamName=ysb
+hierarchy: True
+log_level: "error"
