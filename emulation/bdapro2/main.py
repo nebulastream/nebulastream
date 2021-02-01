@@ -3,7 +3,7 @@ from ipaddress import IPv4Network
 from logging import info
 from pathlib import Path
 from signal import signal, SIGINT, SIGTERM
-from typing import Iterable, List
+from typing import Iterable, List, Set, Dict, Optional
 
 # noinspection PyUnresolvedReferences
 import mininet.node  # https://github.com/mininet/mininet/issues/546 for why import is needed.
@@ -32,6 +32,7 @@ class Config(YamlDataClassConfig):
     producer_options: str = None
     hierarchy: bool = None
     log_level: str = "debug"
+    hierarchy_mapping: Optional[Dict[int, Set[int]]] = None
 
 
 def flat_topology(config: Config):
@@ -122,4 +123,7 @@ if __name__ == '__main__':
     CONFIG.load(f"{Path(__file__).parent}/config.yaml", path_is_absolute=True)
     setLogLevel(CONFIG.log_level)
     logging.basicConfig(level=CONFIG.log_level.upper())
+    assert CONFIG.total_workers >= CONFIG.workers_producing, "Total workers should be equal to or more than workers " \
+                                                             "producing "
+    print(f"Running with configuration: {CONFIG}", flush=True)
     main(config=CONFIG)
