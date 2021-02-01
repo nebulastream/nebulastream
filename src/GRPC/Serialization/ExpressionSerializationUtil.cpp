@@ -24,6 +24,7 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -61,6 +62,15 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(Express
         auto serializedFieldAccessExpression = SerializableExpression_FieldAccessExpression();
         serializedFieldAccessExpression.set_fieldname(fieldAccessExpression->getFieldName());
         serializedExpression->mutable_details()->PackFrom(serializedFieldAccessExpression);
+    } else if (expression->instanceOf<FieldRenameExpressionNode>()) {
+        // serialize field rename expression node
+        NES_TRACE("ExpressionSerializationUtil:: serialize field rename expression node.");
+        auto fieldRenameExpression = expression->as<FieldRenameExpressionNode>();
+        auto serializedFieldRenameExpression = SerializableExpression_FieldRenameExpression();
+        serializeExpression(fieldRenameExpression->getOriginalField(),
+                            serializedFieldRenameExpression.mutable_originalfieldaccessexpression());
+        serializedFieldRenameExpression.set_newfieldname(fieldRenameExpression->getNewFieldName());
+        serializedExpression->mutable_details()->PackFrom(serializedFieldRenameExpression);
     } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
         // serialize field assignment expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize field assignment expression node.");
@@ -102,12 +112,28 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             auto valueType = DataTypeSerializationUtil::deserializeDataValue(serializedConstantValue.release_value());
             expressionNodePtr = ConstantValueExpressionNode::create(valueType);
         } else if (serializedExpression->details().Is<SerializableExpression_FieldAccessExpression>()) {
-            // de-serialize field read expression node.
+            // de-serialize field access expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as FieldAccess expression node.");
             SerializableExpression_FieldAccessExpression serializedFieldAccessExpression;
             serializedExpression->details().UnpackTo(&serializedFieldAccessExpression);
             auto name = serializedFieldAccessExpression.fieldname();
             expressionNodePtr = FieldAccessExpressionNode::create(name);
+        } else if (serializedExpression->details().Is<SerializableExpression_FieldRenameExpression>()) {
+            // de-serialize field rename expression node.
+            NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as Field Rename expression node.");
+            SerializableExpression_FieldRenameExpression serializedFieldRenameExpression;
+            serializedExpression->details().UnpackTo(&serializedFieldRenameExpression);
+            auto originalFieldAccessExpression =
+                deserializeExpression(serializedFieldRenameExpression.mutable_originalfieldaccessexpression());
+            if (originalFieldAccessExpression->instanceOf<FieldAccessExpressionNode>()) {
+                NES_FATAL_ERROR("ExpressionSerializationUtil: the original field access expression "
+                                "should be of type FieldAccessExpressionNode, but was a "
+                                << originalFieldAccessExpression->toString());
+            }
+            auto newFieldName = serializedFieldRenameExpression.newfieldname();
+            expressionNodePtr = FieldRenameExpressionNode::create(originalFieldAccessExpression
+                                                                      ->as<FieldAccessExpressionNode>(),
+                                                                          newFieldName);
         } else if (serializedExpression->details().Is<SerializableExpression_FieldAssignmentExpression>()) {
             // de-serialize field read expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as FieldAssignment expression node.");

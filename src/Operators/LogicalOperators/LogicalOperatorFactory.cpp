@@ -52,7 +52,7 @@ UnaryOperatorNodePtr LogicalOperatorFactory::createRenameStreamOperator(const st
     return std::make_shared<RenameStreamOperatorNode>(newStreamName, id);
 }
 
-UnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(std::vector<ExpressionItem> expressions, OperatorId id) {
+UnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id) {
     return std::make_shared<ProjectionLogicalOperatorNode>(expressions, id);
 }
 

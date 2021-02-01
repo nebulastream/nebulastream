@@ -75,6 +75,8 @@ class CodeGenerator {
   public:
     CodeGenerator();
 
+
+
     /**
      * @brief Code generation for a scan, which depends on a particular input schema.
      * @param schema The input schema, in which we receive the input buffer.
@@ -83,6 +85,14 @@ class CodeGenerator {
      * @return flag if the generation was successful.
      */
     virtual bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) = 0;
+
+    /**
+     * @brief Code generation for a projection, which depends on a particular input schema.
+     * @param projectExpressions The projection expression nodes.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForProjection(std::vector<ExpressionNodePtr> projectExpressions, PipelineContextPtr context) = 0;
 
     /**
      * @brief Code generation for a filter operator, which depends on a particular filter predicate.

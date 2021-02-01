@@ -22,6 +22,7 @@
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
@@ -196,6 +197,31 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     }
 
     code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
+    return true;
+}
+
+bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> projectExpressions, PipelineContextPtr context) {
+    auto recordHandler = context->getRecordHandler();
+    for (auto expression : projectExpressions) {
+        if (expression->instanceOf<FieldRenameExpressionNode>()) {
+            // if rename expression add the attribute to the record handler.
+            auto fieldRenameExpression = expression->as<FieldRenameExpressionNode>();
+            auto originalAttribute = fieldRenameExpression->getOriginalField();
+            if (!recordHandler->hasAttribute(originalAttribute->getFieldName())) {
+                NES_FATAL_ERROR("CCodeGenerator: projection: the original attribute"
+                                << originalAttribute->getFieldName() << " is not registered so we can not access it.");
+            }
+            auto referenceToOriginalValue = recordHandler->getAttribute(originalAttribute->getFieldName());
+            recordHandler->registerAttribute(fieldRenameExpression->getNewFieldName(), referenceToOriginalValue);
+        } else if (expression->instanceOf<FieldAccessExpressionNode>()) {
+            // it its a field access expression, just check if the record exists.
+            auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
+            if (!recordHandler->hasAttribute(fieldAccessExpression->getFieldName())) {
+                NES_FATAL_ERROR("CCodeGenerator: projection: the attribute"
+                                    << fieldAccessExpression->getFieldName() << " is not registered so we can not access it.");
+            }
+        }
+    }
     return true;
 }
 

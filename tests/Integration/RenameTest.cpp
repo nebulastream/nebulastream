@@ -62,7 +62,7 @@ class RenameTest : public testing::Test {
 };
 
 //FIXME: Enabled while solving #1490
-TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
+TEST_F(RenameTest, testAttributeRenameAndProjection) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -135,8 +135,7 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
     EXPECT_TRUE(response == 0);
 }
 
-//FIXME: Enabled while solving #1490
-TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
+TEST_F(RenameTest, testAttributeRenameAndFilter) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -199,8 +198,7 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
     EXPECT_TRUE(response == 0);
 }
 
-//FIXME: Enabled while solving #1490
-TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
+TEST_F(RenameTest, testCentralWindowEventTime) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -246,9 +244,12 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
     remove(outputFilePath.c_str());
 
     NES_INFO("RenameTest: Submit query");
-    string query = "Query::from(\"window\").windowByKey(Attribute(\"id\").rename(\"newId\"), "
+
+    string query = "Query::from(\"window\")"
+                   ".project(Attribute(\"id\").rename(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").rename(\"newValue\"))"
+                   ".windowByKey(Attribute(\"newId\"), "
                    "TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-                   "Seconds(1)), Sum(Attribute(\"value\").rename(\"newValue\"))).sink(FileSinkDescriptor::create(\""
+                   "Seconds(1)), Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -285,7 +286,6 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
 /**
  * Test deploying join with different streams
  */
-//FIXME: Enabled while solving #1490
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -359,7 +359,16 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
 
     NES_INFO("RenameTest: Submit query");
     string query =
-        R"(Query::from("window1").join(Query::from("window2"), Attribute("id1").rename("id1New"), Attribute("id2").rename("id2New"), TumblingWindow::of(EventTime(Attribute("timestamp")),
+        R"(Query::from("window1")
+            .project(Attribute("id1").rename("id1New"), Attribute("timestamp"))
+            .join(
+                        Query::from("window2")
+                        .project(
+                            Attribute("id2").rename("id2New"),
+                            Attribute("timestamp")
+                        ),
+                   Attribute("id1New"), Attribute("id2New"),
+                    TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
