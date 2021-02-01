@@ -42,8 +42,23 @@ class DynamicLayoutBuffer {
      * @return
      */
     virtual uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) = 0;
+
+    /**
+     * @brief This method returns the maximum number of records, so the capacity.
+     * @return
+     */
     uint64_t getCapacity() { return capacity; }
+
+    /**
+     * @brief This method returns the current number of records that are in the associated buffer
+     * @return
+     */
     uint64_t getNumberOfRecords() {return numberOfRecords; }
+
+    /**
+     * @brief This methods returns a reference to the associated buffer
+     * @return
+     */
     TupleBuffer& getTupleBuffer() { return tupleBuffer; }
 
 

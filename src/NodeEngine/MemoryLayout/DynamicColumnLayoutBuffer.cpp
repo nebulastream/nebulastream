@@ -20,8 +20,12 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) {
     auto fieldSizes = dynamicColLayout->getFieldSizes();
 
-    if (boundaryChecks) NES_VERIFY(jthField < fieldSizes.size(), "jthField" << jthField << " is larger than fieldSize.size() " << fieldSizes.size());
-    if (boundaryChecks) NES_VERIFY(jthField < columnOffsets.size(), "columnOffsets" << jthField << " is larger than columnOffsets.size() " << columnOffsets.size());
+    if (boundaryChecks) {
+        NES_VERIFY(jthField < fieldSizes.size(), "jthField" << jthField << " is larger than fieldSize.size() " << fieldSizes.size());
+    }
+    if (boundaryChecks) {
+        NES_VERIFY(jthField < columnOffsets.size(), "columnOffsets" << jthField << " is larger than columnOffsets.size() " << columnOffsets.size());
+    }
 
     auto offSet = (ithRecord * fieldSizes[jthField]) + columnOffsets[jthField];
     NES_DEBUG("DynamicColumnLayoutBuffer.calcOffset: offSet = " << offSet);

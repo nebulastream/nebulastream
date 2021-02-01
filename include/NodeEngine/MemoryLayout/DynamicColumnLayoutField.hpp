@@ -33,10 +33,8 @@ class DynamicColumnLayoutField {
   public:
     static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer);
     inline T& operator[](size_t recordIndex);
-
-  private:
-  public:
     DynamicColumnLayoutField(T* basePointer, DynamicColumnLayoutBufferPtr& dynamicColumnLayoutBuffer) : basePointer(basePointer), dynamicColumnLayoutBuffer(dynamicColumnLayoutBuffer) {};
+
   private:
     T* basePointer;
     DynamicColumnLayoutBufferPtr& dynamicColumnLayoutBuffer;
@@ -44,16 +42,23 @@ class DynamicColumnLayoutField {
 
 template <class T, bool boundaryChecks>
 inline DynamicColumnLayoutField<T, boundaryChecks> DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer) {
-    if (boundaryChecks) NES_VERIFY(fieldIndex < layoutBuffer->getFieldSizes().size(), "fieldIndex out of bounds! " << layoutBuffer->getFieldSizes().size() << " >= " << fieldIndex);
+    if (boundaryChecks) {
+        NES_VERIFY(fieldIndex < layoutBuffer->getFieldSizes().size(), "fieldIndex out of bounds! " << layoutBuffer->getFieldSizes().size() << " >= " << fieldIndex);
+    }
 
-    T* basePointer = reinterpret_cast<T*>(&(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks));
+    auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]);
+    auto fieldOffset = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
+
+    T* basePointer = reinterpret_cast<T*>(bufferBasePointer + fieldOffset);
     NES_DEBUG("DynamicRowLayout: basePointer = " << std::hex << basePointer);
     return DynamicColumnLayoutField<T, boundaryChecks>(basePointer, layoutBuffer);
 }
 
 template <class T, bool boundaryChecks>
 inline T& DynamicColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
-    if (boundaryChecks) NES_VERIFY(recordIndex < dynamicColumnLayoutBuffer->getCapacity(), "recordIndex out of bounds!" << dynamicColumnLayoutBuffer->getCapacity() << " >= " << recordIndex);
+    if (boundaryChecks) {
+        NES_VERIFY(recordIndex < dynamicColumnLayoutBuffer->getCapacity(), "recordIndex out of bounds!" << dynamicColumnLayoutBuffer->getCapacity() << " >= " << recordIndex);
+    }
 
     return *(basePointer + recordIndex);
 }
