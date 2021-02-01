@@ -1,11 +1,29 @@
-total_workers: 3
-workers_producing: 2
+#Sample configuration for Flat topology
+#total_workers: 5
+#workers_producing: 5
+#physical_stream_prefix: "ysb"
+#producer_options: >-
+#  --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
+#  --sourceFrequency=10 --logicalStreamName=ysb
+#log_level: "error"
+#hierarchy: False
+
+
+
+#Sample configuration for Hierarachy topology
+total_workers: 9
+workers_producing: 6
 physical_stream_prefix: "ysb"
 producer_options: >-
   --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
   --sourceFrequency=10 --logicalStreamName=ysb
-hierarchy: True
 log_level: "error"
+hierarchy: True
 hierarchy_mapping:
   "W-0":
     - "S-0"
+    - "S-1"
+  "W-1":
+    - "S-2"
+    - "S-3"
+    - "S-4"
