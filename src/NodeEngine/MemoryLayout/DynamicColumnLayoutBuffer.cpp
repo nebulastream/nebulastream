@@ -16,8 +16,8 @@
 
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
 
-namespace NES::NodeEngine {
-uint64_t NES::NodeEngine::DynamicColumnLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) {
+namespace NES::NodeEngine::DynamicMemoryLayout {
+uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) {
     auto fieldSizes = dynamicColLayout->getFieldSizes();
 
     if (boundaryChecks) NES_VERIFY(jthField < fieldSizes.size(), "jthField" << jthField << " is larger than fieldSize.size() " << fieldSizes.size());

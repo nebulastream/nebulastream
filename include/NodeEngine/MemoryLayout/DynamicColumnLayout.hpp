@@ -20,7 +20,7 @@
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
  * @brief This class derives from DynamicMemoryLayout. It implements abstract map() function

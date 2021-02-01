@@ -21,7 +21,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
  * @brief This class derives from DynamicMemoryLayout. It implements abstract map() function as well as adding fieldOffsets as a new member

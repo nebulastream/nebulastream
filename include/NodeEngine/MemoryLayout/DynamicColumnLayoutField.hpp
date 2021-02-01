@@ -17,9 +17,10 @@
 #ifndef NES_DYNAMICCOLUMNLAYOUTFIELD_HPP
 #define NES_DYNAMICCOLUMNLAYOUTFIELD_HPP
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
  * @brief This class is used for handling fields in a given DynamicColumnLayoutBuffer. It also overrides the operator[] for a more user friendly access of records for a predefined field.
@@ -42,7 +43,7 @@ class DynamicColumnLayoutField {
 };
 
 template <class T, bool boundaryChecks>
-inline NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks> NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer) {
+inline DynamicColumnLayoutField<T, boundaryChecks> DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer) {
     if (boundaryChecks) NES_VERIFY(fieldIndex < layoutBuffer->getFieldSizes().size(), "fieldIndex out of bounds! " << layoutBuffer->getFieldSizes().size() << " >= " << fieldIndex);
 
     T* basePointer = reinterpret_cast<T*>(&(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]) + layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks));
@@ -51,7 +52,7 @@ inline NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks> NES::NodeEng
 }
 
 template <class T, bool boundaryChecks>
-inline T& NES::NodeEngine::DynamicColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
+inline T& DynamicColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
     if (boundaryChecks) NES_VERIFY(recordIndex < dynamicColumnLayoutBuffer->getCapacity(), "recordIndex out of bounds!" << dynamicColumnLayoutBuffer->getCapacity() << " >= " << recordIndex);
 
     return *(basePointer + recordIndex);

@@ -16,9 +16,9 @@
 
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
-uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) {
+uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) {
 
     auto fieldOffSets = dynamicRowLayout->getFieldOffSets();
     auto recordSize = dynamicRowLayout->getRecordSize();

@@ -84,6 +84,18 @@ typedef std::shared_ptr<PipelineExecutionContext> PipelineExecutionContextPtr;
 
 }// namespace Execution
 
+namespace DynamicMemoryLayout {
+class DynamicColumnLayout;
+typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
+
+class DynamicRowLayoutBuffer;
+typedef std::unique_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
+
+class DynamicColumnLayoutBuffer;
+typedef std::unique_ptr<DynamicColumnLayoutBuffer> DynamicColumnLayoutBufferPtr;
+
+}// namespace DynamicMemoryLayout
+
 }// namespace NodeEngine
 
 }// namespace NES

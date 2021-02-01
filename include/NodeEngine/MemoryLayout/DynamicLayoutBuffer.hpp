@@ -17,13 +17,14 @@
 #ifndef NES_DYNAMICLAYOUTBUFFER_HPP
 #define NES_DYNAMICLAYOUTBUFFER_HPP
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <string.h>
 
-namespace NES::NodeEngine {
+namespace NES::NodeEngine::DynamicMemoryLayout {
 
 typedef uint64_t FIELD_SIZE;
-typedef std::shared_ptr<std::vector<NES::NodeEngine::FIELD_SIZE>> FieldSizesPtr;
+
 
 /**
  * @brief This abstract class is the base class for DynamicRowLayoutBuffer and DynamicColumnLayoutBuffer.
@@ -40,7 +41,7 @@ class DynamicLayoutBuffer {
      * @param jthField
      * @return
      */
-    virtual uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, bool boundaryChecks) = 0;
+    virtual uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) = 0;
     uint64_t getCapacity() { return capacity; }
     uint64_t getNumberOfRecords() {return numberOfRecords; }
     TupleBuffer& getTupleBuffer() { return tupleBuffer; }
