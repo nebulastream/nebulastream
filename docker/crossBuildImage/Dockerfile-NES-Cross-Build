@@ -118,6 +118,7 @@ sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-l
 sed -i -- 's|/lib/aarch64-linux-gnu/|/usr/lib/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
 sed -i -- 's|/include|/usr/include|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
 cp -r -v -L /usr/local/lib/libopen62541* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
+cp -r -v -L /usr/local/lib/cmake/open62541* /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/librdkafka* /opt/sysroots/aarch64-linux-gnu/usr/lib/
 
 RUN cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
