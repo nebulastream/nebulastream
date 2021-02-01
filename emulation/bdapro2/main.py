@@ -14,10 +14,12 @@ from mininet.net import Containernet
 from yamldataclassconfig.config import YamlDataClassConfig
 
 from lib.topology import Topology
-from lib.util import NodeCmd, add_parent_topology, NodeType, get_node_ips
+from lib.util import NodeCmd, add_parent_topology, NodeType, get_node_ips, remove_parent_topology
 
-COORDINATOR = '/opt/local/nebula-stream/nesCoordinator'
-WORKER = '/opt/local/nebula-stream/nesWorker'
+COORDINATOR = "/opt/local/nebula-stream/nesCoordinator"
+WORKER = "/opt/local/nebula-stream/nesWorker"
+SENSOR_WORKER_PREFIX = "S"
+WORKER_PREFIX = "W"
 
 ips: Iterable[str] = (str(addr) for addr in IPv4Network('10.220.1.0/24').hosts())
 
@@ -32,7 +34,7 @@ class Config(YamlDataClassConfig):
     producer_options: str = None
     hierarchy: bool = None
     log_level: str = "debug"
-    hierarchy_mapping: Optional[Dict[int, Set[int]]] = None
+    hierarchy_mapping: Optional[Dict[str, Set[str]]] = None
 
 
 def flat_topology(config: Config):
@@ -46,7 +48,7 @@ def flat_topology(config: Config):
                              f"=8 --logLevel=LOG_DEBUG --enableQueryMerging=true"))
         for i in range(0, config.workers_producing):
             worker_ip = next(ips)
-            worker = net.addDocker(f"wp{i}", ip=worker_ip,
+            worker = net.addDocker(f"{SENSOR_WORKER_PREFIX}-{i}", ip=worker_ip,
                                    dimage="bdapro/query-merging",
                                    volumes=["/tmp/logs:/logs"],
                                    cpuset_cpus="1",
@@ -58,7 +60,7 @@ def flat_topology(config: Config):
 
         for i in range(0, config.total_workers - config.workers_producing):
             worker_ip = next(ips)
-            worker = net.addDocker(f"wb{i}", ip=worker_ip,
+            worker = net.addDocker(f"{WORKER_PREFIX}-{i}", ip=worker_ip,
                                    dimage="bdapro/query-merging",
                                    volumes=["/tmp/logs:/logs"],
                                    cpuset_cpus="1"
@@ -91,10 +93,30 @@ class GracefulKiller:
         exit(0)
 
 
-def construct_hierarchy(topology: Topology):
+def construct_hierarchy(topology: Topology, config: Config):
+    node_ips = get_node_ips()
+    hierarchy_mapping = config.hierarchy_mapping
+    if hierarchy_mapping is None:
+        default_hierarchy(topology, node_ips)
+    else:
+        coordinator_worker_id = node_ips.get(config.coordinator_ip)
+        node_name_ip = dict()
+        for node in topology.nodes:
+            node_name_ip[node.node.name] = node.ip
+        for parent in hierarchy_mapping.keys():
+            for child in hierarchy_mapping[parent]:
+                child_ip = node_name_ip[child]
+                parent_ip = node_name_ip[parent]
+                print(f"construct_hierarchy: Adding {parent} as parent for {child}")
+                child_id = node_ips.get(child_ip)
+                parent_id = node_ips.get(parent_ip)
+                add_parent_topology(child_id, parent_id)
+                remove_parent_topology(child_id, coordinator_worker_id)
+
+
+def default_hierarchy(topology: Topology, node_ips: Dict[str, int]):
     producers = [node.ip for node in topology.nodes if node.node_type == NodeType.Sensor]
     workers = [node.ip for node in topology.nodes if node.node_type == NodeType.Worker]
-    node_ips = get_node_ips()
     for i in range(0, min(len(producers), len(workers))):
         add_parent_topology(node_ips.get(producers[i]), node_ips.get(workers[i]))
 
@@ -108,7 +130,7 @@ def main(config: Config):
         GracefulKiller(topology)
         if config.hierarchy:
             print("Constructing Hierarchy")
-            construct_hierarchy(topology)
+            construct_hierarchy(topology, config)
         print("Emulation Running. Press CTRL-C to exit.", flush=True)
         while True:
             # Do nothing and hog CPU forever until SIGINT received.
