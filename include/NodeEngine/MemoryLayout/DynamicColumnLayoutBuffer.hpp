@@ -37,7 +37,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
     const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout->getFieldSizes(); }
 
     /**
-     * @brief This function calculates the offset in the associated buffer for ithRecord and jthField
+     * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
      * @param ithRecord
      * @param jthField
      * @param boundaryChecks
