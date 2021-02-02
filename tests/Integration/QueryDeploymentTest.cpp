@@ -1285,17 +1285,17 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query1 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test1.out\"));";
     QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
-    string query2 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test2.out\"));";
-    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
-    auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId1, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, globalQueryPlan, 2));
+    string query2 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"test2.out\"));";
+    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, 1));
@@ -1380,6 +1380,126 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_EQ(response1, 0);
 
     int response2 = remove("test2.out");
+    EXPECT_EQ(response2, 0);
+}
+
+TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration) {
+    string file1 = "testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration1.out";
+    string file2 = "testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration2.out";
+    remove(file1.c_str());
+    remove(file2.c_str());
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd =
+        std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, std::thread::hardware_concurrency(), true, true);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchemaFileName =
+        "testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfigurationTestSchema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << testSchema;
+    out.close();
+    wrk1->registerLogicalStream("car", testSchemaFileName);
+    wrk2->registerLogicalStream("car", testSchemaFileName);
+
+    //register physical stream
+    PhysicalStreamConfigPtr confCarWrk1 = PhysicalStreamConfig::create("DefaultSource", "", 1, 1, 0, "physical_car1", "car");
+    PhysicalStreamConfigPtr confCarWrk2 = PhysicalStreamConfig::create("DefaultSource", "", 1, 1, 0, "physical_car2", "car");
+    wrk1->registerPhysicalStream(confCarWrk1);
+    wrk2->registerPhysicalStream(confCarWrk2);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query1 = "Query::from(\"car\").sink(FileSinkDescriptor::create("
+                    "\"testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration1.out\"));";
+    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId1, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, globalQueryPlan, 2));
+
+    string query2 = "Query::from(\"car\").sink(FileSinkDescriptor::create("
+                    "\"testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration2.out\"));";
+    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
+    //  Check last processed buffer counts and wait for atleast one more to be produced
+    int processedBuffersWrk1 = TestUtils::getProcessedBuffers(wrk1, queryId1, globalQueryPlan);
+    int processedBuffersWrk2 = TestUtils::getProcessedBuffers(wrk2, queryId1, globalQueryPlan);
+    int processedBuffersCrd = TestUtils::getProcessedBuffers(crd, queryId1, globalQueryPlan);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, processedBuffersWrk1 + 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, processedBuffersWrk2 + 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, processedBuffersCrd + 1));
+
+    NES_INFO("QueryDeploymentTest: Remove query " << queryId1);
+    queryService->validateAndQueueStopRequest(queryId1);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
+
+    //  Check last processed buffer counts and wait for atleast one more to be produced
+    processedBuffersWrk1 = TestUtils::getProcessedBuffers(wrk1, queryId1, globalQueryPlan);
+    processedBuffersWrk2 = TestUtils::getProcessedBuffers(wrk2, queryId1, globalQueryPlan);
+    processedBuffersCrd = TestUtils::getProcessedBuffers(crd, queryId1, globalQueryPlan);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, processedBuffersWrk1 + 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, processedBuffersWrk2 + 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, processedBuffersCrd + 1));
+
+    NES_INFO("QueryDeploymentTest: Remove query " << queryId2);
+    queryService->validateAndQueueStopRequest(queryId2);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
+
+    ifstream my_file1(file1);
+    EXPECT_TRUE(my_file1.good());
+
+    std::ifstream ifs1(file1);
+    std::string actualContent1((std::istreambuf_iterator<char>(ifs1)), (std::istreambuf_iterator<char>()));
+
+    EXPECT_GT(actualContent1.length(), 0);
+
+    ifstream my_file2(file2);
+    EXPECT_TRUE(my_file2.good());
+
+    std::ifstream ifs2(file2);
+    std::string actualContent2((std::istreambuf_iterator<char>(ifs2)), (std::istreambuf_iterator<char>()));
+
+    EXPECT_GT(actualContent2.length(), 0);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+    int response1 = remove(file1.c_str());
+    EXPECT_EQ(response1, 0);
+
+    int response2 = remove(file2.c_str());
     EXPECT_EQ(response2, 0);
 }
 

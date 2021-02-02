@@ -269,6 +269,70 @@ class TestUtils {
     }
 
     /**
+     * @brief method to return produced buffers
+     * @param nesWorker to NesWorker
+     * @param queryId
+     * @param globalQueryPlan
+     * @return int indicating number of buffers processed
+     */
+    static int getProcessedBuffers(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan) {
+        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+            NES_ERROR("Unable to find global query Id for user query id " << queryId);
+            return false;
+        }
+
+        NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
+
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            NES_DEBUG("getProcessedBuffers: check result NesWorkerPtr");
+            //FIXME: handle vector of statistics properly in #977
+            auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
+            if (statistics.empty()) {
+                NES_DEBUG("getProcessedBuffers: query=" << sharedQueryId << " stats size=" << statistics.size());
+                sleep(1);
+                continue;
+            }
+            return statistics[0]->getProcessedBuffers();
+        }
+        return -1;
+    }
+
+    /**
+    * @brief method to return produced buffers
+    * @param nesWorker to NesWorker
+    * @param queryId
+    * @param globalQueryPlan
+    * @return int indicating number of buffers processed
+    */
+    static int getProcessedBuffers(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan) {
+        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+            NES_ERROR("Unable to find global query Id for user query id " << queryId);
+            return false;
+        }
+
+        NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
+
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            NES_DEBUG("getProcessedBuffers: check result NesWorkerPtr");
+            //FIXME: handle vector of statistics properly in #977
+            auto statistics = nesCoordinator->getQueryStatistics(sharedQueryId);
+            if (statistics.empty()) {
+                NES_DEBUG("getProcessedBuffers: query=" << sharedQueryId << " stats size=" << statistics.size());
+                sleep(1);
+                continue;
+            }
+            return statistics[0]->getProcessedBuffers();
+        }
+        return -1;
+    }
+
+    /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
      * @param nesWorker to NesWorker
      * @param queryId

@@ -45,9 +45,12 @@ namespace NES {
 QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                                            QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
                                                            StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                                           QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging)
+                                                           QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+                                                           bool enableQueryReconfiguration)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
       globalQueryPlan(globalQueryPlan) {
+      globalQueryPlan(globalQueryPlan), enableQueryMerging(enableQueryMerging),
+      enableQueryReconfiguration(enableQueryReconfiguration) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -84,14 +87,15 @@ void QueryRequestProcessorService::start() {
                     SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
-                    if (sharedQueryMetaData->isEmpty() && !sharedQueryMetaData->isNew()) {
+                    if ((!enableQueryReconfiguration || sharedQueryMetaData->isEmpty()) && !sharedQueryMetaData->isNew()) {
                             NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
                             bool successful = queryUndeploymentPhase->execute(sharedQueryId);
                             if (!successful) {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
                             }
-                        } else if (sharedQueryMetaData->isNew()) {
+                        }
+                        if ((sharedQueryMetaData->isNew() || !enableQueryReconfiguration) && !sharedQueryMetaData->isEmpty()) {
 
                         auto queryPlan = sharedQueryMetaData->getQueryPlan();
 
@@ -119,7 +123,8 @@ void QueryRequestProcessorService::start() {
                                     sharedQueryId,"QueryRequestProcessingService: Failed to deploy query with global query Id "
                                     + std::to_string(sharedQueryId));
                             }
-                        } else {
+                        }
+                        if (enableQueryReconfiguration && !sharedQueryMetaData->isEmpty() && !sharedQueryMetaData->isNew()) {
                             auto queryPlan = sharedQueryMetaData->getQueryPlan();
                             bool successful = queryReconfigurationPhase->execute(queryPlan);
                             if (!successful) {

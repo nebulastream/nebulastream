@@ -71,7 +71,8 @@ class QueryRequestProcessorService {
     explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                           QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                          QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging);
+                                          QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+                                          bool enableQueryReconfiguration);
 
     ~QueryRequestProcessorService();
     /**
@@ -103,6 +104,7 @@ class QueryRequestProcessorService {
     QueryRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
+    bool enableQueryReconfiguration;
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP
