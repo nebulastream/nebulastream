@@ -105,7 +105,61 @@ int main(int argc, char** argv) {
         wrk->setWithParent(workerConfig->getParentId()->getValue());
     }
 
+    //wrk->replaceParent(1, 5);
+    //wrk->addParent(6);
     wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
+
+//    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
+//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort + 70, dataPort + 11, NodeType::Worker, 4);
+//    //wrk1->addParent(1);
+//    wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+//
+//
+//
+//
+//
+//    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
+//
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort + 20, dataPort + 21, NodeType::Worker, 4);
+//    wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//
+//
+//    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort + 30, dataPort + 31, NodeType::Worker, 4);
+//    wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+//    wrk3->replaceParent(1,3);
+//
+//    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort + 40, dataPort + 41, NodeType::Worker, 4);
+//    wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+//    wrk4->replaceParent(1,5);
+//    wrk4->addParent(4);
+//
+//
+//
+//
+//
+//    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort + 60, dataPort + 61, NodeType::Worker, 4);
+//
+//    wrk5->start(/**blocking**/ false, /**withConnect**/ true);
+//    wrk5->replaceParent(1,5);
+
+    //wrk->replaceParent(1,7);
+    //wrk->addParent(6);
+
+    //NesWorkerPtr wrk6 = std::make_shared<NesWorker>(coordinatorIp, coordinatorPort, localWorkerIp, rpcPort + 80, dataPort + 81, NodeType::Worker, 4);
+    //wrk6->start(/**blocking**/ true, /**withConnect**/ true);
+
+
+
+
+
+
+
+
+
+
+
+
     wrk->stop(/**force*/ true);
     NES_INFO("worker started");
+
 }
