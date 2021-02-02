@@ -18,7 +18,6 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <chrono>
 #include <cstddef>
 #include <iostream>
 
