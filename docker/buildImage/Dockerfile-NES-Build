@@ -27,9 +27,6 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   doxygen \
   graphviz \
   software-properties-common \
-  && add-apt-repository ppa:open62541-team/ppa && \
-  apt-get update -qq && \
-  apt-get install libopen62541-1-dev -qq \
   && apt-get clean -qq
 
 RUN cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
@@ -51,6 +48,9 @@ RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git &&
   cd cppkafka && mkdir -p build && cd build && \
   cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
   make -j -w && make install && cd ${HOME} && rm -rf cppkafka* && \
+  cd ${HOME} && git clone https://github.com/open62541/open62541.git && cd open62541 && \
+  git submodule update --init --recursive --jobs 1 && mkdir -p build && cd build && \
+  cmake .. -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUA_NAMESPACE_ZERO=FULL && make -j && make install && \
   apt-get purge -y wget && apt autoremove -y
 
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
