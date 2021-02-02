@@ -266,7 +266,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
 
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, queryId, executable, context, nullptr, nullptr, nullptr);
+    auto pipeline = ExecutablePipeline::create(0, queryId, executable, context, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);
     return std::make_tuple(builder.build(), executable);
 }
@@ -655,7 +655,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
 
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink);
     auto executable = std::make_shared<FailingTextExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, nullptr, nullptr, nullptr);
+    auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);
     auto qep = builder.build();
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
@@ -707,7 +707,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
 
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink);
     auto executable = std::make_shared<FailingTextExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, nullptr, nullptr, nullptr);
+    auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);
     auto qep = builder.build();
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
