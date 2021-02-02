@@ -20,6 +20,8 @@
 #include <Util/Logger.hpp>
 #include <cstddef>
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 using namespace NES;
 
@@ -450,6 +452,8 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(8), topologyNodes.at(9)};
     std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
 
+    std::cout << topology->toString();
+
     const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
 
     EXPECT_FALSE(startNodes.empty());
@@ -524,4 +528,194 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     EXPECT_TRUE(parent2->getId() == topologyNodes.at(5)->getId());
     TopologyNodePtr parent3 = parent2->getParents()[0]->as<TopologyNode>();
     EXPECT_TRUE(parent3->getId() == topologyNodes.at(0)->getId());
+}
+
+/**
+ * @brief Tests if Path selection ignores nodes marked for maintenance
+ */
+TEST_F(TopologyTest, testPathSelectionWithMaintenance) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // creater workers
+    std::vector<TopologyNodePtr> topologyNodes;
+    int resource = 4;
+    for (uint32_t i = 0; i < 15; ++i) {
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(topologyNodes.at(0));
+    //sets up Topology as in Figure 1 of Balints proposal document
+    // link each worker with its neighbor
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(3));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(4));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(8));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(6));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(7));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(8));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(9));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(6), topologyNodes.at(10));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(10));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(11));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(8), topologyNodes.at(12));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(9), topologyNodes.at(12));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(9), topologyNodes.at(13));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(10), topologyNodes.at(13));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(10), topologyNodes.at(14));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(11), topologyNodes.at(14));
+
+    std::vector<TopologyNodePtr> sourceNodes{ topologyNodes.at(14)};
+
+    std::cout << topology->toString();
+    std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
+
+    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    //std::this_thread::sleep_for (std::chrono::seconds(10));
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+//    TopologyNodePtr startNode1 = startNodes[0];
+//    EXPECT_TRUE(startNode1->getId() == topologyNodes.at(12)->getId());
+//    TopologyNodePtr startNode2 = startNodes[1];
+//    EXPECT_TRUE(startNode2->getId() == topologyNodes.at(13)->getId());
+//    TopologyNodePtr  startNode3 = startNodes[2];
+//    EXPECT_TRUE(startNode3->getId() == topologyNodes.at(14)->getId());
+//
+//
+//    //EXPECT_TRUE(startNode2->getParents().size() == startNode1->getParents().size());
+//
+//    //EXPECT_TRUE(startNode3->getParents().size() == startNode2->getParents().size());
+//
+//    for (auto& startNode: startNodes) {
+//        std::vector<NodePtr> allParents = startNode->getAndFlattenAllAncestors();
+//        for (auto& parent: allParents){
+//            TopologyNodePtr ptr = parent->as<TopologyNode>();
+//            std::cout << "Parent:"<< ptr->getId() << std::endl;
+//
+//        }
+//    }
+//
+//    EXPECT_TRUE(startNode2->getParents()[0]->as<TopologyNode>()->getId()
+//    == startNode1->getParents()[0]->as<TopologyNode>()->getId());
+//    TopologyNodePtr s1Parent1 = startNode1->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(s1Parent1->getId() == topologyNodes.at(7)->getId());
+//    TopologyNodePtr s1Parent2 = s1Parent1->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(s1Parent2->getId() == topologyNodes.at(4)->getId());
+//    TopologyNodePtr s1Parent3 = s1Parent2->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(s1Parent3->getId() == topologyNodes.at(1)->getId());
+//    TopologyNodePtr s1Parent4 = s1Parent3->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(s1Parent4->getId() == topologyNodes.at(0)->getId());
+
+
+
+
+
+//    TopologyPtr topology = Topology::create();
+//
+//    uint32_t grpcPort = 4000;
+//    uint32_t dataPort = 5000;
+//
+//    // creater workers
+//    std::vector<TopologyNodePtr> topologyNodes;
+//    int resource = 4;
+//    for (uint32_t i = 0; i < 10; ++i) {
+//        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+//        grpcPort = grpcPort + 2;
+//        dataPort = dataPort + 2;
+//    }
+//
+//    topology->setAsRoot(topologyNodes.at(0));
+//
+//    // link each worker with its neighbor
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+//
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+//
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
+//
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
+//
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
+//    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
+//
+//    std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(8), topologyNodes.at(9)};
+//    std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
+//
+//    std::cout << topology->toString();
+//
+//    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+//
+//    EXPECT_FALSE(startNodes.empty());
+//    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+//
+//    TopologyNodePtr startNode1 = startNodes[0];
+//    EXPECT_TRUE(startNode1->getId() == topologyNodes.at(8)->getId());
+//    TopologyNodePtr startNode2 = startNodes[1];
+//    EXPECT_TRUE(startNode2->getId() == topologyNodes.at(9)->getId());
+//    EXPECT_TRUE(startNode2->getParents().size() == startNode1->getParents().size());
+//    EXPECT_TRUE(startNode2->getParents()[0]->as<TopologyNode>()->getId()
+//                == startNode1->getParents()[0]->as<TopologyNode>()->getId());
+//
+//
+//    TopologyNodePtr s1Parent1 = startNode1->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(s1Parent1->getId() == topologyNodes.at(7)->getId());
+//    TopologyNodePtr s1Parent2 = s1Parent1->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(s1Parent2->getId() == topologyNodes.at(4)->getId());
+//    TopologyNodePtr s1Parent3 = s1Parent2->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(s1Parent3->getId() == topologyNodes.at(1)->getId());
+//    TopologyNodePtr s1Parent4 = s1Parent3->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(s1Parent4->getId() == topologyNodes.at(0)->getId());
+//
+//    topology->findNodeWithId(4)->setMaintenanceFlag(true);
+//
+//    const std::vector<TopologyNodePtr> startNodesWithMaintenance = topology->findPathBetween(sourceNodes, destinationNodes);
+//
+//    EXPECT_FALSE(startNodes.empty());
+//    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+//
+//    TopologyNodePtr mstartNode1 = startNodesWithMaintenance[0];
+//
+//
+//    EXPECT_TRUE(mstartNode1->getId() == topologyNodes.at(8)->getId());
+//    TopologyNodePtr mstartNode2 = startNodesWithMaintenance[1];
+//    EXPECT_TRUE(mstartNode2->getId() == topologyNodes.at(9)->getId());
+//    EXPECT_TRUE(mstartNode2->getParents().size() == mstartNode1->getParents().size());
+//    EXPECT_TRUE(mstartNode2->getParents()[0]->as<TopologyNode>()->getId()
+//                == mstartNode1->getParents()[0]->as<TopologyNode>()->getId());
+//
+//
+//    TopologyNodePtr ms1Parent1 = mstartNode1->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(ms1Parent1->getId() == topologyNodes.at(7)->getId());
+//    TopologyNodePtr ms1Parent2 = ms1Parent1->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(ms1Parent2->getId() == topologyNodes.at(5)->getId());
+//    TopologyNodePtr ms1Parent3 = ms1Parent2->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(ms1Parent3->getId() == topologyNodes.at(2)->getId());
+//    TopologyNodePtr ms1Parent4 = ms1Parent3->getParents()[0]->as<TopologyNode>();
+//    EXPECT_TRUE(ms1Parent4->getId() == topologyNodes.at(0)->getId());
 }
