@@ -328,9 +328,14 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
     bool ret = true;
     {
         std::unique_lock lock(queryMutex);
-
+        // here im using COW to avoid keeping the lock for long
+        // however, this is not a long-term fix
+        // because it wont lead to correct behaviour
+        // under heavy query deployment ops
         auto sources = qep->getSources();
-        for (const auto& source : sources) {
+        auto copiedSources = std::vector(sources.begin(), sources.end());
+        lock.unlock();
+        for (const auto& source : copiedSources) {
             NES_DEBUG("QueryManager: stop source " << source->toString());
             // TODO what if two qeps use the same source
 
