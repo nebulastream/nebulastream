@@ -251,18 +251,21 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
     //if test node is not destination node, get test nodes parents
     //filer parents of all nodes marked for maintenance
     std::vector<NodePtr> parents = testNode->getParents();
-    parents.erase(std::remove_if(parents.begin(),parents.end(),
-                                 [](NodePtr parent) {
-      return parent->as<TopologyNode>()->getMaintenanceFlag();
-    }),parents.end());
+    std::vector<NodePtr> updatedParents;
+    //parents.erase(,parents.end());
+    for (auto& parent: parents){
+        if(!parent->as<TopologyNode>()->getMaintenanceFlag()){
+            updatedParents.push_back(parent);
+        }
+    }
 
-    if (parents.empty()) {
+    if (updatedParents.empty()) {
         NES_WARNING("Topology: reached end of the tree but destination node not found.");
         return nullptr;
     }
 
     TopologyNodePtr foundNode = nullptr;
-    for (auto& parent : parents) {
+    for (auto& parent : updatedParents) {
         TopologyNodePtr foundInParent = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
         if (foundInParent) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
