@@ -229,14 +229,10 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
                                std::vector<TopologyNodePtr> searchedNodes,
                                std::map<uint64_t, TopologyNodePtr>& uniqueNodes) {
 
-
-
-
     NES_TRACE("Topology: check if test node is one of the searched node");
     auto found = std::find_if(searchedNodes.begin(), searchedNodes.end(), [&](const TopologyNodePtr& searchedNode) {
         return searchedNode->getId() == testNode->getId();
     });
-
 
     //if testNode is a destination node
     if (found != searchedNodes.end()) {
@@ -283,11 +279,6 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
         }
     }
     return foundNode;
-
-
-
-
-
 }
 
 std::string Topology::toString() {

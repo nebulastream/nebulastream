@@ -584,7 +584,7 @@ TEST_F(TopologyTest, testPathSelectionWithMaintenance) {
 
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(11), topologyNodes.at(14));
 
-    std::vector<TopologyNodePtr> sourceNodes{ topologyNodes.at(14)};
+    std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(14)};
 
     std::cout << topology->toString();
     std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
