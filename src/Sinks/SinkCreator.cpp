@@ -104,12 +104,22 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
 }
 #endif
 
-#ifdef ENABLE_OPC_BUILD
-const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
-                                std::string url, UA_NodeId nodeId, std::string user, std::string password) {
+//#ifdef ENABLE_OPC_BUILD
+//const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+//                                std::string url, UA_NodeId nodeId, std::string user, std::string password) {
+//    NES_DEBUG("plz fix me" << parentPlanId);
+//    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
+//    return std::make_shared<OPCSink>(format, url, nodeId, user, password);
+//}
+//#endif
+
+//TODO further adapt to MQTT specifics
+#ifdef ENABLE_MQTT_BUILD
+const DataSinkPtr createMQTTSink(SinkFormatPtr sink_format, QuerySubPlanId parent_plan_id, SchemaPtr schema, QuerySubPlanId parentPlanId,
+                                 NodeEngine::NodeEnginePtr nodeEngine, std::string url, std::string user, std::string password) {
     NES_DEBUG("plz fix me" << parentPlanId);
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<OPCSink>(format, url, nodeId, user, password);
+    return std::make_shared<MQTTSink>(sink_format, parent_plan_id, schema, parentPlanId, nodeEngine, url, user, password);
 }
 #endif
 
