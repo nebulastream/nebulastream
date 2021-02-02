@@ -72,9 +72,8 @@ jobs:
               cd docker/buildImage
               #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
               #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
-              docker build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest
               echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker push nebulastream/nes-build-image:latest
+              docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
               echo "Pushed the build image"
               docker logout
           else
@@ -86,9 +85,8 @@ jobs:
           if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
               echo "Found changes done to devImage"
               cd docker/devImage/
-              docker build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest
               echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker push nebulastream/nes-dev-image:latest
+              docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
               echo "Pushed the dev image"
               docker logout
           else
@@ -101,11 +99,11 @@ jobs:
           nes_version="$(grep -o "NES_VERSION.*" include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
           echo "Preparing new executable image with version $nes_version"
           cd docker/executableImage/
-          docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version
-          docker tag nebulastream/nes-executable-image:$nes_version nebulastream/nes-executable-image:latest
+          echo "Releasing new executable image with version $nes_version"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          echo "Releasing new executable image with version $nes_version and latest"
-          docker push nebulastream/nes-executable-image:$nes_version
+          docker buildx build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version --platform=linux/amd64,linux/arm64 --push
+          docker tag nebulastream/nes-executable-image:$nes_version nebulastream/nes-executable-image:latest
+          echo "Releasing new executable image with version latest"
           docker push nebulastream/nes-executable-image:latest
           echo "Pushed the execution image"
           docker logout
