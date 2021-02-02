@@ -19,7 +19,7 @@
 
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-
+#include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -38,10 +38,11 @@ class SemanticQueryValidationTest : public testing::Test {
 
     void CallValidation(std::string queryString){
         PrintQString(queryString);
-        SemanticQueryValidation semanticQueryValidation;
+        StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+        SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalogPtr);
         QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
         filterQuery->sink(FileSinkDescriptor::create(""));
-        semanticQueryValidation.isSatisfiable(filterQuery);
+        semanticQueryValidationPtr->isSatisfiable(filterQuery);
     }
 
     void TestForException(std::string queryString){
@@ -111,7 +112,8 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithMultipleFilters) {
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Satisfiable Query with later added filters");
 
-    SemanticQueryValidation semanticQueryValidation;
+    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+    SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalogPtr);
 
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10).filter(Attribute(\"value\") < 10); "
@@ -124,13 +126,14 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
 
     filterQuery->sink(FileSinkDescriptor::create(""));
     
-    semanticQueryValidation.isSatisfiable(filterQuery);
+    semanticQueryValidationPtr->isSatisfiable(filterQuery);
 }
 
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Unatisfiable Query with later added filters");
 
-    SemanticQueryValidation semanticQueryValidation;
+    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+    SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalogPtr);
 
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 100).filter(Attribute(\"value\") < 10); "
@@ -144,7 +147,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     filterQuery->sink(FileSinkDescriptor::create(""));
 
     try {
-        semanticQueryValidation.isSatisfiable(filterQuery);
+        semanticQueryValidationPtr->isSatisfiable(filterQuery);
     } catch(std::runtime_error& e) {
         std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
         std::cout << e.what();

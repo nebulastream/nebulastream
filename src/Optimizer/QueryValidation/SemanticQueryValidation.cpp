@@ -32,9 +32,12 @@
 
 namespace NES {
 
+NES::SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr scp) {
+    streamCatalog = scp;
+}
+
 bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     z3::ContextPtr context = std::make_shared<z3::context>();
     
     auto queryPlan = inputQuery->getQueryPlan();

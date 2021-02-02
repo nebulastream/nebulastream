@@ -23,15 +23,20 @@
 
 namespace NES {
 
+class SemanticQueryValidation;
+typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
+
 /**
  * @brief This class is responsible for Semantic Query Validation
  */
 class SemanticQueryValidation {
     private:
+        StreamCatalogPtr streamCatalog;
         bool isLogicalStreamInCatalog(std::string streamname, std::map<std::string, std::string> allLogicalStreams);
         void sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
     public:
         bool isSatisfiable(QueryPtr inputQuery);
+        SemanticQueryValidation(StreamCatalogPtr scp);
 };
 
 typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
