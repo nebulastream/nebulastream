@@ -16,13 +16,13 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <utility>
 #include <z3++.h>
 
 namespace NES {
 SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id)
-    : sinkDescriptor(sinkDescriptor), LogicalOperatorNode(id) {}
+    : sinkDescriptor(sinkDescriptor), UnaryOperatorNode(id) {}
 
 SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() { return sinkDescriptor; }
 
@@ -42,16 +42,28 @@ bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 };
 
+bool SinkLogicalOperatorNode::inferSchema() {
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
+    return true;
+}
+
 const std::string SinkLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "SINK(" << id << ")";
     return ss.str();
 }
 
+std::string SinkLogicalOperatorNode::getStringBasedSignature() {
+    return "SINK()." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+}
+
 OperatorNodePtr SinkLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setSignature(signature);
     return copy;
 }
 }// namespace NES

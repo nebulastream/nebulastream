@@ -20,23 +20,12 @@
 #include <memory>
 #include <vector>
 namespace NES {
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class QueryExecutionPlan;
-typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class QueryCompiler;
 typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
 
 class CodeGenerator;
 typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
-
-class PipelineStage;
-typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
 class PipelineContext;
 typedef std::shared_ptr<PipelineContext> PipelineContextPtr;

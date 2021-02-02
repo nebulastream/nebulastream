@@ -14,10 +14,23 @@
 
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
+
+if (CMAKE_CROSSCOMPILING)
+    set(CMAKE_ARGS_CROSS -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake
+            -DBoost_NO_SYSTEM_PATHS=TRUE
+            -DBoost_INCLUDE_DIR=/opt/sysroots/aarch64-linux-gnu/usr/include/
+            -DBoost_LIBRARY_DIR=/opt/sysroots/aarch64-linux-gnu/usr/lib/
+    )
+else()
+    set(CMAKE_ARGS_CROSS "")
+endif ()
+
 ExternalProject_Add(
         gtest
         URL https://github.com/google/googletest/archive/release-1.8.1.zip
         PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
+        CMAKE_ARGS ${CMAKE_ARGS_CROSS}
         # Disable install step
         INSTALL_COMMAND ""
         URL_HASH SHA256=927827c183d01734cc5cfef85e0ff3f5a92ffe6188e0d18e909c5efebf28a0c7
@@ -65,19 +78,23 @@ file(COPY test_data DESTINATION .)
 add_definitions(-DTEST_DATA_DIRECTORY="${CMAKE_BINARY_DIR}/tests/test_data")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}")
 
-
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
 ### Node Engine Tests ###
-add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
+add_executable(node-engine-test "UnitTests/NodeEngine/NodeEngineTest.cpp")
 target_link_libraries(node-engine-test nes ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
 ### Code Generation Tests ###
-add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
+add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
+
+### Operator Code Generation Tests ###
+add_executable(operator-code-generation-tests "UnitTests/CodeGenerator/OperatorCodeGenerationTest.cpp")
+target_link_libraries(operator-code-generation-tests nes ${GTEST_LIBRARIES})
+add_test(NAME operator-code-generation-tests COMMAND operator-code-generation-tests)
 
 ### NES Topology Tests ###
 add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
@@ -85,38 +102,38 @@ target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
 
 ### Buffer Manager Test ###
-add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp" UnitTests/CoordinatorEngineTest.cpp)
+add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp)
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
 ### AbstractWindowHandler Manager Test ###
-add_executable(window-manager-tests "UnitTests/WindowManagerTest.cpp")
+add_executable(window-manager-tests "UnitTests/Windowing/WindowManagerTest.cpp")
 target_link_libraries(window-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)
 
 ### State Manager Test ###
-add_executable(state-manager-tests "UnitTests/StateTest.cpp")
+add_executable(state-manager-tests "UnitTests/State/StateTest.cpp")
 target_link_libraries(state-manager-tests nes ${GTEST_LIBRARIES})
 add_test(NAME state-manager-tests COMMAND state-manager-tests)
 
 ### ZMQ Data Source Sink Tests ###
-add_executable(zmq-tests "UnitTests/ZMQTest.cpp")
+add_executable(zmq-tests "UnitTests/Source/ZMQTest.cpp")
 target_link_libraries(zmq-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME zmq-tests COMMAND zmq-tests)
 
 ### Source Tests ###
-add_executable(source-tests "UnitTests/SourceTest.cpp")
+add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
 target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME source-tests COMMAND source-tests)
 
 ### Sink Tests ###
-add_executable(sink-tests "UnitTests/SinkTest.cpp" UnitTests/SinkTest.cpp)
+add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
 target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME sink-tests COMMAND sink-tests)
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
-    add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
+    add_executable(kafka-tests "UnitTests/Source/KafkaTest.cpp")
     message("libraies: ${LIBRARIES}")
     target_link_libraries(kafka-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME kafka-tests COMMAND kafka-tests)
@@ -124,16 +141,16 @@ endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
 if(NES_USE_OPC)
-    add_executable(opc-source-tests "UnitTests/OPCSourceTest.cpp" UnitTests/OPCSourceTest.cpp)
+    add_executable(opc-source-tests "UnitTests/Source/OPCSourceTest.cpp" UnitTests/Source/OPCSourceTest.cpp)
     target_link_libraries(opc-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-source-tests COMMAND opc-source-tests)
-    add_executable(opc-sink-tests "UnitTests/OPCSinkTest.cpp" UnitTests/OPCSinkTest.cpp)
+    add_executable(opc-sink-tests "UnitTests/Sink/OPCSinkTest.cpp" UnitTests/Sink/OPCSinkTest.cpp)
     target_link_libraries(opc-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
 endif(NES_USE_OPC)
 
 ### Memory Layout Tests ###
-add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
+add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
 target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
 
@@ -143,47 +160,52 @@ target_link_libraries(stream-catalog-test nes ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 
 ### QueryCatalog Tests ###
-add_executable(query-catalog-tests "UnitTests/QueryCatalogTest.cpp")
+add_executable(query-catalog-tests "UnitTests/CoordinatorEngine/QueryCatalogTest.cpp")
 target_link_libraries(query-catalog-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
-### QueryCompilerTest ###
-add_executable(query-execution-test "UnitTests/QueryExecutionTest.cpp")
+### QueryExecutionTest ###
+add_executable(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
 target_link_libraries(query-execution-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-execution-test COMMAND query-execution-test)
 
+### ProjectionTest ###
+add_executable(projection-test "UnitTests/Query/ProjectionTest.cpp")
+target_link_libraries(projection-test nes ${GTEST_LIBRARIES})
+add_test(NAME projection-test COMMAND projection-test)
+
 ### TupleBufferTest ###
-add_executable(tuple-buffer-test "UnitTests/TupleBufferTest.cpp")
+add_executable(tuple-buffer-test "UnitTests/NodeEngine/TupleBufferTest.cpp")
 target_link_libraries(tuple-buffer-test nes ${GTEST_LIBRARIES})
 add_test(NAME tuple-buffer-test COMMAND tuple-buffer-test)
 
 # LogicalOperatorPlanNodeTest
-add_executable(logical-operator-node-tests "UnitTests/LogicalOperatorNodeTest.cpp")
+add_executable(logical-operator-node-tests "UnitTests/Operators/LogicalOperatorNodeTest.cpp")
 target_link_libraries(logical-operator-node-tests nes ${GTEST_LIBRARIES})
 add_test(NAME logical-operator-node-tests COMMAND logical-operator-node-tests)
 
 # ExpressionNodeTest
-add_executable(predicate-node-tests "UnitTests/ExpressionNodeTest.cpp")
-target_link_libraries(predicate-node-tests nes ${GTEST_LIBRARIES})
-add_test(NAME predicate-node-tests COMMAND predicate-node-tests)
+add_executable(expression-node-test "UnitTests/Operators/ExpressionNodeTest.cpp")
+target_link_libraries(expression-node-test nes ${GTEST_LIBRARIES})
+add_test(NAME expression-node-test COMMAND expression-node-test)
 
 # QueryTest
-add_executable(query-tests "UnitTests/QueryTest.cpp")
+add_executable(query-tests "UnitTests/Catalogs/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
 
 # QueryTest
-add_executable(translate-to-generatable-tests "UnitTests/QueryCompiler/TranslateToGeneratablePlanTest.cpp")
-target_link_libraries(translate-to-generatable-tests nes ${GTEST_LIBRARIES})
-add_test(NAME translate-to-generatable-tests COMMAND translate-to-generatable-tests)
+add_executable(translate-to-generatable-operator-phase-tests "UnitTests/QueryCompiler/TranslateToGeneratableOperatorPhaseTest.cpp")
+target_link_libraries(translate-to-generatable-operator-phase-tests nes ${GTEST_LIBRARIES})
+add_test(NAME translate-to-generatable-operator-phase-tests COMMAND translate-to-generatable-operator-phase-tests)
 
 # ConvertLogicalToPhysicalSinkTest
-add_executable(convert-logical-to-physical-sink-tests "UnitTests/ConvertLogicalToPhysicalSinkTest.cpp")
+add_executable(convert-logical-to-physical-sink-tests "UnitTests/Phases/ConvertLogicalToPhysicalSinkTest.cpp")
 target_link_libraries(convert-logical-to-physical-sink-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-sink-tests COMMAND convert-logical-to-physical-sink-tests)
 
 # ConvertLogicalToPhysicalSourceTest
-add_executable(convert-logical-to-physical-source-tests "UnitTests/ConvertLogicalToPhysicalSourceTest.cpp")
+add_executable(convert-logical-to-physical-source-tests "UnitTests/Phases/ConvertLogicalToPhysicalSourceTest.cpp")
 target_link_libraries(convert-logical-to-physical-source-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
@@ -203,12 +225,12 @@ target_link_libraries(window-distr-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-distr-rule-test COMMAND window-distr-rule-test)
 
 # SerializationUtilTest
-add_executable(serialize-operator-test "UnitTests/Nodes/SerializationUtilTest.cpp")
+add_executable(serialize-operator-test "UnitTests/Serialization/SerializationUtilTest.cpp")
 target_link_libraries(serialize-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
 
 ### CoordinatorEngine Tests ###
-add_executable(coordinator-engine-tests "UnitTests/CoordinatorEngineTest.cpp")
+add_executable(coordinator-engine-tests "UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp")
 target_link_libraries(coordinator-engine-tests nes ${GTEST_LIBRARIES})
 add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
 
@@ -228,7 +250,7 @@ add_test(NAME simple-pattern-test COMMAND simple-pattern-test)
 #add_test(NAME sensor-bus-tests COMMAND sensor-bus-tests)
 
 ### Adaptive Source Tests ###
-add_executable(adaptive-source-tests "UnitTests/AdaptiveSourceTest.cpp")
+add_executable(adaptive-source-tests "UnitTests/Source/AdaptiveSourceTest.cpp")
 target_link_libraries(adaptive-source-tests nes ${GTEST_LIBRARIES})
 add_test(NAME adaptive-source-tests COMMAND adaptive-source-tests)
 
@@ -252,10 +274,10 @@ add_executable(logical-source-expansion-rule-test "UnitTests/Optimizer/QueryRewr
 target_link_libraries(logical-source-expansion-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME logical-source-expansion-rule-test COMMAND logical-source-expansion-rule-test)
 
-### L0 Query Merger Rule Tests ###
-add_executable(l0-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/L0QueryMergerRuleTest.cpp")
-target_link_libraries(l0-query-merger-rule-test nes ${GTEST_LIBRARIES})
-add_test(NAME l0-query-merger-rule-test COMMAND l0-query-merger-rule-test)
+### Syntax Based Equal Query Merger Rule Test ###
+add_executable(syntax-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SyntaxBasedEqualQueryMergerRuleTest.cpp")
+target_link_libraries(syntax-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME syntax-based-equal-query-merger-rule-test COMMAND syntax-based-equal-query-merger-rule-test)
 
 ### Query Placement Tests ###
 add_executable(query-placement-test "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp")
@@ -263,7 +285,7 @@ target_link_libraries(query-placement-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-placement-test COMMAND query-placement-test)
 
 ### Thread Naming Test ###
-add_executable(thread-naming-tests "UnitTests/ThreadNamingTest.cpp")
+add_executable(thread-naming-tests "UnitTests/Util/ThreadNamingTest.cpp")
 target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})
 add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 
@@ -278,19 +300,39 @@ target_link_libraries(z3-validation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME z3-validation-tests COMMAND z3-validation-tests)
 
 ### Operator To FOL Util Test ###
-add_executable(operator-to-FOL-util-tests "UnitTests/Optimizer/Utils/OperatorToZ3ExprUtilTests.cpp")
-target_link_libraries(operator-to-FOL-util-tests nes ${GTEST_LIBRARIES})
-add_test(NAME operator-to-FOL-util-tests COMMAND operator-to-FOL-util-tests)
+add_executable(query-signature-util-tests "UnitTests/Optimizer/Utils/QuerySignatureUtilTests.cpp")
+target_link_libraries(query-signature-util-tests nes ${GTEST_LIBRARIES})
+add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
-### Z3 Expression Inference Phase Test ###
-add_executable(z3-expression-inference-phase-test "UnitTests/Optimizer/Phases/Z3ExpressionInferencePhaseTest.cpp")
-target_link_libraries(z3-expression-inference-phase-test nes ${GTEST_LIBRARIES})
-add_test(NAME z3-expression-inference-phase-test COMMAND z3-expression-inference-phase-test)
+### Signature Inference Phase Test ###
+add_executable(signature-inference-phase-test "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp")
+target_link_libraries(signature-inference-phase-test nes ${GTEST_LIBRARIES})
+add_test(NAME signature-inference-phase-test COMMAND signature-inference-phase-test)
 
 ### Circular Buffer Tests ###
-add_executable(circular-buffer-tests "UnitTests/CircularBufferTest.cpp")
+add_executable(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
 target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
 add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
+
+### Signature Based Equal Query Merger Rule Test ###
+add_executable(signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedEqualQueryMergerRuleTest.cpp")
+target_link_libraries(signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME signature-based-equal-query-merger-rule-test COMMAND signature-based-equal-query-merger-rule-test)
+
+### Join Handler Tests ###
+add_executable(join-handler-tests "UnitTests/JoinHandlerTest.cpp")
+target_link_libraries(join-handler-tests nes ${GTEST_LIBRARIES})
+add_test(NAME join-handler-tests COMMAND join-handler-tests)
+
+### Attribute Sort Rule Test ###
+add_executable(attribute-sort-rule-test "UnitTests/Optimizer/QueryRewrite/AttributeSortRuleTest.cpp")
+target_link_libraries(attribute-sort-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME attribute-sort-rule-test COMMAND attribute-sort-rule-test)
+
+### Attribute Sort Rule Test ###
+add_executable(rename-stream-to-project-operator-rule-test "UnitTests/Optimizer/QueryRewrite/RenameStreamToProjectOperatorRuleTest.cpp")
+target_link_libraries(rename-stream-to-project-operator-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME rename-stream-to-project-operator-rule-test COMMAND rename-stream-to-project-operator-rule-test)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
@@ -303,11 +345,31 @@ add_executable(query-deployment-test "Integration/QueryDeploymentTest.cpp")
 target_link_libraries(query-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-deployment-test COMMAND query-deployment-test)
 
+### RenameTest ###
+add_executable(rename-test "Integration/RenameTest.cpp")
+target_link_libraries(rename-test nes ${GTEST_LIBRARIES})
+add_test(NAME rename-test COMMAND rename-test)
+
+### JoinDeploymentTest ###
+add_executable(join-deployment-test "Integration/JoinDeploymentTest.cpp")
+target_link_libraries(join-deployment-test nes ${GTEST_LIBRARIES})
+add_test(NAME join-deployment-test COMMAND join-deployment-test)
+
 ### windowDeploymentTest ###
 add_executable(window-deployment-test "Integration/WindowDeploymentTest.cpp")
 target_link_libraries(window-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME window-deployment-test COMMAND window-deployment-test)
 
+### MultipleWindowsTest ###
+add_executable(multi-window-test "Integration/MultipleWindowsTest.cpp")
+target_link_libraries(multi-window-test nes ${GTEST_LIBRARIES})
+add_test(NAME multi-window-test COMMAND multi-window-test)
+
+### AssignWatermarkTest ###
+#TODO: activate for testing
+add_executable(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
+target_link_libraries(assignment-watermark-test nes ${GTEST_LIBRARIES})
+add_test(NAME assignment-watermark-test COMMAND assignment-watermark-test)
 
 ### mergeDeploymentTest ###
 add_executable(merge-deployment-test "Integration/MergeDeploymentTest.cpp")
@@ -318,6 +380,11 @@ add_test(NAME merge-deployment-test COMMAND merge-deployment-test)
 add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
 target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})
 add_test(NAME continious-source-test COMMAND continious-source-test)
+
+### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
+add_executable(hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")
+target_link_libraries(hierarchy-test nes ${GTEST_LIBRARIES})
+add_test(NAME hierarchy-test COMMAND hierarchy-test)
 
 ### Catalog Remote Tests ###
 add_executable(stream-catalog-remote-test "Integration/StreamCatalogRemoteTest.cpp")
@@ -340,14 +407,24 @@ target_link_libraries(update-topology-remote-test nes ${GTEST_LIBRARIES})
 add_test(NAME update-topology-remote-test COMMAND update-topology-remote-test)
 
 # NetworkStackTest
-add_executable(network-stack-test "UnitTests/NetworkStackTest.cpp")
+add_executable(network-stack-test "UnitTests/Network/NetworkStackTest.cpp")
 target_link_libraries(network-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME network-stack-test COMMAND network-stack-test)
 
 # MonitoringStackTest
-add_executable(monitoring-stack-test "UnitTests/MonitoringStackTest.cpp")
+add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.cpp")
 target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
+
+### MemorySourceIntegrationTest ###
+add_executable(memory-source-test "Integration/MemorySourceIntegrationTest.cpp")
+target_link_libraries(memory-source-test nes ${GTEST_LIBRARIES})
+add_test(NAME memory-source-test COMMAND memory-source-test)
+
+### TestHarnessUtilTest ###
+add_executable(test-harness-util-test "Integration/TestHarnessUtilTest.cpp")
+target_link_libraries(test-harness-util-test nes ${GTEST_LIBRARIES})
+add_test(NAME test-harness-util-test COMMAND test-harness-util-test)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###

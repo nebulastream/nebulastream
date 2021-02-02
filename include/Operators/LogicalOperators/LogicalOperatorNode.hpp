@@ -23,13 +23,16 @@
 #include <Operators/OperatorNode.hpp>
 
 namespace z3 {
-
 class expr;
 typedef std::shared_ptr<expr> ExprPtr;
-
 class context;
 typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
+
+namespace NES::Optimizer {
+class QuerySignature;
+typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
+}// namespace NES::Optimizer
 
 namespace NES {
 
@@ -43,16 +46,35 @@ class LogicalOperatorNode : public OperatorNode {
      * @param context: the shared pointer to the z3::context
      * @return object of type Z3:expr
      */
-    void inferZ3Expression(z3::ContextPtr context);
+    void inferSignature(z3::ContextPtr context);
+
+    /**
+     * @brief Set the signature for the logical operator
+     * @param signature : the signature
+     */
+    void setSignature(Optimizer::QuerySignaturePtr signature);
 
     /**
      * @brief Get the Z3 expression for the logical operator
      * @return reference to the Z3 expression
      */
-    z3::expr& getZ3Expression();
+    Optimizer::QuerySignaturePtr getSignature();
+
+    /**
+     * @brief Get the string signature computed based on upstream operator chain
+     * @return string representing the query signature
+     */
+    virtual std::string getStringBasedSignature();
+
+    virtual bool inferSchema() = 0;
+    virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
+    virtual SchemaPtr getOutputSchema() const = 0;
+    virtual bool isBinaryOperator() const = 0;
+    virtual bool isExchangeOperator() const = 0;
+    virtual bool isUnaryOperator() const = 0;
 
   protected:
-    z3::ExprPtr expr;
+    Optimizer::QuerySignaturePtr signature;
 };
 
 }// namespace NES

@@ -35,6 +35,7 @@ service CoordinatorRPCService {
 
   rpc RemoveParent (RemoveParentRequest) returns (RemoveParentReply) {}
 
+  rpc ReplaceParent (ReplaceParentRequest) returns (ReplaceParentReply) {}
 }
 
 
@@ -67,12 +68,8 @@ message UnregisterNodeReply {
 message RegisterPhysicalStreamRequest {
   uint64 id = 1;
   string sourceType = 2;
-  string sourceConf = 3;
-  int64 sourceFrequency = 4;
-  uint64 numberOfTuplesToProducePerBuffer = 5;
-  int64 numberOfBuffersToProduce = 6;
-  string physicalStreamName = 7;
-  string logicalStreamName = 8;
+  string physicalStreamName = 3;
+  string logicalStreamName = 4;
 }
 
 message RegisterPhysicalStreamReply {
@@ -114,6 +111,16 @@ message AddParentRequest {
 }
 
 message AddParentReply {
+  bool success = 1;
+}
+
+message ReplaceParentRequest {
+  uint64 childId = 1;
+  uint64 oldParent = 2;
+  uint64 newParent = 3;
+}
+
+message ReplaceParentReply {
   bool success = 1;
 }
 

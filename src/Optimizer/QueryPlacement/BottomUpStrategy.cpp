@@ -20,7 +20,9 @@
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -46,6 +48,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     const QueryId queryId = queryPlan->getQueryId();
     NES_INFO("BottomUpStrategy: Performing placement of the input query plan with id " << queryId);
+    NES_INFO("BottomUpStrategy: And query plan \n" << queryPlan->toString());
 
     NES_DEBUG("BottomUpStrategy: Get all source operators");
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
@@ -100,7 +103,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
                                                    TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
-    if (operatorNode->instanceOf<MergeLogicalOperatorNode>() || operatorNode->instanceOf<WindowOperatorNode>()
+    if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
         || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
         //Check if all children operators already placed

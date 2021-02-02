@@ -15,11 +15,11 @@
 add_source_nes(
         Watermark.cpp
         EventTimeWatermarkGenerator.cpp
-        ProcessingTimeWatermarkGenerator.cpp
+        IngestionTimeWatermarkGenerator.cpp
         WatermarkStrategy.cpp
         EventTimeWatermarkStrategy.cpp
         WatermarkStrategyDescriptor.cpp
         EventTimeWatermarkStrategyDescriptor.cpp
-        ProcessingTimeWatermarkStrategyDescriptor.cpp
-        ProcessingTimeWatermarkStrategy.cpp
+        IngestionTimeWatermarkStrategyDescriptor.cpp
+        IngestionTimeWatermarkStrategy.cpp
 )

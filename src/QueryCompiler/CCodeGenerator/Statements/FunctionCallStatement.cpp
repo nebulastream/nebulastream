@@ -44,4 +44,8 @@ void FunctionCallStatement::addParameter(ExpressionStatmentPtr expr) { expressio
 
 FunctionCallStatement::FunctionCallStatement(const std::string functionname) : functionName(functionname) {}
 
+FunctionCallStatementPtr FunctionCallStatement::create(const std::string functionname) {
+    return std::make_shared<FunctionCallStatement>(functionname);
+}
+
 }// namespace NES

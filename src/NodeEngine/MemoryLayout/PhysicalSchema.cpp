@@ -23,7 +23,7 @@
 #include <Util/Logger.hpp>
 #include <assert.h>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(schemaPtr){};
 
@@ -58,4 +58,4 @@ bool PhysicalSchema::validFieldIndex(uint64_t fieldIndex) {
 }
 
 uint64_t PhysicalSchema::getRecordSize() { return this->schema->getSchemaSizeInBytes(); }
-}// namespace NES
+}// namespace NES::NodeEngine

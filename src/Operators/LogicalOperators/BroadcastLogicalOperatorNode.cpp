@@ -18,11 +18,11 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 
 namespace NES {
 
-BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id) : LogicalOperatorNode(id) {}
+BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id) : ExchangeOperatorNode(id) {}
 
 bool BroadcastLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return rhs->as<BroadcastLogicalOperatorNode>()->getId() == id;
@@ -37,7 +37,7 @@ bool BroadcastLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 bool BroadcastLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
-    OperatorNode::inferSchema();
+    ExchangeOperatorNode::inferSchema();
     return true;
 }
 

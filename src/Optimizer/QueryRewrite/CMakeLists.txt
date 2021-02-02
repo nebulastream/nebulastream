@@ -13,8 +13,10 @@
 # limitations under the License.
 
 add_source_nes(
-        BaseRewriteRule.cpp
+        AttributeSortRule.cpp
         FilterPushDownRule.cpp
         LogicalSourceExpansionRule.cpp
         DistributedWindowRule.cpp
+        DistributedJoinRule.cpp
+        RenameStreamToProjectOperatorRule.cpp
 )

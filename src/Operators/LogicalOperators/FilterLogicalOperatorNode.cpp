@@ -16,13 +16,13 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
 FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr predicate, uint64_t id)
-    : predicate(predicate), LogicalOperatorNode(id) {}
+    : predicate(predicate), UnaryOperatorNode(id) {}
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
 
@@ -45,8 +45,14 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string FilterLogicalOperatorNode::getStringBasedSignature() {
+    return "FILTER(" + predicate->toString() + ")." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+}
+
 bool FilterLogicalOperatorNode::inferSchema() {
-    OperatorNode::inferSchema();
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
     predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
@@ -58,6 +64,7 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createFilterOperator(predicate, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setSignature(signature);
     return copy;
 }
 }// namespace NES

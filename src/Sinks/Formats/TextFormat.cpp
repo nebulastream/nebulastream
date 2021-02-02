@@ -16,6 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Util/Logger.hpp>
@@ -24,17 +25,17 @@
 #include <iostream>
 namespace NES {
 
-TextFormat::TextFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
+TextFormat::TextFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
     NES_DEBUG("TextFormat::()");
 }
 
-std::optional<TupleBuffer> TextFormat::getSchema() {
+std::optional<NodeEngine::TupleBuffer> TextFormat::getSchema() {
     //noting to do as this is part of pretty print
     return std::nullopt;
 }
 
-std::vector<TupleBuffer> TextFormat::getData(TupleBuffer& inputBuffer) {
-    std::vector<TupleBuffer> buffers;
+std::vector<NodeEngine::TupleBuffer> TextFormat::getData(NodeEngine::TupleBuffer& inputBuffer) {
+    std::vector<NodeEngine::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("TextFormat::getData: write watermark-only buffer");

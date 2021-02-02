@@ -197,8 +197,9 @@ class Node : public std::enable_shared_from_this<Node> {
         if (instanceOf<NodeType>()) {
             return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
         } else {
-            NES_THROW_RUNTIME_ERROR("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
-                                    + typeid(NodeType).name());
+            throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
+                                   + typeid(NodeType).name());
+            return nullptr;
         }
     }
 
@@ -223,9 +224,10 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * @brief return all children of current node
      *        Always excluding current node, no matter a cycle exists
-     * @params allChildren a vector to store all children of current node
+     * @param withDuplicateChildren: set true to allow to retrieve duplicate elements
+     * @return allChildren a vector to store all children of current node
      */
-    std::vector<NodePtr> getAndFlattenAllChildren();
+    std::vector<NodePtr> getAndFlattenAllChildren(bool withDuplicateChildren);
 
     /**
      * @brief get direct children.
@@ -269,6 +271,12 @@ class Node : public std::enable_shared_from_this<Node> {
      * @return true if operation succeeded else false
      */
     bool insertBetweenThisAndParentNodes(const NodePtr newNode);
+
+    /**
+    * @brief Add input node as child to the current node and add the input node as new parent to the old child
+    * @return true if operation succeeded else false
+    */
+    bool insertBetweenThisAndChildNodes(const NodePtr newNode);
 
     /**
      * @brief To string method for the current node.
@@ -353,7 +361,8 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * @brief helper function of getAndFlattenAllChildren() function
      */
-    void getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludednode);
+    void getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludedNode,
+                                        bool allowDuplicate);
 
     /**
      * @brief helper function of cycle detector

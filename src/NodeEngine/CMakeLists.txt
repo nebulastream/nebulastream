@@ -20,10 +20,10 @@ add_source_nes(
         ThreadPool.cpp
         Task.cpp
         TupleBuffer.cpp
-        detail/TupleBufferImpl.cpp
-        SignalHandling.cpp
         QueryStatistics.cpp
         NesThread.cpp
         WorkerContext.cpp
 )
 add_subdirectory(MemoryLayout)
+add_subdirectory(Execution)
+add_subdirectory(detail)

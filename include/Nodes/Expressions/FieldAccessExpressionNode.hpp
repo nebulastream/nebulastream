@@ -37,14 +37,23 @@ class FieldAccessExpressionNode : public ExpressionNode {
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
 
+    /**
+     * @brief Get field name
+     * @return field name
+     */
     const std::string getFieldName();
-    void setFieldName(std::string name);
+
+    /**
+     * @brief Updated field name
+     * @param fieldName : the new name of the field
+     */
+    void updateFieldName(std::string fieldName);
 
     /**
     * @brief Infers the stamp of the expression given the current schema.
     * @param SchemaPtr
     */
-    void inferStamp(SchemaPtr schema) override;
+    virtual void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.
@@ -55,7 +64,6 @@ class FieldAccessExpressionNode : public ExpressionNode {
   protected:
     explicit FieldAccessExpressionNode(FieldAccessExpressionNode* other);
 
-  private:
     FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);
     /**
      * @brief Name of the field want to access.

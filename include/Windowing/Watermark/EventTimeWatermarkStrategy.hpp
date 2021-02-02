@@ -26,22 +26,24 @@ typedef std::shared_ptr<EventTimeWatermarkStrategy> EventTimeWatermarkStrategyPt
 
 class EventTimeWatermarkStrategy : public WatermarkStrategy {
   public:
-    EventTimeWatermarkStrategy(FieldAccessExpressionNodePtr onField, uint64_t delay);
+    EventTimeWatermarkStrategy(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness, uint64_t multiplier);
 
     FieldAccessExpressionNodePtr getField();
 
-    uint64_t getDelay();
+    uint64_t getAllowedLateness();
+
+    uint64_t getMultiplier();
 
     Type getType() override;
 
-    static EventTimeWatermarkStrategyPtr create(FieldAccessExpressionNodePtr onField, uint64_t delay);
+    static EventTimeWatermarkStrategyPtr create(FieldAccessExpressionNodePtr onField, uint64_t allowedLateness,
+                                                uint64_t multiplier);
 
   private:
     // Field where the watermark should be retrieved
     FieldAccessExpressionNodePtr onField;
-
-    // Watermark delay
-    uint64_t delay;
+    uint64_t multiplier;
+    uint64_t allowedLateness;
 };
 
 }// namespace NES::Windowing

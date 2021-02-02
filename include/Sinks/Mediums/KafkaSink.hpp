@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 
-#include <Sources/SinkMedium.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <cppkafka/cppkafka.h>
 
 namespace NES {
@@ -40,8 +40,9 @@ class KafkaSink : public SinkMedium {
     /**
      * @brief Get sink type
      */
-    SinkMedium getType() const override;
-    bool writeData(TupleBuffer& input_buffer);
+    SinkMediumTypes getSinkMediumType();
+
+    bool writeData(NodeEngine::TupleBuffer& input_buffer);
     void setup() override;
     void shutdown() override;
 

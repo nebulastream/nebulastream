@@ -101,14 +101,18 @@ TEST_F(Z3ValidationTest, evaluateValidBinssomialEquation) {
     //Define int constants
     sort sort = c.string_sort();
     expr x = c.constant(c.str_symbol("x"), sort);
+    expr y = c.int_const("Y");
 
     expr valX = c.string_val("x");
-    expr valY = c.string_val("x");
+    expr valY = c.int_val(10);
 
-    //Add equations to
-    //    s.add(x > 1);
-    //    s.add(y > 1);
-    s.add(x == valX && x == valY);
+    //Add equations
+    auto xEqualValX = to_expr(c, Z3_mk_eq(c, x, valX));
+    auto yEqualValY = to_expr(c, Z3_mk_ge(c, y, valY));
+    Z3_ast arr[] = {xEqualValX, yEqualValY};
+
+    auto expt = to_expr(c, Z3_mk_and(c, 2, arr));
+    s.add(expt);
 
     //Assert
     ASSERT_EQ(s.check(), sat);
@@ -129,16 +133,18 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     expr y = c.int_const("y");
 
     //Add equations
-    s.reset();
     s.add(x > 1);
     s.add(y > 1);
     s.add(x + y < 1);
+    NES_INFO(s);
+
     //Assert
     ASSERT_EQ(s.check(), unsat);
 
     //Same equation written using api
     s.reset();
     auto one = c.int_val(1);
+    auto xPlusOne = to_expr(c, x + 1);
     auto xLessThanOne = to_expr(c, Z3_mk_gt(c, x, one));
     auto yLessThanOne = to_expr(c, Z3_mk_gt(c, y, one));
     Z3_ast args[] = {x, y};
@@ -146,9 +152,79 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     auto xPlusYLessThanOne = to_expr(c, Z3_mk_lt(c, xPlusY, one));
 
     s.add(xLessThanOne);
+    NES_INFO(s);
     s.add(yLessThanOne);
     s.add(xPlusYLessThanOne);
     //Assert
     ASSERT_EQ(s.check(), unsat);
 }
+
+/**
+   @brief Validate for <tt>(x==y and y==x) == (y==x and x==y) </tt>.
+*/
+TEST_F(Z3ValidationTest, equalityChecks) {
+    context c;
+    expr x = c.int_const("x");
+    expr y = c.int_const("y");
+    solver s(c);
+
+    //We prove that equation (x==y and y==x) != (y==x and x==y) is unsatisfiable
+    s.add((x == y && y == x) != (x == y && y == x));
+    ASSERT_EQ(s.check(), unsat);
+}
+
+/**
+   @brief Validate that <tt>(x>=y) != (y>=x) </tt>.
+*/
+TEST_F(Z3ValidationTest, unequalityChecks) {
+    context c;
+    expr x = c.int_const("x");
+    expr y = c.int_const("y");
+    solver s(c);
+
+    //x>y && x<y && x != y
+
+    //We prove that equation (x>=y) != (y>=x) is satisfiable
+    s.add(!((x >= y) == (y >= x)));
+    ASSERT_EQ(s.check(), sat);
+
+    //Two conditions are equal that can be proved by making sure
+    //that inequality among these conditions is unsatisfiable
+    //
+    //However, to prove that two conditions are not equal
+    //we need to prove that equality of these conditions is unsatisfiable
+    //
+    //However, what to do when we have partially equal expressions?
+    //This means for certain values they are equal and for certain they are not equal.
+    //Example: x>=y and y>=x .... for x==y they are equal but for x!=y they are not.
+    //This means the equality and inequality both are satisfiable.
+
+    //    s.reset();
+    //    expr stream = c.constant("stream", c.string_sort());
+    //    expr streamVal = c.string_val("car");
+    //    expr value50 = c.int_val("50");
+    //    expr value40 = c.int_val("40");
+    //
+    //    // (stream == "car") != (stream =="car")
+    //    //
+    //    // Q1:from("car").map("speed" = 50).print()
+    //    // Q2:from("car").map("speed" = 40).print()
+    //
+    ////    s.add(value40 != value50);
+    //    s.add(!(((stream == streamVal) == (stream == streamVal)) && (value40 == value50)));
+    //    NES_INFO(s);
+    //    NES_INFO("Chk that " << s.check());
+    //    NES_INFO(s.get_model());
+    //
+    //    //(and (< (* (* value 40) 40) 40) (< (* value 40) 40) (= streamName "car"))
+    //
+    //
+    //    expr value = c.int_const("value");
+    //
+    //    s.reset();
+    //    s.add(((value * 10) < 40) != ((value * 10) < 40 && (value * 10) < 30));
+    //    NES_INFO(s.check());
+    //    NES_INFO(s.get_model());
+}
+
 }// namespace NES

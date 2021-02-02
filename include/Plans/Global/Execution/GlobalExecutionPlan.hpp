@@ -110,7 +110,7 @@ class GlobalExecutionPlan {
     std::vector<ExecutionNodePtr> getRootNodes();
 
     /**
-     * Return list of Execution Nodes used for placing operators of the input query Id
+     * Return list of Execution Serialization used for placing operators of the input query Id
      * @param queryId : Id of the query
      * @return vector containing execution nodes
      */

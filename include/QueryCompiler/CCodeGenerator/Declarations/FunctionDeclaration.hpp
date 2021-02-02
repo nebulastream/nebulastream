@@ -17,16 +17,21 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDECLARATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDECLARATION_HPP_
 
+#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 
 namespace NES {
 
+/**
+ * @brief Declaration for a function in the generated code.
+ */
 class FunctionDeclaration : public Declaration {
   private:
-    Code function_code;
+    Code functionCode;
 
   public:
     FunctionDeclaration(Code code);
+    static FunctionDeclarationPtr create(Code code);
 
     virtual const GeneratableDataTypePtr getType() const override;
     virtual const std::string getIdentifierName() const override;

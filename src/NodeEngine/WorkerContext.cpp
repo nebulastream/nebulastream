@@ -16,7 +16,7 @@
 
 #include <NodeEngine/WorkerContext.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 WorkerContext::WorkerContext(uint32_t workerId) : workerId(workerId) {}
 
@@ -38,4 +38,4 @@ Network::OutputChannel* WorkerContext::getChannel(Network::OperatorId ownerId) {
     return channels[ownerId].get();
 }
 
-}// namespace NES
+}// namespace NES::NodeEngine

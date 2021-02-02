@@ -17,6 +17,7 @@
 #ifndef NES_LOGICALSOURCEEXPANSIONRULE_HPP
 #define NES_LOGICALSOURCEEXPANSIONRULE_HPP
 
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>
 
@@ -54,6 +55,7 @@ typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePt
  *                                           |             |
  *                                      Source(Car1)    Source(Car2)
  *
+ *
  * Given that logical source car has two physical sources: i.e. car1 and car2
  *
  *                                                     or
@@ -82,7 +84,7 @@ typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePt
  * logical source truck has two physical sources: i.e. truck1 and truck2
  *
  */
-class LogicalSourceExpansionRule {
+class LogicalSourceExpansionRule : public BaseRewriteRule {
   public:
     static LogicalSourceExpansionRulePtr create(StreamCatalogPtr);
 

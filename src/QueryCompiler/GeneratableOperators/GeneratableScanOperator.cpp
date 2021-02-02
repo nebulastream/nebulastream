@@ -28,17 +28,27 @@ void GeneratableScanOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 void GeneratableScanOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForScan(schema, context);
+    codegen->generateCodeForScan(inputSchema, outputSchema, context);
     getParents()[0]->as<GeneratableOperator>()->consume(codegen, context);
 }
 
-OperatorNodePtr GeneratableScanOperator::copy() { return GeneratableScanOperator::create(schema, id); }
+OperatorNodePtr GeneratableScanOperator::copy() { return GeneratableScanOperator::create(inputSchema, outputSchema, id); }
 
-GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr schema, OperatorId id) {
-    return std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(schema, id));
+GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id) {
+    return std::make_shared<GeneratableScanOperator>(GeneratableScanOperator(inputSchema, outputSchema, id));
 }
 
-GeneratableScanOperator::GeneratableScanOperator(SchemaPtr schema, OperatorId id) : schema(schema), OperatorNode(id) {}
+GeneratableScanOperator::GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id)
+    : UnaryOperatorNode(id) {
+    if (!inputSchema) {
+        NES_ERROR("GeneratableScanOperator invalid input schema");
+    }
+    this->inputSchema = inputSchema->copy();
+    if (!outputSchema) {
+        NES_ERROR("GeneratableScanOperator invalid output schema");
+    }
+    this->outputSchema = outputSchema->copy();
+}
 
 const std::string GeneratableScanOperator::toString() const {
     std::stringstream ss;

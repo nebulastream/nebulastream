@@ -18,12 +18,12 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 
 namespace NES {
 
 MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id)
-    : mapExpression(mapExpression), LogicalOperatorNode(id) {}
+    : mapExpression(mapExpression), UnaryOperatorNode(id) {}
 
 bool MapLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<MapLogicalOperatorNode>()->getId() == id;
@@ -39,22 +39,26 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 bool MapLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
-    OperatorNode::inferSchema();
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
+
     // use the default input schema to calculate the out schema of this operator.
     mapExpression->inferStamp(getInputSchema());
+
     auto assignedField = mapExpression->getField();
-    if (outputSchema->has(assignedField->getFieldName())) {
+    std::string fieldName = assignedField->getFieldName();
+
+    if (outputSchema->hasFieldName(fieldName)) {
         // The assigned field is part of the current schema.
         // Thus we check if it has the correct type.
-        outputSchema->replaceField(assignedField->getFieldName(), assignedField->getStamp());
-        NES_DEBUG("MAP Logical Operator: the field " << assignedField->getFieldName()
-                                                     << " is already of the schema, so we updated its type.");
+        NES_TRACE("MAP Logical Operator: the field " << fieldName << " is already in the schema, so we updated its type.");
+        outputSchema->replaceField(fieldName, assignedField->getStamp());
     } else {
         // The assigned field is not part of the current schema.
         // Thus we extend the schema by the new attribute.
-        outputSchema->addField(assignedField->getFieldName(), assignedField->getStamp());
-        NES_DEBUG("MAP Logical Operator: the field " << assignedField->getFieldName()
-                                                     << " is not part of the schema, so we added it.");
+        NES_TRACE("MAP Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
+        outputSchema->addField(fieldName, assignedField->getStamp());
     }
     return true;
 }
@@ -65,12 +69,17 @@ const std::string MapLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string MapLogicalOperatorNode::getStringBasedSignature() {
+    return "MAP(" + mapExpression->toString() + ")." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+}
+
 FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }
 
 OperatorNodePtr MapLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMapOperator(mapExpression, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setSignature(signature);
     return copy;
 }
 }// namespace NES

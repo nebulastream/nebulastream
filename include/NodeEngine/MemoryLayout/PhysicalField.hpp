@@ -18,18 +18,11 @@
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
-namespace NES {
-class TupleBuffer;
-class PhysicalField;
-typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
-template<class ValueType>
-class BasicPhysicalField;
-class ArrayPhysicalField;
 
-class PhysicalType;
-typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+namespace NES::NodeEngine {
 
 /**
  * @brief This is the base class to represent a physical field.
@@ -48,7 +41,7 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
     template<class ValueType>
     std::shared_ptr<BasicPhysicalField<ValueType>> asValueField() {
         if (!isFieldOfValueType<ValueType>()) {
-            NES_FATAL_ERROR("This field is not of that type");
+            NES_FATAL_ERROR("This field is not of that type " << typeid(ValueType).name());
             throw IllegalArgumentException("This field is not of that type");
         }
         return std::static_pointer_cast<BasicPhysicalField<ValueType>>(this->shared_from_this());
@@ -83,5 +76,5 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
 
 PhysicalFieldPtr createArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset);
 
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_

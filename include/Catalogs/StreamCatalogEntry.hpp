@@ -39,19 +39,16 @@ typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 class StreamCatalogEntry {
 
   public:
-    StreamCatalogEntry(PhysicalStreamConfigPtr streamConf, TopologyNodePtr node);
+    explicit StreamCatalogEntry(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+                                TopologyNodePtr node);
+
+    explicit StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node);
 
     /**
      * @brief get source type
      * @return type as string
      */
     std::string getSourceType();
-
-    /**
-     * @brief get source config
-     * @return config as string
-     */
-    std::string getSourceConfig();
 
     /**
      * @brief get topology pointer
@@ -71,28 +68,12 @@ class StreamCatalogEntry {
      */
     std::string getLogicalName();
 
-    /**
-     * @brief get source fequence
-     * @return frequency as double
-     */
-    double getSourceFrequency();
-
-    /**
-     * @brief get number of tuples per buffer
-     * @return tuple cnt
-     */
-    uint64_t getNumberOfTuplesToProducePerBuffer();
-
-    /**
-     * @brief get number of buffers to produce
-     * @return buffer cnt
-     */
-    uint64_t getNumberOfBuffersToProduce();
-
     std::string toString();
 
   private:
-    PhysicalStreamConfigPtr streamConf;
+    std::string sourceType;
+    std::string physicalStreamName;
+    std::string logicalStreamName;
     TopologyNodePtr node;
 };
 typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;

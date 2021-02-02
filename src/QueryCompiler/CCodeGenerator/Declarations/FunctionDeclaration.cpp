@@ -19,14 +19,16 @@
 
 namespace NES {
 
-FunctionDeclaration::FunctionDeclaration(Code code) : function_code(code) {}
+FunctionDeclaration::FunctionDeclaration(Code code) : functionCode(code) {}
+
+FunctionDeclarationPtr FunctionDeclaration::create(Code code) { return std::make_shared<FunctionDeclaration>(code); }
 
 const GeneratableDataTypePtr FunctionDeclaration::getType() const { return GeneratableDataTypePtr(); }
 const std::string FunctionDeclaration::getIdentifierName() const { return ""; }
 
 const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
 
-const Code FunctionDeclaration::getCode() const { return function_code; }
+const Code FunctionDeclaration::getCode() const { return functionCode; }
 const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
 
 }// namespace NES

@@ -36,7 +36,13 @@ bool MulExpressionNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
-const std::string MulExpressionNode::toString() const { return "MulNode(" + stamp->toString() + ")"; }
+
+const std::string MulExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "*" << children[1]->toString();
+    return ss.str();
+}
+
 ExpressionNodePtr MulExpressionNode::copy() { return std::make_shared<MulExpressionNode>(MulExpressionNode(this)); }
 
 }// namespace NES

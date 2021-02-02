@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
@@ -59,11 +60,10 @@ TranslateToGeneratableOperatorPhase::TranslateToGeneratableOperatorPhase() = def
 
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator(OperatorNodePtr operatorNode,
                                                                                  OperatorNodePtr generatableParentOperator) {
-
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.
         auto scanOperator = operatorNode->as<SourceLogicalOperatorNode>();
-        auto childOperator = GeneratableScanOperator::create(scanOperator->getOutputSchema());
+        auto childOperator = GeneratableScanOperator::create(scanOperator->getInputSchema(), scanOperator->getOutputSchema());
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
@@ -75,30 +75,33 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         generatableParentOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
+        auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
+        //Use left Schema for creating the input schema
+        auto scanOperator =
+            GeneratableScanOperator::create(binaryOperator->getLeftInputSchema(), binaryOperator->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
         auto childOperator = GeneratableMergeOperator::create(operatorNode->as<MergeLogicalOperatorNode>());
         scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>());
+        auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
+        return GeneratableSinkOperator::create(operatorNode->as<SinkLogicalOperatorNode>(), unaryOperator->getOutputSchema());
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         return TranslateToGeneratableOperatorPhase::transformWindowOperator(operatorNode->as<WindowOperatorNode>(),
                                                                             generatableParentOperator);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-        auto scanOperator = GeneratableScanOperator::create(operatorNode->getOutputSchema());
-        generatableParentOperator->addChild(scanOperator);
-        auto childOperator = GeneratableJoinOperator::create(operatorNode->as<JoinLogicalOperatorNode>());
-        scanOperator->addChild(childOperator);
-        return childOperator;
+        return TranslateToGeneratableOperatorPhase::transformJoinOperator(operatorNode->as<JoinLogicalOperatorNode>(),
+                                                                          generatableParentOperator);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator =
             GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
         generatableParentOperator->addChild(watermarkAssignerOperator);
         return watermarkAssignerOperator;
+    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        return generatableParentOperator;
     } else {
-        NES_FATAL_ERROR(
-            "TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: " << operatorNode);
+        NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: "
+                        << operatorNode->toString());
         NES_NOT_IMPLEMENTED();
     }
 
@@ -111,26 +114,39 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
                                                                              OperatorNodePtr generatableParentOperator) {
     auto windowDefinition = windowOperator->getWindowDefinition();
     auto generatableWindowAggregation = transformWindowAggregation(windowDefinition->getWindowAggregation());
-    auto scanOperator = GeneratableScanOperator::create(windowOperator->getOutputSchema());
+    auto scanOperator = GeneratableScanOperator::create(windowOperator->getOutputSchema(), windowOperator->getOutputSchema());
     generatableParentOperator->addChild(scanOperator);
     if (windowOperator->instanceOf<CentralWindowOperator>()) {
         auto generatableWindowOperator =
             GeneratableCompleteWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     } else if (windowOperator->instanceOf<SliceCreationOperator>()) {
         auto generatableWindowOperator = GeneratableSlicingWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     } else if (windowOperator->instanceOf<WindowComputationOperator>()) {
         auto generatableWindowOperator =
             GeneratableCombiningWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     }
     NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: "
                     << windowOperator->toString());
     NES_NOT_IMPLEMENTED();
+}
+
+OperatorNodePtr TranslateToGeneratableOperatorPhase::transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator,
+                                                                           OperatorNodePtr downstreamOperator) {
+    auto scanOperator = GeneratableScanOperator::create(joinOperator->getOutputSchema(), joinOperator->getOutputSchema());
+    auto generatedJoinOperator = GeneratableJoinOperator::create(joinOperator->as<JoinLogicalOperatorNode>());
+    // JOIN -> SCAN -> DOWNSTREAM OPERATOR
+    scanOperator->addChild(generatedJoinOperator);
+    downstreamOperator->addChild(scanOperator);
+    return generatedJoinOperator;
 }
 
 GeneratableWindowAggregationPtr TranslateToGeneratableOperatorPhase::transformWindowAggregation(

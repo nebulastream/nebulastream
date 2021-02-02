@@ -18,6 +18,7 @@
 #define NES_INCLUDE_NODES_PHASES_TRANSLATETOGENERATABLEOPERATORS_HPP_
 
 #include <memory>
+
 namespace NES::Windowing {
 class WindowAggregationDescriptor;
 typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
@@ -37,9 +38,6 @@ typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
 
 class GeneratableWindowAggregation;
 typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
-
-class NodeEngine;
-typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
 /**
  * @brief Translates a logical query plan to the generatable operator tree
@@ -70,6 +68,13 @@ class TranslateToGeneratableOperatorPhase {
     * @return Generatable Operator
     */
     OperatorNodePtr transformWindowOperator(WindowOperatorNodePtr windowOperator, OperatorNodePtr generatableParentOperator);
+
+    /**
+    * @brief Translates an join operator to its generatable representation.
+    * @param windowOperator
+    * @return Generatable Operator
+    */
+    OperatorNodePtr transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator, OperatorNodePtr generatableParentOperator);
 
     /**
     * @brief Translates an window aggregation to its generatable representation.

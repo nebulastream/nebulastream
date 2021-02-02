@@ -17,14 +17,12 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
 
-#include "memory"
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <string>
 
 namespace NES {
-
-class TupleBuffer;
-
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
@@ -37,24 +35,16 @@ typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
 
 class ExpressionItem;
 
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class PipelineStage;
-typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
-
-class MemoryLayout;
-typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
-
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
 }// namespace NES
 
 namespace NES::Windowing {
+
+class WindowOperatorHandler;
+typedef std::shared_ptr<WindowOperatorHandler> WindowOperatorHandlerPtr;
+
 class BaseExecutableWindowTriggerPolicy;
 typedef std::shared_ptr<BaseExecutableWindowTriggerPolicy> BaseExecutableWindowTriggerPolicyPtr;
 
@@ -103,6 +93,9 @@ typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 
 template<class PartialAggregateType>
 class WindowSliceStore;
+
+template<class ValueType>
+class WindowedJoinSliceListStore;
 
 class SliceMetaData;
 

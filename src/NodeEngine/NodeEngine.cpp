@@ -15,6 +15,8 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <NodeEngine/ErrorListener.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -22,7 +24,6 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
@@ -35,13 +36,18 @@
 #include <Util/UtilityFunctions.hpp>
 #include <string>
 
-using namespace std;
-namespace NES {
+namespace NES::NodeEngine {
+
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
+
+NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
+    return NodeEngine::create(hostname, port, config);
+}
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
-std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
-                                               uint16_t numThreads, uint64_t bufferSize, uint64_t numBuffers) {
+NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads,
+                                 uint64_t bufferSize, uint64_t numBuffers) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
@@ -59,36 +65,31 @@ std::shared_ptr<NodeEngine> NodeEngine::create(const std::string& hostname, uint
             NES_ERROR("NodeEngine: error while creating queryManager");
             throw Exception("Error while creating queryManager");
         }
-        if (!queryManager->startThreadPool()) {
-            NES_ERROR("NodeEngine: error while start thread pool");
-            throw Exception("Error while start thread pool");
-        } else {
-            NES_DEBUG("NodeEngine(): thread pool successfully started");
-        }
-
         auto compiler = createDefaultQueryCompiler();
         if (!compiler) {
             NES_ERROR("NodeEngine: error while creating compiler");
             throw Exception("Error while creating compiler");
         }
-        return std::make_shared<NodeEngine>(
+        auto engine = std::make_shared<NodeEngine>(
             config, std::move(bufferManager), std::move(queryManager),
             [hostname, port](std::shared_ptr<NodeEngine> engine) {
                 return Network::NetworkManager::create(
                     hostname, port, Network::ExchangeProtocol(engine->getPartitionManager(), engine), engine->getBufferManager());
             },
             std::move(partitionManager), std::move(compiler), nodeEngineId);
+        installGlobalErrorListener(engine);
+        return engine;
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
     }
+    return nullptr;
 }
 
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId)
-    : Network::ExchangeProtocolListener(), std::enable_shared_from_this<NodeEngine>(), config(config),
-      nodeEngineId(nodeEngineId) {
+    : inherited0(), inherited1(), inherited2(), config(config), nodeEngineId(nodeEngineId) {
 
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
@@ -101,7 +102,14 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
     networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*) {
+        // nop
     }));
+    if (!this->queryManager->startThreadPool()) {
+        NES_ERROR("NodeEngine: error while start thread pool");
+        throw Exception("Error while start thread pool");
+    } else {
+        NES_DEBUG("NodeEngine(): thread pool successfully started");
+    }
 }
 
 NodeEngine::~NodeEngine() {
@@ -109,7 +117,7 @@ NodeEngine::~NodeEngine() {
     stop();
 }
 
-bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan) {
+bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << queryExecutionPlan);
     bool successRegister = registerQueryInNodeEngine(queryExecutionPlan);
@@ -133,7 +141,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryPlan->getQueryId();
     QueryId querySubPlanId = queryPlan->getQuerySubPlanId();
-    NES_INFO("Creating QueryExecutionPlan for " << queryId << " " << querySubPlanId);
+    NES_INFO("Creating ExecutableQueryPlan for " << queryId << " " << querySubPlanId);
     try {
         // Translate the query operators in their legacy representation
         // todo this is not required if later the query compiler can handle it by it self.
@@ -153,62 +161,51 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
                               .setQuerySubPlanId(querySubPlanId)
                               .addOperatorQueryPlan(generatableOperatorPlan);
 
-        std::vector<WindowOperatorNodePtr> winOps = generatableOperatorPlan->getNodesByType<WindowOperatorNode>();
-        std::vector<JoinLogicalOperatorNodePtr> joinOps = generatableOperatorPlan->getNodesByType<JoinLogicalOperatorNode>();
-
         std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
-        if (winOps.size() == 1) {
-            qepBuilder.setWinDef(winOps[0]->getWindowDefinition()).setSchema(sourceOperators[0]->getInputSchema());
-        } else if (winOps.size() > 1) {
-            //currently we only support one window per query
-            NES_NOT_IMPLEMENTED();
-        }
-
-        if (joinOps.size() == 1) {
-            qepBuilder.setJoinDef(joinOps[0]->getJoinDefinition()).setSchema(sourceOperators[0]->getInputSchema());
-        } else if (joinOps.size() > 1) {
-            //currently we only support one window per query
-            NES_NOT_IMPLEMENTED();
-        }
+        NodeEnginePtr self = this->inherited1::shared_from_this();
 
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {
+            auto operatorId = sources->getId();
             auto sourceDescriptor = sources->getSourceDescriptor();
             //perform the operation only for Logical stream source descriptor
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
                 sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
             }
-            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor, shared_from_this());
+            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, self);
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }
 
         // Translate all operator sink to the physical sink and add them to the query plan
+
         for (const auto& sink : sinkOperators) {
+            NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink =
-                ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, shared_from_this(), querySubPlanId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, self, querySubPlanId);
             qepBuilder.addSink(legacySink);
-            NES_DEBUG("ExecutableTransferObject:: add source" << legacySink->toString());
+            NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
 
         return registerQueryInNodeEngine(qepBuilder.build());
     } catch (std::exception& error) {
         NES_ERROR("Error while building query execution plan " << error.what());
+        NES_ASSERT(false, "Error while building query execution plan " << error.what());
         return false;
     }
 }
 
-bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan) {
+bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
     NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId
                                                              << " querySubPlanId =" << querySubPlanId);
+    NES_ASSERT(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         auto found = queryIdToQuerySubPlanIds.find(queryId);
         if (found == queryIdToQuerySubPlanIds.end()) {
@@ -237,7 +234,7 @@ bool NodeEngine::startQuery(QueryId queryId) {
     NES_DEBUG("NodeEngine: startQuery=" << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
 
-        vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
             return false;
@@ -283,7 +280,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
     NES_DEBUG("NodeEngine: unregisterQuery query=" << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
 
-        vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
             return false;
@@ -310,7 +307,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine:stopQuery for qep" << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
-        vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
             return false;
@@ -332,7 +329,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
 
 QueryManagerPtr NodeEngine::getQueryManager() { return queryManager; }
 
-bool NodeEngine::stop() {
+bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO: add check if still queries are running
     //TODO @Steffen: does it make sense to have force stop still?
     //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
@@ -349,11 +346,20 @@ bool NodeEngine::stop() {
     for (auto it = deployedQEPs.begin(); it != deployedQEPs.end();) {
         auto& [querySubPlanId, queryExecutionPlan] = *it;
         try {
-            if (queryManager->stopQuery(queryExecutionPlan)) {
-                NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " succeeded");
+            if (markQueriesAsFailed) {
+                if (queryManager->failQuery(queryExecutionPlan)) {
+                    NES_DEBUG("NodeEngine: fail of QEP " << querySubPlanId << " succeeded");
+                } else {
+                    NES_ERROR("NodeEngine: fail of QEP " << querySubPlanId << " failed");
+                    withError = true;
+                }
             } else {
-                NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed");
-                withError = true;
+                if (queryManager->stopQuery(queryExecutionPlan)) {
+                    NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " succeeded");
+                } else {
+                    NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed");
+                    withError = true;
+                }
             }
         } catch (std::exception& err) {
             NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed: " << err.what());
@@ -392,13 +398,13 @@ Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManag
 
 QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }
 
-QueryExecutionPlan::QueryExecutionPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
+Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
-        vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
-            return QueryExecutionPlan::QueryExecutionPlanStatus::Invalid;
+            return Execution::ExecutableQueryPlanStatus::Invalid;
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
@@ -406,7 +412,7 @@ QueryExecutionPlan::QueryExecutionPlanStatus NodeEngine::getQueryStatus(QueryId 
             return deployedQEPs[querySubPlanId]->getStatus();
         }
     }
-    return QueryExecutionPlan::QueryExecutionPlanStatus::Invalid;
+    return Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
 void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& buffer) {
@@ -473,42 +479,24 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     auto schema = sourceDescriptor->getSchema();
-    auto streamName = config->getLogicalStreamName();
-
-    // Pick the first element from the catalog entry and identify the type to create appropriate source type
-    // todo add handling for support of multiple physical streams.
-    std::string type = config->getSourceType();
-    std::string conf = config->getSourceConfig();
-    uint64_t frequency = config->getSourceFrequency();
-    uint64_t numBuffers = config->getNumberOfBuffersToProduce();
-    bool endlessRepeat = config->isEndlessRepeat();
-    bool skipHeader = config->getSkipHeader();
-
-    uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
-
-    if (type == "DefaultSource") {
-        NES_DEBUG("TypeInferencePhase: create default source for one buffer");
-        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency, sourceDescriptor->getOperatorId());
-    } else if (type == "CSVSource") {
-        NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
-        return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, endlessRepeat, skipHeader, sourceDescriptor->getOperatorId());
-    } else if (type == "SenseSource") {
-        NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
-        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf, sourceDescriptor->getOperatorId());
-    } else if (type == "YSBSource") {
-        NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
-        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency, endlessRepeat,
-                                           sourceDescriptor->getOperatorId());
-    } else if (type == "NettySource") {
-        NES_DEBUG("TypeInferencePhase: create Netty source for " << conf << " buffers");
-        return NettySourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, endlessRepeat, skipHeader, sourceDescriptor->getOperatorId());
-    } else {
-        NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
-    }
+    NES_ASSERT(config, "physical source config is not specified");
+    return config->build(sourceDescriptor->getSchema());
 }
 
-void NodeEngine::setConfig(PhysicalStreamConfigPtr config) { this->config = config; }
+void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
+    NES_ASSERT(config, "physical source config is not specified");
+    this->config = config;
+}
 
-}// namespace NES
+void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
+    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+    std::cerr << "NodeEngine failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
+    std::cerr << "Error: " << strerror(errno) << std::endl;
+    std::cerr << "Callstack:\n " << callstack << std::endl;
+}
+
+void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
+    NES_ERROR("onFatalException: exception=" << exception->what() << " callstack=\n" << callstack);
+}
+
+}// namespace NES::NodeEngine

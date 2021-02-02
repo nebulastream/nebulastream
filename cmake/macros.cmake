@@ -58,6 +58,20 @@ macro(project_enable_clang_format)
     endif ()
 endmacro(project_enable_clang_format)
 
+macro(project_enable_emulated_tests)
+    find_program(QEMU_EMULATOR qemu-aarch64)
+    string(CONCAT SYSROOT_DIR
+            "/opt/sysroots/aarch64-linux-gnu")
+    string(CONCAT TESTS_DIR
+            "${CMAKE_SOURCE_DIR}/build/tests")
+    if (NOT ${QEMU_EMULATOR} STREQUAL "QEMU_EMULATOR-NOTFOUND")
+        message("-- QEMU-emulator found, enabled testing via 'make test_$ARCH_debug' target.")
+        add_custom_target(test_aarch64_debug COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_tests_cross_build.py ${QEMU_EMULATOR} ${SYSROOT_DIR} ${TESTS_DIR} USES_TERMINAL)
+    else ()
+        message(FATAL_ERROR "qemu-user is not installed.")
+    endif ()
+endmacro(project_enable_emulated_tests)
+
 macro(project_enable_release)
     if (NOT IS_GIT_DIRECTORY)
         message(AUTHOR_WARNING " -- Disabled release target as git not configured.")

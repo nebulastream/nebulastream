@@ -65,12 +65,34 @@ typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
  *                                    WindowSlicer        WindowSlicer
  *                                           |             |
  *                                      Source(Car1)    Source(Car2)
-
+* ---------------------------------------------
+ * Example: a query :                       Sink
+*                                           |
+*                                           Window
+*                                           |
+*                                        Source(Car)
+*
+* will be expanded to:                        Sink
+*                                               |
+*                                          Window-Combiner
+*                                                |
+*                                          Watermark-Assigner
+*                                             /    \
+*                                           /       \
+*                            Window-SliceCreator Window-SliceCreator
+*                                      |               |
+*                             Watermark-Assigner   Watermark-Assigner
+*                                      |               |
+*                                   Source(Car1)    Source(Car2)
  */
 class DistributeWindowRule : public BaseRewriteRule {
   public:
     // The number of child nodes from which on we will replace a central window operator with a distributed window operator.
     static const uint64_t CHILD_NODE_THRESHOLD = 2;
+
+    // The number of child nodes from which on we will introduce combinerr
+    static const uint64_t CHILD_NODE_THRESHOLD_COMBINER = 4;
+
     static DistributeWindowRulePtr create();
 
     /**
@@ -83,7 +105,7 @@ class DistributeWindowRule : public BaseRewriteRule {
   private:
     explicit DistributeWindowRule();
     void createCentralWindowOperator(WindowOperatorNodePtr currentWindowOperator);
-    void createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperaotr);
+    void createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperaotr, QueryPlanPtr queryPlan);
 };
 }// namespace NES
 #endif//NES_DistributeWindowRule_HPP

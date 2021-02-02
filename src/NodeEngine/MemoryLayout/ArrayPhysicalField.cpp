@@ -20,7 +20,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <memory>
 #include <utility>
-namespace NES {
+namespace NES::NodeEngine {
 ArrayPhysicalField::ArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset)
     : PhysicalField(bufferOffset), componentField(std::move(componentField)) {}
 
@@ -36,4 +36,4 @@ std::shared_ptr<PhysicalField> ArrayPhysicalField::operator[](uint64_t arrayInde
 PhysicalFieldPtr createArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset) {
     return std::make_shared<ArrayPhysicalField>(componentField, bufferOffset);
 }
-}// namespace NES
+}// namespace NES::NodeEngine

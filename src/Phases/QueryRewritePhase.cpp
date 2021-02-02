@@ -14,11 +14,13 @@
     limitations under the License.
 */
 
+#include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-
+#include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 #include <Phases/QueryRewritePhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {
 
@@ -30,14 +32,19 @@ QueryRewritePhase::QueryRewritePhase(StreamCatalogPtr streamCatalog) {
     filterPushDownRule = FilterPushDownRule::create();
     logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
     distributeWindowRule = DistributeWindowRule::create();
+    distributeJoinRule = DistributeJoinRule::create();
+    renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
 }
 
 QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
 
 QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
-    queryPlan = filterPushDownRule->apply(queryPlan);
-    queryPlan = logicalSourceExpansionRule->apply(queryPlan);
-    return distributeWindowRule->apply(queryPlan);
+    auto duplicateQueryPlan = queryPlan->copy();
+    duplicateQueryPlan = renameStreamToProjectOperatorRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = logicalSourceExpansionRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = distributeJoinRule->apply(duplicateQueryPlan);
+    return distributeWindowRule->apply(duplicateQueryPlan);
 }
 
 }// namespace NES

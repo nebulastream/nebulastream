@@ -32,8 +32,8 @@
 #include <zconf.h>
 namespace NES {
 
-DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                       OperatorId operatorId)
+DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
+                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId) {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
@@ -120,7 +120,8 @@ bool DataSource::isRunning() { return running; }
 
 void DataSource::setGatheringInterval(uint64_t interval) { this->gatheringInterval = interval; }
 
-void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
+void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
+    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
@@ -132,71 +133,76 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr 
         NES_ERROR("bufferManager not set");
         throw std::logic_error("DataSource: BufferManager not set");
     }
+
     auto ts = std::chrono::system_clock::now();
     std::chrono::seconds lastTimeStampSec = std::chrono::duration_cast<std::chrono::seconds>(ts.time_since_epoch());
 
-    if (this->operatorId != 0) {
-        NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType());
-        uint64_t cnt = 0;
-        while (running) {
-            bool recNow = false;
-            auto tsNow = std::chrono::system_clock::now();
-            std::chrono::seconds nowInSec = std::chrono::duration_cast<std::chrono::seconds>(tsNow.time_since_epoch());
+    NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType());
+    if (numBuffersToProcess == 0) {
+        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+                  "the source is empty");
+    } else {
+        NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
+    }
 
-            //this check checks if the gathering interval is less than one second or it is a ZMQ_Source, in both cases we do not need to create a watermark-only buffer
-            if (gatheringInterval <= 1 || type == ZMQ_SOURCE) {
-                NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type=" << getType());
-                if (gatheringInterval == 0 || lastTimeStampSec != nowInSec) {
-                    NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval="
-                              << gatheringInterval << " tsNow=" << lastTimeStampSec.count() << " now=" << nowInSec.count());
+    uint64_t cnt = 0;
+    while (running) {
+        bool recNow = false;
+        auto tsNow = std::chrono::system_clock::now();
+        std::chrono::seconds nowInSec = std::chrono::duration_cast<std::chrono::seconds>(tsNow.time_since_epoch());
+
+        //this check checks if the gathering interval is less than one second or it is a ZMQ_Source, in both cases we do not need to create a watermark-only buffer
+        if (gatheringInterval <= 1 || type == ZMQ_SOURCE) {
+            NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type=" << getType());
+            if (gatheringInterval == 0 || lastTimeStampSec != nowInSec) {
+                NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval="
+                          << gatheringInterval << " tsNow=" << lastTimeStampSec.count() << " now=" << nowInSec.count());
+                recNow = true;
+                lastTimeStampSec = nowInSec;
+            }
+        } else {
+            //check each second
+            if (nowInSec != lastTimeStampSec) {                 //we are in another second
+                if (nowInSec.count() % gatheringInterval == 0) {//produce a regular buffer
+                    NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                     recNow = true;
-                    lastTimeStampSec = nowInSec;
                 }
-            } else {
-                //check each second
-                if (nowInSec != lastTimeStampSec) {                 //we are in another second
-                    if (nowInSec.count() % gatheringInterval == 0) {//produce a regular buffer
-                        NES_DEBUG("DataSource::runningRoutine sending regular buffer");
-                        recNow = true;
-                    }
-                    lastTimeStampSec = nowInSec;
-                }
+                lastTimeStampSec = nowInSec;
             }
-
-            //repeat test
-            if (!recNow) {
-                sleep(1);
-                continue;
-            }
-
-            //check if already produced enough buffer
-            if (cnt < numBuffersToProcess) {
-                auto optBuf = receiveData();
-
-                //this checks we received a valid output buffer
-                if (!!optBuf) {
-                    auto& buf = optBuf.value();
-                    NES_DEBUG("DataSource " << operatorId << " type=" << getType() << " string=" << toString()
-                                            << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                            << " iteration=" << cnt << " operatorId=" << this->operatorId
-                                            << " orgID=" << this->operatorId);
-                    buf.setOriginId(operatorId);
-                    queryManager->addWork(operatorId, buf);
-                    cnt++;
-                }
-            } else {
-                NES_DEBUG("DataSource " << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
-                                        << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
-                return;
-            }
-            NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
-            NES_DEBUG("DataSource::runningRoutine: exist routine " << this);
         }
-    }//end of if souce not empty
+
+        //repeat test
+        if (!recNow) {
+            sleep(1);
+            continue;
+        }
+
+        //check if already produced enough buffer
+        if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
+            auto optBuf = receiveData();
+
+            //this checks we received a valid output buffer
+            if (optBuf.has_value()) {
+                auto& buf = optBuf.value();
+                NES_DEBUG("DataSource " << operatorId << " type=" << getType() << " string=" << toString()
+                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
+                                        << " orgID=" << this->operatorId);
+                buf.setOriginId(operatorId);
+                queryManager->addWork(operatorId, buf);
+                cnt++;
+            }
+        } else {
+            NES_DEBUG("DataSource " << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
+                                    << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
+            return;
+        }
+        NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
+        NES_DEBUG("DataSource::runningRoutine: exist routine " << this);
+    }
 }
 
 // debugging
-void DataSource::setNumBuffersToProcess(uint64_t cnt) { numBuffersToProcess = cnt; };
 uint64_t DataSource::getNumberOfGeneratedTuples() { return generatedTuples; };
 uint64_t DataSource::getNumberOfGeneratedBuffers() { return generatedBuffers; };
 

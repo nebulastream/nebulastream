@@ -18,7 +18,7 @@
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 RowLayout::RowLayout(PhysicalSchemaPtr physicalSchema) : MemoryLayout(std::move(physicalSchema)) {}
 
@@ -33,4 +33,4 @@ MemoryLayoutPtr createRowLayout(SchemaPtr schema) {
     return std::make_shared<RowLayout>(physicalSchema);
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine

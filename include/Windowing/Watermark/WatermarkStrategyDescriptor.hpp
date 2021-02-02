@@ -17,6 +17,7 @@
 #ifndef NES_WATERMARKSTRATEGYDESCRIPTOR_HPP
 #define NES_WATERMARKSTRATEGYDESCRIPTOR_HPP
 
+#include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 
@@ -30,6 +31,8 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     WatermarkStrategyDescriptor();
     virtual ~WatermarkStrategyDescriptor() = default;
     virtual bool equal(WatermarkStrategyDescriptorPtr other) = 0;
+
+    virtual std::string toString() = 0;
 
     /**
     * @brief Checks if the current node is of type WatermarkStrategyDescriptor
@@ -58,6 +61,8 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
             throw std::bad_cast();
         }
     }
+
+    virtual bool inferStamp(SchemaPtr schema) = 0;
 };
 }// namespace NES::Windowing
 

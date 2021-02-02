@@ -18,20 +18,15 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Operators/OperatorId.hpp>
 #include <atomic>
 #include <mutex>
 #include <optional>
 #include <thread>
+
 namespace NES {
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-
-class TupleBuffer;
 
 enum SourceType {
     OPC_SOURCE,
@@ -44,13 +39,22 @@ enum SourceType {
     DEFAULT_SOURCE,
     NETWORK_SOURCE,
     ADAPTIVE_SOURCE,
-    YSB_SOURCE
+    MONITORING_SOURCE,
+    YSB_SOURCE,
+    MEMORY_SOURCE
 };
 
 /**
- * @brief Base class for all data sources in NES
- */
-class DataSource : public Reconfigurable {
+* @brief Base class for all data sources in NES
+* we allow only three cases:
+*  1.) If the user specifies a numBuffersToProcess:
+*      1.1) if the source e.g. file is large enough we will read in numBuffersToProcess and then terminate
+*      1.2) if the file is not large enough, we will start at the beginning until we produced numBuffersToProcess
+*  2.) If the user set numBuffersToProcess to 0, we read the source until it ends, e.g, until the file ends
+*  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
+*/
+
+class DataSource : public NodeEngine::Reconfigurable {
   public:
     /**
      * @brief public constructor for data source
@@ -58,7 +62,8 @@ class DataSource : public Reconfigurable {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, OperatorId operatorId);
+    explicit DataSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                        OperatorId operatorId);
 
     DataSource() = delete;
 
@@ -83,14 +88,14 @@ class DataSource : public Reconfigurable {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    virtual void runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
+    virtual void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager);
 
     /**
      * @brief virtual function to receive a buffer
      * @Note this function is overwritten by the particular data source
      * @return returns a tuple buffer
      */
-    virtual std::optional<TupleBuffer> receiveData() = 0;
+    virtual std::optional<NodeEngine::TupleBuffer> receiveData() = 0;
 
     /**
      * @brief virtual function to get a string describing the particular source
@@ -122,12 +127,6 @@ class DataSource : public Reconfigurable {
      * @return bool indicating if source is running
      */
     virtual bool isRunning();
-
-    /**
-     * @brief debug function for testing to set different buffer counts to be processed
-     * @param number of buffers to be processed
-     */
-    void setNumBuffersToProcess(uint64_t cnt);
 
     /**
      * @brief debug function for testing to get number of generated tuples
@@ -175,8 +174,8 @@ class DataSource : public Reconfigurable {
     std::atomic<uint64_t> gatheringInterval;
     OperatorId operatorId;
     SourceType type;
-    BufferManagerPtr bufferManager;
-    QueryManagerPtr queryManager;
+    NodeEngine::BufferManagerPtr bufferManager;
+    NodeEngine::QueryManagerPtr queryManager;
 
   private:
     //bool indicating if the source is currently running'

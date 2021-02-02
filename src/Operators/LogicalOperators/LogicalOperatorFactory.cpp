@@ -14,12 +14,15 @@
     limitations under the License.
 */
 
+#include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -33,65 +36,73 @@
 
 namespace NES {
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr sourceDescriptor, OperatorId id) {
+UnaryOperatorNodePtr LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr sourceDescriptor, OperatorId id) {
     return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr sinkDescriptor, OperatorId id) {
+UnaryOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr sinkDescriptor, OperatorId id) {
     return std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr predicate, OperatorId id) {
+UnaryOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr predicate, OperatorId id) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate, id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression,
-                                                                 OperatorId id) {
+UnaryOperatorNodePtr LogicalOperatorFactory::createRenameStreamOperator(const std::string newStreamName, OperatorId id) {
+    return std::make_shared<RenameStreamOperatorNode>(newStreamName, id);
+}
+
+UnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(std::vector<ExpressionItem> expressions, OperatorId id) {
+    return std::make_shared<ProjectionLogicalOperatorNode>(expressions, id);
+}
+
+UnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression,
+                                                               OperatorId id) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createMergeOperator(OperatorId id) {
+BinaryOperatorNodePtr LogicalOperatorFactory::createMergeOperator(OperatorId id) {
     return std::make_shared<MergeLogicalOperatorNode>(id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id) {
+BinaryOperatorNodePtr LogicalOperatorFactory::createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id) {
     return std::make_shared<JoinLogicalOperatorNode>(joinDefinition, id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(OperatorId id) {
+ExchangeOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(OperatorId id) {
     return std::make_shared<BroadcastLogicalOperatorNode>(id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                                                    OperatorId id) {
+UnaryOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                                                  OperatorId id) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinition, id);
 }
 
-LogicalOperatorNodePtr
+UnaryOperatorNodePtr
 LogicalOperatorFactory::createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                                                OperatorId id) {
     return std::make_shared<CentralWindowOperator>(windowDefinition, id);
 }
 
-LogicalOperatorNodePtr
+UnaryOperatorNodePtr
 LogicalOperatorFactory::createSliceCreationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                                                OperatorId id) {
     return std::make_shared<SliceCreationOperator>(windowDefinition, id);
 }
 
-LogicalOperatorNodePtr
+UnaryOperatorNodePtr
 LogicalOperatorFactory::createWindowComputationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                                                    OperatorId id) {
     return std::make_shared<WindowComputationOperator>(windowDefinition, id);
 }
 
-LogicalOperatorNodePtr
+UnaryOperatorNodePtr
 LogicalOperatorFactory::createSliceMergingSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                                               OperatorId id) {
     return std::make_shared<SliceMergingOperator>(windowDefinition, id);
 }
 
-LogicalOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOperator(
+UnaryOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOperator(
     const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id) {
     return std::make_shared<WatermarkAssignerLogicalOperatorNode>(watermarkStrategyDescriptor, id);
 }

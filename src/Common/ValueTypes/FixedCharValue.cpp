@@ -24,7 +24,6 @@ FixedCharValue::FixedCharValue(std::vector<std::string> values)
 
 FixedCharValue::FixedCharValue(const std::string& value)
     : ValueType(DataTypeFactory::createFixedChar(value.size())), isString(true) {
-    std::stringstream str;
     values.push_back(value);
 }
 

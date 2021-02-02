@@ -56,10 +56,8 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*, const Regist
                                                     RegisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
 
-    bool success = coordinatorEngine->registerPhysicalStream(
-        request->id(), request->sourcetype(), request->sourceconf(), request->sourcefrequency(),
-        request->numberoftuplestoproduceperbuffer(), request->numberofbufferstoproduce(), request->physicalstreamname(),
-        request->logicalstreamname());
+    bool success = coordinatorEngine->registerPhysicalStream(request->id(), request->sourcetype(), request->physicalstreamname(),
+                                                             request->logicalstreamname());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream success");
@@ -133,6 +131,29 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
         return Status::OK;
     } else {
         NES_ERROR("CoordinatorRPCServer::AddParent failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
+
+Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request =" << request);
+
+    bool success = coordinatorEngine->removeParent(request->childid(), request->oldparent());
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::ReplaceParent success removeParent");
+        bool success2 = coordinatorEngine->addParent(request->childid(), request->newparent());
+        if (success2) {
+            NES_DEBUG("CoordinatorRPCServer::ReplaceParent success addParent topo=");
+            reply->set_success(true);
+            return Status::OK;
+        } else {
+            NES_ERROR("CoordinatorRPCServer::ReplaceParent failed in addParent");
+            reply->set_success(false);
+            return Status::CANCELLED;
+        }
+    } else {
+        NES_ERROR("CoordinatorRPCServer::ReplaceParent failed in remove parent");
         reply->set_success(false);
         return Status::CANCELLED;
     }

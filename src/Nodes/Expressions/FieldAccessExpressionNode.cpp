@@ -44,23 +44,25 @@ bool FieldAccessExpressionNode::equal(const NodePtr rhs) const {
 
 const std::string FieldAccessExpressionNode::getFieldName() { return fieldName; }
 
+void FieldAccessExpressionNode::updateFieldName(std::string fieldName) { this->fieldName = fieldName; }
+
 const std::string FieldAccessExpressionNode::toString() const {
-    return "FieldAccessNode(" + fieldName + ": " + stamp->toString() + ")";
+    return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";
 }
 
 void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
     // check if the access field is defined in the schema.
-    if (!schema->has(fieldName)) {
-        NES_THROW_RUNTIME_ERROR("FieldAccessExpression: the field " + fieldName + " is not defined in the  schema "
-                                + schema->toString());
+    auto existingField = schema->hasFieldName(fieldName);
+    if (existingField) {
+        fieldName = existingField->name;
+        stamp = existingField->getDataType();
+        return;
     }
-    // assign the stamp of this field access with the type of this field.
-    auto field = schema->get(fieldName);
-    stamp = field->getDataType();
+    throw std::logic_error("FieldAccessExpression: the field " + fieldName + " is not defined in the  schema "
+                           + schema->toString());
 }
-void FieldAccessExpressionNode::setFieldName(std::string name) { this->fieldName = name; }
+
 ExpressionNodePtr FieldAccessExpressionNode::copy() {
     return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(this));
 }
-
 }// namespace NES

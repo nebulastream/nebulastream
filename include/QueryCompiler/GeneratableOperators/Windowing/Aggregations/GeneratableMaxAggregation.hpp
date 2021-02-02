@@ -36,7 +36,7 @@ class GeneratableMaxAggregation : public GeneratableWindowAggregation {
      * @param inputRef input value reference
      */
     void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement,
-                            StructDeclaration inputStruct, BinaryOperatorStatement inputRef) override;
+                            RecordHandlerPtr recordHandler) override;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_

@@ -29,9 +29,8 @@ void GeneratableCombiningWindowOperator::produce(CodeGeneratorPtr codegen, Pipel
 }
 
 void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto windowHandler = createWindowHandler();
-    context->setWindow(windowHandler);
-    codegen->generateCodeForCombiningWindow(getWindowDefinition(), generatableWindowAggregation, context);
+    auto windowOperatorIndex = codegen->generateWindowSetup(windowDefinition, outputSchema, context);
+    codegen->generateCodeForCombiningWindow(windowDefinition, generatableWindowAggregation, context, windowOperatorIndex);
 }
 
 GeneratableDistributedlWindowCombinerOperatorPtr

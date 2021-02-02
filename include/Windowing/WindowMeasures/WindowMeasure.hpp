@@ -16,11 +16,15 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWMEASURES_WINDOWMEASURE_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWMEASURES_WINDOWMEASURE_HPP_
+#include <string>
 namespace NES::Windowing {
 /**
  * Defines the measure of a window, common measures are time and count.
  */
-class WindowMeasure {};
+class WindowMeasure {
+    virtual std::string toString() = 0;
+};
+
 }// namespace NES::Windowing
 
 #endif//NES_INCLUDE_WINDOWING_WINDOWMEASURES_WINDOWMEASURE_HPP_

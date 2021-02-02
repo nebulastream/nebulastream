@@ -20,30 +20,27 @@
 
 namespace NES {
 
-StreamCatalogEntry::StreamCatalogEntry(PhysicalStreamConfigPtr streamConf, TopologyNodePtr node)
-    : streamConf(streamConf), node(node){};
+StreamCatalogEntry::StreamCatalogEntry(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+                                       TopologyNodePtr node)
+    : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), node(node) {}
 
-std::string StreamCatalogEntry::getSourceType() { return streamConf->getSourceType(); }
+StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node)
+    : sourceType(config->getSourceType()), physicalStreamName(config->getPhysicalStreamName()),
+      logicalStreamName(config->getLogicalStreamName()), node(node) {
+    // nop
+}
 
-std::string StreamCatalogEntry::getSourceConfig() { return streamConf->getSourceConfig(); }
+std::string StreamCatalogEntry::getSourceType() { return sourceType; }
 
 TopologyNodePtr StreamCatalogEntry::getNode() { return node; }
 
-std::string StreamCatalogEntry::getPhysicalName() { return streamConf->getPhysicalStreamName(); }
+std::string StreamCatalogEntry::getPhysicalName() { return physicalStreamName; }
 
-std::string StreamCatalogEntry::getLogicalName() { return streamConf->getLogicalStreamName(); }
+std::string StreamCatalogEntry::getLogicalName() { return logicalStreamName; }
 
-double StreamCatalogEntry::getSourceFrequency() { return streamConf->getSourceFrequency(); }
-
-uint64_t StreamCatalogEntry::getNumberOfBuffersToProduce() { return streamConf->getNumberOfBuffersToProduce(); }
-
-uint64_t StreamCatalogEntry::getNumberOfTuplesToProducePerBuffer() { return streamConf->getNumberOfTuplesToProducePerBuffer(); }
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalName=" << streamConf->getPhysicalStreamName() << " logicalStreamName=" << streamConf->getLogicalStreamName()
-       << " sourceType=" << streamConf->getSourceType() << " sourceConfig=" << streamConf->getSourceConfig()
-       << " sourceFrequency=" << streamConf->getSourceFrequency()
-       << " numberOfBuffersToProduce=" << streamConf->getNumberOfBuffersToProduce()
+    ss << "physicalName=" << physicalStreamName << " logicalStreamName=" << logicalStreamName << " sourceType=" << sourceType
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }

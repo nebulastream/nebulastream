@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #include <API/Schema.hpp>
+#include <QueryCompiler/RecordHandler.hpp>
 
 namespace NES::Windowing {
 
@@ -36,27 +37,28 @@ typedef std::shared_ptr<Declaration> DeclarationPtr;
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
+class BlockScopeStatement;
+typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
+
 /**
  * @brief The Pipeline Context represents the context of one pipeline during code generation.
  * todo it requires a refactoring if we redesign the compiler.
  */
 class PipelineContext {
   public:
-    PipelineContext();
+    enum PipelineContextArity { Unary, BinaryLeft, BinaryRight };
+
+  public:
+    PipelineContext(PipelineContextArity arity = Unary);
+    ~PipelineContext() { NES_DEBUG("~PipelineContext(" + pipelineName + ")"); }
     static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);
+    BlockScopeStatementPtr createSetupScope();
+    BlockScopeStatementPtr createStartScope();
     std::vector<DeclarationPtr> variable_declarations;
 
     SchemaPtr getInputSchema() const;
     SchemaPtr getResultSchema() const;
-    Windowing::AbstractWindowHandlerPtr getWindow();
-    void setWindow(Windowing::AbstractWindowHandlerPtr window);
-    bool hasWindow() const;
-
-    bool hasJoin() const;
-    Join::AbstractJoinHandlerPtr getJoin();
-    void setJoin(Join::AbstractJoinHandlerPtr join);
-
     SchemaPtr inputSchema;
     SchemaPtr resultSchema;
     GeneratedCodePtr code;
@@ -65,13 +67,29 @@ class PipelineContext {
     void addNextPipeline(PipelineContextPtr nextPipeline);
     bool hasNextPipeline() const;
 
+    RecordHandlerPtr getRecordHandler();
+
+    /**
+     * @brief Appends a new operator handler and returns the handler index.
+     * The index enables runtime lookups.
+     * @param operatorHandler
+     * @return operator handler index
+     */
+    int64_t registerOperatorHandler(NodeEngine::Execution::OperatorHandlerPtr operatorHandler);
+
+    const std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
+
     std::string pipelineName;
-    bool isLeftSide;
+    PipelineContextArity arity;
+    std::vector<BlockScopeStatementPtr> getSetupScopes();
+    std::vector<BlockScopeStatementPtr> getStartScopes();
 
   private:
+    RecordHandlerPtr recordHandler;
     std::vector<PipelineContextPtr> nextPipelines;
-    Windowing::AbstractWindowHandlerPtr windowHandler;
-    Join::AbstractJoinHandlerPtr joinHandler;
+    std::vector<BlockScopeStatementPtr> setupScopes;
+    std::vector<BlockScopeStatementPtr> startScopes;
+    std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_

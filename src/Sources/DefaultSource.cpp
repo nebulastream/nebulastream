@@ -27,27 +27,28 @@
 
 namespace NES {
 
-DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                             const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
+DefaultSource::DefaultSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                             NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
+                             uint64_t frequency, OperatorId operatorId)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce,
                       operatorId) {
     NES_DEBUG("DefaultSource:" << this << " creating");
     this->gatheringInterval = frequency;
 }
 
-std::optional<TupleBuffer> DefaultSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
     // 10 tuples of size one
     NES_DEBUG("Source:" << this << " requesting buffer");
 
     auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("Source:" << this << " got buffer");
     uint64_t tupleCnt = 10;
-    auto layout = createRowLayout(std::make_shared<Schema>(schema));
+    auto layout = NodeEngine::createRowLayout(std::make_shared<Schema>(schema));
 
+    auto value = 1;
     auto fields = schema->fields;
     for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
         for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-            auto value = 1;
             auto dataType = fields[fieldIndex]->getDataType();
             auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
             if (physicalType->isBasicType()) {

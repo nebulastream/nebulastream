@@ -16,31 +16,56 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <API/Windowing.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowMeasures/TimeUnit.hpp>
 
 namespace NES::Windowing {
 
-TimeCharacteristic::TimeCharacteristic(Type type) : type(type) {}
-TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field) : type(type), field(field) {}
+TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(API::Milliseconds()) {}
+TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit)
+    : type(type), field(field), unit(unit) {}
 
-TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldValue) {
+TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldValue, TimeUnit unit) {
     auto keyExpression = fieldValue.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField);
+    return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }
 
-TimeCharacteristicPtr TimeCharacteristic::createProcessingTime() {
-    return std::make_shared<TimeCharacteristic>(Type::ProcessingTime);
+TimeCharacteristicPtr TimeCharacteristic::createIngestionTime() {
+    return std::make_shared<TimeCharacteristic>(Type::IngestionTime);
 }
 
 AttributeFieldPtr TimeCharacteristic::getField() { return field; }
 
 TimeCharacteristic::Type TimeCharacteristic::getType() { return type; }
+
+TimeUnit TimeCharacteristic::getTimeUnit() { return unit; }
+
+std::string TimeCharacteristic::toString() {
+    std::stringstream ss;
+    ss << "TimeCharacteristic: ";
+    ss << " type=" << getTypeAsString();
+    if (field) {
+        ss << " field=" << field->toString();
+    }
+
+    ss << std::endl;
+    return ss.str();
+}
+
+std::string TimeCharacteristic::getTypeAsString() {
+    switch (type) {
+        case IngestionTime: return "IngestionTime";
+        case EventTime: return "EventTime";
+        default: return "Unknown TimeCharacteristic type";
+    }
+}
 
 }// namespace NES::Windowing

@@ -16,7 +16,7 @@
 
 #include <NodeEngine/NesThread.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 /// The first thread will have index 0.
 std::atomic<uint32_t> NesThread::next_index{0};
@@ -27,4 +27,4 @@ std::atomic<bool> NesThread::id_used[MaxNumThreads] = {};
 /// Give the new thread an ID.
 thread_local NesThread::ThreadId NesThread::id{};
 
-}// namespace NES
+}// namespace NES::NodeEngine

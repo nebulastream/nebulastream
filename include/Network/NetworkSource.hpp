@@ -30,7 +30,7 @@ namespace Network {
 class NetworkSource : public DataSource {
 
   public:
-    NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+    NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                   NetworkManagerPtr networkManager, NesPartition nesPartition);
 
     ~NetworkSource();
@@ -39,7 +39,7 @@ class NetworkSource : public DataSource {
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
      * @return TupleBufferPtr containing the received buffer
      */
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method
@@ -71,7 +71,7 @@ class NetworkSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    void runningRoutine(BufferManagerPtr, QueryManagerPtr);
+    void runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr);
 
   private:
     NetworkManagerPtr networkManager;

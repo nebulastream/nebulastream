@@ -17,10 +17,19 @@
 #ifndef NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
 #define NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
 
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <cstdint>
 #include <list>
 #include <memory>
+
+#if __linux
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/QueryManager.hpp>
+#include <sys/syscall.h>
+#endif
 
 namespace NES::Benchmarking {
 /**
@@ -35,19 +44,20 @@ class SimpleBenchmarkSource : public DataSource {
     uint64_t ingestionRate;
     uint64_t keyPos = 0;
     uint64_t curNumberOfTuplesPerBuffer;
-    std::shared_ptr<MemoryLayout> rowLayout;
+    std::shared_ptr<NodeEngine::MemoryLayout> rowLayout;
 
   public:
     uint64_t numberOfTuplesPerBuffer;
 
-    SimpleBenchmarkSource(const SchemaPtr& schema, const BufferManagerPtr& bufferManager, const QueryManagerPtr& queryManager,
-                          uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer, uint64_t operatorId)
+    SimpleBenchmarkSource(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager,
+                          const NodeEngine::QueryManagerPtr& queryManager, uint64_t ingestionRate,
+                          uint64_t numberOfTuplesPerBuffer, uint64_t operatorId)
 
         : DataSource(schema, bufferManager, queryManager, operatorId) {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
-        this->rowLayout = createRowLayout(schema);
+        this->rowLayout = NodeEngine::createRowLayout(schema);
         this->curNumberOfTuplesPerBuffer = this->numberOfTuplesPerBuffer;
         BenchmarkUtils::createUniformData(keyList, curNumberOfTuplesPerBuffer);
     }
@@ -55,7 +65,7 @@ class SimpleBenchmarkSource : public DataSource {
     /**
      * @brief this function is very similar to DataSource.cpp runningRoutine(). The difference is that the sleep is in ms
      */
-    void runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) override {
+    void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) override {
         if (!queryManager) {
             NES_ERROR("query Manager not set");
             throw std::logic_error("SimpleBenchmarkSource: QueryManager not set");
@@ -90,7 +100,7 @@ class SimpleBenchmarkSource : public DataSource {
 
                     // we are using always the same buffer, so no receiveData() call for every iteration
                     // auto optBuf = receiveData();
-                    if (!!optBuf) {
+                    if (optBuf.has_value()) {
                         // here we got a valid buffer
                         auto& buf = optBuf.value();
                         queryManager->addWork(this->operatorId, buf);
@@ -130,24 +140,52 @@ class SimpleBenchmarkSource : public DataSource {
         }//end of if source not empty
     }
 
-    std::optional<NES::TupleBuffer> receiveData() override {
-        NES_DEBUG("SimpleBenchmarkSource: available buffer are " << bufferManager->getAvailableBuffers());
+    std::optional<NodeEngine::TupleBuffer> receiveData() override {
 
-        std::optional<TupleBuffer> optionalBuf;
-        do {
-            optionalBuf = bufferManager->getBufferNoBlocking();
-        } while (!optionalBuf.has_value());
+        // 10 tuples of size one
+        NES_DEBUG("Source:" << this << " requesting buffer");
 
-        NES_DEBUG("SimpleBenchmarkSource: got buffer!");
-
-        auto buf = optionalBuf.value();
-
+        auto buf = this->bufferManager->getBufferBlocking();
         auto listIt = keyList.begin();
         std::advance(listIt, keyPos);
 
-        for (uint64_t i = 0; i < curNumberOfTuplesPerBuffer; ++i, ++listIt) {
-            rowLayout->getValueField<int16_t>(i, 0)->write(buf, *listIt);
-            rowLayout->getValueField<int16_t>(i, 1)->write(buf, 1);
+        auto fields = schema->fields;
+        for (uint64_t recordIndex = 0; recordIndex < curNumberOfTuplesPerBuffer; recordIndex++) {
+            for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+                auto value = *listIt;
+                auto dataType = fields[fieldIndex]->getDataType();
+                auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+                if (physicalType->isBasicType()) {
+                    auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+                    if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                        rowLayout->getValueField<char>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                        rowLayout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                        rowLayout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                        rowLayout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                        rowLayout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                        rowLayout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                        rowLayout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                        rowLayout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                        rowLayout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                        rowLayout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
+                    } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                        rowLayout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
+                    } else {
+                        NES_DEBUG("This data source only generates data for numeric fields");
+                    }
+                } else {
+                    NES_DEBUG("This data source only generates data for numeric fields");
+                }
+            }
         }
 
         this->keyPos += curNumberOfTuplesPerBuffer;
@@ -164,13 +202,17 @@ class SimpleBenchmarkSource : public DataSource {
 
     virtual ~SimpleBenchmarkSource() = default;
 
-    static std::shared_ptr<SimpleBenchmarkSource> create(BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                                                         SchemaPtr& benchmarkSchema, uint64_t ingestionRate,
-                                                         uint64_t operatorId) {
+    static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
+                                                         NodeEngine::QueryManagerPtr queryManager, SchemaPtr& benchmarkSchema,
+                                                         uint64_t ingestionRate, uint64_t operatorId,
+                                                         bool roundingNearestThousand = false) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
-        maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
-                                                              : (maxTuplesPerBuffer - maxTuplesPerBuffer % 1000);
+        if (roundingNearestThousand) {
+            NES_INFO("BM_SimpleFilterQuery: maxTuplesPerBuffer will be rounded to nearest thousands");
+            maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
+                                                                  : (maxTuplesPerBuffer - maxTuplesPerBuffer % 1000);
+        }
 
         NES_INFO("BM_SimpleFilterQuery: maxTuplesPerBuffer=" << maxTuplesPerBuffer);
         // at this point maxTuplesPerBuffer will be rounded to nearest thousands. This makes it easier to work with ingestion rates

@@ -22,49 +22,59 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
 
-namespace NES {
+namespace NES::Optimizer {
 
-z3::expr NES::DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::context& context) {
+Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForField(std::string fieldName, DataTypePtr dataType, z3::ContextPtr context) {
+    NES_DEBUG("DataTypeToZ3ExprUtil: creating z3 expression for field");
+    z3::ExprPtr expr;
     if (dataType->isInteger()) {
-        return context.int_const(fieldName.c_str());
+        expr = std::make_shared<z3::expr>(context->int_const(fieldName.c_str()));
     } else if (dataType->isFloat()) {
-        return context.fpa_const<64>(fieldName.c_str());
+        expr = std::make_shared<z3::expr>(context->fpa_const<64>(fieldName.c_str()));
     } else if (dataType->isBoolean()) {
-        return context.bool_const(fieldName.c_str());
+        expr = std::make_shared<z3::expr>(context->bool_const(fieldName.c_str()));
     } else if (dataType->isChar() || dataType->isFixedChar()) {
-        return context.constant(fieldName.c_str(), context.string_sort());
-    } else if (dataType->isArray()) {
-        auto arrayType = DataType::as<Array>(dataType);
-        NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data type of array type.");
+        expr = std::make_shared<z3::expr>(context->constant(fieldName.c_str(), context->string_sort()));
+    } else {
+        NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + dataType->toString());
     }
-    NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + dataType->toString());
+    std::map<std::string, z3::ExprPtr> fieldMap{{fieldName, expr}};
+    return Z3ExprAndFieldMap::create(expr, fieldMap);
 }
 
-z3::expr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::context& context) {
+Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr valueType, z3::ContextPtr context) {
+    NES_DEBUG("DataTypeToZ3ExprUtil: creating z3 expression for value type");
     if (valueType->isArrayValue()) {
         NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of array type.");
+        return nullptr;
     } else {
         auto basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
         auto valueType = basicValueType->getType();
+        z3::ExprPtr expr;
         if (valueType->isUndefined()) {
             NES_THROW_RUNTIME_ERROR("Can't support creating Z3 expression for data value of undefined type.");
         } else if (valueType->isInteger()) {
-            return context.int_val(std::stoi(basicValueType->getValue()));
+            expr = std::make_shared<z3::expr>(context->int_val(std::stoi(basicValueType->getValue())));
         } else if (valueType->isFloat()) {
-            return context.fpa_val(std::stod(basicValueType->getValue()));
+            expr = std::make_shared<z3::expr>(context->fpa_val(std::stod(basicValueType->getValue())));
         } else if (valueType->isBoolean()) {
             bool val = (strcasecmp(basicValueType->getValue().c_str(), "true") == 0
                         || std::atoi(basicValueType->getValue().c_str()) != 0);
-            return context.bool_val(val);
+            expr = std::make_shared<z3::expr>(context->bool_val(val));
         } else if (valueType->isChar() || valueType->isFixedChar()) {
-            return context.string_val(basicValueType->getValue());
+            expr = std::make_shared<z3::expr>(context->string_val(basicValueType->getValue()));
+        } else {
+            NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueType->toString());
+            return nullptr;
         }
+        return Z3ExprAndFieldMap::create(expr, {});
     }
-    NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueType->toString());
 }
-}// namespace NES
+}// namespace NES::Optimizer

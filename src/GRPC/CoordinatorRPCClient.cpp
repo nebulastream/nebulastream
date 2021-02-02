@@ -38,16 +38,12 @@ CoordinatorRPCClient::CoordinatorRPCClient(std::string address) : address(addres
 
 CoordinatorRPCClient::~CoordinatorRPCClient() { NES_DEBUG("~CoordinatorRPCClient()"); }
 
-bool CoordinatorRPCClient::registerPhysicalStream(PhysicalStreamConfigPtr conf) {
+bool CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf->toString() << " workerID=" << workerId);
 
     RegisterPhysicalStreamRequest request;
     request.set_id(workerId);
     request.set_sourcetype(conf->getSourceType());
-    request.set_sourceconf(conf->getSourceConfig());
-    request.set_sourcefrequency(conf->getSourceFrequency());
-    request.set_numberoftuplestoproduceperbuffer(conf->getNumberOfTuplesToProducePerBuffer());
-    request.set_numberofbufferstoproduce(conf->getNumberOfBuffersToProduce());
     request.set_physicalstreamname(conf->getPhysicalStreamName());
     request.set_logicalstreamname(conf->getLogicalStreamName());
     NES_DEBUG("RegisterPhysicalStreamRequest::RegisterLogicalStreamRequest request=" << request.DebugString());
@@ -166,6 +162,30 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
         return reply.success();
     } else {
         NES_DEBUG(" CoordinatorRPCClient::addParent error=" << status.error_code() << ": " << status.error_message());
+        return reply.success();
+    }
+}
+
+bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
+    NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId=" << oldParentId << " newParentId=" << newParentId
+                                                                 << " workerId=" << workerId);
+
+    ReplaceParentRequest request;
+    request.set_childid(workerId);
+    request.set_oldparent(oldParentId);
+    request.set_newparent(newParentId);
+    NES_DEBUG("CoordinatorRPCClient::replaceParent request=" << request.DebugString());
+
+    ReplaceParentReply reply;
+    ClientContext context;
+
+    Status status = coordinatorStub->ReplaceParent(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("CoordinatorRPCClient::replaceParent: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_DEBUG(" CoordinatorRPCClient::replaceParent error=" << status.error_code() << ": " << status.error_message());
         return reply.success();
     }
 }

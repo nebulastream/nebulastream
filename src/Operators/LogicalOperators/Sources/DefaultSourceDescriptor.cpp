@@ -19,29 +19,27 @@
 #include <utility>
 namespace NES {
 
-DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency,
-                                                 OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), operatorId), numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
+DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency)
+    : SourceDescriptor(std::move(schema)), numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
 
 DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                                 uint32_t frequency, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), std::move(streamName), operatorId), numbersOfBufferToProduce(numbersOfBufferToProduce),
+                                                 uint32_t frequency)
+    : SourceDescriptor(std::move(schema), std::move(streamName)), numbersOfBufferToProduce(numbersOfBufferToProduce),
       frequency(frequency) {}
 
 uint64_t DefaultSourceDescriptor::getNumbersOfBufferToProduce() const { return numbersOfBufferToProduce; }
 
 uint32_t DefaultSourceDescriptor::getFrequency() const { return frequency; }
 
-SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency,
-                                                    OperatorId operatorId) {
+SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency) {
     return std::make_shared<DefaultSourceDescriptor>(
-        DefaultSourceDescriptor(std::move(schema), numbersOfBufferToProduce, frequency, operatorId));
+        DefaultSourceDescriptor(std::move(schema), numbersOfBufferToProduce, frequency));
 }
 
 SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                                    uint32_t frequency, OperatorId operatorId) {
+                                                    uint32_t frequency) {
     return std::make_shared<DefaultSourceDescriptor>(
-        DefaultSourceDescriptor(std::move(schema), std::move(streamName), numbersOfBufferToProduce, frequency, operatorId));
+        DefaultSourceDescriptor(std::move(schema), std::move(streamName), numbersOfBufferToProduce, frequency));
 }
 bool DefaultSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<DefaultSourceDescriptor>())

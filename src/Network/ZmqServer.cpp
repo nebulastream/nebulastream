@@ -29,7 +29,7 @@ namespace NES {
 namespace Network {
 
 ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol,
-                     BufferManagerPtr bufferManager)
+                     NodeEngine::BufferManagerPtr bufferManager)
     : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
       exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
     NES_DEBUG("ZmqServer: Creating ZmqServer()");
@@ -64,10 +64,15 @@ ZmqServer::~ZmqServer() {
     if (future.valid()) {
         // we have an error
         try {
-            future.get();
+            bool gracefullyClosed = future.get();
+            if (gracefullyClosed) {
+                NES_DEBUG("ZmqServer: gracefully closed on " << hostname << ":" << port);
+            } else {
+                NES_WARNING("ZmqServer: non gracefully closed on " << hostname << ":" << port);
+            }
         } catch (std::exception& e) {
             NES_ERROR("ZmqServer: Server failed to start due to " << e.what());
-            throw e;
+            throw;
         }
     }
 }
@@ -95,7 +100,6 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
 
     for (int i = 0; i < numHandlerThreads; ++i) {
         handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
-            std::string thName = "DataSrc-" + i;
             setThreadName("zmq-evt-%d", i);
             messageHandlerEventLoop(barrier, i);
         }));
@@ -122,7 +126,9 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
             // handle
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
-                NES_INFO("ZmqServer: Shutdown completed! address: "
+                //                dispatcherSocket.close();
+                //                frontendSocket.close();
+                NES_INFO("ZmqServer: Frontend: Shutdown completed! address: "
                          << "tcp://" + hostname + ":" + std::to_string(port));
             } else {
                 NES_ERROR("ZmqServer: " << zmqError.what());
@@ -143,7 +149,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
     }
 
     if (shutdownComplete) {
-        errorPromise.set_value(false);
+        errorPromise.set_value(true);
     }
 }
 
@@ -199,10 +205,11 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                                                                             << bufferHeader->getPayloadSize());
 
                     // receive buffer content
-                    TupleBuffer buffer = bufferManager->getBufferBlocking();
+                    auto buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
                     buffer.setOriginId(bufferHeader->getOriginId());
+                    buffer.setWatermark(bufferHeader->getWatermark());
 
                     exchangeProtocol.onBuffer(nesPartition, buffer);
                     break;
@@ -228,11 +235,12 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
         }
     } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
+            //            dispatcherSocket.close();
             NES_DEBUG("ZmqServer: Handler #" << index << " closed on server " << hostname << ":" << port);
         } else {
             errorPromise.set_exception(std::current_exception());
             NES_ERROR("ZmqServer: event loop " << index << " got " << err.what());
-            throw err;
+            std::rethrow_exception(std::current_exception());
         }
     }
 }

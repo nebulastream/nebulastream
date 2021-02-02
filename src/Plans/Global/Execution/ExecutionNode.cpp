@@ -55,7 +55,6 @@ std::vector<QueryPlanPtr> ExecutionNode::getQuerySubPlans(QueryId queryId) {
 }
 
 bool ExecutionNode::removeQuerySubPlans(QueryId queryId) {
-    std::vector<QueryPlanPtr> querySubPlans = mapOfQuerySubPlans[queryId];
     if (mapOfQuerySubPlans.erase(queryId) == 1) {
         NES_DEBUG("ExecutionNode: Successfully removed query sub plan and released the resources");
         return true;

@@ -23,9 +23,13 @@
 namespace NES::Windowing {
 
 MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {}
+    : WindowAggregationDescriptor(std::move(field)) {
+    this->aggregationType = Min;
+}
 MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    this->aggregationType = Min;
+}
 
 WindowAggregationPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                       FieldAccessExpressionNodePtr asField) {
@@ -41,7 +45,6 @@ WindowAggregationPtr MinAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(fieldAccess));
 }
 
-WindowAggregationDescriptor::Type MinAggregationDescriptor::getType() { return Min; }
 DataTypePtr MinAggregationDescriptor::getInputStamp() { return onField->getStamp(); }
 DataTypePtr MinAggregationDescriptor::getPartialAggregateStamp() { return onField->getStamp(); }
 DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp() { return onField->getStamp(); }

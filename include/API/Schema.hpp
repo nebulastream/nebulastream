@@ -35,6 +35,16 @@ class Schema {
     Schema(SchemaPtr query);
 
     /**
+     * @brief Schema qualifier separator
+     */
+    constexpr static const char* const ATTRIBUTE_NAME_SEPARATOR = "$";
+
+    /**
+     * @brief Schema qualifier for field with undefined qualifier
+     */
+    constexpr static const char* const UNDEFINED_SCHEMA_QUALIFIER = "_$";
+
+    /**
      * @brief Factory method to create a new SchemaPtr.
      * @return SchemaPtr
      */
@@ -56,10 +66,10 @@ class Schema {
 
     /**
      * @brief appends a AttributeField to the schema and returns a copy of this schema.
-     * @param field
+     * @param attribute
      * @return a copy of this schema.
      */
-    SchemaPtr addField(AttributeFieldPtr field);
+    SchemaPtr addField(AttributeFieldPtr attribute);
 
     /**
     * @brief appends a field with a basic type to the schema and returns a copy of this schema.
@@ -76,6 +86,12 @@ class Schema {
     SchemaPtr addField(const std::string& name, DataTypePtr data);
 
     /**
+     * @brief removes a AttributeField from the schema
+     * @param field
+     */
+    void removeField(AttributeFieldPtr field);
+
+    /**
      * @brief Replaces a field, which is already part of the schema.
      * @param name
      * @param type
@@ -84,11 +100,11 @@ class Schema {
     void replaceField(const std::string& name, DataTypePtr type);
 
     /**
-     * @brief Checks if attribute field name is defined in the schema
-     * @param fieldName
-     * @return bool
+     * @brief Checks if an attribute with the input field name is defined in the schema
+     * @param fieldName: fully or partly qualified field name
+     * @return AttributeFieldPtr: pointer to attribute field if present else null pointer
      */
-    bool has(const std::string& fieldName);
+    AttributeFieldPtr hasFieldName(const std::string& fieldName);
 
     /**
      * @brief Checks if attribute field name is defined in the schema and returns its index.
@@ -132,7 +148,26 @@ class Schema {
      */
     bool equals(SchemaPtr schema, bool considerOrder = true);
 
+    /**
+     * @brief Checks if two schemas have same datatypes at same index location
+     * @param otherSchema: the other schema to compare agains
+     * @return ture if they are equal else false
+     */
+    bool hasEqualTypes(SchemaPtr otherSchema);
+
+    /**
+     * @brief Checks if the field exists in the schema
+     * @param schema
+     * @return boolean
+    */
+    bool contains(const std::string& fieldName);
+
     const std::string toString() const;
+
+    /**
+     * @brief Remove all fields and qualifying name
+     */
+    void clear();
 
     std::vector<AttributeFieldPtr> fields;
 };

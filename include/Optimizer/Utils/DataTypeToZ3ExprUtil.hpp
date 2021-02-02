@@ -21,7 +21,10 @@
 
 namespace z3 {
 class expr;
+typedef std::shared_ptr<expr> ExprPtr;
+
 class context;
+typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
 namespace NES {
@@ -31,6 +34,13 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
+
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class Z3ExprAndFieldMap;
+typedef std::shared_ptr<Z3ExprAndFieldMap> Z3ExprAndFieldMapPtr;
 
 /**
  * @brief This class is used for converting a data field or value into Z3 expression.
@@ -42,18 +52,18 @@ class DataTypeToZ3ExprUtil {
      * @param fieldName: name of the filed
      * @param dataType: the type of the field
      * @param context: the z3 context
-     * @return expression for the field
+     * @return expression and field map for the field
      */
-    static z3::expr createForField(std::string fieldName, DataTypePtr dataType, z3::context& context);
+    static Z3ExprAndFieldMapPtr createForField(std::string fieldName, DataTypePtr dataType, z3::ContextPtr context);
 
     /**
      * @brief Create Z3 expression for data value of specific type
      * @param valueType: the input value
      * @param context: Z3 context
-     * @return expression for the data value
+     * @return expression and field map for the data value
      */
-    static z3::expr createForDataValue(ValueTypePtr valueType, z3::context& context);
+    static Z3ExprAndFieldMapPtr createForDataValue(ValueTypePtr valueType, z3::ContextPtr context);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_OPTIMIZER_UTILS_DATATYPETOZ3EXPRUTIL_HPP

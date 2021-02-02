@@ -29,7 +29,8 @@
 
 namespace NES {
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, BufferManagerPtr bufferManager)
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology,
+                                     NodeEngine::BufferManagerPtr bufferManager)
     : workerClient(workerClient), topology(topology), bufferManager(bufferManager) {
     NES_DEBUG("MonitoringService: Initializing");
 }
@@ -40,8 +41,8 @@ MonitoringService::~MonitoringService() {
     topology.reset();
 }
 
-std::tuple<SchemaPtr, TupleBuffer> MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
-                                                                            MonitoringPlanPtr plan) {
+std::tuple<SchemaPtr, NodeEngine::TupleBuffer>
+MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan) {
     if (!plan) {
         auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
         plan = MonitoringPlan::create(metrics);
@@ -87,7 +88,7 @@ web::json::value MonitoringService::requestMonitoringDataForAllNodesAsJson(Monit
     auto root = topology->getRoot();
     metricsJson[std::to_string(root->getId())] = requestMonitoringDataAsJson(root->getId(), plan);
 
-    for (const auto& node : root->getAndFlattenAllChildren()) {
+    for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId(), plan);
     }
@@ -131,7 +132,7 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPromethe
     metricsJson[std::to_string(root->getId())] =
         web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
 
-    for (const auto& node : root->getAndFlattenAllChildren()) {
+    for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         metricsJson[std::to_string(tNode->getId())] =
             web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));

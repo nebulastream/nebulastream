@@ -23,9 +23,13 @@
 namespace NES::Windowing {
 
 SumAggregationDescriptor::SumAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {}
+    : WindowAggregationDescriptor(std::move(field)) {
+    this->aggregationType = Sum;
+}
 SumAggregationDescriptor::SumAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    this->aggregationType = Sum;
+}
 
 WindowAggregationPtr SumAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                       FieldAccessExpressionNodePtr asField) {
@@ -40,8 +44,6 @@ WindowAggregationPtr SumAggregationDescriptor::on(ExpressionItem onField) {
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
 }
-
-WindowAggregationDescriptor::Type SumAggregationDescriptor::getType() { return Sum; }
 
 void SumAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.

@@ -17,7 +17,13 @@
 #ifndef INCLUDE_WINDOWS_WINDOW_HPP_
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <algorithm>
 #include <atomic>
@@ -35,6 +41,10 @@ namespace NES::Windowing {
  */
 class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindowHandler> {
   public:
+    explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition) : windowDefinition(windowDefinition) {
+        // nop
+    }
+
     template<class Type>
     auto as() {
         return std::dynamic_pointer_cast<Type>(shared_from_this());
@@ -61,8 +71,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
-                       uint32_t pipelineStageId, uint64_t originId) = 0;
+    virtual bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
     /**
      * @brief Returns window manager.
@@ -72,7 +81,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
 
     virtual std::string toString() = 0;
 
-    virtual LogicalWindowDefinitionPtr getWindowDefinition() = 0;
+    LogicalWindowDefinitionPtr getWindowDefinition() { return windowDefinition; }
 
     /**
      * @brief Gets the last processed watermark
@@ -142,16 +151,25 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
      * @param ts
      * @param originId
      */
-    virtual void updateMaxTs(uint64_t ts, uint64_t originId) = 0;
+    virtual void updateMaxTs(uint64_t ts, uint64_t originId) {
+        NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
+                                 << " new val=" << std::max(originIdToMaxTsMap[originId], ts));
+        if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+            auto beforeMin = getMinWatermark();
+            originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
+            auto afterMin = getMinWatermark();
+            if (beforeMin < afterMin) {
+                trigger();
+            }
+        } else {
+            originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
+        }
+    }
 
   protected:
+    LogicalWindowDefinitionPtr windowDefinition;
     std::atomic_bool running{false};
     WindowManagerPtr windowManager;
-    PipelineStagePtr nextPipeline;
-    uint32_t pipelineStageId;
-    QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
-    uint64_t originId;
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;
     uint64_t lastWatermark;
     uint64_t numberOfInputEdges;

@@ -40,16 +40,19 @@ Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr le
 
 UserAPIExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
 
-const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code) const {
+const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const {
     if (functionCallOverload.empty()) {
         if (bracket)
-            return BinaryOperatorStatement(*(left->generateCode(code)), op, *(right->generateCode(code)), BRACKETS).copy();
-        return BinaryOperatorStatement(*(left->generateCode(code)), op, *(right->generateCode(code))).copy();
+            return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)), op,
+                                           *(right->generateCode(code, recordHandler)), BRACKETS)
+                .copy();
+        return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)), op,
+                                       *(right->generateCode(code, recordHandler)))
+            .copy();
     } else {
-        std::stringstream str;
         FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
-        expr.addParameter(left->generateCode(code));
-        expr.addParameter(right->generateCode(code));
+        expr.addParameter(left->generateCode(code, recordHandler));
+        expr.addParameter(right->generateCode(code, recordHandler));
         auto tf = CompilerTypesFactory();
         if (bracket)
             return BinaryOperatorStatement(expr, op,
@@ -64,17 +67,13 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code) cons
     }
 }
 
-const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr& code) const {
+const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, NES::RecordHandlerPtr recordHandler) const {
     if (attribute) {
-        //checks if the predicate field is contained in the struct declaration.
-        if (code->structDeclaratonInputTuple.containsField(attribute->name, attribute->getDataType())) {
-            // creates a new variable declaration for the predicate field.
-            VariableDeclaration var_decl_attr = code->structDeclaratonInputTuple.getVariableDeclaration(attribute->name);
-            return ((VarRef(code->varDeclarationInputTuples)[VarRef(*code->varDeclarationRecordIndex)])
-                        .accessRef(VarRef(var_decl_attr)))
-                .copy();
+        //checks if the predicate field is contained in the current stream record.
+        if (recordHandler->hasAttribute(attribute->name)) {
+            return recordHandler->getAttribute(attribute->name);
         } else {
-            NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from StructDeclaration!");
+            NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from record handler!");
         }
     } else if (value) {
         // todo remove if compiler refactored

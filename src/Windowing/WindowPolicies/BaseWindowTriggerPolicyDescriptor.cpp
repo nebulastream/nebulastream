@@ -20,4 +20,18 @@ namespace NES::Windowing {
 
 BaseWindowTriggerPolicyDescriptor::BaseWindowTriggerPolicyDescriptor(TriggerType policy) : policy(policy) {}
 
+std::string BaseWindowTriggerPolicyDescriptor::getTypeAsString() {
+    if (policy == triggerOnTime) {
+        return "triggerOnTime";
+    } else if (policy == triggerOnRecord) {
+        return "triggerOnRecord";
+    } else if (policy == triggerOnBuffer) {
+        return "triggerOnBuffer";
+    } else if (policy == triggerOnWatermarkChange) {
+        return "triggerOnWatermarkChange";
+    } else {
+        return "Unknown Policy";
+    }
+}
+
 }// namespace NES::Windowing

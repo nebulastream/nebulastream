@@ -43,10 +43,24 @@ Windowing::TimeMeasure Hours(uint64_t hours) { return Minutes(hours * 60); }
 
 Windowing::TimeMeasure Days(uint64_t days) { return Hours(days); }
 
+Windowing::TimeUnit Milliseconds() { return Windowing::TimeUnit(1); }
+
+Windowing::TimeUnit Seconds() { return Windowing::TimeUnit(1000); }
+
+Windowing::TimeUnit Minutes() { return Windowing::TimeUnit(1000 * 60); }
+
+Windowing::TimeUnit Hours() { return Windowing::TimeUnit(1000 * 60 * 60); }
+
+Windowing::TimeUnit Days() { return Windowing::TimeUnit(1000 * 60 * 60 * 24); }
+
 Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField) {
     return Windowing::TimeCharacteristic::createEventTime(onField);
 }
 
-Windowing::TimeCharacteristicPtr ProcessingTime() { return Windowing::TimeCharacteristic::createProcessingTime(); }
+Windowing::TimeCharacteristicPtr EventTime(ExpressionItem onField, Windowing::TimeUnit unit) {
+    return Windowing::TimeCharacteristic::createEventTime(onField, unit);
+}
+
+Windowing::TimeCharacteristicPtr IngestionTime() { return Windowing::TimeCharacteristic::createIngestionTime(); }
 
 }// namespace NES::API

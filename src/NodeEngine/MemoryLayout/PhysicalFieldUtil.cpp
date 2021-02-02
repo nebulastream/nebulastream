@@ -25,7 +25,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 class ArrayDataType;
 
@@ -56,4 +56,4 @@ std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const Phys
     }
     return nullptr;
 }
-}// namespace NES
+}// namespace NES::NodeEngine

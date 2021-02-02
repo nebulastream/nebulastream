@@ -71,8 +71,6 @@ uint64_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, 
                             + streamConf->getLogicalStreamName());
         }
 
-        SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf->getLogicalStreamName());
-
         std::string sourceType = streamConf->getSourceType();
         if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
             NES_ERROR("CoordinatorEngine::registerNode: error source type " << sourceType << " is not supported");
@@ -143,25 +141,20 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     return successCatalog && successTopology;
 }
 
-bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string sourceConf,
-                                               uint64_t sourceFrequency, uint64_t numberOfTuplesToProducePerBuffer,
-                                               uint64_t numberOfBuffersToProduce, std::string physicalStreamname,
-                                               std::string logicalStreamname) {
+bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string physicalStreamName,
+                                               std::string logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id "
-              << nodeId << " physical stream=" << physicalStreamname << " logical stream=" << logicalStreamname);
+              << nodeId << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
-    PhysicalStreamConfigPtr streamConf =
-        PhysicalStreamConfig::create(sourceType, sourceConf, sourceFrequency, numberOfTuplesToProducePerBuffer,
-                                     numberOfBuffersToProduce, physicalStreamname, logicalStreamname);
-    NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical stream with conf= "
-              << streamConf->toString() << " for workerId=" << nodeId);
+
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     if (!physicalNode) {
         NES_ERROR("CoordinatorEngine::RegisterPhysicalStream node not found");
         return false;
     }
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
-    bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
+    StreamCatalogEntryPtr sce =
+        std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
+    bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
     return success;
 }
 
@@ -227,10 +220,10 @@ bool CoordinatorEngine::addParent(uint64_t childId, uint64_t parentId) {
             return false;
         }
     }
-
     bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
     if (added) {
-        NES_DEBUG("CoordinatorEngine::AddParent: created link successfully");
+        NES_DEBUG("CoordinatorEngine::AddParent: created link successfully new topology is=");
+        topology->print();
         return true;
     } else {
         NES_ERROR("CoordinatorEngine::AddParent: created NOT successfully added");

@@ -48,7 +48,7 @@ class RESTEndpointTest : public testing::Test {
     std::string ipAddress = "127.0.0.1";
 };
 
-TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
+TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -56,8 +56,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");
-    NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
@@ -104,10 +103,10 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("get execution-plan: try to acc return");
     NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.serialize());
     auto expected =
-        "{\"executionNodes\":[{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(5)\\n  "
+        "{\"executionNodes\":[{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(4)\\n  "
         "SOURCE(1)\\n\",\"querySubPlanId\":1}]}],\"executionNodeId\":2,\"topologyNodeId\":2,\"topologyNodeIpAddress\":\"127.0.0."
-        "1\"},{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(3)\\n  "
-        "SOURCE(4)\\n\",\"querySubPlanId\":2}]}],\"executionNodeId\":1,\"topologyNodeId\":1,\"topologyNodeIpAddress\":\"127.0.0."
+        "1\"},{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(2)\\n  "
+        "SOURCE(3)\\n\",\"querySubPlanId\":2}]}],\"executionNodeId\":1,\"topologyNodeId\":1,\"topologyNodeIpAddress\":\"127.0.0."
         "1\"}]}";
     NES_DEBUG("getExecutionPlan response: expected = " << expected);
     ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);

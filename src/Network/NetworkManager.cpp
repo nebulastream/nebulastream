@@ -25,19 +25,19 @@ namespace NES {
 namespace Network {
 
 NetworkManager::NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol,
-                               BufferManagerPtr bufferManager, uint16_t numServerThread)
+                               NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread)
     : exchangeProtocol(std::move(exchangeProtocol)),
       server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)) {
     bool success = server->start();
     if (success) {
         NES_INFO("NetworkManager: Server started successfully");
     } else {
-        NES_THROW_RUNTIME_ERROR("NetworkManager: Server failed to start");
+        NES_THROW_RUNTIME_ERROR("NetworkManager: Server failed to start on " << hostname << ":" << port);
     }
 }
 
 NetworkManagerPtr NetworkManager::create(const std::string& hostname, uint16_t port, Network::ExchangeProtocol&& exchangeProtocol,
-                                         BufferManagerPtr bufferManager, uint16_t numServerThread) {
+                                         NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread) {
     return std::make_shared<NetworkManager>(hostname, port, std::move(exchangeProtocol), bufferManager, numServerThread);
 }
 

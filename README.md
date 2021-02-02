@@ -6,6 +6,8 @@ NebulaStream is a joint research project between the DIMA group at TU Berlin and
 
 Learn more about Nebula Stream at https://www.nebula.stream/
 
+Visit our wiki at http://iotdb.dfki.de/doku.php
+
 ## Documentation
 - API:
     - [Query API](https://github.com/nebulastream/nebulastream/wiki/Query-API) 

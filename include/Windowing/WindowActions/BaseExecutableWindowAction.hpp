@@ -16,15 +16,22 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class BaseExecutableWindowAction {
   public:
+    virtual ~BaseExecutableWindowAction() {
+        // nop
+    }
+
     /**
      * @brief This function does the action
+     * @param windowState
+     * @param currentWatermark
+     * @param lastWatermark
      * @return bool indicating success
      */
     virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
@@ -32,20 +39,12 @@ class BaseExecutableWindowAction {
 
     virtual std::string toString() = 0;
 
-    void setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline, uint64_t originId) {
-        this->queryManager = queryManager;
-        this->bufferManager = bufferManager;
-        this->nextPipeline = nextPipeline;
-        this->originId = originId;
+    void setup(NodeEngine::Execution::PipelineExecutionContextPtr executionContext) {
+        this->weakExecutionContext = executionContext;
     }
 
-    SchemaPtr getWindowSchema() { return windowSchema; }
-
   protected:
-    QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
-    PipelineStagePtr nextPipeline;
-    uint64_t originId;
+    std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
     SchemaPtr windowSchema;
 };
 }// namespace NES::Windowing

@@ -19,6 +19,7 @@ add_source_nes(
         BinaryExpressionNode.cpp
         UnaryExpressionNode.cpp
         FieldAssignmentExpressionNode.cpp
+        FieldRenameExpressionNode.cpp
 )
 add_subdirectory(LogicalExpressions)
 add_subdirectory(ArithmeticalExpressions)

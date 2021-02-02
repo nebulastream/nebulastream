@@ -24,7 +24,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 /**
  * @brief A WorkerContext represents the current state of a worker thread
@@ -67,5 +67,5 @@ class WorkerContext {
      */
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
 };
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif//NES_WORKERCONTEXT_HPP_

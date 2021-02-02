@@ -17,4 +17,7 @@ add_source_nes(
         StructDeclaration.cpp
         VariableDeclaration.cpp
         FunctionDeclaration.cpp
+        ClassDeclaration.cpp
+        NamespaceDeclaration.cpp
+        ConstructorDeclaration.cpp
 )

@@ -17,14 +17,10 @@
 #ifndef NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_
 #define NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/ReconfigurationType.hpp>
 
-namespace NES {
-
-class WorkerContext;
-typedef WorkerContext& WorkerContextRef;
-
-class ReconfigurationTask;
+namespace NES::NodeEngine {
 
 /**
  * @brief Nes components that require to be reconfigured at runtime need to
@@ -54,6 +50,6 @@ class Reconfigurable {
     }
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_

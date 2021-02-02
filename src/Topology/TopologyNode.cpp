@@ -76,7 +76,7 @@ bool TopologyNode::containAsParent(NodePtr node) {
 }
 
 bool TopologyNode::containAsChild(NodePtr node) {
-    std::vector<NodePtr> children = this->getAndFlattenAllChildren();
+    std::vector<NodePtr> children = this->getAndFlattenAllChildren(false);
     auto found = std::find_if(children.begin(), children.end(), [node](NodePtr familyMember) {
         return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
     });

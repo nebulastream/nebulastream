@@ -109,13 +109,13 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     std::string queryId(body.begin(), body.end());
                     NES_DEBUG("getNumberOfProducedBuffers payload=" << queryId);
 
-                    GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(std::stoi(queryId));
+                    SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(std::stoi(queryId));
 
                     //Prepare the response
                     json::value result{};
                     uint64_t processedBuffers = 0;
                     if (auto shared_back_reference = coordinator.lock()) {
-                        processedBuffers = shared_back_reference->getQueryStatistics(globalQueryId)[0]->getProcessedBuffers();
+                        processedBuffers = shared_back_reference->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers();
                     }
                     NES_DEBUG("getNumberOfProducedBuffers processedBuffers=" << processedBuffers);
 

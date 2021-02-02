@@ -51,8 +51,6 @@ class GeneratableWindowOperator : public WindowLogicalOperatorNode, public Gener
      */
     [[nodiscard]] virtual const std::string toString() const = 0;
 
-    Windowing::AbstractWindowHandlerPtr createWindowHandler();
-
   protected:
     explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                        GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);

@@ -25,6 +25,7 @@ class OnWatermarkChangeTriggerPolicyDescription : public BaseWindowTriggerPolicy
   public:
     static WindowTriggerPolicyPtr create();
     TriggerType getPolicyType() override;
+    std::string toString() override;
 
   private:
     OnWatermarkChangeTriggerPolicyDescription();

@@ -17,16 +17,13 @@
 #ifndef THREADPOOL_H_
 #define THREADPOOL_H_
 
-#include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <iostream>
 #include <thread>
 #include <vector>
 
-namespace NES {
-class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
-class WorkerContext;
-typedef WorkerContext& WorkerContextRef;
+namespace NES::NodeEngine {
+
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during runtime
  * @Limitations
@@ -116,6 +113,6 @@ class ThreadPool {
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif /* THREADPOOL_H_ */

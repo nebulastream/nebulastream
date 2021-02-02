@@ -17,8 +17,14 @@
 #ifndef INCLUDE_JOIN_WINDOW_HPP_
 #define INCLUDE_JOIN_WINDOW_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <algorithm>
 #include <atomic>
@@ -38,6 +44,14 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
  */
 class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHandler> {
   public:
+    explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
+                                 Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger)
+        : joinDefinition(std::move(joinDefinition)), executablePolicyTrigger(std::move(executablePolicyTrigger)) {
+        // nop
+    }
+
+    virtual ~AbstractJoinHandler() { NES_DEBUG("~AbstractJoinHandler()"); }
+
     template<class Type>
     auto as() {
         return std::dynamic_pointer_cast<Type>(shared_from_this());
@@ -64,8 +78,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    virtual bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
-                       uint32_t pipelineStageId, uint64_t originId) = 0;
+    virtual bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
     /**
      * @brief Returns window manager.
@@ -75,33 +88,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
 
     virtual std::string toString() = 0;
 
-    virtual LogicalJoinDefinitionPtr getJoinDefinition() = 0;
-
-    /**
-     * @brief Gets the last processed watermark
-     * @param side
-     * @return watermark
-     */
-    [[nodiscard]] uint64_t getLastWatermark(JoinSides side) const {
-        switch (side) {
-            case leftSide: return lastWatermarkLeft;
-            case rightSide: return lastWatermarkRight;
-            default: NES_ERROR("getLastWatermark: invalid side"); return 0;
-        }
-    }
-
-    /**
-     * @brief Sets the last watermark
-     * @param lastWatermark
-     * @param side
-     */
-    void setLastWatermark(uint64_t lastWatermark, JoinSides side) {
-        switch (side) {
-            case leftSide: lastWatermarkLeft = lastWatermark; break;
-            case rightSide: lastWatermarkRight = lastWatermark; break;
-            default: NES_ERROR("setLastWatermark: invalid side");
-        }
-    }
+    LogicalJoinDefinitionPtr getJoinDefinition() { return joinDefinition; }
 
     /**
      * @brief Gets the maximal processed ts per origin id.
@@ -167,27 +154,26 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
             }
         } else {
             NES_THROW_RUNTIME_ERROR("getNumberOfMappings: invalid side");
+            return -1;
         }
     }
+
     /**
-     * @brief Update the max processed ts, per origin.
+     * @brief updates all maxTs in all stores
      * @param ts
      * @param originId
      */
-    virtual void updateMaxTs(uint64_t ts, uint64_t originId) = 0;
+    virtual void updateMaxTs(uint64_t ts, uint64_t originId, bool leftSide) = 0;
 
   protected:
+    LogicalJoinDefinitionPtr joinDefinition;
+    Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
-    PipelineStagePtr nextPipeline;
-    uint32_t pipelineStageId;
-    QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
     uint64_t originId;
     std::map<uint64_t, uint64_t> originIdToMaxTsMapLeft;
     std::map<uint64_t, uint64_t> originIdToMaxTsMapRight;
-    uint64_t lastWatermarkLeft;
-    uint64_t lastWatermarkRight;
+    uint64_t lastWatermark;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
 };

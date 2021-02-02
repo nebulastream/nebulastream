@@ -15,16 +15,16 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <QueryCompiler/PipelineExecutionContext.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::NodeEngine {
 
-Task::Task(PipelineStagePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
+Task::Task(Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
     id = UtilityFunctions::getNextTaskID();
 }
 
@@ -36,7 +36,7 @@ uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
 bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
 
-PipelineStagePtr Task::getPipelineStage() { return pipeline; }
+Execution::ExecutablePipelinePtr Task::getPipeline() { return pipeline; }
 
 bool Task::operator!() const { return pipeline == nullptr; }
 
@@ -47,10 +47,10 @@ std::string Task::toString() {
     std::stringstream ss;
     ss << "Task: id=" << id;
     ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId()
-       << " nextPipelineId=" << pipeline->getNextStage();
+       << " nextPipelineId=" << pipeline->getNextPipeline();
     ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples()
        << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark() << " originID=" << buf.getOriginId();
     return ss.str();
 }
 
-}// namespace NES
+}// namespace NES::NodeEngine

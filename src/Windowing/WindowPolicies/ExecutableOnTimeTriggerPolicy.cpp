@@ -25,23 +25,27 @@
 
 namespace NES::Windowing {
 
+ExecutableOnTimeTriggerPolicy::~ExecutableOnTimeTriggerPolicy() { NES_WARNING("~ExecutableOnTimeTriggerPolicy()"); }
+
 bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler) {
     std::unique_lock lock(runningTriggerMutex);
-    if (running) {
+    if (this->running) {
         NES_WARNING("ExecutableOnTimeTriggerPolicy::start already started");
         return true;
     }
 
-    running = true;
+    this->running = true;
     NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << windowHandler->toString()
                                                               << " with ms=" << triggerTimeInMs);
     std::string handlerName = windowHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, windowHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
-        while (running) {
+        while (this->running) {
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
-            windowHandler->trigger();
+            if (windowHandler != nullptr) {
+                windowHandler->trigger();
+            }
         }
     });
     return true;
@@ -49,21 +53,23 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
 
 bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandler) {
     std::unique_lock lock(runningTriggerMutex);
-    if (running) {
+    if (this->running) {
         NES_WARNING("ExecutableOnTimeTriggerPolicy::start already started");
         return true;
     }
 
-    running = true;
+    this->running = true;
     NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << joinHandler->toString()
                                                               << " with ms=" << triggerTimeInMs);
     std::string handlerName = joinHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, joinHandler, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
-        while (running) {
+        while (this->running) {
             NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
-            joinHandler->trigger();
+            if (joinHandler != nullptr) {
+                joinHandler->trigger();
+            }
         }
     });
     return true;
@@ -72,11 +78,11 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
 bool ExecutableOnTimeTriggerPolicy::stop() {
     std::unique_lock lock(runningTriggerMutex);
     NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called");
-    if (!running) {
+    if (!this->running) {
         NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called but was already not running");
         return true;
     }
-    running = false;
+    this->running = false;
 
     if (thread && thread->joinable()) {
         thread->join();

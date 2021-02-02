@@ -31,11 +31,10 @@
 namespace NES {
 
 DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor,
-                                                         NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) {
+                                                         NodeEngine::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) {
     NES_ASSERT(nodeEngine, "Invalid node engine");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
-        const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
         return createTextPrintSink(schema, querySubPlanId, nodeEngine, std::cout);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");

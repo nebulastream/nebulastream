@@ -36,9 +36,9 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                                                      std::chrono::seconds waitTime, uint8_t retryTimes) {
     int linger = -1;
     try {
-        ChannelId channelId(nesPartition, NesThread::getId());
+        ChannelId channelId(nesPartition, NodeEngine::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
-        NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << linger << ", id=" << channelId);
+        NES_DEBUG("OutputChannel: Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
         zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
         zmqSocket.connect(socketAddr);
@@ -104,30 +104,31 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
             NES_DEBUG("OutputChannel: Zmq context closed!");
         } else {
             NES_ERROR("OutputChannel: Zmq error " << err.what());
-            throw err;
+            throw;
         }
     }
     return nullptr;
 }
 
-bool OutputChannel::sendBuffer(TupleBuffer& inputBuffer, uint64_t tupleSize) {
+bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tupleSize) {
     auto bufferSize = inputBuffer.getBufferSize();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto originId = inputBuffer.getOriginId();
+    auto watermark = inputBuffer.getWatermark();
     auto payloadSize = tupleSize * numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();
     auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
     if (payloadSize == 0) {
         return true;
     }
-    sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples, originId);
+    sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark);
     inputBuffer.retain();
-    auto sentBytesOpt = zmqSocket.send(
-        zmq::message_t(ptr, payloadSize, &detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer), zmq::send_flags::none);
+    auto sentBytesOpt =
+        zmqSocket.send(zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer),
+                       zmq::send_flags::none);
     if (sentBytesOpt.has_value()) {
-        //NES_DEBUG("OutputChannel: Sending buffer for " << nesPartition.toString() << " with "
-        //                                               << inputBuffer.getNumberOfTuples() << "/"
-        //                                               << inputBuffer.getBufferSize());
+        NES_TRACE("OutputChannel: Sending buffer with " << inputBuffer.getNumberOfTuples() << "/" << inputBuffer.getBufferSize()
+                                                        << "-" << inputBuffer.getOriginId());
         return true;
     }
     NES_ERROR("OutputChannel: Error sending buffer for " << channelId);

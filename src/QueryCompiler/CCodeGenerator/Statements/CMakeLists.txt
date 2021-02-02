@@ -14,6 +14,7 @@
 
 add_source_nes(
         ConstantExpressionStatement.cpp
+        BlockScopeStatement.cpp
         Statement.cpp
         ExpressionStatment.cpp
         BinaryOperatorStatement.cpp
@@ -29,4 +30,7 @@ add_source_nes(
         CompoundStatement.cpp
         VarRefStatement.cpp
         VarDeclStatement.cpp
+        ContinueStatement.cpp
+        CommentStatement.cpp
+        StdOutStatement.cpp
 )

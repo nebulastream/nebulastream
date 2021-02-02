@@ -24,9 +24,7 @@
 #include <functional>
 #include <memory>
 
-namespace NES {
-class BufferManager;
-class TupleBuffer;
+namespace NES::NodeEngine {
 
 /**
  * @brief The TupleBuffer is the NES API that allows runtime components to access memory to store records
@@ -48,8 +46,7 @@ class TupleBuffer;
  * Reminder: this class should be header-only to help inlining
  */
 class TupleBuffer {
-    friend class NES::BufferManager;
-
+    friend class BufferManager;
     friend class detail::MemorySegment;
 
   public:
@@ -125,16 +122,16 @@ class TupleBuffer {
      * @brief method to get the watermark as a timestamp
      * @return watermark
      */
-    int64_t getWatermark();
+    uint64_t getWatermark() const;
 
     /**
      * @brief method to set the watermark with a timestamp
      * @param value timestamp
      */
-    void setWatermark(int64_t value);
+    void setWatermark(uint64_t value);
 
     void setOriginId(uint64_t id);
-    uint64_t getOriginId();
+    uint64_t getOriginId() const;
 
   private:
     detail::BufferControlBlock* controlBlock;
@@ -142,5 +139,5 @@ class TupleBuffer {
     uint32_t size;
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

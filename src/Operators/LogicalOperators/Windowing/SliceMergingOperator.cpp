@@ -15,13 +15,24 @@
 */
 
 #include <API/Schema.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES {
 
 SliceMergingOperator::SliceMergingOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
-    : WindowOperatorNode(windowDefinition, id) {}
+    : WindowOperatorNode(windowDefinition, id) {
+    this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
+    this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
+    this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
+    this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
+    this->windowDefinition->setWindowType(windowDefinition->getWindowType());
+    this->windowDefinition->setOnKey(windowDefinition->getOnKey());
+    this->windowDefinition->setOriginId(id);
+}
 
 const std::string SliceMergingOperator::toString() const {
     std::stringstream ss;
@@ -40,12 +51,31 @@ OperatorNodePtr SliceMergingOperator::copy() {
     return copy;
 }
 bool SliceMergingOperator::inferSchema() {
+    if (!WindowOperatorNode::inferSchema()) {
+        return false;
+    }
     // infer the default input and output schema
-
-    WindowOperatorNode::inferSchema();
-
-    NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema "
+    NES_DEBUG("WindowComputationOperator: TypeInferencePhase: infer types for window operator with input schema "
               << inputSchema->toString());
+
+    // infer type of aggregation
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    windowAggregation->inferStamp(inputSchema);
+
+    //Construct output schema
+    outputSchema->clear();
+    outputSchema = outputSchema->addField(createField("_$start", UINT64))
+                       ->addField(createField("_$end", UINT64))
+                       ->addField(createField("_$cnt", UINT64));
+
+    if (windowDefinition->isKeyed()) {
+        // infer the data type of the key field.
+        windowDefinition->getOnKey()->inferStamp(inputSchema);
+        outputSchema->addField(
+            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
+    }
+    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+                                                  windowAggregation->on()->getStamp()));
     return true;
 }
 

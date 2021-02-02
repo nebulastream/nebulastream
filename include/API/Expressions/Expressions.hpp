@@ -66,6 +66,13 @@ class ExpressionItem {
      */
     ExpressionNodePtr getExpressionNode();
 
+    /**
+     * @brief Rename the expression item
+     * @param name : the new name
+     * @return the updated expression item
+     */
+    ExpressionItem rename(std::string name);
+
   private:
     ExpressionNodePtr expression;
 };

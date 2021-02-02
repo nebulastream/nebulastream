@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 
+#include <API/Pattern.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
@@ -59,6 +60,10 @@ const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type) {
 BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatment& lhs, const BinaryOperatorType& op,
                                                  const ExpressionStatment& rhs, BracketMode bracket_mode)
     : lhs_(lhs.copy()), rhs_(rhs.copy()), op_(op), bracket_mode_(bracket_mode) {}
+
+BinaryOperatorStatement::BinaryOperatorStatement(const ExpressionStatmentPtr lhs, const BinaryOperatorType& op,
+                                                 const ExpressionStatmentPtr rhs, BracketMode bracket_mode)
+    : lhs_(lhs), rhs_(rhs), op_(op), bracket_mode_(bracket_mode) {}
 
 BinaryOperatorStatement BinaryOperatorStatement::addRight(const BinaryOperatorType& op, const VarRefStatement& rhs,
                                                           BracketMode bracket_mode) {

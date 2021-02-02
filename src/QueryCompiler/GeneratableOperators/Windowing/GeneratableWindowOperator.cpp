@@ -14,8 +14,25 @@
     limitations under the License.
 */
 
+#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BlockScopeStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
-#include <Windowing/WindowHandler/WindowHandlerFactory.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <utility>
 
 namespace NES {
@@ -24,7 +41,4 @@ GeneratableWindowOperator::GeneratableWindowOperator(Windowing::LogicalWindowDef
                                                      GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id)
     : WindowLogicalOperatorNode(std::move(windowDefinition), id), generatableWindowAggregation(generatableWindowAggregation) {}
 
-Windowing::AbstractWindowHandlerPtr GeneratableWindowOperator::createWindowHandler() {
-    return Windowing::WindowHandlerFactory::createAggregationWindowHandler(windowDefinition);
-}
 }// namespace NES

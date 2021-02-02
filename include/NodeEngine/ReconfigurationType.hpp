@@ -19,7 +19,7 @@
 
 #include <cstdint>
 
-namespace NES {
+namespace NES::NodeEngine {
 enum ReconfigurationType : uint8_t {
     /// use Initialize for reconfiguration tasks that initialize a reconfigurable instance
     Initialize,

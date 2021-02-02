@@ -38,7 +38,7 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
 
     // both sub expressions have to be numerical
     if (!left->getStamp()->isNumeric() || !right->getStamp()->isNumeric()) {
-        NES_THROW_RUNTIME_ERROR(
+        throw std::logic_error(
             "ArithmeticalExpressionNode: Error during stamp inference. Types need to be Numerical but Left was:"
             + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
     }
@@ -49,8 +49,8 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     // check if the common stamp is defined
     if (commonStamp->isUndefined()) {
         // the common stamp was not valid -> in this case the common stamp is undefined.
-        NES_THROW_RUNTIME_ERROR("ArithmeticalExpressionNode: " + commonStamp->toString()
-                                + " is not supported by arithmetical expressions");
+        throw std::logic_error("ArithmeticalExpressionNode: " + commonStamp->toString()
+                               + " is not supported by arithmetical expressions");
     }
 
     stamp = commonStamp;

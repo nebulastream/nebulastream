@@ -17,17 +17,15 @@
 #ifndef Merge_LOGICAL_OPERATOR_NODE_HPP
 #define Merge_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
-
-class MergeLogicalOperatorNode;
-typedef std::shared_ptr<MergeLogicalOperatorNode> MergeLogicalOperatorNodePtr;
 
 /**
  * @brief Merge operator, which contains an expression as a predicate.
  */
-class MergeLogicalOperatorNode : public LogicalOperatorNode {
+class MergeLogicalOperatorNode : public BinaryOperatorNode {
   public:
     explicit MergeLogicalOperatorNode(OperatorId id);
     ~MergeLogicalOperatorNode() = default;
@@ -38,6 +36,7 @@ class MergeLogicalOperatorNode : public LogicalOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
+    std::string getStringBasedSignature() override;
 };
 }// namespace NES
 #endif// Merge_LOGICAL_OPERATOR_NODE_HPP

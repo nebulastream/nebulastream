@@ -66,7 +66,6 @@ message SerializableOperator{
       uint64 numberOfTuplesToProducePerBuffer = 3;
       uint64 numBuffersToProcess = 4;
       uint64 frequency = 5;
-      bool endlessRepeat = 6;
       SerializableSchema sourceSchema = 7;
       bool skipHeader = 8;
     }
@@ -171,10 +170,11 @@ message SerializableOperator{
   message WatermarkStrategyDetails {
     message SerializableEventTimeWatermarkStrategyDescriptor {
       SerializableExpression onField = 1;
-      uint64 delay = 2;
+      uint64 allowedLateness = 2;
+      uint64 multiplier = 3;
     }
 
-    message SerializableProcessingTimeWatermarkStrategyDescriptor {
+    message SerializableIngestionTimeWatermarkStrategyDescriptor {
     }
     google.protobuf.Any strategy = 1;
   }
@@ -186,6 +186,13 @@ message SerializableOperator{
     SerializableExpression expression = 1;
   }
 
+  /**
+  Projection Details contains properties for the projection operator, i.e., the output schema
+  */
+  message ProjectionDetails {
+    repeated SerializableExpression expression = 1;
+
+  }
   /**
    Merge Details contains properties for the merge operator, which is empty currently.
    */
@@ -213,6 +220,7 @@ message SerializableOperator{
         Complete = 0;
         Slicing = 1;
         Combining = 3;
+        Merging = 4;
       }
       Distribution distr = 1;
     }
@@ -220,10 +228,11 @@ message SerializableOperator{
     message TimeCharacteristic {
       enum Type{
         EventTime = 0;
-        ProcessingTime = 1;
+        IngestionTime = 1;
       }
       Type type = 1;
       string field = 2;
+      uint64 multiplier = 3;
     }
     message TumblingWindow {
       TimeCharacteristic timeCharacteristic = 1;
@@ -275,7 +284,7 @@ message SerializableOperator{
     uint64 numberOfInputEdges = 5;
     TriggerPolicy triggerPolicy = 6;
     TriggerAction action = 7;
-
+    uint64 allowedLateness = 8;
   }
 
   /**
@@ -288,6 +297,7 @@ message SerializableOperator{
         Complete = 0;
         Slicing = 1;
         Combining = 3;
+        Merging = 4;
       }
       Distribution distr = 1;
     }
@@ -295,7 +305,7 @@ message SerializableOperator{
     message TimeCharacteristic {
       enum Type{
         EventTime = 0;
-        ProcessingTime = 1;
+        IngestionTime = 1;
       }
       Type type = 1;
       string field = 2;
@@ -331,16 +341,22 @@ message SerializableOperator{
 
     google.protobuf.Any windowType = 2;
     DistributionCharacteristic distrChar = 3;
-    SerializableExpression onKey = 4;
-    TriggerPolicy triggerPolicy = 5;
-    TriggerAction action = 6;
-    uint64 numberOfInputEdgesLeft = 7;
-    uint64 numberOfInputEdgesRight = 8;
+    SerializableExpression onLeftKey = 4;
+    SerializableExpression onRightKey = 5;
+    SerializableExpression leftStreamType = 6;
+    SerializableExpression rightStreamType = 7;
+    TriggerPolicy triggerPolicy = 8;
+    TriggerAction action = 9;
+    uint64 numberOfInputEdgesLeft = 10;
+    uint64 numberOfInputEdgesRight = 11;
   }
 
   google.protobuf.Any details = 1;
   repeated SerializableOperator children = 2;
   SerializableSchema inputSchema = 3;
   SerializableSchema outputSchema = 4;
-  uint64 operatorId = 5;
+  SerializableSchema leftInputSchema = 5;
+  SerializableSchema rightInputSchema = 6;
+
+  uint64 operatorId = 7;
 }

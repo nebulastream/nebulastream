@@ -16,13 +16,13 @@
 
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
 
 namespace NES {
 class Schema;
-class TupleBuffer;
 class MonitoringPlan;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
@@ -47,7 +47,7 @@ class NetworkValues {
      * @param prefix
      * @return The object
      */
-    static NetworkValues fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
+    static NetworkValues fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
     std::string interfaceName;
 
@@ -78,7 +78,7 @@ class NetworkValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const NetworkValues& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix);
+void serialize(const NetworkValues& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
 }// namespace NES
 

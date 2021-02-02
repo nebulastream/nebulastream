@@ -42,13 +42,13 @@ SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void serialize(const MemoryMetrics& metric, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const MemoryMetrics& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     buf.setNumberOfTuples(1);
 
     auto noFields = schema->getSize();
     schema->copyFields(MemoryMetrics::getSchema(prefix));
 
-    auto layout = createRowLayout(schema);
+    auto layout = NodeEngine::createRowLayout(schema);
     layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.TOTAL_RAM);
     layout->getValueField<uint64_t>(0, noFields + 1)->write(buf, metric.TOTAL_SWAP);
     layout->getValueField<uint64_t>(0, noFields + 2)->write(buf, metric.FREE_RAM);
@@ -64,7 +64,7 @@ void serialize(const MemoryMetrics& metric, SchemaPtr schema, TupleBuffer& buf, 
     layout->getValueField<uint64_t>(0, noFields + 12)->write(buf, metric.LOADS_15MIN);
 }
 
-MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     MemoryMetrics output{};
     //get index where the schema for MemoryMetrics is starting
     auto i = schema->getIndex(prefix + "TOTAL_RAM");
@@ -72,7 +72,7 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, cons
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "TOTAL_RAM")
         && UtilityFunctions::endsWith(schema->fields[i + 12]->name, "LOADS_15MIN")) {
         //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
-        auto layout = createRowLayout(schema);
+        auto layout = NodeEngine::createRowLayout(schema);
         output.TOTAL_RAM = layout->getValueField<uint64_t>(0, i)->read(buf);
         output.TOTAL_SWAP = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
         output.FREE_RAM = layout->getValueField<uint64_t>(0, i + 2)->read(buf);

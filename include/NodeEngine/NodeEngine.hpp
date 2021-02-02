@@ -17,21 +17,23 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
+#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
+#include <NodeEngine/ErrorListener.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
 #include <pthread.h>
 #include <string>
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
-#include <zmq.hpp>
 
 namespace NES {
 
@@ -41,19 +43,32 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class PhysicalStreamConfig;
 typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 
+}// namespace NES
+
+namespace NES::NodeEngine {
+
+NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
+
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
  * such as deploying, undeploying, starting, and stopping.
  *
  */
-class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_shared_from_this<NodeEngine> {
+class NodeEngine : public Network::ExchangeProtocolListener,
+                   public NES::detail::virtual_enable_shared_from_this<NodeEngine>,
+                   public ErrorListener {
+    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
+    typedef Network::ExchangeProtocolListener inherited0;
+    typedef virtual_enable_shared_from_this<NodeEngine> inherited1;
+    typedef ErrorListener inherited2;
 
-    static constexpr auto DEFAULT_BUFFER_SIZE = 4096;
     static constexpr auto DEFAULT_NUM_BUFFERS = 1024;
     static constexpr auto DEFAULT_NUM_THREADS = 1;
 
   public:
+    static constexpr auto DEFAULT_BUFFER_SIZE = 4096;
+
     enum NodeEngineQueryStatus { started, stopped, registered };
 
     /**
@@ -66,10 +81,9 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @return
      */
 
-    static std::shared_ptr<NodeEngine> create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
-                                              uint16_t numThreads = DEFAULT_NUM_THREADS,
-                                              uint64_t bufferSize = DEFAULT_BUFFER_SIZE,
-                                              uint64_t numBuffers = DEFAULT_NUM_BUFFERS);
+    static NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
+                                uint16_t numThreads = DEFAULT_NUM_THREADS, uint64_t bufferSize = DEFAULT_BUFFER_SIZE,
+                                uint64_t numBuffers = DEFAULT_NUM_BUFFERS);
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
@@ -85,11 +99,25 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     NodeEngine& operator=(const NodeEngine&) = delete;
 
     /**
+     * @brief signal handler: behaviour not clear yet!
+     * @param signalNumber
+     * @param callstack
+     */
+    void onFatalError(int signalNumber, std::string callstack) override;
+
+    /**
+     * @brief exception handler: behaviour not clear yet!
+     * @param exception
+     * @param callstack
+     */
+    void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override;
+
+    /**
      * @brief deploy registers and starts a query
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan);
+    bool deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -103,7 +131,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(QueryExecutionPlanPtr queryExecutionPlan);
+    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
 
     /**
      * @brief registers a query
@@ -138,8 +166,9 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
     /**
      * @brief release all resource of the node engine
+     * @param withError true if the node engine stopped with an error
      */
-    bool stop();
+    bool stop(bool withError = false);
 
     /**
      * @brief gets the node properties.
@@ -174,7 +203,7 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
     /**
      * @return return the status of a query
      */
-    QueryExecutionPlan::QueryExecutionPlanStatus getQueryStatus(QueryId queryId);
+    Execution::ExecutableQueryPlanStatus getQueryStatus(QueryId queryId);
 
     /**
     * @brief method to return the query statistics
@@ -208,19 +237,20 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
+    // TODO we should get rid of the following method
     /**
      * @brief Set the physical stream config
      * @param config : configuration to be set
      */
-    void setConfig(PhysicalStreamConfigPtr config);
+    void setConfig(AbstractPhysicalStreamConfigPtr config);
 
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
-    PhysicalStreamConfigPtr config;
+    AbstractPhysicalStreamConfigPtr config;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
-    std::map<QuerySubPlanId, QueryExecutionPlanPtr> deployedQEPs;
+    std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;
@@ -233,5 +263,5 @@ class NodeEngine : public Network::ExchangeProtocolListener, public std::enable_
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif// NODE_ENGINE_H

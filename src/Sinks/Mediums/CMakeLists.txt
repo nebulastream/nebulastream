@@ -17,8 +17,13 @@ add_source_nes(
         ZmqSink.cpp
         SinkMedium.cpp
         PrintSink.cpp
-        KafkaSink.cpp
 )
+
+if(NES_USE_KAFKA)
+    add_source_nes(
+            KafkaSink.cpp
+    )
+endif()
 
 if (NES_USE_OPC)
     add_source_nes(

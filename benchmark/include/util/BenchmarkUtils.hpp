@@ -47,6 +47,16 @@ class BenchmarkUtils {
     }
 
     /**
+    * @brief creates a vector with a range of [start, stop). This will increase by a power of two. So e.g. 2kb, 4kb, 8kb
+    */
+    template<typename T>
+    static void createRangeVectorPowerOfTwo(std::vector<T>& vector, T start, T stop) {
+        for (T i = start; i < stop; i = i << 1) {
+            vector.push_back(i);
+        }
+    }
+
+    /**
      * @brief creates a list with values drawn from an uniform distribution of the range [0,999]. The list size is totalNumberOfTuples
      * @param dataList
      * @param totalNumberOfTuples
@@ -66,13 +76,13 @@ class BenchmarkUtils {
      * @param statisticsVec
      * @param nodeEngine
      */
-    static void recordStatistics(std::vector<QueryStatistics*>& statisticsVec, NodeEnginePtr nodeEngine);
+    static void recordStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, NodeEngine::NodeEnginePtr nodeEngine);
 
     /**
      * @brief computes difference between each vector item of its predecessor. Also deletes statisticsVec[0]
      * @param statisticsVec
      */
-    static void computeDifferenceOfStatistics(std::vector<QueryStatistics*>& statisticsVec);
+    static void computeDifferenceOfStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec);
 
     /**
      * @return string with format {dateTime}_v{current NES_VERSION}
@@ -85,9 +95,9 @@ class BenchmarkUtils {
      * @param schema
      * @return comma seperated string {ProcessedBuffers},{ProcessedTasks},{ProcessedTuples},{ProcessedBytes}
      */
-    static std::string getStatisticsAsCSV(QueryStatistics* statistic, SchemaPtr schema);
+    static std::string getStatisticsAsCSV(NodeEngine::QueryStatistics* statistic, SchemaPtr schema);
 
-    static void printOutConsole(QueryStatistics* statistic, SchemaPtr schema);
+    static void printOutConsole(NodeEngine::QueryStatistics* statistic, SchemaPtr schema);
 
     /**
      * @brief runs a benchmark with the given ingestion rate, given query, and a benchmark schema. The statistics (processedTuples)
@@ -98,18 +108,14 @@ class BenchmarkUtils {
      * @param ingestionRate
      */
 
-    static void runBenchmark(std::vector<NES::QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
-                             NES::DataSinkPtr benchmarkSink, NES::NodeEnginePtr nodeEngine, NES::Query query);
+    static void runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
+                             NES::DataSinkPtr benchmarkSink, NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
 };
 
-/**
- * @brief BM_AddBenchmark helps creating a new benchmark by providing a solid building block.
- * It requires std::vectors of type uint64_t named {allIngestionRates, allExperimentsDuration, allPeriodLengths, allWorkerThreads}
- */
-#define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
+#define BM_AddBenchmarkCustomBufferSize(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString,          \
+                                        customCSVOutputs)                                                                        \
     {                                                                                                                            \
-        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_INFO);                                  \
-                                                                                                                                 \
+        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_DEBUG);                                 \
         try {                                                                                                                    \
             std::ofstream benchmarkFile;                                                                                         \
             benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);                \
@@ -121,15 +127,17 @@ class BenchmarkUtils {
             for (auto ingestionRate : allIngestionRates) {                                                                       \
                 for (auto experimentDuration : allExperimentsDuration) {                                                         \
                     for (auto periodLength : allPeriodLengths) {                                                                 \
-                        for (auto workerThreads : allWorkerThreads)                                                              \
+                        for (auto workerThreads : allWorkerThreads) {                                                            \
                             for (auto sourceCnt : allDataSources) {                                                              \
+                                                                                                                                 \
                                 PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();                             \
-                                auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads);             \
+                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads,  \
+                                                                                 bufferSize, numBuffers);                        \
                                                                                                                                  \
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
                                                                                                                                  \
-                                std::vector<QueryStatistics*> statisticsVec;                                                     \
+                                std::vector<NodeEngine::QueryStatistics*> statisticsVec;                                         \
                                 NES_WARNING("Starting benchmark with ingestRate=" + std::to_string(ingestionRate) + ", "         \
                                             + "singleExpSec=" + std::to_string(BenchmarkUtils::runSingleExperimentSeconds)       \
                                             + ", " + "benchPeriod=" + std::to_string(BenchmarkUtils::periodLengthInSeconds)      \
@@ -166,6 +174,7 @@ class BenchmarkUtils {
                                 std::string content((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());      \
                                 std::cout << "benchmark content" << content << std::endl;                                        \
                             }                                                                                                    \
+                        }                                                                                                        \
                     }                                                                                                            \
                 }                                                                                                                \
             }                                                                                                                    \
@@ -176,8 +185,27 @@ class BenchmarkUtils {
         NES::NESLogger->removeAllAppenders();                                                                                    \
     }
 
+/**
+ * @brief BM_AddBenchmark helps creating a new benchmark by providing a solid building block. For now it sets
+ * It requires std::vectors of type uint64_t named {allIngestionRates, allExperimentsDuration, allPeriodLengths, allWorkerThreads}
+ */
+#define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
+    {                                                                                                                            \
+        auto bufferSize = 4096;                                                                                                  \
+        auto numBuffers = 1024;                                                                                                  \
+        BM_AddBenchmarkCustomBufferSize(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString,          \
+                                        customCSVOutputs);                                                                       \
+    }
+
+#if __linux
+#define printPIDandParentID                                                                                                      \
+    (std::cout << __FUNCTION__ << " called by process " << ::getpid() << " and by thread id " << syscall(__NR_gettid)            \
+               << " (parent: " << ::getppid() << ")" << std::endl)
+#else
 #define printPIDandParentID                                                                                                      \
     (std::cout << __FUNCTION__ << " called by process " << ::getpid() << " (parent: " << ::getppid() << ")" << std::endl)
+#endif
+
 }// namespace NES::Benchmarking
 
 #endif//NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_

@@ -27,9 +27,8 @@ namespace NES {
 class ZmqSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string host, uint16_t port, OperatorId operatorId);
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port,
-                                      OperatorId operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string host, uint16_t port);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port);
 
     /**
      * @brief Get zmq host name
@@ -51,9 +50,8 @@ class ZmqSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port, OperatorId operatorId);
-    explicit ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port,
-                                 OperatorId operatorId);
+    explicit ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port);
+    explicit ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port);
 
     std::string host;
     uint16_t port;

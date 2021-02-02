@@ -48,10 +48,25 @@ typedef std::shared_ptr<Statement> StatementPtr;
 
 class Statement {
   public:
+    /**
+     * @brief method to get the statement type
+     * @return StatementType
+     */
     virtual StatementType getStamentType() const = 0;
+
+    /**
+     * @brief method to get the code as code expressions
+     * @return CodeExpressionPtr
+     */
     virtual const CodeExpressionPtr getCode() const = 0;
+
+    /**
+     * @brief method to create a copy of this statement
+     * @return copy of statement
+     */
     virtual const StatementPtr createCopy() const = 0;
-    /** \brief virtual copy constructor */
+
+    /** @brief virtual copy constructor */
     virtual ~Statement();
 };
 

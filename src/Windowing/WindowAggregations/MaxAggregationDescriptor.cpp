@@ -23,10 +23,14 @@
 namespace NES::Windowing {
 
 MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field)
-    : WindowAggregationDescriptor(std::move(field)) {}
+    : WindowAggregationDescriptor(std::move(field)) {
+    this->aggregationType = Max;
+}
 
 MaxAggregationDescriptor::MaxAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {}
+    : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
+    this->aggregationType = Max;
+}
 
 WindowAggregationPtr MaxAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                       FieldAccessExpressionNodePtr asField) {
@@ -42,7 +46,6 @@ WindowAggregationPtr MaxAggregationDescriptor::on(ExpressionItem onField) {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
-WindowAggregationDescriptor::Type MaxAggregationDescriptor::getType() { return Max; }
 void MaxAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);

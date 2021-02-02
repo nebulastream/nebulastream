@@ -17,7 +17,8 @@
 #ifndef NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SOURCES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 #define NES_IMPL_NODES_OPERATORS_PHYSICALOPERATORS_SOURCES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 
-#include "Network/NetworkSink.hpp"
+#include <Network/NetworkSink.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
@@ -25,9 +26,6 @@ namespace NES {
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
-
-class NodeEngine;
-typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
 /**
  * @brief This class is responsible for creating the physical sink from Logical sink description
@@ -42,7 +40,7 @@ class ConvertLogicalToPhysicalSink {
      * @param querySubPlanId: the id of the owning subplan
      * @return Data sink pointer representing the physical sink
      */
-    static DataSinkPtr createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor, NodeEnginePtr nodeEngine,
+    static DataSinkPtr createDataSink(SchemaPtr schema, SinkDescriptorPtr sinkDescriptor, NodeEngine::NodeEnginePtr nodeEngine,
                                       QuerySubPlanId querySubPlanId);
 
   private:

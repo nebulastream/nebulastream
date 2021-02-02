@@ -29,9 +29,8 @@ void GeneratableCompleteWindowOperator::produce(CodeGeneratorPtr codegen, Pipeli
 }
 
 void GeneratableCompleteWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto windowHandler = createWindowHandler();
-    context->setWindow(windowHandler);
-    codegen->generateCodeForCompleteWindow(getWindowDefinition(), generatableWindowAggregation, context);
+    auto operatorID = codegen->generateWindowSetup(windowDefinition, outputSchema, context);
+    codegen->generateCodeForCompleteWindow(windowDefinition, generatableWindowAggregation, context, operatorID);
 }
 GeneratableWindowOperatorPtr
 GeneratableCompleteWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition,

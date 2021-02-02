@@ -59,10 +59,14 @@ bool Node::addChild(const NodePtr newNode) {
 }
 
 bool Node::removeChild(const NodePtr node) {
+
+    if (!node) {
+        NES_ERROR("Node: Can't remove null node");
+        return false;
+    }
+
     // check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
-        NES_DEBUG("Node: remove " << (*nodeItr)->toString() << " from " << node->toString() << " this=" << this
-                                  << " other=" << node.get());
         if ((*nodeItr).get() == node.get()) {
             // remove this from nodeItr's parents
             for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {
@@ -133,6 +137,40 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
     return true;
 }
 
+bool Node::insertBetweenThisAndChildNodes(const NodePtr newNode) {
+
+    if (newNode.get() == this) {
+        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
+        return false;
+    }
+
+    if (vectorContainsTheNode(children, newNode)) {
+        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+        return false;
+    }
+
+    NES_INFO("Node: Create temporary copy of this nodes parents.");
+    std::vector<NodePtr> copyOfChildren = children;
+
+    NES_INFO("Node: Remove all childs of this node.");
+    removeChildren();
+
+    if (!addChild(newNode)) {
+        NES_ERROR("Node: Unable to add input node as parent to this node.");
+        return false;
+    }
+
+    NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
+    for (NodePtr child : copyOfChildren) {
+        if (!newNode->addChild(child)) {
+            NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void Node::removeAllParent() {
     NES_INFO("Node: Removing all parents for current node");
     auto nodeItr = parents.begin();
@@ -156,6 +194,12 @@ void Node::removeChildren() {
 }
 
 bool Node::removeParent(const NodePtr node) {
+
+    if (!node) {
+        NES_ERROR("Node: Can't remove null node");
+        return false;
+    }
+
     // check all parents.
     for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
         if ((*nodeItr).get() == node.get()) {
@@ -176,6 +220,12 @@ bool Node::removeParent(const NodePtr node) {
 bool Node::replace(NodePtr newNode) { return replace(newNode, shared_from_this()); }
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
+
+    if (!newNode || !oldNode) {
+        NES_ERROR("Node: Can't replace null node");
+        return false;
+    }
+
     if (shared_from_this() == oldNode) {
         insertBetweenThisAndParentNodes(newNode);
         removeAndJoinParentAndChildren();
@@ -499,19 +549,23 @@ std::vector<NodePtr> Node::split(const NodePtr splitNode) {
 
 bool Node::isValid() { return !isCyclic(); }
 
-std::vector<NodePtr> Node::getAndFlattenAllChildren() {
+std::vector<NodePtr> Node::getAndFlattenAllChildren(bool withDuplicateChildren) {
     std::vector<NodePtr> allChildren{};
-    getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this());
+    getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this(), withDuplicateChildren);
     return allChildren;
 }
 
-void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludednode) {
+void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludedNode,
+                                          bool allowDuplicate) {
 
     // todo this implementation may be slow
     for (auto&& currentNode : node->children) {
-        if (!find(allChildren, currentNode) && (currentNode != excludednode)) {
+        if (allowDuplicate) {
             allChildren.push_back(currentNode);
-            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode);
+            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludedNode, allowDuplicate);
+        } else if (!find(allChildren, currentNode) && (currentNode != excludedNode)) {
+            allChildren.push_back(currentNode);
+            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludedNode, allowDuplicate);
         }
     }
 }
@@ -529,7 +583,7 @@ std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
 }
 
 bool Node::isCyclic() {
-    auto allChildren = getAndFlattenAllChildren();
+    auto allChildren = getAndFlattenAllChildren(false);
     for (auto&& node : allChildren) {
         node->visited = false;
         node->recStack = false;
@@ -544,9 +598,9 @@ bool Node::isCyclic() {
     // test all sub-node in the DAG
     for (auto&& node : allChildren) {
         if (isCyclicHelper(*node)) {
-            for (auto&& node : allChildren) {
-                node->visited = false;
-                node->recStack = false;
+            for (auto&& innerNode : allChildren) {
+                innerNode->visited = false;
+                innerNode->recStack = false;
             }
             return true;
         }

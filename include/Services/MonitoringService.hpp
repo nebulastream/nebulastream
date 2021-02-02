@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <cpprest/json.h>
 #include <memory>
 
@@ -34,14 +35,9 @@ typedef std::shared_ptr<Topology> TopologyPtr;
 class MonitoringPlan;
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 
-class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
-
-class TupleBuffer;
-
 class MonitoringService {
   public:
-    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, BufferManagerPtr bufferManager);
+    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager);
 
     ~MonitoringService();
 
@@ -53,8 +49,8 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    std::tuple<SchemaPtr, TupleBuffer> requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
-                                                             MonitoringPlanPtr plan);
+    std::tuple<SchemaPtr, NodeEngine::TupleBuffer> requestMonitoringData(const std::string& ipAddress, int64_t grpcPort,
+                                                                         MonitoringPlanPtr plan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
@@ -104,7 +100,7 @@ class MonitoringService {
   private:
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
 };
 
 typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;

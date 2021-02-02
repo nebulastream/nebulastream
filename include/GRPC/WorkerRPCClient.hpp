@@ -17,17 +17,19 @@
 #ifndef NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
-
-#include <Plans/Query/QueryId.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
+#include <thread>
 
 using grpc::Channel;
+using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
+using grpc::CompletionQueue;
 using grpc::Status;
-
 namespace NES {
 
 class OperatorNode;
@@ -36,7 +38,6 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-class TupleBuffer;
 class MonitoringPlan;
 
 class MonitoringPlan;
@@ -45,34 +46,47 @@ typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-class WorkerRPCClient {
+typedef std::shared_ptr<CompletionQueue> CompletionQueuePtr;
 
+enum RpcClientModes { Register, Unregister, Start, Stop };
+
+class WorkerRPCClient {
   public:
+    template<typename ReplayType>
+    struct AsyncClientCall {
+        // Container for the data we expect from the server.
+        ReplayType reply;
+
+        // Context for the client. It could be used to convey extra information to
+        // the server and/or tweak certain RPC behaviors.
+        ClientContext context;
+
+        // Storage for the status of the RPC upon completion.
+        Status status;
+
+        std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
+    };
+
     WorkerRPCClient();
     ~WorkerRPCClient();
 
-    /**
-    * @brief deploy registers and starts a query
-    * @param queryId
-    * @param new query plan as eto
-    * @return true if succeeded, else false
-    */
-    bool deployQuery(std::string address, std::string executableTransferObject);
+    void AsyncCompleteRpc();
 
     /**
-     * @brief undeploy stops and undeploy a query
-     * @param queryId to undeploy
-     * @return true if succeeded, else false
-     */
-    bool undeployQuery(std::string address, QueryId queryId);
+        * @brief register a query
+        * @param address: address of node where query plan need to be registered
+        * @param query plan to register
+        * @return true if succeeded, else false
+        */
+    bool registerQuery(std::string address, QueryPlanPtr queryPlan);
 
     /**
-    * @brief register a query
-    * @param address: addres of node where query plan need to be registered
+    * @brief register a query asynchronously
+    * @param address: address of node where query plan need to be registered
     * @param query plan to register
     * @return true if succeeded, else false
     */
-    bool registerQuery(std::string address, QueryPlanPtr queryPlan);
+    bool registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueuePtr cq);
 
     /**
      * @brief ungregisters a query
@@ -80,6 +94,13 @@ class WorkerRPCClient {
      * @return true if succeeded, else false
      */
     bool unregisterQuery(std::string address, QueryId queryId);
+
+    /**
+     * @brief ungregisters a query asynchronously
+     * @param queryIdto unregister query
+     * @return true if succeeded, else false
+     */
+    bool unregisterQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
      * @brief method to start a already deployed query
@@ -90,11 +111,26 @@ class WorkerRPCClient {
     bool startQuery(std::string address, QueryId queryId);
 
     /**
+      * @brief method to start a already deployed query asynchronously
+      * @note if query is not deploy, false is returned
+      * @param queryId to start
+      * @return bool indicating success
+      */
+    bool startQueryAsyn(std::string address, QueryId queryId, CompletionQueuePtr cq);
+
+    /**
      * @brief method to stop a query
      * @param queryId to stop
      * @return bool indicating success
      */
     bool stopQuery(std::string address, QueryId queryId);
+
+    /**
+     * @brief method to stop a query asynchronously
+     * @param queryId to stop
+     * @return bool indicating success
+     */
+    bool stopQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
@@ -103,7 +139,15 @@ class WorkerRPCClient {
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, TupleBuffer& buf);
+    SchemaPtr requestMonitoringData(const std::string& address, MonitoringPlanPtr plan, NodeEngine::TupleBuffer& buf);
+
+    /**
+     * @brief This functions loops over all queues and wait for the async calls return
+     * @param queues
+     * @param mode
+     * @return true if all calls returned
+     */
+    bool checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> queues, RpcClientModes mode);
 
   private:
 };

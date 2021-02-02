@@ -21,16 +21,16 @@
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
+#include <mutex>
 
 namespace NES {
-class TupleBuffer;
 
 enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK, OPC_SINK };
 /**
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
  */
-class SinkMedium : public Reconfigurable {
+class SinkMedium : public NodeEngine::Reconfigurable {
 
   public:
     /**
@@ -61,7 +61,7 @@ class SinkMedium : public Reconfigurable {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    virtual bool writeData(TupleBuffer& inputBuffer, WorkerContext& workerContext) = 0;
+    virtual bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) = 0;
 
     /**
      * @brief get the id of the owning plan

@@ -14,12 +14,15 @@
 
 add_source_nes(
         ExecutionPlanRollbackException.cpp
-        InvalidQueryException.cpp
+        GlobalQueryPlanUpdateException.cpp
         InvalidArgumentException.cpp
+        InvalidFieldException.cpp
+        InvalidQueryException.cpp
+        InvalidQueryStatusException.cpp
         QueryDeploymentException.cpp
         QueryPlacementException.cpp
         QueryNotFoundException.cpp
-        InvalidQueryStatusException.cpp
         QueryUndeploymentException.cpp
-        GlobalQueryPlanUpdateException.cpp
+        TypeInferenceException.cpp
+        NesRuntimeException.cpp
 )

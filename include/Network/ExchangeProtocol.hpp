@@ -54,7 +54,7 @@ class ExchangeProtocol {
      * @param id of the buffer
      * @param buffer content
      */
-    void onBuffer(NesPartition id, TupleBuffer& buffer);
+    void onBuffer(NesPartition id, NodeEngine::TupleBuffer& buffer);
 
     /**
      * @brief Reaction of the zmqServer after an error occurs.

@@ -35,7 +35,12 @@ bool AndExpressionNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
-const std::string AndExpressionNode::toString() const { return "AndNode(" + stamp->toString() + ")"; }
+
+const std::string AndExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "&&" << children[1]->toString();
+    return ss.str();
+}
 
 void AndExpressionNode::inferStamp(SchemaPtr schema) {
     // delegate stamp inference of children

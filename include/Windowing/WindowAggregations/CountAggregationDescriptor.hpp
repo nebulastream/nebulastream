@@ -33,11 +33,6 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
-    /**
-     * @brief Returns the type of this aggregation.
-     * @return WindowAggregationDescriptor::Type
-     */
-    Type getType() override;
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;
     DataTypePtr getFinalAggregateStamp() override;

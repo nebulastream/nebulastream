@@ -18,7 +18,8 @@
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
 
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-namespace NES {
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+namespace NES::NodeEngine {
 
 /**
  * @brief Rowlayout every field of a tuple is stores sequentially.
@@ -32,6 +33,6 @@ class RowLayout : public MemoryLayout {
     MemoryLayoutPtr copy() const override;
 };
 
-}// namespace NES
+}// namespace NES::NodeEngine
 
 #endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_

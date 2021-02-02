@@ -25,13 +25,14 @@
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(NodeEnginePtr nodeEngine) : nodeEngine(nodeEngine) {
+WorkerRPCServer::WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine) : nodeEngine(nodeEngine) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
-    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId());
+    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId()
+                                                                          << " plan=" << queryPlan->toString());
     bool success;
     try {
         success = nodeEngine->registerQueryInNodeEngine(queryPlan);

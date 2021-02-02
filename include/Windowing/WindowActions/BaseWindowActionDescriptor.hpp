@@ -20,7 +20,7 @@
 
 namespace NES::Windowing {
 
-enum ActionType { WindowAggregationTriggerAction, SliceAggregationTriggerAction };
+enum ActionType { WindowAggregationTriggerAction, SliceAggregationTriggerAction, SliceCombinerTriggerAction };
 
 class BaseWindowActionDescriptor {
   public:
@@ -29,6 +29,10 @@ class BaseWindowActionDescriptor {
      * @return
      */
     virtual ActionType getActionType() = 0;
+
+    std::string toString();
+
+    std::string getTypeAsString();
 
   protected:
     BaseWindowActionDescriptor(ActionType action);

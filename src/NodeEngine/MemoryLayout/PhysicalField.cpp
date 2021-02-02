@@ -16,8 +16,7 @@
 
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 
-namespace NES {
-
+namespace NES::NodeEngine {
 PhysicalField::PhysicalField(uint64_t bufferOffset) : bufferOffset(bufferOffset){};
 
 PhysicalField::~PhysicalField(){};
@@ -30,4 +29,4 @@ std::shared_ptr<ArrayPhysicalField> PhysicalField::asArrayField() {
     NES_FATAL_ERROR("This field is not an array field");
     throw IllegalArgumentException("This field is not an array field");
 }
-}// namespace NES
+}// namespace NES::NodeEngine

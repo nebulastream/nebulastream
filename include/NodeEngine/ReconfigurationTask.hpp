@@ -19,10 +19,11 @@
 
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationType.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <memory>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 /**
  * @brief this class contains the description of the reconfiguration that
@@ -139,5 +140,5 @@ class ReconfigurationTask {
     /// owning plan id
     const QuerySubPlanId parentPlanId;
 };
-}// namespace NES
+}// namespace NES::NodeEngine
 #endif//NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_

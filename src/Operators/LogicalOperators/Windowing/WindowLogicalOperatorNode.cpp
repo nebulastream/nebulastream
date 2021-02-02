@@ -19,9 +19,10 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <sstream>
 
 namespace NES {
@@ -32,6 +33,21 @@ WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWin
 const std::string WindowLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "WINDOW(" << id << ")";
+    return ss.str();
+}
+
+std::string WindowLogicalOperatorNode::getStringBasedSignature() {
+    std::stringstream ss;
+    auto windowType = windowDefinition->getWindowType();
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    if (windowDefinition->isKeyed()) {
+        ss << "WINDOW-BY-KEY(" << windowDefinition->getOnKey()->toString() << ",";
+    } else {
+        ss << "WINDOW(";
+    }
+    ss << "WINDOW-TYPE: " << windowType->toString() << ",";
+    ss << "AGGREGATION: " << windowAggregation->toString() << ")";
+    ss << "." << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
     return ss.str();
 }
 
@@ -52,8 +68,9 @@ OperatorNodePtr WindowLogicalOperatorNode::copy() {
 }
 
 bool WindowLogicalOperatorNode::inferSchema() {
-
-    WindowOperatorNode::inferSchema();
+    if (!WindowOperatorNode::inferSchema()) {
+        return false;
+    }
     // infer the default input and output schema
     NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema "
               << inputSchema->toString());
@@ -61,22 +78,23 @@ bool WindowLogicalOperatorNode::inferSchema() {
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
     windowAggregation->inferStamp(inputSchema);
-
     auto windowType = windowDefinition->getWindowType();
+    windowType->inferStamp(inputSchema);
+
+    //Construct output schema
+    outputSchema->clear();
+    outputSchema = outputSchema->addField(createField("_$start", UINT64))
+                       ->addField(createField("_$end", UINT64))
+                       ->addField(createField("_$cnt", UINT64));
+
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema =
-            Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
-                                                  windowDefinition->getOnKey()->getStamp()))
-                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
-        return true;
-    } else {
-        NES_THROW_RUNTIME_ERROR("WindowLogicalOperatorNode : type inference for non keyed streams is not supported");
+        outputSchema->addField(
+            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
     }
+    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+                                                  windowAggregation->on()->getStamp()));
+    return true;
 }
 }// namespace NES

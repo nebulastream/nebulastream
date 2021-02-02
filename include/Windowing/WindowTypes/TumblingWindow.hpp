@@ -29,7 +29,7 @@ class TumblingWindow : public WindowType {
   public:
     /**
     * Creates a new TumblingWindow that assigns
-    * elements to time windows based on the element timestamp and offset.
+    * elements to time windows based on the element timestamp and multiplier.
     * For example, if you want window a stream by hour,but window begins at the 15th minutes
     * of each hour, you can use {@code of(Time.hours(1),Time.minutes(15))},then you will get
     * time windows start at 0:15:00,1:15:00,2:15:00,etc.
@@ -64,7 +64,9 @@ class TumblingWindow : public WindowType {
     * @brief return size of the window
     * @return size of the window
     */
-    TimeMeasure getSize();
+    TimeMeasure getSize() override;
+
+    std::string toString() override;
 
   private:
     TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);

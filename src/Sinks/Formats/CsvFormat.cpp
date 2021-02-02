@@ -15,6 +15,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Logger.hpp>
@@ -23,9 +24,9 @@
 #include <iostream>
 namespace NES {
 
-CsvFormat::CsvFormat(SchemaPtr schema, BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
+CsvFormat::CsvFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
 
-std::optional<TupleBuffer> CsvFormat::getSchema() {
+std::optional<NodeEngine::TupleBuffer> CsvFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     std::stringstream ss;
     uint64_t numberOfFields = schema->fields.size();
@@ -46,8 +47,8 @@ std::optional<TupleBuffer> CsvFormat::getSchema() {
     return buf;
 }
 
-std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
-    std::vector<TupleBuffer> buffers;
+std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer& inputBuffer) {
+    std::vector<NodeEngine::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("CsvFormat::getData: write watermark-only buffer");
@@ -78,7 +79,7 @@ std::vector<TupleBuffer> CsvFormat::getData(TupleBuffer& inputBuffer) {
         buffers.emplace_back(buf);
         NES_DEBUG("CsvFormat::getData: successfully copied buffer=" << numberOfBuffers);
     } else {
-        NES_DEBUG("CsvFormat::getData: content fits in one buffer");
+        NES_DEBUG("CsvFormat::getData: content fits in one buffer schema=" << schema->toString());
         auto buf = this->bufferManager->getBufferBlocking();
         std::memcpy(buf.getBufferAs<char>(), bufferContent.c_str(), contentSize);
         buf.setNumberOfTuples(contentSize);

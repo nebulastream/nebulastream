@@ -83,7 +83,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
         code << "#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
-        code << "#include <Windowing/Watermark/ProcessingTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
+        code << "#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
         code << "using namespace NES::API;" << std::endl;
         code << "namespace NES{" << std::endl;
@@ -115,14 +115,14 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
             auto pos1 = queryCodeSnippet.find("join(");
             if (pos1 != std::string::npos) {
                 boost::replace_first(newQuery, "Query::from", "return Query::from");
-                auto pos1 = queryCodeSnippet.find("join(");
                 std::string tmp = queryCodeSnippet.substr(pos1);
                 auto pos2 = tmp.find("),");
+
                 //find the end bracket of merge query
                 std::string subquery = tmp.substr(5, pos2 - 4);
                 NES_DEBUG("UtilityFunctions: subquery = " << subquery);
                 code << "auto subQuery = " << subquery << ";" << std::endl;
-                boost::replace_all(newQuery, subquery, "join(&subQuery");
+                boost::replace_last(newQuery, subquery, "join(&subQuery");
                 boost::replace_first(newQuery, "join(", "");
                 NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
             } else {
@@ -242,7 +242,7 @@ std::vector<std::string> UtilityFunctions::split(const std::string& s, char deli
     return elems;
 }
 
-std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
+std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
         ss << buffer.getBufferAs<char>()[i];
@@ -250,7 +250,7 @@ std::string UtilityFunctions::printTupleBufferAsText(TupleBuffer& buffer) {
     return ss.str();
 }
 
-std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, SchemaPtr schema) {
+std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, SchemaPtr schema) {
     if (!buffer.isValid()) {
         return "INVALID_BUFFER_PTR";
     }
@@ -304,7 +304,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(TupleBuffer& buffer, Schema
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string UtilityFunctions::printTupleBufferAsCSV(TupleBuffer& tbuffer, SchemaPtr schema) {
+std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, SchemaPtr schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto buffer = tbuffer.getBufferAs<char>();

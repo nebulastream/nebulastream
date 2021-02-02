@@ -51,11 +51,26 @@ class WindowType {
     virtual bool isTumblingWindow();
 
     /**
+     * @brief method to get the window size
+     * @return size of window
+     */
+    virtual TimeMeasure getSize() = 0;
+
+    /**
     * @return true if this is a sliding window
     */
     virtual bool isSlidingWindow();
 
-  private:
+    virtual std::string toString() = 0;
+
+    /**
+     * @brief Infer stamp of the window type
+     * @param schema : the schema of the window
+     * @return true if success else false
+     */
+    bool inferStamp(SchemaPtr schema);
+
+  protected:
     TimeCharacteristicPtr timeCharacteristic;
 };
 

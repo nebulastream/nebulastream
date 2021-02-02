@@ -29,8 +29,11 @@
 #endif
 
 namespace NES {
+
+namespace NodeEngine {
 class BufferManager;
 class TupleBuffer;
+
 namespace detail {
 
 class MemorySegment;
@@ -95,13 +98,13 @@ class BufferControlBlock {
      * @brief method to get the watermark as a timestamp
      * @return watermark
      */
-    int64_t getWatermark() const;
+    uint64_t getWatermark() const;
 
     /**
    * @brief method to set the watermark with a timestamp
    * @param value timestamp
    */
-    void setWatermark(int64_t value);
+    void setWatermark(uint64_t value);
 
     /**
      * @brief get id where this buffer was created
@@ -172,18 +175,14 @@ class BufferControlBlock {
  *
  */
 class MemorySegment {
-    friend class NES::TupleBuffer;
+    friend class NES::NodeEngine::TupleBuffer;
 
-    friend class NES::BufferManager;
+    friend class NES::NodeEngine::BufferManager;
 
   public:
     MemorySegment(const MemorySegment& other);
 
     MemorySegment& operator=(const MemorySegment& other);
-
-    MemorySegment(MemorySegment&& other) = delete;
-
-    MemorySegment& operator=(MemorySegment&& other) = delete;
 
     MemorySegment();
 
@@ -232,6 +231,7 @@ class MemorySegment {
 void zmqBufferRecyclingCallback(void* ptr, void* hint);
 
 }// namespace detail
+}// namespace NodeEngine
 }// namespace NES
 
 #endif//NES_INCLUDE_NODEENGINE_DETAIL_TUPLEBUFFERIMPL_HPP_

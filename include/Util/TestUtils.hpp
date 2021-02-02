@@ -26,6 +26,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <chrono>
+#include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
 #include <iostream>
 #include <memory>
@@ -45,7 +46,7 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static const uint64_t timeout = 30;//TODO:increase it again to 30
+    static constexpr uint64_t timeout = 60;
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
@@ -54,15 +55,14 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    static bool checkCompleteOrTimeout(NodeEnginePtr ptr, QueryId queryId, uint64_t expectedResult) {
+    static bool checkCompleteOrTimeout(NodeEngine::NodeEnginePtr ptr, QueryId queryId, uint64_t expectedResult) {
         if (ptr->getQueryStatistics(queryId).empty()) {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;
         }
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        auto now = start_timestamp;
-        while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
             //FIXME: handle vector of statistics properly in #977
             if (ptr->getQueryStatistics(queryId)[0]->getProcessedBuffers() == expectedResult
@@ -84,7 +84,7 @@ class TestUtils {
      * @param expectedResult: The expected value
      * @return true if matched the expected result within the timeout
      */
-    static bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult) {
+    static bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, std::string restPort = "8081") {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         uint64_t currentResult = 0;
@@ -93,7 +93,7 @@ class TestUtils {
 
         NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
-            web::http::client::http_client clientProc("http://localhost:8081/v1/nes/queryCatalog/status");
+            web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
             clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
                 .then([](const web::http::http_response& response) {
                     cout << "Get query status" << endl;
@@ -117,7 +117,8 @@ class TestUtils {
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
 
-            web::http::client::http_client clientProc("http://localhost:8081/v1/nes/queryCatalog/getNumberOfProducedBuffers");
+            web::http::client::http_client clientProc("http://localhost:" + restPort
+                                                      + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
             clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
                 .then([](const web::http::http_response& response) {
                     cout << "read number of buffers" << endl;
@@ -151,10 +152,10 @@ class TestUtils {
      * @param queryId: Id of the query
      * @return if stopped
      */
-    static bool stopQueryViaRest(QueryId queryId) {
+    static bool stopQueryViaRest(QueryId queryId, std::string restPort = "8081") {
         web::json::value json_return;
 
-        web::http::client::http_client client("http://127.0.0.1:8081/v1/nes/query/stop-query");
+        web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/query/stop-query");
         client.request(web::http::methods::DEL, _XPLATSTR("/"), queryId)
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
@@ -181,10 +182,10 @@ class TestUtils {
      * @param query string
      * @return if stopped
      */
-    static web::json::value startQueryViaRest(string queryString) {
+    static web::json::value startQueryViaRest(string queryString, std::string restPort = "8081") {
         web::json::value json_return;
 
-        web::http::client::http_client clientQ1("http://127.0.0.1:8081/v1/nes/");
+        web::http::client::http_client clientQ1("http://127.0.0.1:" + restPort + "/v1/nes/");
         clientQ1.request(web::http::methods::POST, "/query/execute-query", queryString)
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
@@ -211,10 +212,10 @@ class TestUtils {
    * @param query string
    * @return
    */
-    static bool addLogicalStream(string schemaString) {
+    static bool addLogicalStream(string schemaString, std::string restPort = "8081") {
         web::json::value json_returnSchema;
 
-        web::http::client::http_client clientSchema("http://127.0.0.1:8081/v1/nes/streamCatalog/addLogicalStream");
+        web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/streamCatalog/addLogicalStream");
         clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
@@ -240,11 +241,12 @@ class TestUtils {
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
      * @param queryId : the query id to check for
      * @param queryCatalog: the catalog to look into for status change
+     * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog) {
+    static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog,
+                                    std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout)) {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
-        auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
 
         NES_DEBUG("TestUtils: Keep checking the status of query " << queryId << " untill a fixed time out");
@@ -278,21 +280,21 @@ class TestUtils {
     static bool checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
                                        uint64_t expectedResult) {
 
-        GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
-        if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
+        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
             return false;
         }
 
-        NES_INFO("Found global query id " << globalQueryId << " for user query " << queryId);
+        NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
             //FIXME: handle vector of statistics properly in #977
-            auto statistics = nesWorker->getQueryStatistics(globalQueryId);
+            auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
             if (statistics.empty()) {
-                NES_DEBUG("checkCompleteOrTimeout: query=" << globalQueryId << " stats size=" << statistics.size());
+                NES_DEBUG("checkCompleteOrTimeout: query=" << sharedQueryId << " stats size=" << statistics.size());
                 sleep(1);
                 continue;
             }
@@ -308,7 +310,7 @@ class TestUtils {
                       << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
             sleep(1);
         }
-        auto statistics = nesWorker->getQueryStatistics(globalQueryId);
+        auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
         uint64_t processed = statistics[0]->getProcessedBuffers();
         NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected="
                   << expectedResult << " final result=" << processed);
@@ -326,20 +328,20 @@ class TestUtils {
     template<typename Predicate = std::equal_to<uint64_t>>
     static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
                                        uint64_t expectedResult) {
-        GlobalQueryId globalQueryId = globalQueryPlan->getGlobalQueryIdForQuery(queryId);
-        if (globalQueryId == INVALID_GLOBAL_QUERY_ID) {
+        SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             NES_ERROR("Unable to find global query Id for user query id " << queryId);
             return false;
         }
 
-        NES_INFO("Found global query id " << globalQueryId << " for user query " << queryId);
+        NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
 
             //FIXME: handle vector of statistics properly in #977
-            auto statistics = nesCoordinator->getQueryStatistics(globalQueryId);
+            auto statistics = nesCoordinator->getQueryStatistics(sharedQueryId);
             if (statistics.empty()) {
                 continue;
             }
@@ -396,6 +398,8 @@ class TestUtils {
     static bool checkOutputOrTimeout(string expectedContent, string outputFilePath) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
+        uint64_t found = 0;
+        uint64_t count = 0;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             sleep(1);
             NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
@@ -404,14 +408,13 @@ class TestUtils {
                 NES_DEBUG("checkOutputOrTimeout: file " << outputFilePath << " open and good");
                 std::vector<std::string> expectedLines = UtilityFunctions::split(expectedContent, '\n');
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-                int count = std::count(content.begin(), content.end(), '\n');
+                count = std::count(content.begin(), content.end(), '\n');
                 if (expectedLines.size() != count) {
                     NES_DEBUG("checkOutputOrTimeout: number of expected lines "
                               << expectedLines.size() << " not reached yet with " << count << " lines content=" << content);
                     continue;
                 }
 
-                uint64_t found = 0;
                 for (uint64_t i = 0; i < expectedLines.size(); i++) {
                     if (content.find(expectedLines[i]) != std::string::npos) {
                         found++;
@@ -421,11 +424,33 @@ class TestUtils {
                     NES_DEBUG("all lines found final content=" << content);
                     return true;
                 } else {
-                    NES_DEBUG("only " << found << " lines found final content" << content);
+                    NES_DEBUG("only " << found << " lines found final content=" << content);
                 }
             }
         }
-        NES_DEBUG("checkOutputOrTimeout: expected result not reached within set timeout content");
+        NES_ERROR("checkOutputOrTimeout: expected (" << count << ") result not reached (" << found
+                                                     << ") within set timeout content");
+        return false;
+    }
+
+    /**
+   * @brief Check if a outputfile is created
+   * @param expectedContent
+   * @param outputFilePath
+   * @return true if successful
+   */
+    static bool checkFileCreationOrTimeout(string outputFilePath) {
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            sleep(1);
+            NES_DEBUG("checkFileCreationOrTimeout: for file " << outputFilePath);
+            std::ifstream ifs(outputFilePath);
+            if (ifs.good() && ifs.is_open()) {
+                return true;
+            }
+        }
+        NES_DEBUG("checkFileCreationOrTimeout: expected result not reached within set timeout");
         return false;
     }
 
@@ -490,6 +515,48 @@ class TestUtils {
             topology->addNewPhysicalNodeAsChild(rootNode, nodePtr);
         }
         return nodePtr;
+    }
+
+    static bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers) {
+        auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
+        NES_INFO("TestUtil: Executen GET request on URI " << baseUri);
+        web::json::value json_return;
+        web::http::client::http_client client(baseUri);
+        size_t nodeNo;
+
+        for (int i = 0; i < maxTimeout; i++) {
+            try {
+                client.request(web::http::methods::GET)
+                    .then([](const web::http::http_response& response) {
+                        NES_INFO("get first then");
+                        return response.extract_json();
+                    })
+                    .then([&json_return](const pplx::task<web::json::value>& task) {
+                        try {
+                            json_return = task.get();
+                        } catch (const web::http::http_exception& e) {
+                            NES_ERROR("TestUtils: Error while setting return: " << e.what());
+                        }
+                    })
+                    .wait();
+
+                nodeNo = json_return.at("nodes").size();
+
+                if (nodeNo == expectedWorkers + 1) {
+                    NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
+                    return true;
+                } else {
+                    sleep(1);
+                }
+            } catch (const std::exception& e) {
+                NES_ERROR("TestUtils: WaitForWorkers error occured " << e.what());
+                sleep(1);
+            }
+        }
+
+        NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly " << nodeNo << " but expected "
+                                                                                                 << expectedWorkers);
+        return false;
     }
 };
 }// namespace NES

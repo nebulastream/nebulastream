@@ -22,7 +22,6 @@
 #include <string>
 
 namespace NES {
-class TupleBuffer;
 
 /**
  * @brief this class implement the CSV as an input source
@@ -36,22 +35,22 @@ class CSVSource : public DataSource {
    * @param delimiter inside the file, default ","
    * @param number of buffers to create
    */
-    explicit CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string filePath,
-                       const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                       uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId);
+    explicit CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                       const std::string filePath, const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
+                       uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId);
 
     /**
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
      */
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    void fillBuffer(TupleBuffer&);
-    void fillSocket(TupleBuffer&);
+    void fillBuffer(NodeEngine::TupleBuffer&);
+
     /**
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source
@@ -80,15 +79,9 @@ class CSVSource : public DataSource {
     const uint64_t getNumberOfTuplesToProducePerBuffer() const;
 
     /**
-     * @brief getter/setter for endlessRepeat
+     * @brief getter for skip header
      */
     bool getSkipHeader() const;
-
-    /**
-     * @brief getter/setter for endlessRepeat
-     */
-    bool isEndlessRepeat() const;
-    void setEndlessRepeat(bool endlessRepeat);
 
   private:
     std::string filePath;
@@ -96,7 +89,7 @@ class CSVSource : public DataSource {
     uint64_t numberOfTuplesToProducePerBuffer;
     std::string delimiter;
     uint64_t currentPosInFile;
-    bool endlessRepeat;
+    bool loopOnFile;
     std::ifstream input;
     uint64_t fileSize;
     bool fileEnded;

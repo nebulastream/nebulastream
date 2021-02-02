@@ -46,14 +46,14 @@ std::vector<std::string> NetworkMetrics::getInterfaceNames() {
     return keys;
 }
 
-NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     auto output = NetworkMetrics();
     auto i = schema->getIndex(prefix + "INTERFACE_NO");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1
         && UtilityFunctions::endsWith(schema->fields[i]->name, prefix + "INTERFACE_NO")) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
-        auto layout = createRowLayout(schema);
+        auto layout = NodeEngine::createRowLayout(schema);
         auto numInt = layout->getValueField<uint16_t>(0, i)->read(buf);
 
         for (int n = 0; n < numInt; n++) {
@@ -69,12 +69,12 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, TupleBuffer& buf, co
     return output;
 }
 
-void serialize(const NetworkMetrics& metrics, SchemaPtr schema, TupleBuffer& buf, const std::string& prefix) {
+void serialize(const NetworkMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     auto noFields = schema->getSize();
     schema->addField(prefix + "INTERFACE_NO", BasicType::UINT16);
     buf.setNumberOfTuples(1);
 
-    auto layout = createRowLayout(schema);
+    auto layout = NodeEngine::createRowLayout(schema);
     layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getInterfaceNum());
 
     for (int i = 0; i < metrics.getInterfaceNum(); i++) {

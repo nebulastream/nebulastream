@@ -244,10 +244,11 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNod
 
     TopologyNodePtr foundNode = nullptr;
     for (auto& parent : parents) {
-        TopologyNodePtr found = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
-        if (found) {
+        TopologyNodePtr foundInParent = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
+        if (foundInParent) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
             if (!foundNode) {
+                //TODO: SZ I don't understand how we can end up here
                 if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
                     const TopologyNodePtr copyOfTestNode = testNode->copy();
                     uniqueNodes[testNode->getId()] = copyOfTestNode;
@@ -255,7 +256,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNod
                 foundNode = uniqueNodes[testNode->getId()];
             }
             NES_TRACE("Topology: Adding found node as parent to the copy of testNode.");
-            foundNode->addParent(found);
+            foundNode->addParent(foundInParent);
         }
     }
     return foundNode;
@@ -274,9 +275,8 @@ std::string Topology::toString() {
 
     // store pair of TopologyNodePtr and its depth in when printed
     std::deque<std::pair<TopologyNodePtr, uint64_t>> parentToPrint{std::make_pair(rootNode, 0)};
-    std::deque<std::pair<TopologyNodePtr, uint64_t>> childToPrint;
 
-    // indent multiplier
+    // indent offset
     int indent = 2;
 
     // perform dfs traverse
@@ -396,7 +396,7 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
         nodesToProcess.pop_front();
         NES_TRACE(
             "Topology: Check if the children topology node of the node under consideration contains all input topology nodes.");
-        std::vector<NodePtr> children = candidateNode->getAndFlattenAllChildren();
+        std::vector<NodePtr> children = candidateNode->getAndFlattenAllChildren(false);
         for (auto& nodeToLook : topologyNodes) {
             auto found = std::find_if(children.begin(), children.end(), [&](NodePtr child) {
                 return nodeToLook->getId() == child->as<TopologyNode>()->getId();
@@ -475,31 +475,34 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
 TopologyNodePtr Topology::findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes,
                                                 std::vector<TopologyNodePtr> parenNodes) {
     NES_DEBUG("Topology: Find a common ancestor node for the input children nodes.");
-    TopologyNodePtr commonAncestor = findCommonAncestor(childNodes);
-    if (!commonAncestor) {
-        NES_WARNING("Topology: Unable to fina a common ancestor node for the input child node.");
+    TopologyNodePtr commonAncestorForChildren = findCommonAncestor(childNodes);
+    if (!commonAncestorForChildren) {
+        NES_WARNING("Topology: Unable to find a common ancestor node for the input child node.");
         return nullptr;
     }
 
     NES_DEBUG("Topology: Find a common child node for the input parent nodes.");
-    TopologyNodePtr commonChild = findCommonChild(parenNodes);
-    if (!commonChild) {
+    TopologyNodePtr commonChildForParents = findCommonChild(parenNodes);
+    if (!commonChildForParents) {
         NES_WARNING("Topology: Unable to find a common child node for the input parent nodes.");
         return nullptr;
     }
 
-    if (commonChild->getId() == commonAncestor->getId()) {
+    if (commonChildForParents->getId() == commonAncestorForChildren->getId()) {
         NES_DEBUG("Topology: Both common child and ancestor are same node. Returning as result.");
-        return commonChild;
-    } else if (!commonChild->containAsParent(commonAncestor)) {
+        return commonChildForParents;
+    } else if (commonChildForParents->containAsChild(commonAncestorForChildren)) {
+        NES_DEBUG("Topology: Returning the common children of the parent topology nodes");
+        return commonChildForParents;
+    } else if (!commonChildForParents->containAsParent(commonAncestorForChildren)) {
         NES_WARNING("Topology: Common child is not connected to the common ancestor.");
         return nullptr;
     }
     NES_DEBUG("Topology: Returning common ancestor as result.");
-    return commonAncestor;
+    return commonAncestorForChildren;
 }
 
-std::vector<TopologyNodePtr> Topology::findTopologyNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode) {
+std::vector<TopologyNodePtr> Topology::findNodesBetween(TopologyNodePtr sourceNode, TopologyNodePtr destinationNode) {
 
     NES_DEBUG("Topology: Find topology nodes between source and destination nodes.");
     if (sourceNode->getId() == destinationNode->getId()) {
@@ -513,8 +516,7 @@ std::vector<TopologyNodePtr> Topology::findTopologyNodesBetween(TopologyNodePtr 
     std::vector<TopologyNodePtr> nodesBetween;
     NES_DEBUG("Topology: iterate over parent of the source node and find path between its parent and destination nodes.");
     for (auto& sourceParent : sourceNode->getParents()) {
-        std::vector<TopologyNodePtr> foundBetweenNodes =
-            findTopologyNodesBetween(sourceParent->as<TopologyNode>(), destinationNode);
+        std::vector<TopologyNodePtr> foundBetweenNodes = findNodesBetween(sourceParent->as<TopologyNode>(), destinationNode);
         if (!foundBetweenNodes.empty()) {
             NES_TRACE("Topology: found a path between source nodes parent and destination nodes.");
             nodesBetween.push_back(sourceNode);
@@ -524,6 +526,25 @@ std::vector<TopologyNodePtr> Topology::findTopologyNodesBetween(TopologyNodePtr 
     }
     NES_DEBUG("Topology: return the found path between source and destination nodes.");
     return nodesBetween;
+}
+
+std::vector<TopologyNodePtr> Topology::findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
+                                                        std::vector<TopologyNodePtr> destinationNodes) {
+    NES_DEBUG("Topology: Find a common ancestor node for the input children nodes.");
+    TopologyNodePtr commonAncestorForChildren = findCommonAncestor(sourceNodes);
+    if (!commonAncestorForChildren) {
+        NES_WARNING("Topology: Unable to find a common ancestor node for the input child node.");
+        return {};
+    }
+
+    NES_DEBUG("Topology: Find a common child node for the input parent nodes.");
+    TopologyNodePtr commonChildForParents = findCommonChild(destinationNodes);
+    if (!commonChildForParents) {
+        NES_WARNING("Topology: Unable to find a common child node for the input parent nodes.");
+        return {};
+    }
+
+    return findNodesBetween(commonAncestorForChildren, commonChildForParents);
 }
 
 }// namespace NES

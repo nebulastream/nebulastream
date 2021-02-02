@@ -18,6 +18,7 @@
 #define NES_INCLUDE_API_WINDOWING_HPP_
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
@@ -62,10 +63,18 @@ Windowing::WindowAggregationPtr Count();
 Windowing::TimeCharacteristicPtr EventTime(ExpressionItem ExpressionItem);
 
 /**
- * @brief Defines a processing time as a time characteristic for a window.
+ * @brief Defines event time as a time characteristic for a window.
+ * @param ExpressionItem which defines the field name.
+ * @param Timeunit
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr ProcessingTime();
+Windowing::TimeCharacteristicPtr EventTime(ExpressionItem ExpressionItem, Windowing::TimeUnit unit);
+
+/**
+ * @brief Defines a ingestion time as a time characteristic for a window.
+ * @return A descriptor of the time characteristic.
+ */
+Windowing::TimeCharacteristicPtr IngestionTime();
 
 /**
  * @brief A time measure in Milliseconds.
@@ -90,6 +99,30 @@ Windowing::TimeMeasure Minutes(uint64_t minutes);
  * @return TimeMeasure
  */
 Windowing::TimeMeasure Hours(uint64_t hours);
+
+/**
+ * @brief A time unit in Milliseconds.
+ * @return TimeUnit
+ */
+Windowing::TimeUnit Milliseconds();
+
+/**
+ * @brief A time unit in Seconds.
+ * @return TimeUnit
+ */
+Windowing::TimeUnit Seconds();
+
+/**
+ * @brief A time unit in Minutes.
+ * @return TimeUnit
+ */
+Windowing::TimeUnit Minutes();
+
+/**
+ * @brief A time unit in Hours.
+ * @return TimeUnit
+ */
+Windowing::TimeUnit Hours();
 
 /**
  * @brief A time measure in Days.

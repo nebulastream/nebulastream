@@ -18,6 +18,7 @@
 #define NES_INVALIDQUERYEXCEPTION_HPP
 
 #include <stdexcept>
+#include <string>
 
 namespace NES {
 /**

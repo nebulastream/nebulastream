@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
@@ -31,28 +31,31 @@ GeneratedQueryExecutionPlanBuilder::GeneratedQueryExecutionPlanBuilder() {
 
 GeneratedQueryExecutionPlanBuilder GeneratedQueryExecutionPlanBuilder::create() { return GeneratedQueryExecutionPlanBuilder(); }
 
-BufferManagerPtr GeneratedQueryExecutionPlanBuilder::getBufferManager() const { return bufferManager; }
+NodeEngine::BufferManagerPtr GeneratedQueryExecutionPlanBuilder::getBufferManager() const { return bufferManager; }
 
 QueryId GeneratedQueryExecutionPlanBuilder::getQueryId() const { return queryId; }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addPipelineStage(PipelineStagePtr pipelineStagePtr) {
-    stages.push_back(pipelineStagePtr);
+GeneratedQueryExecutionPlanBuilder&
+GeneratedQueryExecutionPlanBuilder::addPipeline(NodeEngine::Execution::ExecutablePipelinePtr pipeline) {
+    pipelines.push_back(pipeline);
     return *this;
 }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setBufferManager(BufferManagerPtr bufferManager) {
+GeneratedQueryExecutionPlanBuilder&
+GeneratedQueryExecutionPlanBuilder::setBufferManager(NodeEngine::BufferManagerPtr bufferManager) {
     this->bufferManager = std::move(bufferManager);
     return *this;
 }
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQueryManager(QueryManagerPtr queryManager) {
+GeneratedQueryExecutionPlanBuilder&
+GeneratedQueryExecutionPlanBuilder::setQueryManager(NodeEngine::QueryManagerPtr queryManager) {
     this->queryManager = std::move(queryManager);
     return *this;
 }
 
-QueryManagerPtr GeneratedQueryExecutionPlanBuilder::getQueryManager() const { return queryManager; }
+NodeEngine::QueryManagerPtr GeneratedQueryExecutionPlanBuilder::getQueryManager() const { return queryManager; }
 
-QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
+NodeEngine::Execution::ExecutableQueryPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(bufferManager, "GeneratedQueryExecutionPlanBuilder: Invalid bufferManager");
     NES_ASSERT(queryManager, "GeneratedQueryExecutionPlanBuilder: Invalid queryManager");
     NES_ASSERT(!sources.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sources");
@@ -61,16 +64,17 @@ QueryExecutionPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(querySubPlanId != INVALID_QUERY_SUB_PLAN_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Subplan Id");
     NES_ASSERT(queryCompiler, "GeneratedQueryExecutionPlanBuilder: Invalid compiler or no stages");
 
-    if (stages.empty() && !leaves.empty()) {
+    if (pipelines.empty() && !leaves.empty()) {
         for (auto& operatorPlan : leaves) {
             queryCompiler->compile(*this, operatorPlan);
         }
-        NES_ASSERT(!stages.empty(), "GeneratedQueryExecutionPlanBuilder: No stages after query compilation");
-        std::reverse(stages.begin(), stages.end());// this is necessary, check plan generator documentation
+        NES_ASSERT(!pipelines.empty(), "GeneratedQueryExecutionPlanBuilder: No stages after query compilation");
+        std::reverse(pipelines.begin(), pipelines.end());// this is necessary, check plan generator documentation
     }
 
-    return std::make_shared<GeneratedQueryExecutionPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks),
-                                                         std::move(stages), std::move(queryManager), std::move(bufferManager));
+    return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources),
+                                                                        std::move(sinks), std::move(pipelines),
+                                                                        std::move(queryManager), std::move(bufferManager));
 }
 
 std::vector<DataSinkPtr>& GeneratedQueryExecutionPlanBuilder::getSinks() { return sinks; }
@@ -104,7 +108,7 @@ DataSourcePtr GeneratedQueryExecutionPlanBuilder::getSource(uint64_t index) { re
 
 DataSinkPtr GeneratedQueryExecutionPlanBuilder::getSink(uint64_t index) { return sinks[index]; }
 
-uint64_t GeneratedQueryExecutionPlanBuilder::getNumberOfPipelineStages() const { return stages.size(); }
+uint64_t GeneratedQueryExecutionPlanBuilder::getNumberOfPipelineStages() const { return pipelines.size(); }
 
 GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQuerySubPlanId(QuerySubPlanId querySubPlanId) {
     this->querySubPlanId = querySubPlanId;
@@ -112,22 +116,5 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setQuery
 }
 
 QuerySubPlanId GeneratedQueryExecutionPlanBuilder::getQuerySubPlanId() const { return querySubPlanId; }
-GeneratedQueryExecutionPlanBuilder&
-GeneratedQueryExecutionPlanBuilder::setWinDef(const Windowing::LogicalWindowDefinitionPtr& winDef) {
-    this->winDef = winDef;
-    return *this;
-}
 
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setJoinDef(const Join::LogicalJoinDefinitionPtr joinDef) {
-    this->joinDef = joinDef;
-    return *this;
-}
-Join::LogicalJoinDefinitionPtr GeneratedQueryExecutionPlanBuilder::getJoinDef() { return joinDef; }
-
-GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::setSchema(const SchemaPtr& schema) {
-    this->schema = schema;
-    return *this;
-}
-Windowing::LogicalWindowDefinitionPtr GeneratedQueryExecutionPlanBuilder::getWinDef() { return winDef; }
-SchemaPtr GeneratedQueryExecutionPlanBuilder::getSchema() { return schema; }
 }// namespace NES

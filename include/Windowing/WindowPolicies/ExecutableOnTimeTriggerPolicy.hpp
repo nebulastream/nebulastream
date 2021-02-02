@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_EXECUTABLEONTIMETRIGGERPOLICY_HPP_
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -28,6 +29,8 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
     ExecutableOnTimeTriggerPolicy(uint64_t triggerTimeInMs);
 
     static ExecutableOnTimeTriggerPtr create(uint64_t triggerTimeInMs);
+
+    ~ExecutableOnTimeTriggerPolicy();
 
     /**
      * @brief This function starts the trigger policy
@@ -44,7 +47,7 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
     bool stop() override;
 
   private:
-    bool running;
+    std::atomic<bool> running;
     std::shared_ptr<std::thread> thread;
     std::mutex runningTriggerMutex;
     uint64_t triggerTimeInMs;

@@ -20,17 +20,17 @@
 #include <memory>
 #include <vector>
 
+#include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ForLoopStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
@@ -42,6 +42,7 @@ typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 class GeneratedCode {
   public:
     GeneratedCode();
+    std::vector<StatementPtr> setupCode;
     std::vector<VariableDeclaration> variableDeclarations;
     std::vector<StatementPtr> variableInitStmts;
     std::shared_ptr<FOR> forLoopStmt;
@@ -55,7 +56,7 @@ class GeneratedCode {
     StatementPtr returnStmt;
     std::shared_ptr<VariableDeclaration> varDeclarationRecordIndex;
     std::shared_ptr<VariableDeclaration> varDeclarationReturnValue;
-    StructDeclaration structDeclaratonInputTuple;
+    std::vector<StructDeclaration> structDeclaratonInputTuples;
     StructDeclaration structDeclarationResultTuple;
     VariableDeclaration varDeclarationInputBuffer;
     VariableDeclaration varDeclarationResultBuffer;

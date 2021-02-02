@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -28,12 +28,13 @@ namespace NES {
 
 SliceCreationOperator::SliceCreationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
     : WindowOperatorNode(windowDefinition, id) {
-    this->windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createSlicingWindowType());
+    this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
     this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
     this->windowDefinition->setWindowType(windowDefinition->getWindowType());
     this->windowDefinition->setOnKey(windowDefinition->getOnKey());
+    this->windowDefinition->setOriginId(id);
 }
 
 const std::string SliceCreationOperator::toString() const {
@@ -55,7 +56,9 @@ OperatorNodePtr SliceCreationOperator::copy() {
     return copy;
 }
 bool SliceCreationOperator::inferSchema() {
-    WindowOperatorNode::inferSchema();
+    if (!WindowOperatorNode::inferSchema()) {
+        return false;
+    }
     // infer the default input and output schema
     NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema "
               << inputSchema->toString());
@@ -64,29 +67,20 @@ bool SliceCreationOperator::inferSchema() {
     auto windowAggregation = windowDefinition->getWindowAggregation();
     windowAggregation->inferStamp(inputSchema);
 
-    auto windowType = windowDefinition->getWindowType();
+    //Construct output schema
+    outputSchema->clear();
+    outputSchema = outputSchema->addField(createField("_$start", UINT64))
+                       ->addField(createField("_$end", UINT64))
+                       ->addField(createField("_$cnt", UINT64));
+
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema =
-            Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField(createField("cnt", UINT64))
-                ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
-                                                  windowDefinition->getOnKey()->getStamp()))
-                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
-        return true;
-    } else {
-        outputSchema =
-            Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField(createField("cnt", UINT64))
-                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
-        return true;
+        outputSchema->addField(
+            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
     }
+    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+                                                  windowAggregation->on()->getStamp()));
+    return true;
 }
 }// namespace NES

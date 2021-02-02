@@ -24,6 +24,7 @@ class OnRecordTriggerPolicyDescription : public BaseWindowTriggerPolicyDescripto
   public:
     static WindowTriggerPolicyPtr create();
     TriggerType getPolicyType() override;
+    std::string toString() override;
 
   private:
     OnRecordTriggerPolicyDescription();

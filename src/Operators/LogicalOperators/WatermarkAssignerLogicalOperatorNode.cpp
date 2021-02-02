@@ -15,14 +15,15 @@
 */
 
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
+#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 
 namespace NES {
 
 WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(
     const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
-    : watermarkStrategyDescriptor(watermarkStrategyDescriptor), LogicalOperatorNode(id) {}
+    : watermarkStrategyDescriptor(watermarkStrategyDescriptor), UnaryOperatorNode(id) {}
 
 const std::string WatermarkAssignerLogicalOperatorNode::toString() const {
     std::stringstream ss;
@@ -30,9 +31,17 @@ const std::string WatermarkAssignerLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string WatermarkAssignerLogicalOperatorNode::getStringBasedSignature() {
+    std::stringstream ss;
+    ss << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ").";
+    ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    return ss.str();
+}
+
 bool WatermarkAssignerLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<WatermarkAssignerLogicalOperatorNode>()->getId() == id;
 }
+
 bool WatermarkAssignerLogicalOperatorNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator = rhs->as<WatermarkAssignerLogicalOperatorNode>();
@@ -40,6 +49,7 @@ bool WatermarkAssignerLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     return false;
 }
+
 OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
     copy->setInputSchema(inputSchema);
@@ -49,6 +59,14 @@ OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
 
 Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::getWatermarkStrategyDescriptor() const {
     return watermarkStrategyDescriptor;
+}
+
+bool WatermarkAssignerLogicalOperatorNode::inferSchema() {
+    if (!UnaryOperatorNode::inferSchema()) {
+        return false;
+    }
+    watermarkStrategyDescriptor->inferStamp(inputSchema);
+    return true;
 }
 
 }// namespace NES

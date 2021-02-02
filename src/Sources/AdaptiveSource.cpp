@@ -25,8 +25,8 @@
 
 namespace NES {
 
-AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                               uint64_t initialGatheringInterval, OperatorId operatorId)
+AdaptiveSource::AdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                               NodeEngine::QueryManagerPtr queryManager, uint64_t initialGatheringInterval, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval);
     this->gatheringInterval = initialGatheringInterval;
@@ -34,7 +34,7 @@ AdaptiveSource::AdaptiveSource(SchemaPtr schema, BufferManagerPtr bufferManager,
 
 SourceType AdaptiveSource::getType() const { return ADAPTIVE_SOURCE; }
 
-std::optional<TupleBuffer> AdaptiveSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> AdaptiveSource::receiveData() {
     NES_DEBUG("AdaptiveSource::receiveData called");
     auto buf = this->bufferManager->getBufferBlocking();
     this->sampleSourceAndFillBuffer(buf);
@@ -43,7 +43,7 @@ std::optional<TupleBuffer> AdaptiveSource::receiveData() {
     return buf;
 }
 
-void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager) {
+void AdaptiveSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
     setThreadName("AdaptSrc-%d", operatorId);
     std::string thName = "AdaptSrc-" + operatorId;
 
@@ -71,7 +71,7 @@ void AdaptiveSource::runningRoutine(BufferManagerPtr bufferManager, QueryManager
             lastGatheringTimeStamp = currentTime;
             if (cnt < numBuffersToProcess) {
                 auto optBuf = this->receiveData();
-                if (!!optBuf) {
+                if (optBuf.has_value()) {
                     auto& buf = optBuf.value();
                     NES_DEBUG("AdaptiveSource " << this->operatorId << " string=" << this->toString()
                                                 << ": Received Data: " << buf.getNumberOfTuples() << " tuples"

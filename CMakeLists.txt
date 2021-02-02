@@ -46,7 +46,15 @@ endif ()
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -Werror=unused-variable -Werror=unused-parameter -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK -DNES_DEBUG_MODE=1")
-set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-unused-variable -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-sign-compare -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3")
+
+# Set Flamegraph Flags
+if (NES_BUILD_BENCHMARKS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -fno-omit-frame-pointer")
+    message("---Flags needed for retrieving function names in flamegraphs have been added!")
+endif()
 
 # Set NES_LOGGING_LEVEL Flag
 if (NES_LOGGING_LEVEL)
@@ -60,9 +68,9 @@ endif (NES_LOGGING_LEVEL)
 
 # Compiler should produce specific code for system architecture
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+CHECK_CXX_COMPILER_FLAG("-march=x86-64" COMPILER_SUPPORTS_MARCH_NATIVE)
 if (COMPILER_SUPPORTS_MARCH_NATIVE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
 endif ()
 
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
@@ -269,6 +277,15 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 ###########################################################################################
 
+# Cross compilation
+if (CMAKE_CROSSCOMPILING)
+    set(QEMU_EMULATOR_PATH /usr/bin/qemu-aarch64)
+    message(STATUS "Current Qemu Executable: ${QEMU_EMULATOR_PATH}")
+    add_definitions(-D 'QEMU_EMULATOR_PATH=\"${QEMU_EMULATOR_PATH}\"')
+endif ()
+
+###########################################################################################
+
 # Add Source Code
 add_subdirectory(src)
 
@@ -330,5 +347,8 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CP
 INCLUDE(CPack)
 
 project_enable_clang_format()
+if (CMAKE_CROSSCOMPILING)
+    project_enable_emulated_tests()
+endif ()
 project_enable_release()
 project_enable_version()

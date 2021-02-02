@@ -198,6 +198,12 @@ class QueryPlan {
      */
     void setQuerySubPlanId(uint64_t querySubPlanId);
 
+    /**
+     * @brief Create copy of the query plan
+     * @return copy of the query plan
+     */
+    QueryPlanPtr copy();
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.

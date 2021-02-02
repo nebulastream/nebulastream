@@ -18,7 +18,7 @@
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::NodeEngine {
 
 TupleBuffer::TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullptr) {
     //nop
@@ -95,13 +95,13 @@ void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) { controlBlock->set
 
 void TupleBuffer::revertEndianness(SchemaPtr schema) { detail::revertEndianness(*this, schema); }
 
-int64_t TupleBuffer::getWatermark() { return controlBlock->getWatermark(); }
+uint64_t TupleBuffer::getWatermark() const { return controlBlock->getWatermark(); }
 
-uint64_t TupleBuffer::getOriginId() { return controlBlock->getOriginId(); }
+uint64_t TupleBuffer::getOriginId() const { return controlBlock->getOriginId(); }
 
 void TupleBuffer::setOriginId(uint64_t id) { controlBlock->setOriginId(id); }
 
-void TupleBuffer::setWatermark(int64_t value) { controlBlock->setWatermark(value); }
+void TupleBuffer::setWatermark(uint64_t value) { controlBlock->setWatermark(value); }
 
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
     std::swap(lhs.ptr, rhs.ptr);
@@ -109,4 +109,4 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
     std::swap(lhs.controlBlock, rhs.controlBlock);
 }
 
-}// namespace NES
+}// namespace NES::NodeEngine

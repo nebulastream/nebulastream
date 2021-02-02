@@ -33,27 +33,6 @@ class OperatorNode : public Node {
     OperatorNode(OperatorId id);
 
     /**
-    * @brief get the input schema of this operator
-    * @return SchemaPtr
-    */
-    SchemaPtr getInputSchema() const;
-    void setInputSchema(SchemaPtr inputSchema);
-
-    /**
-    * @brief get the result schema of this operator
-    * @return SchemaPtr
-    */
-    SchemaPtr getOutputSchema() const;
-    void setOutputSchema(SchemaPtr outputSchema);
-
-    /**
-    * @brief infers the input and out schema of this operator depending on its child.
-    * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
-    * @return true if schema was correctly inferred
-    */
-    virtual bool inferSchema();
-
-    /**
      * @brief gets the operator id.
      * Unique Identifier of the operator within a query.
      * @return u_int64_t
@@ -84,10 +63,32 @@ class OperatorNode : public Node {
      * @brief detect if this operator is a n-ary operator, i.e., it has multiple parent or children.
      * @return true if n-ary else false;
      */
-    bool isNAryOperator();
+    bool hasMultipleChildrenOrParents();
 
+    /**
+    * @brief return if the operator has multiple children
+    * @return bool
+    */
+    bool hasMultipleChildren();
+
+    /**
+    * @brief return if the operator has multiple children
+    * @return bool
+    */
+    bool hasMultipleParents();
+
+    /**
+     * @brief method to add a child to this node
+     * @param newNode
+     * @return bool indicating success
+     */
     bool addChild(const NodePtr newNode) override;
 
+    /**
+    * @brief method to add a parent to this node
+    * @param newNode
+    * @return bool indicating success
+    */
     bool addParent(const NodePtr newNode) override;
 
     /**
@@ -96,6 +97,42 @@ class OperatorNode : public Node {
      * @return nullptr if not found else the operator node
      */
     NodePtr getChildWithOperatorId(uint64_t operatorId);
+
+    /**
+     * @brief Method to infer the schema for this operator
+     * @return bool indicating success
+     */
+    virtual bool inferSchema() = 0;
+
+    /**
+     * @brief Method to get the output schema of the operator
+     * @return output schema
+     */
+    virtual SchemaPtr getOutputSchema() const = 0;
+
+    /**
+     * @brief Method to set the output schema
+     * @param outputSchema
+     */
+    virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
+
+    /**
+     * @brief This methods return if the operator is a binary operator, i.e., as two input schemas
+     * @return bool
+     */
+    virtual bool isBinaryOperator() const = 0;
+
+    /**
+    * @brief This methods return if the operator is a unary operator, i.e., as oneinput schemas
+    * @return bool
+     */
+    virtual bool isUnaryOperator() const = 0;
+
+    /**
+    * @brief This methods return if the operator is an exchange operator, i.e., it has potentially multiple output schemas
+    * @return bool
+    */
+    virtual bool isExchangeOperator() const = 0;
 
   protected:
     /**
@@ -116,13 +153,6 @@ class OperatorNode : public Node {
      * @brief Unique Identifier of the operator within a query.
      */
     u_int64_t id;
-
-    /**
-     * @brief All operators maintain an input and output schema.
-     * To make sure that the schema is propagated correctly through the operator chain all inferSchema();
-     */
-    SchemaPtr inputSchema;
-    SchemaPtr outputSchema;
 };
 
 }// namespace NES

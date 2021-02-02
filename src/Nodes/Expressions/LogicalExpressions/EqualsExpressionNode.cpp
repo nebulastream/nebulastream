@@ -36,7 +36,11 @@ bool EqualsExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string EqualsExpressionNode::toString() const { return "EqualsNode(" + stamp->toString() + ")"; }
+const std::string EqualsExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << children[0]->toString() << "==" << children[1]->toString();
+    return ss.str();
+}
 
 ExpressionNodePtr EqualsExpressionNode::copy() { return std::make_shared<EqualsExpressionNode>(EqualsExpressionNode(this)); }
 

@@ -22,4 +22,6 @@ TimeMeasure::TimeMeasure(uint64_t ms) : ms(ms) {}
 
 uint64_t TimeMeasure::getTime() const { return ms; }
 
+std::string TimeMeasure::toString() { return "TimeMeasure: ms)" + std::to_string(ms); }
+
 }// namespace NES::Windowing

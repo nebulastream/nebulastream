@@ -37,8 +37,8 @@
 
 namespace NES {
 
-OPCSource::OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url,
-                     UA_NodeId nodeId, std::string password, std::string user, OperatorId operatorId)
+OPCSource::OPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                     std::string url, UA_NodeId nodeId, std::string password, std::string user, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), url(url), nodeId(nodeId), retval(UA_STATUSCODE_GOOD),
       client(UA_Client_new()), connected(false), user(user), password(password) {
 
@@ -56,7 +56,7 @@ OPCSource::~OPCSource() {
     }
 }
 
-std::optional<TupleBuffer> OPCSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> OPCSource::receiveData() {
 
     NES_DEBUG("OPCSOURCE::receiveData()  " << this << ": receiveData() ");
     if (connect()) {

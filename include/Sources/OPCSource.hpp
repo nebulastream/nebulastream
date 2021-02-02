@@ -43,8 +43,8 @@ class OPCSource : public DataSource {
      * @param user name if connecting with a server with authentication
      * @param password for authentication if needed
      */
-    OPCSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId,
-              std::string password, std::string user, OperatorId operatorId);
+    OPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+              std::string url, UA_NodeId nodeId, std::string password, std::string user, OperatorId operatorId);
 
     /**
      * @brief destructor of OPC source that disconnects the queue before deconstruction
@@ -56,7 +56,7 @@ class OPCSource : public DataSource {
      * @brief blocking method to receive a buffer from the OPC source
      * @return TupleBufferPtr containing the received buffer
      */
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the opc source

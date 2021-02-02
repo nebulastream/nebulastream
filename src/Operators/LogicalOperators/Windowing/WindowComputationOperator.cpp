@@ -25,12 +25,13 @@ namespace NES {
 
 WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
     : WindowOperatorNode(windowDefinition, id) {
-    this->windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCombiningWindowType());
+    this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
     this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
     this->windowDefinition->setWindowType(windowDefinition->getWindowType());
     this->windowDefinition->setOnKey(windowDefinition->getOnKey());
+    this->windowDefinition->setOriginId(id);
 }
 
 const std::string WindowComputationOperator::toString() const {
@@ -52,7 +53,9 @@ OperatorNodePtr WindowComputationOperator::copy() {
     return copy;
 }
 bool WindowComputationOperator::inferSchema() {
-    WindowOperatorNode::inferSchema();
+    if (!WindowOperatorNode::inferSchema()) {
+        return false;
+    }
     // infer the default input and output schema
     NES_DEBUG("WindowComputationOperator: TypeInferencePhase: infer types for window operator with input schema "
               << inputSchema->toString());
@@ -61,27 +64,18 @@ bool WindowComputationOperator::inferSchema() {
     auto windowAggregation = windowDefinition->getWindowAggregation();
     windowAggregation->inferStamp(inputSchema);
 
-    auto windowType = windowDefinition->getWindowType();
+    //Construct output schema
+    outputSchema->clear();
+    outputSchema = outputSchema->addField(createField("_$start", UINT64))->addField(createField("_$end", UINT64));
+
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema =
-            Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField(AttributeField::create(windowDefinition->getOnKey()->getFieldName(),
-                                                  windowDefinition->getOnKey()->getStamp()))
-                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
-        return true;
-    } else {
-        outputSchema =
-            Schema::create()
-                ->addField(createField("start", UINT64))
-                ->addField(createField("end", UINT64))
-                ->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
-        return true;
+        outputSchema->addField(
+            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
     }
+    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
+                                                  windowAggregation->on()->getStamp()));
+    return true;
 }
 }// namespace NES

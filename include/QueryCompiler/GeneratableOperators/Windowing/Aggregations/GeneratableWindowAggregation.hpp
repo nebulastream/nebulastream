@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEWINDOWAGGREGATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEWINDOWAGGREGATION_HPP_
+#include <QueryCompiler/RecordHandler.hpp>
 #include <memory>
 
 namespace NES::Windowing {
@@ -41,7 +42,7 @@ class GeneratableWindowAggregation {
      * @param inputRef input value reference
      */
     virtual void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialValueRef,
-                                    StructDeclaration inputStruct, BinaryOperatorStatement inputRef) = 0;
+                                    RecordHandlerPtr recordHandler) = 0;
 
   protected:
     explicit GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);

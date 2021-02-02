@@ -21,8 +21,9 @@
 namespace NES {
 namespace Network {
 
-NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
-                             NetworkManagerPtr networkManager, NesPartition nesPartition)
+NetworkSource::NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                             NodeEngine::QueryManagerPtr queryManager, NetworkManagerPtr networkManager,
+                             NesPartition nesPartition)
     : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId()), networkManager(networkManager),
       nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
@@ -31,7 +32,7 @@ NetworkSource::NetworkSource(SchemaPtr schema, BufferManagerPtr bufferManager, Q
 
 NetworkSource::~NetworkSource() { NES_DEBUG("NetworkSink: Destroying NetworkSource " << nesPartition.toString()); }
 
-std::optional<TupleBuffer> NetworkSource::receiveData() {
+std::optional<NodeEngine::TupleBuffer> NetworkSource::receiveData() {
     NES_THROW_RUNTIME_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
 }
 
@@ -51,7 +52,7 @@ bool NetworkSource::stop() {
     return true;
 }
 
-void NetworkSource::runningRoutine(BufferManagerPtr, QueryManagerPtr) {
+void NetworkSource::runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
 

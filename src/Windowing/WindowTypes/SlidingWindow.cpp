@@ -16,7 +16,9 @@
 
 #include <Util/Logger.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
+
 namespace NES::Windowing {
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
@@ -31,11 +33,9 @@ void SlidingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t l
     long lastStart = currentWatermark - ((currentWatermark + slide.getTime()) % slide.getTime());
     NES_DEBUG("SlidingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime()
                                                           << " lastWatermark=" << lastWatermark);
-    for (long windowStart = lastStart; windowStart + size.getTime() >= lastWatermark && windowStart >= 0;
+    for (long windowStart = lastStart; windowStart + size.getTime() > lastWatermark && windowStart >= 0;
          windowStart -= slide.getTime()) {
-        if (windowStart >= 0
-            && ((windowStart + size.getTime())
-                < currentWatermark)) {//TODO we have to really find out if it is < or <= currentWatermark
+        if (windowStart >= 0 && ((windowStart + size.getTime()) <= currentWatermark)) {
             NES_DEBUG("SlidingWindow::triggerWindows add window to be triggered = windowStart=" << windowStart);
             windows.emplace_back(windowStart, windowStart + size.getTime());
         }
@@ -52,4 +52,12 @@ TimeMeasure SlidingWindow::getSize() { return size; }
 
 TimeMeasure SlidingWindow::getSlide() { return slide; }
 
+std::string SlidingWindow::toString() {
+    std::stringstream ss;
+    ss << "SlidingWindow: size=" << size.getTime();
+    ss << " slide=" << slide.getTime();
+    ss << " timeCharacteristic=" << timeCharacteristic->toString();
+    ss << std::endl;
+    return ss.str();
+}
 }// namespace NES::Windowing

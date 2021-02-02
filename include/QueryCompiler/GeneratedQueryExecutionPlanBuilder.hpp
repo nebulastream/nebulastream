@@ -30,7 +30,7 @@ namespace NES {
 
 /**
  * @brief This GeneratedQueryExecutionPlanBuilder is a mutable object that allows constructing
- * immutable QueryExecutionPlan using the builder pattern.
+ * immutable ExecutableQueryPlan using the builder pattern.
  */
 class GeneratedQueryExecutionPlanBuilder {
   public:
@@ -44,32 +44,32 @@ class GeneratedQueryExecutionPlanBuilder {
      * @param pipelineStagePtr
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& addPipelineStage(PipelineStagePtr pipelineStagePtr);
+    GeneratedQueryExecutionPlanBuilder& addPipeline(NodeEngine::Execution::ExecutablePipelinePtr pipeline);
 
     /**
      * @brief configure buffer manager
      * @param bufferManager
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& setBufferManager(BufferManagerPtr bufferManager);
+    GeneratedQueryExecutionPlanBuilder& setBufferManager(NodeEngine::BufferManagerPtr bufferManager);
 
     /**
      * @brief returns currently set buffer manager for the builder
      * @return currently set buffer manager for the builder
      */
-    BufferManagerPtr getBufferManager() const;
+    NodeEngine::BufferManagerPtr getBufferManager() const;
 
     /**
      * @brief configure query manager
      * @param queryManager
      * @return this
      */
-    GeneratedQueryExecutionPlanBuilder& setQueryManager(QueryManagerPtr queryManager);
+    GeneratedQueryExecutionPlanBuilder& setQueryManager(NodeEngine::QueryManagerPtr queryManager);
 
     /**
      * @return currently set query manager for the builder
      */
-    QueryManagerPtr getQueryManager() const;
+    NodeEngine::QueryManagerPtr getQueryManager() const;
 
     /**
      * @return total number of pipeline stages in the qep
@@ -101,7 +101,7 @@ class GeneratedQueryExecutionPlanBuilder {
     /**
      * @return a query execution plan with the specified configuration
      */
-    QueryExecutionPlanPtr build();
+    NodeEngine::Execution::ExecutableQueryPlanPtr build();
 
     /**
      * @brief configure query compiler
@@ -151,42 +151,18 @@ class GeneratedQueryExecutionPlanBuilder {
      */
     QuerySubPlanId getQuerySubPlanId() const;
 
-    /**
-     * @brief Getter/setter the window definition
-     */
-    GeneratedQueryExecutionPlanBuilder& setWinDef(const Windowing::LogicalWindowDefinitionPtr& winDef);
-    Windowing::LogicalWindowDefinitionPtr getWinDef();
-
-    /**
-    * @brief Getter/setter the join definition
-    */
-    GeneratedQueryExecutionPlanBuilder& setJoinDef(const Join::LogicalJoinDefinitionPtr joinDef);
-    Join::LogicalJoinDefinitionPtr getJoinDef();
-
-    /**
-     * @brief Getter/setter the input schema
-     */
-    GeneratedQueryExecutionPlanBuilder& setSchema(const SchemaPtr& schema);
-    SchemaPtr getSchema();
-
   private:
     GeneratedQueryExecutionPlanBuilder();
 
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
-    BufferManagerPtr bufferManager;
-    QueryManagerPtr queryManager;
+    NodeEngine::BufferManagerPtr bufferManager;
+    NodeEngine::QueryManagerPtr queryManager;
     QueryCompilerPtr queryCompiler;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
-    std::vector<PipelineStagePtr> stages;
+    std::vector<NodeEngine::Execution::ExecutablePipelinePtr> pipelines;
     std::vector<OperatorNodePtr> leaves;
-    Windowing::LogicalWindowDefinitionPtr winDef;
-    Join::LogicalJoinDefinitionPtr joinDef;
-
-  public:
-  private:
-    SchemaPtr schema;
 };
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATEDQUERYEXECUTIONPLANBUILDER_HPP_

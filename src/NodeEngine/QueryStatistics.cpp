@@ -16,7 +16,7 @@
 
 #include <NodeEngine/QueryStatistics.hpp>
 #include <sstream>
-namespace NES {
+namespace NES::NodeEngine {
 
 const std::atomic<uint64_t> QueryStatistics::getProcessedTasks() const { return processedTasks.load(); }
 
@@ -53,4 +53,4 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedWatermarks=" << processedWatermarks;
     return ss.str();
 }
-}// namespace NES
+}// namespace NES::NodeEngine

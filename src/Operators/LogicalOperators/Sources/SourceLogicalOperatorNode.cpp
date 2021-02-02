@@ -16,13 +16,13 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <z3++.h>
 
 namespace NES {
 
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor, OperatorId id)
-    : sourceDescriptor(sourceDescriptor), LogicalOperatorNode(id) {}
+    : sourceDescriptor(sourceDescriptor), UnaryOperatorNode(id) {}
 
 bool SourceLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<SourceLogicalOperatorNode>()->getId() == id;
@@ -42,7 +42,10 @@ const std::string SourceLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string SourceLogicalOperatorNode::getStringBasedSignature() { return "SOURCE(" + sourceDescriptor->getStreamName() + ")"; }
+
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() { return sourceDescriptor; }
+
 bool SourceLogicalOperatorNode::inferSchema() {
     inputSchema = sourceDescriptor->getSchema();
     outputSchema = sourceDescriptor->getSchema();
@@ -53,10 +56,17 @@ void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDe
     this->sourceDescriptor = sourceDescriptor;
 }
 
+void SourceLogicalOperatorNode::setProjectSchema(SchemaPtr schema) { projectSchema = schema; }
+
 OperatorNodePtr SourceLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setSignature(signature);
+    if (copy->instanceOf<SourceLogicalOperatorNode>()) {
+        copy->as<SourceLogicalOperatorNode>()->setProjectSchema(projectSchema);
+    }
+
     return copy;
 }
 }// namespace NES

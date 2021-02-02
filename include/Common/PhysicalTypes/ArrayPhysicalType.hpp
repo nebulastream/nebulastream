@@ -82,8 +82,8 @@ class ArrayPhysicalType : public PhysicalType {
     std::string toString() override;
 
   private:
-    const PhysicalTypePtr physicalComponentType;
     const uint64_t length;
+    const PhysicalTypePtr physicalComponentType;
 };
 
 }// namespace NES

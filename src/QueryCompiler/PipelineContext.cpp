@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/BlockScopeStatement.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <memory>
@@ -22,21 +23,18 @@
 
 namespace NES {
 
-PipelineContext::PipelineContext() { this->code = std::make_shared<GeneratedCode>(); }
+PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity), recordHandler(RecordHandler::create()) {
+    this->code = std::make_shared<GeneratedCode>();
+}
+
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
-void PipelineContext::setWindow(Windowing::AbstractWindowHandlerPtr window) { this->windowHandler = std::move(window); }
+BlockScopeStatementPtr PipelineContext::createSetupScope() { return setupScopes.emplace_back(BlockScopeStatement::create()); }
+BlockScopeStatementPtr PipelineContext::createStartScope() { return startScopes.emplace_back(BlockScopeStatement::create()); }
 
-void PipelineContext::setJoin(Join::AbstractJoinHandlerPtr join) { this->joinHandler = std::move(join); }
-
-Windowing::AbstractWindowHandlerPtr PipelineContext::getWindow() { return this->windowHandler; }
-
-Join::AbstractJoinHandlerPtr PipelineContext::getJoin() { return this->joinHandler; }
-
-bool PipelineContext::hasWindow() const { return this->windowHandler != nullptr; }
-
-bool PipelineContext::hasJoin() const { return this->joinHandler != nullptr; }
 bool PipelineContext::hasNextPipeline() const { return this->nextPipelines.size() != 0; }
+
+RecordHandlerPtr PipelineContext::getRecordHandler() { return this->recordHandler; }
 
 const std::vector<PipelineContextPtr>& PipelineContext::getNextPipelineContexts() const { return this->nextPipelines; }
 
@@ -47,5 +45,18 @@ SchemaPtr PipelineContext::getInputSchema() const { return inputSchema; }
 SchemaPtr PipelineContext::getResultSchema() const { return resultSchema; }
 
 PipelineContextPtr PipelineContext::create() { return std::make_shared<PipelineContext>(); }
+
+std::vector<BlockScopeStatementPtr> PipelineContext::getSetupScopes() { return setupScopes; }
+
+std::vector<BlockScopeStatementPtr> PipelineContext::getStartScopes() { return startScopes; }
+
+int64_t PipelineContext::registerOperatorHandler(NodeEngine::Execution::OperatorHandlerPtr operatorHandler) {
+    operatorHandlers.emplace_back(operatorHandler);
+    return operatorHandlers.size() - 1;
+}
+
+const std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() {
+    return this->operatorHandlers;
+}
 
 }// namespace NES

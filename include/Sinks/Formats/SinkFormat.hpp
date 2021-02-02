@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_SINKS_SINKFORMAT_HPP_
 #define NES_INCLUDE_SINKS_SINKFORMAT_HPP_
-#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
 #include <fstream>
@@ -34,20 +34,20 @@ class SinkFormat {
      * @param schema
      * @param append
      */
-    SinkFormat(SchemaPtr schema, BufferManagerPtr bufferManager);
+    SinkFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager);
 
     /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    virtual std::vector<TupleBuffer> getData(TupleBuffer& inputBuffer) = 0;
+    virtual std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer) = 0;
 
     /**
     * @brief method to write the schema of the data
     * @return TupleBuffer containing the schema
     */
-    virtual std::optional<TupleBuffer> getSchema() = 0;
+    virtual std::optional<NodeEngine::TupleBuffer> getSchema() = 0;
 
     /**
      * @brief method to return the format as a string
@@ -60,12 +60,12 @@ class SinkFormat {
     SchemaPtr getSchemaPtr();
     void setSchemaPtr(SchemaPtr schema);
 
-    BufferManagerPtr getBufferManager();
-    void setBufferManager(BufferManagerPtr schema);
+    NodeEngine::BufferManagerPtr getBufferManager();
+    void setBufferManager(NodeEngine::BufferManagerPtr schema);
 
   protected:
     SchemaPtr schema;
-    BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr bufferManager;
 };
 
 typedef std::shared_ptr<SinkFormat> SinkFormatPtr;

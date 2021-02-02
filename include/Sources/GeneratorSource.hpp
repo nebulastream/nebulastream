@@ -37,7 +37,7 @@ class GeneratorSource : public DataSource {
    * @param number of buffer that should be processed
    * @param via template, the functor that determines what to do
    */
-    GeneratorSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+    GeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                     const uint64_t numbersOfBufferToProduce, OperatorId operatorId)
         : DataSource(schema, bufferManager, queryManager, operatorId) {
         this->numBuffersToProcess = numbersOfBufferToProduce;
@@ -46,7 +46,7 @@ class GeneratorSource : public DataSource {
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-    virtual std::optional<TupleBuffer> receiveData() = 0;
+    virtual std::optional<NodeEngine::TupleBuffer> receiveData() = 0;
 
     /**
      * @brief override the toString method for the generator source

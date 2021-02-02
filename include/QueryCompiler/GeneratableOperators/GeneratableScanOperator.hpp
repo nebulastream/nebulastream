@@ -21,15 +21,17 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 namespace NES {
 
-class GeneratableScanOperator : public OperatorNode, public GeneratableOperator {
+class GeneratableScanOperator : public UnaryOperatorNode, public GeneratableOperator {
   public:
     /**
      * @brief Create sharable instance of GeneratableScanOperator
      * @param schema: the schema of the input records
+     * @param schema: the schema of the output records
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableScanOperator
      */
-    static GeneratableScanOperatorPtr create(SchemaPtr schema, OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableScanOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                             OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -58,8 +60,9 @@ class GeneratableScanOperator : public OperatorNode, public GeneratableOperator 
     OperatorNodePtr copy() override;
 
   private:
-    explicit GeneratableScanOperator(SchemaPtr schema, OperatorId id);
-    SchemaPtr schema;
+    explicit GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id);
+    SchemaPtr inputSchema;
+    SchemaPtr outputSchema;
 };
 
 }// namespace NES

@@ -16,24 +16,13 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/QueryManager.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Windowing/Runtime/WindowState.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
-#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
-#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
-#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 namespace NES::Windowing {
 
@@ -45,16 +34,26 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
         BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction)
-        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
+        : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)) {
+        NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
         handlerType = this->windowDefinition->getDistributionType()->toString();
     }
 
+    static auto
+    create(LogicalWindowDefinitionPtr windowDefinition,
+           std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
+           BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
+           BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction) {
+        return std::make_shared<AggregationWindowHandler>(windowDefinition, windowAggregation, executablePolicyTrigger,
+                                                          executableWindowAction);
+    }
+
     ~AggregationWindowHandler() {
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  calling destructor");
-        stop();
+        NES_DEBUG("~AggregationWindowHandler(" << handlerType << "):  calling destructor");
+        NES_DEBUG("~AggregationWindowHandler(" << handlerType << "):  finished destructor");
     }
 
     /**
@@ -67,16 +66,22 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @brief Stops the window thread.
      * @return
      */
-    bool stop() override { return executablePolicyTrigger->stop(); }
+    bool stop() override {
+        executablePolicyTrigger->stop();
+        //StateManager::instance().unRegisterState("window");
+        return true;
+    }
 
     std::string toString() override {
         std::stringstream ss;
-        ss << "AG:" << pipelineStageId << +"-" << nextPipeline->getQepParentId();
+        ss << "AG:";
         std::string triggerType;
         if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
             triggerType = "Combining";
         } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
             triggerType = "Slicing";
+        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Merging) {
+            triggerType = "Merging";
         } else {
             triggerType = "Complete";
         }
@@ -89,8 +94,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     void trigger() override {
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "):  run window action " << executableWindowAction->toString()
-                                              << " distribution type=" << windowDefinition->getDistributionType()->toString()
-                                              << " origin id=" << originId);
+                                              << " distribution type=" << windowDefinition->getDistributionType()->toString());
 
         if (originIdToMaxTsMap.size() != numberOfInputEdges) {
             NES_DEBUG("AggregationWindowHandler("
@@ -135,35 +139,16 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     /**
     * @brief Initialises the state of this window depending on the window definition.
     */
-    bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager, PipelineStagePtr nextPipeline,
-               uint32_t pipelineStageId, uint64_t originId) override {
-        this->queryManager = queryManager;
-        this->bufferManager = bufferManager;
-        this->pipelineStageId = pipelineStageId;
-        this->originId = originId;
-
+    bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
         // Initialize AggregationWindowHandler Manager
-        this->windowManager = std::make_shared<WindowManager>(windowDefinition->getWindowType());
+        this->windowManager =
+            std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness());
         // Initialize StateVariable
         this->windowStateVariable =
-            &StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
-        this->nextPipeline = nextPipeline;
-
-        executableWindowAction->setup(queryManager, bufferManager, nextPipeline, originId);
-        NES_ASSERT(!!this->nextPipeline, "Error on pipeline");
+            StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
+        executableWindowAction->setup(pipelineExecutionContext);
         return true;
     }
-
-    /**
-   * @brief Update the max processed ts, per origin.
-   * @param ts
-   * @param originId
-   */
-    void updateMaxTs(uint64_t ts, uint64_t originId) override {
-        NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
-                                 << " new val=" << std::max(originIdToMaxTsMap[originId], ts));
-        originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
-    };
 
     /**
      * @brief Returns window manager.
@@ -173,10 +158,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     auto getTypedWindowState() { return windowStateVariable; }
 
-    LogicalWindowDefinitionPtr getWindowDefinition() override { return windowDefinition; }
+    auto getWindowAction() { return executableWindowAction; }
 
   private:
-    LogicalWindowDefinitionPtr windowDefinition;
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;

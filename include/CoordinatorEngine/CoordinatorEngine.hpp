@@ -63,9 +63,8 @@ class CoordinatorEngine {
      * @param logicalstreamname
      * @return bool indicating success
      */
-    bool registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string sourceConf, uint64_t sourceFrequency,
-                                uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                std::string physicalStreamname, std::string logicalStreamname);
+    bool registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string physicalStreamname,
+                                std::string logicalStreamname);
 
     /**
      * @brief method to unregister a physical stream

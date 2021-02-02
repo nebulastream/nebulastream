@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Signature)
+
 add_source_nes(
-        L0QueryMergerRule.cpp
+        SyntaxBasedEqualQueryMergerRule.cpp
+        SignatureBasedEqualQueryMergerRule.cpp
 )

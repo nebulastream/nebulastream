@@ -17,7 +17,9 @@
 #ifndef NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_
 #define NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_
 
+#include <string>
+
 namespace NES {
-void collectAndPrintStacktrace();
+std::string collectAndPrintStacktrace();
 }
 #endif//NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_

@@ -62,6 +62,12 @@ if (NES_BUILD_BENCHMARKS)
     target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
 
+    ### Benchmark Uniform Data Benchmark ###
+    add_executable(uniformdata-benchmark "BenchmarkSuite/BenchmarkCreateUniformData.cpp")
+    target_link_libraries(uniformdata-benchmark nes ${GBENCHMARK_LIBRARIES})
+    target_sources(uniformdata-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME uniformdata-benchmark COMMAND uniformdata-benchmark --benchmark_out=uniformdata-benchmark.log --benchmark_out_format=json)
+
     ### Tuple Buffer Benchmark ###
     add_executable(tuplebuffer-benchmark "BenchmarkSuite/TupleBufferBenchmark.cpp")
     target_link_libraries(tuplebuffer-benchmark nes ${GBENCHMARK_LIBRARIES})
@@ -85,7 +91,17 @@ if (NES_BUILD_BENCHMARKS)
     target_sources(map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME map-query-benchmark COMMAND map-query-benchmark --benchmark_out=map-query-benchmark.log --benchmark_out_format=json)
 
+    ### BufferSize Query Benchmark ###
+    add_executable(buffer-size-query-benchmark "BenchmarkSuite/QueryBufferSizesBenchmark.cpp")
+    target_link_libraries(buffer-size-query-benchmark nes)
+    target_sources(buffer-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME buffer-size-query-benchmark COMMAND buffer-size-query-benchmark --benchmark_out=buffer-size-query-benchmark.log --benchmark_out_format=json)
 
+    ### TupleSize Query Benchmark ###
+    add_executable(tuple-size-query-benchmark "BenchmarkSuite/QueryTupleSizesBenchmark.cpp")
+    target_link_libraries(tuple-size-query-benchmark nes)
+    target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
 
     add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
 

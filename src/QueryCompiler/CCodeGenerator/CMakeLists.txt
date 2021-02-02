@@ -13,9 +13,10 @@
 # limitations under the License.
 
 add_source_nes(
-        FileBuilder.cpp
-        FunctionBuilder.cpp
         CCodeGenerator.cpp
+        FileBuilder.cpp
 )
 add_subdirectory(Declarations)
 add_subdirectory(Statements)
+add_subdirectory(Definitions)
+add_subdirectory(Runtime)

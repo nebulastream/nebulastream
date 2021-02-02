@@ -22,6 +22,8 @@ WindowTriggerPolicyPtr OnWatermarkChangeTriggerPolicyDescription::create() {
     return std::make_shared<OnWatermarkChangeTriggerPolicyDescription>(OnWatermarkChangeTriggerPolicyDescription());
 }
 
+std::string OnWatermarkChangeTriggerPolicyDescription::toString() { return getTypeAsString(); }
+
 TriggerType OnWatermarkChangeTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
 OnWatermarkChangeTriggerPolicyDescription::OnWatermarkChangeTriggerPolicyDescription()

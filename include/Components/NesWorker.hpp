@@ -18,6 +18,7 @@
 #define INCLUDE_COMPONENTS_NESWORKER_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <future>
@@ -32,15 +33,10 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localWorkerIp, uint16_t localWorkerRpcPort,
-              uint16_t localWorkerZmqPort, uint16_t numberOfSlots, NodeType type,
-              uint16_t numWorkerThreads = DEFAULT_NUM_THREADS);
-
-    /**
-     * @brief constructor with default numberOfSlots
-     */
-    NesWorker(std::string coordinatorIp, std::string coordinatorPort, std::string localWorkerIp, uint16_t localWorkerRpcPort,
-              uint16_t localWorkerZmqPort, NodeType type);
+    explicit NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::string localWorkerIp,
+                       uint16_t localWorkerRpcPort, uint16_t localWorkerZmqPort, NodeType type,
+                       uint16_t numberOfSlots = std::thread::hardware_concurrency(),
+                       uint16_t numWorkerThreads = DEFAULT_NUM_THREADS);
 
     /**
      * @brief default dtor
@@ -109,7 +105,7 @@ class NesWorker {
      * @param config of the stream
      * @return bool indicating success
      */
-    bool registerPhysicalStream(PhysicalStreamConfigPtr conf);
+    bool registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf);
 
     /**
     * @brief method to deregister physical stream with the coordinator
@@ -126,6 +122,14 @@ class NesWorker {
     bool addParent(uint64_t parentId);
 
     /**
+    * @brief method to replace old with new parent
+    * @param oldParentId
+    * @param newParentId
+    * @return bool indicating success
+    */
+    bool replaceParent(uint64_t oldParentId, uint64_t newParentId);
+
+    /**
     * @brief method remove parent from this node
     * @param parentId
     * @return bool indicating success
@@ -137,24 +141,26 @@ class NesWorker {
     * @param id of the query
     * @return vector of queryStatistics
     */
-    std::vector<QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+    std::vector<NodeEngine::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
     /**
      * @brief method to get a ptr to the node engine
      * @return pt to node engine
      */
-    NodeEnginePtr getNodeEngine();
+    NodeEngine::NodeEnginePtr getNodeEngine();
 
   private:
     /**
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
    */
     void buildAndStartGRPCServer(std::promise<bool>& prom);
+    void handleRpcs(WorkerRPCServer::Service& service);
 
     std::shared_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
+    std::unique_ptr<grpc_impl::ServerCompletionQueue> completionQueue;
 
-    NodeEnginePtr nodeEngine;
+    NodeEngine::NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
     bool connected;
@@ -166,7 +172,7 @@ class NesWorker {
     std::string rpcAddress;
 
     std::string coordinatorIp;
-    std::string coordinatorPort;
+    uint16_t coordinatorPort;
     std::string localWorkerIp;
     uint16_t localWorkerRpcPort;
     uint16_t localWorkerZmqPort;

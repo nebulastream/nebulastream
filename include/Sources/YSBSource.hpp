@@ -23,12 +23,13 @@ namespace NES {
 
 class YSBSource : public DefaultSource {
   public:
-    explicit YSBSource(BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
-                       uint64_t numberOfTuplesPerBuffer, uint64_t frequency, bool endlessRepeat, OperatorId operatorId);
+    explicit YSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                       const uint64_t numbersOfBufferToProduce, uint64_t numberOfTuplesPerBuffer, uint64_t frequency,
+                       OperatorId operatorId);
 
     SourceType getType() const override;
 
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the binary source
@@ -45,7 +46,6 @@ class YSBSource : public DefaultSource {
             ->addField("event_type", UINT64)
             ->addField("current_ms", UINT64)
             ->addField("ip", UINT64)
-
             ->addField("d1", UINT64)
             ->addField("d2", UINT64)
             ->addField("d3", UINT32)
@@ -98,7 +98,6 @@ class YSBSource : public DefaultSource {
 
   private:
     uint64_t numberOfTuplesPerBuffer;
-    bool endlessRepeat;
     uint64_t tmpEventType;
     uint64_t currentMs;
     uint64_t currentEventType;

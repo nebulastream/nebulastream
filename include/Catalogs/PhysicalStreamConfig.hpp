@@ -17,6 +17,8 @@
 #ifndef INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_
 #define INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_
 
+#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
+#include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <memory>
 #include <string>
 
@@ -35,27 +37,26 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
  * @param physicalStreamName: name of the stream created by this source
  * @param logicalStreamName: name of the logical steam where this physical stream contributes to
  */
-struct PhysicalStreamConfig {
+struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
     static PhysicalStreamConfigPtr create(std::string sourceType = "DefaultSource", std::string sourceConfig = "1",
                                           uint32_t sourceFrequency = 1, uint32_t numberOfTuplesToProducePerBuffer = 1,
                                           uint32_t numberOfBuffersToProduce = 1,
                                           std::string physicalStreamName = "default_physical",
-                                          std::string logicalStreamName = "default_logical", bool endlessRepeat = false,
-                                          bool skipHeader = false);
+                                          std::string logicalStreamName = "default_logical", bool skipHeader = false);
 
     /**
      * @brief Get the source type
      * @return string representing source type
      */
-    const std::string& getSourceType() const;
+    const std::string getSourceType() override;
 
     /**
      * @brief get source config
      * @return string representing source config
      */
-    const std::string& getSourceConfig() const;
+    const std::string getSourceConfig() const;
 
     /**
      * @brief get source frequency
@@ -79,29 +80,24 @@ struct PhysicalStreamConfig {
      * @brief get physical stream name
      * @return physical stream name
      */
-    const std::string getPhysicalStreamName() const;
+    const std::string getPhysicalStreamName() override;
 
     /**
      * @brief get logical stream name
      * @return logical stream name
      */
-    const std::string getLogicalStreamName() const;
+    const std::string getLogicalStreamName() override;
 
-    std::string toString();
-
-    /**
-     * @brief getter/setter endlessRepeat
-     */
-    bool isEndlessRepeat() const;
-    void setEndlessRepeat(bool endlessRepeat);
+    const std::string toString() override;
 
     bool getSkipHeader() const;
+
+    SourceDescriptorPtr build(SchemaPtr) override;
 
   private:
     explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
                                   uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                  std::string physicalStreamName, std::string logicalStreamName, bool endlessRepeat,
-                                  bool skipHeader);
+                                  std::string physicalStreamName, std::string logicalStreamName, bool skipHeader);
 
     std::string sourceType;
     std::string sourceConfig;
@@ -110,7 +106,6 @@ struct PhysicalStreamConfig {
     uint32_t numberOfBuffersToProduce;
     std::string physicalStreamName;
     std::string logicalStreamName;
-    bool endlessRepeat;
     bool skipHeader;
 };
 

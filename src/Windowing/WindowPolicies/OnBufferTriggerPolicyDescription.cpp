@@ -22,6 +22,7 @@ WindowTriggerPolicyPtr OnBufferTriggerPolicyDescription::create() {
     return std::make_shared<OnBufferTriggerPolicyDescription>(OnBufferTriggerPolicyDescription());
 }
 
+std::string OnBufferTriggerPolicyDescription::toString() { return getTypeAsString(); }
 TriggerType OnBufferTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
 OnBufferTriggerPolicyDescription::OnBufferTriggerPolicyDescription() : BaseWindowTriggerPolicyDescriptor(triggerOnBuffer) {}

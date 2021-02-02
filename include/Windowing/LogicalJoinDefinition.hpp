@@ -22,23 +22,43 @@
 
 namespace NES::Join {
 
+/**
+ * @brief Runtime definition of a join operator
+ * @experimental
+ */
 class LogicalJoinDefinition {
   public:
-    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
+    static LogicalJoinDefinitionPtr create(FieldAccessExpressionNodePtr leftJoinKeyType,
+                                           FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
                                            Windowing::DistributionCharacteristicPtr distributionType,
                                            Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                            BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight);
 
-    LogicalJoinDefinition(FieldAccessExpressionNodePtr joinKey, Windowing::WindowTypePtr windowType,
-                          Windowing::DistributionCharacteristicPtr distributionType,
-                          Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
-                          uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight);
+    explicit LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType, FieldAccessExpressionNodePtr rightJoinKeyType,
+                                   Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType,
+                                   Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
+                                   uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on left join key
     */
-    FieldAccessExpressionNodePtr getJoinKey();
+    FieldAccessExpressionNodePtr getLeftJoinKey();
+
+    /**
+   * @brief getter/setter for on left join key
+   */
+    FieldAccessExpressionNodePtr getRightJoinKey();
+
+    /**
+   * @brief getter left stream type
+   */
+    SchemaPtr getLeftStreamType();
+
+    /**
+   * @brief getter of right stream type
+   */
+    SchemaPtr getRightStreamType();
 
     /**
      * @brief getter/setter for window type
@@ -62,11 +82,47 @@ class LogicalJoinDefinition {
     */
     Windowing::DistributionCharacteristicPtr getDistributionType() const;
 
+    /**
+     * @brief number of input edges. Need to define a clear concept for this
+     * @experimental This is experimental API
+     * @return
+     */
     uint64_t getNumberOfInputEdgesLeft();
+
+    /**
+     * @brief number of input edges. Need to define a clear concept for this
+     * @return
+     */
     uint64_t getNumberOfInputEdgesRight();
 
+    /**
+     * @brief Update the left and right stream types upon type inference
+     * @param leftStreamType the type of the left stream
+     * @param rightStreamType the type of the right stream
+     */
+    void updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType);
+
+    /**
+     * @brief Update the output stream type upon type inference
+     * @param outputSchema the type of the output stream
+     */
+    void updateOutputDefinition(SchemaPtr outputSchema);
+
+    /**
+     * @brief Getter of the output stream schema
+     * @return the output stream schema
+     */
+    SchemaPtr getOutputSchema() const;
+
+    void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
+    void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
+
   private:
-    FieldAccessExpressionNodePtr joinKey;
+    FieldAccessExpressionNodePtr leftJoinKeyType;
+    FieldAccessExpressionNodePtr rightJoinKeyType;
+    SchemaPtr leftStreamType;
+    SchemaPtr rightStreamType;
+    SchemaPtr outputSchema;
     Windowing::WindowTriggerPolicyPtr triggerPolicy;
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;

@@ -21,9 +21,13 @@
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 namespace NES {
 
+/**
+ * @brief Represents a function return statement.
+ */
 class ReturnStatement : public Statement {
   public:
-    ReturnStatement(VarRefStatement var_ref);
+    static StatementPtr create(StatementPtr statement);
+    ReturnStatement(StatementPtr statement);
 
     StatementType getStamentType() const override;
 
@@ -34,7 +38,7 @@ class ReturnStatement : public Statement {
     ~ReturnStatement() override;
 
   private:
-    VarRefStatement var_ref_;
+    StatementPtr statement;
 };
 
 }// namespace NES

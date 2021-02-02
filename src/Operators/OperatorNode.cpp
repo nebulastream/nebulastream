@@ -24,45 +24,13 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode(uint64_t id) : id(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {
-    NES_INFO("Creating Operator " << id);
-}
-
-SchemaPtr OperatorNode::getInputSchema() const { return inputSchema; }
-
-SchemaPtr OperatorNode::getOutputSchema() const { return outputSchema; }
-
-bool OperatorNode::inferSchema() {
-    // We assume that all children operators have the same output schema otherwise this plan is not valid
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->inferSchema()) {
-            return false;
-        }
-    }
-    if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("OperatorNode: this node should have at least one child operator");
-    }
-    auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("OperatorNode: infer schema failed. The schema has to be the same across all child operators.");
-            return false;
-        }
-    }
-    inputSchema = childSchema->copy();
-    outputSchema = childSchema->copy();
-    return true;
-}
+OperatorNode::OperatorNode(uint64_t id) : id(id) { NES_INFO("Creating Operator " << id); }
 
 uint64_t OperatorNode::getId() const { return id; }
 
 void OperatorNode::setId(uint64_t id) { OperatorNode::id = id; }
 
-void OperatorNode::setInputSchema(SchemaPtr inputSchema) { this->inputSchema = std::move(inputSchema); }
-
-void OperatorNode::setOutputSchema(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
-
-bool OperatorNode::isNAryOperator() {
+bool OperatorNode::hasMultipleChildrenOrParents() {
     //has multiple child operator
     bool hasMultipleChildren = (!getChildren().empty()) && getChildren().size() > 1;
     //has multiple parent operator
@@ -70,6 +38,10 @@ bool OperatorNode::isNAryOperator() {
     NES_DEBUG("OperatorNode: has multiple children " << hasMultipleChildren << " or has multiple parent " << hasMultipleParent);
     return hasMultipleChildren || hasMultipleParent;
 }
+
+bool OperatorNode::hasMultipleChildren() { return !getChildren().empty() && getChildren().size() > 1; }
+
+bool OperatorNode::hasMultipleParents() { return !getParents().empty() && getParents().size() > 1; }
 
 OperatorNodePtr OperatorNode::duplicate() {
     NES_INFO("OperatorNode: Create copy of the operator");
@@ -125,6 +97,11 @@ OperatorNodePtr OperatorNode::getDuplicateOfChild(OperatorNodePtr operatorNode) 
 
 bool OperatorNode::addChild(NodePtr newNode) {
 
+    if (!newNode) {
+        NES_ERROR("OperatorNode: Can't add null node");
+        return false;
+    }
+
     if (newNode->as<OperatorNode>()->getId() == id) {
         NES_ERROR("OperatorNode: can not add self as child to itself");
         return false;
@@ -146,6 +123,11 @@ bool OperatorNode::addChild(NodePtr newNode) {
 }
 
 bool OperatorNode::addParent(NodePtr newNode) {
+
+    if (!newNode) {
+        NES_ERROR("OperatorNode: Can't add null node");
+        return false;
+    }
 
     if (newNode->as<OperatorNode>()->getId() == id) {
         NES_ERROR("OperatorNode: can not add self as parent to itself");
@@ -180,5 +162,4 @@ NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
     }
     return nullptr;
 }
-
 }// namespace NES

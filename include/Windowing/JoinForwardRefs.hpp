@@ -28,18 +28,22 @@ typedef std::shared_ptr<JoinActionDescriptor> JoinActionDescriptorPtr;
 class AbstractJoinHandler;
 typedef std::shared_ptr<AbstractJoinHandler> AbstractJoinHandlerPtr;
 
-template<class KeyType>
+template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class ExecutableNestedLoopJoinTriggerAction;
-template<class KeyType>
-using ExecutableNestedLoopJoinTriggerActionPtr = std::shared_ptr<ExecutableNestedLoopJoinTriggerAction<KeyType>>;
+template<class KeyType, class InputTypeLeft, class InputTypeRight>
+using ExecutableNestedLoopJoinTriggerActionPtr =
+    std::shared_ptr<ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>>;
 
-template<class KeyType>
+template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class BaseExecutableJoinAction;
-template<class KeyType>
-using BaseExecutableJoinActionPtr = std::shared_ptr<BaseExecutableJoinAction<KeyType>>;
+template<class KeyType, class InputTypeLeft, class InputTypeRight>
+using BaseExecutableJoinActionPtr = std::shared_ptr<BaseExecutableJoinAction<KeyType, InputTypeLeft, InputTypeRight>>;
 
 class BaseJoinActionDescriptor;
 typedef std::shared_ptr<BaseJoinActionDescriptor> BaseJoinActionDescriptorPtr;
+
+class JoinOperatorHandler;
+typedef std::shared_ptr<JoinOperatorHandler> JoinOperatorHandlerPtr;
 
 }// namespace NES::Join
 #endif//NES_INCLUDE_JOIN_JOINFORWARDREFS_HPP_

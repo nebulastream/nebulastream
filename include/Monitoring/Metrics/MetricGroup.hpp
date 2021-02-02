@@ -69,7 +69,7 @@ class MetricGroup {
      * @param schema
      * @param buf
      */
-    void getSample(std::shared_ptr<Schema> schema, TupleBuffer& buf);
+    void getSample(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf);
 
   private:
     MetricGroup();

@@ -50,11 +50,12 @@ class MergeDeploymentTest : public testing::Test {
 
     std::string ipAddress = "127.0.0.1";
 };
+
 /**
  * Test deploying merge query with source on two different worker node using bottom up strategy.
  */
-
-TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -62,15 +63,13 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest: Worker2 started successfully");
@@ -114,7 +113,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -127,7 +126,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -140,7 +139,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -153,7 +152,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -166,7 +165,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -179,7 +178,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -218,7 +217,8 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -226,15 +226,13 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest: Worker2 started successfully");
@@ -278,7 +276,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -291,7 +289,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -304,7 +302,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -317,7 +315,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -330,7 +328,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -343,7 +341,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -382,7 +380,8 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -390,15 +389,13 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest: Worker2 started successfully");
@@ -442,7 +439,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -455,7 +452,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -468,7 +465,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -481,7 +478,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -494,7 +491,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -507,7 +504,7 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -542,10 +539,12 @@ TEST_F(MergeDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     EXPECT_TRUE(retStopCord);
     NES_INFO("MergeDeploymentTest: Test finished");
 }
+
 /**
  * Test deploying merge query with source on two different worker node using top down strategy.
  */
-TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -553,15 +552,13 @@ TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MergeDeploymentTest: Worker1 started successfully");
 
     NES_INFO("MergeDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 =
-        std::make_shared<NesWorker>("127.0.0.1", std::to_string(port), "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MergeDeploymentTest: Worker2 started successfully");
@@ -616,4 +613,406 @@ TEST_F(MergeDeploymentTest, testMergeTwoDifferentStreams) {
     NES_INFO("MergeDeploymentTest: Test finished");
 }
 
+/**
+ * Test deploying filter-push-down on merge query with source on two different worker node using top down strategy.
+ * Case: 2 filter operators are above a merge operator and will be pushed down towards both of the available sources.
+ *       2 filter operators are already below merge operator and need to be pushed down normally towards its respective source.
+ */
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Coordinator started successfully");
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker1 started successfully");
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");
+
+    std::string outputFilePath = "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams.out";
+    remove(outputFilePath.c_str());
+
+    //register logical stream
+    std::string rareStonesSchema =
+        R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
+    std::string rareStonesSchemaFileName = "rareStonesSchema.hpp";
+    std::ofstream out(rareStonesSchemaFileName);
+    out << rareStonesSchema;
+    out.close();
+
+    wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
+    wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
+
+    //register physical stream
+    PhysicalStreamConfigPtr confStreamRuby =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
+
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
+                                                                             1, "physical_diamond", "diamond", false);
+
+    wrk1->registerPhysicalStream(confStreamRuby);
+    wrk2->registerPhysicalStream(confStreamDiamond);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
+    string query = "Query::from(\"ruby\")"
+                   ".filter(Attribute(\"id\") < 12)"
+                   ".merge(Query::from(\"diamond\")"
+                   ".filter(Attribute(\"value\") < 15))"
+                   ".map(Attribute(\"timestamp\") = 1)"
+                   ".filter(Attribute(\"value\") < 17)"
+                   ".map(Attribute(\"timestamp\") = 2)"
+                   ".filter(Attribute(\"value\") > 1)"
+                   ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    std::string expectedContentSubQry = "+----------------------------------------------------+\n"
+                                        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                        "+----------------------------------------------------+\n"
+                                        "|2|1|2|\n"
+                                        "|2|11|2|\n"
+                                        "|2|16|2|\n"
+                                        "|3|1|2|\n"
+                                        "|3|11|2|\n"
+                                        "|3|1|2|\n"
+                                        "|3|1|2|\n"
+                                        "|4|1|2|\n"
+                                        "|5|1|2|\n"
+                                        "|6|1|2|\n"
+                                        "|7|1|2|\n"
+                                        "|8|1|2|\n"
+                                        "|9|1|2|\n"
+                                        "|10|1|2|\n"
+                                        "|11|1|2|\n"
+                                        "|12|1|2|\n"
+                                        "|13|1|2|\n"
+                                        "|14|1|2|\n"
+                                        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry = "+----------------------------------------------------+\n"
+                                         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                         "+----------------------------------------------------+\n"
+                                         "|2|1|2|\n"
+                                         "|2|11|2|\n"
+                                         "|3|1|2|\n"
+                                         "|3|11|2|\n"
+                                         "|3|1|2|\n"
+                                         "|3|1|2|\n"
+                                         "|4|1|2|\n"
+                                         "|5|1|2|\n"
+                                         "|6|1|2|\n"
+                                         "|7|1|2|\n"
+                                         "|8|1|2|\n"
+                                         "|9|1|2|\n"
+                                         "|10|1|2|\n"
+                                         "|11|1|2|\n"
+                                         "|12|1|2|\n"
+                                         "|13|1|2|\n"
+                                         "|14|1|2|\n"
+                                         "|15|1|2|\n"
+                                         "|16|1|2|\n"
+                                         "+----------------------------------------------------+\n";
+
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): content="
+             << content);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentSubQry="
+             << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentMainQry="
+             << expectedContentMainQry);
+    EXPECT_TRUE(content.find(expectedContentSubQry));
+    EXPECT_TRUE(content.find(expectedContentMainQry));
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Test finished");
+}
+
+/**
+ * Test deploying filter-push-down on merge query with source on two different worker node using top down strategy.
+ * Case: 1 filter operator is above a merge operator and will be pushed down towards both of the available sources.
+ *       1 filter operator is already below merge operator and needs to be pushed down normally towards its own source.
+ */
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Coordinator started successfully");
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker1 started successfully");
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");
+
+    std::string outputFilePath = "testOneFilterPushDownWithMergeOfTwoDifferentStreams.out";
+    remove(outputFilePath.c_str());
+
+    //register logical stream
+    std::string rareStonesSchema =
+        R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
+    std::string rareStonesSchemaFileName = "rareStonesSchema.hpp";
+    std::ofstream out(rareStonesSchemaFileName);
+    out << rareStonesSchema;
+    out.close();
+
+    wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
+    wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
+
+    //register physical stream
+    PhysicalStreamConfigPtr confStreamRuby =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
+
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
+                                                                             1, "physical_diamond", "diamond", false);
+
+    wrk1->registerPhysicalStream(confStreamRuby);
+    wrk2->registerPhysicalStream(confStreamDiamond);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
+    string query = "Query::from(\"ruby\")"
+                   ".merge(Query::from(\"diamond\")"
+                   ".map(Attribute(\"timestamp\") = 1)"
+                   ".filter(Attribute(\"id\") > 3))"
+                   ".map(Attribute(\"timestamp\") = 2)"
+                   ".filter(Attribute(\"id\") > 4)"
+                   ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    std::string expectedContentSubQry = "+----------------------------------------------------+\n"
+                                        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                        "+----------------------------------------------------+\n"
+                                        "|1|12|2|\n"
+                                        "|2|11|2|\n"
+                                        "|2|16|2|\n"
+                                        "|3|11|2|\n"
+                                        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry = "+----------------------------------------------------+\n"
+                                         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                         "+----------------------------------------------------+\n"
+                                         "|1|12|2|\n"
+                                         "|2|11|2|\n"
+                                         "|2|16|2|\n"
+                                         "|3|11|2|\n"
+                                         "+----------------------------------------------------+\n";
+
+    NES_INFO("MergeDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentStreams): content=" << content);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentSubQry="
+             << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentMainQry="
+             << expectedContentMainQry);
+    EXPECT_TRUE(content.find(expectedContentSubQry));
+    EXPECT_TRUE(content.find(expectedContentMainQry));
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Test finished");
+}
+
+/**
+ * Test deploying filter-push-down on merge query with source on two different worker node using top down strategy.
+ * Case: 2 filter operators are already below merge operator and needs to be pushed down normally towards their respective source.
+ *       Here the filters don't need to be pushed down over an existing merge operator.
+ */
+//FIXME: Enabled while solving #1467
+TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Coordinator started successfully");
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker1 started successfully");
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Start worker 2");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");
+
+    std::string outputFilePath = "testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams.out";
+    remove(outputFilePath.c_str());
+
+    //register logical stream
+    std::string rareStonesSchema =
+        R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
+    std::string rareStonesSchemaFileName = "rareStonesSchema.hpp";
+    std::ofstream out(rareStonesSchemaFileName);
+    out << rareStonesSchema;
+    out.close();
+
+    wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
+    wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
+
+    //register physical stream
+    PhysicalStreamConfigPtr confStreamRuby =
+        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28, 1, "physical_ruby", "ruby", false);
+
+    PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 28,
+                                                                             1, "physical_diamond", "diamond", false);
+
+    wrk1->registerPhysicalStream(confStreamRuby);
+    wrk2->registerPhysicalStream(confStreamDiamond);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
+    string query = "Query::from(\"ruby\")"
+                   ".map(Attribute(\"timestamp\") = 2)"
+                   ".filter(Attribute(\"value\") < 9)"
+                   ".merge(Query::from(\"diamond\")"
+                   ".map(Attribute(\"timestamp\") = 1)"
+                   ".filter(Attribute(\"id\") < 12)"
+                   ".filter(Attribute(\"value\") < 6))"
+                   ".sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\"));";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    std::string expectedContentSubQry = "+----------------------------------------------------+\n"
+                                        "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                        "+----------------------------------------------------+\n"
+                                        "|1|1|2|\n"
+                                        "|1|12|2|\n"
+                                        "|1|4|2|\n"
+                                        "|2|1|2|\n"
+                                        "|2|11|2|\n"
+                                        "|2|16|2|\n"
+                                        "|3|1|2|\n"
+                                        "|3|11|2|\n"
+                                        "|3|1|2|\n"
+                                        "|3|1|2|\n"
+                                        "|4|1|2|\n"
+                                        "|5|1|2|\n"
+                                        "|6|1|2|\n"
+                                        "|7|1|2|\n"
+                                        "|8|1|2|\n"
+                                        "+----------------------------------------------------+\n";
+    std::string expectedContentMainQry = "+----------------------------------------------------+\n"
+                                         "|value:UINT32|id:UINT32|timestamp:INT32|\n"
+                                         "+----------------------------------------------------+\n"
+                                         "|1|1|1|\n"
+                                         "|1|4|1|\n"
+                                         "|2|1|1|\n"
+                                         "|2|11|1|\n"
+                                         "|3|1|1|\n"
+                                         "|3|11|1|\n"
+                                         "|3|1|1|\n"
+                                         "|3|1|1|\n"
+                                         "|4|1|1|\n"
+                                         "|5|1|1|\n"
+                                         "+----------------------------------------------------+\n";
+
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams): content=" << content);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentSubQry="
+             << expectedContentSubQry);
+    NES_INFO("MergeDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+             "expectedContentMainQry="
+             << expectedContentMainQry);
+    EXPECT_TRUE(content.find(expectedContentSubQry));
+    EXPECT_TRUE(content.find(expectedContentMainQry));
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("MergeDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("MergeDeploymentTest For Filter-Push-Down: Test finished");
+}
 }// namespace NES

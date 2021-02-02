@@ -15,13 +15,14 @@
 */
 
 #include <API/Schema.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/OperatorToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-MergeLogicalOperatorNode::MergeLogicalOperatorNode(OperatorId id) : LogicalOperatorNode(id) {}
+MergeLogicalOperatorNode::MergeLogicalOperatorNode(OperatorId id) : BinaryOperatorNode(id) {}
 
 bool MergeLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<MergeLogicalOperatorNode>()->getId() == id;
@@ -33,31 +34,46 @@ const std::string MergeLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string MergeLogicalOperatorNode::getStringBasedSignature() {
+    std::stringstream ss;
+    ss << "MERGE(";
+    ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
+    ss << children[1]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    return ss.str();
+}
+
 bool MergeLogicalOperatorNode::inferSchema() {
-    if (!OperatorNode::inferSchema()) {
+    if (!BinaryOperatorNode::inferSchema()) {
         return false;
     }
-    if (getChildren().size() != 2) {
-        NES_THROW_RUNTIME_ERROR("MergeLogicalOperator: merge need two child operators.");
-        return false;
-    }
-    auto child1 = getChildren()[0]->as<LogicalOperatorNode>();
-    auto child2 = getChildren()[1]->as<LogicalOperatorNode>();
 
-    auto schema1 = child1->getInputSchema();
-    auto schema2 = child2->getInputSchema();
-
-    if (!schema1->equals(schema2)) {
-        NES_ERROR("MergeLogicalOperator: the two input streams have different schema.");
-        return false;
+    leftInputSchema->clear();
+    rightInputSchema->clear();
+    if (distinctSchemas.size() == 1) {
+        leftInputSchema->copyFields(distinctSchemas[0]);
+        rightInputSchema->copyFields(distinctSchemas[0]);
+    } else {
+        leftInputSchema->copyFields(distinctSchemas[0]);
+        rightInputSchema->copyFields(distinctSchemas[1]);
     }
+
+    if (!leftInputSchema->hasEqualTypes(rightInputSchema)) {
+        NES_ERROR("Found Schema mismatch for left and right schema types. Left schema " + leftInputSchema->toString()
+                  + " and Right schema " + rightInputSchema->toString());
+        throw TypeInferenceException("Found Schema mismatch for left and right schema types. Left schema "
+                                     + leftInputSchema->toString() + " and Right schema " + rightInputSchema->toString());
+    }
+
+    //Copy the schema of left input
+    outputSchema->clear();
+    outputSchema->copyFields(leftInputSchema);
     return true;
 }
 
 OperatorNodePtr MergeLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMergeOperator(id);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
+    copy->setLeftInputSchema(leftInputSchema);
+    copy->setRightInputSchema(rightInputSchema);
     return copy;
 }
 

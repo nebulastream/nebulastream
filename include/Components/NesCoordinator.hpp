@@ -18,11 +18,15 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <GRPC/WorkerRPCClient.hpp>
+#include <NodeEngine/ErrorListener.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <string>
 #include <thread>
+
 namespace NES {
 class QueryRequestQueue;
 typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
@@ -51,9 +55,6 @@ typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
 class NesWorker;
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 
-class QueryStatistics;
-typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
-
 class QueryRequestProcessorService;
 typedef std::shared_ptr<QueryRequestProcessorService> QueryRequestProcessorServicePtr;
 
@@ -66,25 +67,21 @@ typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
-class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
+class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
+    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
+
+    typedef detail::virtual_enable_shared_from_this<NesCoordinator> inherited0;
+    typedef ErrorListener inherited1;
+
   public:
-    explicit NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort, uint16_t numberOfSlots,
-                            bool enableQueryMerging);
+    explicit NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort,
+                            uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
 
     /**
      * @brief Constructor where ip = restIp and rpcIp
      */
-    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort, uint16_t numberOfSlots, bool enableQueryMerging);
-
-    /**
-     * @brief constructor with default numberOfSlots
-     */
-    NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort);
-
-    /**
-     * @brief Constructor where ip = restIp and rpcIp
-     */
-    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort);
+    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort,
+                   uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
 
     /**
      * @brief dtor
@@ -110,7 +107,7 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
     * @param id of the query
     * @return vector of queryStatistics
     */
-    std::vector<QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+    std::vector<NodeEngine::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
     /**
      * @brief catalog method for debug use only
@@ -143,6 +140,9 @@ class NesCoordinator : public std::enable_shared_from_this<NesCoordinator> {
      * @return Global query plan
      */
     GlobalQueryPlanPtr getGlobalQueryPlan();
+
+    void onFatalError(int signalNumber, std::string string) override;
+    void onFatalException(const std::shared_ptr<std::exception> ptr, std::string string) override;
 
   private:
     /**

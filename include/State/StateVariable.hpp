@@ -17,6 +17,7 @@
 #ifndef STATEVARIABLE_HPP
 #define STATEVARIABLE_HPP
 
+#include <Util/Logger.hpp>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -68,7 +69,7 @@ struct StateVariableDestroyerHelper<Key, T*> {
 
 class Destroyable {
   public:
-    virtual ~Destroyable() {}
+    virtual ~Destroyable() { NES_DEBUG("~Destroyable()"); }
 };
 }// namespace detail
 
@@ -86,6 +87,7 @@ class StateVariable : public detail::Destroyable {
   private:
     std::string name;
     StateBackend backend;
+    std::function<Value(const Key&)> defaultCallback;
 
   public:
     class KeyValueHandle {
@@ -94,9 +96,13 @@ class StateVariable : public detail::Destroyable {
       private:
         StateBackendRef backend;
         Key key;
+        std::function<Value(const Key&)> defaultCallback;
 
       private:
-        explicit KeyValueHandle(StateBackend& backend, Key key) : backend(backend), key(key) {}
+        explicit KeyValueHandle(StateBackend& backend, Key key, std::function<Value(const Key&)> defaultCallback)
+            : backend(backend), key(key), defaultCallback(defaultCallback) {
+            // nop
+        }
 
       public:
         /**
@@ -126,6 +132,19 @@ class StateVariable : public detail::Destroyable {
         Value valueOrDefault(Arguments&&... args) {
             if (!backend.contains(key)) {
                 emplace(std::forward<Arguments>(args)...);
+            }
+            return value();
+        }
+
+        /**
+        * Retrieves the actual value for a key.
+        * If the value is not set yet, we set a default value.
+        * @return the actual value for a key
+        */
+        Value valueOrDefaultWithCallback() {
+            NES_VERIFY(defaultCallback, "invalid default callback");
+            if (!backend.contains(key)) {
+                emplace(defaultCallback(key));
             }
             return value();
         }
@@ -223,16 +242,62 @@ class StateVariable : public detail::Destroyable {
     };
 
   public:
-    explicit StateVariable(std::string name) : name(std::move(name)), backend() {}
+    /**
+     * @brief Creates a new state variable
+     * @param name of the state variable
+     * @param defaultCallback a function that gets called when retrieving a value not present in the state
+     */
+    explicit StateVariable(std::string name, std::function<Value(const Key&)> defaultCallback)
+        : name(std::move(name)), backend(), defaultCallback(defaultCallback) {
+        NES_ASSERT(this->defaultCallback, "invalid default callback");
+    }
 
-    explicit StateVariable(const StateVariable<Key, Value>& other) = delete;
+    /**
+     * @brief Creates a new state variable
+     * @param name of the state variable
+     */
+    explicit StateVariable(std::string name) : name(std::move(name)), backend(), defaultCallback(nullptr) {}
 
-    explicit StateVariable(StateVariable<Key, Value>&& other) { *this = std::move(other); }
+    /**
+     * @brief Copy Constructor of a state variable
+     * @param other the param to copy
+     */
+    StateVariable(const StateVariable<Key, Value>& other)
+        : name(other.name), backend(other.backend), defaultCallback(other.defaultCallback) {
+        // nop
+    }
 
-    virtual ~StateVariable() override { detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend); }
+    /**
+     * @brief Move Constructor of a state variable
+     * @param other the param to move
+     */
+    StateVariable(StateVariable<Key, Value>&& other) { *this = std::move(other); }
 
-    StateVariable& operator=(const StateVariable<Key, Value>& other) = delete;
+    /**
+     * @brief Destructor of a state variable. It frees all allocated resources.
+     */
+    virtual ~StateVariable() override {
+        NES_DEBUG("~StateVariable()");
+        detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend);
+    }
 
+    /**
+     * @brief Copy assignment operator
+     * @param other the param to copy
+     * @return the same state variable
+     */
+    StateVariable& operator=(const StateVariable<Key, Value>& other) {
+        name = other.name;
+        backend = other.backend;
+        defaultCallback = other.defaultCallback;
+    }
+
+    // TODO reimplement this use copy-and-swap: https://stackoverflow.com/questions/3279543/what-is-the-copy-and-swap-idiom
+    /**
+     * @brief Move assignment operator
+     * @param other the param to move
+     * @return the same state variable
+     */
     StateVariable& operator=(StateVariable<Key, Value>&& other) {
         name = std::move(other.name);
         backend = std::move(other.backend);
@@ -245,21 +310,21 @@ class StateVariable : public detail::Destroyable {
      * @param key
      * @return an accessor to a key-value pair
      */
-    KeyValueHandle get(Key key) { return KeyValueHandle(backend, key); }
+    KeyValueHandle get(Key key) { return KeyValueHandle(backend, key, defaultCallback); }
 
     /**
    * Point lookup of a key-value pair
    * @param key
    * @return an accessor to a key-value pair
    */
-    KeyValueHandle operator[](Key&& key) { return KeyValueHandle(backend, key); }
+    KeyValueHandle operator[](Key&& key) { return KeyValueHandle(backend, key, defaultCallback); }
 
     /**
    * Point lookup of a key-value pair
    * @param key
    * @return an accessor to a key-value pair
    */
-    KeyValueHandle operator[](const Key& key) { return KeyValueHandle(backend, key); }
+    KeyValueHandle operator[](const Key& key) { return KeyValueHandle(backend, key, defaultCallback); }
 
     KeyValueRangeHandle range(Key, Key) { assert(false && "not implemented yet"); }
 

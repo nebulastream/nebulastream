@@ -18,6 +18,7 @@
 #define NES_QUERYUNDEPLOYMENTEXCEPTION_HPP
 
 #include <stdexcept>
+#include <string>
 
 namespace NES {
 class QueryUndeploymentException : public std::runtime_error {

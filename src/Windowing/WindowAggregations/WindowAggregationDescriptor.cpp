@@ -37,5 +37,33 @@ ExpressionNodePtr WindowAggregationDescriptor::as() {
     return asField;
 }
 
+std::string WindowAggregationDescriptor::toString() {
+    std::stringstream ss;
+    ss << "WindowAggregation: ";
+    ss << " Type=" << getTypeAsString();
+    ss << " onField=" << onField->toString();
+    ss << " asField=" << asField->toString();
+    ss << std::endl;
+    return ss.str();
+}
+
+WindowAggregationDescriptor::Type WindowAggregationDescriptor::getType() { return aggregationType; }
+
+std::string WindowAggregationDescriptor::getTypeAsString() {
+    if (aggregationType == Count) {
+        return "Count";
+    } else if (aggregationType == Avg) {
+        return "Avg";
+    } else if (aggregationType == Max) {
+        return "Max";
+    } else if (aggregationType == Min) {
+        return "Min";
+    } else if (aggregationType == Sum) {
+        return "Sum";
+    } else {
+        return "Unknown Agg Type";
+    }
+}
+
 ExpressionNodePtr WindowAggregationDescriptor::on() { return onField; }
 }// namespace NES::Windowing

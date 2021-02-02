@@ -21,6 +21,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -48,15 +49,16 @@ uint64_t Schema::getSchemaSizeInBytes() const {
 }
 
 SchemaPtr Schema::copyFields(SchemaPtr otherSchema) {
-    for (AttributeFieldPtr attr : otherSchema->fields) {
-        this->fields.push_back(attr);
+    for (AttributeFieldPtr attribute : otherSchema->fields) {
+        fields.push_back(attribute->copy());
     }
     return copy();
 }
 
-SchemaPtr Schema::addField(AttributeFieldPtr field) {
-    if (field)
-        fields.push_back(field);
+SchemaPtr Schema::addField(AttributeFieldPtr attribute) {
+    if (attribute) {
+        fields.push_back(attribute->copy());
+    }
     return copy();
 }
 
@@ -66,6 +68,17 @@ SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
 
 SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return addField(AttributeField::create(name, data)); }
 
+void Schema::removeField(AttributeFieldPtr field) {
+    auto it = fields.begin();
+    while (it != fields.end()) {
+        if (it->get()->name == field->name) {
+            fields.erase(it);
+            break;
+        }
+        it++;
+    }
+}
+
 void Schema::replaceField(const std::string& name, DataTypePtr type) {
     for (auto i = 0; i < fields.size(); i++) {
         if (fields[i]->name == name) {
@@ -73,15 +86,6 @@ void Schema::replaceField(const std::string& name, DataTypePtr type) {
             return;
         }
     }
-}
-
-bool Schema::has(const std::string& fieldName) {
-    for (auto& field : fields) {
-        if (field->name == fieldName) {
-            return true;
-        }
-    }
-    return false;
 }
 
 AttributeFieldPtr Schema::get(const std::string& fieldName) {
@@ -114,13 +118,32 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
         }
         return true;
     } else {
-        for (AttributeFieldPtr attr : fields) {
-            if (!(schema->has(attr->name) && schema->get(attr->name)->isEqual(attr))) {
+        for (AttributeFieldPtr fieldAttribute : fields) {
+            auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->name);
+            if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
                 return false;
             }
         }
         return true;
     }
+}
+
+bool Schema::hasEqualTypes(SchemaPtr otherSchema) {
+    auto otherFields = otherSchema->fields;
+    //Check if the number of filed are same or not
+    if (otherFields.size() != fields.size()) {
+        return false;
+    }
+
+    //Iterate over all fields and check in both schema at same index that they have same attribute type
+    for (uint32_t i = 0; i < fields.size(); i++) {
+        auto thisField = fields.at(i);
+        auto otherField = otherFields.at(i);
+        if (!thisField->dataType->isEquals(otherField->dataType)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 const std::string Schema::toString() const {
@@ -135,15 +158,67 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };
 
-uint64_t Schema::getIndex(const std::string& fieldName) {
-    int i = 0;
+bool Schema::contains(const std::string& fieldName) {
     for (const auto& field : this->fields) {
         if (UtilityFunctions::startsWith(field->name, fieldName)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+uint64_t Schema::getIndex(const std::string& fieldName) {
+    int i = 0;
+    bool found = false;
+    for (const auto& field : this->fields) {
+        if (UtilityFunctions::startsWith(field->name, fieldName)) {
+            found = true;
             break;
         }
         i++;
     }
-    return i;
+    if (found) {
+        return i;
+    } else {
+        return -1;
+    }
 }
+
+AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
+
+    //Check if the field name is with fully qualified name
+    auto stringToMatch = fieldName;
+    if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        //Add only attribute name separator
+        //caution: adding the fully qualified name may result in undesired behavior
+        //E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
+        //system should throw invalid field exception
+        stringToMatch = ATTRIBUTE_NAME_SEPARATOR + fieldName;
+    }
+
+    //Iterate over all fields and look for field which fully qualified name
+    std::vector<AttributeFieldPtr> matchedFields;
+    for (auto& field : fields) {
+        std::string& fullyQualifiedFieldName = field->name;
+        if (stringToMatch.length() <= fullyQualifiedFieldName.length()) {
+            //Check if the field name ends with the input field name
+            auto startingPos = fullyQualifiedFieldName.length() - stringToMatch.length();
+            auto found = fullyQualifiedFieldName.compare(startingPos, stringToMatch.length(), stringToMatch);
+            if (found == 0) {
+                matchedFields.push_back(field);
+            }
+        }
+    }
+    //Check how many matching fields were found and raise appropriate exception
+    if (matchedFields.size() == 1) {
+        return matchedFields[0];
+    } else if (matchedFields.size() > 1) {
+        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
+        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+    }
+    return nullptr;
+}
+
+void Schema::clear() { fields.clear(); }
 
 }// namespace NES

@@ -18,9 +18,10 @@
 #define NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
 
 #include <API/Expressions/Expressions.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkGenerator.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-
+#include <Windowing/WindowMeasures/TimeUnit.hpp>
 namespace NES::Windowing {
 
 class EventTimeWatermarkStrategyDescriptor;
@@ -28,22 +29,27 @@ typedef std::shared_ptr<EventTimeWatermarkStrategyDescriptor> EventTimeWatermark
 
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
   public:
-    static WatermarkStrategyDescriptorPtr create(ExpressionItem onField, TimeMeasure delay);
+    static WatermarkStrategyDescriptorPtr create(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit);
 
     ExpressionItem getOnField();
 
-    TimeMeasure getDelay();
+    TimeMeasure getAllowedLateness();
+
+    TimeUnit getTimeUnit();
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
+
+    std::string toString() override;
+
+    bool inferStamp(SchemaPtr schema) override;
 
   private:
     // Field where the watermark should be retrieved
     ExpressionItem onField;
+    TimeUnit unit;
+    TimeMeasure allowedLateness;
 
-    // watermark delay
-    TimeMeasure delay;
-
-    explicit EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure delay);
+    explicit EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit);
 };
 
 }// namespace NES::Windowing

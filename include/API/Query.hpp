@@ -23,17 +23,17 @@
 #include <API/Schema.hpp>
 #include <API/Windowing.hpp>
 
+#include <API/Expressions/Expressions.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Sources/DataSource.hpp>
+
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #include <string>
-
-//namespace NES::Windowing {
-//class WatermarkStrategyDescriptor;
-//typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
-//}
 
 namespace NES {
 
@@ -82,18 +82,39 @@ class Query {
     static Query from(const std::string sourceStreamName);
 
     /**
-     * This looks ugly, but we can't reference to QueryPtr at this line.
-     * @param subQuery is the query to be merged
-     * @return
-     */
+    * This looks ugly, but we can't reference to QueryPtr at this line.
+    * @param subQuery is the query to be merged
+    * @return
+    */
     Query& merge(Query* subQuery);
 
     /**
+     * @brief this call projects out the attributes in the parameter list
+     * @param attribute list
+     * @return
+     */
+    template<typename... Args>
+    Query& project(Args&&... args) {
+        SchemaPtr schema = Schema::create();
+        std::vector<ExpressionItem> vec({std::forward<Args>(args)...});
+
+        OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(vec);
+        queryPlan->appendOperatorAsNewRoot(op);
+        return *this;
+    }
+    /**
      * This looks ugly, but we can't reference to QueryPtr at this line.
+     * @param new stream name
+     * @return
+     */
+    Query& as(const std::string newStreamName);
+
+    /**
+     * @brief This methods add the join operator to a query
      * @param subQuery is the query to be merged
      * @return
      */
-    Query& join(Query* subQuery, ExpressionItem onKey, const Windowing::WindowTypePtr windowType);
+    Query& join(Query* subQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey, const Windowing::WindowTypePtr windowType);
 
     /**
      * @brief Create Query using queryPlan

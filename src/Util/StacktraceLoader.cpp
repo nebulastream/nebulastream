@@ -24,14 +24,15 @@ namespace NES {
 /**
  * @brief This methods collects the call stacks and prints is
  */
-void collectAndPrintStacktrace() {
+std::string collectAndPrintStacktrace() {
     backward::StackTrace stackTrace;
     backward::Printer printer;
     stackTrace.load_here(CALLSTACK_MAX_SIZE);
     std::stringbuf buffer;
     std::ostream os(&buffer);
     printer.print(stackTrace, os);
-    NES_ERROR("Stacktrace:\n " << buffer.str());
+    //    NES_ERROR("Stacktrace:\n " << buffer.str());
+    return buffer.str();
 }
 
 void nesErrorHandler() { collectAndPrintStacktrace(); }
