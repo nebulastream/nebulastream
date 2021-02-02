@@ -26,11 +26,13 @@
 #include <WorkQueues/QueryRequestQueue.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+
 
 namespace NES {
 
-QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue)
-    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue) {
+QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog)
+    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), streamCatalog(streamCatalog) {
     NES_DEBUG("QueryService()");
 }
 
@@ -56,9 +58,11 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     queryPlan->setQueryId(queryId);
 
     NES_INFO("QueryService: Executing Semantic validation");
-    SemanticQueryValidation semanticQueryValidation;
-    semanticQueryValidation.isSatisfiable(query);
 
+    SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalog);
+    semanticQueryValidationPtr->isSatisfiable(query);
+
+    // store the string without the query plan if it's invalid (add failed query request?)
     NES_INFO("QueryService: Queuing the query for the execution");
     QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
     if (entry) {
