@@ -24,9 +24,8 @@
 #include <string>
 #include <typeinfo>
 
-using namespace std;
-
 namespace NES {
+
 /**
  * @brief Template for a ConfigOption object
  * @tparam T template parameter, depends on ConfigOptions
@@ -34,144 +33,89 @@ namespace NES {
 template<class T>
 class ConfigOption {
   public:
-    /**
-     * @brief Constructs a ConfigOption<T> object
-     * @param key the name of the object
-     * @param value the value of the object
-     * @param description default value of the object
-     * @param dataType data type of the object
-     * @param isList boolean indicating a list
-     */
-    ConfigOption(std::string key, T value, string description, string dataType, bool isList);
+    static std::shared_ptr<ConfigOption> create(std::string key, T value, std::string description) {
+        return std::make_shared<>(ConfigOption(key, value, description));
+    };
 
     /**
      * @brief converts a ConfigOption Object into human readable format
      */
-    std::string toString();
+    std::string toString() {
+        std::stringstream ss;
+        ss << "Config Object: \n";
+        ss << "Name (key): " << key << "\n";
+        ss << "Description: " << description << "\n";
+        ss << "Value: " << value << "\n";
+        ss << "Default Value: " << defaultValue << "\n";
+        return ss.str();
+    }
 
     /**
      * @brief converts the value of this object into a string
      * @return string of the value of this object
      */
-    string getValueAsString() const;
-
-    /**
-     * @brief a method to make an object comparable
-     */
-    bool equals(any o);
+    std::string getValueAsString() const { return string(value); };
 
     /**
       * @brief get the name of the ConfigOption Object
       */
-    std::string getKey();
+    std::string getKey() { return key; }
 
     /**
       * @brief get the value of the ConfigOption Object
       */
-    T getValue() const;
-
-    /**
-       * @brief returns false if the value is just a value, and true if value consists of multiple values
-       */
-    bool getIsList();
-
-    /**
-     * @brief returns the data type of the value of this object
-     */
-    string getDataType();
+    T getValue() const { return value; };
 
     /**
      * @brief sets the value
      */
-    void setValue(T value);
+    void setValue(T value) { this->value = value; }
 
     /**
      * @brief get the description of this parameter
      */
-    const string& getDescription() const;
+    const std::string getDescription() const { return description; };
 
     /**
      * @brief get the default value of this parameter
      */
-    T getDefaultValue() const;
+    T getDefaultValue() const { return defaultValue; };
+
+    /**
+     * @brief perform equality check between two config options
+     * @param other: other config option
+     * @return true if equal else return false
+     */
+    bool equals(std::any other) {
+        if (this == other) {
+            return true;
+        } else if (other.has_value() && other.type() == typeid(ConfigOption)) {
+            ConfigOption<T> that = (ConfigOption<T>) other;
+            return this->key == that.key && this->description == that.description && this->value == that.value
+                && this->defaultValue == that.defaultValue;
+        }
+        return false;
+    };
 
   private:
+    /**
+     * @brief Constructs a ConfigOption<T> object
+     * @param key the name of the object
+     * @param value the value of the object
+     * @param description default value of the object
+     */
+    ConfigOption(std::string key, T value, std::string description)
+        : key(key), description(description), value(value), defaultValue(value) {}
+
     std::string key;
     std::string description;
     T value;
     T defaultValue;
-    string dataType;
-    bool isList;
 };
 
-template<class T>
-ConfigOption<T>::ConfigOption(std::string key, T value, string description, string dataType, bool isList)
-    : key(key), description(description), value(value), defaultValue(value), dataType(dataType), isList(isList) {}
-
-template<typename T>
-string ConfigOption<T>::getValueAsString() const {
-    if (dataType == "string" && !isList) {
-        return string(value);
-    } else {
-        return string(value);
-    }
-}
-
-template<class T>
-void ConfigOption<T>::setValue(T value) {
-    this->value = value;
-}
-
-template<class T>
-std::string ConfigOption<T>::toString() {
-    std::stringstream ss;
-    ss << "Config Object: \n";
-    ss << "Name (key): " << key << "\n";
-    ss << "Description: " << description << "\n";
-    ss << "Value: " << value << "\n";
-    ss << "Default Value: " << defaultValue << "\n";
-    ss << "Data Type: " << dataType << "\n";
-    ss << "Is Value a List? " << isList << ".";
-
-    return ss.str();
-}
-template<class T>
-bool ConfigOption<T>::equals(std::any o) {
-    if (this == o) {
-        return true;
-    } else if (o.has_value() && o.type() == typeid(ConfigOption)) {
-        ConfigOption<T> that = (ConfigOption<T>) o;
-        return this->key == that.key && this->description == that.description && this->value == that.value
-            && this->dataType == that.dataType && this->defaultValue == that.defaultValue && this->isList == that.isList;
-    }
-    return false;
-}
-
-template<class T>
-std::string ConfigOption<T>::getKey() {
-    return key;
-}
-template<class T>
-T ConfigOption<T>::getValue() const {
-    return value;
-}
-template<class T>
-std::string ConfigOption<T>::getDataType() {
-    return dataType;
-}
-template<class T>
-bool ConfigOption<T>::getIsList() {
-    return isList;
-}
-template<class T>
-const string& ConfigOption<T>::getDescription() const {
-    return description;
-}
-template<class T>
-T ConfigOption<T>::getDefaultValue() const {
-    return defaultValue;
-}
-
+typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
+typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
+typedef std::shared_ptr<ConfigOption<bool>> BoolConfigOption;
 }// namespace NES
 
 #endif//NES_CONFIGOPTION_HPP
