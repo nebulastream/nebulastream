@@ -119,7 +119,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
 
-
     std::vector<Output> expectedOutput = {{40, 40, 40},
                                           {21, 21, 21},
                                           {
@@ -188,7 +187,11 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
 
     std::vector<Output> expectedOutput = {{40, 40, 40},
                                           {21, 21, 21},
-                                          {30,30,30,},
+                                          {
+                                              30,
+                                              30,
+                                              30,
+                                          },
                                           {71, 71, 71}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
@@ -207,13 +210,14 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    std::string queryWithWindowOperator = R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value"))))";
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator);
 
     testHarness.addMemorySource("car", carSchema, "car1");
@@ -247,7 +251,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     testHarness.pushElement<Car>({1, 4, 4000}, 1);
     testHarness.pushElement<Car>({1, 5, 5000}, 1);
 
-
     struct Output {
         uint64_t start;
         uint64_t end;
@@ -255,18 +258,15 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
         uint32_t value;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && start == rhs.start && end == rhs.end); }
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value == rhs.value && start == rhs.start && end == rhs.end);
+        }
     };
 
-    std::vector<Output> expectedOutput = {{1000, 2000, 1, 2},
-                                          {2000, 3000, 1, 0},
-                                          {3000, 4000, 1, 4},
-                                          {4000, 5000, 1, 0},
-                                          {1000, 2000, 4, 2},
-                                          {2000, 3000, 11, 4},
-                                          {3000, 4000, 11, 0},
-                                          {1000, 2000, 12, 2},
-                                          {2000, 3000, 16, 4},};
+    std::vector<Output> expectedOutput = {
+        {1000, 2000, 1, 2},  {2000, 3000, 1, 0},  {3000, 4000, 1, 4},  {4000, 5000, 1, 0},  {1000, 2000, 4, 2},
+        {2000, 3000, 11, 4}, {3000, 4000, 11, 0}, {1000, 2000, 12, 2}, {2000, 3000, 16, 4},
+    };
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -288,17 +288,18 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     };
 
     auto window1Schema = Schema::create()
-        ->addField("id1", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id1", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window2Schema = Schema::create()
-        ->addField("id2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
-    std::string queryWithJoinOperator = R"(Query::from("window1").join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
+    std::string queryWithJoinOperator =
+        R"(Query::from("window1").join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(queryWithJoinOperator);
 
     testHarness.addMemorySource("window1", window1Schema, "window1");
@@ -306,21 +307,21 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
-    testHarness.pushElement<Window1>({ 1, 1000}, 0);
-    testHarness.pushElement<Window2>({ 12, 1001}, 0);
-    testHarness.pushElement<Window2>({ 4, 1002}, 0);
-    testHarness.pushElement<Window2>({ 1, 2000}, 0);
-    testHarness.pushElement<Window2>({ 11, 2001}, 0);
-    testHarness.pushElement<Window2>({ 16, 2002}, 0);
-    testHarness.pushElement<Window2>({ 1, 3000}, 0);
+    testHarness.pushElement<Window1>({1, 1000}, 0);
+    testHarness.pushElement<Window2>({12, 1001}, 0);
+    testHarness.pushElement<Window2>({4, 1002}, 0);
+    testHarness.pushElement<Window2>({1, 2000}, 0);
+    testHarness.pushElement<Window2>({11, 2001}, 0);
+    testHarness.pushElement<Window2>({16, 2002}, 0);
+    testHarness.pushElement<Window2>({1, 3000}, 0);
 
-    testHarness.pushElement<Window2>({ 21, 1003}, 1);
-    testHarness.pushElement<Window2>({ 12, 1011}, 1);
-    testHarness.pushElement<Window2>({ 4, 1102}, 1);
-    testHarness.pushElement<Window2>({ 4, 1112}, 1);
-    testHarness.pushElement<Window2>({ 1, 2010}, 1);
-    testHarness.pushElement<Window2>({ 11, 2301}, 1);
-    testHarness.pushElement<Window2>({ 33, 3100}, 1);
+    testHarness.pushElement<Window2>({21, 1003}, 1);
+    testHarness.pushElement<Window2>({12, 1011}, 1);
+    testHarness.pushElement<Window2>({4, 1102}, 1);
+    testHarness.pushElement<Window2>({4, 1112}, 1);
+    testHarness.pushElement<Window2>({1, 2010}, 1);
+    testHarness.pushElement<Window2>({11, 2301}, 1);
+    testHarness.pushElement<Window2>({33, 3100}, 1);
 
     struct Output {
         uint64_t _$start;
@@ -359,9 +360,9 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -386,7 +387,11 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
 
     std::vector<Output> expectedOutput = {{40, 1600, 40},
                                           {21, 441, 21},
-                                          {30,900,30,},
+                                          {
+                                              30,
+                                              900,
+                                              30,
+                                          },
                                           {71, 5041, 71}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
@@ -405,9 +410,9 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -430,11 +435,9 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
         uint32_t value;
         uint64_t timestamp;
 
-        bool operator==(Output const& rhs) const {
-            return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp);
-        }
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
-    std::vector<Output> expectedOutput = {{1, 2, 3},{1, 2, 4}};
+    std::vector<Output> expectedOutput = {{1, 2, 3}, {1, 2, 4}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -452,9 +455,9 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -474,8 +477,8 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     testHarness.addMemorySource("car", carSchema, "carMem");
 
     // push two elements to the memory source
-    testHarness.pushElement<Car>({1,8,8},1);
-    testHarness.pushElement<Car>({1,9,9},1);
+    testHarness.pushElement<Car>({1, 8, 8}, 1);
+    testHarness.pushElement<Car>({1, 9, 9}, 1);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2);
 
@@ -484,11 +487,9 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
         uint32_t value;
         uint64_t timestamp;
 
-        bool operator==(Output const& rhs) const {
-            return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp);
-        }
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
-    std::vector<Output> expectedOutput = {{1, 2, 3},{1, 2, 4},{1,9,9},{1,8,8}};
+    std::vector<Output> expectedOutput = {{1, 2, 3}, {1, 2, 4}, {1, 9, 9}, {1, 8, 8}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());

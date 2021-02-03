@@ -466,10 +466,12 @@ class TestUtils {
 
                 if (expectedNumberOfContent != currentContentSize) {
                     NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines "
-                                  << expectedNumberOfContent << " not reached yet with " << currentContent.size() << " lines content=" << content);
+                              << expectedNumberOfContent << " not reached yet with " << currentContent.size()
+                              << " lines content=" << content);
                     continue;
                 } else {
-                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected number of content");
+                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
+                              "number of content");
                     return true;
                 }
             }

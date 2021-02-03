@@ -18,8 +18,8 @@
 #define NES_TESTHARNESS_HPP
 #include <API/Schema.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
-#include <Operators/OperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
 /**
@@ -79,13 +79,13 @@ class TestHarness {
     void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
         // check if record may span multiple buffers
         NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
-                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize=" << bufferSize
-                                                                                                              << " recordSize=" << schema->getSchemaSizeInBytes());
+                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
+                        << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
 
         // Check if logical stream already exists
         if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
-                          << logicalStreamName);
+                      << logicalStreamName);
             crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
         } else {
             // Check if it has the same schema
@@ -130,7 +130,7 @@ class TestHarness {
          * @param physical stream name
          * @param csvSourceConf physical stream configuration for the csv source
          */
-    void addCSVSource( PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema) {
+    void addCSVSource(PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema) {
         checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema, csvSourceConf->getPhysicalStreamName());
 
         csvSourceConfs.push_back(csvSourceConf);
@@ -162,27 +162,27 @@ class TestHarness {
 
         // add value collected by the record vector to the memory source
         for (int i = 0; i < sourceTypes.size(); ++i) {
-             if(sourceTypes[i] == CSVSource) {
-                 // use the given csv source
-                 workerPtrs[i]->registerPhysicalStream(csvSourceConfs[i]);
-             } else if (sourceTypes[i] == MemorySource) {
-                 // create and populate memory source
-                 auto currentSourceNumOfRecords = records.at(i).size();
-                 auto tupleSize = sourceSchemas.at(i)->getSchemaSizeInBytes();
-                 auto memAreaSize = currentSourceNumOfRecords * tupleSize;
-                 auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
+            if (sourceTypes[i] == CSVSource) {
+                // use the given csv source
+                workerPtrs[i]->registerPhysicalStream(csvSourceConfs[i]);
+            } else if (sourceTypes[i] == MemorySource) {
+                // create and populate memory source
+                auto currentSourceNumOfRecords = records.at(i).size();
+                auto tupleSize = sourceSchemas.at(i)->getSchemaSizeInBytes();
+                auto memAreaSize = currentSourceNumOfRecords * tupleSize;
+                auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
-                 auto currentRecords = records.at(i);
-                 for (int j = 0; j < currentSourceNumOfRecords; ++j) {
-                     memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
-                 }
+                auto currentRecords = records.at(i);
+                for (int j = 0; j < currentSourceNumOfRecords; ++j) {
+                    memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
+                }
 
-                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-                     "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
-                 workerPtrs[i]->registerPhysicalStream(conf);
-             } else {
-                 NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" + std::to_string(sourceTypes[i]));
-             }
+                AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
+                    "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
+                workerPtrs[i]->registerPhysicalStream(conf);
+            } else {
+                NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" + std::to_string(sourceTypes[i]));
+            }
         }
 
         // local fs
@@ -201,7 +201,8 @@ class TestHarness {
 
         if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false "
-                                    "number of buffers to expect=" + std::to_string(numberOfContentToExpect));
+                                    "number of buffers to expect="
+                                    + std::to_string(numberOfContentToExpect));
         }
 
         NES_INFO("QueryDeploymentTest: Remove query");
@@ -221,10 +222,15 @@ class TestHarness {
         // Output struct might be padded, in this case the size is not equal to the total size of its field
         // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
         // (e.g., the size is multiple of 8)
-        uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)->getQueryPlan()->getSinkOperators()[0]
-                                               ->getOutputSchema()->getSchemaSizeInBytes();
-        NES_ASSERT(outputSchemaSizeInBytes == sizeof(T), "The size of output struct does not match output schema."
-                   " Output struct:" + std::to_string(sizeof(T)) + " Schema:" +  std::to_string(outputSchemaSizeInBytes));
+        uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)
+                                               ->getQueryPlan()
+                                               ->getSinkOperators()[0]
+                                               ->getOutputSchema()
+                                               ->getSchemaSizeInBytes();
+        NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
+                   "The size of output struct does not match output schema."
+                   " Output struct:"
+                       + std::to_string(sizeof(T)) + " Schema:" + std::to_string(outputSchemaSizeInBytes));
 
         // check the length of the output file
         ifs.seekg(0, ifs.end);
@@ -245,10 +251,7 @@ class TestHarness {
     }
 
   private:
-    enum TestHarnessSourceType {
-        CSVSource,
-        MemorySource
-    };
+    enum TestHarnessSourceType { CSVSource, MemorySource };
 
     NesCoordinatorPtr crd;
     uint64_t crdPort;
