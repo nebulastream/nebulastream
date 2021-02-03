@@ -44,8 +44,8 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, 
     //get index where the schema for CpuValues is starting
     auto i = schema->getIndex(prefix + "USER");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "USER")
-        && UtilityFunctions::endsWith(schema->fields[i + 9]->name, "GUESTNICE")) {
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->getName(), "USER")
+        && UtilityFunctions::endsWith(schema->fields[i + 9]->getName(), "GUESTNICE")) {
         NES_DEBUG("CpuValues: Index found for " + prefix + "USER" + " at " + std::to_string(i));
         auto layout = NodeEngine::createRowLayout(schema);
         //set the values to the output object

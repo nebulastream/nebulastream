@@ -49,7 +49,7 @@ std::string ProjectionLogicalOperatorNode::getStringBasedSignature() {
     std::stringstream ss;
     std::vector<std::string> fields;
     for (auto& field : outputSchema->fields) {
-        fields.push_back(field->name);
+        fields.push_back(field->getName());
     }
     std::sort(fields.begin(), fields.end());
     ss << "PROJECTION(";

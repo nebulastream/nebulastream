@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <API/UserAPIExpression.hpp>
 #include <Common/DataTypes/Array.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
@@ -53,6 +52,7 @@
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/LegacyExpression.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -86,16 +86,16 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string str
     NES_DEBUG("Define Struct : " << structName);
 
     for (uint64_t i = 0; i < schema->getSize(); ++i) {
-        structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->name));
-        NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name);
+        structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->getName()));
+        NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->getName());
     }
     return structDeclarationTuple;
 }
 
 const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
                                                             const AttributeFieldPtr field) {
-    if (structDeclaration.getField(field->name))
-        return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->name));
+    if (structDeclaration.getField(field->getName()))
+        return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->getName()));
     else {
         return VariableDeclarationPtr();
     }
@@ -193,7 +193,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                 VarRef(variable));
 
-        recordHandler->registerAttribute(field->name, fieldRefStatement.copy());
+        recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
     }
 
     code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
@@ -262,17 +262,17 @@ bool CCodeGenerator::generateCodeForMap(AttributeFieldPtr field, UserAPIExpressi
     // Check if the assignment value is new or if we have to create it
     auto mapExpression = pred->generateCode(code, context->getRecordHandler());
     auto recordHandler = context->getRecordHandler();
-    if (recordHandler->hasAttribute(field->name)) {
+    if (recordHandler->hasAttribute(field->getName())) {
         // Get the attribute variable from the field and assign a new value to it.
-        auto attributeVariable = recordHandler->getAttribute(field->name);
+        auto attributeVariable = recordHandler->getAttribute(field->getName());
         auto assignedMap = attributeVariable->assign(mapExpression);
         code->currentCodeInsertionPoint->addStatement(assignedMap.copy());
     } else {
         // Create a new attribute variable and assign the new value to it.
-        auto variableDeclaration = VariableDeclaration::create(field->dataType, field->name);
+        auto variableDeclaration = VariableDeclaration::create(field->getDataType(), field->getName());
         auto attributeVariable = VarDeclStatement(variableDeclaration);
         auto assignedMap = attributeVariable.assign(mapExpression).copy();
-        recordHandler->registerAttribute(field->name, VarRef(variableDeclaration).copy());
+        recordHandler->registerAttribute(field->getName(), VarRef(variableDeclaration).copy());
         code->currentCodeInsertionPoint->addStatement(assignedMap);
     }
     return true;
@@ -307,14 +307,14 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
         }
 
         // check if record handler has current field
-        if (!recordHandler->hasAttribute(field->name)) {
+        if (!recordHandler->hasAttribute(field->getName())) {
             NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
                             + " is part of the output schema, "
                               "but not registered in the record handler.");
         }
 
         // Get current field from record handler.
-        auto currentFieldVariableReference = recordHandler->getAttribute(field->name);
+        auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
 
         // assign current value to result record.
         // extract code to assign expression.
@@ -394,7 +394,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         // uint64_t currentWatermark = record[index].ts;
         auto currentWatermarkVariableDeclaration =
             VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "currentWatermark");
-        auto tsVariableDeclaration = recordHandler->getAttribute(attribute->name);
+        auto tsVariableDeclaration = recordHandler->getAttribute(attribute->getName());
         //     context->code->structDeclaratonInputTuples[0].getVariableDeclaration(attribute->name);
 
         auto calculateMaxTupleStatement = (*tsVariableDeclaration)
@@ -660,7 +660,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
         NES_ASSERT(context->code->structDeclaratonInputTuples.size() >= 1, "invalid number of input tuples");
-        auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->name;
+        auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
         auto tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
 
         /**
@@ -984,7 +984,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
 
         //Extract the name of the window field used for time characteristics
-        std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->name;
+        std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->getName();
         if (context->arity == PipelineContext::BinaryRight) {
             //Extract the schema of the right side
             auto rightSchema = joinDef->getRightStreamType();
@@ -992,7 +992,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
             auto trimmedWindowFieldName = windowTimeStampFieldName.substr(
                 windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR), windowTimeStampFieldName.length());
             //Extract the first field from right schema and trim it to find the schema qualifier for the right side
-            std::string firstRightField = rightSchema->fields[0]->name;
+            std::string firstRightField = rightSchema->fields[0]->getName();
             auto schemaQualifierName = firstRightField.substr(0, firstRightField.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
             //Construct window field name after adding schema qualifier
             windowTimeStampFieldName = schemaQualifierName + trimmedWindowFieldName;

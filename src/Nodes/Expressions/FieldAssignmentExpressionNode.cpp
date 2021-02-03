@@ -67,7 +67,7 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     auto fieldName = field->getFieldName();
     auto existingField = schema->hasFieldName(fieldName);
     if (existingField) {
-        field->updateFieldName(existingField->name);
+        field->updateFieldName(existingField->getName());
     } else {
         //Since this is a new field add the stream name from schema
         field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);

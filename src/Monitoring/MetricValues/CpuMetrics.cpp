@@ -49,7 +49,7 @@ CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf
     auto idx = schema->getIndex(prefix + "CORE_NO");
 
     if (idx < schema->getSize() && buf.getNumberOfTuples() == 1
-        && UtilityFunctions::endsWith(schema->fields[idx]->name, "CORE_NO")) {
+        && UtilityFunctions::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
         auto layout = NodeEngine::createRowLayout(schema);
         auto numCores = layout->getValueField<uint16_t>(0, idx)->read(buf);

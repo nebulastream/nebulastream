@@ -34,6 +34,7 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
+#include <QueryCompiler/LegacyExpression.hpp>
 #include <utility>
 namespace NES {
 

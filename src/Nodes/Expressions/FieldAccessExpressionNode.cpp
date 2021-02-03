@@ -54,7 +54,7 @@ void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
     // check if the access field is defined in the schema.
     auto existingField = schema->hasFieldName(fieldName);
     if (existingField) {
-        fieldName = existingField->name;
+        fieldName = existingField->getName();
         stamp = existingField->getDataType();
         return;
     }

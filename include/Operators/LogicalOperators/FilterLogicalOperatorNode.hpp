@@ -17,7 +17,6 @@
 #ifndef FILTER_LOGICAL_OPERATOR_NODE_HPP
 #define FILTER_LOGICAL_OPERATOR_NODE_HPP
 
-#include <API/UserAPIExpression.hpp>
 #include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 namespace NES {

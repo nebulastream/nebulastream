@@ -34,12 +34,11 @@ bool WindowType::isSlidingWindow() { return false; }
 bool WindowType::isTumblingWindow() { return false; }
 
 bool WindowType::inferStamp(SchemaPtr schema) {
-
     if (timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
-        auto fieldName = timeCharacteristic->getField()->name;
+        auto fieldName = timeCharacteristic->getField()->getName();
         auto existingField = schema->hasFieldName(fieldName);
         if (existingField) {
-            timeCharacteristic->getField()->name = existingField->name;
+            timeCharacteristic->getField()->getName() = existingField->getName();
             return false;
         }
 
