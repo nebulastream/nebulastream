@@ -24,6 +24,8 @@
 
 namespace NES {
 
+WorkerConfigPtr WorkerConfig::create() { return std::make_unique<WorkerConfig>(WorkerConfig()); }
+
 WorkerConfig::WorkerConfig() {
     NES_INFO("Generated new Worker Config object. Configurations initialized with default values.");
     localWorkerIp = ConfigOption<std::string>::create("localWorkerIp", "127.0.0.1", "Worker IP.");

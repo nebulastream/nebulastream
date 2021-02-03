@@ -22,16 +22,17 @@
 #include <thread>
 
 namespace NES {
+
+class CoordinatorConfig;
+typedef std::unique_ptr<CoordinatorConfig> CoordinatorConfigPtr;
+
 /**
  * @brief ConfigOptions for Coordinator
  */
 class CoordinatorConfig {
 
   public:
-    /**
-     * @brief constructor to create a new coordinator option object initialized with default values as set below
-     */
-    CoordinatorConfig();
+    static CoordinatorConfigPtr create();
 
     /**
      * @brief overwrite the default configurations with those loaded from a yaml file
@@ -131,6 +132,10 @@ class CoordinatorConfig {
     void setLogLevel(std::string logLevel);
 
   private:
+    /**
+     * @brief constructor to create a new coordinator option object initialized with default values as set below
+     */
+    CoordinatorConfig();
     StringConfigOption restIp;
     StringConfigOption coordinatorIp;
     IntConfigOption rpcPort;

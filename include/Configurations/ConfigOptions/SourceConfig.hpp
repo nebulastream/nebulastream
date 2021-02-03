@@ -23,8 +23,11 @@
 namespace NES {
 
 class SourceConfig;
-typedef std::shared_ptr<SourceConfig> SourceConfigPtr;
+typedef std::unique_ptr<SourceConfig> SourceConfigPtr;
 
+/**
+ * @brief Configuration object for source config
+ */
 class SourceConfig {
 
   public:
@@ -132,7 +135,6 @@ class SourceConfig {
      * @brief constructor to create a new source option object initialized with default values as set below
      */
     SourceConfig();
-
     StringConfigOption sourceType;
     StringConfigOption sourceConfig;
     IntConfigOption sourceFrequency;
