@@ -490,8 +490,10 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
-    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
+    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator(
+        {FieldAccessExpressionNode::create("id"), FieldAccessExpressionNode::create("value")});
+    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator(
+        {FieldAccessExpressionNode::create("id"), FieldAccessExpressionNode::create("value")});
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
@@ -518,8 +520,10 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
-    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
+    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator(
+        {FieldAccessExpressionNode::create("id"), FieldAccessExpressionNode::create("value")});
+    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator(
+        {FieldAccessExpressionNode::create("id"), FieldAccessExpressionNode::create("value")});
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
@@ -546,8 +550,9 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator({Attribute("id"), Attribute("value")});
-    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator({Attribute("id")});
+    auto projectionOperator1 = LogicalOperatorFactory::createProjectionOperator(
+        {FieldAccessExpressionNode::create("id"), FieldAccessExpressionNode::create("value")});
+    auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator({FieldAccessExpressionNode::create("id")});
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
