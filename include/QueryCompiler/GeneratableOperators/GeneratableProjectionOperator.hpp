@@ -8,6 +8,9 @@
 
 namespace NES{
 
+/**
+ * @brief Generatable projection operator
+ */
 class GeneratableProjectionOperator : public ProjectionLogicalOperatorNode, public GeneratableOperator {
   public:
     /**
@@ -18,7 +21,6 @@ class GeneratableProjectionOperator : public ProjectionLogicalOperatorNode, publ
     */
     static GeneratableProjectionOperatorPtr create(ProjectionLogicalOperatorNodePtr projectLogicalOperator,
                                             OperatorId id = UtilityFunctions::getNextOperatorId());
-
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

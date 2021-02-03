@@ -20,7 +20,6 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
 
-
 /**
  * @brief A FieldRenameExpressionNode allows us to rename an attribute value via .rename in the query
  */
