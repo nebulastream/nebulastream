@@ -61,7 +61,6 @@ class RenameTest : public testing::Test {
     void TearDown() { std::cout << "Tear down RenameTest class." << std::endl; }
 };
 
-//FIXME: Enabled while solving #1490
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -118,6 +117,77 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
                              "|1|\n"
                              "|1|\n"
                              "|1|\n"
+                             "+----------------------------------------------------+";
+    NES_INFO("RenameTest (testDeployOneWorkerFileOutput): content=" << content);
+    NES_INFO("RenameTest (testDeployOneWorkerFileOutput): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
+
+    NES_INFO("RenameTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RenameTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RenameTest: Test finished");
+    int response = remove("test.out");
+    EXPECT_TRUE(response == 0);
+}
+
+
+TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
+    remove("test.out");
+
+    NES_INFO("RenameTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RenameTest: Coordinator started successfully");
+
+    NES_INFO("RenameTest: Start worker 1");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RenameTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("RenameTest: Submit query");
+    string query = "Query::from(\"default_logical\")"
+                   ".project(Attribute(\"id\").rename(\"NewName\"))"
+                   ".map(Attribute(\"NewName\") = Attribute(\"NewName\") * 2u)"
+                   ".project(Attribute(\"NewName\").rename(\"id\"))"
+                   ".sink(FileSinkDescriptor::create(\"test.out\"));";
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    NES_INFO("RenameTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    ifstream my_file("test.out");
+    EXPECT_TRUE(my_file.good());
+
+    std::ifstream ifs("test.out");
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|default_logical$id:UINT32|\n"
+                             "+----------------------------------------------------+\n"
+                             "|2|\n"
+                             "|2|\n"
+                             "|2|\n"
+                             "|2|\n"
+                             "|2|\n"
+                             "|2|\n"
+                             "|2|\n"
+                             "|2|\n"
+                             "|2|\n"
+                             "|2|\n"
                              "+----------------------------------------------------+";
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): content=" << content);
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): expContent=" << expectedContent);
