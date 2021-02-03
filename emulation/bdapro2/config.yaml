@@ -1,24 +1,22 @@
-#Sample configuration for Flat topology
-#total_workers: 5
-#workers_producing: 5
-#physical_stream_prefix: "ysb"
-#producer_options: >-
-#  --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
-#  --sourceFrequency=10 --logicalStreamName=ysb
-#log_level: "error"
-#hierarchy: False
-
-
-
-#Sample configuration for Hierarachy topology
 total_workers: 9
 workers_producing: 6
 physical_stream_prefix: "ysb"
 producer_options: >-
   --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
   --sourceFrequency=10 --logicalStreamName=ysb
+worker_options: >-
+  --numberOfSlots=1000
+coordinator_options: >-
+  --enableQueryReconfiguration=true
 log_level: "error"
 docker_image: "bdapro/query-merging"
+
+#Sample configuration for Flat topology
+#hierarchy: False
+
+
+
+#Sample configuration for Hierarachy topology
 hierarchy: True
 hierarchy_mapping:
   "W-0":

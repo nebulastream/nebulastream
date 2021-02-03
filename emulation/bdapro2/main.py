@@ -32,7 +32,8 @@ class Config(YamlDataClassConfig):
     workers_producing: int = None
     physical_stream_prefix: str = None
     producer_options: str = None
-    coordinator_options: Optional[str] = None
+    coordinator_options: str = ""
+    worker_options: str = ""
     hierarchy: bool = None
     log_level: str = "debug"
     docker_image: str = "nebulastream/nes-executable-image"
@@ -47,8 +48,8 @@ def flat_topology(config: Config):
         crd = net.addDocker('crd', ip=config.coordinator_ip, dimage=config.docker_image, ports=[8081, 4000],
                             port_bindings={8081: 8081, 4000: 4000}, volumes=["/tmp/logs:/logs"])
         nodes.append(NodeCmd(crd, NodeType.Coordinator, config.coordinator_ip,
-                             f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} --numberOfSlots"
-                             f"=8 --logLevel=LOG_DEBUG --enableQueryMerging=true"))
+                             f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} --logLevel"
+                             f"=LOG_DEBUG --enableQueryMerging=true {config.coordinator_options} {config.worker_options}"))
         for i in range(0, config.workers_producing):
             worker_ip = next(ips)
             worker = net.addDocker(f"{SENSOR_WORKER_PREFIX}-{i}", ip=worker_ip,
@@ -57,7 +58,7 @@ def flat_topology(config: Config):
                                    )
             worker_cmd = f"{WORKER} --logLevel=LOG_DEBUG --coordinatorPort={config.coordinator_port}" \
                          f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} " \
-                         f"--numberOfSlots=8 --physicalStreamName={config.physical_stream_prefix}-{i} {config.producer_options} "
+                         f"--physicalStreamName={config.physical_stream_prefix}-{i} {config.producer_options} {config.worker_options}"
             nodes.append(NodeCmd(worker, NodeType.Sensor, worker_ip, worker_cmd))
 
         for i in range(0, config.total_workers - config.workers_producing):
@@ -67,7 +68,7 @@ def flat_topology(config: Config):
                                    volumes=["/tmp/logs:/logs"],
                                    )
             worker_cmd = f"{WORKER} --logLevel=LOG_DEBUG --coordinatorPort={config.coordinator_port}" \
-                         f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} --numberOfSlots=8"
+                         f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} {config.worker_options}"
             nodes.append(NodeCmd(worker, NodeType.Worker, worker_ip, worker_cmd))
 
         info('*** Adding switches\n')
