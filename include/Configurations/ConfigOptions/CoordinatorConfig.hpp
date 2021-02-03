@@ -17,12 +17,9 @@
 #ifndef NES_COORDINATORCONFIG_HPP
 #define NES_COORDINATORCONFIG_HPP
 
-#include <Configurations/ConfigOption.hpp>
 #include <map>
 #include <string>
 #include <thread>
-
-using namespace std;
 
 namespace NES {
 /**
@@ -40,12 +37,14 @@ class CoordinatorConfig {
      * @brief overwrite the default configurations with those loaded from a yaml file
      * @param filePath file path to the yaml file
      */
-    void overwriteConfigWithYAMLFileInput(string filePath);
+    void overwriteConfigWithYAMLFileInput(std::string filePath);
+
     /**
      * @brief overwrite the default and the yaml file configurations with command line input
      * @param inputParams map with key=command line parameter and value = value
      */
-    void overwriteConfigWithCommandLineInput(map<string, string> inputParams);
+    void overwriteConfigWithCommandLineInput(std::map<std::string, std::string> inputParams);
+
     /**
      * @brief resets all options to default values
      */
@@ -54,94 +53,92 @@ class CoordinatorConfig {
     /**
      * @brief gets a ConfigOption object with restIp
      */
-    const ConfigOption<std::string>& getRestIp() const;
+    StringConfigOption getRestIp();
+
     /**
      * @brief set the value for rest ip with the appropriate data format
      */
-    void setRestIp(const string& restIp);
+    void setRestIp(std::string restIp);
+
     /**
-    * @brief gets a ConfigOption object with coordinatorip
-    */
-    const ConfigOption<std::string>& getCoordinatorIp() const;
+     * @brief gets a ConfigOption object with coordinatorip
+     */
+    StringConfigOption getCoordinatorIp();
+
     /**
-    * @brief set the value for coordinatorIp with the appropriate data format
-    */
-    void setCoordinatorIp(const string& coordinatorIp);
+     * @brief set the value for coordinatorIp with the appropriate data format
+     */
+    void setCoordinatorIp(std::string coordinatorIp);
+
     /**
-    * @brief gets a ConfigOption object with rpcPort
-    */
-    const ConfigOption<uint16_t>& getRpcPort() const;
+     * @brief gets a ConfigOption object with rpcPort
+     */
+    IntConfigOption getRpcPort();
+
     /**
-    * @brief set the value for rpcPort with the appropriate data format
-    */
-    void setRpcPort(const uint16_t& rpcPort);
+     * @brief set the value for rpcPort with the appropriate data format
+     */
+    void setRpcPort(uint16_t rpcPort);
+
     /**
-    * @brief gets a ConfigOption object with rest port
-    */
-    const ConfigOption<uint16_t>& getRestPort() const;
+     * @brief gets a ConfigOption object with rest port
+     */
+    IntConfigOption getRestPort();
+
     /**
-    * @brief set the value for restPort with the appropriate data format
-    */
-    void setRestPort(const uint16_t& restPort);
+     * @brief set the value for restPort with the appropriate data format
+     */
+    void setRestPort(uint16_t restPort);
+
     /**
-    * @brief gets a ConfigOption object with data port
-    */
-    const ConfigOption<uint16_t>& getDataPort() const;
+     * @brief gets a ConfigOption object with data port
+     */
+    IntConfigOption getDataPort();
+
     /**
-    * @brief set the value for dataPort with the appropriate data format
-    */
-    void setDataPort(const uint16_t& dataPort);
+     * @brief set the value for dataPort with the appropriate data format
+     */
+    void setDataPort(uint16_t dataPort);
+
     /**
-    * @brief gets a ConfigOption object with number of slots
-    */
-    const ConfigOption<uint16_t>& getNumberOfSlots() const;
+     * @brief gets a ConfigOption object with number of slots
+     */
+    IntConfigOption getNumberOfSlots();
+
     /**
-    * @brief set the value for numberOfSlots with the appropriate data format
-    */
-    void setNumberOfSlots(const uint16_t& numberOfSlots);
+     * @brief set the value for numberOfSlots with the appropriate data format
+     */
+    void setNumberOfSlots(uint16_t numberOfSlots);
+
     /**
-    * @brief gets a ConfigOption object with enable query merging
-    */
-    const ConfigOption<bool>& getEnableQueryMerging() const;
+     * @brief gets a ConfigOption object with enable query merging
+     */
+    BoolConfigOption getEnableQueryMerging();
+
     /**
-    * @brief set the value for enableQueryMerging with the appropriate data format
-    */
-    void setEnableQueryMerging(const bool& enableQueryMerging);
+     * @brief set the value for enableQueryMerging with the appropriate data format
+     */
+    void setEnableQueryMerging(bool enableQueryMerging);
+
     /**
-    * @brief gets a ConfigOption object with log level
-    */
-    const ConfigOption<std::string>& getLogLevel() const;
+     * @brief gets a ConfigOption object with log level
+     */
+    StringConfigOption getLogLevel();
+
     /**
-    * @brief set the value for logLevel with the appropriate data format
-    */
-    void setLogLevel(const string& logLevel);
-    /**
- * @brief definition of options and information for coordinator config options
- */
+     * @brief set the value for logLevel with the appropriate data format
+     */
+    void setLogLevel(std::string logLevel);
+
   private:
-    ConfigOption<std::string> restIp =
-        ConfigOption("restIp", std::string("127.0.0.1"), "NES ip of the REST server.", "string", false);
-
-    ConfigOption<std::string> coordinatorIp =
-        ConfigOption("coordinatorIp", std::string("127.0.0.1"), "RPC IP address of NES Coordinator.", "string", false);
-
-    ConfigOption<uint16_t> rpcPort =
-        ConfigOption("rpcPort", uint16_t(4000), "RPC server port of the NES Coordinator", "uint16_t", false);
-
-    ConfigOption<uint16_t> restPort =
-        ConfigOption("restPort", uint16_t(8081), "Port exposed for rest endpoints", "uint16_t", false);
-
-    ConfigOption<uint16_t> dataPort = ConfigOption("dataPort", uint16_t(3001), "NES data server port", "uint16_t", false);
-
-    ConfigOption<uint16_t> numberOfSlots = ConfigOption("numberOfSlots", uint16_t(std::thread::hardware_concurrency()),
-                                                        "Number of computing slots for NES Coordinator", "uint16_t", false);
-
-    ConfigOption<bool> enableQueryMerging =
-        ConfigOption("enableQueryMerging", false, "Enable Query Merging Feature", "bool", false);
-
-    ConfigOption<std::string> logLevel =
-        ConfigOption("logLevel", std::string("LOG_DEBUG"),
-                     "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)", "string", false);
+    StringConfigOption restIp;
+    StringConfigOption coordinatorIp;
+    IntConfigOption rpcPort;
+    IntConfigOption restPort;
+    IntConfigOption dataPort;
+    IntConfigOption numberOfSlots;
+    BoolConfigOption enableQueryMerging;
+    StringConfigOption logLevel;
 };
 
 }// namespace NES
