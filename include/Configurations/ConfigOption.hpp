@@ -33,17 +33,18 @@ namespace NES {
 template<class T>
 class ConfigOption {
   public:
-    static std::shared_ptr<ConfigOption> create(std::string key, T value, std::string description) {
-        return std::make_shared<ConfigOption>(ConfigOption(key, value, description));
+    static std::shared_ptr<ConfigOption> create(std::string name, T value, std::string description) {
+        return std::make_shared<ConfigOption>(ConfigOption(name, value, description));
     };
 
     /**
      * @brief converts a ConfigOption Object into human readable format
+     * @return string representation of the config
      */
     std::string toString() {
         std::stringstream ss;
         ss << "Config Object: \n";
-        ss << "Name (key): " << key << "\n";
+        ss << "Name: " << name << "\n";
         ss << "Description: " << description << "\n";
         ss << "Value: " << value << "\n";
         ss << "Default Value: " << defaultValue << "\n";
@@ -57,27 +58,32 @@ class ConfigOption {
     std::string getValueAsString() const { return string(value); };
 
     /**
-      * @brief get the name of the ConfigOption Object
-      */
-    std::string getKey() { return key; }
+     * @brief get the name of the ConfigOption Object
+     * @return name of the config
+     */
+    std::string getName() { return name; }
 
     /**
-      * @brief get the value of the ConfigOption Object
-      */
+     * @brief get the value of the ConfigOption Object
+     * @return the value of the config if not set then default value
+     */
     T getValue() const { return value; };
 
     /**
      * @brief sets the value
+     * @param value: the value to be used
      */
     void setValue(T value) { this->value = value; }
 
     /**
      * @brief get the description of this parameter
+     * @return description of the config
      */
     const std::string getDescription() const { return description; };
 
     /**
      * @brief get the default value of this parameter
+     * @return: the default value
      */
     T getDefaultValue() const { return defaultValue; };
 
@@ -91,7 +97,7 @@ class ConfigOption {
             return true;
         } else if (other.has_value() && other.type() == typeid(ConfigOption)) {
             ConfigOption<T> that = (ConfigOption<T>) other;
-            return this->key == that.key && this->description == that.description && this->value == that.value
+            return this->name == that.name && this->description == that.description && this->value == that.value
                 && this->defaultValue == that.defaultValue;
         }
         return false;
@@ -100,14 +106,14 @@ class ConfigOption {
   private:
     /**
      * @brief Constructs a ConfigOption<T> object
-     * @param key the name of the object
+     * @param name the name of the object
      * @param value the value of the object
      * @param description default value of the object
      */
-    ConfigOption(std::string key, T value, std::string description)
-        : key(key), description(description), value(value), defaultValue(value) {}
+    ConfigOption(std::string name, T value, std::string description)
+        : name(name), description(description), value(value), defaultValue(value) {}
 
-    std::string key;
+    std::string name;
     std::string description;
     T value;
     T defaultValue;

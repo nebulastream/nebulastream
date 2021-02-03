@@ -39,7 +39,7 @@ CoordinatorConfig::CoordinatorConfig() {
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
 }
 
-void CoordinatorConfig::overwriteConfigWithYAMLFileInput(std::string filePath) {
+void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         NES_INFO("CoordinatorConfig: Using config file with path: " << filePath << " .");
@@ -65,7 +65,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(std::string filePath) {
     NES_WARNING("CoordinatorConfig: Keeping default values for Coordinator Config.");
 }
 
-void CoordinatorConfig::overwriteConfigWithCommandLineInput(std::map<std::string, std::string> inputParams) {
+void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
     try {
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
             if (it->first == "--restIp") {
