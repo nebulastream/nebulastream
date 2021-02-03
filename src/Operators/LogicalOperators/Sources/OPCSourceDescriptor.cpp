@@ -20,7 +20,6 @@
 #include <utility>
 
 #include <open62541/client_config_default.h>
-#include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
 
 namespace NES {
