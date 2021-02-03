@@ -29,12 +29,15 @@ using namespace NES;
 namespace NES::Benchmarking {
 /**
  * @brief SimpleBenchmarkSink will set completed to true, after it gets @param expectedNumberOfTuples have been processed by SimpleBenchmarkSink
+ * The schema must have a key field as this field is used to check if the benchmark has ended
  */
 class SimpleBenchmarkSink : public SinkMedium {
   public:
     SimpleBenchmarkSink(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0) {
             rowLayout = NodeEngine::createRowLayout(schema);
+
+            // An end of benchmark will be signaled by the source as key field will be equal to -1
             auto fields = getSchemaPtr()->fields;
             for (size_t i = 0; i < fields.size(); ++i) {
                 if (fields[i]->name == "key") {

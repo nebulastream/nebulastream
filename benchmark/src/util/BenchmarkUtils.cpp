@@ -147,14 +147,10 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     nodeEngine->startQuery(1);
     recordStatistics(statisticsVec, nodeEngine);
 
-//    auto simpleBenchmarkSink = std::dynamic_pointer_cast<Benchmarking::SimpleBenchmarkSink>(benchmarkSink);
     while(!benchmarkSink->completed.get_future().get()) ;
     NES_WARNING("BenchmarkUtils: completed is true!!");
 
-//    benchmarkSink->shutdown();
-//    for (auto src : benchmarkSource) {
-//        src->stop();
-//    }
+
     NES_WARNING("BenchmarkUtils: Stopping query...");
     nodeEngine->stopQuery(1);
     NES_WARNING("Query was stopped!");
