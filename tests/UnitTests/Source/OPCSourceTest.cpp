@@ -52,7 +52,7 @@ class OPCSourceTest : public testing::Test {
 
         test_schema = Schema::create()->addField("var", UINT32);
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
         bufferManager = nodeEngine->getBufferManager();

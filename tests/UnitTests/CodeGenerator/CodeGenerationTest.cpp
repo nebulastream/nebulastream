@@ -334,7 +334,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  * @brief Simple test that generates code to process a input buffer and calculate a running sum.
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf);
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NodeEngine::TupleBuffer");

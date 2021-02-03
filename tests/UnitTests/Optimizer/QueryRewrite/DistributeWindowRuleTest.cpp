@@ -65,7 +65,7 @@ void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    SourceConfig* sourceConfig = new SourceConfig();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
     sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -92,7 +92,7 @@ void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
 
     std::cout << "topo=" << topology->toString() << std::endl;
 
-    SourceConfig* sourceConfig = new SourceConfig();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
     sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -118,7 +118,7 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);

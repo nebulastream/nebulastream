@@ -77,7 +77,7 @@ class QueryPlacementTest : public testing::Test {
         streamCatalog = std::make_shared<StreamCatalog>();
         streamCatalog->addLogicalStream(streamName, schema);
 
-        SourceConfig* sourceConfig = new SourceConfig();
+        SourceConfigPtr sourceConfig = SourceConfig::create();
         sourceConfig->setSourceFrequency(0);
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setPhysicalStreamName("test2");

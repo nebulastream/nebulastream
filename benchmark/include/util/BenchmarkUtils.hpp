@@ -135,7 +135,7 @@ class BenchmarkUtils {
                         for (auto workerThreads : allWorkerThreads) {                                                            \
                             for (auto sourceCnt : allDataSources) {                                                              \
                                                                                                                                  \
-                                PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();                             \
+                                PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();                             \
                                 uint64_t zmqPort = distr(gen);                                                                   \
                                 NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                           \
                                 auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", zmqPort, streamConf, workerThreads,\

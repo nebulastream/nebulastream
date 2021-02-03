@@ -33,8 +33,8 @@ static uint64_t rpcPort = 4000;
 
 class RESTEndpointTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
     static void SetUpTestCase() {
         NES::setupLogging("RESTEndpointTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup RESTEndpointTest test class.");
@@ -43,6 +43,8 @@ class RESTEndpointTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }

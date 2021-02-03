@@ -40,9 +40,9 @@ uint64_t rpcPort = 4000;
 
 class ContinuousSourceTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
-    SourceConfig* sourceConfig = new SourceConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
+    SourceConfigPtr sourceConfig;
 
     static void SetUpTestCase() {
         NES::setupLogging("ContinuousSourceTest.log", NES::LOG_DEBUG);
@@ -52,9 +52,10 @@ class ContinuousSourceTest : public testing::Test {
     void SetUp() {
 
         rpcPort = rpcPort + 30;
-
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
+        sourceConfig = SourceConfig::create();
         coordinatorConfig->setRpcPort(rpcPort);
-
         workerConfig->setCoordinatorPort(rpcPort);
     }
 

@@ -37,7 +37,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSinkTest test class." << std::endl; }
 
     void SetUp() {
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::create("127.0.0.1", 12345, conf);
     }
 
@@ -59,7 +59,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create("127.0.0.1", 2000);
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
     EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK");
 }
@@ -75,7 +75,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
     EXPECT_EQ(printSink->toString(), "PRINT_SINK");
 }
@@ -86,7 +86,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
     Network::NesPartition nesPartition{1, 22, 33, 44};
     SinkDescriptorPtr sinkDescriptor =
         Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 1);
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     DataSinkPtr networkSink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, nodeEngine, 0);
     EXPECT_EQ(networkSink->toString(), "NETWORK_SINK");
 }

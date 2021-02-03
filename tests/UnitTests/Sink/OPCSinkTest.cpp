@@ -54,7 +54,7 @@ class OPCSinkTest : public testing::Test {
     void SetUp() {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         test_schema = Schema::create()->addField("var", UINT32);
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
     }
 
@@ -179,7 +179,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();
 
-    auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31338, PhysicalStreamConfig::create());
+    auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31338, PhysicalStreamConfig::createEmpty());
     auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId,
                                      user, password, 1);
     auto tuple_buffer = opcSource->receiveData();

@@ -108,7 +108,7 @@ template<typename MockedNodeEngine>
 std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize = 8192,
                                                      uint64_t numBuffers = 1024) {
     try {
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
@@ -278,13 +278,13 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
  *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
 TEST_F(EngineTest, testStartStopEngineEmpty) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     ASSERT_TRUE(engine->stop());
 }
 
 TEST_F(EngineTest, teststartDeployStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
@@ -297,7 +297,7 @@ TEST_F(EngineTest, teststartDeployStop) {
 }
 
 TEST_F(EngineTest, testStartDeployUndeployStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto ptr = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
@@ -311,7 +311,7 @@ TEST_F(EngineTest, testStartDeployUndeployStop) {
 }
 
 TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto ptr = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
@@ -330,7 +330,7 @@ TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
 }
 //
 TEST_F(EngineTest, testParallelDifferentSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
@@ -395,7 +395,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
 }
 //
 TEST_F(EngineTest, testParallelSameSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
@@ -453,7 +453,7 @@ TEST_F(EngineTest, testParallelSameSource) {
 }
 //
 TEST_F(EngineTest, testParallelSameSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
@@ -508,7 +508,7 @@ TEST_F(EngineTest, testParallelSameSink) {
 }
 //
 TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
@@ -563,7 +563,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
 }
 //
 TEST_F(EngineTest, testStartStopStartStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
@@ -717,7 +717,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
 }
 
 TEST_F(EngineTest, DISABLED_testFatalCrash) {
-    auto engine = NodeEngine::create("127.0.0.1", 31400, PhysicalStreamConfig::create());
+    auto engine = NodeEngine::create("127.0.0.1", 31400, PhysicalStreamConfig::createEmpty());
     EXPECT_EXIT(detail::segkiller(), testing::ExitedWithCode(1), "NodeEngine failed fatally");
 }
 

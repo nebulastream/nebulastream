@@ -210,7 +210,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
@@ -238,7 +238,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
