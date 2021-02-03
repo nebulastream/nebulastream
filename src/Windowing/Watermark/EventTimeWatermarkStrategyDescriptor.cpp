@@ -53,7 +53,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema) {
     //Check if the field exists in the schema
     auto existingField = schema->hasFieldName(fieldName);
     if (existingField) {
-        fieldAccessExpression->updateFieldName(existingField->name);
+        fieldAccessExpression->updateFieldName(existingField->getName());
         return true;
     }
     NES_ERROR("EventTimeWaterMark is using a non existing field " + fieldName);

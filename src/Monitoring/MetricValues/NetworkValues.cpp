@@ -56,8 +56,8 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     if (buf.getNumberOfTuples() > 1) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
     }
-    if (!(UtilityFunctions::endsWith(schema->fields[i]->name, "rBytes")
-          && UtilityFunctions::endsWith(schema->fields[i + 15]->name, "tCompressed"))) {
+    if (!(UtilityFunctions::endsWith(schema->fields[i]->getName(), "rBytes")
+          && UtilityFunctions::endsWith(schema->fields[i + 15]->getName(), "tCompressed"))) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 

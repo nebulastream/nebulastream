@@ -20,10 +20,18 @@
 
 namespace NES {
 
-AttributeField::AttributeField(const std::string& name, DataTypePtr data_type) : name(name), dataType(data_type) {}
+AttributeField::AttributeField(const std::string& name, DataTypePtr dataType) : name(name), dataType(dataType) {}
 
-AttributeFieldPtr AttributeField::create(std::string name, DataTypePtr data_type) {
-    return std::make_shared<AttributeField>(name, data_type);
+AttributeFieldPtr AttributeField::create(std::string name, DataTypePtr dataType) {
+    return std::make_shared<AttributeField>(name, dataType);
+}
+
+std::string AttributeField::getName() const {
+    return name;
+}
+
+void AttributeField::setName(std::string newName) {
+    this->name = newName;
 }
 
 DataTypePtr AttributeField::getDataType() const { return dataType; }

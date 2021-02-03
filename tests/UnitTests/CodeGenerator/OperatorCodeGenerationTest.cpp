@@ -16,7 +16,6 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
@@ -41,6 +40,7 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/LegacyExpression.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -1115,10 +1115,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
                             ->addField(createField("window$end", UINT64))
                             ->addField(AttributeField::create("window$key", joinDef->getLeftJoinKey()->getStamp()));
     for (auto field : input_schema->fields) {
-        outputSchema = outputSchema->addField(field->name, field->getDataType());
+        outputSchema = outputSchema->addField(field->getName(), field->getDataType());
     }
     for (auto field : input_schema->fields) {
-        outputSchema = outputSchema->addField(field->name, field->getDataType());
+        outputSchema = outputSchema->addField(field->getName(), field->getDataType());
     }
     joinDef->updateOutputDefinition(outputSchema);
     auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());

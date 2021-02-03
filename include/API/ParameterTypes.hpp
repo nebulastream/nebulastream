@@ -28,8 +28,8 @@ namespace NES {
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
-class UserAPIExpression;
-typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
+class LegacyExpression;
+typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
 
 class Field;
 typedef std::shared_ptr<Field> FieldPtr;

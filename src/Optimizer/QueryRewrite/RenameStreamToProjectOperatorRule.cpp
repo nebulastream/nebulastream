@@ -50,7 +50,7 @@ OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr opera
     //Iterate over the input schema and add a new field rename expression
     for (auto field : inputSchema->fields) {
         //compute the new name for the field by added new stream name as field qualifier
-        std::string fieldName = field->name;
+        std::string fieldName = field->getName();
         //Compute new name without field qualifier
         std::string updatedFieldName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
         //Compute field access and field rename expression

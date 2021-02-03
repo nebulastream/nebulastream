@@ -42,8 +42,8 @@ typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
 
 enum class PredicateItemMutation { ATTRIBUTE, VALUE };
 
-class UserAPIExpression;
-typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
+class LegacyExpression;
+typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
 
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
@@ -51,16 +51,16 @@ typedef std::shared_ptr<Predicate> PredicatePtr;
 class Field;
 typedef std::shared_ptr<Field> FieldPtr;
 
-class UserAPIExpression {
+class LegacyExpression {
   public:
-    virtual ~UserAPIExpression(){};
+    virtual ~LegacyExpression(){};
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const = 0;
     virtual const std::string toString() const = 0;
     virtual UserAPIExpressionPtr copy() const = 0;
-    virtual bool equals(const UserAPIExpression& rhs) const = 0;
+    virtual bool equals(const LegacyExpression& rhs) const = 0;
 };
 
-class Predicate : public UserAPIExpression {
+class Predicate : public LegacyExpression {
   public:
     Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right,
               const std::string& functionCallOverload, bool bracket = true);
@@ -70,7 +70,7 @@ class Predicate : public UserAPIExpression {
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const override;
     virtual const std::string toString() const override;
     virtual UserAPIExpressionPtr copy() const override;
-    bool equals(const UserAPIExpression& rhs) const override;
+    bool equals(const LegacyExpression& rhs) const override;
     BinaryOperatorType getOperatorType() const;
     const UserAPIExpressionPtr getLeft() const;
     const UserAPIExpressionPtr getRight() const;
@@ -84,7 +84,7 @@ class Predicate : public UserAPIExpression {
     std::string functionCallOverload;
 };
 
-class PredicateItem : public UserAPIExpression {
+class PredicateItem : public LegacyExpression {
   public:
     PredicateItem(AttributeFieldPtr attribute);
     PredicateItem(ValueTypePtr value);
@@ -107,7 +107,7 @@ class PredicateItem : public UserAPIExpression {
     virtual const std::string toString() const override;
     virtual UserAPIExpressionPtr copy() const override;
 
-    bool equals(const UserAPIExpression& rhs) const override;
+    bool equals(const LegacyExpression& rhs) const override;
 
     bool isStringType() const;
     const DataTypePtr getDataTypePtr() const;
@@ -133,64 +133,64 @@ class Field : public PredicateItem {
 
 typedef std::shared_ptr<Field> FieldPtr;
 
-const PredicatePtr createPredicate(const UserAPIExpression& expression);
+const PredicatePtr createPredicate(const LegacyExpression& expression);
 
-Predicate operator==(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator!=(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator<(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator>(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator>=(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator<=(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator+(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator-(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator*(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator/(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator%(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator&&(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator||(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator&(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator|(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator^(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator<<(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
-Predicate operator>>(const UserAPIExpression& lhs, const UserAPIExpression& rhs);
+Predicate operator==(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator!=(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator<(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator>(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator>=(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator<=(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator+(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator-(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator*(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator/(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator%(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator&&(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator||(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator&(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator|(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator^(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator<<(const LegacyExpression& lhs, const LegacyExpression& rhs);
+Predicate operator>>(const LegacyExpression& lhs, const LegacyExpression& rhs);
 
-Predicate operator==(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator!=(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator<(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator>(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator>=(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator<=(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator+(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator-(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator*(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator/(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator%(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator&&(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator||(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator&(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator|(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator^(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator<<(const PredicateItem& lhs, const UserAPIExpression& rhs);
-Predicate operator>>(const PredicateItem& lhs, const UserAPIExpression& rhs);
+Predicate operator==(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator!=(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator<(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator>(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator>=(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator<=(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator+(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator-(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator*(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator/(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator%(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator&&(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator||(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator&(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator|(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator^(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator<<(const PredicateItem& lhs, const LegacyExpression& rhs);
+Predicate operator>>(const PredicateItem& lhs, const LegacyExpression& rhs);
 
-Predicate operator==(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator!=(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator<(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator>(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator>=(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator<=(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator+(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator-(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator*(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator/(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator%(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator&&(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator||(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator&(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator|(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator^(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator<<(const UserAPIExpression& lhs, const PredicateItem& rhs);
-Predicate operator>>(const UserAPIExpression& lhs, const PredicateItem& rhs);
+Predicate operator==(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator!=(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator<(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator>(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator>=(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator<=(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator+(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator-(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator*(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator/(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator%(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator&&(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator||(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator&(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator|(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator^(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator<<(const LegacyExpression& lhs, const PredicateItem& rhs);
+Predicate operator>>(const LegacyExpression& lhs, const PredicateItem& rhs);
 
 Predicate operator==(const PredicateItem& lhs, const PredicateItem& rhs);
 Predicate operator!=(const PredicateItem& lhs, const PredicateItem& rhs);

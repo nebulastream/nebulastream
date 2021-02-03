@@ -16,9 +16,7 @@
 
 #include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/LogicalStream.hpp>
-#include <Util/Logger.hpp>
 
 namespace NES {
 

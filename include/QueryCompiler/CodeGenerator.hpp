@@ -59,8 +59,8 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 class CompilerTypesFactory;
 typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
 
-class UserAPIExpression;
-typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
+class LegacyExpression;
+typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
 
 class GeneratableWindowAggregation;
 typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;

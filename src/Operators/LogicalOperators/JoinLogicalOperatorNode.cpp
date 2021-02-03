@@ -128,11 +128,11 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
     // create dynamic fields to store all fields from left and right streams
     for (auto field : leftInputSchema->fields) {
-        outputSchema->addField(field->name, field->getDataType());
+        outputSchema->addField(field->getName(), field->getDataType());
     }
 
     for (auto field : rightInputSchema->fields) {
-        outputSchema->addField(field->name, field->getDataType());
+        outputSchema->addField(field->getName(), field->getDataType());
     }
 
     joinDefinition->updateOutputDefinition(outputSchema);

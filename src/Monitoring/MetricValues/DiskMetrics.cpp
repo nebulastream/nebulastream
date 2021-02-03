@@ -57,8 +57,8 @@ DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& b
     if (buf.getNumberOfTuples() > 1) {
         NES_THROW_RUNTIME_ERROR("DiskMetrics: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
     }
-    if (!(UtilityFunctions::endsWith(schema->fields[i]->name, "F_BSIZE")
-          && UtilityFunctions::endsWith(schema->fields[i + 4]->name, "F_BAVAIL"))) {
+    if (!(UtilityFunctions::endsWith(schema->fields[i]->getName(), "F_BSIZE")
+          && UtilityFunctions::endsWith(schema->fields[i + 4]->getName(), "F_BAVAIL"))) {
         NES_THROW_RUNTIME_ERROR("DiskMetrics: Missing fields in schema.");
     }
 

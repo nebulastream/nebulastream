@@ -34,17 +34,22 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 class AttributeField {
   public:
     AttributeField() = default;
-    AttributeField(const std::string& name, DataTypePtr data_type);
+    AttributeField(const std::string& name, DataTypePtr dataType);
 
     /**
      * @brief Factory method to create a new field
      * @param name name of the field
-     * @param data_type data type
+     * @param dataType data type
      * @return AttributeFieldPtr
      */
-    static AttributeFieldPtr create(std::string name, DataTypePtr data_type);
+    static AttributeFieldPtr create(std::string name, DataTypePtr dataType);
 
     DataTypePtr getDataType() const;
+
+    std::string getName() const;
+
+    void setName(std::string newName);
+
     const std::string toString() const;
     bool isEqual(AttributeFieldPtr attr);
 
@@ -54,6 +59,7 @@ class AttributeField {
      */
     AttributeFieldPtr copy();
 
+  private:
     std::string name;
     DataTypePtr dataType;
 };

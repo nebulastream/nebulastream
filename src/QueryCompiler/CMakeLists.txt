@@ -21,6 +21,7 @@ add_source_nes(
         PipelineContext.cpp
         CompilerTypeFactory.cpp
         RecordHandler.cpp
+        LegacyExpression.cpp
 )
 add_subdirectory(CCodeGenerator)
 add_subdirectory(Compiler)

@@ -27,7 +27,7 @@ SerializableSchema* SchemaSerializationUtil::serializeSchema(SchemaPtr schema, S
     // serialize all field in schema
     for (const auto& field : schema->fields) {
         auto serializedField = serializedSchema->add_fields();
-        serializedField->set_name(field->name);
+        serializedField->set_name(field->getName());
         // serialize data type
         DataTypeSerializationUtil::serializeDataType(field->getDataType(), serializedField->mutable_type());
     }

@@ -51,7 +51,7 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuf
     auto i = schema->getIndex(prefix + "INTERFACE_NO");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1
-        && UtilityFunctions::endsWith(schema->fields[i]->name, prefix + "INTERFACE_NO")) {
+        && UtilityFunctions::endsWith(schema->fields[i]->getName(), prefix + "INTERFACE_NO")) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
         auto layout = NodeEngine::createRowLayout(schema);
         auto numInt = layout->getValueField<uint16_t>(0, i)->read(buf);
