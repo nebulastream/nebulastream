@@ -39,14 +39,6 @@ namespace NES::Benchmarking {
  * Selectivity can be set
  */
 class SimpleBenchmarkSource : public DataSource {
-  private:
-    std::list<uint64_t> keyList;
-    uint64_t ingestionRate;
-    uint64_t keyPos = 0;
-    uint64_t curNumberOfTuplesPerBuffer;
-    uint64_t maxNumberOfPeriods;
-    std::shared_ptr<NodeEngine::MemoryLayout> rowLayout;
-
   public:
     uint64_t numberOfTuplesPerBuffer;
 
@@ -283,6 +275,14 @@ class SimpleBenchmarkSource : public DataSource {
         return std::make_shared<SimpleBenchmarkSource>(benchmarkSchema, bufferManager, queryManager, ingestionRate,
                                                        maxTuplesPerBuffer, operatorId);
     }
+
+  private:
+    std::list<uint64_t> keyList;
+    uint64_t ingestionRate;
+    uint64_t keyPos = 0;
+    uint64_t curNumberOfTuplesPerBuffer;
+    uint64_t maxNumberOfPeriods;
+    std::shared_ptr<NodeEngine::MemoryLayout> rowLayout;
 };
 }// namespace NES::Benchmarking
 
