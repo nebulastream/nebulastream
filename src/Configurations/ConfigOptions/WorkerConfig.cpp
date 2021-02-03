@@ -20,6 +20,7 @@
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
 #include <string>
+#include <thread>
 
 namespace NES {
 
@@ -94,6 +95,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(std::map<std::string, std
                 setParentId(it->second);
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
+            } else {
+                NES_WARNING("Unknow configuration value :" << it->first);
             }
         }
     } catch (std::exception& e) {

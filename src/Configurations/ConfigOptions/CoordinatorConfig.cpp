@@ -21,15 +21,23 @@
 #include <filesystem>
 #include <string>
 
-using namespace std;
-
 namespace NES {
 
 CoordinatorConfig::CoordinatorConfig() {
     NES_INFO("Generated new Coordinator Config object. Configurations initialized with default values.");
+    restIp = ConfigOption<std::string>::create("restIp", "127.0.0.1", "NES ip of the REST server.");
+    coordinatorIp = ConfigOption<std::string>::create("coordinatorIp", "127.0.0.1", "RPC IP address of NES Coordinator.");
+    rpcPort = ConfigOption<uint32_t>::create("rpcPort", 4000, "RPC server port of the NES Coordinator");
+    restPort = ConfigOption<uint32_t>::create("restPort", uint16_t(8081), "Port exposed for rest endpoints");
+    dataPort = ConfigOption<uint32_t>::create("dataPort", uint16_t(3001), "NES data server port");
+    numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", uint16_t(std::thread::hardware_concurrency()),
+                                                   "Number of computing slots for NES Coordinator");
+    enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
+    logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
+                                                 "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
 }
 
-void CoordinatorConfig::overwriteConfigWithYAMLFileInput(string filePath) {
+void CoordinatorConfig::overwriteConfigWithYAMLFileInput(std::string filePath) {
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         NES_INFO("CoordinatorConfig: Using config file with path: " << filePath << " .");
@@ -39,13 +47,13 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(string filePath) {
             setRestPort(config["restPort"].As<uint16_t>());
             setRpcPort(config["rpcPort"].As<uint16_t>());
             setDataPort(config["dataPort"].As<uint16_t>());
-            setRestIp(config["restIp"].As<string>());
-            setCoordinatorIp(config["coordinatorIp"].As<string>());
+            setRestIp(config["restIp"].As<std::string>());
+            setCoordinatorIp(config["coordinatorIp"].As<std::string>());
             setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
             setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
-            setLogLevel(config["logLevel"].As<string>());
-        } catch (exception& e) {
-            NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file.");
+            setLogLevel(config["logLevel"].As<std::string>());
+        } catch (std::exception& e) {
+            NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
             resetCoordinatorOptions();
         }
@@ -55,7 +63,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(string filePath) {
     NES_WARNING("CoordinatorConfig: Keeping default values for Coordinator Config.");
 }
 
-void CoordinatorConfig::overwriteConfigWithCommandLineInput(map<string, string> inputParams) {
+void CoordinatorConfig::overwriteConfigWithCommandLineInput(std::map<std::string, std::string> inputParams) {
     try {
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
             if (it->first == "--restIp") {
@@ -74,9 +82,11 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(map<string, string> 
                 setEnableQueryMerging((it->second == "true"));
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
+            } else {
+                NES_WARNING("Unknow configuration value :" << it->first);
             }
         }
-    } catch (exception e) {
+    } catch (std::exception& e) {
         NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from command line.");
         NES_WARNING("CoordinatorConfig: Keeping default values.");
         resetCoordinatorOptions();
@@ -84,37 +94,47 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(map<string, string> 
 }
 
 void CoordinatorConfig::resetCoordinatorOptions() {
-    setRestPort(restPort.getDefaultValue());
-    setRpcPort(rpcPort.getDefaultValue());
-    setDataPort(dataPort.getDefaultValue());
-    setRestIp(restIp.getDefaultValue());
-    setCoordinatorIp(coordinatorIp.getDefaultValue());
-    setNumberOfSlots(numberOfSlots.getDefaultValue());
-    setEnableQueryMerging(enableQueryMerging.getDefaultValue());
-    setLogLevel(logLevel.getDefaultValue());
+    setRestPort(restPort->getDefaultValue());
+    setRpcPort(rpcPort->getDefaultValue());
+    setDataPort(dataPort->getDefaultValue());
+    setRestIp(restIp->getDefaultValue());
+    setCoordinatorIp(coordinatorIp->getDefaultValue());
+    setNumberOfSlots(numberOfSlots->getDefaultValue());
+    setEnableQueryMerging(enableQueryMerging->getDefaultValue());
+    setLogLevel(logLevel->getDefaultValue());
 }
 
-const ConfigOption<std::string>& CoordinatorConfig::getRestIp() const { return restIp; }
-void CoordinatorConfig::setRestIp(const string& restIp) { CoordinatorConfig::restIp.setValue(restIp); }
-const ConfigOption<std::string>& CoordinatorConfig::getCoordinatorIp() const { return coordinatorIp; }
-void CoordinatorConfig::setCoordinatorIp(const string& coordinatorIp) {
-    CoordinatorConfig::coordinatorIp.setValue(coordinatorIp);
-}
-const ConfigOption<uint16_t>& CoordinatorConfig::getRpcPort() const { return rpcPort; }
-void CoordinatorConfig::setRpcPort(const uint16_t& rpcPort) { CoordinatorConfig::rpcPort.setValue(rpcPort); }
-const ConfigOption<uint16_t>& CoordinatorConfig::getRestPort() const { return restPort; }
-void CoordinatorConfig::setRestPort(const uint16_t& restPort) { CoordinatorConfig::restPort.setValue(restPort); }
-const ConfigOption<uint16_t>& CoordinatorConfig::getDataPort() const { return dataPort; }
-void CoordinatorConfig::setDataPort(const uint16_t& dataPort) { CoordinatorConfig::dataPort.setValue(dataPort); }
-const ConfigOption<uint16_t>& CoordinatorConfig::getNumberOfSlots() const { return numberOfSlots; }
-void CoordinatorConfig::setNumberOfSlots(const uint16_t& numberOfSlots) {
-    CoordinatorConfig::numberOfSlots.setValue(numberOfSlots);
-}
-const ConfigOption<bool>& CoordinatorConfig::getEnableQueryMerging() const { return enableQueryMerging; }
-void CoordinatorConfig::setEnableQueryMerging(const bool& enableQueryMerging) {
-    CoordinatorConfig::enableQueryMerging.setValue(enableQueryMerging);
-}
-const ConfigOption<std::string>& CoordinatorConfig::getLogLevel() const { return logLevel; }
-void CoordinatorConfig::setLogLevel(const string& logLevel) { CoordinatorConfig::logLevel.setValue(logLevel); }
+StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
 
+void CoordinatorConfig::setRestIp(std::string restIpValue) { restIp->setValue(restIpValue); }
+
+StringConfigOption CoordinatorConfig::getCoordinatorIp() { return coordinatorIp; }
+
+void CoordinatorConfig::setCoordinatorIp(std::string coordinatorIpValue) { coordinatorIp->setValue(coordinatorIpValue); }
+
+IntConfigOption CoordinatorConfig::getRpcPort() { return rpcPort; }
+
+void CoordinatorConfig::setRpcPort(uint16_t rpcPortValue) { rpcPort->setValue(rpcPortValue); }
+
+IntConfigOption CoordinatorConfig::getRestPort() { return restPort; }
+
+void CoordinatorConfig::setRestPort(uint16_t restPortValue) { restPort->setValue(restPortValue); }
+
+IntConfigOption CoordinatorConfig::getDataPort() { return dataPort; }
+
+void CoordinatorConfig::setDataPort(uint16_t dataPortValue) { dataPort->setValue(dataPortValue); }
+
+IntConfigOption CoordinatorConfig::getNumberOfSlots() { return numberOfSlots; }
+
+void CoordinatorConfig::setNumberOfSlots(uint16_t numberOfSlotsValue) { numberOfSlots->setValue(numberOfSlotsValue); }
+
+BoolConfigOption CoordinatorConfig::getEnableQueryMerging() { return enableQueryMerging; }
+
+void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
+    CoordinatorConfig::enableQueryMerging->setValue(enableQueryMergingValue);
+}
+
+StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
+
+void CoordinatorConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
 }// namespace NES

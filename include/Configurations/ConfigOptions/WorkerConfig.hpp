@@ -17,10 +17,8 @@
 #ifndef NES_WORKERCONFIG_HPP
 #define NES_WORKERCONFIG_HPP
 
-#include <Configurations/ConfigOption.hpp>
 #include <map>
 #include <string>
-#include <thread>
 
 namespace NES {
 
