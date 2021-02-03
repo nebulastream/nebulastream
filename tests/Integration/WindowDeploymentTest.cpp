@@ -40,9 +40,9 @@ static uint64_t rpcPort = 4000;
 
 class WindowDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
-    SourceConfig* sourceConfig = new SourceConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
+    SourceConfigPtr sourceConfig;
 
     static void SetUpTestCase() {
         NES::setupLogging("WindowDeploymentTest.log", NES::LOG_DEBUG);
@@ -52,6 +52,11 @@ class WindowDeploymentTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
+        sourceConfig = SourceConfig::create();
+
         coordinatorConfig->setRpcPort(rpcPort);
         coordinatorConfig->setRestPort(restPort);
         workerConfig->setCoordinatorPort(rpcPort);

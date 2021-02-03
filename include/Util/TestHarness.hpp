@@ -41,10 +41,12 @@ class TestHarness {
         ipAddress = "127.0.0.1";
 
         NES_INFO("TestHarness: Start coordinator");
+        crdConf = CoordinatorConfig::create();
         crdConf->resetCoordinatorOptions();
         crdConf->setCoordinatorIp(ipAddress);
         crdConf->setRestPort(restPort);
         crdConf->setRpcPort(rpcPort);
+        wrkConf = WorkerConfig::create();
         crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
         QueryServicePtr queryService = crd->getQueryService();
@@ -217,15 +219,15 @@ class TestHarness {
 
         NES_INFO("QueryDeploymentTest: Remove query");
         if (!queryService->validateAndQueueStopRequest(queryId)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: cannot validateAndQueueStopRequest for query with id=" + queryId);
+            NES_THROW_RUNTIME_ERROR("TestHarness: cannot validateAndQueueStopRequest for query with id=" << queryId);
         }
         if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalog)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " + queryId);
+            NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
         }
 
         std::ifstream ifs(filePath.c_str());
         if (!ifs.good()) {
-            NES_WARNING("TestHarness:ifs.good() returns false for query with id " + queryId << " file path=" + filePath);
+            NES_WARNING("TestHarness:ifs.good() returns false for query with id " << queryId << " file path=" << filePath);
         }
 
         // Check if the size of output struct match with the size of output schema
@@ -262,9 +264,8 @@ class TestHarness {
 
   private:
     enum TestHarnessSourceType { CSVSource, MemorySource };
-
-    CoordinatorConfig* crdConf = new CoordinatorConfig();
-    WorkerConfig* wrkConf = new WorkerConfig();
+    CoordinatorConfigPtr crdConf;
+    WorkerConfigPtr wrkConf;
     NesCoordinatorPtr crd;
     uint64_t crdPort;
     std::string ipAddress;

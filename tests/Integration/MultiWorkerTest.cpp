@@ -36,8 +36,8 @@ uint64_t rpcPort = 4000;
 
 class MultiWorkerTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
     static void SetUpTestCase() {
         NES::setupLogging("MultiWorkerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultiWorkerTest test class.");
@@ -45,6 +45,8 @@ class MultiWorkerTest : public testing::Test {
 
     void SetUp() {
         rpcPort = rpcPort + 30;
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
         coordinatorConfig->setRpcPort(rpcPort);
         workerConfig->setCoordinatorPort(rpcPort);
     }

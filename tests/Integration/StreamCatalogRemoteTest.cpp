@@ -33,9 +33,9 @@ uint64_t rpcPort = 4000;
 
 class StreamCatalogRemoteTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
-    SourceConfig* sourceConfig = new SourceConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
+    SourceConfigPtr sourceConfig;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
@@ -46,6 +46,9 @@ class StreamCatalogRemoteTest : public testing::Test {
 
     void SetUp() {
         rpcPort = rpcPort + 30;
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
+        sourceConfig = SourceConfig::create();
         coordinatorConfig->setRpcPort(rpcPort);
         workerConfig->setCoordinatorPort(rpcPort);
     }

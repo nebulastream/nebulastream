@@ -40,9 +40,9 @@ static uint64_t rpcPort = 4000;
 
 class AssignWatermarkTest : public testing::Test {
   public:
-    CoordinatorConfig* crdConf = new CoordinatorConfig();
-    WorkerConfig* wrkConf = new WorkerConfig();
-    SourceConfig* srcConf = new SourceConfig();
+    CoordinatorConfigPtr crdConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
 
     static void SetUpTestCase() {
         NES::setupLogging("AssignWatermarkTest.log", NES::LOG_DEBUG);
@@ -54,11 +54,14 @@ class AssignWatermarkTest : public testing::Test {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
+        crdConf = CoordinatorConfig::create();
         crdConf->setRpcPort(rpcPort);
         crdConf->setRestPort(restPort);
 
+        wrkConf = WorkerConfig::create();
         wrkConf->setCoordinatorPort(rpcPort);
 
+        srcConf = SourceConfig::create();
         srcConf->setSourceType("CSVSource");
         srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
         srcConf->setNumberOfTuplesToProducePerBuffer(3);

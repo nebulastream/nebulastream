@@ -57,17 +57,17 @@ int main(int argc, char** argv) {
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel("LOG_DEBUG"));
 
-    WorkerConfig* workerConfig = new WorkerConfig();
-    SourceConfig* sourceConfig = new SourceConfig();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
     sourceConfig->setSourceType("NoSource");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
 
-    map<string, string> commandLineParams;
+    std::map<string, string> commandLineParams;
 
     for (int i = 1; i < argc; ++i) {
         commandLineParams.insert(
-            pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find("=")),
-                                 string(argv[i]).substr(string(argv[i]).find("=") + 1, string(argv[i]).length() - 1)));
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find("=")),
+                                      string(argv[i]).substr(string(argv[i]).find("=") + 1, string(argv[i]).length() - 1)));
     }
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
@@ -83,29 +83,29 @@ int main(int argc, char** argv) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
-    NES::setLogLevel(NES::getStringAsDebugLevel(workerConfig->getLogLevel().getValue()));
+    NES::setLogLevel(NES::getStringAsDebugLevel(workerConfig->getLogLevel()->getValue()));
 
-    NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort().getValue() << " localport="
-                                                  << workerConfig->getDataPort().getValue() << " pid=" << getpid()
-                                                  << " coordinatorPort=" << workerConfig->getCoordinatorPort().getValue());
+    NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort()->getValue() << " localport="
+                                                  << workerConfig->getDataPort()->getValue() << " pid=" << getpid()
+                                                  << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig,
                                                    NodeType::Sensor// TODO what is this?!
     );
 
     //register phy stream if necessary
-    if (sourceConfig->getSourceType().getValue() != "NoSource") {
-        NES_INFO("start with dedicated source=" << sourceConfig->getSourceType().getValue() << "\n");
+    if (sourceConfig->getSourceType()->getValue() != "NoSource") {
+        NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
         NES_INFO("NESWORKERSTARTER: Source Config type = "
-                 << sourceConfig->getSourceType().getValue() << " Config = " << sourceConfig->getSourceConfig().getValue()
-                 << " physicalStreamName = " << sourceConfig->getPhysicalStreamName().getValue()
-                 << " logicalStreamName = " << sourceConfig->getLogicalStreamName().getValue());
+                 << sourceConfig->getSourceType()->getValue() << " Config = " << sourceConfig->getSourceConfig()->getValue()
+                 << " physicalStreamName = " << sourceConfig->getPhysicalStreamName()->getValue()
+                 << " logicalStreamName = " << sourceConfig->getLogicalStreamName()->getValue());
 
         wrk->setWithRegister(conf);
-    } else if (workerConfig->getParentId().getValue() != "-1") {
-        NES_INFO("start with dedicated parent=" << workerConfig->getParentId().getValue());
-        wrk->setWithParent(workerConfig->getParentId().getValue());
+    } else if (workerConfig->getParentId()->getValue() != "-1") {
+        NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
+        wrk->setWithParent(workerConfig->getParentId()->getValue());
     }
 
     wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call

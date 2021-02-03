@@ -24,7 +24,13 @@
 namespace NES {
 
 class CoordinatorConfig;
-typedef std::unique_ptr<CoordinatorConfig> CoordinatorConfigPtr;
+typedef std::shared_ptr<CoordinatorConfig> CoordinatorConfigPtr;
+
+template<class T>
+class ConfigOption;
+typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
+typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
+typedef std::shared_ptr<ConfigOption<bool>> BoolConfigOption;
 
 /**
  * @brief ConfigOptions for Coordinator

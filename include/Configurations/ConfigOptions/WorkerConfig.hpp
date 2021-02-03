@@ -23,7 +23,12 @@
 namespace NES {
 
 class WorkerConfig;
-typedef std::unique_ptr<WorkerConfig> WorkerConfigPtr;
+typedef std::shared_ptr<WorkerConfig> WorkerConfigPtr;
+
+template<class T>
+class ConfigOption;
+typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
+typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
 
 /**
  * @brief object for storing worker configuration

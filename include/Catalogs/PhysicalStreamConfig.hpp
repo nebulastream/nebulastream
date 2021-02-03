@@ -41,7 +41,8 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
-    static PhysicalStreamConfigPtr create(SourceConfig* sourceConfig = new SourceConfig());
+    static PhysicalStreamConfigPtr createEmpty();
+    static PhysicalStreamConfigPtr create(SourceConfigPtr sourceConfig);
 
     /**
      * @brief Get the source type
@@ -92,7 +93,7 @@ struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     SourceDescriptorPtr build(SchemaPtr) override;
 
   private:
-    explicit PhysicalStreamConfig(SourceConfig* sourceConfig);
+    explicit PhysicalStreamConfig(SourceConfigPtr sourceConfig);
 
     std::string sourceType;
     std::string sourceConfig;

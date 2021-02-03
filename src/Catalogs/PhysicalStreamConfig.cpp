@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -24,17 +25,21 @@
 #include <sstream>
 namespace NES {
 
-PhysicalStreamConfigPtr PhysicalStreamConfig::create(SourceConfig* sourceConfig) {
+PhysicalStreamConfigPtr PhysicalStreamConfig::create(SourceConfigPtr sourceConfig) {
     return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceConfig));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(SourceConfig* sourceConfig)
-    : sourceType(sourceConfig->getSourceType().getValue()), sourceConfig(sourceConfig->getSourceConfig().getValue()),
-      sourceFrequency(sourceConfig->getSourceFrequency().getValue()),
-      numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer().getValue()),
-      numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce().getValue()),
-      physicalStreamName(sourceConfig->getPhysicalStreamName().getValue()),
-      logicalStreamName(sourceConfig->getLogicalStreamName().getValue()), skipHeader(sourceConfig->getSkipHeader().getValue()) {
+PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(SourceConfig::create()));
+}
+
+PhysicalStreamConfig::PhysicalStreamConfig(SourceConfigPtr sourceConfig)
+    : sourceType(sourceConfig->getSourceType()->getValue()), sourceConfig(sourceConfig->getSourceConfig()->getValue()),
+      sourceFrequency(sourceConfig->getSourceFrequency()->getValue()),
+      numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()),
+      numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce()->getValue()),
+      physicalStreamName(sourceConfig->getPhysicalStreamName()->getValue()),
+      logicalStreamName(sourceConfig->getLogicalStreamName()->getValue()), skipHeader(sourceConfig->getSkipHeader()->getValue()) {
     NES_INFO("PhysicalStreamConfig: Created source with config: " << this->toString());
 };
 
@@ -62,7 +67,6 @@ const std::string PhysicalStreamConfig::getPhysicalStreamName() { return physica
 const std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
-
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     auto* config = this;
     auto streamName = config->getLogicalStreamName();

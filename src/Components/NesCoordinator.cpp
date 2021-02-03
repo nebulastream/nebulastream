@@ -34,6 +34,7 @@
 #include <thread>
 
 //GRPC Includes
+#include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
@@ -50,14 +51,13 @@ using grpc::Status;
 
 namespace NES {
 
-NesCoordinator::NesCoordinator(CoordinatorConfig* coordinatorConfig)
-    : restIp(coordinatorConfig->getRestIp().getValue()), restPort(coordinatorConfig->getRestPort().getValue()),
-      rpcIp(coordinatorConfig->getCoordinatorIp().getValue()), rpcPort(coordinatorConfig->getRpcPort().getValue()),
-      numberOfSlots(coordinatorConfig->getNumberOfSlots().getValue()), inherited0(), inherited1() {
+NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
+    : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
+      rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
+      numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()), inherited0(), inherited1() {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;
-
     topology = Topology::create();
     streamCatalog = std::make_shared<StreamCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
@@ -68,7 +68,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfig* coordinatorConfig)
     globalQueryPlan = GlobalQueryPlan::create();
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(
         globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
-        coordinatorConfig->getEnableQueryMerging().getValue());
+        coordinatorConfig->getEnableQueryMerging()->getValue());
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 
@@ -143,7 +143,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
-    WorkerConfig* workerConfig = new WorkerConfig();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
     workerConfig->resetWorkerOptions();
     workerConfig->setCoordinatorIp(rpcIp);
     workerConfig->setLocalWorkerIp(rpcIp);
