@@ -75,6 +75,7 @@ void QueryRequestProcessorService::start() {
             //process the queries using query-at-a-time model
             for (auto queryCatalogEntry : queryCatalogEntryBatch) {
                 QueryId queryId = queryCatalogEntry.getQueryId();
+                auto start = std::chrono::system_clock::now();
                 try {
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
                         NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
@@ -165,6 +166,10 @@ void QueryRequestProcessorService::start() {
 
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+                        auto end = std::chrono::system_clock::now();
+                        NES_DEBUG("QueryProcessingService: Query with ID marked as Running - (queryId, microseconds) : "
+                                  << "(" << queryId << ", "
+                                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     }
