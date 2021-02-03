@@ -18,43 +18,58 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <filesystem>
 #include <string>
-#include <sys/stat.h>
 
 namespace NES {
-SourceConfig::SourceConfig() { NES_INFO("NesSourceConfig: Init source config object with default values."); }
 
-void SourceConfig::overwriteConfigWithYAMLFileInput(string filePath) {
+SourceConfigPtr SourceConfig::create() { return std::make_shared<SourceConfig>(SourceConfig()); }
 
-    struct stat buffer {};
-    if (!filePath.empty() && !(stat(filePath.c_str(), &buffer) == -1)) {
+SourceConfig::SourceConfig() {
+    NES_INFO("NesSourceConfig: Init source config object with default values.");
+    sourceType = ConfigOption<std::string>::create(
+        "sourceType", "DefaultSource",
+        "Type of the Source (available options: DefaultSource, CSVSource, BinarySource, YSBSource).");
+    sourceConfig = ConfigOption<std::string>::create(
+        "sourceConfig", "1",
+        "Source configuration. Options depend on source type. See Source Configurations on our wiki page for further details.");
+    sourceFrequency = ConfigOption<uint32_t>::create("sourceFrequency", 1, "Sampling frequency of the source.");
+    numberOfBuffersToProduce = ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 1, "Number of buffers to produce.");
+    numberOfTuplesToProducePerBuffer =
+        ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.");
+    physicalStreamName =
+        ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.");
+    logicalStreamName = ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.");
+    skipHeader = ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.");
+}
 
+void SourceConfig::overwriteConfigWithYAMLFileInput(std::string filePath) {
+
+    if (!filePath.empty() && std::filesystem::exists(filePath)) {
         NES_INFO("NesSourceConfig: Using config file with path: " << filePath << " .");
-
         Yaml::Node config;
         Yaml::Parse(config, filePath.c_str());
         try {
-            setSourceConfig(config["sourceConfig"].As<string>());
-            setSourceType(config["sourceType"].As<string>());
+            setSourceConfig(config["sourceConfig"].As<std::string>());
+            setSourceType(config["sourceType"].As<std::string>());
             setSourceFrequency(config["sourceFrequency"].As<uint16_t>());
             setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
             setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
-            setPhysicalStreamName(config["physicalStreamName"].As<string>());
-            setLogicalStreamName(config["logicalStreamName"].As<string>());
+            setPhysicalStreamName(config["physicalStreamName"].As<std::string>());
+            setLogicalStreamName(config["logicalStreamName"].As<std::string>());
             setSkipHeader(config["skipHeader"].As<bool>());
-            setLogLevel(config["logLevel"].As<string>());
-        } catch (exception& e) {
-            NES_ERROR("NesSourceConfig: Error while initializing configuration parameters from YAML file. Keeping default "
-                      "values.");
+        } catch (std::exception& e) {
+            NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from XAML file.");
+            NES_WARNING("NesWorkerConfig: Keeping default values.");
             resetSourceOptions();
         }
-    } else {
-        NES_ERROR("NesWorkerConfig: No file path was provided or file could not be found at " << filePath << ".");
-        NES_INFO("Keeping default values for Coordinator Config.");
+        return;
     }
+    NES_ERROR("NesWorkerConfig: No file path was provided or file could not be found at " << filePath << ".");
+    NES_WARNING("NesWorkerConfig: Keeping default values for Coordinator Config.");
 }
 
-void SourceConfig::overwriteConfigWithCommandLineInput(map<string, string> inputParams) {
+void SourceConfig::overwriteConfigWithCommandLineInput(std::map<std::string, std::string> inputParams) {
     try {
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
             if (it->first == "--sourceType") {
@@ -73,58 +88,66 @@ void SourceConfig::overwriteConfigWithCommandLineInput(map<string, string> input
                 setLogicalStreamName(it->second);
             } else if (it->first == "--skipHeader") {
                 setSkipHeader((it->second == "true"));
-            } else if (it->first == "--logLevel") {
-                setLogLevel(it->second);
+            } else {
+                NES_WARNING("Unknow configuration value :" << it->first);
             }
         }
-    } catch (exception e) {
-        NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from command line. Keeping default "
-                  "values.");
+    } catch (std::exception& e) {
+        NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from command line. " << e.what());
+        NES_WARNING("NesWorkerConfig: Keeping default values.");
         resetSourceOptions();
     }
 }
+
 void SourceConfig::resetSourceOptions() {
-    setSourceConfig(sourceConfig.getDefaultValue());
-    setSourceType(sourceType.getDefaultValue());
-    setSourceFrequency(sourceFrequency.getDefaultValue());
-    setNumberOfBuffersToProduce(numberOfBuffersToProduce.getDefaultValue());
-    setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer.getDefaultValue());
-    setPhysicalStreamName(physicalStreamName.getDefaultValue());
-    setLogicalStreamName(logicalStreamName.getDefaultValue());
-    setSkipHeader(skipHeader.getDefaultValue());
-    setLogLevel(logLevel.getDefaultValue());
+    setSourceConfig(sourceConfig->getDefaultValue());
+    setSourceType(sourceType->getDefaultValue());
+    setSourceFrequency(sourceFrequency->getDefaultValue());
+    setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
+    setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
+    setPhysicalStreamName(physicalStreamName->getDefaultValue());
+    setLogicalStreamName(logicalStreamName->getDefaultValue());
+    setSkipHeader(skipHeader->getDefaultValue());
 }
 
-const ConfigOption<std::string>& NES::SourceConfig::getSourceType() const { return sourceType; }
-const ConfigOption<std::string>& NES::SourceConfig::getSourceConfig() const { return sourceConfig; }
-const ConfigOption<uint32_t>& NES::SourceConfig::getSourceFrequency() const { return sourceFrequency; }
-const ConfigOption<uint32_t>& NES::SourceConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
-const ConfigOption<uint32_t>& NES::SourceConfig::getNumberOfTuplesToProducePerBuffer() const {
-    return numberOfTuplesToProducePerBuffer;
-}
-const ConfigOption<std::string>& NES::SourceConfig::getPhysicalStreamName() const { return physicalStreamName; }
-const ConfigOption<std::string>& NES::SourceConfig::getLogicalStreamName() const { return logicalStreamName; }
-const ConfigOption<bool>& NES::SourceConfig::getSkipHeader() const { return skipHeader; }
-const ConfigOption<std::string>& NES::SourceConfig::getLogLevel() const { return logLevel; }
+const StringConfigOption SourceConfig::getSourceType() const { return sourceType; }
 
-void SourceConfig::setSourceType(const string& sourceType) { SourceConfig::sourceType.setValue(sourceType); }
-void SourceConfig::setSourceConfig(const string& sourceConfig) { SourceConfig::sourceConfig.setValue(sourceConfig); }
-void SourceConfig::setSourceFrequency(const uint32_t& sourceFrequency) {
-    SourceConfig::sourceFrequency.setValue(sourceFrequency);
+const StringConfigOption SourceConfig::getSourceConfig() const { return sourceConfig; }
+
+const IntConfigOption SourceConfig::getSourceFrequency() const { return sourceFrequency; }
+
+const IntConfigOption SourceConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+
+const IntConfigOption SourceConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+
+const StringConfigOption SourceConfig::getPhysicalStreamName() const { return physicalStreamName; }
+
+const StringConfigOption SourceConfig::getLogicalStreamName() const { return logicalStreamName; }
+
+const BoolConfigOption SourceConfig::getSkipHeader() const { return skipHeader; }
+
+void SourceConfig::setSourceType(std::string sourceTypeValue) { sourceType->setValue(sourceTypeValue); }
+
+void SourceConfig::setSourceConfig(std::string sourceConfigValue) { sourceConfig->setValue(sourceConfigValue); }
+
+void SourceConfig::setSourceFrequency(uint32_t sourceFrequencyValue) { sourceFrequency->setValue(sourceFrequencyValue); }
+
+void SourceConfig::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduceValue) {
+    numberOfBuffersToProduce->setValue(numberOfBuffersToProduceValue);
 }
-void SourceConfig::setNumberOfBuffersToProduce(const uint32_t& numberOfBuffersToProduce) {
-    SourceConfig::numberOfBuffersToProduce.setValue(numberOfBuffersToProduce);
+
+void SourceConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBufferValue) {
+    numberOfTuplesToProducePerBuffer->setValue(numberOfTuplesToProducePerBufferValue);
 }
-void SourceConfig::setNumberOfTuplesToProducePerBuffer(const uint32_t& numberOfTuplesToProducePerBuffer) {
-    SourceConfig::numberOfTuplesToProducePerBuffer.setValue(numberOfTuplesToProducePerBuffer);
+
+void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
+    physicalStreamName->setValue(physicalStreamNameValue);
 }
-void SourceConfig::setPhysicalStreamName(const string& physicalStreamName) {
-    SourceConfig::physicalStreamName.setValue(physicalStreamName);
+
+void SourceConfig::setLogicalStreamName(std::string logicalStreamNameValue) {
+    logicalStreamName->setValue(logicalStreamNameValue);
 }
-void SourceConfig::setLogicalStreamName(const string& logicalStreamName) {
-    SourceConfig::logicalStreamName.setValue(logicalStreamName);
-}
-void SourceConfig::setSkipHeader(const bool& skipHeader) { SourceConfig::skipHeader.setValue(skipHeader); }
-void SourceConfig::setLogLevel(const string& logLevel) { SourceConfig::logLevel.setValue(logLevel); }
+
+void SourceConfig::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
 
 }// namespace NES

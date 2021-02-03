@@ -18,8 +18,8 @@
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <filesystem>
 #include <string>
-#include <sys/stat.h>
 
 using namespace std;
 
@@ -31,14 +31,10 @@ CoordinatorConfig::CoordinatorConfig() {
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(string filePath) {
 
-    struct stat buffer {};
-    if (!filePath.empty() && !(stat(filePath.c_str(), &buffer) == -1)) {
-
-        NES_INFO("NESCOORDINATORCONFIG: Using config file with path: " << filePath << " .");
-
+    if (!filePath.empty() && std::filesystem::exists(filePath)) {
+        NES_INFO("CoordinatorConfig: Using config file with path: " << filePath << " .");
         Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
-
         try {
             setRestPort(config["restPort"].As<uint16_t>());
             setRpcPort(config["rpcPort"].As<uint16_t>());
@@ -49,20 +45,18 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(string filePath) {
             setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
             setLogLevel(config["logLevel"].As<string>());
         } catch (exception& e) {
-            NES_ERROR("NesCoordinatorConfig: Error while initializing configuration parameters from YAML file. Keeping default "
-                      "values.");
+            NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file.");
+            NES_WARNING("CoordinatorConfig: Keeping default values.");
             resetCoordinatorOptions();
         }
-
-    } else {
-        NES_ERROR("NESCOORDINATORCONFIG: No file path was provided or file could not be found at " << filePath << ".");
-        NES_INFO("Keeping default values for Coordinator Config.");
+        return;
     }
+    NES_ERROR("CoordinatorConfig: No file path was provided or file could not be found at " << filePath << ".");
+    NES_WARNING("CoordinatorConfig: Keeping default values for Coordinator Config.");
 }
 
 void CoordinatorConfig::overwriteConfigWithCommandLineInput(map<string, string> inputParams) {
     try {
-
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
             if (it->first == "--restIp") {
                 setRestIp(it->second);
@@ -83,8 +77,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(map<string, string> 
             }
         }
     } catch (exception e) {
-        NES_ERROR("NesCoordinatorConfig: Error while initializing configuration parameters from command line. Keeping default "
-                  "values.");
+        NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from command line.");
+        NES_WARNING("CoordinatorConfig: Keeping default values.");
         resetCoordinatorOptions();
     }
 }
