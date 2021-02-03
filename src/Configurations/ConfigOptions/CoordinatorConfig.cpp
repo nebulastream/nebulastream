@@ -23,6 +23,8 @@
 
 namespace NES {
 
+CoordinatorConfigPtr CoordinatorConfig::create() { return std::make_unique<CoordinatorConfig>(CoordinatorConfig()); }
+
 CoordinatorConfig::CoordinatorConfig() {
     NES_INFO("Generated new Coordinator Config object. Configurations initialized with default values.");
     restIp = ConfigOption<std::string>::create("restIp", "127.0.0.1", "NES ip of the REST server.");

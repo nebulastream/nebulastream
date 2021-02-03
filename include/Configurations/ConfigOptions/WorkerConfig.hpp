@@ -22,13 +22,16 @@
 
 namespace NES {
 
+class WorkerConfig;
+typedef std::unique_ptr<WorkerConfig> WorkerConfigPtr;
+
+/**
+ * @brief object for storing worker configuration
+ */
 class WorkerConfig {
 
   public:
-    /**
-     * @brief constructor to create a new coordinator option object initialized with default values as set below
-     */
-    WorkerConfig();
+    static WorkerConfigPtr create();
 
     /**
      * @brief overwrite the default configurations with those loaded from a yaml file
@@ -138,6 +141,10 @@ class WorkerConfig {
     void setLogLevel(std::string logLevel);
 
   private:
+    /**
+     * @brief constructor to create a new coordinator option object initialized with default values as set below
+     */
+    WorkerConfig();
     StringConfigOption localWorkerIp;
     StringConfigOption coordinatorIp;
     IntConfigOption coordinatorPort;
