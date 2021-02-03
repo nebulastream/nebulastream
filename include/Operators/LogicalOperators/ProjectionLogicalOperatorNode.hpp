@@ -19,7 +19,6 @@
 
 #include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
-#include <QueryCompiler/LegacyExpression.hpp>
 
 namespace NES {
 
