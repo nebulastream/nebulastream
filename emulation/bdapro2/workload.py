@@ -1,13 +1,14 @@
 import math
 import random
 import time
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import grequests
+import requests
 from requests import Response
 
 
-def generate_query(names: List[str], n_queries: int = 100, n_iter: int = 0) -> List[Dict[str, str]]:
+def generate_query(n_queries: int = 100, n_iter: int = 0) -> List[Dict[str, str]]:
     """
     Generate queries for submitting, we use a default query to start with
     :param names: list of logical stream name
@@ -15,14 +16,12 @@ def generate_query(names: List[str], n_queries: int = 100, n_iter: int = 0) -> L
     :param n_iter: nth iteration
     :return:
     """
-    queries_per = math.ceil(n_queries / len(names))
     query_set = []
-    for i in range(queries_per):
-        for stream in names:
-            output_file_path = f"{stream}_out_{n_iter}_{i}.csv"
-            query = "Query::from(\"" + stream + "\").sink(FileSinkDescriptor::create(\"" + output_file_path + "\",\"CSV_FORMAT\",\"APPEND\")); "
-            query_set.append({"userQuery": query,
-                              "strategyName": "BottomUp"})
+    for i in range(n_queries):
+        output_file_path = f"ysb_out_{n_iter}_{i}.csv"
+        query = "Query::from(\"" + "ysb" + "\").sink(FileSinkDescriptor::create(\"" + output_file_path + "\",\"CSV_FORMAT\",\"APPEND\")); "
+        query_set.append({"userQuery": query,
+                          "strategyName": "BottomUp"})
     return query_set
 
 
@@ -52,45 +51,62 @@ def get_query_id(responses: List[Response]):
 
 
 # stop running queries in sample
-def stop_query(base_url: str, sample):
+def stop_query(base_url: str, query_ids: List[int]):
     stop_query_url = f"{base_url}/queryCatalog/query"
     http_req = []
-    for id in sample:
-        http_req.append(grequests.delete(stop_query_url, json={"queryId": id}))
+    for query_id in query_ids:
+        http_req.append(grequests.delete(stop_query_url, json={"queryId": query_id}))
 
     response_list = grequests.map(http_req)
     return response_list
 
 
-def generate_workload(url, n_requests=100, stable=True, ratio=0.5, iter=1, names=["ysb"], interval=1, diff=False):
+def number_of_queries_waiting_to_run(base_url: str) -> int:
+    valid_status_codes = [200, 204]
+    status_url = f"{base_url}/queryCatalog/queries"
+    registered_response = requests.get(status_url, json={"status": "Registered"})
+    scheduling_response = requests.get(status_url, json={"status": "Scheduling"})
+    if registered_response.status_code not in valid_status_codes or scheduling_response.status_code not in valid_status_codes:
+        Exception(
+            f"Registered Response Code {registered_response.status_code}. Scheduling Response Code {scheduling_response.status_code}")
+    registered_count = 0
+    scheduled_count = 0
+    if registered_response.status_code == 200:
+        registered_count = len(_filter_none(registered_response.json()))
+    if scheduling_response.status_code == 200:
+        scheduled_count = len(_filter_none(scheduling_response.json()))
+    return registered_count + scheduled_count
+
+
+def _filter_none(response: List[Optional[str]]) -> List[str]:
+    return [r for r in response if r is not None]
+
+
+def generate_workload(base_url: str, n_requests: int = 100, stable: bool = True, ratio: float = 0.5, iter: int = 1):
     queryids = []
     for i in range(iter):
         print(f"Running iteration {i + 1}")
-        # setting diff=True, every iteration will generate different queries
-        if diff:
-            query_sets = generate_query(names, n_requests, i)
-        else:
-            query_sets = generate_query(names, n_requests)
-        response_list = submit_query(url, query_sets)
-        queryids.extend(get_query_id(response_list))
-        if stable:
-            time.sleep(interval)
-        else:
+        query_sets = generate_query(n_requests, i)
+        response_list = submit_query(base_url, query_sets)
+        recent_query_ids = get_query_id(response_list)
+        while number_of_queries_waiting_to_run(base_url) > 0:
+            print(f"Waiting until submitted queries are marked as running.")
+            time.sleep(1)
+        if not stable:
             random.shuffle(queryids)
             if ratio > 1:
                 ratio = 1
             # the number of queries to delete
             n_stop = math.ceil(ratio * len(queryids))
             stop_set = queryids[: n_stop]
-            res = stop_query(url, stop_set)
+            res = stop_query(base_url, stop_set)
             # still RUNNING queries
             queryids = queryids[n_stop:]
             stopped_query_ids = ",".join([str(qid) for qid in stop_set])
-            print(f"STOPPED Queries {stopped_query_ids}. {len(queryids)} are still RUNNING")
-
-    return queryids
+            print(f"STOPPED Queries {stopped_query_ids}. {len(queryids)} queries are still RUNNING")
+        queryids.extend(recent_query_ids)
 
 
 if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
-    ids = generate_workload(NES_BASE_URL, stable=False, n_requests=2, iter=2)
+    generate_workload(NES_BASE_URL, stable=True, n_requests=10, iter=2)

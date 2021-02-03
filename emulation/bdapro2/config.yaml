@@ -17,7 +17,7 @@ docker_image: "bdapro/query-merging"
 
 
 #Sample configuration for Hierarachy topology
-hierarchy: True
+hierarchy: False
 hierarchy_mapping:
   "W-0":
     - "S-0"
