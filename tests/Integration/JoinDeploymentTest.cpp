@@ -38,9 +38,9 @@ static uint64_t rpcPort = 4000;
 
 class JoinDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfig* crdConf = new CoordinatorConfig();
-    WorkerConfig* wrkConf = new WorkerConfig();
-    SourceConfig* srcConf = new SourceConfig();
+    CoordinatorConfigPtr crdConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
     static void SetUpTestCase() {
         NES::setupLogging("JoinDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup JoinDeploymentTest test class.");
@@ -51,6 +51,9 @@ class JoinDeploymentTest : public testing::Test {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
+        crdConf=CoordinatorConfig::create();
+        wrkConf=WorkerConfig::create();
+        srcConf=SourceConfig::create();
         crdConf->setRpcPort(rpcPort);
         crdConf->setRestPort(restPort);
 

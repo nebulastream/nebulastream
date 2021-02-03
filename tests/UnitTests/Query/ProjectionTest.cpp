@@ -74,7 +74,7 @@ class ProjectionTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
-        auto streamConf = PhysicalStreamConfig::create();
+        auto streamConf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
     }
 
@@ -278,7 +278,7 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(ProjectionTest, projectionQueryCorrectField) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -337,7 +337,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 }
 
 TEST_F(ProjectionTest, projectionQueryWrongField) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -396,7 +396,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 }
 
 TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -455,7 +455,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     nodeEngine->stop();
 }
 TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -473,7 +473,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
 }
 
 TEST_F(ProjectionTest, projectNotExistingField) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -492,7 +492,7 @@ TEST_F(ProjectionTest, projectNotExistingField) {
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -572,7 +572,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -618,7 +618,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
         {// created buffer per source * number of sources
             uint64_t expectedBuf = 20;
 
-            PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+            PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
             auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                              nodeEngine->getQueryManager(), 1);
@@ -654,7 +654,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     // created buffer per source * number of sources
     uint64_t expectedBuf = 20;
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager(), 1);

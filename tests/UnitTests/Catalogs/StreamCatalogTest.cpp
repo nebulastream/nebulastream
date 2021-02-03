@@ -36,22 +36,22 @@ const std::string defaultLogicalStreamName = "default_logical";
 /* - nesTopologyManager ---------------------------------------------------- */
 class StreamCatalogTest : public testing::Test {
   public:
-    SourceConfig* sourceConfig = new SourceConfig();
+    SourceConfigPtr sourceConfig;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup StreamCatalogTest test class." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("StreamCatalogTest.log", NES::LOG_DEBUG);
-        std::cout << "Setup StreamCatalogTest test case." << std::endl;
+        NES_INFO("Setup StreamCatalogTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Tear down StreamCatalogTest test case." << std::endl; }
+    void SetUp() { sourceConfig = SourceConfig::create(); }
+
+    /* Will be called before a test is executed. */
+    void TearDown() { NES_INFO("Tear down StreamCatalogTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down StreamCatalogTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down StreamCatalogTest test class."); }
 };
 
 TEST_F(StreamCatalogTest, testAddGetLogStream) {
@@ -159,7 +159,7 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 

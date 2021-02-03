@@ -62,7 +62,7 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
         default: benchmarkSchema = benchmarkSchemaI64; break;
     }
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     auto bufferManager = nodeEngine->getBufferManager();
     auto buffer = bufferManager->getBufferBlocking();
@@ -124,7 +124,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
         default: benchmarkSchema = benchmarkSchemaI64; break;
     }
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     auto bufferManager = nodeEngine->getBufferManager();
     auto buffer = bufferManager->getBufferBlocking();
@@ -190,7 +190,7 @@ static void BM_CustomFilling(benchmark::State& state) {
         default: benchmarkSchema = benchmarkSchemaI64; break;
     }
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     auto bufferManager = nodeEngine->getBufferManager();
     auto buffer = bufferManager->getBufferBlocking();

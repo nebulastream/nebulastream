@@ -55,8 +55,8 @@ class MonitoringStackTest : public testing::Test {
     NodeEngine::BufferManagerPtr bufferManager;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
-    CoordinatorConfig* crdConf = new CoordinatorConfig();
-    WorkerConfig* wrkConf = new WorkerConfig();
+    CoordinatorConfigPtr crdConf;
+    WorkerConfigPtr wrkConf;
 
     static void SetUpTestCase() {
         NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
@@ -67,6 +67,8 @@ class MonitoringStackTest : public testing::Test {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
+        crdConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
         crdConf->resetCoordinatorOptions();
         wrkConf->resetWorkerOptions();
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;

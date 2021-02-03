@@ -111,7 +111,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     std::string physicalStreamName = "testStream";
 
-    SourceConfig* sourceConfig = new SourceConfig();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("testCSV.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);

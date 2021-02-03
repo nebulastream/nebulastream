@@ -37,9 +37,9 @@ uint64_t rpcPort = 4000;
 
 class SimplePatternTest : public testing::Test {
   public:
-    CoordinatorConfig* coConf = new CoordinatorConfig();
-    WorkerConfig* wrkConf = new WorkerConfig();
-    SourceConfig* srcConf = new SourceConfig();
+    CoordinatorConfigPtr coConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
 
     static void SetUpTestCase() {
         NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
@@ -49,6 +49,10 @@ class SimplePatternTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+        coConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
+        srcConf = SourceConfig::create();
+
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
         wrkConf->setCoordinatorPort(rpcPort);

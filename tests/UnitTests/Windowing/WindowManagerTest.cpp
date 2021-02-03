@@ -185,7 +185,7 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
@@ -260,7 +260,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31338, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
@@ -333,7 +333,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31339, conf);
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -409,7 +409,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
@@ -489,7 +489,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31340, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));

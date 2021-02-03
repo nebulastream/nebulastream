@@ -39,9 +39,9 @@ static uint64_t rpcPort = 4000;
 
 class MergeDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
-    SourceConfig* sourceConfig = new SourceConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
+    SourceConfigPtr sourceConfig;
     static void SetUpTestCase() {
         NES::setupLogging("MergeDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MergeDeploymentTest test class.");
@@ -50,9 +50,15 @@ class MergeDeploymentTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+
+        coordinatorConfig = CoordinatorConfig::create();
         coordinatorConfig->setRpcPort(rpcPort);
         coordinatorConfig->setRestPort(restPort);
+
+        workerConfig = WorkerConfig::create();
         workerConfig->setCoordinatorPort(rpcPort);
+
+        sourceConfig = SourceConfig::create();
     }
 
     void TearDown() { std::cout << "Tear down MergeDeploymentTest class." << std::endl; }

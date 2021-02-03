@@ -619,7 +619,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 }
 
 TEST_F(NetworkStackTest, testNetworkSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
     auto netManager = nodeEngine->getNetworkManager();
 
@@ -639,7 +639,7 @@ TEST_F(NetworkStackTest, testNetworkSource) {
 }
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
@@ -662,7 +662,7 @@ template<typename MockedNodeEngine, typename... ExtraParameters>
 std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize,
                                                      uint64_t numBuffers, ExtraParameters&&... extraParams) {
     try {
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
@@ -791,7 +791,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                            ->addField("test$one", DataTypeFactory::createInt64())
                            ->addField("test$value", DataTypeFactory::createInt64());
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink

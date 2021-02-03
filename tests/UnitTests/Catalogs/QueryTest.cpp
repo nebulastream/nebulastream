@@ -49,7 +49,8 @@ namespace NES {
 
 class QueryTest : public testing::Test {
   public:
-    SourceConfig* sourceConfig = new SourceConfig();
+
+    SourceConfigPtr sourceConfig;
 
     static void SetUpTestCase() {
         NES::setupLogging("QueryTest.log", NES::LOG_DEBUG);
@@ -58,6 +59,8 @@ class QueryTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() {
+
+        sourceConfig;
         sourceConfig->setSourceConfig("");
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setNumberOfBuffersToProduce(3);

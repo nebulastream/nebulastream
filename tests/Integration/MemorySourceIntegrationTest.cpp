@@ -37,9 +37,9 @@ uint64_t rpcPort = 4000;
 
 class MemorySourceIntegrationTest : public testing::Test {
   public:
-    CoordinatorConfig* crdConf = new CoordinatorConfig();
-    WorkerConfig* wrkConf = new WorkerConfig();
-    SourceConfig* srcConf = new SourceConfig();
+    CoordinatorConfigPtr crdConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
     static void SetUpTestCase() {
         NES::setupLogging("MemorySourceIntegrationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MemorySourceIntegrationTest test class.");
@@ -48,6 +48,9 @@ class MemorySourceIntegrationTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
 
+        crdConf =CoordinatorConfig::create();
+        wrkConf=WorkerConfig::create();
+        srcConf=SourceConfig::create();
         crdConf->setRpcPort(rpcPort);
         wrkConf->setCoordinatorPort(rpcPort);
     }

@@ -86,7 +86,7 @@ class OperatorCodeGenerationTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
-        auto streamConf = PhysicalStreamConfig::create();
+        auto streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     }
 
@@ -337,7 +337,7 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -376,7 +376,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -425,7 +425,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -445,7 +445,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -484,7 +484,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -548,7 +548,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -610,7 +610,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -677,7 +677,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTime
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -746,7 +746,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     auto schema = Schema::create()
                       ->addField(createField("_$start", UINT64))
@@ -878,7 +878,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     auto schema = Schema::create()
                       ->addField(createField("_$start", UINT64))
@@ -915,7 +915,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     /* prepare objects for test */
@@ -964,7 +964,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     /* prepare objects for test */
@@ -1026,7 +1026,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     /* prepare objects for test */
@@ -1090,7 +1090,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());

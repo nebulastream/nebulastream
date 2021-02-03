@@ -111,7 +111,7 @@ const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::Bu
  * @result true, if source starts, changes interval, and stops
  */
 TEST_F(AdaptiveSourceTest, testSamplingChange) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
 
     std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
