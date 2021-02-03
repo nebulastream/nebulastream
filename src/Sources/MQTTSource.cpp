@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#include "mqtt/client.h"
+#ifdef ENABLE_MQTT_BUILD
+
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/MQTTSource.hpp>
@@ -24,6 +25,7 @@
 #include <cstring>
 #include <sstream>
 #include <string>
+#include <mqtt/async_client.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -31,40 +33,54 @@ using namespace std::chrono;
 namespace NES {
 
 MQTTSource::MQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                       const std::string serverAddress, const std::string clientId, OperatorId operatorId)
-    : DataSource(schema, bufferManager, queryManager, operatorId), connected(false), serverAddress(serverAddress),
-      clientId(clientId) {
-    NES_DEBUG("MQTTSOURCE  " << this << ": Init MQTTSOURCE to " << serverAddress << " with client id: " << clientId << "/");
+                       const std::string serverAddress, const std::string clientId, const std::string user, const std::string password,
+                       const std::string topic, OperatorId operatorId)
+    : DataSource(schema, bufferManager, queryManager, operatorId), connected(false), serverAddress(serverAddress), clientId(clientId),
+    user(user), password(password), topic(topic), client(serverAddress, clientId) {
+    NES_DEBUG("MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId <<
+              " and ");
 }
 
 MQTTSource::~MQTTSource() {
     NES_DEBUG("MQTTSource::~MQTTSource()");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG("MQTTSOURCE  " << this << ": Destroy MQTT Source");
+        NES_DEBUG("MQTTSource  " << this << ": Destroy MQTT Source");
     } else {
-        NES_ERROR("MQTTSOURCE  " << this << ": Destroy MQTT Source failed cause it could not be disconnected");
+        NES_ERROR("MQTTSource  " << this << ": Destroy MQTT Source failed cause it could not be disconnected");
         assert(0);
     }
-    NES_DEBUG("MQTTSOURCE  " << this << ": Destroy MQTT Source");
+    NES_DEBUG("MQTTSource  " << this << ": Destroy MQTT Source");
 }
 
 std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
-    NES_DEBUG("MQTTSOURCE  " << this << ": receiveData ");
+    NES_DEBUG("MQTTSource  " << this << ": receiveData ");
 
     if (connect()) {// was if (connect()) {
         try {
+            NES_INFO("Waiting for messages on topic: '" << topic << "'");
 
+            auto buffer = bufferManager->getBufferBlocking();
+            //ToDo: check if only one tuple send each time or changes possible
+            int count = 0;
+            while (true) {
+                auto msg = client.consume_message();
+                if (!msg){
+                    buffer.setNumberOfTuples(count);
+                    break;
+                }
+                std::memcpy(buffer.getBuffer(), msg->get_payload_str().c_str(), msg->get_payload().size());
+            }
             return buffer;
-        } catch (const zmq::error_t& ex) {
-            NES_ERROR("MQTTSOURCE error: " << ex.what());
+        } catch (const mqtt::exception& exc) {
+            NES_ERROR("MQTTSource error: " << exc.what());
             return std::nullopt;
         } catch (...) {
-            NES_ERROR("MQTTSOURCE general error");
+            NES_ERROR("MQTTSource general error");
             return std::nullopt;
         }
     } else {
-        NES_ERROR("MQTTSOURCE: Not connected!");
+        NES_ERROR("MQTTSource: Not connected!");
         return std::nullopt;
     }
 }
@@ -73,52 +89,83 @@ const std::string MQTTSource::toString() const {
     std::stringstream ss;
     ss << "MQTTSOURCE(";
     ss << "SCHEMA(" << schema->toString() << "), ";
-    ss << "HOST=" << host << ", ";
-    ss << "PORT=" << port << ", ";
+    ss << "SERVERADDRESS=" << serverAddress << ", ";
+    ss << "CLIENTID=" << clientId << ", ";
+    ss << "USER=" << user << ", ";
+    ss << "PASSWORD=" << password << ", ";
+    ss << "TOPIC=" << topic << ", ";
     return ss.str();
 }
 
 bool MQTTSource::connect() {
     if (!connected) {
-        NES_DEBUG("MQTTSOURCE was !conncect now connect " << this << ": connected");
-
-        mqtt::client cli(serverAddress, clientId);
-
+        NES_DEBUG("MQTTSource was !connect now connect " << this << ": connected");
+        // connect with user name and password
         auto connOpts = mqtt::connect_options_builder()
-                            .user_name("user")
-                            .password("passwd")
-                            .keep_alive_interval(seconds(30))
-                            .automatic_reconnect(seconds(2), seconds(30))
+                            .user_name(user)
+                            .password(password)
                             .clean_session(false)
                             .finalize();
+        try {
+            // Start consumer before connecting to make sure to not miss messages
+            client.start_consuming();
+
+            // Connect to the server
+            NES_INFO("MQTTSource: Connecting to the MQTT server...");
+            auto tok = client.connect(connOpts);
+
+            // Getting the connect response will block waiting for the
+            // connection to complete.
+            auto rsp = tok->get_connect_response();
+
+            // If there is no session present, then we need to subscribe, but if
+            // there is a session, then the server remembers us and our
+            // subscriptions.
+            if (!rsp.is_session_present())
+                client.subscribe(topic, 1)->wait();
+            connected = client.is_connected();
+        }
+        catch (const mqtt::exception& exc) {
+            NES_WARNING("\n  " << exc );
+            connected = false;
+            return connected;
+        }
 
         if (connected) {
-            NES_DEBUG("MQTTSOURCE  " << this << ": connected");
+            NES_INFO("MQTTSource: Connection established with topic: " << topic);
+            NES_DEBUG("MQTTSource  " << this << ": connected");
         } else {
-            NES_DEBUG("Exception: MQTTSOURCE  " << this << ": NOT connected");
+            NES_DEBUG("Exception: MQTTSource  " << this << ": NOT connected");
         }
-        return connected;
     }
+    return connected;
 }
 
 bool MQTTSource::disconnect() {
-    NES_DEBUG("MQTTSOURCE::disconnect() connected=" << connected);
+    NES_DEBUG("MQTTSource::disconnect() connected=" << connected);
     if (connected) {
-        // we put assert here because it d be called anyway from the shutdown method
-        // that we commented out
-
-        if (!success) {
-            throw Exception("MQTTSOURCE::disconnect() error");
+        // If we're here, the client was almost certainly disconnected.
+        // But we check, just to make sure.
+        if (client.is_connected()) {
+            NES_INFO("MQTTSource: Shutting down and disconnecting from the MQTT server.");
+            client.unsubscribe(topic)->wait();
+            client.stop_consuming();
+            client.disconnect()->wait();
+            NES_INFO("MQTTSource: disconnected.");
         }
-        //        context.shutdown();
-        connected = false;
+        else {
+            NES_INFO("MQTTSource: Client was already disconnected");
+        }
+        connected = client.is_connected();
     }
     if (!connected) {
-        NES_DEBUG("MQTTSOURCE  " << this << ": disconnected");
+        NES_DEBUG("MQTTSource  " << this << ": disconnected");
     } else {
-        NES_DEBUG("MQTTSOURCE  " << this << ": NOT disconnected");
+        NES_DEBUG("MQTTSource  " << this << ": NOT disconnected");
+        return connected;
     }
     return !connected;
 }
 
 }// namespace NES
+#endif

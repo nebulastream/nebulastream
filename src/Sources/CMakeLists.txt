@@ -25,7 +25,6 @@ add_source_nes(
         YSBSource.cpp
         MonitoringSource.cpp
         MemorySource.cpp
-        MQTTSource.cpp
 )
 
 if(NES_USE_KAFKA)
@@ -36,5 +35,10 @@ endif()
 if(NES_USE_OPC)
     add_source_nes(
             OPCSource.cpp
+    )
+endif()
+if(NES_USE_MQTT)
+    add_source_nes(
+            MQTTSource.cpp
     )
 endif()
