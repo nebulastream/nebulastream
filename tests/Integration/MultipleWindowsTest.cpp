@@ -35,9 +35,10 @@ static uint64_t rpcPort = 4000;
 
 class MultipleWindowsTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
-    SourceConfig* srcConf = new SourceConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
+    SourceConfigPtr srcConf;
+
     static void SetUpTestCase() {
         NES::setupLogging("MultipleWindowsTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultipleWindowsTest test class.");
@@ -47,14 +48,16 @@ class MultipleWindowsTest : public testing::Test {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
+        srcConf = SourceConfig::create();
+
         coordinatorConfig->setRpcPort(rpcPort);
         coordinatorConfig->setRestPort(restPort);
-
         workerConfig->setCoordinatorPort(rpcPort);
     }
 
-    void TearDown() { std::cout << "Tear down MultipleWindowsTest class." << std::endl; }
-
+    void TearDown() { NES_INFO("Tear down MultipleWindowsTest class."); }
     std::string ipAddress = "127.0.0.1";
 };
 

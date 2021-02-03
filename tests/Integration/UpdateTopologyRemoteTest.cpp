@@ -34,8 +34,8 @@ uint64_t rpcPort = 4000;
 
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 
@@ -52,6 +52,8 @@ class UpdateTopologyRemoteTest : public testing::Test {
 
     void SetUp() {
         rpcPort = rpcPort + 30;
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
         coordinatorConfig->setRpcPort(rpcPort);
         workerConfig->setCoordinatorPort(rpcPort);
     }

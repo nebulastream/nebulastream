@@ -70,12 +70,11 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
-
     typedef detail::virtual_enable_shared_from_this<NesCoordinator> inherited0;
     typedef ErrorListener inherited1;
 
   public:
-    explicit NesCoordinator(CoordinatorConfig* coordinatorConfig = new CoordinatorConfig());
+    explicit NesCoordinator(CoordinatorConfigPtr coordinatorConfig);
 
     /**
      * @brief dtor
@@ -161,7 +160,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
-    std::atomic<bool> stopped;
+    std::atomic<bool> stopped{};
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;

@@ -23,7 +23,13 @@
 namespace NES {
 
 class SourceConfig;
-typedef std::unique_ptr<SourceConfig> SourceConfigPtr;
+typedef std::shared_ptr<SourceConfig> SourceConfigPtr;
+
+template<class T>
+class ConfigOption;
+typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
+typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
+typedef std::shared_ptr<ConfigOption<bool>> BoolConfigOption;
 
 /**
  * @brief Configuration object for source config

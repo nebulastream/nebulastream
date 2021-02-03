@@ -15,6 +15,7 @@
 */
 
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <future>
@@ -31,13 +32,13 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(WorkerConfig* workerConfig, NodeType type)
-    : coordinatorIp(std::move(workerConfig->getCoordinatorIp().getValue())),
-      coordinatorPort(workerConfig->getCoordinatorPort().getValue()),
-      localWorkerIp(std::move(workerConfig->getLocalWorkerIp().getValue())),
-      localWorkerRpcPort(workerConfig->getRpcPort().getValue()), localWorkerZmqPort(workerConfig->getDataPort().getValue()),
-      numberOfSlots(workerConfig->getNumberOfSlots().getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads().getValue()), type(type), conf(PhysicalStreamConfig::create()) {
+NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
+    : coordinatorIp(std::move(workerConfig->getCoordinatorIp()->getValue())),
+      coordinatorPort(workerConfig->getCoordinatorPort()->getValue()),
+      localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
+      localWorkerRpcPort(workerConfig->getRpcPort()->getValue()), localWorkerZmqPort(workerConfig->getDataPort()->getValue()),
+      numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()) {
     connected = false;
     withRegisterStream = false;
     withParent = false;

@@ -24,7 +24,7 @@
 
 namespace NES {
 
-WorkerConfigPtr WorkerConfig::create() { return std::make_unique<WorkerConfig>(WorkerConfig()); }
+WorkerConfigPtr WorkerConfig::create() { return std::make_shared<WorkerConfig>(WorkerConfig()); }
 
 WorkerConfig::WorkerConfig() {
     NES_INFO("Generated new Worker Config object. Configurations initialized with default values.");

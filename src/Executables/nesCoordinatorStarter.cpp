@@ -49,7 +49,7 @@ int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel("LOG_DEBUG"));
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
 
     map<string, string> commandLineParams;
 
@@ -67,13 +67,13 @@ int main(int argc, const char* argv[]) {
     if (argc >= 1) {
         coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
-    NES::setLogLevel(NES::getStringAsDebugLevel(coordinatorConfig->getLogLevel().getValue()));
+    NES::setLogLevel(NES::getStringAsDebugLevel(coordinatorConfig->getLogLevel()->getValue()));
 
-    NES_INFO("start coordinator with RestIp=" << coordinatorConfig->getRestIp().getValue()
-                                              << " restPort=" << coordinatorConfig->getRestPort().getValue()
-                                              << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp().getValue()
-                                              << " with rpc port " << coordinatorConfig->getRpcPort().getValue()
-                                              << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots().getValue());
+    NES_INFO("start coordinator with RestIp=" << coordinatorConfig->getRestIp()->getValue()
+                                              << " restPort=" << coordinatorConfig->getRestPort()->getValue()
+                                              << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp()->getValue()
+                                              << " with rpc port " << coordinatorConfig->getRpcPort()->getValue()
+                                              << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots()->getValue());
 
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);

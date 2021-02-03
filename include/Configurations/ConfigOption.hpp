@@ -34,7 +34,7 @@ template<class T>
 class ConfigOption {
   public:
     static std::shared_ptr<ConfigOption> create(std::string key, T value, std::string description) {
-        return std::make_shared<>(ConfigOption(key, value, description));
+        return std::make_shared<ConfigOption>(ConfigOption(key, value, description));
     };
 
     /**
@@ -112,10 +112,6 @@ class ConfigOption {
     T value;
     T defaultValue;
 };
-
-typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
-typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
-typedef std::shared_ptr<ConfigOption<bool>> BoolConfigOption;
 }// namespace NES
 
 #endif//NES_CONFIGOPTION_HPP

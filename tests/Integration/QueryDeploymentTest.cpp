@@ -40,9 +40,9 @@ static uint64_t rpcPort = 4000;
 
 class QueryDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfig* coConf = new CoordinatorConfig();
-    WorkerConfig* wrkConf = new WorkerConfig();
-    SourceConfig* srcConf = new SourceConfig();
+    CoordinatorConfigPtr coConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
 
     static void SetUpTestCase() {
         NES::setupLogging("QueryDeploymentTest.log", NES::LOG_DEBUG);
@@ -53,6 +53,9 @@ class QueryDeploymentTest : public testing::Test {
 
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+        coConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
+        srcConf = SourceConfig::create();
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
         wrkConf->setCoordinatorPort(rpcPort);

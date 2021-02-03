@@ -35,8 +35,8 @@ uint64_t rpcPort = 4000;
 
 class WorkerCoordinatorStarterTest : public testing::Test {
   public:
-    CoordinatorConfig* coordinatorConfig = new CoordinatorConfig();
-    WorkerConfig* workerConfig = new WorkerConfig();
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
 
     static void SetUpTestCase() {
         NES::setupLogging("WorkerCoordinatorStarterTest.log", NES::LOG_DEBUG);
@@ -45,7 +45,8 @@ class WorkerCoordinatorStarterTest : public testing::Test {
 
     void SetUp() {
         rpcPort = rpcPort + 30;
-
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
         coordinatorConfig->setRpcPort(rpcPort);
         workerConfig->setCoordinatorPort(rpcPort);
     }
