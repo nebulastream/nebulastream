@@ -141,6 +141,10 @@ void QueryRequestProcessorService::start() {
                     auto queryId = queryRequest.getQueryId();
                     if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+                        auto end = std::chrono::system_clock::now();
+                        NES_DEBUG("QueryProcessingService: Query with ID marked as Running - (queryId, microseconds) : "
+                                  << "(" << queryId << ", "
+                                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     }
