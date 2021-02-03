@@ -199,13 +199,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
-    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = Attribute("f3").rename("f5") * 42);
-    auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
+   auto query =  Query::from("default_logical")
+        .project(Attribute("f3").rename("f5"))
+        .map(Attribute("f4") = Attribute("f5") * 42)
+        .sink(FileSinkDescriptor::create(""));
 
-    auto plan = QueryPlan::create(source);
-    plan->appendOperatorAsNewRoot(map);
-    plan->appendOperatorAsNewRoot(sink);
+    auto plan = query.getQueryPlan();
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
@@ -227,13 +226,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
-    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = Attribute("f3") * 42);
-    auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
+    auto query =  Query::from("default_logical")
+        .map(Attribute("f3") = Attribute("f3") * 42)
+        .project(Attribute("f3").rename("f4"))
+        .sink(FileSinkDescriptor::create(""));
 
-    auto plan = QueryPlan::create(source);
-    plan->appendOperatorAsNewRoot(map);
-    plan->appendOperatorAsNewRoot(sink);
+    auto plan = query.getQueryPlan();
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
@@ -249,14 +247,14 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 /**
      * @brief In this test we test the rename operator
      */
-TEST_F(TypeInferencePhaseTest, inferQueryRenameinAssignment) {
+TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
-    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3").rename("f4") = 42);
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f4") = 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
     auto plan = QueryPlan::create(source);
