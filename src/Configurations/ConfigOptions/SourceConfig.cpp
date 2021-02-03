@@ -43,7 +43,7 @@ SourceConfig::SourceConfig() {
     skipHeader = ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.");
 }
 
-void SourceConfig::overwriteConfigWithYAMLFileInput(std::string filePath) {
+void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         NES_INFO("NesSourceConfig: Using config file with path: " << filePath << " .");
@@ -69,7 +69,7 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(std::string filePath) {
     NES_WARNING("NesWorkerConfig: Keeping default values for Coordinator Config.");
 }
 
-void SourceConfig::overwriteConfigWithCommandLineInput(std::map<std::string, std::string> inputParams) {
+void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
     try {
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
             if (it->first == "--sourceType") {

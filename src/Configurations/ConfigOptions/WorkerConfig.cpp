@@ -45,7 +45,7 @@ WorkerConfig::WorkerConfig() {
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
 }
 
-void WorkerConfig::overwriteConfigWithYAMLFileInput(std::string filePath) {
+void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
 
@@ -75,7 +75,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(std::string filePath) {
     NES_WARNING("Keeping default values for Worker Config.");
 }
 
-void WorkerConfig::overwriteConfigWithCommandLineInput(std::map<std::string, std::string> inputParams) {
+void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
     try {
 
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {

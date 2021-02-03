@@ -34,7 +34,7 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    NesWorker(WorkerConfigPtr workerConfig, NodeType type);
+    explicit NesWorker(WorkerConfigPtr workerConfig, NodeType type);
 
     /**
      * @brief default dtor

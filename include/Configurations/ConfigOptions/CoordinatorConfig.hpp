@@ -44,13 +44,13 @@ class CoordinatorConfig {
      * @brief overwrite the default configurations with those loaded from a yaml file
      * @param filePath file path to the yaml file
      */
-    void overwriteConfigWithYAMLFileInput(std::string filePath);
+    void overwriteConfigWithYAMLFileInput(const std::string& filePath);
 
     /**
      * @brief overwrite the default and the yaml file configurations with command line input
      * @param inputParams map with key=command line parameter and value = value
      */
-    void overwriteConfigWithCommandLineInput(std::map<std::string, std::string> inputParams);
+    void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief resets all options to default values
@@ -59,81 +59,97 @@ class CoordinatorConfig {
 
     /**
      * @brief gets a ConfigOption object with restIp
+     * @return Configuration option for rest IP
      */
     StringConfigOption getRestIp();
 
     /**
      * @brief set the value for rest ip with the appropriate data format
+     * @param restIp: the rest ip address
      */
     void setRestIp(std::string restIp);
 
     /**
      * @brief gets a ConfigOption object with coordinatorip
+     * @return Config option for coordinator ip
      */
     StringConfigOption getCoordinatorIp();
 
     /**
      * @brief set the value for coordinatorIp with the appropriate data format
+     * @param coordinatorIp: the coordinator ip
      */
     void setCoordinatorIp(std::string coordinatorIp);
 
     /**
      * @brief gets a ConfigOption object with rpcPort
+     * @return config option for RPC port
      */
     IntConfigOption getRpcPort();
 
     /**
      * @brief set the value for rpcPort with the appropriate data format
+     * @param rpcPort: the rpc port
      */
     void setRpcPort(uint16_t rpcPort);
 
     /**
      * @brief gets a ConfigOption object with rest port
+     * @return config option for rest port
      */
     IntConfigOption getRestPort();
 
     /**
      * @brief set the value for restPort with the appropriate data format
+     * @param restPort: the rest port
      */
     void setRestPort(uint16_t restPort);
 
     /**
      * @brief gets a ConfigOption object with data port
+     * @return config option for data port
      */
     IntConfigOption getDataPort();
 
     /**
      * @brief set the value for dataPort with the appropriate data format
+     * @param dataPort: data port
      */
     void setDataPort(uint16_t dataPort);
 
     /**
      * @brief gets a ConfigOption object with number of slots
+     * @return config option for number of slots
      */
     IntConfigOption getNumberOfSlots();
 
     /**
      * @brief set the value for numberOfSlots with the appropriate data format
+     * @param numberOfSlots: number of slots
      */
     void setNumberOfSlots(uint16_t numberOfSlots);
 
     /**
      * @brief gets a ConfigOption object with enable query merging
+     * @param Config option for query merging
      */
     BoolConfigOption getEnableQueryMerging();
 
     /**
      * @brief set the value for enableQueryMerging with the appropriate data format
+     * @param enableQueryMerging: enable or disable query merging
      */
     void setEnableQueryMerging(bool enableQueryMerging);
 
     /**
      * @brief gets a ConfigOption object with log level
+     * @return Config option for Log level for coordinator
      */
     StringConfigOption getLogLevel();
 
     /**
      * @brief set the value for logLevel with the appropriate data format
+     * @param logLevel: the log level value
      */
     void setLogLevel(std::string logLevel);
 

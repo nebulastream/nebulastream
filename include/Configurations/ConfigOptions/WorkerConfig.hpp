@@ -42,13 +42,13 @@ class WorkerConfig {
      * @brief overwrite the default configurations with those loaded from a yaml file
      * @param filePath file path to the yaml file
      */
-    void overwriteConfigWithYAMLFileInput(std::string filePath);
+    void overwriteConfigWithYAMLFileInput(const std::string& filePath);
 
     /**
      * @brief overwrite the default and the yaml file configurations with command line input
      * @param inputParams map with key=command line parameter and value = value
      */
-    void overwriteConfigWithCommandLineInput(std::map<std::string, std::string> inputParams);
+    void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief resets all options to default values
