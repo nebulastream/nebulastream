@@ -275,7 +275,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 /**
  * Testing testHarness utility for query with a join operator on different streams
  */
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
+TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -322,18 +322,19 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
     testHarness.pushElement<Window2>({ 33, 3100}, 1);
 
     struct Output {
-        uint64_t start;
-        uint64_t end;
-        uint64_t key;
-        uint64_t left_id1;
-        uint64_t left_timestamp;
-        uint64_t right_id2;
-        uint64_t right_timestamp;
+        uint64_t _$start;
+        uint64_t _$end;
+        uint64_t _$key;
+        uint64_t window1$id1;
+        uint64_t window1$timestamp;
+        uint64_t window2$id2;
+        uint64_t window2$timestamp;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
-            return (start == rhs.start && end == rhs.end && left_id1 == rhs.left_id1 && left_timestamp == rhs.left_timestamp
-                    && right_id2 == rhs.right_id2 && right_timestamp == rhs.right_timestamp);
+            return (_$start == rhs._$start && _$end == rhs._$end && _$key == rhs._$key && window1$id1 == rhs.window1$id1
+                    && window1$timestamp == rhs.window1$timestamp && window2$id2 == rhs.window2$id2
+                    && window2$timestamp == rhs.window2$timestamp);
         }
     };
     std::vector<Output> expectedOutput = {{1000, 2000, 4, 4, 1002, 4, 1102},
