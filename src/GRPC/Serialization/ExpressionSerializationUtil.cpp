@@ -125,7 +125,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             serializedExpression->details().UnpackTo(&serializedFieldRenameExpression);
             auto originalFieldAccessExpression =
                 deserializeExpression(serializedFieldRenameExpression.mutable_originalfieldaccessexpression());
-            if (originalFieldAccessExpression->instanceOf<FieldAccessExpressionNode>()) {
+            if (!originalFieldAccessExpression->instanceOf<FieldAccessExpressionNode>()) {
                 NES_FATAL_ERROR("ExpressionSerializationUtil: the original field access expression "
                                 "should be of type FieldAccessExpressionNode, but was a "
                                 << originalFieldAccessExpression->toString());
