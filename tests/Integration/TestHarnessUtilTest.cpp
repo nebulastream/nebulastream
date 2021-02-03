@@ -409,6 +409,68 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
 }
 
 /*
+ * Testing testHarness utility for a query with map operator
+ */
+TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
+struct Car {
+    uint32_t key;
+    uint32_t value;
+    uint64_t timestamp;
+};
+
+auto carSchema = Schema::create()
+    ->addField("key", DataTypeFactory::createUInt32())
+    ->addField("value", DataTypeFactory::createUInt32())
+    ->addField("timestamp", DataTypeFactory::createUInt64());
+
+ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
+TestHarness testHarness = TestHarness(queryWithFilterOperator);
+
+/*
+ * Expected topology:
+ * PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+ *  |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+ *  |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+ *  |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+ */
+
+testHarness.addNonSourceWorker(); // worker with id=2
+testHarness.addNonSourceWorker(2); //worker with id=3
+testHarness.addMemorySource("car", carSchema, "car1", 3); //worker (source) with id = 4
+
+TopologyPtr topology = testHarness.getTopology();
+EXPECT_EQ(topology->getRoot()->getChildren().size(), 1);
+EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1);
+EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+
+
+testHarness.pushElement<Car>({40, 40, 40}, 0);
+testHarness.pushElement<Car>({30, 30, 30}, 0);
+testHarness.pushElement<Car>({71, 71, 71}, 0);
+testHarness.pushElement<Car>({21, 21, 21}, 0);
+
+struct Output {
+    uint32_t key;
+    uint32_t value;
+    uint64_t timestamp;
+
+    // overload the == operator to check if two instances are the same
+    bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
+};
+
+std::vector<Output> expectedOutput = {{40, 1600, 40},
+                                      {21, 441, 21},
+                                      {30,900,30,},
+                                      {71, 5041, 71}};
+std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+
+EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
  * Testing test harness CSV source
  */
 TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {

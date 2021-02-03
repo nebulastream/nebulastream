@@ -84,7 +84,7 @@ class TestHarness {
      * @param schema schema of the source
      * @param physical stream name
      */
-    void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
+    void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
         // check if record may span multiple buffers
         NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
@@ -117,6 +117,9 @@ class TestHarness {
         wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        if (parentId != 1) {
+            wrk->replaceParent(1,parentId);
+        }
         workerPtrs.push_back(wrk);
     }
 
@@ -126,8 +129,8 @@ class TestHarness {
          * @param schema schema of the source
          * @param physical stream name
          */
-    void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
-        checkAndAddSource(logicalStreamName, schema, physicalStreamName);
+    void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId = 1) {
+        checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);
 
         sourceTypes.push_back(MemorySource);
         std::vector<uint8_t*> currentSourceRecords;
@@ -141,8 +144,8 @@ class TestHarness {
          * @param physical stream name
          * @param csvSourceConf physical stream configuration for the csv source
          */
-    void addCSVSource(PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema) {
-        checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema, csvSourceConf->getPhysicalStreamName());
+    void addCSVSource( PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema, uint64_t parentId = 1) {
+        checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema, csvSourceConf->getPhysicalStreamName(), parentId);
 
         csvSourceConfs.push_back(csvSourceConf);
         sourceTypes.push_back(CSVSource);
@@ -150,6 +153,18 @@ class TestHarness {
         std::vector<uint8_t*> currentSourceRecords;
         records.push_back(currentSourceRecords);
     }
+
+    void addNonSourceWorker(uint64_t parentId = 1){
+        auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress, crdPort + (workerPtrs.size() + 1) * 20,
+                                               crdPort + (workerPtrs.size() + 1) * 20 + 1, NodeType::Sensor);
+        wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        if (parentId != 1) {
+            wrk->replaceParent(1,parentId);
+        }
+        workerPtrs.push_back(wrk);
+    }
+
+
 
     uint64_t getWorkerCount() { return workerPtrs.size(); }
 
@@ -260,6 +275,10 @@ class TestHarness {
 
         return actualOutput;
     }
+
+    TopologyPtr getTopology() {
+        return crd->getTopology();
+    };
 
   private:
     enum TestHarnessSourceType { CSVSource, MemorySource };
