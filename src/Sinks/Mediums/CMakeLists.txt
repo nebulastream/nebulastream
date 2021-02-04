@@ -15,7 +15,6 @@
 add_source_nes(
         FileSink.cpp
         ZmqSink.cpp
-        MQTTSink.cpp
         SinkMedium.cpp
         PrintSink.cpp
 )
