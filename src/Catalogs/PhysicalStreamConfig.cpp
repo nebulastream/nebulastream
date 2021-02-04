@@ -67,6 +67,7 @@ const std::string PhysicalStreamConfig::getPhysicalStreamName() { return physica
 const std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
+
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     auto* config = this;
     auto streamName = config->getLogicalStreamName();
@@ -82,20 +83,20 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
 
     if (type == "DefaultSource") {
-        NES_DEBUG("TypeInferencePhase: create default source for one buffer");
+        NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
         return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency);
     } else if (type == "CSVSource") {
-        NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
+        NES_DEBUG("PhysicalStreamConfig: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
                                            numBuffers, frequency, skipHeader);
     } else if (type == "SenseSource") {
-        NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
+        NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else if (type == "YSBSource") {
-        NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
+        NES_DEBUG("PhysicalStreamConfig: create YSB source for " << conf);
         return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency);
     } else {
-        NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
+        NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
     }
     return nullptr;
 }
