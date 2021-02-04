@@ -5,10 +5,10 @@ producer_options: >-
   --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
   --sourceFrequency=10 --logicalStreamName=ysb
 worker_options: >-
-  --numberOfSlots=1000
+  --numberOfSlots=1000 --logLevel=LOG_INFO
 coordinator_options: >-
   --enableQueryReconfiguration=true
-log_level: "error"
+log_level: "info"
 docker_image: "bdapro/query-merging"
 
 #Sample configuration for Flat topology

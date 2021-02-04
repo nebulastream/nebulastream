@@ -48,15 +48,15 @@ def flat_topology(config: Config):
         crd = net.addDocker('crd', ip=config.coordinator_ip, dimage=config.docker_image, ports=[8081, 4000],
                             port_bindings={8081: 8081, 4000: 4000}, volumes=["/tmp/logs:/logs"])
         nodes.append(NodeCmd(crd, NodeType.Coordinator, config.coordinator_ip,
-                             f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} --logLevel"
-                             f"=LOG_DEBUG --enableQueryMerging=true {config.coordinator_options} {config.worker_options}"))
+                             f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} "
+                             f"--enableQueryMerging=true {config.coordinator_options} {config.worker_options}"))
         for i in range(0, config.workers_producing):
             worker_ip = next(ips)
             worker = net.addDocker(f"{SENSOR_WORKER_PREFIX}-{i}", ip=worker_ip,
                                    dimage=config.docker_image,
                                    volumes=["/tmp/logs:/logs"],
                                    )
-            worker_cmd = f"{WORKER} --logLevel=LOG_DEBUG --coordinatorPort={config.coordinator_port}" \
+            worker_cmd = f"{WORKER} --coordinatorPort={config.coordinator_port}" \
                          f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} " \
                          f"--physicalStreamName={config.physical_stream_prefix}-{i} {config.producer_options} {config.worker_options}"
             nodes.append(NodeCmd(worker, NodeType.Sensor, worker_ip, worker_cmd))
@@ -67,7 +67,7 @@ def flat_topology(config: Config):
                                    dimage=config.docker_image,
                                    volumes=["/tmp/logs:/logs"],
                                    )
-            worker_cmd = f"{WORKER} --logLevel=LOG_DEBUG --coordinatorPort={config.coordinator_port}" \
+            worker_cmd = f"{WORKER} --coordinatorPort={config.coordinator_port}" \
                          f" --coordinatorIp={config.coordinator_ip} --localWorkerIp={worker_ip} {config.worker_options}"
             nodes.append(NodeCmd(worker, NodeType.Worker, worker_ip, worker_cmd))
 
