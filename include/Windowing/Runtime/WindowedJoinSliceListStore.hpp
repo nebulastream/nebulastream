@@ -138,7 +138,6 @@ class WindowedJoinSliceListStore {
     inline void append(int64_t index, ValueType&& value) {
         std::lock_guard lock(internalMutex);
         NES_VERIFY(content.size() > index, "invalid index");
-        NES_DEBUG(" append&& size=" << sizeof(content[index].at(0)) << " value size=" << sizeof(value));
         content[index].emplace_back(std::move(value));
     }
 
@@ -150,7 +149,6 @@ class WindowedJoinSliceListStore {
     inline void append(int64_t index, ValueType& value) {
         std::lock_guard lock(internalMutex);
         NES_ASSERT2(content.size() > index, "invalid index for content size" << content.size() << " idx=" << index);
-        NES_DEBUG(" append& size=" << sizeof(content[index].at(0)) << " value size=" << sizeof(value));
         content[index].emplace_back(value);
     }
 

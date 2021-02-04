@@ -162,10 +162,10 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             } else {
                 operatorIdToPipelineStage[sourceOperatorId] = 0;
             }
-
-            //            NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << sourceOperatorId);
         }
     }
+
+#if EXTENDEDDEBUGGING //the mapping is a common sources of errors so please leave it in
     NES_DEBUG("operatorIdToPipelineStage mapping:");
     for (auto& a : operatorIdToPipelineStage) {
         NES_DEBUG("first=" << a.first << " second=" << a.second);
@@ -180,7 +180,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     for (auto& a : queryMapToOperatorId) {
         NES_DEBUG("first=" << a.first << " second=" << a.second.size());
     }
-
+#endif
     return true;
 }
 
