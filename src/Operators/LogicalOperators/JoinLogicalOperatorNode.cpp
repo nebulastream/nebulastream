@@ -135,6 +135,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
+    NES_DEBUG("Outputschme for join=" << outputSchema->toString());
     joinDefinition->updateOutputDefinition(outputSchema);
     return true;
 }

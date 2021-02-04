@@ -27,17 +27,31 @@ JoinOperatorHandlerPtr JoinOperatorHandler::create(LogicalJoinDefinitionPtr join
 }
 
 JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema)
-    : joinDefinition(joinDefinition), resultSchema(resultSchema) {}
+    : joinDefinition(joinDefinition), resultSchema(resultSchema) {
+    NES_DEBUG("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema)");
+}
 
 JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema,
                                          AbstractJoinHandlerPtr joinHandler)
-    : joinDefinition(joinDefinition), joinHandler(joinHandler), resultSchema(resultSchema) {}
+    : joinDefinition(joinDefinition), joinHandler(joinHandler), resultSchema(resultSchema) {
+    NES_DEBUG("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr "
+              "joinHandler)");
+}
 
 LogicalJoinDefinitionPtr JoinOperatorHandler::getJoinDefinition() { return joinDefinition; }
 
 void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler) { this->joinHandler = joinHandler; }
 
 SchemaPtr JoinOperatorHandler::getResultSchema() { return resultSchema; }
-void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) { joinHandler->start(); }
-void JoinOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { joinHandler->stop(); }
+void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) {
+    if (joinHandler) {
+        joinHandler->start();
+    }
+}
+void JoinOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) {
+    if (joinHandler) {
+        joinHandler->stop();
+    }
+}
+
 }// namespace NES::Join

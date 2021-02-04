@@ -67,9 +67,11 @@ Query& Query::merge(Query* subQuery) {
     return *this;
 }
 
-Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+Query& Query::join(const Query& subQueryRhsConst, ExpressionItem onLeftKey, ExpressionItem onRightKey,
                    const Windowing::WindowTypePtr windowType) {
     NES_DEBUG("Query: join the subQuery to current query");
+
+    auto subQueryRhs = const_cast<Query&>(subQueryRhsConst);
 
     auto leftKeyExpression = onLeftKey.getExpressionNode();
     if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
@@ -93,9 +95,9 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
-    NES_ASSERT(subQueryRhs && subQueryRhs->getQueryPlan() && subQueryRhs->getQueryPlan()->getRootOperators().size() > 0,
+    NES_ASSERT(subQueryRhs.getQueryPlan() && subQueryRhs.getQueryPlan()->getRootOperators().size() > 0,
                "invalid right query plan");
-    auto rootOperatorRhs = subQueryRhs->getQueryPlan()->getRootOperators()[0];
+    auto rootOperatorRhs = subQueryRhs.getQueryPlan()->getRootOperators()[0];
     auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
     auto rightJoinType = rootOperatorRhs->getOutputSchema();
 
@@ -112,7 +114,7 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
         }
     }
 
-    auto rhsQueryPlan = subQueryRhs->getQueryPlan();
+    auto rhsQueryPlan = subQueryRhs.getQueryPlan();
     if (rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());

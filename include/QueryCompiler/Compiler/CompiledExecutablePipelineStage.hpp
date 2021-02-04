@@ -32,8 +32,8 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     typedef NodeEngine::Execution::ExecutablePipelineStage base;
 
   public:
-    explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity);
-    static NodeEngine::Execution::ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode, PipelineStageArity arity);
+    explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string src);
+    static NodeEngine::Execution::ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string src);
     ~CompiledExecutablePipelineStage();
 
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -41,6 +41,9 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
                      NodeEngine::WorkerContext& workerContext) override;
+
+    std::string toString() override;
+
     uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
@@ -50,6 +53,7 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     CompiledCodePtr compiledCode;
     std::mutex executionStageLock;
     std::atomic<ExecutionStage> currentExecutionStage;
+    std::string src;
 };
 
 }// namespace NES

@@ -237,7 +237,7 @@ TEST_F(QueryTest, testQueryJoin) {
     auto subQuery = Query::from("default_logical").filter(lessExpression);
 
     auto query = Query::from("default_logical")
-                     .join(&subQuery, Attribute("id"), Attribute("id"),
+                     .join(subQuery, Attribute("id"), Attribute("id"),
                            TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
                      .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();

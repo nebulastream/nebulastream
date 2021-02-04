@@ -700,7 +700,6 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     out << window;
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
-    wrk2->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/window.csv");

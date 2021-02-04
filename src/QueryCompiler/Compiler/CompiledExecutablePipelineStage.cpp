@@ -28,15 +28,15 @@ static constexpr auto MANGELED_ENTRY_POINT = "_ZN3NES6createEv";
 
 typedef NodeEngine::Execution::ExecutablePipelineStagePtr (*CreateFunctionPtr)();
 
-CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity)
-    : base(arity), compiledCode(compiledCode), currentExecutionStage(NotInitialized) {
+CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string src)
+    : base(arity), compiledCode(compiledCode), currentExecutionStage(NotInitialized), src(src){
     auto createFunction = compiledCode->getFunctionPointer<CreateFunctionPtr>(MANGELED_ENTRY_POINT);
     this->executablePipelineStage = (*createFunction)();
 }
 
 NodeEngine::Execution::ExecutablePipelineStagePtr CompiledExecutablePipelineStage::create(CompiledCodePtr compiledCode,
-                                                                                          PipelineStageArity arity) {
-    return std::make_shared<CompiledExecutablePipelineStage>(compiledCode, arity);
+                                                                                          PipelineStageArity arity, std::string src) {
+    return std::make_shared<CompiledExecutablePipelineStage>(compiledCode, arity, src);
 }
 
 CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage() {
@@ -96,6 +96,12 @@ uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
     }
     return executablePipelineStage->execute(inputTupleBuffer, pipelineExecutionContext, workerContext);
 }
+
+std::string CompiledExecutablePipelineStage::toString()
+{
+    return src;
+}
+
 
 uint32_t CompiledExecutablePipelineStage::close(NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
                                                 NodeEngine::WorkerContext& workerContext) {

@@ -63,11 +63,14 @@ class WindowedJoinSliceListStore {
         std::lock_guard lock(internalMutex);
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
+            NES_DEBUG("slice begin=" << slice.getStartTs() << " slice end =" << slice.getEndTs());
             if (slice.getStartTs() <= timestamp && slice.getEndTs() > timestamp) {
+                NES_DEBUG("return slice id=" << i);
                 return i;
             }
         }
-        return -1;
+        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp);
+        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts");
     }
 
     /**
@@ -112,6 +115,7 @@ class WindowedJoinSliceListStore {
      * @param slice the slice to add
      */
     inline void appendSlice(SliceMetaData slice) {
+        NES_DEBUG("appendSlice with start " << slice.getStartTs());
         std::lock_guard lock(internalMutex);
         sliceMetaData.emplace_back(slice);
         content.emplace_back(std::vector<ValueType>());
@@ -134,6 +138,7 @@ class WindowedJoinSliceListStore {
     inline void append(int64_t index, ValueType&& value) {
         std::lock_guard lock(internalMutex);
         NES_VERIFY(content.size() > index, "invalid index");
+        NES_DEBUG(" append&& size=" << sizeof(content[index].at(0)) << " value size=" << sizeof(value));
         content[index].emplace_back(std::move(value));
     }
 
@@ -144,7 +149,8 @@ class WindowedJoinSliceListStore {
     */
     inline void append(int64_t index, ValueType& value) {
         std::lock_guard lock(internalMutex);
-        NES_VERIFY(content.size() > index, "invalid index");
+        NES_ASSERT2(content.size() > index, "invalid index for content size" << content.size() << " idx=" << index);
+        NES_DEBUG(" append& size=" << sizeof(content[index].at(0)) << " value size=" << sizeof(value));
         content[index].emplace_back(value);
     }
 

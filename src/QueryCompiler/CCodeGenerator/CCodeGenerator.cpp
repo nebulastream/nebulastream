@@ -766,8 +766,11 @@ bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefini
 }
 
 uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context) {
-    auto tf = getTypeFactory();
+    if (context->arity == PipelineContext::BinaryLeft) {
+        return 0;
+    }
 
+    auto tf = getTypeFactory();
     NES_ASSERT(join, "invalid join definition");
     NES_ASSERT(!join->getLeftJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
     NES_ASSERT(!join->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
@@ -1521,7 +1524,7 @@ NodeEngine::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Pipeli
         case PipelineContext::BinaryLeft: arity = BinaryLeft; break;
         case PipelineContext::BinaryRight: arity = BinaryRight; break;
     }
-    return CompiledExecutablePipelineStage::create(compiledCode, arity);
+    return CompiledExecutablePipelineStage::create(compiledCode, arity, src);
 }
 
 BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(VariableDeclaration pipelineContext) {
