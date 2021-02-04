@@ -119,7 +119,8 @@ void BenchmarkUtils::printOutConsole(NodeEngine::QueryStatistics* statistic, Sch
 }
 
 void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
-                                  std::vector<DataSourcePtr> benchmarkSource, std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
+                                  std::vector<DataSourcePtr> benchmarkSource,
+                                  std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
                                   NodeEngine::NodeEnginePtr nodeEngine, Query query) {
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
@@ -147,9 +148,9 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     nodeEngine->startQuery(1);
     recordStatistics(statisticsVec, nodeEngine);
 
-    while(!benchmarkSink->completed.get_future().get()) ;
+    while (!benchmarkSink->completed.get_future().get())
+        ;
     NES_WARNING("BenchmarkUtils: completed is true!!");
-
 
     NES_WARNING("BenchmarkUtils: Stopping query...");
     nodeEngine->stopQuery(1);

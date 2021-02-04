@@ -20,12 +20,12 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <cstdint>
 #include <list>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
-#include <NodeEngine/QueryManager.hpp>
 
 #if __linux
 #include <sys/syscall.h>
@@ -52,7 +52,8 @@ class SimpleBenchmarkSource : public DataSource {
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
         this->rowLayout = NodeEngine::createRowLayout(schema);
         this->curNumberOfTuplesPerBuffer = this->numberOfTuplesPerBuffer;
-        this->maxNumberOfPeriods = std::ceil((double)BenchmarkUtils::runSingleExperimentSeconds / (double)BenchmarkUtils::periodLengthInSeconds);
+        this->maxNumberOfPeriods =
+            std::ceil((double) BenchmarkUtils::runSingleExperimentSeconds / (double) BenchmarkUtils::periodLengthInSeconds);
         BenchmarkUtils::createUniformData(keyList, curNumberOfTuplesPerBuffer);
     }
 

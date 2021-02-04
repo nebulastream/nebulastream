@@ -51,9 +51,9 @@ class JoinDeploymentTest : public testing::Test {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
-        crdConf=CoordinatorConfig::create();
-        wrkConf=WorkerConfig::create();
-        srcConf=SourceConfig::create();
+        crdConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
+        srcConf = SourceConfig::create();
         crdConf->setRpcPort(rpcPort);
         crdConf->setRestPort(restPort);
 

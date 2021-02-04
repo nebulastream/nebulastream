@@ -48,9 +48,9 @@ class MemorySourceIntegrationTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
 
-        crdConf =CoordinatorConfig::create();
-        wrkConf=WorkerConfig::create();
-        srcConf=SourceConfig::create();
+        crdConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
+        srcConf = SourceConfig::create();
         crdConf->setRpcPort(rpcPort);
         wrkConf->setCoordinatorPort(rpcPort);
     }
