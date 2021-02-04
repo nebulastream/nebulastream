@@ -24,10 +24,18 @@ class TestHarnessUtilTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("TestHarnessUtilTest.log", NES::LOG_DEBUG);
-
         NES_INFO("TestHarnessUtilTest test class SetUpTestCase.");
     }
+
+    void SetUp() {
+        restPort = restPort + 2;
+        rpcPort = rpcPort + 30;
+    }
+
     static void TearDownTestCase() { NES_INFO("TestHarnessUtilTest test class TearDownTestCase."); }
+
+    uint32_t restPort = 8080;
+    uint32_t rpcPort = 4000;
 };
 
 /*
@@ -48,7 +56,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
@@ -98,7 +106,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
     testHarness.addMemorySource("car", carSchema, "car2");
@@ -164,7 +172,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
     testHarness.addMemorySource("truck", truckSchema, "truck1");
@@ -218,7 +226,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator);
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
     testHarness.addMemorySource("car", carSchema, "car2");
@@ -300,7 +308,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
 
     std::string queryWithJoinOperator =
         R"(Query::from("window1").join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(queryWithJoinOperator);
+    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("window1", window1Schema, "window1");
     testHarness.addMemorySource("window2", window2Schema, "window2");
@@ -367,7 +375,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
@@ -417,7 +425,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // Content ov testCSV.csv:
     // 1,2,3
@@ -472,7 +480,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // Content ov testCSV.csv:
     // 1,2,3
@@ -527,7 +535,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
     };
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0);
 
@@ -553,7 +561,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     };
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0);
     EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), NesRuntimeException);
@@ -588,7 +596,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
                            ->addField("timestamp", DataTypeFactory::createUInt64());
 
     std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
     testHarness.addMemorySource("truck", truckSchema, "truck1");

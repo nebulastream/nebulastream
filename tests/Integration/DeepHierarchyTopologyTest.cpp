@@ -57,7 +57,6 @@ class DeepHierarchyTopologyTest : public testing::Test {
     }
 
     void TearDown() { NES_DEBUG("TearDown DeepTopologyHierarchyTest test class."); }
-    std::string ipAddress = "127.0.0.1";
 };
 
 /**

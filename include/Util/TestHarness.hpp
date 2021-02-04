@@ -37,9 +37,8 @@ class TestHarness {
          * @param numWorkers number of worker (each for one physical source) to be used in the test
          * @param operatorToTest operator to test
          */
-    TestHarness(std::string operatorToTest) : operatorToTest(operatorToTest) {
-        ipAddress = "127.0.0.1";
-
+    TestHarness(std::string operatorToTest, uint16_t restPort = 8081, uint16_t rpcPort = 4000)
+        : ipAddress("127.0.0.1"), operatorToTest(operatorToTest), bufferSize(4096) {
         NES_INFO("TestHarness: Start coordinator");
         crdConf = CoordinatorConfig::create();
         crdConf->resetCoordinatorOptions();
@@ -280,14 +279,8 @@ class TestHarness {
     std::vector<std::string> logicalStreamNames;
     std::vector<PhysicalStreamConfigPtr> csvSourceConfs;
     std::vector<TestHarnessSourceType> sourceTypes;
-
-    uint64_t restPort = 8081;
-    uint64_t rpcPort = 4000;
-    // default bufferSize
-    uint64_t bufferSize = 4096;
+    uint64_t bufferSize;
 };
-
-typedef std::shared_ptr<TestHarness> TestHarnessPtr;
 }// namespace NES
 
 #endif//NES_TESTHARNESS_HPP

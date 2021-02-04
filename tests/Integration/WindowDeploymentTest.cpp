@@ -63,8 +63,6 @@ class WindowDeploymentTest : public testing::Test {
     }
 
     void TearDown() { std::cout << "Tear down WindowDeploymentTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
 };
 
 /**

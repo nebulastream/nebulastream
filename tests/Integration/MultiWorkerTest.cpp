@@ -51,10 +51,7 @@ class MultiWorkerTest : public testing::Test {
         workerConfig->setCoordinatorPort(rpcPort);
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down MultiWorkerTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
+    static void TearDownTestCase() { NES_INFO("Tear down MultiWorkerTest class."); }
 };
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {

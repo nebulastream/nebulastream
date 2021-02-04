@@ -61,9 +61,7 @@ class MergeDeploymentTest : public testing::Test {
         sourceConfig = SourceConfig::create();
     }
 
-    void TearDown() { std::cout << "Tear down MergeDeploymentTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
+    void TearDown() { NES_INFO("Tear down MergeDeploymentTest class."); }
 };
 
 /**

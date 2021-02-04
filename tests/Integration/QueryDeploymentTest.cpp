@@ -61,9 +61,7 @@ class QueryDeploymentTest : public testing::Test {
         wrkConf->setCoordinatorPort(rpcPort);
     }
 
-    void TearDown() { std::cout << "Tear down QueryDeploymentTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
+    void TearDown() { NES_INFO("Tear down QueryDeploymentTest class."); }
 };
 
 /**

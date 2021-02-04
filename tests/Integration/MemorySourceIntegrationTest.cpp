@@ -54,9 +54,6 @@ class MemorySourceIntegrationTest : public testing::Test {
         crdConf->setRpcPort(rpcPort);
         wrkConf->setCoordinatorPort(rpcPort);
     }
-
-    std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
 };
 
 /// This test checks that a deployed MemorySource can write M records spanning exactly N records

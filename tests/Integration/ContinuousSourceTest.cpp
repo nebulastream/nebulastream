@@ -60,9 +60,6 @@ class ContinuousSourceTest : public testing::Test {
     }
 
     void TearDown() { std::cout << "Tear down ContinuousSourceTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
