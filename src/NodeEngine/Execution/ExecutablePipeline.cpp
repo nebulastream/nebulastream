@@ -91,6 +91,13 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const
                                                 nextPipeline, inputSchema, outputSchema, reconfiguration);
 }
 
+std::string ExecutablePipeline::toString()
+{
+    std::stringstream ss;
+    ss << executablePipelineStage->toString();
+    return ss.str();
+}
+
 ExecutablePipeline::~ExecutablePipeline() { NES_DEBUG("~ExecutablePipeline(" + std::to_string(pipelineStageId) + ")"); }
 
 const SchemaPtr& ExecutablePipeline::getInputSchema() const { return inputSchema; }

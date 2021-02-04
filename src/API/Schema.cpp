@@ -197,7 +197,6 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
 }
 
 AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
-
     //Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
@@ -225,8 +224,10 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     if (matchedFields.size() == 1) {
         return matchedFields[0];
     } else if (matchedFields.size() > 1) {
-        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
-        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+//        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
+//        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+        //TODO: workaround we choose the first one to join
+        return matchedFields[0];
     }
     return nullptr;
 }

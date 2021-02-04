@@ -121,6 +121,7 @@ class ExecutablePipeline {
      */
     const SchemaPtr& getOutputSchema() const;
 
+    std::string toString();
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;

@@ -116,7 +116,7 @@ class Query {
      * @param subQuery is the query to be merged
      * @return
      */
-    Query& join(Query* subQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey, const Windowing::WindowTypePtr windowType);
+    Query& join(const Query& subQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey, const Windowing::WindowTypePtr windowType);
 
     /**
      * @brief Create Query using queryPlan

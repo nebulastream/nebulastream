@@ -365,6 +365,11 @@ add_executable(multi-window-test "Integration/MultipleWindowsTest.cpp")
 target_link_libraries(multi-window-test nes ${GTEST_LIBRARIES})
 add_test(NAME multi-window-test COMMAND multi-window-test)
 
+### MultiJoinsTest ###
+add_executable(multi-join-test "Integration/MultipleJoinsTest.cpp")
+target_link_libraries(multi-join-test nes ${GTEST_LIBRARIES})
+add_test(NAME multi-join-test COMMAND multi-join-test)
+
 ### AssignWatermarkTest ###
 #TODO: activate for testing
 add_executable(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")

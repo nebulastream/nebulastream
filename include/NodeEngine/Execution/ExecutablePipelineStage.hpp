@@ -87,6 +87,8 @@ class ExecutablePipelineStage {
      */
     virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
 
+    virtual std::string toString();
+
   private:
     PipelineStageArity arity;
 };

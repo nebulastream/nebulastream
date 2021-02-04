@@ -217,10 +217,10 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
         }
         if (queryManager->registerQuery(queryExecutionPlan)) {
             deployedQEPs[querySubPlanId] = queryExecutionPlan;
-            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " succeeded");
+            NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " succeeded");
             return true;
         } else {
-            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " failed");
+            NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " failed");
             return false;
         }
     } else {
