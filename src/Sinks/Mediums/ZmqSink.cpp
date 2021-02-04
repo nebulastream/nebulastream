@@ -28,7 +28,6 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-std::string ZmqSink::toString() { return "ZMQ_SINK"; }
 
 SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
 
@@ -160,7 +159,6 @@ bool ZmqSink::connect() {
         }
     }
     if (connected) {
-
         NES_DEBUG("ZmqSink  " << this << ": connected host=" << host << " port= " << port);
     } else {
         NES_DEBUG("ZmqSink  " << this << ": NOT connected=" << host << " port= " << port);

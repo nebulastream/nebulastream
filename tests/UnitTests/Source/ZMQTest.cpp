@@ -26,7 +26,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
 
 using namespace NES;
 
@@ -86,7 +85,8 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), LOCAL_HOST, LOCAL_PORT, 1);
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                        LOCAL_HOST, LOCAL_PORT, 1);
     std::cout << zmq_source->toString() << std::endl;
     // bufferManager->resizeFixedBufferSize(test_data_size);
 

@@ -20,4 +20,5 @@ add_source_nes(
         PrintSinkDescriptor.cpp
         NetworkSinkDescriptor.cpp
         OPCSinkDescriptor.cpp
+        MQTTSinkDescriptor.cpp
 )

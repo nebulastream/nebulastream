@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
@@ -56,6 +57,14 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         return createOPCSink(schema, querySubPlanId, nodeEngine, opcSinkDescriptor->getUrl(), opcSinkDescriptor->getNodeId(),
                              opcSinkDescriptor->getUser(), opcSinkDescriptor->getPassword());
+    }
+#endif
+#ifdef ENABLE_MQTT_BUILD
+        else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
+        const MQTTSinkDescriptorPtr mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
+        return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getHost(), mqttSinkDescriptor->getPort(),
+                             mqttSinkDescriptor->getClientId(), mqttSinkDescriptor->getTopic(), mqttSinkDescriptor->getUser());
     }
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {

@@ -26,32 +26,24 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 
-#include "mqtt/client.h"
+//#include "mqtt/client.h"
 #include "mqtt/async_client.h"
 
 namespace NES {
-std::string MQTTSink::toString() { return "MQTT_SINK"; }
 
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
-//TODO IMPLEMENT CONNECT! Rethink parameter choice!
+MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& host,
+                   const uint16_t port, const std::string& clientId, const std::string& topic,
+                   const std::string& user)
+    : SinkMedium(sinkFormat, parentPlanId), host(host), port(port), clientId(clientId),topic(topic), user(user),
+                 qualityOfService(1), maxBufferedMSGs(60), sendPeriod(1),
+                 timeType(2), address(std::string("tcp://") + host + std::string(":") + std::to_string(port)),
+                 client(mqtt::async_client(address, clientId, maxBufferedMSGs)), connected(false){
 
-//TODO find out which parameters are needed by MQTT
-// - SinkFormatPtr? [y] -> which kind of data does arrive at sink
-// - QuerySubPlanId [y/n] -> ? not sure, for debugging? ASK
-// - Schema         [n]   -> probably not required
-// - NodeEngginePtr [n]   -> probably not required
-// might want to change host(host) -> host(host.substr(0, host.find(":")))
-MQTTSink::MQTTSink(SinkFormatPtr sink_format, QuerySubPlanId parentPlanId, std::string& host,
-                   uint16_t port, std::string& user, std::string& password)
-    : SinkMedium(sink_format, parentPlanId), host(host), port(port), user(user), password(password), connected(false) {
     NES_DEBUG("MQTT Sink  " << this << ": Init MQTT Sink to " << host << ":" << port);
+    std::cout << "ClientID Constructor test: " << this->getClientId() << '\n';
 }
-//MQTTSink::MQTTSink(SinkFormatPtr format, const std::string& host, const uint16_t port, bool internal, QuerySubPlanId parentPlanId)
-//    : SinkMedium(format, parentPlanId), host(host.substr(0, host.find(":"))), port(port), connected(false), internal(internal),
-//      context(MQTT::context_t(1)), socket(MQTT::socket_t(context, ZMQ_PUSH)) {
-//    NES_DEBUG("MQTT Sink  " << this << ": Init MQTT Sink to " << host << ":" << port);
-//}
 
 MQTTSink::~MQTTSink() {
     NES_DEBUG("MQTTSink::~MQTTSink: destructor called");
@@ -66,100 +58,24 @@ MQTTSink::~MQTTSink() {
 }
 
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
-    std::unique_lock lock(writeMutex);
-    connect();
-    if (!connected) {
-        NES_DEBUG("MQTTSink  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");
-        throw Exception("Write to MQTT sink failed");
-    }
-
-    if (!inputBuffer.isValid()) {
-        NES_ERROR("MQTTSink::writeData input buffer invalid");
-        return false;
-    }
-
-    if (!schemaWritten) {//TODO:atomic
-        NES_DEBUG("FileSink::getData: write schema");
-        auto schemaBuffer = sinkFormat->getSchema();
-        if (schemaBuffer) {
-            NES_DEBUG("MQTTSink writes schema buffer");
-            try {
-                // TODO insert MQTT write code
-                //  what is the idea of write code?
-                //  -
-
-                //	uint64_t usedBufferSize = inputBuffer->num_tuples * inputBuffer->tuple_size_bytes;
-                MQTT::message_t msg(schemaBuffer->getBufferSize());
-
-                std::memcpy(msg.data(), schemaBuffer->getBuffer(), schemaBuffer->getBufferSize());
-                MQTT::message_t envelope(sizeof(uint64_t));
-                uint64_t schemaSize = schemaBuffer->getNumberOfTuples();
-                memcpy(envelope.data(), &schemaSize, sizeof(schemaSize));
-
-                bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-                bool rc_msg = socket.send(msg);
-                if (!rc_env || !rc_msg) {
-                    NES_DEBUG("MQTTSink  " << this << ": schema send NOT successful");
-                    return false;
-                } else {
-                    NES_DEBUG("MQTTSink  " << this << ": schema send successful");
-                }
-            } catch (const MQTT::error_t& ex) {
-                if (ex.num() != ETERM) {
-                    NES_ERROR("MQTTSink: schema write " << ex.what());
-                }
-            }
-            schemaWritten = true;
-            NES_DEBUG("MQTTSink::writeData: schema written");
-        }
-        { NES_DEBUG("MQTTSink::writeData: no schema written"); }
-    } else {
-        NES_DEBUG("MQTTSink::getData: schema already written");
-    }
-
-    NES_DEBUG("MQTTSink  " << this << ": writes buffer " << inputBuffer << " with tupleCnt =" << inputBuffer.getNumberOfTuples()
-                          << " watermark=" << inputBuffer.getWatermark());
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
-    for (auto buffer : dataBuffers) {
-        try {
-            uint64_t tupleCnt = buffer.getNumberOfTuples();
-            uint64_t currentTs = buffer.getWatermark();
-
-            MQTT::message_t envelope(sizeof(tupleCnt) + sizeof(currentTs));
-            memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
-            memcpy((void*) ((char*) envelope.data() + sizeof(currentTs)), &currentTs, sizeof(currentTs));
-
-            MQTT::message_t msg(buffer.getBufferSize());
-            std::memcpy(msg.data(), buffer.getBuffer(), buffer.getBufferSize());
-
-            bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-            bool rc_msg = socket.send(msg);
-            sentBuffer++;
-            if (!rc_env || !rc_msg) {
-                NES_DEBUG("MQTTSink  " << this << ": data send NOT successful");
-                return false;
-            } else {
-                NES_DEBUG("MQTTSink  " << this << ": data send successful");
-                return true;
-            }
-        } catch (const MQTT::error_t& ex) {
-            // recv() throws ETERM when the MQTT context is destroyed,
-            //  as when AsyncMQTTListener::Stop() is called
-            if (ex.num() != ETERM) {
-                NES_ERROR("MQTTSink: " << ex.what());
-            }
-        }
-    }
-    return true;
+    std::cout << inputBuffer.getBufferSize() << '\n';
+    return false;
 }
 
 //TODO add more to print?
 const std::string MQTTSink::toString() const {
     std::stringstream ss;
     ss << "MQTT_SINK(";
-    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
-    ss << "HOST=" << host << ", ";
-    ss << "PORT=" << port << ", ";
+    ss << "SCHEMA("    << sinkFormat->getSchemaPtr()->toString() << "), ";
+    ss << "HOST="      << host     << ", ";
+    ss << "PORT="      << std::to_string(port)     << ", ";
+    ss << "CLIENT_ID=" << clientId << ", ";
+    ss << "TOPIC="     << topic    << ", ";
+    ss << "USER="      << user     << ", ";
+    ss << "QUALITY_OF_SERVICE=" << std::to_string(qualityOfService) << ", ";
+    ss << "MAX_BUFFERED_MESSAGES=" << maxBufferedMSGs << ", ";
+    ss << "SEND_PERIOD=" << sendPeriod << ", ";
+    ss << "TIME_TYPE=" << std::to_string(timeType) << ", ";
     ss << "\")";
     return ss.str();
 }
@@ -167,20 +83,27 @@ const std::string MQTTSink::toString() const {
 bool MQTTSink::connect() {
     if (!connected) {
         try {
+            auto PERIOD = std::chrono::nanoseconds(sendPeriod) * ((timeType > 0) * 100000) * ((timeType > 1) * 1000);
+
+            auto connOpts = mqtt::connect_options_builder()
+                .keep_alive_interval(maxBufferedMSGs  * PERIOD)
+                .clean_session(true)
+                .automatic_reconnect(true)
+                .finalize();
+
+            // Create a topic object. This is a convenience since we will
+            // repeatedly publish messages with the same parameters.
+            mqtt::topic top(client, topic, qualityOfService, true);
+
+            // Connect to the MQTT broker
             NES_DEBUG("MQTTSink: connect to host=" << host << " port=" << port);
-            auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
-            socket.connect(address.c_str());
+            client.connect(connOpts)->wait();
             connected = true;
-        } catch (const MQTT::error_t& ex) {
-            // recv() throws ETERM when the MQTT context is destroyed,
-            //  as when AsyncMQTTListener::Stop() is called
-            if (ex.num() != ETERM) {
-                NES_ERROR("MQTTSink: " << ex.what());
-            }
+        } catch (const mqtt::exception& ex) {
+            NES_ERROR("MQTTSink: " << ex.what());
         }
     }
     if (connected) {
-
         NES_DEBUG("MQTTSink  " << this << ": connected host=" << host << " port= " << port);
     } else {
         NES_DEBUG("MQTTSink  " << this << ": NOT connected=" << host << " port= " << port);
@@ -190,7 +113,7 @@ bool MQTTSink::connect() {
 
 bool MQTTSink::disconnect() {
     if (connected) {
-        socket.close();
+        client.disconnect()->wait();
         connected = false;
     }
     if (!connected) {
@@ -201,8 +124,10 @@ bool MQTTSink::disconnect() {
     return !connected;
 }
 
-int MQTTSink::getPort() { return this->port; }
-
-const std::string MQTTSink::getHost() const { return host; }
+int MQTTSink::getPort() { return port; }
+const std::string& MQTTSink::getHost() const { return host; }
+const std::string& MQTTSink::getClientId() const { return clientId; }
+const std::string& MQTTSink::getTopic() const { return topic; }
+const std::string& MQTTSink::getUser() const { return user; }
 
 }// namespace NES

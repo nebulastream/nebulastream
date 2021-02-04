@@ -33,8 +33,6 @@ NetworkSink::NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkM
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());
 }
 
-std::string NetworkSink::toString() { return "NETWORK_SINK"; }
-
 SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesPartition); }
