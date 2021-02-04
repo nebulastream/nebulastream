@@ -31,6 +31,7 @@
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
 
 namespace NES {
@@ -59,7 +60,15 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         const BinarySourceDescriptorPtr binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
         return createBinaryFileSource(binarySourceDescriptor->getSchema(), bufferManager, queryManager,
                                       binarySourceDescriptor->getFilePath(), operatorId);
-    } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
+    }else if (sourceDescriptor->instanceOf<NettySourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
+        const NettySourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<NettySourceDescriptor>();
+        return createNettyFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
+                                   csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
+                                   csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
+                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
+                                   csvSourceDescriptor->getSkipHeader(), operatorId);}
+    else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
         const CsvSourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,

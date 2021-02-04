@@ -21,33 +21,33 @@ namespace NES {
 
 NettySourceDescriptor::NettySourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
                                          uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                         uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), operatorId), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
+                                         uint64_t frequency, bool skipHeader)
+    : SourceDescriptor(std::move(schema)), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numBuffersToProcess(numBuffersToProcess),
-      frequency(frequency), endlessRepeat(endlessRepeat), skipHeader(skipHeader) {}
+      frequency(frequency), skipHeader(skipHeader) {}
 
 NettySourceDescriptor::NettySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                          uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                         uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), std::move(streamName), operatorId), filePath(std::move(filePath)),
+                                         uint64_t frequency, bool skipHeader)
+    : SourceDescriptor(std::move(schema), std::move(streamName)), filePath(std::move(filePath)),
       delimiter(std::move(delimiter)), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      numBuffersToProcess(numBuffersToProcess), frequency(frequency), endlessRepeat(endlessRepeat), skipHeader(skipHeader) {}
+      numBuffersToProcess(numBuffersToProcess), frequency(frequency), skipHeader(skipHeader) {}
 
 SourceDescriptorPtr NettySourceDescriptor::create(SchemaPtr schema, std::string filePath, std::string delimiter,
                                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                uint64_t frequency, bool endlessRepeat, bool skipHeader, OperatorId operatorId) {
+                                                uint64_t frequency, bool skipHeader) {
     return std::make_shared<NettySourceDescriptor>(NettySourceDescriptor(std::move(schema), std::move(filePath), std::move(delimiter),
                                                                      numberOfTuplesToProducePerBuffer, numBuffersToProcess,
-                                                                     frequency, endlessRepeat, skipHeader, operatorId));
+                                                                     frequency, skipHeader));
 }
 
 SourceDescriptorPtr NettySourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string filePath,
                                                 std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
-                                                uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat,
-                                                bool skipHeader, OperatorId operatorId) {
+                                                uint64_t numBuffersToProcess, uint64_t frequency,
+                                                bool skipHeader) {
     return std::make_shared<NettySourceDescriptor>(NettySourceDescriptor(
         std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer,
-        numBuffersToProcess, frequency, endlessRepeat, skipHeader, operatorId));
+        numBuffersToProcess, frequency, skipHeader));
 }
 
 const std::string& NettySourceDescriptor::getFilePath() const { return filePath; }
@@ -75,7 +75,6 @@ std::string NettySourceDescriptor::toString() {
     return "NettySourceDescriptor(" + filePath + "," + delimiter + ", " + std::to_string(numBuffersToProcess) + ", "
         + std::to_string(frequency) + ")";
 }
-bool NettySourceDescriptor::isEndlessRepeat() const { return endlessRepeat; }
-void NettySourceDescriptor::setEndlessRepeat(bool endlessRepeat) { this->endlessRepeat = endlessRepeat; }
+
 
 }// namespace NES

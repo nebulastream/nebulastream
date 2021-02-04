@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+
+
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -36,57 +38,65 @@
 #include <unistd.h>
 #include <vector>
 
-#define PORT 31000
+#define PORT 5000
 #define BUFFER_SIZE 1024
 
 using Clock = std::chrono::high_resolution_clock;
 
 namespace NES {
 
-NettySource::NettySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
+NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                          const std::string filePath, const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
-                         uint64_t numBuffersToProcess, uint64_t frequency, bool endlessRepeat, bool skipHeader,
-                         OperatorId operatorId)
+                         uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), endlessRepeat(endlessRepeat), currentPosInFile(0),
+      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0),
       skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = frequency;
     tupleSize = schema->getSchemaSizeInBytes();
-    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
+  /*  NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
                                       << numberOfTuplesToProducePerBuffer << "endlessRepeat=" << endlessRepeat);
-
+*/
     char* path = realpath(filePath.c_str(), NULL);
-    NES_DEBUG("CSVSource: Opening path " << path);
+    NES_DEBUG("NettySource: Opening path " << path);
     input.open(path);
 
-    NES_DEBUG("CSVSource::fillBuffer: read buffer");
+    NES_DEBUG("NettySource::fillBuffer: read buffer");
     input.seekg(0, input.end);
     fileSize = input.tellg();
     if (fileSize == -1) {
-        NES_ERROR("CSVSource::fillBuffer File " + filePath + " is corrupted");
+        NES_ERROR("NettySource::fillBuffer File " + filePath + " is corrupted");
     }
+    if (numBuffersToProcess != 0) {
+        loopOnFile = true;
+    } else {
+        loopOnFile = false;
+    }
+    NES_DEBUG("NettySource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
+                                      << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
+                                      << numberOfTuplesToProducePerBuffer << "loopOnFile=" << loopOnFile);
+
     fileEnded = false;
 }
 
-std::optional<TupleBuffer> NettySource::receiveData() {
-    NES_DEBUG("CSVSource::receiveData called");
+std::optional<NodeEngine::TupleBuffer> NettySource::receiveData() {
+    NES_DEBUG("NettySource::receiveData called");
     auto buf = this->bufferManager->getBufferBlocking();
     //fillBuffer(buf);
     fillSocket(buf);
-    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
+    NES_DEBUG("NettySource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
     return buf;
 }
 
 const std::string NettySource::toString() const {
     std::stringstream ss;
-    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval
+    ss << "Netty_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval
        << " numBuff=" << this->numBuffersToProcess << ")";
     return ss.str();
 }
 
-void NettySource::fillSocket(TupleBuffer& buf) {
+void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
 
     std::vector<PhysicalTypePtr> physicalTypes;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -103,16 +113,16 @@ void NettySource::fillSocket(TupleBuffer& buf) {
     std::stringstream readStream;
     bool readData = true;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Socket creation error \n");
+        NES_ERROR("\n Socket creation error \n");
         return;
     }
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
-
+    //172.16.0.254
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        printf("\nInvalid address/ Address not supported \n");
+        NES_ERROR("Invalid address/ Address not supported ");
         return;
     }
 
@@ -164,11 +174,11 @@ void NettySource::fillSocket(TupleBuffer& buf) {
 
                     if (field->isBasicType()) {
                         auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
-                        /*
-                     * TODO: this requires proper MIN / MAX size checks, numeric_limits<T>-like
+                /*     * TODO: this requires proper MIN / MAX size checks, numeric_limits<T>-like
                      * TODO: this requires underflow/overflow checks
                      * TODO: our types need their own sto/strto methods
-                     */
+*/
+
                         if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
 
                             uint64_t val = std::stoull(tokens[j].c_str());
@@ -247,8 +257,10 @@ const std::string NettySource::getFilePath() const { return filePath; }
 const std::string NettySource::getDelimiter() const { return delimiter; }
 
 const uint64_t NettySource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+/*
 bool NettySource::isEndlessRepeat() const { return endlessRepeat; }
 void NettySource::setEndlessRepeat(bool endlessRepeat) { this->endlessRepeat = endlessRepeat; }
+*/
 
 bool NettySource::getSkipHeader() const { return skipHeader; }
 }// namespace NES

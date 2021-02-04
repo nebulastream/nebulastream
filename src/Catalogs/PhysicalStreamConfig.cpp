@@ -17,6 +17,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
@@ -85,7 +86,12 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
                                            numBuffers, frequency, skipHeader);
-    } else if (type == "SenseSource") {
+    }else if (type == "NettySource") {
+        NES_DEBUG("TypeInferencePhase: create Netty source for " << conf << " buffers");
+        return NettySourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
+                                           numBuffers, frequency, skipHeader);
+    }
+    else if (type == "SenseSource") {
         NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else if (type == "YSBSource") {
