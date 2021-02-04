@@ -48,7 +48,15 @@ QueryReconfigurationPhase::~QueryReconfigurationPhase() { NES_DEBUG("~QueryRecon
 bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryReconfigurationPhase: reconfigure queryId=" << queryPlan->getQueryId());
     auto queryId = queryPlan->getQueryId();
+
+    auto startFindSinkTopologyNode = std::chrono::system_clock::now();
     auto sinkTopologyNode = findSinkTopologyNode(queryPlan);
+    auto endFindSinkTopologyNode = std::chrono::system_clock::now();
+
+    NES_INFO("BDAPRO2Tracking: findSinkTopologyNode - (queryId, microseconds) : "
+             << "(" << queryId << ", "
+             << std::chrono::duration_cast<std::chrono::microseconds>(endFindSinkTopologyNode - startFindSinkTopologyNode).count()
+             << ")");
     NES_DEBUG("QueryReconfigurationPhase: reconfigure queryId=" << queryPlan->getQueryId() << " Sink Node "
                                                                 << sinkTopologyNode->toString());
     auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -82,6 +90,7 @@ bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
                                   << querySubPlan->getQueryId());
                         querySubPlan->removeAsRootOperator(sinkToDelete);
                     }
+                    auto startSinksToBeAdded = std::chrono::system_clock::now();
                     for (auto sinkToAdd : sinksToBeAdded) {
                         auto newSink = sinkToAdd->copy();
                         NES_DEBUG("QueryReconfigurationPhase:execute: add sink = "
@@ -92,6 +101,12 @@ bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
                         }
                         querySubPlan->addRootOperator(newSink);
                     }
+                    auto endSinksToBeAdded = std::chrono::system_clock::now();
+                    NES_INFO(
+                        "BDAPRO2Tracking: sinksToBeAdded - (queryId, microseconds) : "
+                        << "(" << queryId << ", "
+                        << std::chrono::duration_cast<std::chrono::microseconds>(endSinksToBeAdded - startSinksToBeAdded).count()
+                        << ")");
                     NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n"
                               << globalExecutionPlan->getAsString());
                     successfulReconfiguration = reconfigureQuery(executionNode, querySubPlan);
@@ -159,7 +174,15 @@ bool QueryReconfigurationPhase::reconfigureQuery(ExecutionNodePtr executionNode,
     std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
     NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: queryId=" << queryId << " querySubPlanId="
                                                                      << querySubPlan->getQueryId() << " to " << rpcAddress);
+
+    auto startWorkerRPCReconfigure = std::chrono::system_clock::now();
     bool success = workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
+    auto endWorkerRPCReconfigure = std::chrono::system_clock::now();
+
+    NES_INFO("BDAPRO2Tracking: WorkerRPCReconfigure - (queryId, microseconds) : "
+             << "(" << queryId << ", "
+             << std::chrono::duration_cast<std::chrono::microseconds>(endWorkerRPCReconfigure - startWorkerRPCReconfigure).count()
+             << ")");
     if (success) {
         NES_DEBUG("QueryReconfigurationPhase:reconfigureQuery: queryId="
                   << queryId << " querySubPlanId=" << querySubPlan->getQueryId() << " to " << rpcAddress << " successful");

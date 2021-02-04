@@ -152,8 +152,16 @@ void QueryRequestProcessorService::start() {
                             }
                         }
                         if (enableQueryReconfiguration && !sharedQueryMetaData->isEmpty() && !sharedQueryMetaData->isNew()) {
+                            auto startReconfiguration = std::chrono::system_clock::now();
                             auto queryPlan = sharedQueryMetaData->getQueryPlan();
                             bool successful = queryReconfigurationPhase->execute(queryPlan);
+                            auto endReconfiguration = std::chrono::system_clock::now();
+                            NES_INFO("BDAPRO2Tracking: queryReconfigurationPhase - (queryId, microseconds) : "
+                                     << "(" << queryId << ", "
+                                     << std::chrono::duration_cast<std::chrono::microseconds>(endReconfiguration
+                                                                                              - startReconfiguration)
+                                            .count()
+                                     << ")");
                             if (!successful) {
                                 throw QueryDeploymentException(
                                     "QueryRequestProcessingService: Failed to deploy query with global query Id "
@@ -167,9 +175,9 @@ void QueryRequestProcessorService::start() {
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                         auto end = std::chrono::system_clock::now();
-                        NES_DEBUG("QueryProcessingService: Query with ID marked as Running - (queryId, microseconds) : "
-                                  << "(" << queryId << ", "
-                                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
+                        NES_INFO("BDAPRO2Tracking: markAsRunning - (queryId, microseconds) : "
+                                 << "(" << queryId << ", "
+                                 << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     }
