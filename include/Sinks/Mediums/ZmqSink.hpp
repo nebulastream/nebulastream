@@ -49,11 +49,6 @@ class ZmqSink : public SinkMedium {
     const std::string getHost() const;
 
     /**
-     * @brief Get Sink type
-     */
-    std::string toString() override;
-
-    /**
     * @brief method to return the type of medium
     * @return type of medium
     */

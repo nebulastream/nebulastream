@@ -134,7 +134,7 @@ add_test(NAME sink-tests COMMAND sink-tests)
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
     add_executable(kafka-tests "UnitTests/Source/KafkaTest.cpp")
-    message("libraies: ${LIBRARIES}")
+    message("libraries: ${LIBRARIES}")
     target_link_libraries(kafka-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME kafka-tests COMMAND kafka-tests)
 endif (NES_USE_KAFKA)
@@ -152,7 +152,7 @@ endif (NES_USE_OPC)
 ### MQTT Tests ###
 if(NES_USE_MQTT)
 add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
-target_link_libraries(mqtt-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES} paho-mqtt3as paho-mqttpp3)
+target_link_libraries(mqtt-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif(NES_USE_MQTT)
 

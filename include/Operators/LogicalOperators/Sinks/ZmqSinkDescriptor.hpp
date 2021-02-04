@@ -55,8 +55,8 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     bool isInternal() const;
     void setInternal(bool internal);
 
-    std::string toString() override;
     bool equal(SinkDescriptorPtr other) override;
+    std::string toString() override;
 
   private:
     explicit ZmqSinkDescriptor(std::string host, uint16_t port, bool internal);

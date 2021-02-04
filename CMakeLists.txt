@@ -234,9 +234,9 @@ if (NES_USE_OPC)
 endif (NES_USE_OPC)
 
 # Library containing OPC client
-# TODO REMOVE ENABLE_OPC_BUILD
 if (NES_USE_MQTT)
-    add_compile_definitions(ENABLE_OPC_BUILD)
+#    find_package(paho-mqtt3as REQUIRED COMPONENTS FullNamespace)
+    set(LIBRARIES ${LIBRARIES} paho-mqtt3as paho-mqttpp3)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
 
