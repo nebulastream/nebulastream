@@ -71,11 +71,6 @@ class PrintSink : public SinkMedium {
     const std::string toString() const override;
 
     /**
-     * @brief Get sink type
-     */
-    std::string toString() override;
-
-    /**
     * @brief method to return the type of medium
     * @return type of medium
     */

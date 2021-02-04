@@ -187,8 +187,9 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
  * @param kafkaProducerTimeout: MQTT producer timeout
  * @return a data sink pointer
  */
-const DataSinkPtr createMQTTSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
-                                            const uint64_t kafkaProducerTimeout);
+const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                 const std::string& host, const uint16_t port, const std::string& clientID,
+                                 const std::string& topic, const std::string& user);
 #endif
 
 }// namespace NES

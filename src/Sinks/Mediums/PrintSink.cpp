@@ -27,8 +27,6 @@ PrintSink::PrintSink(SinkFormatPtr format, QuerySubPlanId parentPlanId, std::ost
 
 PrintSink::~PrintSink() {}
 
-std::string PrintSink::toString() { return "PRINT_SINK"; }
-
 SinkMediumTypes PrintSink::getSinkMediumType() { return PRINT_SINK; }
 
 bool PrintSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {

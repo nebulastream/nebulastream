@@ -95,12 +95,6 @@ class SinkMedium : public NodeEngine::Reconfigurable {
     SchemaPtr getSchemaPtr() const;
 
     /**
-      * @brief method to return the type
-      * @return type
-      */
-    virtual std::string toString() = 0;
-
-    /**
      * @brief method to get the format as string
      * @return format as string
      */

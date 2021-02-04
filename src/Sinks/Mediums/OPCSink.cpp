@@ -186,8 +186,6 @@ const std::string OPCSink::getPassword() const { return password; }
 
 SinkMediumTypes OPCSink::getSinkMediumType() { return OPC_SINK; }
 
-std::string OPCSink::toString() { return "OPC_SINK"; }
-
 UA_StatusCode OPCSink::getRetval() const { return retval; }
 
 }// namespace NES
