@@ -25,6 +25,7 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   libboost-all-dev \
   liblog4cxx-dev \
   libcpprest-dev \
+  libmbedtls-dev \
   libssl-dev \
   clang-format \
   librdkafka1 \
