@@ -41,10 +41,17 @@ QueryService::~QueryService() { NES_DEBUG("~QueryService()"); }
 uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
 
     NES_INFO("QueryService: Executing Syntactic validation");
-    SyntacticQueryValidation syntacticQueryValidation;
-    syntacticQueryValidation.isValid(queryString);
+    try{
+        SyntacticQueryValidation syntacticQueryValidation;
+        syntacticQueryValidation.isValid(queryString);
+    } catch (const std::exception& exc) {
+        QueryCatalogEntryPtr failedEntry = queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
+        failedEntry->setFaliureReason(std::string(exc.what()));
+        NES_THROW_RUNTIME_ERROR(exc.what());
+    }
 
     NES_INFO("QueryService: Validating placement strategy");
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
@@ -53,16 +60,20 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     }
     NES_INFO("QueryService: Parsing and converting user query string");
     QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
 
     NES_INFO("QueryService: Executing Semantic validation");
+    try{
+        SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalog);
+        semanticQueryValidationPtr->isSatisfiable(query);
+    } catch (const std::exception& exc) {
+        QueryCatalogEntryPtr failedEntry = queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
+        failedEntry->setFaliureReason(std::string(exc.what()));
+        NES_THROW_RUNTIME_ERROR(exc.what());
+    }
 
-    SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalog);
-    semanticQueryValidationPtr->isSatisfiable(query);
-
-    // store the string without the query plan if it's invalid (add failed query request?)
     NES_INFO("QueryService: Queuing the query for the execution");
     QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
     if (entry) {

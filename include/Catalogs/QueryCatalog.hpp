@@ -50,6 +50,10 @@ class QueryCatalog {
     QueryCatalogEntryPtr addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan,
                                             const std::string& optimizationStrategyName);
 
+    QueryCatalogEntryPtr recordInvalidQuery(const std::string& queryString, const QueryId queryId, 
+                                            const QueryPlanPtr queryPlan,
+                                            const std::string& optimizationStrategyName);
+
     /**
      * @brief register a request for stopping a query and add it to the scheduling queue.
      * @param queryId: id of the user query.

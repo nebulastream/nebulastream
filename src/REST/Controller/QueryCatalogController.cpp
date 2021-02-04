@@ -109,6 +109,41 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
             RuntimeUtils::printStackTrace();
             internalServerErrorImpl(request);
         }
+        
+    } else if (path[1] == "allQueriesData") {
+        try {
+            //Prepare the response
+            json::value result{};
+            std::map<uint64_t, QueryCatalogEntryPtr> queries = queryCatalog->getAllQueryCatalogEntries();
+
+            for (auto [key, value] : queries) {
+                
+                auto x = json::value::object();
+                x["qstr"] = json::value::string(value->getQueryString());
+                x["id"] = json::value::number(value->getQueryId());
+                x["result"] = json::value::string(value->getQueryStatusAsString());
+                x["info"] = json::value::string(value->getFaliureReason());
+                result[key] = x;
+            }
+
+            if (queries.size() == 0) {
+                NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query was found.");
+                noContentImpl(request);
+            } else {
+                successMessageImpl(request, result);
+            }
+            return;
+        } catch (const std::exception& exc) {
+            NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
+                        "query plan for user request:"
+                        << exc.what());
+            handleException(request, exc);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+        }
+
     } else if (path[1] == "getNumberOfProducedBuffers") {
         //Check if the path contains the query id
         auto param = parameters.find("queryId");
