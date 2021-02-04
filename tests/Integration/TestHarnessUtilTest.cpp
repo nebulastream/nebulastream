@@ -424,8 +424,18 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     // 1,2,4
     // 4,3,6
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/testCSV.csv", 1, 3, 1, "car", "car", false);
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceType("CsvSource");
+    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->setPhysicalStreamName("car");
+    sourceConfig->setSourceConfig("../tests/test_data/testCSV.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    sourceConfig->setSkipHeader(false);
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1);
@@ -469,8 +479,18 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     // 1,2,4
     // 4,3,6
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/testCSV.csv", 1, 3, 1, "car", "car", false);
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceType("CsvSource");
+    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->setPhysicalStreamName("car");
+    sourceConfig->setSourceConfig("../tests/test_data/testCSV.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    sourceConfig->setSkipHeader(false);
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);
 
     // add a memory source
