@@ -35,18 +35,18 @@ class SimpleBenchmarkSink : public SinkMedium {
   public:
     SimpleBenchmarkSink(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0) {
-            rowLayout = NodeEngine::createRowLayout(schema);
+        rowLayout = NodeEngine::createRowLayout(schema);
 
-            // An end of benchmark will be signaled by the source as key field will be equal to -1
-            auto fields = getSchemaPtr()->fields;
-            for (size_t i = 0; i < fields.size(); ++i) {
-                if (fields[i]->name == "key") {
-                    this->fieldIndex = i;
-                    break;
-                }
+        // An end of benchmark will be signaled by the source as key field will be equal to -1
+        auto fields = getSchemaPtr()->fields;
+        for (size_t i = 0; i < fields.size(); ++i) {
+            if (fields[i]->name == "key") {
+                this->fieldIndex = i;
+                break;
             }
-            promiseSet = false;
-        };
+        }
+        promiseSet = false;
+    };
 
     static std::shared_ptr<SimpleBenchmarkSink> create(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) {
         return std::make_shared<SimpleBenchmarkSink>(schema, bufferManager);
@@ -60,7 +60,8 @@ class SimpleBenchmarkSink : public SinkMedium {
         currentTuples += input_buffer.getNumberOfTuples();
         bool endOfBenchmark = true;
 
-        if (promiseSet) return true;
+        if (promiseSet)
+            return true;
 
         auto fields = getSchemaPtr()->fields;
         uint64_t recordIndex = 1;
@@ -120,7 +121,8 @@ class SimpleBenchmarkSink : public SinkMedium {
         }
 
         if (currentTuples % (100 * 1000 * 1000) == 0) {
-            NES_WARNING("SimpleBenchmarkSink: endOfBenchmark = " << endOfBenchmark << " with " << input_buffer.getNumberOfTuples() << " number of tuples!");
+            NES_WARNING("SimpleBenchmarkSink: endOfBenchmark = " << endOfBenchmark << " with " << input_buffer.getNumberOfTuples()
+                                                                 << " number of tuples!");
             NES_DEBUG("SimpleBenchmarkSink: currentTuples=" << currentTuples);
         }
         if (endOfBenchmark && input_buffer.getNumberOfTuples() > 0 && !promiseSet) {
@@ -128,8 +130,6 @@ class SimpleBenchmarkSink : public SinkMedium {
             completed.set_value(endOfBenchmark);
             promiseSet = true;
         }
-
-
 
         return true;
     }

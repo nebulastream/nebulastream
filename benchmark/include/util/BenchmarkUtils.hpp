@@ -110,7 +110,8 @@ class BenchmarkUtils {
      */
 
     static void runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
-                             std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink, NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
+                             std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
+                             NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
 };
 
 #define BM_AddBenchmarkCustomBufferSize(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString,          \
@@ -135,21 +136,21 @@ class BenchmarkUtils {
                         for (auto workerThreads : allWorkerThreads) {                                                            \
                             for (auto sourceCnt : allDataSources) {                                                              \
                                                                                                                                  \
-                                PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();                             \
+                                PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();                        \
                                 uint64_t zmqPort = distr(gen);                                                                   \
-                                NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                           \
-                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", zmqPort, streamConf, workerThreads,\
-                                                                                 bufferSize, numBuffers);                        \
+                                NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                                 \
+                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", zmqPort, streamConf,               \
+                                                                                 workerThreads, bufferSize, numBuffers);         \
                                                                                                                                  \
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
                                                                                                                                  \
                                 std::vector<NodeEngine::QueryStatistics*> statisticsVec;                                         \
-                                NES_WARNING("BenchmarkUtils: Starting benchmark with ingestRate=" + std::to_string(ingestionRate) + ", "         \
-                                            + "singleExpSec=" + std::to_string(BenchmarkUtils::runSingleExperimentSeconds)       \
-                                            + ", " + "benchPeriod=" + std::to_string(BenchmarkUtils::periodLengthInSeconds)      \
-                                            + ", " + "workerThreads=" + std::to_string(workerThreads)                            \
-                                            + " sources=" + std::to_string(sourceCnt));                                          \
+                                NES_WARNING("BenchmarkUtils: Starting benchmark with ingestRate="                                \
+                                            + std::to_string(ingestionRate) + ", " + "singleExpSec="                             \
+                                            + std::to_string(BenchmarkUtils::runSingleExperimentSeconds) + ", " + "benchPeriod=" \
+                                            + std::to_string(BenchmarkUtils::periodLengthInSeconds) + ", " + "workerThreads="    \
+                                            + std::to_string(workerThreads) + " sources=" + std::to_string(sourceCnt));          \
                                 std::vector<DataSourcePtr> sources;                                                              \
                                 for (int i = 0; i < sourceCnt; i++) {                                                            \
                                     DataSourcePtr thisSource = (benchmarkSource);                                                \

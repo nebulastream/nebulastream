@@ -201,8 +201,7 @@ class ParsingException : public Exception {
     * @see Exception
     *
     */
-    class OperationFatalException : public Exception
-    {
+class OperationFatalException : public Exception {
 
   public:
     /**
@@ -211,10 +210,8 @@ class ParsingException : public Exception {
         * @param message Exception message.
         *
         */
-        OperationFatalException(const std::string & message);
-
-    };
-
+    OperationFatalException(const std::string& message);
+};
 
 /**
     * @breif Iterator class.
