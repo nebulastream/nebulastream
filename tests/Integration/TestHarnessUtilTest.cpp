@@ -284,7 +284,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 /**
  * Testing testHarness utility for query with a join operator on different streams
  */
-TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
+//Enable while fixing #1547
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
