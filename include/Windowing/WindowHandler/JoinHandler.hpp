@@ -75,7 +75,7 @@ class JoinHandler : public AbstractJoinHandler {
 
     std::string toString() override {
         std::stringstream ss;
-        //ss << "AG:" << pipelineStageId << +"-" << nextPipeline->getQepParentId();
+        ss << "Joinhandler id=" << id;
         return ss.str();
     }
 
