@@ -49,7 +49,6 @@ namespace NES {
 
 class QueryTest : public testing::Test {
   public:
-
     SourceConfigPtr sourceConfig;
 
     static void SetUpTestCase() {
@@ -60,7 +59,7 @@ class QueryTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
 
-        sourceConfig;
+        sourceConfig = SourceConfig::create();
         sourceConfig->setSourceConfig("");
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setNumberOfBuffersToProduce(3);
@@ -68,7 +67,7 @@ class QueryTest : public testing::Test {
         sourceConfig->setLogicalStreamName("test_stream");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down QueryTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryTest test class."); }
 
     void TearDown() {}
 };
