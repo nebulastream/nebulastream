@@ -61,8 +61,6 @@ class JoinDeploymentTest : public testing::Test {
     }
 
     void TearDown() { std::cout << "Tear down JoinDeploymentTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
 };
 
 /**

@@ -36,8 +36,6 @@ class StreamCatalogRemoteTest : public testing::Test {
     CoordinatorConfigPtr coordinatorConfig;
     WorkerConfigPtr workerConfig;
     SourceConfigPtr sourceConfig;
-    std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
 
     static void SetUpTestCase() {
         NES::setupLogging("StreamCatalogRemoteTest.log", NES::LOG_DEBUG);

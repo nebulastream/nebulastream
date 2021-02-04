@@ -58,7 +58,6 @@ class MultipleWindowsTest : public testing::Test {
     }
 
     void TearDown() { NES_INFO("Tear down MultipleWindowsTest class."); }
-    std::string ipAddress = "127.0.0.1";
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {

@@ -59,8 +59,6 @@ class RenameTest : public testing::Test {
     }
 
     void TearDown() { std::cout << "Tear down RenameTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
 };
 
 //FIXME: Enabled while solving #1490

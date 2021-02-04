@@ -37,7 +37,6 @@ class UpdateTopologyRemoteTest : public testing::Test {
     CoordinatorConfigPtr coordinatorConfig;
     WorkerConfigPtr workerConfig;
     std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
 
     // set the default numberOfSlots to the number of processor
     const uint16_t processorCount = std::thread::hardware_concurrency();

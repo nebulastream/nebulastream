@@ -48,8 +48,6 @@ class RESTEndpointTest : public testing::Test {
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
-
-    std::string ipAddress = "127.0.0.1";
 };
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
