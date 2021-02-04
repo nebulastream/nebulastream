@@ -32,6 +32,12 @@ class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
     ~ProjectionLogicalOperatorNode() = default;
 
     /**
+    * @brief get the ProjectionExpressions.
+    * @return ExpressionItemVector
+    */
+    std::vector<ExpressionItem> getExpressions();
+
+    /**
      * @brief check if two operators have the same output schema
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
@@ -47,7 +53,6 @@ class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
 
-    std::vector<ExpressionItem> getExpressions();
     std::string getStringBasedSignature() override;
 
   private:

@@ -19,4 +19,5 @@ add_source_nes(
         DistributedWindowRule.cpp
         DistributedJoinRule.cpp
         RenameStreamToProjectOperatorRule.cpp
+        ProjectionPushDownRule.cpp
 )

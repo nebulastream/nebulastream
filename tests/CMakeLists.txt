@@ -334,6 +334,12 @@ add_executable(rename-stream-to-project-operator-rule-test "UnitTests/Optimizer/
 target_link_libraries(rename-stream-to-project-operator-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME rename-stream-to-project-operator-rule-test COMMAND rename-stream-to-project-operator-rule-test)
 
+# ProjectionPushDownTest
+add_executable(projection-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/ProjectionPushDownRuleTest.cpp")
+target_link_libraries(projection-push-down-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME projection-push-down-rule-test COMMAND projection-push-down-rule-test)
+
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

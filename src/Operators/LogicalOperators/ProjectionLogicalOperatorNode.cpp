@@ -27,6 +27,9 @@ namespace NES {
 ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<ExpressionItem> expressions, uint64_t id)
     : expressions(expressions), UnaryOperatorNode(id) {}
 
+
+std::vector<ExpressionItem> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
+
 bool ProjectionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<ProjectionLogicalOperatorNode>()->getId() == id;
 }
@@ -95,8 +98,6 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
     }
     return true;
 }
-
-std::vector<ExpressionItem> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
 
 OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createProjectionOperator(expressions, id);
