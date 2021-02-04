@@ -114,6 +114,10 @@ class QueryCatalogEntry {
      */
     QueryCatalogEntry copy();
 
+    void setFaliureReason(std::string faliureReason);
+
+    std::string getFaliureReason();
+
   private:
     QueryId queryId;
     std::string queryString;
