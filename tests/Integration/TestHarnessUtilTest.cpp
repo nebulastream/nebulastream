@@ -33,7 +33,7 @@ class TestHarnessUtilTest : public testing::Test {
 /*
  * Testing testHarness utility using one logical source and one physical source
  */
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithSingleSource) {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -83,7 +83,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithSingleSource) {
 /*
  * Testing testHarness utility using one logical source and two physical sources
  */
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -426,7 +426,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     //register physical stream
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CsvSource");
+    sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
     sourceConfig->setSourceConfig("../tests/test_data/testCSV.csv");
@@ -481,7 +481,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     //register physical stream
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CsvSource");
+    sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
     sourceConfig->setSourceConfig("../tests/test_data/testCSV.csv");
@@ -519,7 +519,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
 /*
  * Testing test harness without source (should not work)
  */
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithNoSources) {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -545,7 +545,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithNoSources) {
 /*
  * Testing test harness pushing element to non-existent source (should not work)
  */
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToNonExsistentSource) {
+TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -562,8 +562,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToNonExsistentSource) {
 /*
  * Testing test harness pushing element push to wrong source (should not work)
  */
-//FIXME: Enabled while solving #1467
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
+TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
