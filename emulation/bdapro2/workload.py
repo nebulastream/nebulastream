@@ -1,14 +1,17 @@
 import math
 import random
 import time
+from datetime import datetime
 from typing import List, Dict, Optional
 
 import grequests
 import requests
 from requests import Response
 
+start_time: str = '{date:%Y%m%d_%H%M%S}'.format(date=datetime.now())
 
-def generate_query(n_queries: int = 100, n_iter: int = 0) -> List[Dict[str, str]]:
+
+def generate_query(base_query: str, n_queries: int = 100, n_iter: int = 0) -> List[Dict[str, str]]:
     """
     Generate queries for submitting, we use a default query to start with
     :param names: list of logical stream name
@@ -18,8 +21,8 @@ def generate_query(n_queries: int = 100, n_iter: int = 0) -> List[Dict[str, str]
     """
     query_set = []
     for i in range(n_queries):
-        output_file_path = f"ysb_out_{n_iter}_{i}.csv"
-        query = "Query::from(\"" + "ysb" + "\").sink(FileSinkDescriptor::create(\"" + output_file_path + "\",\"CSV_FORMAT\",\"APPEND\")); "
+        output_file_path = f"{start_time}_{n_iter}_{i}.csv"
+        query = f"{base_query}.sink(FileSinkDescriptor::create(\"{output_file_path}\",\"CSV_FORMAT\",\"APPEND\")); "
         query_set.append({"userQuery": query,
                           "strategyName": "BottomUp"})
     return query_set
@@ -82,11 +85,12 @@ def _filter_none(response: List[Optional[str]]) -> List[str]:
     return [r for r in response if r is not None]
 
 
-def generate_workload(base_url: str, n_requests: int = 100, stable: bool = True, ratio: float = 0.5, iter: int = 1):
+def generate_workload(base_url: str, base_query: str, n_requests: int = 100, stable: bool = True, ratio: float = 0.5,
+                      niter: int = 1):
     queryids = []
-    for i in range(iter):
+    for i in range(niter):
         print(f"Running iteration {i + 1}")
-        query_sets = generate_query(n_requests, i)
+        query_sets = generate_query(base_query, n_requests, i)
         response_list = submit_query(base_url, query_sets)
         recent_query_ids = get_query_id(response_list)
         while number_of_queries_waiting_to_run(base_url) > 0:
@@ -105,8 +109,9 @@ def generate_workload(base_url: str, n_requests: int = 100, stable: bool = True,
             stopped_query_ids = ",".join([str(qid) for qid in stop_set])
             print(f"STOPPED Queries {stopped_query_ids}. {len(queryids)} queries are still RUNNING")
         queryids.extend(recent_query_ids)
-
+,
 
 if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
-    generate_workload(NES_BASE_URL, stable=True, n_requests=10, iter=2)
+    BASE_QUERY = "Query::from(\"" + "ysb" + "\")"
+    generate_workload(NES_BASE_URL, BASE_QUERY, stable=True, n_requests=10, niter=10)
