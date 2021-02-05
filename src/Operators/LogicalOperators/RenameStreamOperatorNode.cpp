@@ -55,11 +55,11 @@ bool RenameStreamOperatorNode::inferSchema() {
     auto newQualifierName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (auto& field : outputSchema->fields) {
         //Extract field name without qualifier
-        auto& fieldName = field->name;
-        unsigned long separatorLocation = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
+        auto fieldName = field->name;
+/*        unsigned long separatorLocation = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
         if (separatorLocation != std::string::npos) {
             fieldName = fieldName.substr(separatorLocation + 1, fieldName.length());
-        }
+        }*/
         //Add new qualifier name to the field and update the field name
         field->name = newQualifierName + fieldName;
     }
