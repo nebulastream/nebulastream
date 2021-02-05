@@ -158,7 +158,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     auto resultSchema = Schema::create()
                             ->addField("default_logical$id", BasicType::UINT32)
                             ->addField("default_logical$value", BasicType::UINT64)
-                            ->addField("_$f3", BasicType::UINT32);
+                            ->addField("default_logical$f3", BasicType::UINT32);
 
     NES_INFO(sink->getOutputSchema()->toString());
 
@@ -662,7 +662,6 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
  * @brief In this test we test the type inference for query with Join, Stream Rename and Project operators with fully qualified stream name
  */
 TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQualifiedNamesAndJoinOperator) {
-
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
@@ -697,6 +696,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$ts"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << filterOperator[0]->getOutputSchema()->toString());
     ASSERT_TRUE(filterOutputSchema->fields.size() == 9);
     ASSERT_TRUE(filterOutputSchema->hasFieldName("x$default_logical$f2"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("x$default_logical$f1"));
@@ -704,9 +704,9 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     ASSERT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$f2"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$f1"));
     ASSERT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$ts"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("_$start"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("_$end"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("_$key"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("yx$start"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("yx$end"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("yx$key"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
     ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
