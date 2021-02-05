@@ -335,7 +335,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$newId:INTEGER,window$newValue:INTEGER\n"
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$newId:INTEGER,window$newValue:INTEGER\n"
                              "1000,2000,1,1\n"
                              "2000,3000,1,2\n"
                              "1000,2000,4,1\n"

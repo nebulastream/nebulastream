@@ -71,9 +71,8 @@ bool CentralWindowOperator::inferSchema() {
 
     //Construct output schema
     outputSchema->clear();
-    auto streamName = inputSchema->fields[0]->name.substr(0, inputSchema->fields[0]->name.find("$"));
 
-    outputSchema = outputSchema->addField(createField(streamName +"$start", UINT64))->addField(createField(streamName + "$end", UINT64));
+    outputSchema = outputSchema->addField(createField(inputSchema->getQualifierName() +"$start", UINT64))->addField(createField(inputSchema->getQualifierName() + "$end", UINT64));
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.

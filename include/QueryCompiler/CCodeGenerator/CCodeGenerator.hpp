@@ -100,7 +100,7 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
                                        GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
-                                       uint64_t operatorHandlerIndex) override;
+                                       uint64_t operatorHandlerIndex, SchemaPtr schema) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -112,7 +112,7 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
                                       GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
-                                      uint64_t windowOperatorIndex) override;
+                                      uint64_t windowOperatorIndex, SchemaPtr schema) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -124,7 +124,7 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
                                         GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
-                                        uint64_t windowOperatorIndex) override;
+                                        uint64_t windowOperatorIndex, SchemaPtr schema) override;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.

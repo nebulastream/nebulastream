@@ -166,7 +166,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
 
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(LogicalWindowDefinition::create(
         Attribute("id"), Sum(Attribute("value")), TumblingWindow::of(IngestionTime(), Seconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0, Schema::create()));
+        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0));
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
 

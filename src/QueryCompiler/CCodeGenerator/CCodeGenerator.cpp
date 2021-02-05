@@ -544,7 +544,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context, V
  */
 bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                    GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                   PipelineContextPtr context, uint64_t windowOperatorIndex) {
+                                                   PipelineContextPtr context, uint64_t windowOperatorIndex, SchemaPtr schema) {
     auto tf = getTypeFactory();
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
@@ -591,10 +591,9 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
 
-    std::string streamName = window->getSchema()->fields[0]->name.substr(0, window->getSchema()->fields[0]->name.find("$"));
 
     // Read key value from record
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), streamName +"$key");
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), schema->getQualifierName() +"$key");
     auto recordHandler = context->getRecordHandler();
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()->getFieldName());
@@ -758,11 +757,11 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
 
 bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                   GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                  PipelineContextPtr context, uint64_t windowOperatorId) {
+                                                  PipelineContextPtr context, uint64_t windowOperatorId, SchemaPtr schema) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
-    return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, windowOperatorId);
+    return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, windowOperatorId, schema);
 }
 
 uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context) {
@@ -1066,7 +1065,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                     GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                    PipelineContextPtr context, uint64_t windowOperatorIndex) {
+                                                    PipelineContextPtr context, uint64_t windowOperatorIndex, SchemaPtr schema) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
     auto code = context->code;
@@ -1130,10 +1129,9 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     // Read key value from record
     //        int64_t key = windowTuples[recordIndex].key;
 
-    std::string streamName = window->getSchema()->fields[0]->name.substr(0, window->getSchema()->fields[0]->name.find("$"));
 
     //TODO this is not nice but we cannot create an empty one or a ptr
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), streamName + "$key");
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), schema->getQualifierName() + "$key");
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(window->getOnKey()->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
@@ -1164,14 +1162,14 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         std::make_shared<BinaryOperatorStatement>(windowStateVariableStatement));
 
     // get current timestamp
-    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), streamName + "$start");
-    auto recordStartAttributeRef = context->getRecordHandler()->getAttribute(streamName +"$start");
+    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), schema->getQualifierName() + "$start");
+    auto recordStartAttributeRef = context->getRecordHandler()->getAttribute(schema->getQualifierName() +"$start");
 
     if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
-        currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), streamName +"$start");
+        currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), schema->getQualifierName() +"$start");
         auto tsVariableDeclarationStatement =
             VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef->copy());
         context->code->currentCodeInsertionPoint->addStatement(tsVariableDeclarationStatement.copy());
@@ -1184,8 +1182,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
     // get current timestamp
-    auto currentCntVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), streamName + "$cnt");
-    auto recordCntFieldRef = context->getRecordHandler()->getAttribute(streamName + "$cnt");
+    auto currentCntVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), schema->getQualifierName() + "$cnt");
+    auto recordCntFieldRef = context->getRecordHandler()->getAttribute(schema->getQualifierName() + "$cnt");
     auto getCurrentCntStatement = VarDeclStatement(currentCntVariable).assign(recordCntFieldRef);
     context->code->currentCodeInsertionPoint->addStatement(getCurrentCntStatement.copy());
 

@@ -285,8 +285,6 @@ message SerializableOperator{
     TriggerPolicy triggerPolicy = 6;
     TriggerAction action = 7;
     uint64 allowedLateness = 8;
-    SerializableSchema inputSchema = 9;
-
   }
 
   /**

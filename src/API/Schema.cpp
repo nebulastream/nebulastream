@@ -158,7 +158,7 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };
 
-std::string Schema::getStreamName()
+std::string Schema::getQualifierName()
 {
     if(!fields.empty())
     {
