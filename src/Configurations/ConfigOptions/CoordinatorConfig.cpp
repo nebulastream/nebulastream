@@ -84,7 +84,7 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setNumberOfSlots(stoi(it->second));
             } else if (it->first == "--enableQueryMerging") {
                 setEnableQueryMerging((it->second == "true"));
-            } else if (it->first == "--enableQueryMerging") {
+            } else if (it->first == "--enableQueryReconfiguration") {
                 setEnableQueryReconfiguration((it->second == "true"));
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
