@@ -116,10 +116,10 @@ void QueryRequestProcessorService::start() {
                         }
 
                         NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                        localEnd = std::chrono::system_clock::now();
-                        globalQueryPlan->addQueryPlan(queryPlan);
                         localStart = std::chrono::system_clock::now();
-                        NES_TIMER("BDAPRO2Tracking: executeTypeAddQueryPlan - (queryId, microseconds) : "
+                        globalQueryPlan->addQueryPlan(queryPlan);
+                        localEnd = std::chrono::system_clock::now();
+                        NES_TIMER("BDAPRO2Tracking: executeAddGlobalQueryPlan - (queryId, microseconds) : "
                                   << "(" << queryId << ", "
                                   << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count() << ")");
                     } else {

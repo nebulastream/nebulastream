@@ -104,14 +104,15 @@ bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
                     }
                     NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n"
                               << globalExecutionPlan->getAsString());
+                    auto end = std::chrono::system_clock::now();
+                    NES_TIMER("BDAPRO2Tracking: executeQueryReconfigurationPhase - (queryId, microseconds) : "
+                              << "(" << queryId << ", "
+                              << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                     successfulReconfiguration = reconfigureQuery(executionNode, querySubPlan);
                 }
             }
         }
     }
-    auto end = std::chrono::system_clock::now();
-    NES_TIMER("BDAPRO2Tracking: executeQueryReconfigurationPhase - (queryId, microseconds) : "
-              << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
     return successfulReconfiguration;
 }
 
