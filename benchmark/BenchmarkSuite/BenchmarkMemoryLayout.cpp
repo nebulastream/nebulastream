@@ -268,7 +268,7 @@ static void BM_ReadRecordsRowLayoutOldLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-#define REPETITIONS 1
+#define REPETITIONS 20
 BENCHMARK(BM_WriteRecordsRowLayoutOldLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_WriteRecordsCustomRowLayoutOldLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_ReadRecordsRowLayoutOldLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
