@@ -38,7 +38,7 @@ bool WindowType::inferStamp(SchemaPtr schema) {
         auto fieldName = timeCharacteristic->getField()->getName();
         auto existingField = schema->hasFieldName(fieldName);
         if (existingField) {
-            timeCharacteristic->getField()->getName() = existingField->getName();
+            timeCharacteristic->getField()->setName(existingField->getName());
             return false;
         }
 
