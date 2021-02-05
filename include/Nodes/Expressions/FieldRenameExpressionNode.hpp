@@ -51,7 +51,6 @@ class FieldRenameExpressionNode : public ExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-
     const FieldAccessExpressionNodePtr getOriginalField() const;
 
   protected:

@@ -14,17 +14,18 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-namespace NES{
+#include <QueryCompiler/GeneratableOperators/GeneratableProjectionOperator.hpp>
+namespace NES {
 
-GeneratableProjectionOperator::GeneratableProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id) :
-                                                                                                                       ProjectionLogicalOperatorNode(expressions, id){
-}
+GeneratableProjectionOperator::GeneratableProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id)
+    : ProjectionLogicalOperatorNode(expressions, id) {}
 
-GeneratableProjectionOperatorPtr GeneratableProjectionOperator::create(ProjectionLogicalOperatorNodePtr projectLogicalOperator, OperatorId id) {
-    return std::make_shared<GeneratableProjectionOperator>(GeneratableProjectionOperator(projectLogicalOperator->getExpressions(), id));
+GeneratableProjectionOperatorPtr GeneratableProjectionOperator::create(ProjectionLogicalOperatorNodePtr projectLogicalOperator,
+                                                                       OperatorId id) {
+    return std::make_shared<GeneratableProjectionOperator>(
+        GeneratableProjectionOperator(projectLogicalOperator->getExpressions(), id));
 }
 
 void GeneratableProjectionOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
@@ -36,13 +37,10 @@ void GeneratableProjectionOperator::consume(CodeGeneratorPtr codegen, PipelineCo
     getParents()[0]->as<GeneratableOperator>()->consume(codegen, context);
 }
 
-
-
 const std::string GeneratableProjectionOperator::toString() const {
     std::stringstream ss;
     ss << "GENERATABLE_PROJECTION(" << outputSchema->toString() << ")";
     return ss.str();
 }
 
-
-}
+}// namespace NES

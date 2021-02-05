@@ -106,7 +106,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         NES_TRACE("OperatorSerializationUtil:: serialize to ProjectionLogicalOperatorNode");
         auto projectionDetail = SerializableOperator_ProjectionDetails();
         auto projectionOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
-        for (auto & exp: projectionOperator->getExpressions()) {
+        for (auto& exp : projectionOperator->getExpressions()) {
             auto mutableExpression = projectionDetail.mutable_expression()->Add();
             ExpressionSerializationUtil::serializeExpression(exp, mutableExpression);
         }
@@ -233,7 +233,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
 
         std::vector<ExpressionNodePtr> exps;
         // serialize and append children if the node has any
-        for(auto mutableExpression: *serializedProjectionOperator.mutable_expression()){
+        for (auto mutableExpression : *serializedProjectionOperator.mutable_expression()) {
             auto projectExpression = ExpressionSerializationUtil::deserializeExpression(&mutableExpression);
             exps.push_back(projectExpression);
         }

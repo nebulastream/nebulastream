@@ -75,8 +75,6 @@ class CodeGenerator {
   public:
     CodeGenerator();
 
-
-
     /**
      * @brief Code generation for a scan, which depends on a particular input schema.
      * @param schema The input schema, in which we receive the input buffer.

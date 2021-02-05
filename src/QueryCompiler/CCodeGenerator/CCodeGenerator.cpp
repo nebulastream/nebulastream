@@ -218,8 +218,8 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
             // it is a field access expression, so we just check if the record exists.
             auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
             if (!recordHandler->hasAttribute(fieldAccessExpression->getFieldName())) {
-                NES_FATAL_ERROR("CCodeGenerator: projection: the attribute"
-                                    << fieldAccessExpression->getFieldName() << " is not registered so we can not access it.");
+                NES_FATAL_ERROR("CCodeGenerator: projection: the attribute" << fieldAccessExpression->getFieldName()
+                                                                            << " is not registered so we can not access it.");
             }
         }
     }

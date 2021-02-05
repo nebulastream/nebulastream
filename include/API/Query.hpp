@@ -97,7 +97,7 @@ class Query {
     Query& project(Args&&... args) {
         std::vector<ExpressionNodePtr> expressions;
         std::vector<ExpressionItem> expressionItems({std::forward<Args>(args)...});
-        for(ExpressionItem item : expressionItems){
+        for (ExpressionItem item : expressionItems) {
             expressions.push_back(item.getExpressionNode());
         }
         OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
