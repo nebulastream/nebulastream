@@ -192,16 +192,17 @@ static log4cxx::LoggerPtr NESTimerLogger(log4cxx::Logger::getLogger("NESTimer"))
     do {                                                                                                                         \
         LOG4CXX_ERROR(NES::NESLogger, TEXT);                                                                                     \
     } while (0)
-#define NES_TIMER(TEXT)                                                                                                          \
-    do {                                                                                                                         \
-        LOG4CXX_TRACE(NES::NESTimerLogger, TEXT);                                                                                \
-    } while (0)
 #endif
 namespace NES {
 namespace NodeEngine {
 void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 }
 }// namespace NES
+
+#define NES_TIMER(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        LOG4CXX_TRACE(NES::NESTimerLogger, TEXT);                                                                                \
+    } while (0)
 
 /// I am aware that we do not like __ before variable names but here we need them
 /// to avoid name collions, e.g., __buffer, __stacktrace
