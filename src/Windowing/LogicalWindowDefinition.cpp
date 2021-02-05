@@ -30,20 +30,20 @@ namespace NES::Windowing {
 LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
                                                  DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
                                                  WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr triggerAction,
-                                                 uint64_t allowedLateness, SchemaPtr schema)
+                                                 uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(nullptr),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(triggerAction), allowedLateness(allowedLateness), schema(schema) {
+      triggerAction(triggerAction), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
 LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation,
                                                  WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
                                                  uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
-                                                 WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness, SchemaPtr schema)
+                                                 WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(std::move(onKey)),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(triggerAction), allowedLateness(allowedLateness), schema(schema) {
+      triggerAction(triggerAction), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
@@ -52,27 +52,27 @@ bool LogicalWindowDefinition::isKeyed() { return onKey != nullptr; }
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
                                                            DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
                                                            WindowTriggerPolicyPtr triggerPolicy,
-                                                           WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness, SchemaPtr schema) {
+                                                           WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness) {
     return std::make_shared<LogicalWindowDefinition>(windowAggregation, windowType, distChar, numberOfInputEdges, triggerPolicy,
-                                                     triggerAction, allowedLateness, schema);
+                                                     triggerAction, allowedLateness);
 }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey, WindowAggregationPtr windowAggregation,
                                                            WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
                                                            uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
-                                                           WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness, SchemaPtr schema) {
+                                                           WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness) {
     return std::make_shared<LogicalWindowDefinition>(onKey.getExpressionNode()->as<FieldAccessExpressionNode>(),
                                                      windowAggregation, windowType, distChar, numberOfInputEdges, triggerPolicy,
-                                                     triggerAction, allowedLateness, schema);
+                                                     triggerAction, allowedLateness);
 }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(FieldAccessExpressionNodePtr onKey,
                                                            WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
                                                            DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
                                                            WindowTriggerPolicyPtr triggerPolicy,
-                                                           WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness, SchemaPtr schema) {
+                                                           WindowActionDescriptorPtr triggerAction, uint64_t allowedLateness) {
     return std::make_shared<LogicalWindowDefinition>(onKey, windowAggregation, windowType, distChar, numberOfInputEdges,
-                                                     triggerPolicy, triggerAction, allowedLateness, schema);
+                                                     triggerPolicy, triggerAction, allowedLateness);
 }
 
 void LogicalWindowDefinition::setDistributionCharacteristic(DistributionCharacteristicPtr characteristic) {
@@ -93,10 +93,9 @@ void LogicalWindowDefinition::setWindowAggregation(WindowAggregationPtr windowAg
 void LogicalWindowDefinition::setWindowType(WindowTypePtr windowType) { this->windowType = std::move(windowType); }
 void LogicalWindowDefinition::setOnKey(FieldAccessExpressionNodePtr onKey) { this->onKey = std::move(onKey); }
 
-SchemaPtr LogicalWindowDefinition::getSchema(){return schema;};
 LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
     return create(onKey, windowAggregation->copy(), windowType, distributionType, numberOfInputEdges, triggerPolicy,
-                  triggerAction, allowedLateness, schema);
+                  triggerAction, allowedLateness);
 }
 WindowTriggerPolicyPtr LogicalWindowDefinition::getTriggerPolicy() const { return triggerPolicy; }
 void LogicalWindowDefinition::setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy) { this->triggerPolicy = triggerPolicy; }

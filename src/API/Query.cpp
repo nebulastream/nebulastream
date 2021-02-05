@@ -177,7 +177,7 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
 
     auto windowDefinition =
         LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1,
-                                        triggerPolicy, triggerAction, allowedLateness, inputSchema);
+                                        triggerPolicy, triggerAction, allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);
@@ -229,7 +229,7 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
 
     auto windowDefinition = Windowing::LogicalWindowDefinition::create(
         fieldAccess, aggregation, windowType, Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy,
-        triggerAction, allowedLateness, inputSchema);
+        triggerAction, allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);

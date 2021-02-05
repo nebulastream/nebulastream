@@ -111,13 +111,12 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         windowDef = Windowing::LogicalWindowDefinition::create(
             keyField, windowComputationAggregation, windowType,
             Windowing::DistributionCharacteristic::createCombiningWindowType(), numberOfEdgesForFinalComputation, triggerPolicy,
-            triggerActionComplete, allowedLateness, logicalWindowOperator->getInputSchema());
+            triggerActionComplete, allowedLateness);
 
     } else {
         windowDef = Windowing::LogicalWindowDefinition::create(
             windowComputationAggregation, windowType, Windowing::DistributionCharacteristic::createCombiningWindowType(),
-            numberOfEdgesForFinalComputation, triggerPolicy, triggerActionComplete, allowedLateness,
-            logicalWindowOperator->getInputSchema());
+            numberOfEdgesForFinalComputation, triggerPolicy, triggerActionComplete, allowedLateness);
     }
     NES_DEBUG("DistributeWindowRule::apply: created logical window definition for computation operator" << windowDef->toString());
 
@@ -146,13 +145,12 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
             windowDef = Windowing::LogicalWindowDefinition::create(
                 keyField, sliceCombinerWindowAggregation, windowType,
                 Windowing::DistributionCharacteristic::createMergingWindowType(), numberOfEdgesForMerger, triggerPolicy,
-                triggerActionComplete, allowedLateness, logicalWindowOperator->getInputSchema());
+                triggerActionComplete, allowedLateness);
 
         } else {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 sliceCombinerWindowAggregation, windowType, Windowing::DistributionCharacteristic::createMergingWindowType(),
-                numberOfEdgesForMerger, triggerPolicy, triggerActionComplete, allowedLateness,
-                logicalWindowOperator->getInputSchema());
+                numberOfEdgesForMerger, triggerPolicy, triggerActionComplete, allowedLateness);
         }
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice merger operator"
                   << windowDef->toString());
@@ -176,11 +174,11 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
             windowDef = Windowing::LogicalWindowDefinition::create(
                 keyField, sliceCreationWindowAggregation, windowType,
                 Windowing::DistributionCharacteristic::createSlicingWindowType(), 1, triggerPolicy, triggerActionSlicing,
-                allowedLateness, logicalWindowOperator->getInputSchema());
+                allowedLateness);
         } else {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 sliceCreationWindowAggregation, windowType, Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
-                triggerPolicy, triggerActionSlicing, allowedLateness, logicalWindowOperator->getInputSchema());
+                triggerPolicy, triggerActionSlicing, allowedLateness);
         }
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice operator" << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef);

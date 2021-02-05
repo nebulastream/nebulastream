@@ -36,7 +36,7 @@ class LogicalWindowDefinition {
     explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
                                      WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr windowAction,
-                                     uint64_t allowedLateness, SchemaPtr schema);
+                                     uint64_t allowedLateness);
 
     /**
      * @brief This constructor constructs a key-by window
@@ -52,7 +52,7 @@ class LogicalWindowDefinition {
     explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation,
                                      WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
                                      uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
-                                     WindowActionDescriptorPtr windowAction, uint64_t allowedLateness, SchemaPtr schema);
+                                     WindowActionDescriptorPtr windowAction, uint64_t allowedLateness);
 
     /**
      * @brief Create a new window definition for a global window
@@ -67,7 +67,7 @@ class LogicalWindowDefinition {
     static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
                                              DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
                                              WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr windowAction,
-                                             uint64_t allowedLateness, SchemaPtr schema);
+                                             uint64_t allowedLateness);
 
     /**
      * @brief Create a new window definition for a keyed window
@@ -81,7 +81,7 @@ class LogicalWindowDefinition {
     static LogicalWindowDefinitionPtr create(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation,
                                              WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
                                              uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr windowAction, uint64_t allowedLateness, SchemaPtr schema);
+                                             WindowActionDescriptorPtr windowAction, uint64_t allowedLateness);
 
     /**
     * @brief Create a new window definition for a keyed window
@@ -95,7 +95,7 @@ class LogicalWindowDefinition {
     static LogicalWindowDefinitionPtr create(ExpressionItem onKey, WindowAggregationPtr windowAggregation,
                                              WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
                                              uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr windowAction, uint64_t allowedLateness, SchemaPtr schema);
+                                             WindowActionDescriptorPtr windowAction, uint64_t allowedLateness);
 
     /**
      * @brief getter and setter for the distribution type (centralized or distributed)
@@ -149,8 +149,6 @@ class LogicalWindowDefinition {
 
     std::string toString();
 
-    SchemaPtr getSchema();
-
   private:
     WindowAggregationPtr windowAggregation;
     WindowTriggerPolicyPtr triggerPolicy;
@@ -161,7 +159,6 @@ class LogicalWindowDefinition {
     uint64_t numberOfInputEdges;
     uint64_t originId;
     uint64_t allowedLateness;
-    SchemaPtr schema;
 
   public:
     uint64_t getAllowedLateness() const;
