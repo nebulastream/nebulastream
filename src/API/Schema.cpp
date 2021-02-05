@@ -158,6 +158,17 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };
 
+std::string Schema::getStreamName()
+{
+    if(!fields.empty())
+    {
+        return fields[0]->name.substr(0, fields[0]->name.find("$"));
+    }
+    else
+    {
+        return "";
+    }
+}
 bool Schema::contains(const std::string& fieldName) {
     for (const auto& field : this->fields) {
         if (UtilityFunctions::startsWith(field->name, fieldName)) {

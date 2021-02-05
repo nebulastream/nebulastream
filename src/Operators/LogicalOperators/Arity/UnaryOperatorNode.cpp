@@ -19,6 +19,7 @@
 
 namespace NES {
 
+
 UnaryOperatorNode::UnaryOperatorNode(OperatorId id)
     : LogicalOperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
 

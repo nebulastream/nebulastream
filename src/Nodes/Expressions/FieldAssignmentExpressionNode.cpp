@@ -69,10 +69,8 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     if (existingField) {
         field->updateFieldName(existingField->name);
     } else {
-        //Since this is a new field add the undefined schema qualifier to the field if not added already
-        if (fieldName.find(Schema::UNDEFINED_SCHEMA_QUALIFIER) == std::string::npos) {
-            field->updateFieldName(Schema::UNDEFINED_SCHEMA_QUALIFIER + fieldName);
-        }
+        //Since this is a new field add the stream name from schema
+        field->updateFieldName(schema->getStreamName() + "$" + fieldName);
     }
 
     if (field->getStamp()->isUndefined()) {

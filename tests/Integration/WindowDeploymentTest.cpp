@@ -776,7 +776,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,windowStream$value:INTEGER\n"
+    string expectedContent = "windowStream$start:INTEGER,windowStream$end:INTEGER,windowStream$value:INTEGER\n"
                              "1000,2000,3\n"
                              "2000,3000,6\n";
 
@@ -963,7 +963,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,windowStream$value:INTEGER\n"
+    string expectedContent = "windowStream$start:INTEGER,windowStream$end:INTEGER,windowStream$value:INTEGER\n"
                              "1000,2000,6\n"
                              "2000,3000,12\n";
 
