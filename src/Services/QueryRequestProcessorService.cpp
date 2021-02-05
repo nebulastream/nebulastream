@@ -129,7 +129,7 @@ void QueryRequestProcessorService::start() {
                             auto queryPlan = sharedQueryMetaData->getQueryPlan();
                             bool successful = queryReconfigurationPhase->execute(queryPlan);
                             auto endReconfiguration = std::chrono::system_clock::now();
-                            NES_INFO("BDAPRO2Tracking: queryReconfigurationPhase - (queryId, microseconds) : "
+                            NES_TIMER("BDAPRO2Tracking: queryReconfigurationPhase - (queryId, microseconds) : "
                                      << "(" << queryId << ", "
                                      << std::chrono::duration_cast<std::chrono::microseconds>(endReconfiguration
                                                                                               - startReconfiguration)
@@ -150,7 +150,7 @@ void QueryRequestProcessorService::start() {
                     if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                         auto end = std::chrono::system_clock::now();
-                        NES_INFO("BDAPRO2Tracking: markAsRunning - (queryId, microseconds) : "
+                        NES_TIMER("BDAPRO2Tracking: markAsRunning - (queryId, microseconds) : "
                                  << "(" << queryId << ", "
                                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                     } else {
