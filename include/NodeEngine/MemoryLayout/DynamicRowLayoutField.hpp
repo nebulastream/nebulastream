@@ -54,6 +54,7 @@ inline DynamicRowLayoutField<T, boundaryChecks> DynamicRowLayoutField<T, boundar
         NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds!" << layoutBuffer->getFieldOffSets().size() << " >= " << fieldIndex);
     }
 
+    // via pointer arithmetic gets the starting field address
     auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]);
     auto offSet = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
     auto basePointer = bufferBasePointer + offSet;

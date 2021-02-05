@@ -17,17 +17,17 @@
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
-uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) {
+uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) {
     auto fieldSizes = dynamicColLayout.getFieldSizes();
 
-    if (boundaryChecks && jthField >= fieldSizes.size()) {
-        NES_THROW_RUNTIME_ERROR("jthField" << jthField << " is larger than fieldSize.size() " << fieldSizes.size());
+    if (boundaryChecks && fieldIndex >= fieldSizes.size()) {
+        NES_THROW_RUNTIME_ERROR("jthField" << fieldIndex << " is larger than fieldSize.size() " << fieldSizes.size());
     }
-    if (boundaryChecks && jthField >= columnOffsets.size()) {
-        NES_THROW_RUNTIME_ERROR("columnOffsets" << jthField << " is larger than columnOffsets.size() " << columnOffsets.size());
+    if (boundaryChecks && fieldIndex >= columnOffsets.size()) {
+        NES_THROW_RUNTIME_ERROR("columnOffsets" << fieldIndex << " is larger than columnOffsets.size() " << columnOffsets.size());
     }
 
-    auto offSet = (ithRecord * fieldSizes[jthField]) + columnOffsets[jthField];
+    auto offSet = (recordIndex * fieldSizes[fieldIndex]) + columnOffsets[fieldIndex];
     NES_DEBUG("DynamicColumnLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }

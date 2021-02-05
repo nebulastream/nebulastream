@@ -38,12 +38,12 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
 
     /**
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
-     * @param ithRecord
-     * @param jthField
+     * @param recordIndex
+     * @param fieldIndex
      * @param boundaryChecks
      * @return
      */
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) override;
+    uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) override;
 
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
@@ -79,6 +79,8 @@ void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     auto address = &(byteBuffer[0]);
     size_t tupleIndex = 0;
     auto fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks);
+
+    // std::apply iterates over tuple and copies via memcpy the fields from retTuple to the buffer
     std::apply([&tupleIndex, &address, &fieldAddress, fieldSizes, this](auto&&... args) {
         ((fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks),
           memcpy(fieldAddress, &args, fieldSizes[tupleIndex]), ++tupleIndex), ...);
@@ -97,6 +99,8 @@ std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex)
     auto address = &(byteBuffer[0]);
     size_t tupleIndex = 0;
     unsigned char* fieldAddress;
+
+    // std::apply iterates over tuple and copies via memcpy the fields into retTuple
     std::apply([&tupleIndex, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {
         ((fieldAddress = address + calcOffset(recordIndex, tupleIndex, boundaryChecks),
           memcpy(&args, fieldAddress, fieldSizes[tupleIndex]), ++tupleIndex), ...);
