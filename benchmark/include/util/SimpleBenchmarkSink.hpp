@@ -40,7 +40,7 @@ class SimpleBenchmarkSink : public SinkMedium {
         // An end of benchmark will be signaled by the source as key field will be equal to -1
         auto fields = getSchemaPtr()->fields;
         for (size_t i = 0; i < fields.size(); ++i) {
-            if (fields[i]->name == "key") {
+            if (fields[i]->getName() == "key") {
                 this->fieldIndex = i;
                 break;
             }
