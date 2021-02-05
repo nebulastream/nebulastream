@@ -245,14 +245,14 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$value:INTEGER,window1$id:INTEGER,window1$timestamp:INTEGER,"
-        "window2$value:INTEGER,window2$id:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,1,4,1002\n"
-        "1000,2000,12,1,12,1001,1,12,1001\n"
-        "2000,3000,1,2,1,2000,2,1,2000\n"
-        "2000,3000,11,2,11,2001,2,11,2001\n"
-        "2000,3000,16,2,16,2002,2,16,2002\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$value:"
+                             "INTEGER,window1$id:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$value:INTEGER,window2$id:INTEGER,window2$timestamp:INTEGER\n"
+                             "1000,2000,4,1,4,1002,1,4,1002\n"
+                             "1000,2000,12,1,12,1001,1,12,1001\n"
+                             "2000,3000,1,2,1,2000,2,1,2000\n"
+                             "2000,3000,11,2,11,2001,2,11,2001\n"
+                             "2000,3000,16,2,16,2002,2,16,2002\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
@@ -362,14 +362,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,1,4,1002\n"
-        "1000,2000,12,1,12,1001,1,12,1001\n"
-        "2000,3000,1,2,1,2000,2,1,2000\n"
-        "2000,3000,11,2,11,2001,2,11,2001\n"
-        "2000,3000,16,2,16,2002,2,16,2002\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
+                             "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
+                             "1000,2000,4,1,4,1002,1,4,1002\n"
+                             "1000,2000,12,1,12,1001,1,12,1001\n"
+                             "2000,3000,1,2,1,2000,2,1,2000\n"
+                             "2000,3000,11,2,11,2001,2,11,2001\n"
+                             "2000,3000,16,2,16,2002,2,16,2002\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
@@ -480,14 +480,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
+                             "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
@@ -598,14 +598,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,4,1002\n"
-        "1000,2000,12,1,12,1001,12,1001\n"
-        "2000,3000,1,2,1,2000,1,2000\n"
-        "2000,3000,11,2,11,2001,11,2001\n"
-        "2000,3000,16,2,16,2002,16,2002\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win:"
+                             "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$id2:INTEGER,window2$timestamp:INTEGER\n"
+                             "1000,2000,4,1,4,1002,4,1002\n"
+                             "1000,2000,12,1,12,1001,12,1001\n"
+                             "2000,3000,1,2,1,2000,1,2000\n"
+                             "2000,3000,11,2,11,2001,11,2001\n"
+                             "2000,3000,16,2,16,2002,16,2002\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
@@ -720,14 +720,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
+                             "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -854,19 +854,19 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
+                             "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -1009,29 +1009,29 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
+                             "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -1149,19 +1149,19 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "1500,2500,1,2,1,2000,2,1,2010\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "500,1500,4,1,4,1002,3,4,1102\n"
-        "500,1500,4,1,4,1002,3,4,1112\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n"
-        "1500,2500,11,2,11,2001,2,11,2301\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "500,1500,12,1,12,1001,5,12,1011\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
+                             "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "1500,2500,1,2,1,2000,2,1,2010\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "500,1500,4,1,4,1002,3,4,1102\n"
+                             "500,1500,4,1,4,1002,3,4,1112\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n"
+                             "1500,2500,11,2,11,2001,2,11,2301\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "500,1500,12,1,12,1001,5,12,1011\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
@@ -1270,19 +1270,19 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "2000,3000,1,2,1,2000,1,2000\n"
-        "1500,2500,1,2,1,2000,1,2000\n"
-        "1000,2000,4,1,4,1002,4,1002\n"
-        "500,1500,4,1,4,1002,4,1002\n"
-        "2000,3000,11,2,11,2001,11,2001\n"
-        "1500,2500,11,2,11,2001,11,2001\n"
-        "1000,2000,12,1,12,1001,12,1001\n"
-        "500,1500,12,1,12,1001,12,1001\n"
-        "2000,3000,16,2,16,2002,16,2002\n"
-        "1500,2500,16,2,16,2002,16,2002\n";
+    string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win:"
+                             "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
+                             "window2$id2:INTEGER,window2$timestamp:INTEGER\n"
+                             "2000,3000,1,2,1,2000,1,2000\n"
+                             "1500,2500,1,2,1,2000,1,2000\n"
+                             "1000,2000,4,1,4,1002,4,1002\n"
+                             "500,1500,4,1,4,1002,4,1002\n"
+                             "2000,3000,11,2,11,2001,11,2001\n"
+                             "1500,2500,11,2,11,2001,11,2001\n"
+                             "1000,2000,12,1,12,1001,12,1001\n"
+                             "500,1500,12,1,12,1001,12,1001\n"
+                             "2000,3000,16,2,16,2002,16,2002\n"
+                             "1500,2500,16,2,16,2002,16,2002\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

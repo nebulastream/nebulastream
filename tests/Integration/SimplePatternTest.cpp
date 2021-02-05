@@ -376,12 +376,13 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
 
     //TODO Patternname waiting for String support in map operator
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|QnV$start:UINT64|QnV$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|QnV$QnV$PatternId:INT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1543622400000|1543623300000|2000073|107|1|\n"
-                             "|1543623600000|1543624500000|2000073|107|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|QnV$start:UINT64|QnV$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|QnV$QnV$PatternId:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622400000|1543623300000|2000073|107|1|\n"
+        "|1543623600000|1543624500000|2000073|107|1|\n"
+        "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());

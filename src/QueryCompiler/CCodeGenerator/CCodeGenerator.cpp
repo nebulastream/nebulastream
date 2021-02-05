@@ -591,10 +591,10 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
 
-
     // Read key value from record
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()),
-                                                              context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() +"key");
+    auto keyVariableDeclaration =
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()),
+                                    context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
     auto recordHandler = context->getRecordHandler();
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()->getFieldName());
@@ -1130,10 +1130,10 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     // Read key value from record
     //        int64_t key = windowTuples[recordIndex].key;
 
-
     //TODO this is not nice but we cannot create an empty one or a ptr
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"),
-                                                              context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
+    auto keyVariableDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"),
+                                    context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
     if (window->isKeyed()) {
         auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(window->getOnKey()->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
@@ -1164,14 +1164,19 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         std::make_shared<BinaryOperatorStatement>(windowStateVariableStatement));
 
     // get current timestamp
-    auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start");
-    auto recordStartAttributeRef = context->getRecordHandler()->getAttribute(context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() +"start");
+    auto currentTimeVariableDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"),
+                                    context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start");
+    auto recordStartAttributeRef = context->getRecordHandler()->getAttribute(
+        context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start");
 
     if (window->getWindowType()->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
-        currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() +"start");
+        currentTimeVariableDeclaration = VariableDeclaration::create(
+            tf->createAnonymusDataType("auto"),
+            context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start");
         auto tsVariableDeclarationStatement =
             VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef->copy());
         context->code->currentCodeInsertionPoint->addStatement(tsVariableDeclarationStatement.copy());
@@ -1184,9 +1189,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
     // get current timestamp
-    auto currentCntVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"),
-                                                          context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt");
-    auto recordCntFieldRef = context->getRecordHandler()->getAttribute(context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt");
+    auto currentCntVariable =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"),
+                                    context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt");
+    auto recordCntFieldRef = context->getRecordHandler()->getAttribute(
+        context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt");
     auto getCurrentCntStatement = VarDeclStatement(currentCntVariable).assign(recordCntFieldRef);
     context->code->currentCodeInsertionPoint->addStatement(getCurrentCntStatement.copy());
 
