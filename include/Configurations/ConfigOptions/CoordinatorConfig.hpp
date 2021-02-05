@@ -136,10 +136,22 @@ class CoordinatorConfig {
     BoolConfigOption getEnableQueryMerging();
 
     /**
+    * @brief gets a ConfigOption object with enable query reconfiguration
+    * @param Config option for query reconfiguration
+    */
+    BoolConfigOption getEnableQueryReconfiguration();
+
+    /**
      * @brief set the value for enableQueryMerging with the appropriate data format
      * @param enableQueryMerging: enable or disable query merging
      */
     void setEnableQueryMerging(bool enableQueryMerging);
+
+    /**
+    * @brief set the value for enableQueryReconfiguration with the appropriate data format
+    * @param enableQueryReconfiguration: enable or disable query reconfiguration
+    */
+    void setEnableQueryReconfiguration(bool enableQueryReconfiguration);
 
     /**
      * @brief gets a ConfigOption object with log level
@@ -177,6 +189,7 @@ class CoordinatorConfig {
     IntConfigOption dataPort;
     IntConfigOption numberOfSlots;
     BoolConfigOption enableQueryMerging;
+    BoolConfigOption enableQueryReconfiguration;
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
 };
