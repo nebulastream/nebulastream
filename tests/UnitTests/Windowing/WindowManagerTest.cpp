@@ -152,7 +152,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
         aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)),
-        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0, Schema::create());
 
     auto windowManager = new WindowManager(windowDef->getWindowType());
     uint64_t ts = 10;
@@ -194,7 +194,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
         Attribute("key", UINT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0);
+        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0, Schema::create());
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -269,7 +269,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
         Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-        DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction, 0);
+        DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction, 0, Schema::create());
 
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -341,7 +341,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto windowDef = LogicalWindowDefinition::create(
         Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-        DistributionCharacteristic::createCombiningWindowType(), 1, trigger, triggerAction, 0);
+        DistributionCharacteristic::createCombiningWindowType(), 1, trigger, triggerAction, 0, Schema::create());
     auto exec = ExecutableSumAggregation<int64_t>::create();
 
     auto windowInputSchema = Schema::create();
@@ -418,7 +418,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
         Attribute("key", UINT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0);
+        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0, Schema::create());
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto windowInputSchema = Schema::create();
@@ -495,12 +495,12 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto windowInputSchema = Schema::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
         Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-        DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction, 0);
+        DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction, 0, windowInputSchema);
 
-    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
                                   ->addField(createField("end", UINT64))

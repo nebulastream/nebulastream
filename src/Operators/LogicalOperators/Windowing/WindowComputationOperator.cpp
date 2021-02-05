@@ -66,7 +66,9 @@ bool WindowComputationOperator::inferSchema() {
 
     //Construct output schema
     outputSchema->clear();
-    outputSchema = outputSchema->addField(createField("_$start", UINT64))->addField(createField("_$end", UINT64));
+    auto streamName = inputSchema->fields[0]->name.substr(0, inputSchema->fields[0]->name.find("$"));
+
+    outputSchema = outputSchema->addField(createField(streamName + "$start", UINT64))->addField(createField(streamName + "$end", UINT64));
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.

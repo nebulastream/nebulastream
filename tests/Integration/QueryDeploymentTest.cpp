@@ -1472,7 +1472,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window$value:INTEGER,window$id:INTEGER,window$timestamp:INTEGER,"
+        "window$start:INTEGER,window$end:INTEGER,window$key:INTEGER,window$value:INTEGER,window$id:INTEGER,window$timestamp:INTEGER,"
         "window2$value:INTEGER,window2$id:INTEGER,window2$timestamp:INTEGER\n"
         "1000,2000,4,1,4,1002,1,4,1002\n"
         "1000,2000,12,1,12,1001,1,12,1001\n"
