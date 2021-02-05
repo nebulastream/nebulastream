@@ -58,7 +58,13 @@ ZmqServer::~ZmqServer() {
         return;// start() not called
     }
     keepRunning = false;
-    zmqContext.reset();
+    /// plz do not change the above shutdown sequence
+    /// following zmq's guidelines, the correct way to terminate it is to:
+    /// 1. call shutdown on the zmq context (this tells ZMQ to prepare for termination)
+    /// 2. wait for all zmq sockets and threads to be closed (including the WorkerPool as it holds OutputChannels)
+    /// 3. call close on the zmq context
+    /// 4. deallocate the zmq contect
+    zmqContext->shutdown();
     auto future = errorPromise.get_future();
     routerThread->join();
     if (future.valid()) {
@@ -75,6 +81,8 @@ ZmqServer::~ZmqServer() {
             throw;
         }
     }
+    zmqContext->close();
+    zmqContext.reset();
 }
 
 void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise) {
