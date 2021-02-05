@@ -75,10 +75,7 @@ void QueryRequestProcessorService::start() {
             //process the queries using query-at-a-time model
             for (auto queryCatalogEntry : queryCatalogEntryBatch) {
                 QueryId queryId = queryCatalogEntry.getQueryId();
-                auto start = std::chrono::system_clock::now();
-                auto localEnd = std::chrono::system_clock::now();
                 try {
-                    auto localStart = std::chrono::system_clock::now();
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
                         NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                         globalQueryPlan->removeQuery(queryId);
@@ -89,20 +86,11 @@ void QueryRequestProcessorService::start() {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
                         NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                        start = std::chrono::system_clock::now();
                         queryPlan = typeInferencePhase->execute(queryPlan);
-                        localEnd = std::chrono::system_clock::now();
-                        NES_TIMER("BDAPRO2Tracking: executeTypeInferencePhase - (queryId, microseconds) : "
-                                  << "(" << queryId << ", "
-                                  << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count() << ")");
 
                         NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
-                        localStart = std::chrono::system_clock::now();
                         queryPlan = queryRewritePhase->execute(queryPlan);
-                        localEnd = std::chrono::system_clock::now();
-                        NES_TIMER("BDAPRO2Tracking: executeQueryRewritePhase - (queryId, microseconds) : "
-                                  << "(" << queryId << ", "
-                                  << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count() << ")");
+
                         if (!queryPlan) {
                             throw Exception("QueryProcessingService: Failed during query rewrite phase for query: "
                                             + std::to_string(queryId));
@@ -116,12 +104,7 @@ void QueryRequestProcessorService::start() {
                         }
 
                         NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                        localStart = std::chrono::system_clock::now();
                         globalQueryPlan->addQueryPlan(queryPlan);
-                        localEnd = std::chrono::system_clock::now();
-                        NES_TIMER("BDAPRO2Tracking: executeAddGlobalQueryPlan - (queryId, microseconds) : "
-                                  << "(" << queryId << ", "
-                                  << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count() << ")");
                     } else {
                         NES_ERROR("QueryProcessingService: Request received for query with status "
                                   << queryCatalogEntry.getQueryStatus() << " ");
@@ -131,19 +114,9 @@ void QueryRequestProcessorService::start() {
 
                     if (enableQueryMerging) {
                         NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
-                        localStart = std::chrono::system_clock::now();
                         queryMergerPhase->execute(globalQueryPlan);
-                        localEnd = std::chrono::system_clock::now();
-                        NES_TIMER("BDAPRO2Tracking: executeQueryMergerPhase - (queryId, microseconds) : "
-                                  << "(" << queryId << ", "
-                                  << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count() << ")");
                     }
-                    localStart = std::chrono::system_clock::now();
                     auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-                    localEnd = std::chrono::system_clock::now();
-                    NES_TIMER("BDAPRO2Tracking: executeGetSharedQueryMetaDataToDeploy - (queryId, microseconds) : "
-                              << "(" << queryId << ", "
-                              << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count() << ")");
                     for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
                         SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                         NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
@@ -178,22 +151,8 @@ void QueryRequestProcessorService::start() {
                             }
                         }
                         if (enableQueryReconfiguration && !sharedQueryMetaData->isEmpty() && !sharedQueryMetaData->isNew()) {
-                            localStart = std::chrono::system_clock::now();
                             auto queryPlan = sharedQueryMetaData->getQueryPlan();
-                            localEnd = std::chrono::system_clock::now();
-                            NES_TIMER("BDAPRO2Tracking: sharedQueryMetaData - (queryId, microseconds) : "
-                                      << "(" << queryId << ", "
-                                      << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count()
-                                      << ")");
-                            auto startReconfiguration = std::chrono::system_clock::now();
                             bool successful = queryReconfigurationPhase->execute(queryPlan);
-                            auto endReconfiguration = std::chrono::system_clock::now();
-                            NES_TIMER("BDAPRO2Tracking: queryReconfigurationPhase - (queryId, microseconds) : "
-                                      << "(" << queryId << ", "
-                                      << std::chrono::duration_cast<std::chrono::microseconds>(endReconfiguration
-                                                                                               - startReconfiguration)
-                                             .count()
-                                      << ")");
                             if (!successful) {
                                 throw QueryDeploymentException(
                                     "QueryRequestProcessingService: Failed to deploy query with global query Id "
@@ -206,10 +165,6 @@ void QueryRequestProcessorService::start() {
 
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
-                        auto end = std::chrono::system_clock::now();
-                        NES_TIMER("BDAPRO2Tracking: markAsRunning - (queryId, microseconds) : "
-                                  << "(" << queryId << ", "
-                                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     }
