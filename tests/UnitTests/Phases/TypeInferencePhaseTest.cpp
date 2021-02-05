@@ -94,7 +94,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     auto mappedSchema = Schema::create();
     mappedSchema->addField("default_logical$f1", BasicType::INT32);
     mappedSchema->addField("default_logical$f2", BasicType::INT8);
-    mappedSchema->addField("_$f3", BasicType::INT8);
+    mappedSchema->addField("default_logical$f3", BasicType::INT8);
 
     ASSERT_TRUE(map->getOutputSchema()->equals(mappedSchema));
     ASSERT_TRUE(sink->getOutputSchema()->equals(mappedSchema));
@@ -184,7 +184,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
     auto resultSchema = Schema::create()
                             ->addField("default_logical$id", BasicType::UINT32)
                             ->addField("default_logical$value", BasicType::UINT64)
-                            ->addField("_$f3", BasicType::UINT32);
+                            ->addField("default_logical$f3", BasicType::UINT32);
 
     NES_INFO(sink->getOutputSchema()->toString());
     ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));

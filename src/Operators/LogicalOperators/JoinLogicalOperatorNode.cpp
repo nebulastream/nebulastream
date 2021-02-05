@@ -119,9 +119,12 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();
-    outputSchema->addField(createField("_$start", UINT64));
-    outputSchema->addField(createField("_$end", UINT64));
-    outputSchema->addField(AttributeField::create("_$key", leftJoinKey->getStamp()));
+    auto streamNameLeft = leftInputSchema->fields[0]->name.substr(0, leftInputSchema->fields[0]->name.find("$"));
+    auto streamNameRight = rightInputSchema->fields[0]->name.substr(0, rightInputSchema->fields[0]->name.find("$"));
+    auto newStreamPrefix = streamNameLeft + streamNameRight;
+    outputSchema->addField(createField(newStreamPrefix + "$start", UINT64));
+    outputSchema->addField(createField(newStreamPrefix + "$end", UINT64));
+    outputSchema->addField(AttributeField::create(newStreamPrefix + "$key", leftJoinKey->getStamp()));
 
     // create dynamic fields to store all fields from left and right streams
     for (auto field : leftInputSchema->fields) {
