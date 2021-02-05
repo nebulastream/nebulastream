@@ -70,7 +70,7 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
         field->updateFieldName(existingField->name);
     } else {
         //Since this is a new field add the stream name from schema
-        field->updateFieldName(schema->getQualifierName() + "$" + fieldName);
+        field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
     }
 
     if (field->getStamp()->isUndefined()) {

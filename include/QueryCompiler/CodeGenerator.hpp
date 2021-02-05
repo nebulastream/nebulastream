@@ -145,7 +145,7 @@ class CodeGenerator {
     */
     virtual bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                               PipelineContextPtr context, uint64_t operatorHandlerIndex, SchemaPtr schema) = 0;
+                                               PipelineContextPtr context, uint64_t operatorHandlerIndex) = 0;
 
     /**
    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -156,7 +156,7 @@ class CodeGenerator {
    */
     virtual bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
                                               GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                              PipelineContextPtr context, uint64_t windowOperatorIndex, SchemaPtr schema) = 0;
+                                              PipelineContextPtr context, uint64_t windowOperatorIndex) = 0;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -167,7 +167,7 @@ class CodeGenerator {
     */
     virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                 GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                PipelineContextPtr context, uint64_t windowOperatorIndex, SchemaPtr schema) = 0;
+                                                PipelineContextPtr context, uint64_t windowOperatorIndex) = 0;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.

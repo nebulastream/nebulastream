@@ -163,7 +163,14 @@ class Schema {
      * @brief method to get the qualifier of the stream without $
      * @return qualifier without $
      */
-    std::string getQualifierName();
+    std::string getQualifierNameForSystemGeneratedFields();
+
+    /**
+     * @brief method to get the qualifier of the stream with $
+     * @return qualifier with
+     */
+    std::string getQualifierNameForSystemGeneratedFieldsWithSeparator();
+
     /**
      * @brief Remove all fields and qualifying name
      */

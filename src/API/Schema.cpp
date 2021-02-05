@@ -158,14 +158,26 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };
 
-std::string Schema::getQualifierName()
+std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator()
+{
+    return getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR;
+}
+std::string Schema::getQualifierNameForSystemGeneratedFields()
 {
     if(!fields.empty())
     {
-        return fields[0]->name.substr(0, fields[0]->name.find("$"));
+        if(fields[0]->name.find("start") != std::string::npos)
+        {
+            return fields[0]->name.substr(0, fields[0]->name.find(ATTRIBUTE_NAME_SEPARATOR));
+        }
+        {
+            NES_ERROR("first element in schema should be start if this function is called");
+            return "";
+        }
     }
     else
     {
+        NES_ERROR("Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is requested");
         return "";
     }
 }
