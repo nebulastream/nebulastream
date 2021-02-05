@@ -542,7 +542,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
-                     .project(Attribute("f1").rename("default_logical$f3"), Attribute("f2").rename("f4"))
+                     .project(Attribute("f1").rename("f3"), Attribute("f2").rename("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
@@ -605,7 +605,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto query = Query::from("default_logical")
                      .merge(&subQuery)
                      .filter(Attribute("f2") < 42)
-                     .project(Attribute("f1").rename("default_logical$f3"), Attribute("f2").rename("f4"))
+                     .project(Attribute("f1").rename("f3"), Attribute("f2").rename("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
