@@ -51,7 +51,7 @@ class MultipleJoinsTest : public testing::Test {
 };
 
 
-TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindow) {
+TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowOnCoodinator) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -142,20 +142,13 @@ TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindow) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n";
+        "window3$start:INTEGER,window3$end:INTEGER,window3$key:INTEGER,window2$start:INTEGER,window2$end:INTEGER,window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER\n"
+        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
@@ -181,14 +174,13 @@ TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindow) {
 /**
  * @brief This tests just outputs the default stream for a hierarchy with one relay which also produces data by itself
  * Topology:
-    PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0]
+    PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0] => Join 2
+    |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0] => Join 1
     |  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(MultipleJoinsTest, DISABLED_testTwoJoinsWithDifferentStreamTumblingWindow) {
+TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowDistributed) {
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -196,7 +188,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testTwoJoinsWithDifferentStreamTumblingWindow
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Worker, 200);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
@@ -220,14 +212,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testTwoJoinsWithDifferentStreamTumblingWindow
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
-    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 2);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
+    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
     std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
@@ -243,7 +228,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testTwoJoinsWithDifferentStreamTumblingWindow
 
     //register logical stream qnv
     std::string window2 =
-        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
     std::string testSchemaFileName2 = "window.hpp";
     std::ofstream out2(testSchemaFileName2);
     out2 << window2;
@@ -276,8 +261,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testTwoJoinsWithDifferentStreamTumblingWindow
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MultipleJoinsTest: Submit query");
-    //project(Attribute("timestamp").rename("window1$timestamp"))
-    //    .join(Query::from("window3"), Attribute("window1$id1"), Attribute("id1"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
 
     string query =
         R"(Query::from("window1")
@@ -286,30 +269,25 @@ TEST_F(MultipleJoinsTest, DISABLED_testTwoJoinsWithDifferentStreamTumblingWindow
         .sink(FileSinkDescriptor::create(")"
             + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n";
+        "window3$start:INTEGER,window3$end:INTEGER,window3$key:INTEGER,window2$start:INTEGER,window2$end:INTEGER,window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER\n"
+        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
+
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
@@ -329,9 +307,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testTwoJoinsWithDifferentStreamTumblingWindow
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 5");
-    bool retStopWrk5 = wrk5->stop(true);
-    EXPECT_TRUE(retStopWrk5);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

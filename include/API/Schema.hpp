@@ -159,6 +159,8 @@ class Schema {
 
     const std::string toString() const;
 
+    const std::string getStreamName() const;
+
     /**
      * @brief method to get the qualifier of the stream without $
      * @return qualifier without $
