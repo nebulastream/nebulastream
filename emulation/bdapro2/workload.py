@@ -91,11 +91,15 @@ def generate_workload(base_url: str, base_query: str, n_requests: int = 100, sta
     for i in range(niter):
         print(f"Running iteration {i + 1}")
         query_sets = generate_query(base_query, n_requests, i)
+        start_time = time.time()
         response_list = submit_query(base_url, query_sets)
         recent_query_ids = get_query_id(response_list)
         while number_of_queries_waiting_to_run(base_url) > 0:
             print(f"Waiting until submitted queries are marked as running.")
             time.sleep(1)
+        print(
+            f"Iteration {i + 1} submitted {n_requests} queries and it took {(time.time() - start_time)} seconds for "
+            f"them to run", flush=True)
         if not stable:
             random.shuffle(queryids)
             if ratio > 1:
@@ -109,7 +113,7 @@ def generate_workload(base_url: str, base_query: str, n_requests: int = 100, sta
             stopped_query_ids = ",".join([str(qid) for qid in stop_set])
             print(f"STOPPED Queries {stopped_query_ids}. {len(queryids)} queries are still RUNNING")
         queryids.extend(recent_query_ids)
-,
+
 
 if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
