@@ -68,6 +68,12 @@ static DebugLevel getStringAsDebugLevel(std::string level) {
 }
 
 static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
+/**
+ * Logger to log trace timings logs log4cxx does not support custom logging level, recommended approach is to create different logger
+ * Set level to lowest possible
+ * https://logging.apache.org/log4cxx/latest_stable/faq.html#custom_levels
+ */
+static log4cxx::LoggerPtr NESTimerLogger(log4cxx::Logger::getLogger("NESTimer"));
 }// namespace NES
 // LoggerPtr logger(Logger::getLogger("NES"));
 
@@ -185,6 +191,10 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 #define NES_FATAL_ERROR(TEXT)                                                                                                    \
     do {                                                                                                                         \
         LOG4CXX_ERROR(NES::NESLogger, TEXT);                                                                                     \
+    } while (0)
+#define NES_TIMER(TEXT)                                                                                                          \
+    do {                                                                                                                         \
+        LOG4CXX_TRACE(NES::NESTimerLogger, TEXT);                                                                                \
     } while (0)
 #endif
 namespace NES {
@@ -308,6 +318,8 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
 
     NESLogger->addAppender(file);
     NESLogger->addAppender(console);
+    NESTimerLogger->setLevel(log4cxx::Level::getTrace());
+    NESTimerLogger->addAppender(console);
 }
 
 static void setLogLevel(DebugLevel level) {
