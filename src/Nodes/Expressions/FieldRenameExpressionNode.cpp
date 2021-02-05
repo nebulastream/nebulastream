@@ -53,32 +53,34 @@ const std::string FieldRenameExpressionNode::toString() const {
 }
 
 void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
-    //Detect if user has provided fully qualified name
+
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp(schema);
     auto fieldName = originalFieldName->getFieldName();
     auto fieldAttribute = schema->hasFieldName(fieldName);
-    if (!fieldAttribute) {
-        NES_ERROR("Original field with name " << fieldName << " does not exists in the schema " << schema->toString());
-        throw InvalidFieldException("Original field with name " + fieldName + " does not exists in the schema "
-                                    + schema->toString());
+    //Detect if user has added attribute name separator
+    if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+        if (!fieldAttribute) {
+            NES_ERROR("FieldRenameExpressionNode: Original field with name " << fieldName << " does not exists in the schema "
+                                                                             << schema->toString());
+            throw InvalidFieldException("Original field with name " + fieldName + " does not exists in the schema "
+                                        + schema->toString());
+        }
+        newFieldName = fieldName.substr(0, fieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
     }
-
-    auto newFieldAttribute = schema->hasFieldName(newFieldName);
-    if (newFieldAttribute) {
-        NES_ERROR("FieldRenameExpressionNode: The new field name" + newFieldName + " already exists in the input schema "
-                  + schema->toString() + ". Can't use the name of an existing field.");
-        throw InvalidFieldException("New field with name " + newFieldName + " already exists in the schema "
-                                    + schema->toString());
-    }
-
-    newFieldName = fieldName.substr(0, fieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
 
     if (fieldName == newFieldName) {
         NES_WARNING("FieldRenameExpressionNode: Both existing and new fields are same: existing: " + fieldName
                     + " new field name: " + newFieldName);
+    } else {
+        auto newFieldAttribute = schema->hasFieldName(newFieldName);
+        if (newFieldAttribute) {
+            NES_ERROR("FieldRenameExpressionNode: The new field name" + newFieldName + " already exists in the input schema "
+                      + schema->toString() + ". Can't use the name of an existing field.");
+            throw InvalidFieldException("New field with name " + newFieldName + " already exists in the schema "
+                                        + schema->toString());
+        }
     }
-
     // assign the stamp of this field access with the type of this field.
     stamp = fieldAttribute->getDataType();
 }
