@@ -123,13 +123,23 @@ add_test(NAME zmq-tests COMMAND zmq-tests)
 
 ### Source Tests ###
 add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
-target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES} "/home/nes/java/jre/lib/amd64/server/libjvm.so" "/home/nes/hadoop/lib/native/libhdfs.so")
 add_test(NAME source-tests COMMAND source-tests)
+
+### HDFS Source Test ####
+add_executable(hdfs-source-tests "UnitTests/Source/HdfsSourceTest.cpp")
+target_link_libraries(hdfs-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES} "/home/nes/java/jre/lib/amd64/server/libjvm.so" "/home/nes/hadoop/lib/native/libhdfs.so")
+add_test(NAME hdfs-source-tests COMMAND hdfs-source-tests)
 
 ### Sink Tests ###
 add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
 target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME sink-tests COMMAND sink-tests)
+
+#### Hdfs Sink Test ###
+#add_executable(hdfs-sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
+#target_link_libraries(hdfs-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+#add_test(NAME hdfs-sink-tests COMMAND hdfs-sink-tests)
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
@@ -373,7 +383,9 @@ add_test(NAME merge-deployment-test COMMAND merge-deployment-test)
 
 ### ContiniousSourceTest ###
 add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
-target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})
+target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES} "/home/nes/java/jre/lib/amd64/server/libjvm.so" "/home/nes/hadoop/lib/native/libhdfs.so")
+#target_link_libraries(continious-source-test PRIVATE "/home/ricardohb/hadoop/lib/native/libhdfs.so")
+#target_link_libraries(continious-source-test PRIVATE "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/libjvm.so")
 add_test(NAME continious-source-test COMMAND continious-source-test)
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###

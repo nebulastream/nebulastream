@@ -32,6 +32,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Sources/YSBSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Sources/HdfsSource.hpp>
 
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
@@ -106,6 +107,16 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferMana
                                         NodeEngine::QueryManagerPtr queryManager, Network::NetworkManagerPtr networkManager,
                                         Network::NesPartition nesPartition) {
     return std::make_shared<Network::NetworkSource>(schema, bufferManager, queryManager, networkManager, nesPartition);
+}
+
+const DataSourcePtr createHdfsSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                     NodeEngine::QueryManagerPtr queryManager, const std::string& namenode,
+                                     uint64_t port,  const std::string& pathToFile, const std::string& delimiter,
+                                     uint64_t numberOfTuplesToProducePerBuffer, uint64_t numbersOfBufferToProduce,
+                                     uint64_t frequency, bool skipHeader, OperatorId operatorId) {
+    return std::make_shared<HdfsSource>(schema, bufferManager, queryManager, namenode, port, pathToFile, delimiter,
+                                       numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, skipHeader,
+                                       operatorId);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

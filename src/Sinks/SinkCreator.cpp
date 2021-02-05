@@ -96,6 +96,12 @@ const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanI
                                                   waitTime, retryTimes);
 }
 
+const DataSinkPtr createHdfsSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                 const std::string& filePath, bool append) {
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
+}
+
 #ifdef ENABLE_KAFKA_BUILD
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const uint64_t kafkaProducerTimeout) {

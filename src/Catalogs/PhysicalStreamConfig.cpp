@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/HdfsSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
 namespace NES {
@@ -91,6 +92,9 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     } else if (type == "YSBSource") {
         NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
         return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency);
+    } else if (type == "HDFSSource") {
+        NES_DEBUG("TypeInferencePhase: create HDFS source for " << conf);
+        return HdfsSourceDescriptor::create(schema, "default", 0, conf, ",", numberOfTuplesToProducePerBuffer, numBuffers, frequency, skipHeader);
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
     }

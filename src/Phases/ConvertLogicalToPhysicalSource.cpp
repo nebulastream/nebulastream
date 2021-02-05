@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/HdfsSourceDescriptor.hpp>
 
 #include <Network/NetworkManager.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -105,6 +106,13 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
         return createMemorySource(memorySourceDescriptor->getSchema(), bufferManager, queryManager, operatorId,
                                   memorySourceDescriptor->getMemoryArea(), memorySourceDescriptor->getMemoryAreaSize());
+    } else if (sourceDescriptor->instanceOf<HdfsSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating hdfs source");
+        auto hdfsSourceDescriptor = sourceDescriptor->as<HdfsSourceDescriptor>();
+        return createHdfsSource(hdfsSourceDescriptor->getSchema(), bufferManager, queryManager, hdfsSourceDescriptor->getNamenode(),
+                                hdfsSourceDescriptor->getPort(), hdfsSourceDescriptor->getFilePath(), hdfsSourceDescriptor->getDelimiter(),
+                                hdfsSourceDescriptor->getNumberOfTuplesToProducePerBuffer(), hdfsSourceDescriptor->getNumBuffersToProcess(),
+                                hdfsSourceDescriptor->getFrequency(), hdfsSourceDescriptor->getSkipHeader(), operatorId);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
