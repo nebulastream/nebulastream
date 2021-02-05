@@ -154,6 +154,18 @@ const std::string Schema::toString() const {
     return ss.str();
 }
 
+const std::string Schema::getStreamName() const {
+    if(fields.empty())
+    {
+        return "";
+    }
+    else
+    {
+        return fields[0]->name.substr(0, fields[0]->name.find("$"));
+    }
+}
+
+
 AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 };
