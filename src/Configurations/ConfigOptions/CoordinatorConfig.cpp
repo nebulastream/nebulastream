@@ -35,6 +35,7 @@ CoordinatorConfig::CoordinatorConfig() {
     numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", std::thread::hardware_concurrency(),
                                                    "Number of computing slots for NES Coordinator");
     enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
+    enableQueryReconfiguration = ConfigOption<bool>::create("enableQueryReconfiguration", false, "Enable Sink Reconfiguration Feature");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
 }
@@ -53,6 +54,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setCoordinatorIp(config["coordinatorIp"].As<std::string>());
             setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
             setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
+            setEnableQueryMerging(config[enableQueryReconfiguration->getName()].As<bool>());
             setLogLevel(config["logLevel"].As<std::string>());
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
@@ -82,10 +84,12 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setNumberOfSlots(stoi(it->second));
             } else if (it->first == "--enableQueryMerging") {
                 setEnableQueryMerging((it->second == "true"));
+            } else if (it->first == "--enableQueryMerging") {
+                setEnableQueryReconfiguration((it->second == "true"));
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
             } else {
-                NES_WARNING("Unknow configuration value :" << it->first);
+                NES_WARNING("Unknown configuration value :" << it->first);
             }
         }
     } catch (std::exception& e) {
@@ -132,8 +136,14 @@ void CoordinatorConfig::setNumberOfSlots(uint16_t numberOfSlotsValue) { numberOf
 
 BoolConfigOption CoordinatorConfig::getEnableQueryMerging() { return enableQueryMerging; }
 
+BoolConfigOption CoordinatorConfig::getEnableQueryReconfiguration() { return enableQueryReconfiguration; }
+
 void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
     CoordinatorConfig::enableQueryMerging->setValue(enableQueryMergingValue);
+}
+
+void CoordinatorConfig::setEnableQueryReconfiguration(bool enableQueryReconfiguration) {
+    CoordinatorConfig::enableQueryReconfiguration->setValue(enableQueryReconfiguration);
 }
 
 StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
