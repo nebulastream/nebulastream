@@ -92,6 +92,8 @@ void NesWorker::buildAndStartGRPCServer(std::promise<bool>& prom) {
     ServerBuilder builder;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
+    // Increase maximum message size to support large query plans
+    builder.SetMaxReceiveMessageSize(420630300);
     completionQueue = builder.AddCompletionQueue();
     rpcServer = builder.BuildAndStart();
     prom.set_value(true);
