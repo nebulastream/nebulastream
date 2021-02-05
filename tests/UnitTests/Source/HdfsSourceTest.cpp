@@ -125,8 +125,8 @@ TEST_F(HdfsSourceTest, testHdfsSource) {
                            ->addField(createField("val2", UINT64))
                            ->addField(createField("val3", UINT64));
 
-//    uint64_t tuple_size = schema->getSchemaSizeInBytes();
-//    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;
 //    uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
@@ -136,16 +136,16 @@ TEST_F(HdfsSourceTest, testHdfsSource) {
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         NES_DEBUG("HdfsSourceTest: aaaaaa");
-//        uint64_t i = 0;
-//        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-//            ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
-//            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
-//                      << std::endl;
-//            EXPECT_STREQ(record.ad_type, "banner78");
-//            EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click")
-//                         || !strcmp(record.event_type, "purchase")));
-//            i++;
-//        }
+        uint64_t i = 0;
+        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
+            ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
+                      << std::endl;
+            EXPECT_STREQ(record.ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click")
+                         || !strcmp(record.event_type, "purchase")));
+            i++;
+        }
     }
 
 //    EXPECT_EQ(source->getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
