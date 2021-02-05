@@ -72,6 +72,9 @@ Status WorkerRPCServer::ReconfigureQuery(ServerContext*, const ReconfigureQueryR
     NES_TIMER("BDAPRO2Tracking: deserializedQueryPlan - (queryId, microseconds) : "
               << "(" << queryPlan->getQueryId() << ", "
               << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
+    NES_TIMER("BDAPRO2Tracking: ReconfigureQueryReceivedTime - (numberOfSinks, microseconds) : "
+                  << "(" << queryPlan->getSinkOperators().size() << ", "
+                  << end.time_since_epoch().count() << ")");
     NES_DEBUG("WorkerRPCServer::ReconfigureQuery: got request for queryId: " << queryPlan->getQueryId());
     bool success;
     try {

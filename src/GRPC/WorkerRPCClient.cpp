@@ -191,10 +191,7 @@ bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPl
     auto end = std::chrono::system_clock::now();
 
     NES_TIMER("BDAPRO2Tracking: serializedQueryPlan - (queryId, microseconds) : "
-                  << "(" << queryId << ", "
-                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
-                  << ")");
-
+              << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
 
     NES_TRACE("WorkerRPCClient:reconfigureQuery -> " << request.DebugString());
     ReconfigureQueryReply reply;
@@ -203,13 +200,12 @@ bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPl
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     start = std::chrono::system_clock::now();
+    NES_TIMER("BDAPRO2Tracking: ReconfigureQueryStartedTime - (numberOfSinks, microseconds) : "
+              << "(" << queryPlan->getSinkOperators().size() << ", " << start.time_since_epoch().count() << ")");
     Status status = workerStub->ReconfigureQuery(&context, request, &reply);
     end = std::chrono::system_clock::now();
     NES_TIMER("BDAPRO2Tracking: workerStubReconfigureQuery - (queryId, microseconds) : "
-                  << "(" << queryId << ", "
-                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
-                  << ")");
-
+              << "(" << queryId << ", " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::reconfigureQuery: status ok return success=" << reply.success());
         return reply.success();
@@ -217,7 +213,7 @@ bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPl
         NES_DEBUG(" WorkerRPCClient::reconfigureQuery "
                   "error="
                   << status.error_code() << ": " << status.error_message());
-        throw Exception("Error while WorkerRPCClient::reconfigureQuery");
+        throw Exception("Error while WorkerRPCClient::reconfigureQuery error: " + status.error_message());
     }
 }
 
