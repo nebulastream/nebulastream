@@ -220,15 +220,26 @@ bool NodeEngine::addSinks(std::vector<SinkLogicalOperatorNodePtr> sinkOperators,
     if (deployedQEPs.find(querySubPlanId) != deployedQEPs.end()) {
         std::vector<DataSinkPtr> sinks;
         sinks.reserve(sinkOperators.size());
+        auto start = std::chrono::system_clock::now();
+
         for (const auto& sinkOperator : sinkOperators) {
             const auto& sink = getPhysicalSink(querySubPlanId, sinkOperator, self);
             sinks.push_back(sink);
             NES_DEBUG("AddSinks:: add sink" << sink->toString());
         }
+        auto end = std::chrono::system_clock::now();
+        NES_TIMER("BDAPRO2Tracking: getPhysicalSink - (queryId, microseconds) : "
+                          << "(" << queryId << ", "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
         Execution::ExecutableQueryPlanPtr qep = deployedQEPs[querySubPlanId];
+        start = std::chrono::system_clock::now();
         std::unique_ptr<NES::NodeEngine::SinkReconfiguration> sinkReconfiguration =
             std::make_unique<NES::NodeEngine::SinkReconfiguration>(sinks, deployedQEPs[querySubPlanId]);
         sinkReconfiguration->setup(queryManager, querySubPlanId);
+        end = std::chrono::system_clock::now();
+        NES_TIMER("BDAPRO2Tracking: sinkReconfigurationSetup - (queryId, microseconds) : "
+                          << "(" << queryId << ", "
+                          << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
         return true;
     }
     NES_ERROR("NodeEngine: qep does not exists. updateSinks failed = " << queryId);

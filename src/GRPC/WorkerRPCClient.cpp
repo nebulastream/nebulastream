@@ -185,8 +185,16 @@ bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPl
     // wrap the query id and the query operators in the protobuf register query request object.
     ReconfigureQueryRequest request;
     // serialize query plan.
+    auto start = std::chrono::system_clock::now();
     auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     request.set_allocated_queryplan(serializedQueryPlan);
+    auto end = std::chrono::system_clock::now();
+
+    NES_TIMER("BDAPRO2Tracking: serializedQueryPlan - (queryId, microseconds) : "
+                  << "(" << queryId << ", "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                  << ")");
+
 
     NES_TRACE("WorkerRPCClient:reconfigureQuery -> " << request.DebugString());
     ReconfigureQueryReply reply;
@@ -194,7 +202,13 @@ bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPl
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    start = std::chrono::system_clock::now();
     Status status = workerStub->ReconfigureQuery(&context, request, &reply);
+    end = std::chrono::system_clock::now();
+    NES_TIMER("BDAPRO2Tracking: workerStubReconfigureQuery - (queryId, microseconds) : "
+                  << "(" << queryId << ", "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                  << ")");
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::reconfigureQuery: status ok return success=" << reply.success());
