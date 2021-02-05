@@ -222,7 +222,6 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
         "R2000073,1543624020000,102.629631,8,1\n"
         "R2000070,1543625280000,108.166664,5,1\n";
 
-
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
@@ -233,7 +232,6 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
-
 
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);

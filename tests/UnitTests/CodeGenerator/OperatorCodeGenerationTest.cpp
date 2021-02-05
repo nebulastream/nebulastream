@@ -749,11 +749,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     auto schema = Schema::create()
-        ->addField(createField("window$start", UINT64))
-        ->addField(createField("window$end", UINT64))
-        ->addField(createField("window$cnt", UINT64))
-        ->addField(createField("key", UINT64))
-        ->addField("value", UINT64);
+                      ->addField(createField("window$start", UINT64))
+                      ->addField(createField("window$end", UINT64))
+                      ->addField(createField("window$cnt", UINT64))
+                      ->addField(createField("key", UINT64))
+                      ->addField("value", UINT64);
 
     auto codeGenerator = CCodeGenerator::create();
     auto context1 = PipelineContext::create();
@@ -781,10 +781,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("window$start", UINT64))
-        ->addField(createField("window$end", UINT64))
-        ->addField("window$key", UINT64)
-        ->addField("value", UINT64);
+                                  ->addField(createField("window$start", UINT64))
+                                  ->addField(createField("window$end", UINT64))
+                                  ->addField("window$key", UINT64)
+                                  ->addField("value", UINT64);
 
     // init window handler
     auto windowHandler =

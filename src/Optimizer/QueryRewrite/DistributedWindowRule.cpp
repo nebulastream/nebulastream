@@ -108,10 +108,10 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
 
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef = Windowing::LogicalWindowDefinition::create(
-            keyField, windowComputationAggregation, windowType,
-            Windowing::DistributionCharacteristic::createCombiningWindowType(), numberOfEdgesForFinalComputation, triggerPolicy,
-            triggerActionComplete, allowedLateness);
+        windowDef = Windowing::LogicalWindowDefinition::create(keyField, windowComputationAggregation, windowType,
+                                                               Windowing::DistributionCharacteristic::createCombiningWindowType(),
+                                                               numberOfEdgesForFinalComputation, triggerPolicy,
+                                                               triggerActionComplete, allowedLateness);
 
     } else {
         windowDef = Windowing::LogicalWindowDefinition::create(
@@ -171,10 +171,10 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
         auto triggerActionSlicing = Windowing::SliceAggregationTriggerActionDescriptor::create();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-            windowDef = Windowing::LogicalWindowDefinition::create(
-                keyField, sliceCreationWindowAggregation, windowType,
-                Windowing::DistributionCharacteristic::createSlicingWindowType(), 1, triggerPolicy, triggerActionSlicing,
-                allowedLateness);
+            windowDef =
+                Windowing::LogicalWindowDefinition::create(keyField, sliceCreationWindowAggregation, windowType,
+                                                           Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
+                                                           triggerPolicy, triggerActionSlicing, allowedLateness);
         } else {
             windowDef = Windowing::LogicalWindowDefinition::create(
                 sliceCreationWindowAggregation, windowType, Windowing::DistributionCharacteristic::createSlicingWindowType(), 1,
