@@ -421,25 +421,26 @@ static void BM_ReadWholeRecordWithFieldColumnLayout(benchmark::State& state) {
             int32_t tmp14 = field14[recordIndex];
             int32_t tmp15 = field15[recordIndex];
 
-            ((void)tmp0);
-            ((void)tmp1);
-            ((void)tmp2);
-            ((void)tmp3);
+            if (tmp0 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
+            if (tmp1 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
+            if (tmp2 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1");
+            if (tmp3 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1");
 
-            ((void)tmp4);
-            ((void)tmp5);
-            ((void)tmp6);
-            ((void)tmp7);
+            if (tmp4 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1");
+            if (tmp5 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1");
+            if (tmp6 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1");
+            if (tmp7 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1");
 
-            ((void)tmp8);
-            ((void)tmp9);
-            ((void)tmp10);
-            ((void)tmp11);
+            if (tmp8 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1");
+            if (tmp9 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1");
+            if (tmp10 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1");
+            if (tmp11 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp11 != 1");
 
-            ((void)tmp12);
-            ((void)tmp13);
-            ((void)tmp14);
-            ((void)tmp15);
+            if (tmp12 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1");
+            if (tmp13 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1");
+            if (tmp14 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1");
+            if (tmp15 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1");
+
         }
     }
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
@@ -497,25 +498,25 @@ static void BM_ReadWholeRecordWithFieldRowLayout(benchmark::State& state) {
             int32_t tmp14 = field14[recordIndex];
             int32_t tmp15 = field15[recordIndex];
 
-            ((void)tmp0);
-            ((void)tmp1);
-            ((void)tmp2);
-            ((void)tmp3);
+            if (tmp0 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
+            if (tmp1 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
+            if (tmp2 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1");
+            if (tmp3 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1");
 
-            ((void)tmp4);
-            ((void)tmp5);
-            ((void)tmp6);
-            ((void)tmp7);
+            if (tmp4 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1");
+            if (tmp5 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1");
+            if (tmp6 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1");
+            if (tmp7 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1");
 
-            ((void)tmp8);
-            ((void)tmp9);
-            ((void)tmp10);
-            ((void)tmp11);
+            if (tmp8 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1");
+            if (tmp9 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1");
+            if (tmp10 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1");
+            if (tmp11 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp11 != 1");
 
-            ((void)tmp12);
-            ((void)tmp13);
-            ((void)tmp14);
-            ((void)tmp15);
+            if (tmp12 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1");
+            if (tmp13 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1");
+            if (tmp14 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1");
+            if (tmp15 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1");
         }
     }
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
