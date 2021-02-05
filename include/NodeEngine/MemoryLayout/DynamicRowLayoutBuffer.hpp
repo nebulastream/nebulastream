@@ -41,7 +41,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @param boundaryChecks
      * @return
      */
-    uint64_t calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) override;
+    uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) override;
 
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
@@ -73,8 +73,13 @@ void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
     auto fieldSizes = dynamicRowLayout.getFieldSizes();
     auto address = &(byteBuffer[offSet]);
-    size_t I = 0;
-    std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(address, &args, fieldSizes[I]), address = address + fieldSizes[I], ++I), ...);}, record);
+    size_t fieldIndex = 0;
+
+    // std::apply iterates over tuple and copies via memcpy the fields from retTuple to the buffer
+    std::apply([&fieldIndex, &address, fieldSizes](auto&&... args) {
+        ((memcpy(address, &args, fieldSizes[fieldIndex]),
+          address = address + fieldSizes[fieldIndex], ++fieldIndex),
+         ...);}, record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
     NES_DEBUG("DynamicRowLayoutBuffer: numberOfRecords = " << numberOfRecords);
@@ -89,8 +94,13 @@ std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
     auto fieldSizes = dynamicRowLayout.getFieldSizes();
 
     auto address = &(byteBuffer[offSet]);
-    size_t I = 0;
-    std::apply([&I, &address, fieldSizes](auto&&... args) {((memcpy(&args, address, fieldSizes[I]), address = address + fieldSizes[I], ++I), ...);}, retTuple);
+    size_t fieldIndex = 0;
+
+    // std::apply iterates over tuple and copies via memcpy the fields into retTuple
+    std::apply([&fieldIndex, &address, fieldSizes](auto&&... args) {
+        ((memcpy(&args, address, fieldSizes[fieldIndex]),
+          address = address + fieldSizes[fieldIndex], ++fieldIndex),
+         ...);}, retTuple);
     return retTuple;
 
 }

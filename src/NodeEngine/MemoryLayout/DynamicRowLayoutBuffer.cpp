@@ -18,15 +18,15 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t ithRecord, uint64_t jthField, const bool boundaryChecks) {
+uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) {
 
     auto fieldOffSets = dynamicRowLayout.getFieldOffSets();
     auto recordSize = dynamicRowLayout.getRecordSize();
-    if (boundaryChecks && jthField >= fieldOffSets.size()) {
-        NES_THROW_RUNTIME_ERROR("jthField " << jthField << " is larger than fieldOffsets.size() " << fieldOffSets.size());
+    if (boundaryChecks && fieldIndex >= fieldOffSets.size()) {
+        NES_THROW_RUNTIME_ERROR("jthField " << fieldIndex << " is larger than fieldOffsets.size() " << fieldOffSets.size());
     }
 
-    auto offSet = (ithRecord * recordSize) + fieldOffSets[jthField];
+    auto offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex];
     NES_DEBUG("DynamicRowLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }
