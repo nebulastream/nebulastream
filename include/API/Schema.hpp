@@ -42,7 +42,7 @@ class Schema {
     /**
      * @brief Schema qualifier for field with undefined qualifier
      */
-    constexpr static const char* const UNDEFINED_SCHEMA_QUALIFIER = "_$";
+//    constexpr static const char* const UNDEFINED_SCHEMA_QUALIFIER = "_$";
 
     /**
      * @brief Factory method to create a new SchemaPtr.
@@ -164,6 +164,7 @@ class Schema {
 
     const std::string toString() const;
 
+    std::string getStreamName();
     /**
      * @brief Remove all fields and qualifying name
      */
