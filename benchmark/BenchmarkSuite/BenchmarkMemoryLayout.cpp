@@ -45,7 +45,7 @@ namespace NES::Benchmarking {
                                          ->addField("value", BasicType::INT32))
 
 
-static void BM_WriteRecordsRowLayout(benchmark::State& state) {
+static void BM_WriteRecordsRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -97,7 +97,7 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_WriteRecordsCustomRowLayout(benchmark::State& state) {
+static void BM_WriteRecordsCustomRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -129,7 +129,7 @@ static void BM_WriteRecordsCustomRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_ReadRecordsCustomRowLayout(benchmark::State& state) {
+static void BM_ReadRecordsCustomRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -199,7 +199,7 @@ static void BM_ReadRecordsCustomRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_ReadRecordsRowLayout(benchmark::State& state) {
+static void BM_ReadRecordsRowLayoutOldLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -301,10 +301,10 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
 }
 
 #define REPETITIONS 20
-BENCHMARK(BM_WriteRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WriteRecordsCustomRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadRecordsCustomRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteRecordsRowLayoutOldLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteRecordsCustomRowLayoutOldLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsRowLayoutOldLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsCustomRowLayoutOldLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 
 // A benchmark main is needed
