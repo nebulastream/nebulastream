@@ -49,7 +49,7 @@ const std::string FieldRenameExpressionNode::getNewFieldName() { return newField
 
 const std::string FieldRenameExpressionNode::toString() const {
     auto node = getOriginalField();
-    return "FieldRenameExpression(" + getOriginalField()->toString() + ": " + stamp->toString() + ")";
+    return "FieldRenameExpression(" + getOriginalField()->toString() + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
 void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
@@ -59,6 +59,7 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
     auto fieldName = originalFieldName->getFieldName();
     auto fieldAttribute = schema->hasFieldName(fieldName);
     if (!fieldAttribute) {
+        NES_ERROR("Original field with name " << fieldName << " does not exists in the schema " << schema->toString());
         throw InvalidFieldException("Original field with name " + fieldName + " does not exists in the schema "
                                     + schema->toString());
     }
@@ -71,10 +72,7 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema) {
                                     + schema->toString());
     }
 
-    //Check if the new field is already fully qualified if not then make it fully qualified
-    if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
-        newFieldName = fieldName.substr(0, fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
-    }
+    newFieldName = fieldName.substr(0, fieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
 
     if (fieldName == newFieldName) {
         NES_WARNING("FieldRenameExpressionNode: Both existing and new fields are same: existing: " + fieldName
