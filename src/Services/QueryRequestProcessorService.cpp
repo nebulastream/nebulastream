@@ -150,7 +150,13 @@ void QueryRequestProcessorService::start() {
 
                         if ((!enableQueryReconfiguration || sharedQueryMetaData->isEmpty()) && !sharedQueryMetaData->isNew()) {
                             NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                            localStart = std::chrono::system_clock::now();
                             bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+                            localEnd = std::chrono::system_clock::now();
+                            NES_TIMER("BDAPRO2Tracking: queryUndeploymentPhase - (queryId, microseconds) : "
+                                      << "(" << queryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count()
+                                      << ")");
                             if (!successful) {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
@@ -164,13 +170,25 @@ void QueryRequestProcessorService::start() {
                                 "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
                                 << sharedQueryId);
                             std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
+                            localStart = std::chrono::system_clock::now();
                             bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                            localEnd = std::chrono::system_clock::now();
+                            NES_TIMER("BDAPRO2Tracking: queryPlacementPhase - (queryId, microseconds) : "
+                                      << "(" << queryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count()
+                                      << ")");
                             if (!placementSuccessful) {
                                 throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for "
                                                               "query plan with shared query id: "
                                                               + std::to_string(sharedQueryId));
                             }
+                            localStart = std::chrono::system_clock::now();
                             bool successful = queryDeploymentPhase->execute(sharedQueryId);
+                            localEnd = std::chrono::system_clock::now();
+                            NES_TIMER("BDAPRO2Tracking: queryDeploymentPhase - (queryId, microseconds) : "
+                                      << "(" << queryId << ", "
+                                      << std::chrono::duration_cast<std::chrono::microseconds>(localEnd - localStart).count()
+                                      << ")");
                             if (!successful) {
                                 throw QueryDeploymentException(
                                     "QueryRequestProcessingService: Failed to deploy query with global query Id "
