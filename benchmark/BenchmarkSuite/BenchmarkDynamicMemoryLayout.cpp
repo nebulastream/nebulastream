@@ -28,6 +28,7 @@
 using namespace NES::NodeEngine::DynamicMemoryLayout;
 namespace NES::Benchmarking {
 
+#define bufferSize (40 * 1024 * 1024)
 #define benchmarkSchemaCacheLine (Schema::create()->addField("key", BasicType::INT32)                                         \
                                          ->addField("value", BasicType::INT32)                                                \
                                          ->addField("value", BasicType::INT32)                                                \
@@ -48,7 +49,7 @@ namespace NES::Benchmarking {
 static void BM_WriteRecordsRowLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -72,7 +73,7 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
 static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -106,7 +107,7 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
 static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -130,7 +131,7 @@ static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
 static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -164,7 +165,7 @@ static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
 static void BM_ReadFieldRowLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -192,7 +193,7 @@ static void BM_ReadFieldRowLayout(benchmark::State& state) {
 static void BM_ReadFieldColumnLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -221,7 +222,7 @@ static void BM_ReadFieldColumnLayout(benchmark::State& state) {
 static void BM_WriteFieldRowLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -240,7 +241,7 @@ static void BM_WriteFieldRowLayout(benchmark::State& state) {
 static void BM_WriteFieldColumnLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -256,6 +257,270 @@ static void BM_WriteFieldColumnLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
+static void BM_WriteWholeRecordWithFieldColumnLayout(benchmark::State& state) {
+    SchemaPtr schema = benchmarkSchemaCacheLine;
+
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+
+    DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
+    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
+
+    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
+    auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, mappedColumnLayout);
+    auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, mappedColumnLayout);
+    auto field3 = DynamicColumnLayoutField<int32_t, false>::create(3, mappedColumnLayout);
+
+    auto field4 = DynamicColumnLayoutField<int32_t, false>::create(4, mappedColumnLayout);
+    auto field5 = DynamicColumnLayoutField<int32_t, false>::create(5, mappedColumnLayout);
+    auto field6 = DynamicColumnLayoutField<int32_t, false>::create(6, mappedColumnLayout);
+    auto field7 = DynamicColumnLayoutField<int32_t, false>::create(7, mappedColumnLayout);
+
+    auto field8 = DynamicColumnLayoutField<int32_t, false>::create(8, mappedColumnLayout);
+    auto field9 = DynamicColumnLayoutField<int32_t, false>::create(9, mappedColumnLayout);
+    auto field10 = DynamicColumnLayoutField<int32_t, false>::create(10, mappedColumnLayout);
+    auto field11 = DynamicColumnLayoutField<int32_t, false>::create(11, mappedColumnLayout);
+
+    auto field12 = DynamicColumnLayoutField<int32_t, false>::create(12, mappedColumnLayout);
+    auto field13 = DynamicColumnLayoutField<int32_t, false>::create(13, mappedColumnLayout);
+    auto field14 = DynamicColumnLayoutField<int32_t, false>::create(14, mappedColumnLayout);
+    auto field15 = DynamicColumnLayoutField<int32_t, false>::create(15, mappedColumnLayout);
+
+    for (auto singleState : state) {
+        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+            field0[recordIndex] = 2;
+            field1[recordIndex] = 2;
+            field2[recordIndex] = 2;
+            field3[recordIndex] = 2;
+
+            field4[recordIndex] = 2;
+            field5[recordIndex] = 2;
+            field6[recordIndex] = 2;
+            field7[recordIndex] = 2;
+
+            field8[recordIndex] = 2;
+            field9[recordIndex] = 2;
+            field10[recordIndex] = 2;
+            field11[recordIndex] = 2;
+
+            field12[recordIndex] = 2;
+            field13[recordIndex] = 2;
+            field14[recordIndex] = 2;
+            field15[recordIndex] = 2;
+        }
+    }
+    state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
+}
+
+static void BM_WriteWholeRecordWithFieldRowLayout(benchmark::State& state) {
+    SchemaPtr schema = benchmarkSchemaCacheLine;
+
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+
+    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+
+    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
+    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, mappedRowLayout);
+    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, mappedRowLayout);
+    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, mappedRowLayout);
+
+    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, mappedRowLayout);
+    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, mappedRowLayout);
+    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, mappedRowLayout);
+    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, mappedRowLayout);
+
+    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, mappedRowLayout);
+    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, mappedRowLayout);
+    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, mappedRowLayout);
+    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, mappedRowLayout);
+
+    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, mappedRowLayout);
+    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, mappedRowLayout);
+    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, mappedRowLayout);
+    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, mappedRowLayout);
+
+    for (auto singleState : state) {
+        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+            field0[recordIndex] = 2;
+            field1[recordIndex] = 2;
+            field2[recordIndex] = 2;
+            field3[recordIndex] = 2;
+
+            field4[recordIndex] = 2;
+            field5[recordIndex] = 2;
+            field6[recordIndex] = 2;
+            field7[recordIndex] = 2;
+
+            field8[recordIndex] = 2;
+            field9[recordIndex] = 2;
+            field10[recordIndex] = 2;
+            field11[recordIndex] = 2;
+
+            field12[recordIndex] = 2;
+            field13[recordIndex] = 2;
+            field14[recordIndex] = 2;
+            field15[recordIndex] = 2;
+        }
+    }
+    state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
+}
+
+static void BM_ReadWholeRecordWithFieldColumnLayout(benchmark::State& state) {
+    SchemaPtr schema = benchmarkSchemaCacheLine;
+
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+
+    DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
+    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
+
+    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
+    auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, mappedColumnLayout);
+    auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, mappedColumnLayout);
+    auto field3 = DynamicColumnLayoutField<int32_t, false>::create(3, mappedColumnLayout);
+
+    auto field4 = DynamicColumnLayoutField<int32_t, false>::create(4, mappedColumnLayout);
+    auto field5 = DynamicColumnLayoutField<int32_t, false>::create(5, mappedColumnLayout);
+    auto field6 = DynamicColumnLayoutField<int32_t, false>::create(6, mappedColumnLayout);
+    auto field7 = DynamicColumnLayoutField<int32_t, false>::create(7, mappedColumnLayout);
+
+    auto field8 = DynamicColumnLayoutField<int32_t, false>::create(8, mappedColumnLayout);
+    auto field9 = DynamicColumnLayoutField<int32_t, false>::create(9, mappedColumnLayout);
+    auto field10 = DynamicColumnLayoutField<int32_t, false>::create(10, mappedColumnLayout);
+    auto field11 = DynamicColumnLayoutField<int32_t, false>::create(11, mappedColumnLayout);
+
+    auto field12 = DynamicColumnLayoutField<int32_t, false>::create(12, mappedColumnLayout);
+    auto field13 = DynamicColumnLayoutField<int32_t, false>::create(13, mappedColumnLayout);
+    auto field14 = DynamicColumnLayoutField<int32_t, false>::create(14, mappedColumnLayout);
+    auto field15 = DynamicColumnLayoutField<int32_t, false>::create(15, mappedColumnLayout);
+
+    for (auto singleState : state) {
+        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+            int32_t tmp0 = field0[recordIndex];
+            int32_t tmp1 = field1[recordIndex];
+            int32_t tmp2 = field2[recordIndex];
+            int32_t tmp3 = field3[recordIndex];
+
+            int32_t tmp4 = field4[recordIndex];
+            int32_t tmp5 = field5[recordIndex];
+            int32_t tmp6 = field6[recordIndex];
+            int32_t tmp7 = field7[recordIndex];
+
+            int32_t tmp8 = field8[recordIndex];
+            int32_t tmp9 = field9[recordIndex];
+            int32_t tmp10 = field10[recordIndex];
+            int32_t tmp11 = field11[recordIndex];
+
+            int32_t tmp12 = field12[recordIndex];
+            int32_t tmp13 = field13[recordIndex];
+            int32_t tmp14 = field14[recordIndex];
+            int32_t tmp15 = field15[recordIndex];
+
+            ((void)tmp0);
+            ((void)tmp1);
+            ((void)tmp2);
+            ((void)tmp3);
+
+            ((void)tmp4);
+            ((void)tmp5);
+            ((void)tmp6);
+            ((void)tmp7);
+
+            ((void)tmp8);
+            ((void)tmp9);
+            ((void)tmp10);
+            ((void)tmp11);
+
+            ((void)tmp12);
+            ((void)tmp13);
+            ((void)tmp14);
+            ((void)tmp15);
+        }
+    }
+    state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
+}
+
+static void BM_ReadWholeRecordWithFieldRowLayout(benchmark::State& state) {
+    SchemaPtr schema = benchmarkSchemaCacheLine;
+
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+
+    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    DynamicRowLayoutBufferPtr mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+
+    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
+    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, mappedRowLayout);
+    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, mappedRowLayout);
+    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, mappedRowLayout);
+
+    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, mappedRowLayout);
+    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, mappedRowLayout);
+    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, mappedRowLayout);
+    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, mappedRowLayout);
+
+    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, mappedRowLayout);
+    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, mappedRowLayout);
+    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, mappedRowLayout);
+    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, mappedRowLayout);
+
+    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, mappedRowLayout);
+    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, mappedRowLayout);
+    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, mappedRowLayout);
+    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, mappedRowLayout);
+
+    for (auto singleState : state) {
+        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+            int32_t tmp0 = field0[recordIndex];
+            int32_t tmp1 = field1[recordIndex];
+            int32_t tmp2 = field2[recordIndex];
+            int32_t tmp3 = field3[recordIndex];
+
+            int32_t tmp4 = field4[recordIndex];
+            int32_t tmp5 = field5[recordIndex];
+            int32_t tmp6 = field6[recordIndex];
+            int32_t tmp7 = field7[recordIndex];
+
+            int32_t tmp8 = field8[recordIndex];
+            int32_t tmp9 = field9[recordIndex];
+            int32_t tmp10 = field10[recordIndex];
+            int32_t tmp11 = field11[recordIndex];
+
+            int32_t tmp12 = field12[recordIndex];
+            int32_t tmp13 = field13[recordIndex];
+            int32_t tmp14 = field14[recordIndex];
+            int32_t tmp15 = field15[recordIndex];
+
+            ((void)tmp0);
+            ((void)tmp1);
+            ((void)tmp2);
+            ((void)tmp3);
+
+            ((void)tmp4);
+            ((void)tmp5);
+            ((void)tmp6);
+            ((void)tmp7);
+
+            ((void)tmp8);
+            ((void)tmp9);
+            ((void)tmp10);
+            ((void)tmp11);
+
+            ((void)tmp12);
+            ((void)tmp13);
+            ((void)tmp14);
+            ((void)tmp15);
+        }
+    }
+    state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
+}
+
 #define REPETITIONS 20
 BENCHMARK(BM_WriteRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_WriteRecordsColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
@@ -266,6 +531,11 @@ BENCHMARK(BM_WriteFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnl
 BENCHMARK(BM_WriteFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_ReadFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_ReadFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+
+BENCHMARK(BM_ReadWholeRecordWithFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadWholeRecordWithFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteWholeRecordWithFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteWholeRecordWithFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 
 // A benchmark main is needed

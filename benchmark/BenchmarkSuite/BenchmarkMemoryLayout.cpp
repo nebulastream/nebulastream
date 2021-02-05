@@ -25,9 +25,8 @@
 
 namespace NES::Benchmarking {
 
-static std::shared_ptr<NES::NodeEngine::BufferManager> bufferManager;
-static std::shared_ptr<NES::NodeEngine::MemoryLayout> rowLayout;
 
+#define bufferSize (40 * 1024 * 1024)
 #define benchmarkSchemaCacheLine (Schema::create()->addField("key", BasicType::INT32)                                         \
                                          ->addField("value", BasicType::INT32)                                                \
                                          ->addField("value", BasicType::INT32)                                                \
@@ -49,8 +48,8 @@ static std::shared_ptr<NES::NodeEngine::MemoryLayout> rowLayout;
 static void BM_WriteRecordsRowLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
-    rowLayout = NodeEngine::createRowLayout(schema);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -101,8 +100,8 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
 static void BM_WriteRecordsCustomRowLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
-    rowLayout = NodeEngine::createRowLayout(schema);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
 
@@ -133,8 +132,8 @@ static void BM_WriteRecordsCustomRowLayout(benchmark::State& state) {
 static void BM_ReadRecordsCustomRowLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
-    rowLayout = NodeEngine::createRowLayout(schema);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
     const auto value = 1;
@@ -203,8 +202,8 @@ static void BM_ReadRecordsCustomRowLayout(benchmark::State& state) {
 static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
-    bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(4096, 10);
-    rowLayout = NodeEngine::createRowLayout(schema);
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto rowLayout = NodeEngine::createRowLayout(schema);
     auto buf = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (buf.getBufferSize() / schema->getSchemaSizeInBytes());
 
