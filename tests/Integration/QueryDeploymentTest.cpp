@@ -1384,26 +1384,37 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     string file1 = "testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration1.out";
     string file2 = "testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration2.out";
     remove(file1.c_str());
     remove(file2.c_str());
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd =
-        std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, std::thread::hardware_concurrency(), true, true);
+
+    coConf->setEnableQueryMerging(true);
+    coConf->setEnableQueryReconfiguration(true);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
@@ -1419,8 +1430,14 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     wrk2->registerLogicalStream("car", testSchemaFileName);
 
     //register physical stream
-    PhysicalStreamConfigPtr confCarWrk1 = PhysicalStreamConfig::create("DefaultSource", "", 1, 1, 0, "physical_car1", "car");
-    PhysicalStreamConfigPtr confCarWrk2 = PhysicalStreamConfig::create("DefaultSource", "", 1, 1, 0, "physical_car2", "car");
+    srcConf->setSourceConfig("DefaultSource");
+    srcConf->setNumberOfTuplesToProducePerBuffer(2);
+    srcConf->setNumberOfBuffersToProduce(0);
+    srcConf->setPhysicalStreamName("physical_car1");
+    srcConf->setLogicalStreamName("car");
+    PhysicalStreamConfigPtr confCarWrk1 = PhysicalStreamConfig::create(srcConf);
+    srcConf->setPhysicalStreamName("physical_car2");
+    PhysicalStreamConfigPtr confCarWrk2 = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(confCarWrk1);
     wrk2->registerPhysicalStream(confCarWrk2);
 
