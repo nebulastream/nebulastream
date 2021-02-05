@@ -46,7 +46,7 @@ namespace NES::Benchmarking {
                                          ->addField("value", BasicType::INT32)                                                \
                                          ->addField("value", BasicType::INT32))
 
-static void BM_WriteRecordsRowLayout(benchmark::State& state) {
+static void BM_WriteRecordsRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -70,7 +70,7 @@ static void BM_WriteRecordsRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_ReadRecordsRowLayout(benchmark::State& state) {
+static void BM_ReadRecordsRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -104,7 +104,7 @@ static void BM_ReadRecordsRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
+static void BM_WriteRecordsColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -128,7 +128,7 @@ static void BM_WriteRecordsColumnLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
+static void BM_ReadRecordsColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -162,7 +162,7 @@ static void BM_ReadRecordsColumnLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_ReadFieldRowLayout(benchmark::State& state) {
+static void BM_ReadFieldRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -190,7 +190,7 @@ static void BM_ReadFieldRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_ReadFieldColumnLayout(benchmark::State& state) {
+static void BM_ReadFieldColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -219,7 +219,7 @@ static void BM_ReadFieldColumnLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_WriteFieldRowLayout(benchmark::State& state) {
+static void BM_WriteFieldRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -238,7 +238,7 @@ static void BM_WriteFieldRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_WriteFieldColumnLayout(benchmark::State& state) {
+static void BM_WriteFieldColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -257,7 +257,7 @@ static void BM_WriteFieldColumnLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_WriteWholeRecordWithFieldColumnLayout(benchmark::State& state) {
+static void BM_WriteWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -313,7 +313,7 @@ static void BM_WriteWholeRecordWithFieldColumnLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_WriteWholeRecordWithFieldRowLayout(benchmark::State& state) {
+static void BM_WriteWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -369,7 +369,7 @@ static void BM_WriteWholeRecordWithFieldRowLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_ReadWholeRecordWithFieldColumnLayout(benchmark::State& state) {
+static void BM_ReadWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -446,7 +446,7 @@ static void BM_ReadWholeRecordWithFieldColumnLayout(benchmark::State& state) {
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
-static void BM_ReadWholeRecordWithFieldRowLayout(benchmark::State& state) {
+static void BM_ReadWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& state) {
     SchemaPtr schema = benchmarkSchemaCacheLine;
 
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -523,20 +523,20 @@ static void BM_ReadWholeRecordWithFieldRowLayout(benchmark::State& state) {
 }
 
 #define REPETITIONS 20
-BENCHMARK(BM_WriteRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WriteRecordsColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadRecordsRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadRecordsColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteRecordsRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteRecordsColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
-BENCHMARK(BM_WriteFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WriteFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
-BENCHMARK(BM_ReadWholeRecordWithFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadWholeRecordWithFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WriteWholeRecordWithFieldColumnLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WriteWholeRecordWithFieldRowLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadWholeRecordWithFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadWholeRecordWithFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteWholeRecordWithFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteWholeRecordWithFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 
 // A benchmark main is needed

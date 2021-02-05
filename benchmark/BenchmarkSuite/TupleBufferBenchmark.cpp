@@ -267,7 +267,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
  *
  * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64, 4 == cache line
  */
-static void BM_CustomFilling(benchmark::State& state) {
+static void BM_StructWriting(benchmark::State& state) {
 
     SchemaPtr benchmarkSchema;
     switch (state.range(0)) {
@@ -370,7 +370,7 @@ static void BM_CustomFilling(benchmark::State& state) {
  *
   * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64, 4 == cache line
  */
-static void BM_CustomReading(benchmark::State& state) {
+static void BM_StructReading(benchmark::State& state) {
 
     SchemaPtr benchmarkSchema;
     switch (state.range(0)) {
@@ -492,8 +492,8 @@ static void BM_CustomReading(benchmark::State& state) {
 /* Just for using it with schema benchmarkCacheLine */
 BENCHMARK(BM_DefaultFilling_V1)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_DefaultFilling_V2)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_CustomFilling)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_CustomReading)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_StructWriting)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_StructReading)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 //BENCHMARK(BM_DefaultFilling_V1)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 //BENCHMARK(BM_DefaultFilling_V2)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
