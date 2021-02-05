@@ -66,11 +66,21 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryReq
 }
 
 Status WorkerRPCServer::ReconfigureQuery(ServerContext*, const ReconfigureQueryRequest* request, ReconfigureQueryReply* reply) {
+    auto start = std::chrono::system_clock::now();
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
+    auto end = std::chrono::system_clock::now();
+    NES_TIMER("BDAPRO2Tracking: deserializedQueryPlan - (queryId, microseconds) : "
+              << "(" << queryPlan->getQueryId() << ", "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
     NES_DEBUG("WorkerRPCServer::ReconfigureQuery: got request for queryId: " << queryPlan->getQueryId());
     bool success;
     try {
+        start = std::chrono::system_clock::now();
         success = nodeEngine->reconfigureQueryInNodeEngine(queryPlan);
+        end = std::chrono::system_clock::now();
+        NES_TIMER("BDAPRO2Tracking: nodeEngineReconfigureQueryInNodeEngine - (queryId, microseconds) : "
+                  << "(" << queryPlan->getQueryId() << ", "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
     } catch (std::exception& error) {
         NES_ERROR("Reconfigure query crashed: " << error.what());
         success = false;

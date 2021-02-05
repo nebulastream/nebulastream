@@ -132,10 +132,15 @@ void ExecutableQueryPlan::updateSinks(std::vector<DataSinkPtr> newSinks) {
     auto lambdaSinks = sinks;
     sinkContext->updateEmitFunctionHandler(
         [lambdaSinks, originId](NES::NodeEngine::TupleBuffer& buffer, NES::NodeEngine::WorkerContextRef workerContext) {
+            auto start = std::chrono::system_clock::now();
             buffer.setOriginId(originId);
             for (auto& sink : lambdaSinks) {
                 sink->writeData(buffer, workerContext);
             }
+            auto end = std::chrono::system_clock::now();
+            NES_TIMER("BDAPRO2Tracking: writeToSink - (numberOfSinks, microseconds) : "
+                      << "(" << lambdaSinks.size() << ", "
+                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
         });
 }
 
