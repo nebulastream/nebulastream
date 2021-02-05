@@ -21,7 +21,7 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperatorForwardRef.hpp>
 
-namespace NES{
+namespace NES {
 
 /**
  * @brief Generatable projection operator
@@ -35,7 +35,7 @@ class GeneratableProjectionOperator : public ProjectionLogicalOperatorNode, publ
     * @return instance of GeneratableMapOperator
     */
     static GeneratableProjectionOperatorPtr create(ProjectionLogicalOperatorNodePtr projectLogicalOperator,
-                                            OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                   OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.
@@ -59,9 +59,8 @@ class GeneratableProjectionOperator : public ProjectionLogicalOperatorNode, publ
 
   private:
     GeneratableProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id);
-
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEPROJECTIONOPERATOR_HPP_

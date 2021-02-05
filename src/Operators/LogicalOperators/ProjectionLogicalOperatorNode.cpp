@@ -76,17 +76,17 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
         if (expression->instanceOf<FieldRenameExpressionNode>()) {
             auto fieldRename = expression->as<FieldRenameExpressionNode>();
             outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getStamp());
-        } else if(expression->instanceOf<FieldAccessExpressionNode>()){
+        } else if (expression->instanceOf<FieldAccessExpressionNode>()) {
             auto fieldAccess = expression->as<FieldAccessExpressionNode>();
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         } else {
-            NES_ERROR("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a FieldRenameExpression but it was a "
-                          + expression->toString());
-            throw TypeInferenceException(
-                "ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a FieldRenameExpression but it was a "
-                    + expression->toString());
+            NES_ERROR("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a FieldRenameExpression "
+                      "but it was a "
+                      + expression->toString());
+            throw TypeInferenceException("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a "
+                                         "FieldRenameExpression but it was a "
+                                         + expression->toString());
         }
-
     }
     return true;
 }

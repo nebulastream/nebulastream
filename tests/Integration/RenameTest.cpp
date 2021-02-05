@@ -134,7 +134,6 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     EXPECT_TRUE(response == 0);
 }
 
-
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -321,11 +320,12 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
 
     NES_INFO("RenameTest: Submit query");
 
-    string query = "Query::from(\"window\")"
-                   ".project(Attribute(\"id\").rename(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").rename(\"newValue\"))"
-                   ".windowByKey(Attribute(\"newId\"), "
-                   "TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-                   "Seconds(1)), Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
+    string query =
+        "Query::from(\"window\")"
+        ".project(Attribute(\"id\").rename(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").rename(\"newValue\"))"
+        ".windowByKey(Attribute(\"newId\"), "
+        "TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
+        "Seconds(1)), Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");

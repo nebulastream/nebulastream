@@ -21,7 +21,6 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
-#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <utility>
 
 namespace NES {
@@ -38,14 +37,13 @@ ExpressionNodePtr FieldRenameExpressionNode::create(FieldAccessExpressionNodePtr
 bool FieldRenameExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<FieldRenameExpressionNode>()) {
         auto otherFieldRead = rhs->as<FieldRenameExpressionNode>();
-        return otherFieldRead->getOriginalField()->equal(getOriginalField()) && this->newFieldName ==otherFieldRead->getNewFieldName();
+        return otherFieldRead->getOriginalField()->equal(getOriginalField())
+            && this->newFieldName == otherFieldRead->getNewFieldName();
     }
     return false;
 }
 
-const FieldAccessExpressionNodePtr FieldRenameExpressionNode::getOriginalField() const {
-    return this->originalField;
-}
+const FieldAccessExpressionNodePtr FieldRenameExpressionNode::getOriginalField() const { return this->originalField; }
 
 const std::string FieldRenameExpressionNode::getNewFieldName() { return newFieldName; }
 

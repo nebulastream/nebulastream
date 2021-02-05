@@ -62,7 +62,8 @@ OperatorNodePtr RenameStreamToProjectOperatorRule::convert(OperatorNodePtr opera
 
         //Compute field access and field rename expression
         auto originalField = FieldAccessExpressionNode::create(field->getDataType(), fieldName);
-        auto fieldRenameExpression = FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
+        auto fieldRenameExpression =
+            FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
         projectionAttributes.push_back(fieldRenameExpression);
     }
     //Construct a new project operator

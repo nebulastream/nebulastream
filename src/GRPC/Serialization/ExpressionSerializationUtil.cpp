@@ -131,9 +131,8 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
                                 << originalFieldAccessExpression->toString());
             }
             auto newFieldName = serializedFieldRenameExpression.newfieldname();
-            expressionNodePtr = FieldRenameExpressionNode::create(originalFieldAccessExpression
-                                                                      ->as<FieldAccessExpressionNode>(),
-                                                                          newFieldName);
+            expressionNodePtr =
+                FieldRenameExpressionNode::create(originalFieldAccessExpression->as<FieldAccessExpressionNode>(), newFieldName);
         } else if (serializedExpression->details().Is<SerializableExpression_FieldAssignmentExpression>()) {
             // de-serialize field read expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as FieldAssignment expression node.");

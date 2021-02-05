@@ -199,10 +199,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-   auto query =  Query::from("default_logical")
-        .project(Attribute("f3").rename("f5"))
-        .map(Attribute("f4") = Attribute("f5") * 42)
-        .sink(FileSinkDescriptor::create(""));
+    auto query = Query::from("default_logical")
+                     .project(Attribute("f3").rename("f5"))
+                     .map(Attribute("f4") = Attribute("f5") * 42)
+                     .sink(FileSinkDescriptor::create(""));
 
     auto plan = query.getQueryPlan();
 
@@ -226,10 +226,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto query =  Query::from("default_logical")
-        .map(Attribute("f3") = Attribute("f3") * 42)
-        .project(Attribute("f3").rename("f4"))
-        .sink(FileSinkDescriptor::create(""));
+    auto query = Query::from("default_logical")
+                     .map(Attribute("f3") = Attribute("f3") * 42)
+                     .project(Attribute("f3").rename("f4"))
+                     .sink(FileSinkDescriptor::create(""));
 
     auto plan = query.getQueryPlan();
 
