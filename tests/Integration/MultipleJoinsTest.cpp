@@ -35,6 +35,10 @@ static uint64_t rpcPort = 4000;
 
 class MultipleJoinsTest : public testing::Test {
   public:
+    CoordinatorConfigPtr crdConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
+
     static void SetUpTestCase() {
         NES::setupLogging("MultipleJoinsTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultipleJoinsTest test class.");
@@ -43,6 +47,14 @@ class MultipleJoinsTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+
+        crdConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
+        srcConf = SourceConfig::create();
+        crdConf->setRpcPort(rpcPort);
+        crdConf->setRestPort(restPort);
+
+        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { std::cout << "Tear down MultipleJoinsTest class." << std::endl; }
@@ -52,32 +64,46 @@ class MultipleJoinsTest : public testing::Test {
 
 
 TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowOnCoodinator) {
-    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
+    NES_INFO("JoinDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
+    NES_INFO("JoinDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
+    NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NES_INFO("JoinDeploymentTest: Start worker 2");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
+    NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
+
+    NES_INFO("JoinDeploymentTest: Start worker 3");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
+    NES_INFO("JoinDeploymentTest: Worker3 started SUCCESSFULLY");
 
-    std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
+    std::string outputFilePath = "testTwoJoinsWithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
 
     //register logical stream qnv
@@ -107,14 +133,23 @@ TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowOnCoodina
     wrk1->registerLogicalStream("window3", testSchemaFileName3);
 
     //register physical stream
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", false);
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setSourceFrequency(1);
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(false);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window2.csv", 1, 3, 2, "test_stream", "window2", false);
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
-    PhysicalStreamConfigPtr windowStream3 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window4.csv", 1, 3, 2, "test_stream", "window3", false);
+    srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -142,7 +177,7 @@ TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowOnCoodina
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window3$start:INTEGER,window3$end:INTEGER,window3$key:INTEGER,window2$start:INTEGER,window2$end:INTEGER,window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER\n"
+        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
@@ -181,40 +216,56 @@ TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowOnCoodina
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowDistributed) {
-    NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+
+    NES_INFO("JoinDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    NES_INFO("JoinDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Worker, 200);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
+    NES_INFO("JoinDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
+    NES_INFO("JoinDeploymentTest: Worker1 started successfully");
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    NES_INFO("JoinDeploymentTest: Start worker 2");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
+    NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
+    NES_INFO("JoinDeploymentTest: Start worker 3");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
+    NES_INFO("JoinDeploymentTest: Worker3 started SUCCESSFULLY");
 
-    NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Sensor);
+    NES_INFO("JoinDeploymentTest: Start worker 4");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
-    NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
+    NES_INFO("JoinDeploymentTest: Worker3 started SUCCESSFULLY");
 
-    std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
+    std::string outputFilePath = "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
     //register logical stream qnv
@@ -244,14 +295,23 @@ TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowDistribut
     wrk3->registerLogicalStream("window3", testSchemaFileName3);
 
     //register physical stream
-    PhysicalStreamConfigPtr windowStream =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 2, "test_stream", "window1", false);
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setSourceFrequency(1);
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(2);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window1");
+    srcConf->setSkipHeader(false);
+    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    PhysicalStreamConfigPtr windowStream2 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window2.csv", 1, 3, 2, "test_stream", "window2", false);
+    srcConf->setSourceConfig("../tests/test_data/window2.csv");
+    srcConf->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 
-    PhysicalStreamConfigPtr windowStream3 =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window4.csv", 1, 3, 2, "test_stream", "window3", false);
+    srcConf->setSourceConfig("../tests/test_data/window4.csv");
+    srcConf->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
 
     wrk2->registerPhysicalStream(windowStream);
     wrk3->registerPhysicalStream(windowStream2);
@@ -280,7 +340,7 @@ TEST_F(MultipleJoinsTest, testTwoJoinsWithDifferentStreamTumblingWindowDistribut
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window3$start:INTEGER,window3$end:INTEGER,window3$key:INTEGER,window2$start:INTEGER,window2$end:INTEGER,window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER\n"
+        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";

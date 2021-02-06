@@ -672,7 +672,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto subQuery = Query::from("default_logical").as("x");
     auto query = Query::from("default_logical")
                      .as("y")
-                     .join(&subQuery, Attribute("f1"), Attribute("f1"), windowType1)
+                     .join(subQuery, Attribute("f1"), Attribute("f1"), windowType1)
                      .filter(Attribute("x$default_logical$f2") < 42)
                      .project(Attribute("x$default_logical$f1").rename("f3"), Attribute("y$default_logical$f2").rename("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
