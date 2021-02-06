@@ -320,7 +320,7 @@ std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbu
             }
             offset += fieldSize;
         }
-        ss << std::endl;
+        ss << "," << std::chrono::system_clock::now().time_since_epoch().count() << std::endl;
     }
     return ss.str();
 }

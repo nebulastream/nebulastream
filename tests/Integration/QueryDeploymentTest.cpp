@@ -1383,6 +1383,69 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_EQ(response2, 0);
 }
 
+TEST_F(QueryDeploymentTest, oneTestDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+    remove("ysbOut1.csv");
+    remove("ysbOut2.csv");
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+
+    coConf->setEnableQueryMerging(true);
+    coConf->setEnableQueryReconfiguration(true);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+//    "--sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20 --sourceFrequency=10 --logicalStreamName=ysb";
+    srcConf->setSourceType("YSBSource");
+    srcConf->setNumberOfBuffersToProduce(100);
+    srcConf->setNumberOfTuplesToProducePerBuffer(20);
+    srcConf->setSourceFrequency(20);
+    srcConf->setLogicalStreamName("ysb");
+    srcConf->setPhysicalStreamName("ysb1");
+    wrk1->setWithRegister(PhysicalStreamConfig::create(srcConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 2");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    srcConf->setPhysicalStreamName("ysb2");
+    wrk2->setWithRegister(PhysicalStreamConfig::create(srcConf));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query1 = "Query::from(\"ysb\").sink(FileSinkDescriptor::create(\"ysbOut1.csv\",\"CSV_FORMAT\",\"APPEND\"));";
+    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId1, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, globalQueryPlan, 2));
+    string query2 = "Query::from(\"ysb\").sink(FileSinkDescriptor::create(\"ysbOut2.csv\",\"CSV_FORMAT\",\"APPEND\"));";
+    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
+    while (true) {
+        sleep(1);
+    }
+}
+
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMergingWithQueryReconfiguration) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
