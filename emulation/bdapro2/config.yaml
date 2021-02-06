@@ -1,11 +1,11 @@
-total_workers: 9
-workers_producing: 6
+total_workers: 2
+workers_producing: 2
 physical_stream_prefix: "ysb"
 producer_options: >-
   --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
-  --sourceFrequency=10 --logicalStreamName=ysb
+  --sourceFrequency=1 --logicalStreamName=ysb
 worker_options: >-
-  --numberOfSlots=1000 --logLevel=LOG_INFO
+  --numberOfSlots=1000 --logLevel=LOG_DEBUG
 coordinator_options: >-
   --enableQueryReconfiguration=true
 log_level: "info"
