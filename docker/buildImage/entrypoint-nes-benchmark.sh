@@ -29,7 +29,8 @@ then
     cd /nebulastream/benchmark/scripts
     apt-get install python3-pip -y && pip3 install --user argparse datetime matplotlib pandas seaborn numpy
     echo "Executing python script at $(date)..."
-    python3 -u run_and_plot_benchmarks.py $BENCHMARK_SCRIPT_ARGS
+    echo "python3 -u run_and_plot_benchmarks.py ${BENCHMARK_SCRIPT_ARGS}"
+    python3 -u run_and_plot_benchmarks.py ${BENCHMARK_SCRIPT_ARGS}
     result=$?
     rm -rf /nebulastream/build
     exit $result
