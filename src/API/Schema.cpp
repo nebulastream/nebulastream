@@ -161,7 +161,7 @@ const std::string Schema::getStreamName() const {
     }
     else
     {
-        return fields[0]->name.substr(0, fields[0]->name.find("$"));
+        return fields[0]->getName().substr(0, fields[0]->getName().find("$"));
     }
 }
 
