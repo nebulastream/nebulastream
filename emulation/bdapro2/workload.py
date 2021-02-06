@@ -22,7 +22,8 @@ def generate_query(base_query: str, n_queries: int = 100, n_iter: int = 0) -> Li
     query_set = []
     for i in range(n_queries):
         output_file_path = f"{start_time}_{n_iter}_{i}.csv"
-        query = f"{base_query}.sink(FileSinkDescriptor::create(\"{output_file_path}\",\"CSV_FORMAT\",\"APPEND\")); "
+        query = f"{base_query}.sink(FileSinkDescriptor::create(\"/logs/{output_file_path}\",\"CSV_FORMAT\"," \
+                f"\"APPEND\")); "
         query_set.append({"userQuery": query,
                           "strategyName": "BottomUp"})
     return query_set
@@ -118,4 +119,4 @@ def generate_workload(base_url: str, base_query: str, n_requests: int = 100, sta
 if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
     BASE_QUERY = "Query::from(\"" + "ysb" + "\")"
-    generate_workload(NES_BASE_URL, BASE_QUERY, stable=True, n_requests=10, niter=10)
+    generate_workload(NES_BASE_URL, BASE_QUERY, stable=True, n_requests=2, niter=1)
