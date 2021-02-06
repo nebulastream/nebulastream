@@ -163,7 +163,7 @@ std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() {
 }
 std::string Schema::getQualifierNameForSystemGeneratedFields() {
     if (!fields.empty()) {
-        return fields[0]->name.substr(0, fields[0]->name.find(ATTRIBUTE_NAME_SEPARATOR));
+        return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
     } else {
         NES_ERROR("Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is "
                   "requested");
