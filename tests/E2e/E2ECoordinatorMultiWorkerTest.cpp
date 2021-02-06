@@ -602,4 +602,87 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
     coordinatorProc.terminate();
 }
 
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingYSBQueryWithFileOutputTwoWorkerOne) {
+    uint64_t numBuffers = 3;
+    uint64_t numTuples = 10;
+
+    NES_INFO(" start coordinator");
+    std::string outputFilePath = "YSBQueryWithFileOutputTwoWorkerTestResult.csv";
+    remove(outputFilePath.c_str());
+
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+    bp::child coordinatorProc(cmdCoord.c_str());
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string cmdWrk1 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+                     + " --dataPort=" + worker1DataPort
+                     + " --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
+                     + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples)
+                     + " --sourceFrequency=1";
+    bp::child workerProc1(cmdWrk1.c_str());
+    NES_INFO("started worker 1 with pid = " << workerProc1.id());
+
+    string worker2RPCPort = std::to_string(rpcPort + 6);
+    string worker2DataPort = std::to_string(dataPort + 2);
+    string cmdWrk2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
+                     + " --dataPort=" + worker2DataPort
+                     + " --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
+                     + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples)
+                     + " --sourceFrequency=1";
+
+    bp::child workerProc2(cmdWrk2.c_str());
+    NES_INFO("started worker 2 with pid = " << workerProc2.id());
+
+    uint64_t coordinatorPid = coordinatorProc.id();
+    uint64_t workerPid1 = workerProc1.id();
+    uint64_t workerPid2 = workerProc2.id();
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << "\"Query::from(\\\"ysb\\\").windowByKey(Attribute(\\\"campaign_id\\\"), "
+          "TumblingWindow::of(EventTime(Attribute(\\\"current_ms\\\")), Milliseconds(1)), "
+          "Sum(Attribute(\\\"user_id\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << outputFilePath;
+    ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ss << "));\",\"strategyName\" : \"BottomUp\"}";
+    ss << endl;
+
+    NES_INFO("string submit=" << ss.str());
+    string body = ss.str();
+
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    QueryId queryId = json_return.at("queryId").as_integer();
+
+    NES_INFO("try to acc return");
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 4, std::to_string(restPort)));
+    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    NES_INFO("ContinuousSourceTest: content=" << content);
+    EXPECT_TRUE(!content.empty());
+
+    int response = remove(outputFilePath.c_str());
+    EXPECT_TRUE(response == 0);
+
+    NES_INFO("Killing worker 1 process->PID: " << workerPid1);
+    workerProc1.terminate();
+    NES_INFO("Killing worker 2 process->PID: " << workerPid2);
+    workerProc2.terminate();
+    NES_INFO("Killing coordinator process->PID: " << coordinatorPid);
+    coordinatorProc.terminate();
+}
+
 }// namespace NES
