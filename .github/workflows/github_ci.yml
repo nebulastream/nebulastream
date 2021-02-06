@@ -32,7 +32,7 @@ jobs:
           access_token: ${{ github.token }}
       - name: Run benchmarks
         run: |
-          docker run -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro -e BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b "(filter|map)-query-benchmark" -m "Run-with-docker" -jrb=1' --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
+          docker run -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro -e BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b "(filter|map)-query-benchmark" -m "Run-with-docker" -jrb=1' --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:test
           cp -R $GITHUB_WORKSPACE/benchmark/script/benchmark_* /tmp/.
       - name: Run tests
         run: |
