@@ -148,6 +148,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator,
                                                                            OperatorNodePtr downstreamOperator) {
     auto scanOperator = GeneratableScanOperator::create(joinOperator->getOutputSchema(), joinOperator->getOutputSchema());
+    NES_DEBUG(" create join scan for in/out=" << joinOperator->getOutputSchema()->toString());
     auto generatedJoinOperator = GeneratableJoinOperator::create(joinOperator->as<JoinLogicalOperatorNode>());
     // JOIN -> SCAN -> DOWNSTREAM OPERATOR
     scanOperator->addChild(generatedJoinOperator);

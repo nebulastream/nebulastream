@@ -183,10 +183,13 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                                               (++VarRef(code->varDeclarationRecordIndex)).copy());
 
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
+    if(context->arity != PipelineContext::Unary)
+    {
+        NES_DEBUG("adding in scan for schema=" << inputSchema->toString());
+    }
 
     auto recordHandler = context->getRecordHandler();
     for (AttributeFieldPtr field : inputSchema->fields) {
-
         auto variable = getVariableDeclarationForField(code->structDeclaratonInputTuples[0], field);
 
         auto fieldRefStatement =
@@ -872,7 +875,11 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
 
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
                                          uint64_t operatorHandlerIndex) {
-    //    std::cout << joinDef << context << std::endl;
+    std::string ar = "right";
+    if (context->arity == PipelineContext::BinaryLeft) {
+        ar = "left";
+    }
+    NES_DEBUG("join input=" << context->inputSchema->toString() << " ar=" << ar << " out=" << joinDef->getOutputSchema()->toString());
     auto tf = getTypeFactory();
 
     if (context->arity == PipelineContext::BinaryLeft) {
@@ -939,7 +946,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         keyVariableDeclaration =
             VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName);
 
-        NES_ASSERT(recordHandler->hasAttribute(joinKeyFieldName), "join key is not defined on iput tuple");
+        NES_ASSERT2(recordHandler->hasAttribute(joinKeyFieldName),
+                    "join key is not defined on input tuple << " << joinKeyFieldName);
 
         auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
 
