@@ -267,7 +267,7 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
  *
  * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64, 4 == cache line
  */
-static void BM_StructWriting(benchmark::State& state) {
+static void BM_WriteRecordsStruct(benchmark::State& state) {
 
     SchemaPtr benchmarkSchema;
     switch (state.range(0)) {
@@ -370,7 +370,7 @@ static void BM_StructWriting(benchmark::State& state) {
  *
   * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64, 4 == cache line
  */
-static void BM_StructReading(benchmark::State& state) {
+static void BM_ReadRecordsStruct(benchmark::State& state) {
 
     SchemaPtr benchmarkSchema;
     switch (state.range(0)) {
@@ -488,12 +488,194 @@ static void BM_StructReading(benchmark::State& state) {
     state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
 }
 
+/**
+ *
+ * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64, 4 == cache line
+ */
+static void BM_WriteFieldStruct(benchmark::State& state) {
+
+    SchemaPtr benchmarkSchema;
+    switch (state.range(0)) {
+        case 0: benchmarkSchema = benchmarkSchemaI8; break;
+        case 1: benchmarkSchema = benchmarkSchemaI16; break;
+        case 2: benchmarkSchema = benchmarkSchemaI32; break;
+        case 3: benchmarkSchema = benchmarkSchemaI64; break;
+        case 4: benchmarkSchema = benchmarkSchemaCacheLine; break;
+        default: break;
+    }
+
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto buffer = bufferManager->getBufferBlocking();
+
+    uint64_t maxTuplesPerBuffer = 0;
+
+    switch (state.range(0)) {
+        case 0: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI8);
+                auto tupleIt = buffer.getBufferAs<TupleI8>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 1: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI16);
+                auto tupleIt = buffer.getBufferAs<TupleI16>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 2: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI32);
+                auto tupleIt = buffer.getBufferAs<TupleI32>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 3: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI64);
+                auto tupleIt = buffer.getBuffer<TupleI64>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+        case 4: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleCacheLine);
+                auto tupleIt = buffer.getBuffer<TupleCacheLine>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
+}
+
+/**
+ *
+  * @param state.range(0): 0 == INT8, 1 == INT16, 2 == INT32, 3 == INT64, 4 == cache line
+ */
+static void BM_ReadFieldStruct(benchmark::State& state) {
+
+    SchemaPtr benchmarkSchema;
+    switch (state.range(0)) {
+        case 0: benchmarkSchema = benchmarkSchemaI8; break;
+        case 1: benchmarkSchema = benchmarkSchemaI16; break;
+        case 2: benchmarkSchema = benchmarkSchemaI32; break;
+        case 3: benchmarkSchema = benchmarkSchemaI64; break;
+        case 4: benchmarkSchema = benchmarkSchemaCacheLine; break;
+        default: break;
+    }
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
+    auto buffer = bufferManager->getBufferBlocking();
+
+    uint64_t maxTuplesPerBuffer = 0;
+
+    switch (state.range(0)) {
+        case 0: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI8);
+                auto tupleIt = buffer.getBufferAs<TupleI8>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 1: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI16);
+                auto tupleIt = buffer.getBufferAs<TupleI16>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 2: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI32);
+                auto tupleIt = buffer.getBufferAs<TupleI32>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 3: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI64);
+                auto tupleIt = buffer.getBuffer<TupleI64>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+        case 4: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleCacheLine);
+                auto tupleIt = buffer.getBuffer<TupleCacheLine>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    int32_t tmp0 = tupleIt[i].key;
+
+                    if (tmp0 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
+                }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
+}
+
 #define REPETITIONS 20
 /* Just for using it with schema benchmarkCacheLine */
 BENCHMARK(BM_DefaultFilling_V1)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_DefaultFilling_V2)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_StructWriting)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_StructReading)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WriteRecordsStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadRecordsStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+
+BENCHMARK(BM_WriteFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+
+
 
 //BENCHMARK(BM_DefaultFilling_V1)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 //BENCHMARK(BM_DefaultFilling_V2)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
