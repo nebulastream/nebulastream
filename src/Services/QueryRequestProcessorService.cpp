@@ -20,6 +20,7 @@
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
+#include <Exceptions/QueryReconfigurationException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -213,9 +214,9 @@ void QueryRequestProcessorService::start() {
                                              .count()
                                       << ")");
                             if (!successful) {
-                                throw QueryDeploymentException(
-                                    "QueryRequestProcessingService: Failed to deploy query with global query Id "
-                                    + std::to_string(sharedQueryId));
+                                throw QueryReconfigurationException(
+                                    "QueryRequestProcessingService: Failed to reconfigure query with global query Id "
+                                    + std::to_string(sharedQueryId) + " when attempting for query Id " + std::to_string(queryId));
                             }
                         }
                         //Mark the meta data as deployed
@@ -238,6 +239,9 @@ void QueryRequestProcessorService::start() {
                 } catch (QueryDeploymentException& ex) {
                     NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
                     queryUndeploymentPhase->execute(queryId);
+                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                } catch (QueryReconfigurationException& ex) {
+                    NES_ERROR("QueryRequestProcessingService QueryReconfigurationException: " << ex.what());
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 } catch (TypeInferenceException& ex) {
                     NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
