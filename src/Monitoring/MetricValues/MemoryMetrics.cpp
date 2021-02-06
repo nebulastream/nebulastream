@@ -69,7 +69,8 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     //get index where the schema for MemoryMetrics is starting
     auto i = schema->getIndex(prefix + "TOTAL_RAM");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->getName(), "TOTAL_RAM")
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
+        && UtilityFunctions::endsWith(schema->fields[i]->getName(), "TOTAL_RAM")
         && UtilityFunctions::endsWith(schema->fields[i + 12]->getName(), "LOADS_15MIN")) {
         //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
         auto layout = NodeEngine::createRowLayout(schema);
