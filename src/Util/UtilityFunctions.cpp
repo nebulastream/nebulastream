@@ -275,8 +275,8 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
     str << "+----------------------------------------------------+" << std::endl;
     str << "|";
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        str << schema->get(i)->getName() << ":" << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString()
-            << "|";
+        str << schema->get(i)->getName() << ":"
+            << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString() << "|";
     }
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;

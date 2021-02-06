@@ -105,10 +105,10 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
-                EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                                                             Milliseconds(0),
-                                                             windowType->getTimeCharacteristic()->getTimeUnit())));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     }
 
@@ -152,10 +152,10 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
-                EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                                                             Milliseconds(0),
-                                                             windowType->getTimeCharacteristic()->getTimeUnit())));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
         NES_DEBUG("add existing watermark strategy for window");
@@ -204,10 +204,10 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
-                EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
-                                                             Milliseconds(0),
-                                                             windowType->getTimeCharacteristic()->getTimeUnit())));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
         NES_DEBUG("add existing watermark strategy for window");
