@@ -241,7 +241,6 @@ TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
     ASSERT_EQ(schema->toString(), metricGroup->createGroupSchema()->toString());
 }
 
-
 TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     auto cpuStats = MetricUtils::CPUStats();
 

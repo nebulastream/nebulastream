@@ -18,8 +18,8 @@
 #define NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_
 
 #include <Monitoring/Metrics/MetricType.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <functional>
 
 namespace NES {

@@ -72,7 +72,5 @@ DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& b
     return output;
 }
 
-SchemaPtr getSchema(const DiskMetrics&, const std::string& prefix) {
-    return DiskMetrics::getSchema(prefix);
-}
+SchemaPtr getSchema(const DiskMetrics&, const std::string& prefix) { return DiskMetrics::getSchema(prefix); }
 }// namespace NES

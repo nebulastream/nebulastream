@@ -17,18 +17,18 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 #define NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
 #include <cstdint>
 #include <memory>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <vector>
 #include <string>
 #include <unordered_map>
-#include <Util/Logger.hpp>
+#include <vector>
 
 namespace NES {
 class Schema;
 class MonitoringPlan;
 typedef std::shared_ptr<Schema> SchemaPtr;
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_

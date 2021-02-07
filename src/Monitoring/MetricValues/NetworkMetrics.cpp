@@ -98,5 +98,4 @@ SchemaPtr getSchema(const NetworkMetrics& metrics, const std::string& prefix) {
     return schema;
 }
 
-
 }// namespace NES

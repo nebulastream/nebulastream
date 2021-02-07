@@ -18,8 +18,8 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
 
 #include <Monitoring/MetricValues/NetworkValues.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
