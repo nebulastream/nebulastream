@@ -22,7 +22,7 @@ jobs:
       - name: Invoke Benchmark Workflow
         uses: benc-uk/workflow-dispatch@v1
         with:
-           workflow: Some Workflow
+           workflow: NES Benchmark
            token: ${{ secrets.CI_PERSONAL_TOKEN }}
            inputs: '{ "trigger-value": "blah blah"}'
       - uses: actions/checkout@v2
