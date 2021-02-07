@@ -48,7 +48,7 @@ jobs:
           ssh-strict: 'false'
       - name: Fetch git history
         run: |
-             git fetch --prune --unshallow --tags
+          git fetch --prune --unshallow --tags
       - name: Run benchmarks
         run: |
           docker run -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro -e BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker -jrb=1' --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:test

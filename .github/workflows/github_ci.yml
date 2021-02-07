@@ -19,12 +19,6 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
-      - name: Invoke Benchmark Workflow
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-           workflow: NES Benchmark
-           token: ${{ secrets.CI_PERSONAL_TOKEN }}
-           inputs: '{ "trigger-value": "trigger benchmark"}'
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
