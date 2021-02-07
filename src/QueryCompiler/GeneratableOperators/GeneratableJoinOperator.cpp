@@ -26,35 +26,49 @@ namespace NES {
 void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDefinition, context->getResultSchema());
 
-    NES_DEBUG(" joind def left=" << joinDefinition->getLeftStreamType()->toString()
-                                 << " join right=" << joinDefinition->getRightStreamType()->toString() << " left scan="
-                                 << getChildren()[0]->toString() << " right scan=" << getChildren()[1]->toString()
-                                 << " join key right=" << joinDefinition->getRightJoinKey()->getFieldName()
-                                 << " join key left=" << joinDefinition->getLeftJoinKey()->getFieldName()
-              << " out of op=" << getChildren()[0]->as<GeneratableScanOperator>()->getOutputSchema()->toString());
+    SchemaPtr inputSchemaLeftChild;
+    SchemaPtr inputSchemaRightChild;
+    if (getChildren()[0]->instanceOf<UnaryOperatorNode>()) {
+        inputSchemaLeftChild = getChildren()[0]->as<UnaryOperatorNode>()->getOutputSchema();
+        NES_DEBUG("child0 unary schema=" << inputSchemaLeftChild->toString());
+    } else {
+        inputSchemaLeftChild = getChildren()[0]->as<BinaryOperatorNode>()->getOutputSchema();
+        NES_DEBUG("child0 binary schema=" << inputSchemaLeftChild->toString());
+    }
+    NES_ASSERT(inputSchemaLeftChild->getSchemaSizeInBytes() != 0, "left schema empty");
 
-    NES_ASSERT(!(getChildren()[0]->as<GeneratableScanOperator>()->getOutputSchema()->contains(
-                     joinDefinition->getRightJoinKey()->getFieldName())
-                 && getChildren()[1]->as<GeneratableScanOperator>()->getOutputSchema()->contains(
-                     joinDefinition->getRightJoinKey()->getFieldName())),
+
+    if (getChildren()[1]->instanceOf<UnaryOperatorNode>()) {
+        inputSchemaRightChild = getChildren()[1]->as<UnaryOperatorNode>()->getOutputSchema();
+        NES_DEBUG("child1 unary schema=" << inputSchemaRightChild->toString());
+    } else {
+        inputSchemaRightChild = getChildren()[1]->as<BinaryOperatorNode>()->getOutputSchema();
+        NES_DEBUG("child1 binary schema=" << inputSchemaRightChild->toString());
+    }
+    NES_ASSERT(inputSchemaRightChild->getSchemaSizeInBytes() != 0, "right schema empty");
+
+    NES_DEBUG(" joind def left=" << joinDefinition->getLeftStreamType()->toString()
+                                 << " join right=" << joinDefinition->getRightStreamType()->toString() << " input left="
+                                 << inputSchemaLeftChild->toString() << " input right=" << inputSchemaRightChild->toString()
+                                 << " join key right=" << joinDefinition->getRightJoinKey()->getFieldName()
+                                 << " join key left=" << joinDefinition->getLeftJoinKey()->getFieldName());
+
+    NES_ASSERT(!(inputSchemaLeftChild->contains(joinDefinition->getRightJoinKey()->getFieldName())
+                 && inputSchemaRightChild->contains(joinDefinition->getRightJoinKey()->getFieldName())),
                "Error both scans contain the same join key for right");
 
-    NES_ASSERT(!(getChildren()[0]->as<GeneratableScanOperator>()->getOutputSchema()->contains(
-                     joinDefinition->getLeftJoinKey()->getFieldName())
-                 && getChildren()[1]->as<GeneratableScanOperator>()->getOutputSchema()->contains(
-                     joinDefinition->getLeftJoinKey()->getFieldName())),
+    NES_ASSERT(!(inputSchemaLeftChild->contains(joinDefinition->getLeftJoinKey()->getFieldName())
+                 && inputSchemaRightChild->contains(joinDefinition->getLeftJoinKey()->getFieldName())),
                "Error both scans contain the same join key for left");
 
     auto newPipelineContext1 = PipelineContext::create();
     newPipelineContext1->arity = PipelineContext::BinaryLeft;
     NES_ASSERT(0 == newPipelineContext1->registerOperatorHandler(joinOperatorHandler), "invalid operator handler index");
-    if (getChildren()[0]->as<GeneratableScanOperator>()->getOutputSchema()->contains(
-            joinDefinition->getLeftJoinKey()->getFieldName())) {
-        NES_DEBUG("Binarly left choose child 0");
+    if (inputSchemaLeftChild->contains(joinDefinition->getLeftJoinKey()->getFieldName())) {
+        NES_DEBUG("Binary left choose child left");
         getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
-    } else if (getChildren()[1]->as<GeneratableScanOperator>()->getOutputSchema()->contains(
-                   joinDefinition->getLeftJoinKey()->getFieldName())) {
-        NES_DEBUG("Binarly left choose child 1");
+    } else if (inputSchemaRightChild->contains(joinDefinition->getLeftJoinKey()->getFieldName())) {
+        NES_DEBUG("Binary left choose child right");
         getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
     } else {
         NES_ERROR("no input stream contains left join key");
@@ -63,13 +77,11 @@ void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
     auto newPipelineContext2 = PipelineContext::create();
     newPipelineContext2->arity = PipelineContext::BinaryRight;
     NES_ASSERT(0 == newPipelineContext2->registerOperatorHandler(joinOperatorHandler), "invalid operator handler index");
-    if (getChildren()[0]->as<GeneratableScanOperator>()->getOutputSchema()->contains(
-            joinDefinition->getRightJoinKey()->getFieldName())) {
-        NES_DEBUG("Binarly right choose child 0");
+    if (inputSchemaLeftChild->contains(joinDefinition->getRightJoinKey()->getFieldName())) {
+        NES_DEBUG("Binary right choose child left");
         getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2);
-    } else if (getChildren()[1]->as<GeneratableScanOperator>()->getOutputSchema()->contains(
-                   joinDefinition->getRightJoinKey()->getFieldName())) {
-        NES_DEBUG("Binarly right choose child 1");
+    } else if (inputSchemaRightChild->contains(joinDefinition->getRightJoinKey()->getFieldName())) {
+        NES_DEBUG("Binary right choose child right");
         getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2);
     } else {
         NES_ERROR("no input stream contains right join key");
