@@ -115,14 +115,17 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     switch (context->arity) {
         case PipelineContext::Unary: {
             code->structDeclaratonInputTuples.emplace_back(getStructDeclarationFromSchema("InputTuple", inputSchema));
+            NES_DEBUG("arity unary generate scan for input=" << inputSchema->toString() << " output=" << outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryLeft: {
             code->structDeclaratonInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
+            NES_DEBUG("arity binaryleft generate scan for input=" << inputSchema->toString() << " output=" << outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryRight: {
             code->structDeclaratonInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
+            NES_DEBUG("arity binaryright generate scan for input=" << inputSchema->toString() << " output=" << outputSchema->toString());
             break;
         }
     }
@@ -185,7 +188,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
     if(context->arity != PipelineContext::Unary)
     {
-        NES_DEBUG("adding in scan for schema=" << inputSchema->toString());
+        NES_DEBUG("adding in scan for schema=" << inputSchema->toString() << " context=" << context->inputSchema->toString());
     }
 
     auto recordHandler = context->getRecordHandler();

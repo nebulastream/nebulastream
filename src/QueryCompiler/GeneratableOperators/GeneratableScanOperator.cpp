@@ -44,10 +44,14 @@ GeneratableScanOperator::GeneratableScanOperator(SchemaPtr inputSchema, SchemaPt
         NES_ERROR("GeneratableScanOperator invalid input schema");
     }
     this->inputSchema = inputSchema->copy();
+//    this->inputSchema = std::make_shared<Schema>();
+//    this->inputSchema->copyFields(inputSchema);
     if (!outputSchema) {
         NES_ERROR("GeneratableScanOperator invalid output schema");
     }
     this->outputSchema = outputSchema->copy();
+//    this->outputSchema = std::make_shared<Schema>();
+//    this->outputSchema->copyFields(outputSchema);
 }
 
 const std::string GeneratableScanOperator::toString() const {
