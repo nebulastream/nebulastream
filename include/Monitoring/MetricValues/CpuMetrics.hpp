@@ -18,8 +18,8 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
 
 #include <Monitoring/MetricValues/CpuValues.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -86,7 +86,6 @@ void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuf
  * @return the SchemaPtr
  */
 SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);
-
 
 }// namespace NES
 

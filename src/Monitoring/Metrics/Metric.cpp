@@ -35,14 +35,10 @@ void serialize(const std::string& metric, std::shared_ptr<Schema> schema, NodeEn
                             + schema->toString());
 }
 
-SchemaPtr getSchema(uint64_t, const std::string& prefix) {
-    return Schema::create()
-        ->addField(prefix + "uint64", UINT64);
-}
+SchemaPtr getSchema(uint64_t, const std::string& prefix) { return Schema::create()->addField(prefix + "uint64", UINT64); }
 
 SchemaPtr getSchema(const std::string& metric, const std::string& prefix) {
     NES_THROW_RUNTIME_ERROR("Metric: Schema for std::string not possible for metric " + metric + "and prefix " + prefix);
 }
-
 
 }// namespace NES

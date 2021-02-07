@@ -101,5 +101,4 @@ SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix) {
     return schema;
 }
 
-
 }// namespace NES

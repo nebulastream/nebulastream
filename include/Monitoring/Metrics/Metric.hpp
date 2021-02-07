@@ -18,8 +18,8 @@
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
 #include <Monitoring/Metrics/MetricType.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
@@ -38,8 +38,7 @@ MetricType getMetricType(const T&) {
  * @param the prefix as std::string
  */
 void serialize(uint64_t metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
-void serialize(const std::string& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf,
-               const std::string& prefix);
+void serialize(const std::string& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
 /**
  * @brief class specific getSchema() methods
@@ -97,8 +96,7 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend void serialize(const Metric& x, SchemaPtr schema, NodeEngine::TupleBuffer& buf,
-                          const std::string& prefix) {
+    friend void serialize(const Metric& x, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
         x.self->serializeC(schema, buf, prefix);
     }
 
@@ -106,9 +104,7 @@ class Metric {
      * @brief Returns the schema of the metric.
      * @return the schema
      */
-    friend SchemaPtr getSchema(const Metric& x, const std::string& prefix) {
-      return x.self->getSchemaConcept(prefix);
-    };
+    friend SchemaPtr getSchema(const Metric& x, const std::string& prefix) { return x.self->getSchemaConcept(prefix); };
 
   private:
     /**
@@ -143,9 +139,7 @@ class Metric {
             serialize(data, schema, buf, prefix);
         }
 
-        SchemaPtr getSchemaConcept(const std::string& prefix) override {
-            return getSchema(data, prefix);
-        };
+        SchemaPtr getSchemaConcept(const std::string& prefix) override { return getSchema(data, prefix); };
 
         T data;
         MetricType type;

@@ -17,9 +17,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES {
 
