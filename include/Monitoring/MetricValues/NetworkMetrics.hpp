@@ -19,16 +19,9 @@
 
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <cstdint>
-#include <memory>
-#include <unordered_map>
-#include <vector>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 class NetworkMetrics {
 
@@ -69,6 +62,7 @@ void serialize(const NetworkMetrics& metrics, SchemaPtr schema, NodeEngine::Tupl
 /**
  * @brief Class specific getSchema() method for NetworkMetrics
  * @param metric
+ * @param prefix
  * @return the SchemaPtr
  */
 SchemaPtr getSchema(const NetworkMetrics& metric, const std::string& prefix);

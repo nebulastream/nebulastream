@@ -16,15 +16,12 @@
 
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
+
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <cstdint>
-#include <memory>
-#include <string>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 /**
  * @brief This class represents the metric values read from /proc/net/dev.

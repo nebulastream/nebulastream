@@ -19,15 +19,9 @@
 
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <Util/Logger.hpp>
-#include <memory>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-
-typedef std::shared_ptr<Schema> SchemaPtr;
-
 
 template<typename T>
 MetricType getMetricType(const T&) {
@@ -113,7 +107,7 @@ class Metric {
      * @return the schema
      */
     friend SchemaPtr getSchema(const Metric& x, const std::string& prefix) {
-      return x.self->getSchemaC(prefix);
+      return x.self->getSchemaConcept(prefix);
     };
 
   private:
@@ -130,7 +124,7 @@ class Metric {
          */
         virtual void serializeC(std::shared_ptr<Schema>, NodeEngine::TupleBuffer&, std::string) = 0;
 
-        virtual SchemaPtr getSchemaC(const std::string& prefix) = 0;
+        virtual SchemaPtr getSchemaConcept(const std::string& prefix) = 0;
     };
 
     /**
@@ -149,7 +143,7 @@ class Metric {
             serialize(data, schema, buf, prefix);
         }
 
-        SchemaPtr getSchemaC(const std::string& prefix) override {
+        SchemaPtr getSchemaConcept(const std::string& prefix) override {
             return getSchema(data, prefix);
         };
 

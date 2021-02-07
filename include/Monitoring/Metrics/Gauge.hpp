@@ -19,14 +19,10 @@
 
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <Util/Logger.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <functional>
-#include <memory>
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 template<typename T>
 /**
