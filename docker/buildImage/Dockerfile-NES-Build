@@ -44,7 +44,7 @@ RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git &&
   make -j -w && make install && cd ${HOME} && rm -rf cppkafka* && \
   apt-get purge -y wget && apt autoremove -y
 
-ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b "(filter|map)-query-benchmark" -m "Run-with-docker"'
+ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
 
