@@ -66,7 +66,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     std::string filename = basename + ".cpp";
     std::string libraryName = basename + ".so";
     writeSourceToFile(filename, source);
-
+    NES_DEBUG("compiler filename =" << filename);
     // if we are in compile in debugging mode we create print the source file.
     if (debugging) {
         formatAndPrintSource(filename);

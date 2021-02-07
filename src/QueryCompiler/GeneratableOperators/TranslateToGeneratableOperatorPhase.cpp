@@ -96,6 +96,8 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator =
             GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
+        //TODO: I am not sure why we have to set this here explicitly We have to check if we need this for all
+        watermarkAssignerOperator->as<UnaryOperatorNode>()->setOutputSchema(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(watermarkAssignerOperator);
         return watermarkAssignerOperator;
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
