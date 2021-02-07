@@ -19,13 +19,9 @@
 
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <memory>
-#include <vector>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about cpu data.
@@ -86,6 +82,7 @@ void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuf
 /**
  * @brief Class specific getSchema() method
  * @param metric
+ * @param prefix
  * @return the SchemaPtr
  */
 SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);

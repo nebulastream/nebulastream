@@ -208,6 +208,9 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     ASSERT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
+/**
+ * @brief Tests that the schema from the sample method and the metric group are the same, so that no inconsistencies occur
+ */
 TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 

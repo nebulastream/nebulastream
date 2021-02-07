@@ -18,11 +18,9 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <memory>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+
 namespace NES {
-class Schema;
-class MonitoringPlan;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 /**
  * @brief This class represents the metrics read from /proc/stat.

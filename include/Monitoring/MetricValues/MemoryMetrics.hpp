@@ -18,14 +18,10 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <cstdint>
-#include <memory>
-#include <string>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 class MemoryMetrics {
   public:
@@ -79,6 +75,7 @@ void serialize(const MemoryMetrics& metrics, SchemaPtr schema, NodeEngine::Tuple
 /**
  * @brief Class specific getSchema() method
  * @param metric
+ * @param prefix
  * @return the SchemaPtr
  */
 SchemaPtr getSchema(const MemoryMetrics& metric, const std::string& prefix);
