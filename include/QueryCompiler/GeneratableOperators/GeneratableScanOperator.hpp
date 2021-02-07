@@ -61,8 +61,8 @@ class GeneratableScanOperator : public UnaryOperatorNode, public GeneratableOper
 
   private:
     explicit GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id);
-    SchemaPtr inputSchema;
-    SchemaPtr outputSchema;
+//    SchemaPtr inputSchema;
+//    SchemaPtr outputSchema;
 };
 
 }// namespace NES
