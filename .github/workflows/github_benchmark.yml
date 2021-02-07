@@ -4,9 +4,15 @@ on:
   schedule:
     # executes every day at 1:15 am
     - cron: '15 1 * * *'
-
+  workflow_dispatch:
+    inputs:
+      trigger-value:
+        description: 'Trigger for performing benchmark'
+        required: false
+        default: 'No_Value'
 jobs:  
-  benchmark-job:
+  benchmark-scheduled-job:
+    if: "contains(github.event.inputs.trigger-value, 'No_Value')"
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
@@ -30,3 +36,15 @@ jobs:
           keep_files: true
           external_repository: nebulastream/nes-server
           publish_branch: master
+  benchmark-triggered-job:
+    if: "!contains(github.event.inputs.trigger-value, 'No_Value')"
+    runs-on: self-hosted
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+      - name: Run benchmarks
+        run: |
+          echo "Hello ${{ github.event.inputs.trigger-value}}!"
