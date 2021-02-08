@@ -100,8 +100,6 @@ class TestSink : public SinkMedium {
 
     ~TestSink() override{};
 
-    std::string toString() override { return "PRINT_SINK"; }
-
   public:
     std::mutex m;
     std::promise<uint64_t> completed;

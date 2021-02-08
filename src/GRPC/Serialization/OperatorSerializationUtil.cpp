@@ -61,6 +61,7 @@
 
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -840,6 +841,27 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr s
                                                  opcSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
     }
+#endif
+#ifdef ENABLE_MQTT_BUILD
+//        else if (sourceDescriptor->instanceOf<MQTTSinkDescriptor>()) {
+//        // serialize opc source descriptor
+//        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+//                  "SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
+//        auto mqttSinkDescriptor = sourceDescriptor->as<MQTTSinkDescriptor>();
+//        auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
+//        memcpy(ident, mqttSinkDescriptor->getNodeId().identifier.string.data,
+//               mqttSinkDescriptor->getNodeId().identifier.string.length);
+//        opcSerializedSourceDescriptor.set_identifier(ident);
+//        opcSerializedSourceDescriptor.set_url(mqttSinkDescriptor->getUrl());
+//        opcSerializedSourceDescriptor.set_namespaceindex(mqttSinkDescriptor->getNodeId().namespaceIndex);
+//        opcSerializedSourceDescriptor.set_identifiertype(mqttSinkDescriptor->getNodeId().identifierType);
+//        opcSerializedSourceDescriptor.set_user(mqttSinkDescriptor->getUser());
+//        opcSerializedSourceDescriptor.set_password(mqttSinkDescriptor->getPassword());
+//        // serialize source schema
+//        SchemaSerializationUtil::serializeSchema(mqttSinkDescriptor->getSchema(),
+//                                                 opcSerializedSourceDescriptor.mutable_sourceschema());
+//        sourceDetails->mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
+//    }
 #endif
     else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         // serialize network source descriptor

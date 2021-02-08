@@ -27,24 +27,38 @@
 #include <zmq.hpp>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <mqtt/client.h>
 //#include "mqtt/client.h"
 #include "mqtt/async_client.h"
 
 
 namespace NES {
 
+
+class UserCallback : public virtual mqtt::callback
+{
+    void connection_lost(const std::string& cause) override;
+
+    void delivery_complete(mqtt::delivery_token_ptr tok) override;
+
+  public:
+};
+
 class MQTTSink : public SinkMedium {
 
   public:
     //TODO: remove internal flag once the new network stack is in place
     MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& host,
-             const uint16_t port, const std::string& clientId, const std::string& topic,
-             const std::string& user);
+             const uint16_t port, const std::string& clientId, const std::string& topic, const std::string& user,
+             const uint32_t maxBufferedMSGs = 60, char timeUnit = 'm', uint64_t msgDelay = 500, bool asynchronousClient = 1);
     ~MQTTSink();
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
     void setup() override { connect(); };
     void shutdown() override{};
+
+    bool connect();
+    bool disconnect();
 
     /**
      * @brief Get MQTT sink port
@@ -71,6 +85,12 @@ class MQTTSink : public SinkMedium {
      */
     const std::string& getUser() const;
 
+
+    /**
+     * @brief Get connected status of MQTT sink
+     */
+    bool getConnected();
+
     /**
      * @brief Print MQTT Sink (schema, host, port, clientId, topic, user)
      */
@@ -95,27 +115,70 @@ class MQTTSink : public SinkMedium {
 
     std::string user;
 
-    uint8_t qualityOfService; // 0-at most once, 1-at least once, 2-exactly once
     uint32_t maxBufferedMSGs;
+    uint8_t timeUnit; //'n'-nanoseconds, 'm'-milliseconds, 's'-seconds
 
-    uint64_t sendPeriod;
-    uint8_t timeType; //0-nanoseconds, 1-milliseconds, 2-seconds
+    uint64_t msgDelay;
+    bool asynchronousClient;
+    char qualityOfService; // 0-at most once, 1-at least once, 2-exactly once
 
     std::string address;
-    mqtt::async_client client;
-
-// not needed yet, but possibly in the future:
-//    std::string& password;
-//    std::string& period;
-//    std::string& persistDir;
 
     bool connected;
+    std::chrono::duration<int64_t, std::ratio<1, 1000000000>> sendDuration;
 
-    bool connect();
-    bool disconnect();
+    struct ClientWrapper {
+        mqtt::async_client_ptr asyncClient;
+        mqtt::client_ptr syncClient;
+
+        bool useAsyncClient;
+
+      public:
+        ClientWrapper(bool useAsyncClient, const std::string& address, const std::string& clientId, uint32_t maxBufferedMSGs){
+            this->useAsyncClient = useAsyncClient;
+            if(useAsyncClient) {
+                asyncClient = std::make_shared<mqtt::async_client>(address, clientId, maxBufferedMSGs);
+            } else {
+                syncClient = std::make_shared<mqtt::client>(address, clientId, maxBufferedMSGs);
+            }
+        }
+        mqtt::async_client_ptr getAsyncClient() {
+            return (useAsyncClient) ? asyncClient : nullptr;
+        }
+        mqtt::client_ptr getSyncClient() {
+            return (useAsyncClient) ? nullptr : syncClient;
+        }
+
+        void connect(mqtt::connect_options connOpts) {
+            if(useAsyncClient) { asyncClient->connect(connOpts)->wait(); } else { syncClient->connect(); }
+        }
+        void disconnect() {
+            if(useAsyncClient) { asyncClient->disconnect()->wait(); } else { syncClient->disconnect(); }
+        }
+        int getBufferSize() {
+            return (asyncClient) ? asyncClient->get_pending_delivery_tokens().size() : 0;
+        }
+
+        void setCallback(UserCallback& cb) {
+            syncClient->set_callback(cb);
+        }
+    };
+    ClientWrapper client;
+//    mqtt::async_client client1;
+//    mqtt::client client2;
+//    mqtt::client_ptr clientPtr;
+// not needed yet, but possibly in the future:
+
+//    std::string& persistDir;
+//    std::string& period;
+//    std::string& password;
+
 };
 //TODO change to MQTT specific
 typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
+
+
 }// namespace NES
+
 
 #endif// MQTTSINK_HPP
