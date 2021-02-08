@@ -1022,19 +1022,6 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                 }
             }
             NES_ASSERT(found, " right schema does not contain a timestamp attribute");
-//        std::string firstRightField = rightSchema->fields[0]->getName();
-        //schema->getFieldsNameWithoutQualifier
-        //            first timestamp
-        //                window3$timestamp
-        //                    window4$time4s
-        //            //look for timestamp window3window4$start
-        //            window3window4$timestamp
-//        auto schemaQualifierName = firstRightField.substr(0, firstRightField.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
-        //Construct window field name after adding schema qualifier
-//        windowTimeStampFieldName = schemaQualifierName + trimmedWindowFieldName;
-//        NES_DEBUG("windowTimeStampFieldName right replacement" << windowTimeStampFieldName
-//                                                               << " schemaQualifierName=" << schemaQualifierName
-//                                                               << " trimmedWindowFieldName=" << trimmedWindowFieldName);
     }
     else {
         NES_DEBUG("windowTimeStampFieldName bin left=" << windowTimeStampFieldName);
