@@ -16,9 +16,7 @@
 
 #include <Sinks/Mediums/MQTTSink.hpp>
 
-#include <cassert>
 #include <cstdint>
-#include <cstring>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -27,22 +25,34 @@
 #include <Util/Logger.hpp>
 
 //#include "mqtt/client.h"
-#include "mqtt/async_client.h"
+//#include "mqtt/async_client.h"
 
 namespace NES {
+
+void UserCallback::connection_lost(const std::string& cause) {
+    std::cout << "\nConnection lost" << std::endl;
+    if (!cause.empty())
+        std::cout << "\tcause: " << cause << std::endl;
+}
+//TODO handle synchronous delivery correctly
+void UserCallback::delivery_complete(mqtt::delivery_token_ptr tok) {
+    std::cout << "\n\t[Delivery complete for token: "
+              << (tok ? tok->get_message_id() : -1) << "]" << std::endl;
+}
 
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& host,
-                   const uint16_t port, const std::string& clientId, const std::string& topic,
-                   const std::string& user)
+                   const uint16_t port, const std::string& clientId, const std::string& topic, const std::string& user,
+                   const uint32_t maxBufferedMSGs, const char timeUnit, const uint64_t msgDelay, bool asynchronousClient)
     : SinkMedium(sinkFormat, parentPlanId), host(host), port(port), clientId(clientId),topic(topic), user(user),
-                 qualityOfService(1), maxBufferedMSGs(60), sendPeriod(1),
-                 timeType(2), address(std::string("tcp://") + host + std::string(":") + std::to_string(port)),
-                 client(mqtt::async_client(address, clientId, maxBufferedMSGs)), connected(false){
+      maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), msgDelay(msgDelay), asynchronousClient(asynchronousClient),
+      qualityOfService(1), address(std::string("tcp://") + host + std::string(":") + std::to_string(port)),
+      connected(false), sendDuration(std::chrono::nanoseconds(msgDelay * ((timeUnit=='m') ? 1000000 :
+                                                                  (1000000000 * (timeUnit!='n') | (timeUnit=='n'))))),
+      client(asynchronousClient, address, clientId, maxBufferedMSGs) {
 
     NES_DEBUG("MQTT Sink  " << this << ": Init MQTT Sink to " << host << ":" << port);
-    std::cout << "ClientID Constructor test: " << this->getClientId() << '\n';
 }
 
 MQTTSink::~MQTTSink() {
@@ -57,9 +67,52 @@ MQTTSink::~MQTTSink() {
     NES_DEBUG("MQTTSink  " << this << ": Destroy MQTT Sink");
 }
 
+
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
-    std::cout << inputBuffer.getBufferSize() << '\n';
-    return false;
+    try {
+        std::unique_lock lock(writeMutex);
+        //    connect(); -> extra step?
+        if (!connected) {
+            NES_DEBUG("ZmqSink  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");
+            throw Exception("Write to zmq sink failed");
+        }
+        if (!inputBuffer.isValid()) {
+            NES_ERROR("ZmqSink::writeData input buffer invalid");
+            return false;
+        }
+
+        // Create a topic object. This is a convenience since we will
+        // repeatedly publish messages with the same parameters.
+        if (asynchronousClient) {
+            mqtt::topic top(*client.getAsyncClient(), topic, qualityOfService, true);
+            for (uint32_t j = 0; j < inputBuffer.getNumberOfTuples() * 2; j = j + 2) {
+                std::string value = std::to_string(inputBuffer.getBuffer<uint32_t>()[j + 1]);
+                std::string payload = "{\"temperature\":" + value + "}";
+                top.publish(std::move(payload));
+                std::this_thread::sleep_for(sendDuration);
+            }
+        } else {
+            UserCallback cb;
+            client.setCallback(cb);
+            for (uint32_t j = 0; j < inputBuffer.getNumberOfTuples() * 2; j = j + 2) {
+                std::string value = std::to_string(inputBuffer.getBuffer<uint32_t>()[j + 1]);
+                std::string payload = "{\"temperature\":" + value + "}";
+                auto pubmsg = mqtt::make_message(topic, payload);
+                pubmsg->set_qos(qualityOfService);
+                (*client.getSyncClient()).publish(pubmsg);
+                std::this_thread::sleep_for(sendDuration);
+            }
+            NES_DEBUG("Synchronous Case");
+        }
+        if(asynchronousClient && client.getAsyncClient()->get_pending_delivery_tokens().size() > 0) {
+            NES_DEBUG("Unsent messages");
+        }
+    }
+    catch (const mqtt::exception& ex) {
+        NES_ERROR("Error during writeData in MQTT sink: " << ex.what());
+        return false;
+    }
+    return true;
 }
 
 //TODO add more to print?
@@ -72,10 +125,12 @@ const std::string MQTTSink::toString() const {
     ss << "CLIENT_ID=" << clientId << ", ";
     ss << "TOPIC="     << topic    << ", ";
     ss << "USER="      << user     << ", ";
-    ss << "QUALITY_OF_SERVICE=" << std::to_string(qualityOfService) << ", ";
     ss << "MAX_BUFFERED_MESSAGES=" << maxBufferedMSGs << ", ";
-    ss << "SEND_PERIOD=" << sendPeriod << ", ";
-    ss << "TIME_TYPE=" << std::to_string(timeType) << ", ";
+    ss << "TIME_UNIT=" << timeUnit << ", ";
+    ss << "SEND_PERIOD=" << msgDelay << ", ";
+    ss << "SEND_DURATION_IN_NS=" << std::to_string(sendDuration.count()) << ", ";
+    ss << "QUALITY_OF_SERVICE=" << std::to_string(qualityOfService) << ", ";
+    ss << "CLIENT_TYPE=" << ((asynchronousClient) ? "ASYMMETRIC_CLIENT" : "SYMMETRIC_CLIENT");
     ss << "\")";
     return ss.str();
 }
@@ -83,21 +138,16 @@ const std::string MQTTSink::toString() const {
 bool MQTTSink::connect() {
     if (!connected) {
         try {
-            auto PERIOD = std::chrono::nanoseconds(sendPeriod) * ((timeType > 0) * 100000) * ((timeType > 1) * 1000);
-
             auto connOpts = mqtt::connect_options_builder()
-                .keep_alive_interval(maxBufferedMSGs  * PERIOD)
+                .keep_alive_interval(maxBufferedMSGs * sendDuration)
+                .user_name(user)
                 .clean_session(true)
                 .automatic_reconnect(true)
                 .finalize();
 
-            // Create a topic object. This is a convenience since we will
-            // repeatedly publish messages with the same parameters.
-            mqtt::topic top(client, topic, qualityOfService, true);
-
             // Connect to the MQTT broker
             NES_DEBUG("MQTTSink: connect to host=" << host << " port=" << port);
-            client.connect(connOpts)->wait();
+            client.connect(connOpts);
             connected = true;
         } catch (const mqtt::exception& ex) {
             NES_ERROR("MQTTSink: " << ex.what());
@@ -113,7 +163,7 @@ bool MQTTSink::connect() {
 
 bool MQTTSink::disconnect() {
     if (connected) {
-        client.disconnect()->wait();
+        client.disconnect();
         connected = false;
     }
     if (!connected) {
@@ -125,6 +175,7 @@ bool MQTTSink::disconnect() {
 }
 
 int MQTTSink::getPort() { return port; }
+bool MQTTSink::getConnected() { return connected; }
 const std::string& MQTTSink::getHost() const { return host; }
 const std::string& MQTTSink::getClientId() const { return clientId; }
 const std::string& MQTTSink::getTopic() const { return topic; }
