@@ -147,6 +147,13 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolch
 -DCMAKE_INSTALL_PREFIX=/opt/sysroots/aarch64-linux-gnu/ && \
 make -j2 install && cd ../.. && rm -rf grpc
 
+RUN cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
+  cd paho.mqtt.c && git checkout v1.3.8 && cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF -DPAHO_BUILD_STATIC=ON \
+  -DPAHO_WITH_SSL=ON -DPAHO_HIGH_PERFORMANCE=ON && sudo cmake --build build/ --target install \
+  sudo ldconfig && git clone https://github.com/eclipse/paho.mqtt.cpp && cd ${HOME} && cd paho.mqtt.cpp && \
+  cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
+  sudo cmake --build build/ --target install && sudo ldconfig
+
 RUN update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
     update-alternatives --set cc /usr/bin/clang && \
