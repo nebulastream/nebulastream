@@ -1146,8 +1146,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     context3->arity = PipelineContext::BinaryRight;
     context3->pipelineName = "3";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context3);
+    codeGenerator->generateJoinSetup(joinDef, context3);
     codeGenerator->generateCodeForJoin(joinDef, context3, 0);
     auto stage3 = codeGenerator->compile(context3);
+    stage3->setup(*executionContext.get());
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();

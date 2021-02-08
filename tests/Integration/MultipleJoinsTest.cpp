@@ -229,7 +229,7 @@ TEST_F(MultipleJoinsTest, testJoin2WithDifferentStreamTumblingWindowDistributed)
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
@@ -238,7 +238,7 @@ TEST_F(MultipleJoinsTest, testJoin2WithDifferentStreamTumblingWindowDistributed)
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
@@ -248,7 +248,7 @@ TEST_F(MultipleJoinsTest, testJoin2WithDifferentStreamTumblingWindowDistributed)
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
@@ -258,7 +258,7 @@ TEST_F(MultipleJoinsTest, testJoin2WithDifferentStreamTumblingWindowDistributed)
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 40);
     wrkConf->setDataPort(port + 41);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
@@ -897,7 +897,7 @@ TEST_F(MultipleJoinsTest, testJoin2WithDifferentStreamSlidingWindowDistributed) 
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
@@ -906,7 +906,7 @@ TEST_F(MultipleJoinsTest, testJoin2WithDifferentStreamSlidingWindowDistributed) 
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
@@ -916,7 +916,7 @@ TEST_F(MultipleJoinsTest, testJoin2WithDifferentStreamSlidingWindowDistributed) 
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
@@ -926,7 +926,7 @@ TEST_F(MultipleJoinsTest, testJoin2WithDifferentStreamSlidingWindowDistributed) 
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 40);
     wrkConf->setDataPort(port + 41);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
