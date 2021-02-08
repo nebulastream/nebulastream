@@ -880,12 +880,9 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
 
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
                                          uint64_t operatorHandlerIndex) {
-    std::string ar = "right";
-    if (context->arity == PipelineContext::BinaryLeft) {
-        ar = "left";
-    }
-    NES_DEBUG("join input=" << context->inputSchema->toString() << " ar=" << ar
+    NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << context->arity
                             << " out=" << joinDef->getOutputSchema()->toString());
+
     auto tf = getTypeFactory();
 
     if (context->arity == PipelineContext::BinaryLeft) {
@@ -999,8 +996,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
         //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
-
-        //TODO: this has to be changed once we close 1543 and thus we would have 2 times the attribute
+        //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->getName();
         if (context->arity == PipelineContext::BinaryRight) {
@@ -1012,7 +1008,6 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
             auto trimmedWindowFieldName = windowTimeStampFieldName.substr(
                 windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR), windowTimeStampFieldName.length());
             //Extract the first field from right schema and trim it to find the schema qualifier for the right side
-            //            rightSchema->getIndex()
             //TODO: I know I know this is really not nice but we will fix in with the other issue above
             bool found = false;
             for (auto& field : rightSchema->fields) {
@@ -1022,73 +1017,74 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                 }
             }
             NES_ASSERT(found, " right schema does not contain a timestamp attribute");
+        } else {
+            NES_DEBUG("windowTimeStampFieldName bin left=" << windowTimeStampFieldName);
+        }
+
+        auto tsVariableReference = recordHandler->getAttribute(windowTimeStampFieldName);
+
+        auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(tsVariableReference);
+        context->code->currentCodeInsertionPoint->addStatement(tsVariableDeclarationStatement.copy());
     }
-    else {
-        NES_DEBUG("windowTimeStampFieldName bin left=" << windowTimeStampFieldName);
+
+    // auto lock = std::unique_lock(stateVariable->mutex());
+    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
+    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
+    auto stateMutex = FunctionCallStatement("mutex");
+    uniqueLockCtor.addParameter(
+        std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
+    context->code->currentCodeInsertionPoint->addStatement(
+        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
+
+    // update slices
+    // windowManager->sliceStream(current_ts, windowState);
+    auto sliceStream = FunctionCallStatement("sliceStream");
+    sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
+    sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
+    sliceStream.addParameter(VarRef(keyVariableDeclaration));
+    auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream));
+    context->code->currentCodeInsertionPoint->addStatement(call);
+
+    // find the slices for a time stamp
+    // uint64_t current_slice_index = windowState->getSliceIndexByTs(current_ts);
+    auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
+    getSliceIndexByTs.addParameter(VarRef(currentTimeVariableDeclaration));
+    auto getSliceIndexByTsCall = VarRef(windowStateVariableDeclaration).accessPtr(getSliceIndexByTs);
+    auto currentSliceIndexVariableDeclaration =
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()), "current_slice_index");
+    auto current_slice_ref = VarRef(currentSliceIndexVariableDeclaration);
+    auto currentSliceIndexVariableStatement =
+        VarDeclStatement(currentSliceIndexVariableDeclaration).assign(getSliceIndexByTsCall);
+    context->code->currentCodeInsertionPoint->addStatement(
+        std::make_shared<BinaryOperatorStatement>(currentSliceIndexVariableStatement));
+
+    // append to the join state
+    auto joinStateCall = FunctionCallStatement("append");
+    joinStateCall.addParameter(VarRef(currentSliceIndexVariableDeclaration));
+    joinStateCall.addParameter(
+        VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]);
+    auto getJoinStateCall = VarRef(windowStateVariableDeclaration).accessPtr(joinStateCall);
+    context->code->currentCodeInsertionPoint->addStatement(getJoinStateCall.copy());
+
+    // joinHandler->trigger();
+    switch (joinDef->getTriggerPolicy()->getPolicyType()) {
+        case Windowing::triggerOnBuffer: {
+            auto trigger = FunctionCallStatement("trigger");
+            call = std::make_shared<BinaryOperatorStatement>(VarRef(windowJoinVariableDeclration).accessPtr(trigger));
+            context->code->cleanupStmts.push_back(call);
+            break;
+        }
+        default: {
+            break;
+        }
     }
 
-    auto tsVariableReference = recordHandler->getAttribute(windowTimeStampFieldName);
-
-    auto tsVariableDeclarationStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(tsVariableReference);
-    context->code->currentCodeInsertionPoint->addStatement(tsVariableDeclarationStatement.copy());
-}
-
-// auto lock = std::unique_lock(stateVariable->mutex());
-auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
-auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
-auto stateMutex = FunctionCallStatement("mutex");
-uniqueLockCtor.addParameter(
-    std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
-context->code->currentCodeInsertionPoint->addStatement(
-    std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
-
-// update slices
-// windowManager->sliceStream(current_ts, windowState);
-auto sliceStream = FunctionCallStatement("sliceStream");
-sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
-sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
-sliceStream.addParameter(VarRef(keyVariableDeclaration));
-auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream));
-context->code->currentCodeInsertionPoint->addStatement(call);
-
-// find the slices for a time stamp
-// uint64_t current_slice_index = windowState->getSliceIndexByTs(current_ts);
-auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
-getSliceIndexByTs.addParameter(VarRef(currentTimeVariableDeclaration));
-auto getSliceIndexByTsCall = VarRef(windowStateVariableDeclaration).accessPtr(getSliceIndexByTs);
-auto currentSliceIndexVariableDeclaration =
-    VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()), "current_slice_index");
-auto current_slice_ref = VarRef(currentSliceIndexVariableDeclaration);
-auto currentSliceIndexVariableStatement = VarDeclStatement(currentSliceIndexVariableDeclaration).assign(getSliceIndexByTsCall);
-context->code->currentCodeInsertionPoint->addStatement(
-    std::make_shared<BinaryOperatorStatement>(currentSliceIndexVariableStatement));
-
-// append to the join state
-auto joinStateCall = FunctionCallStatement("append");
-joinStateCall.addParameter(VarRef(currentSliceIndexVariableDeclaration));
-joinStateCall.addParameter(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]);
-auto getJoinStateCall = VarRef(windowStateVariableDeclaration).accessPtr(joinStateCall);
-context->code->currentCodeInsertionPoint->addStatement(getJoinStateCall.copy());
-
-// joinHandler->trigger();
-switch (joinDef->getTriggerPolicy()->getPolicyType()) {
-    case Windowing::triggerOnBuffer: {
-        auto trigger = FunctionCallStatement("trigger");
-        call = std::make_shared<BinaryOperatorStatement>(VarRef(windowJoinVariableDeclration).accessPtr(trigger));
-        context->code->cleanupStmts.push_back(call);
-        break;
-    }
-    default: {
-        break;
-    }
-}
-
-NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
-                                              << " with code=" << context->code);
-// Generate code for watermark updater
-// i.e., calling updateAllMaxTs
-generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == PipelineContext::BinaryLeft);
-return true;
+    NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
+                                                  << " with code=" << context->code);
+    // Generate code for watermark updater
+    // i.e., calling updateAllMaxTs
+    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == PipelineContext::BinaryLeft);
+    return true;
 }
 
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,

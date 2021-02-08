@@ -48,6 +48,7 @@ void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextP
         joinHandler->start();
     }
 }
+
 void JoinOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) {
     if (joinHandler) {
         joinHandler->stop();

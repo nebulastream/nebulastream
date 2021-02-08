@@ -105,9 +105,9 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     auto executablePipelines = qep->getPipelines();
     for (auto& pipeline : executablePipelines) {
         std::string ar = pipeline->getArity() == Unary ? "unary" : "binary";
-        NES_DEBUG("PIPELINE ID=" << pipeline->getPipeStageId() << " input schema=" << pipeline->getInputSchema()->toString()
+        NES_TRACE("PIPELINE ID=" << pipeline->getPipeStageId() << " input schema=" << pipeline->getInputSchema()->toString()
                                  << " outSche=" << pipeline->getOutputSchema()->toString() << " arity=" << ar
-                                 << " src=" << pipeline->toString());
+                                 << " source code=" << pipeline->getCodeAsString());
 
         switch (pipeline->getArity()) {
             case Unary: {
@@ -156,10 +156,11 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                                    "Found existing entry for the source operator " << sourceOperatorId);
                         operatorIdToPipelineStage[sourceOperatorId] = i;
                     } else {
-                        NES_DEBUG("source not equal");
+                        NES_TRACE("source not equal");
                     }
                 }
             } else {
+                //default fall back, if there is no join, then we always execute the pipeline at id 0
                 operatorIdToPipelineStage[sourceOperatorId] = 0;
             }
         }
@@ -224,7 +225,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
         if (operatorIdToPipelineStage.find(operatorId) == operatorIdToPipelineStage.end()) {
-            NES_ERROR("Operator ID=" << operatorId << " not found in mapping table");
+            NES_THROW_RUNTIME_ERROR("Operator ID=" << operatorId << " not found in mapping table");
         }
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);

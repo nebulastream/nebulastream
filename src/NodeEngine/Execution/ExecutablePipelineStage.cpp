@@ -27,6 +27,6 @@ uint32_t ExecutablePipelineStage::close(PipelineExecutionContext&, WorkerContext
 
 uint32_t ExecutablePipelineStage::stop(PipelineExecutionContext&) { return 0; }
 
-std::string ExecutablePipelineStage::toString(){return "";};
+std::string ExecutablePipelineStage::getCodeAsString(){return "";};
 
 }// namespace NES::NodeEngine::Execution

@@ -197,6 +197,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 /// to avoid name collions, e.g., __buffer, __stacktrace
 /// that should not be a problem because of the scope, however, better be safe than sorry :P
 #ifdef NES_DEBUG
+//Note Verify is only evaluated in Debug but not in Release
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
