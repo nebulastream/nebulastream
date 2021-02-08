@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_MQTTSOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_MQTTSOURCEDESCRIPTOR_HPP_
 
-#ifdef ENABLE_OPC_BUILD
+#ifdef ENABLE_MQTT_BUILD
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <mqtt/async_client.h>
@@ -30,11 +30,11 @@ namespace NES {
 class MQTTSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string serverAddress, std::string clientId,
-                                      std::string user, std::string password, std::string topic);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string serverAddress, std::string clientId, std::string user,
+                                      std::string topic);
 
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string serverAddress, std::string clientId,
-                                      std::string user, std::string password, std::string topic);
+                                      std::string user, std::string topic);
 
     /**
      * @brief get OPC server url
@@ -64,12 +64,10 @@ class MQTTSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit MQTTSourceDescriptor(SchemaPtr schema, const std::string serverAddress, const std::string clientId,
-                                  const std::string user, const std::string password,
-                                  const std::string topic);
+                                  const std::string user, const std::string topic);
 
     explicit MQTTSourceDescriptor(SchemaPtr schema, std::string streamName, const std::string serverAddress,
-                                  const std::string clientId, const std::string user, const std::string password,
-                                  const std::string topic);
+                                  const std::string clientId, const std::string user, const std::string topic);
 
     std::string serverAddress;
     std::string clientId;

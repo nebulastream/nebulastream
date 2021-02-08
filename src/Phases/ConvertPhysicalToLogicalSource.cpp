@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
@@ -30,6 +31,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
+#include <Sources/MQTTSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
@@ -80,6 +82,16 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
                 kafkaSourcePtr->getSchema(), kafkaSourcePtr->getBrokers(), kafkaSourcePtr->getTopic(),
                 kafkaSourcePtr->getGroupId(), kafkaSourcePtr->isAutoCommit(), kafkaSourcePtr->getKafkaConsumerTimeout().count());
             return kafkaSourceDescriptor;
+        }
+#endif
+#ifdef ENABLE_MQTT_BUILD
+        case MQTT_SOURCE: {
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating MQTT source");
+            const MQTTSourcePtr mqttSourcePtr = std::dynamic_pointer_cast<MQTTSource>(dataSource);
+            const SourceDescriptorPtr mqttSourceDescriptor =
+                MQTTSourceDescriptor::create(mqttSourcePtr->getSchema(), mqttSourcePtr->getServerAddress(),
+                                             mqttSourcePtr->getClientId(), mqttSourcePtr->getUser(), mqttSourcePtr->getTopic());
+            return mqttSourceDescriptor;
         }
 #endif
 #ifdef ENABLE_OPC_BUILD

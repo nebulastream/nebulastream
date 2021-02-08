@@ -14,38 +14,36 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_MQTT_BUILD
 
-#ifdef ENABLE_OPC_BUILD
-
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <mqtt/async_client.h>
 
 namespace NES {
 
 SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, std::string serverAddress, std::string clientId,
-                                                 std::string user, std::string password, std::string topic) {
-    return std::make_shared<MQTTSourceDescriptor>(
-        MQTTSourceDescriptor(std::move(schema), std::move(serverAddress), std::move(clientId), std::move(user), std::move(password),
-                             std::move(topic)));
+                                                 std::string user, std::string topic) {
+    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(serverAddress),
+                                                                       std::move(clientId), std::move(user), std::move(topic)));
 }
 
-SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string serverAddress, std::string clientId,
-                                                 std::string user, std::string password, std::string topic) {
+SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string serverAddress,
+                                                 std::string clientId, std::string user, std::string topic) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(streamName),
-                                                                      std::move(serverAddress), std::move(clientId), std::move(user), std::move(password),
-                                                                      std::move(topic)));
+                                                                       std::move(serverAddress), std::move(clientId),
+                                                                       std::move(user), std::move(topic)));
 }
 
-MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, std::string serverAddress, std::string clientId,
-                                           std::string user, std::string password, std::string topic)
-    : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)), user(std::move(user)),
-      password(std::move(password)), topic(std::move(topic)) {}
+MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, std::string serverAddress, std::string clientId, std::string user,
+                                           std::string topic)
+    : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
+      user(std::move(user)), topic(std::move(topic)) {}
 
-MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, std::string streamName, std::string serverAddress, std::string clientId,
-                                           std::string user, std::string password, std::string topic)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)), user(std::move(user)),
-      password(std::move(password)), topic(std::move(topic)) {}
+MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, std::string streamName, std::string serverAddress,
+                                           std::string clientId, std::string user, std::string topic)
+    : SourceDescriptor(std::move(schema), std::move(streamName)), serverAddress(std::move(serverAddress)),
+      clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)) {}
 
 const std::string MQTTSourceDescriptor::getServerAddress() const { return serverAddress; }
 
@@ -64,8 +62,7 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr other) {
     auto otherMQTTSource = other->as<MQTTSourceDescriptor>();
     NES_DEBUG("URL= " << serverAddress << " == " << otherMQTTSource->getServerAddress());
     return serverAddress == otherMQTTSource->getServerAddress() && clientId == otherMQTTSource->getClientId()
-        && user == otherMQTTSource->getUser() && password == otherMQTTSource->getPassword()
-        && topic == otherMQTTSource->getTopic();
+        && user == otherMQTTSource->getUser() && topic == otherMQTTSource->getTopic();
 }
 
 std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }

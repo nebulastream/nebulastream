@@ -23,9 +23,9 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <mqtt/async_client.h>
 #include <sstream>
 #include <string>
-#include <mqtt/async_client.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -33,12 +33,11 @@ using namespace std::chrono;
 namespace NES {
 
 MQTTSource::MQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                       const std::string serverAddress, const std::string clientId, const std::string user, const std::string password,
+                       const std::string serverAddress, const std::string clientId, const std::string user,
                        const std::string topic, OperatorId operatorId)
-    : DataSource(schema, bufferManager, queryManager, operatorId), connected(false), serverAddress(serverAddress), clientId(clientId),
-    user(user), password(password), topic(topic), client(serverAddress, clientId) {
-    NES_DEBUG("MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId <<
-              " and ");
+    : DataSource(schema, bufferManager, queryManager, operatorId), connected(false), serverAddress(serverAddress),
+      clientId(clientId), user(user), topic(topic), client(serverAddress, clientId) {
+    NES_DEBUG("MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId << " and ");
 }
 
 MQTTSource::~MQTTSource() {
@@ -65,7 +64,7 @@ std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
             int count = 0;
             while (true) {
                 auto msg = client.consume_message();
-                if (!msg){
+                if (!msg) {
                     buffer.setNumberOfTuples(count);
                     break;
                 }
@@ -92,8 +91,7 @@ const std::string MQTTSource::toString() const {
     ss << "SERVERADDRESS=" << serverAddress << ", ";
     ss << "CLIENTID=" << clientId << ", ";
     ss << "USER=" << user << ", ";
-    ss << "PASSWORD=" << password << ", ";
-    ss << "TOPIC=" << topic << ", ";
+    ss << "TOPIC=" << topic << ". ";
     return ss.str();
 }
 
@@ -103,7 +101,7 @@ bool MQTTSource::connect() {
         // connect with user name and password
         auto connOpts = mqtt::connect_options_builder()
                             .user_name(user)
-                            .password(password)
+                            .keep_alive_interval(seconds(1))//waiting interval in standard chrono notation
                             .clean_session(false)
                             .finalize();
         try {
@@ -124,9 +122,8 @@ bool MQTTSource::connect() {
             if (!rsp.is_session_present())
                 client.subscribe(topic, 1)->wait();
             connected = client.is_connected();
-        }
-        catch (const mqtt::exception& exc) {
-            NES_WARNING("\n  " << exc );
+        } catch (const mqtt::exception& exc) {
+            NES_WARNING("\n  " << exc);
             connected = false;
             return connected;
         }
@@ -152,8 +149,7 @@ bool MQTTSource::disconnect() {
             client.stop_consuming();
             client.disconnect()->wait();
             NES_INFO("MQTTSource: disconnected.");
-        }
-        else {
+        } else {
             NES_INFO("MQTTSource: Client was already disconnected");
         }
         connected = client.is_connected();
@@ -166,6 +162,11 @@ bool MQTTSource::disconnect() {
     }
     return !connected;
 }
+const string& MQTTSource::getServerAddress() const { return serverAddress; }
+const string& MQTTSource::getClientId() const { return clientId; }
+const string& MQTTSource::getUser() const { return user; }
+const string& MQTTSource::getTopic() const { return topic; }
+SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
 
 }// namespace NES
 #endif
