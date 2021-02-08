@@ -107,7 +107,9 @@ bool ExecutableQueryPlan::start() {
     auto expected = Deployed;
     if (qepStatus.compare_exchange_strong(expected, Running)) {
         for (auto& stage : pipelines) {
-            NES_DEBUG("ExecutableQueryPlan::start qep=" << stage->getQepParentId() << " pipe=" << stage->getPipeStageId() << " next=" << stage->getNextPipeline() << " arity=" << stage->getArity());
+            NES_DEBUG("ExecutableQueryPlan::start qep=" << stage->getQepParentId() << " pipe=" << stage->getPipeStageId()
+                                                        << " next=" << stage->getNextPipeline()
+                                                        << " arity=" << stage->getArity());
             if (!stage->start()) {
                 NES_ERROR("QueryExecutionPlan: start failed! " << queryId << " " << querySubPlanId);
                 this->stop();

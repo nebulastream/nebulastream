@@ -216,9 +216,11 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
 
                     // receive buffer content
                     auto buffer = bufferManager->getBufferBlocking();
-                    auto optRetSize = dispatcherSocket.recv(zmq::mutable_buffer(buffer.getBuffer(), bufferHeader->getPayloadSize()), kZmqRecvDefault);
+                    auto optRetSize = dispatcherSocket.recv(
+                        zmq::mutable_buffer(buffer.getBuffer(), bufferHeader->getPayloadSize()), kZmqRecvDefault);
                     NES_ASSERT2(optRetSize.has_value(), "Invalid recv size");
-                    NES_ASSERT2(optRetSize.value().size == bufferHeader->getPayloadSize(), "Recv not matching sizes " << optRetSize.value().size << "!=" << bufferHeader->getPayloadSize());
+                    NES_ASSERT2(optRetSize.value().size == bufferHeader->getPayloadSize(),
+                                "Recv not matching sizes " << optRetSize.value().size << "!=" << bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
                     buffer.setOriginId(bufferHeader->getOriginId());
                     buffer.setWatermark(bufferHeader->getWatermark());

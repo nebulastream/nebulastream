@@ -166,7 +166,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
-#if EXTENDEDDEBUGGING //the mapping is a common sources of errors so please leave it in
+#if EXTENDEDDEBUGGING//the mapping is a common sources of errors so please leave it in
     NES_DEBUG("operatorIdToPipelineStage mapping:");
     for (auto& a : operatorIdToPipelineStage) {
         NES_DEBUG("first=" << a.first << " second=" << a.second);

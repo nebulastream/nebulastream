@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Windowing/Runtime/WindowManager.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
 namespace NES::Windowing {
 
 WindowManager::WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness)

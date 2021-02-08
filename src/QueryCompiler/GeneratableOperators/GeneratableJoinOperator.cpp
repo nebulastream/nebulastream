@@ -47,10 +47,11 @@ void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
     NES_ASSERT(inputSchemaRightChild->getSchemaSizeInBytes() != 0, "right schema empty");
 
     NES_DEBUG(" join definition left=" << joinDefinition->getLeftStreamType()->toString()
-                                 << " join definition right=" << joinDefinition->getRightStreamType()->toString() << " input left="
-                                 << inputSchemaLeftChild->toString() << " input right=" << inputSchemaRightChild->toString()
-                                 << " join key right=" << joinDefinition->getRightJoinKey()->getFieldName()
-                                 << " join key left=" << joinDefinition->getLeftJoinKey()->getFieldName());
+                                       << " join definition right=" << joinDefinition->getRightStreamType()->toString()
+                                       << " input left=" << inputSchemaLeftChild->toString()
+                                       << " input right=" << inputSchemaRightChild->toString()
+                                       << " join key right=" << joinDefinition->getRightJoinKey()->getFieldName()
+                                       << " join key left=" << joinDefinition->getLeftJoinKey()->getFieldName());
 
     //check that the right join key is not in the left AND right schema
     NES_ASSERT(!(inputSchemaLeftChild->contains(joinDefinition->getRightJoinKey()->getFieldName())

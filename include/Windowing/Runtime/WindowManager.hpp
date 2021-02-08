@@ -67,21 +67,23 @@ class WindowManager {
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
-                NES_DEBUG("WindowManager " << id << ": for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
-                          << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge
-                          << " key=" << key);
+                NES_DEBUG("WindowManager " << id
+                                           << ": for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
+                                           << store->nextEdge - window->getSize().getTime()
+                                           << " nextWindowEnd=" << store->nextEdge << " key=" << key);
             } else if (windowType->isSlidingWindow()) {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
-                NES_DEBUG("WindowManager " << id << ": for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
-                          << store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge
-                          << " key=" << key);
+                NES_DEBUG("WindowManager " << id
+                                           << ": for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
+                                           << store->nextEdge - window->getSlide().getTime()
+                                           << " nextWindowEnd=" << store->nextEdge << " key=" << key);
             } else {
                 NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }
         }
         NES_DEBUG("WindowManager " << id << ": sliceStream check store-nextEdge=" << store->nextEdge << " <="
-                                                                     << " ts=" << ts << " key=" << key);
+                                   << " ts=" << ts << " key=" << key);
 
         // append new slices if needed
         while (store->nextEdge <= ts) {
@@ -92,7 +94,8 @@ class WindowManager {
             NES_TRACE("WindowManager " << id << " sliceStream newStart=" << newStart << " key=" << key);
             auto nextEdge = windowType->calculateNextWindowEnd(store->nextEdge);
             NES_TRACE("WindowManager: sliceStream nextEdge=" << nextEdge << " key=" << key);
-            NES_DEBUG("WindowManager " << id << ": append new slide for start=" << newStart << " end=" << nextEdge << " key=" << key);
+            NES_DEBUG("WindowManager " << id << ": append new slide for start=" << newStart << " end=" << nextEdge
+                                       << " key=" << key);
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }
@@ -117,13 +120,15 @@ class WindowManager {
             if (windowType->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
-                NES_DEBUG("WindowManager " << id << ": for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
-                          << store->nextEdge - window->getSize().getTime() << " nextWindowEnd=" << store->nextEdge
-                          << " key=" << key);
+                NES_DEBUG("WindowManager " << id
+                                           << ": for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
+                                           << store->nextEdge - window->getSize().getTime()
+                                           << " nextWindowEnd=" << store->nextEdge << " key=" << key);
             } else if (windowType->isSlidingWindow()) {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
-                NES_DEBUG("WindowManager list " << id << ": for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
+                NES_DEBUG("WindowManager list "
+                          << id << ": for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
                           << store->nextEdge - window->getSlide().getTime() << " nextWindowEnd=" << store->nextEdge
                           << " key=" << key);
             } else {
@@ -131,7 +136,7 @@ class WindowManager {
             }
         }
         NES_DEBUG("WindowManager list " << id << ": sliceStream check store-nextEdge=" << store->nextEdge << " <="
-                                                                     << " ts=" << ts << " key=" << key);
+                                        << " ts=" << ts << " key=" << key);
 
         // append new slices if needed
         while (store->nextEdge <= ts) {
@@ -142,7 +147,8 @@ class WindowManager {
             NES_TRACE("WindowManager: sliceStream newStart=" << newStart << " key=" << key);
             auto nextEdge = windowType->calculateNextWindowEnd(store->nextEdge);
             NES_TRACE("WindowManager: sliceStream nextEdge=" << nextEdge << " key=" << key);
-            NES_DEBUG("WindowManager list " << id << ": append new slide for start=" << newStart << " end=" << nextEdge << " key=" << key);
+            NES_DEBUG("WindowManager list " << id << ": append new slide for start=" << newStart << " end=" << nextEdge
+                                            << " key=" << key);
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }

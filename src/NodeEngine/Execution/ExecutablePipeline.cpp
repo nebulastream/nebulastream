@@ -91,8 +91,7 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const
                                                 nextPipeline, inputSchema, outputSchema, reconfiguration);
 }
 
-std::string ExecutablePipeline::getCodeAsString()
-{
+std::string ExecutablePipeline::getCodeAsString() {
     std::stringstream ss;
     ss << executablePipelineStage->getCodeAsString();
     return ss.str();
