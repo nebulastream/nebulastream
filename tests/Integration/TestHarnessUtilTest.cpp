@@ -436,11 +436,15 @@ TestHarness testHarness = TestHarness(queryWithFilterOperator);
  *  |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
  */
 
-testHarness.addNonSourceWorker(); // worker with id=2
-testHarness.addNonSourceWorker(2); //worker with id=3
-testHarness.addMemorySource("car", carSchema, "car1", 3); //worker (source) with id = 4
+testHarness.addNonSourceWorker();
+NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 0: " << testHarness.getWorkerId(0));
+testHarness.addNonSourceWorker(testHarness.getWorkerId(0));
+NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 1: " << testHarness.getWorkerId(1));
+testHarness.addMemorySource("car", carSchema, "car1", testHarness.getWorkerId(1));
+NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 2: " << testHarness.getWorkerId(2));
 
 TopologyPtr topology = testHarness.getTopology();
+NES_DEBUG("TestHarness: topology:\n" << topology->toString());
 EXPECT_EQ(topology->getRoot()->getChildren().size(), 1);
 EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1);
 EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);

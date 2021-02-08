@@ -216,6 +216,8 @@ bool NesWorker::connect() {
     auto nodeStats = nodeStatsProvider->getNodeStats();
     bool successPRCRegister =
         coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, type, nodeStats);
+    NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
+    id = coordinatorRpcClient->getId();
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
@@ -320,6 +322,12 @@ bool NesWorker::waitForConnect() {
     }
     NES_DEBUG("waitForConnect: not connected after timeout");
     return false;
+}
+uint64_t NesWorker::getId() {
+    bool con = waitForConnect();
+    NES_DEBUG("connected= " << con);
+    assert(con);
+    return id;
 }
 
 }// namespace NES
