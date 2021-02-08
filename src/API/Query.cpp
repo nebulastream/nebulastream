@@ -125,10 +125,11 @@ Query& Query::join(const Query& subQueryRhsConst, ExpressionItem onLeftKey, Expr
                 windowType->getTimeCharacteristic()->getTimeUnit()));
             rhsQueryPlan->appendOperatorAsNewRoot(op);
         }
-    } else {
-        auto op = rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
-        NES_ASSERT(op.size() == 1, "Only one watermark assigner is allowed per pipeline");
     }
+//    else {
+//        auto op = rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
+//        NES_ASSERT(op.size() == 1, "Only one watermark assigner is allowed per pipeline");
+//    }
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
