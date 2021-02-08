@@ -25,47 +25,88 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical opc source
+ * @brief Descriptor defining properties used for creating physical mqtt source
  */
 class MQTTSourceDescriptor : public SourceDescriptor {
 
   public:
+    /**
+     * @brief create a source descriptor pointer for MQTT source
+     * @param schema the schema of the data
+     * @param serverAddress the server address to connect to (port included)
+     * @param clientId unique server id
+     * @param user to connect to server
+     * @param topic to subscribe to
+     * @return source descriptor pointer to mqtt source
+     */
     static SourceDescriptorPtr create(SchemaPtr schema, std::string serverAddress, std::string clientId, std::string user,
                                       std::string topic);
-
+    /**
+     * @brief create a source descriptor pointer for MQTT source
+     * @param streamName Name of the data stream
+     * @param schema the schema of the data
+     * @param serverAddress the server address to connect to (port included)
+     * @param clientId unique server id
+     * @param user to connect to server
+     * @param topic to subscribe to
+     * @return source descriptor pointer to mqtt source
+     */
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string serverAddress, std::string clientId,
                                       std::string user, std::string topic);
 
     /**
-     * @brief get OPC server url
+     * @brief get MQTT server address
+     * @return serverAddress
      */
     const std::string getServerAddress() const;
 
     /**
-     * @brief get desired node id
+     * @brief get desired mqtt server client id
+     * @return clientId
      */
     const std::string getClientId() const;
 
     /**
      * @brief get user name
+     * @return user
      */
     const std::string getUser() const;
 
     /**
-     * @brief get password
+     * @brief getter for topic
+     * @return topic
      */
-    const std::string getPassword() const;
-
     const std::string getTopic() const;
 
+    /**
+     * checks if two mqtt source descriptors are the same
+     * @param other
+     * @return true if they are the same
+     */
     bool equal(SourceDescriptorPtr other) override;
 
     std::string toString() override;
 
   private:
+    /**
+     * @brief mqtt source descriptor constructor
+     * @param schema the schema of the data
+     * @param serverAddress the server address to connect to (port included)
+     * @param clientId unique server id
+     * @param user to connect to server
+     * @param topic to subscribe to
+     */
     explicit MQTTSourceDescriptor(SchemaPtr schema, const std::string serverAddress, const std::string clientId,
                                   const std::string user, const std::string topic);
-
+    /**
+     * @brief mqtt source descriptor constructor
+     * @param schema the schema of the data
+     * @param streamName name of the data stream
+     * @param serverAddress the server address to connect to (port included)
+     * @param clientId unique server id
+     * @param user to connect to server
+     * @param topic to subscribe to
+     */
     explicit MQTTSourceDescriptor(SchemaPtr schema, std::string streamName, const std::string serverAddress,
                                   const std::string clientId, const std::string user, const std::string topic);
 
