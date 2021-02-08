@@ -147,6 +147,12 @@ class NesWorker {
      */
     NodeEngine::NodeEnginePtr getNodeEngine();
 
+    /**
+     * @brief method to the id of the worker
+     * @return id of the worker
+     */
+    uint64_t getId();
+
   private:
     /**
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
@@ -176,7 +182,7 @@ class NesWorker {
     uint16_t numWorkerThreads;
     NodeType type;
     std::atomic<bool> stopped;
-
+    std::uint64_t id;
     /**
      * @brief helper method to ensure client is connected before callin rpcs functions
      * @return

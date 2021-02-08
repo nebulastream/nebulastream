@@ -52,7 +52,9 @@ class TestHarness {
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     };
 
-    ~TestHarness(){};
+    ~TestHarness(){
+        NES_DEBUG("TestHarness: ~TestHarness()");
+    };
 
     /*
          * @brief push a single element/tuple to specific source
@@ -118,7 +120,7 @@ class TestHarness {
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         if (parentId != 1) {
-            wrk->replaceParent(1,parentId);
+            wrk->replaceParent(crd->getTopology()->getRoot()->getId(),parentId);
         }
         workerPtrs.push_back(wrk);
     }
@@ -155,11 +157,14 @@ class TestHarness {
     }
 
     void addNonSourceWorker(uint64_t parentId = 1){
-        auto wrk = std::make_shared<NesWorker>(ipAddress, crdPort, ipAddress, crdPort + (workerPtrs.size() + 1) * 20,
-                                               crdPort + (workerPtrs.size() + 1) * 20 + 1, NodeType::Sensor);
+        wrkConf->resetWorkerOptions();
+        wrkConf->setCoordinatorPort(crdPort);
+        wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
+        wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
+        auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         if (parentId != 1) {
-            wrk->replaceParent(1,parentId);
+            wrk->replaceParent(crd->getTopology()->getRoot()->getId(),parentId);
         }
         workerPtrs.push_back(wrk);
     }
@@ -279,6 +284,14 @@ class TestHarness {
     TopologyPtr getTopology() {
         return crd->getTopology();
     };
+
+    /*
+     * @brief get the id of worker at a particular index
+     * @param workerIdx index of the worker in the test harness
+     */
+    uint64_t getWorkerId(uint64_t workerIdx) {
+        return workerPtrs.at(workerIdx)->getId();
+    }
 
   private:
     enum TestHarnessSourceType { CSVSource, MemorySource };
