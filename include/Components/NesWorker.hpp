@@ -148,7 +148,7 @@ class NesWorker {
     NodeEngine::NodeEnginePtr getNodeEngine();
 
     /**
-     * @brief method to the id of the worker
+     * @brief method to get the id of the worker
      * @return id of the worker
      */
     uint64_t getId();

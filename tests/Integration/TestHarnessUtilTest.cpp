@@ -449,7 +449,6 @@ EXPECT_EQ(topology->getRoot()->getChildren().size(), 1);
 EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1);
 EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
 
-
 testHarness.pushElement<Car>({40, 40, 40}, 0);
 testHarness.pushElement<Car>({30, 30, 30}, 0);
 testHarness.pushElement<Car>({71, 71, 71}, 0);
