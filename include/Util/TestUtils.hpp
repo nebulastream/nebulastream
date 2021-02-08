@@ -415,6 +415,13 @@ class TestUtils {
                     continue;
                 }
 
+                if(content.size() != expectedContent.size())
+                {
+                    NES_DEBUG("checkOutputOrTimeout: number of chars "
+                                  << expectedContent.size() << " not reached yet with chars content=" << content.size());
+                    continue;
+                }
+
                 for (uint64_t i = 0; i < expectedLines.size(); i++) {
                     if (content.find(expectedLines[i]) != std::string::npos) {
                         found++;
