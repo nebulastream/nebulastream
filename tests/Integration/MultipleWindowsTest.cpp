@@ -763,7 +763,6 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     NES_DEBUG("MultipleWindowsTest: Test finished");
 }
 
-
 /**
  * @brief This tests just outputs the default stream for a hierarchy with one relay which also produces data by itself
  * Topology:

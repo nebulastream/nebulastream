@@ -682,7 +682,11 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3window4$start:INTEGER,window3window4$end:INTEGER,window3window4$key:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:INTEGER\n"
+        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
+        "INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$"
+        "id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3window4$"
+        "start:INTEGER,window3window4$end:INTEGER,window3window4$key:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$"
+        "timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:INTEGER\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n";
@@ -821,7 +825,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
         .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -994,7 +998,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
         .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -1174,7 +1178,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
         .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .join(Query::from("window4"), Attribute("id1"), Attribute("id4"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1367,7 +1371,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
         .join(Query::from("window3").join(Query::from("window4"), Attribute("id3"), Attribute("id4"), SlidingWindow::of(EventTime(Attribute("timestamp"))
         ,Seconds(1),Milliseconds(500))), Attribute("id1"), Attribute("id4"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1380,7 +1384,11 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3window4$start:INTEGER,window3window4$end:INTEGER,window3window4$key:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:INTEGER\n"
+        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
+        "INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$"
+        "id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3window4$"
+        "start:INTEGER,window3window4$end:INTEGER,window3window4$key:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$"
+        "timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:INTEGER\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"

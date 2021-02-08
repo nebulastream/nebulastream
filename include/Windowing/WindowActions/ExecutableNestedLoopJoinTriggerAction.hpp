@@ -95,8 +95,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             NES_DEBUG("ExecutableNestedLoopJoinTriggerAction "
                       << id << ":: Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
-                      << " originId=" << tupleBuffer.getOriginId()
-                      << " watermark=" << tupleBuffer.getWatermark()
+                      << " originId=" << tupleBuffer.getOriginId() << " watermark=" << tupleBuffer.getWatermark()
                       << "windowAction=" << toString() << std::endl);
 
             //forward buffer to next  pipeline stage
@@ -239,7 +238,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     */
     void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
                            InputTypeLeft& leftValue, InputTypeRight& rightValue) {
-        NES_TRACE("write sizes left=" << sizeof(leftValue) << " right=" << sizeof(rightValue) << " typeL=" << sizeof(InputTypeLeft) << " typeR=" << sizeof(InputTypeRight));
+        NES_TRACE("write sizes left=" << sizeof(leftValue) << " right=" << sizeof(rightValue)
+                                      << " typeL=" << sizeof(InputTypeLeft) << " typeR=" << sizeof(InputTypeRight));
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
         windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
