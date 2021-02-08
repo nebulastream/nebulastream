@@ -111,6 +111,14 @@ message SerializableOperator{
       SerializableSchema sourceSchema = 7;
     }
 
+    message SerializableMQTTSourceDescriptor {
+      string serverAddress = 1;
+      string clientId = 2;
+      string user = 3;
+      string topic = 4;
+      SerializableSchema sourceSchema = 5;
+    }
+
     message SerializableNetworkSourceDescriptor {
       SerializableSchema sourceSchema = 1;
       NesPartition nesPartition = 2;

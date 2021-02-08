@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
@@ -75,6 +76,14 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
                                  kafkaSourceDescriptor->getBrokers(), kafkaSourceDescriptor->getTopic(),
                                  kafkaSourceDescriptor->getGroupId(), kafkaSourceDescriptor->isAutoCommit(),
                                  kafkaSourceDescriptor->getKafkaConnectTimeout());
+#endif
+#ifdef ENABLE_MQTT_BUILD
+    } else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating OPC source");
+        const MQTTSourceDescriptorPtr mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
+        return createMQTTSource(mqttSourceDescriptor->getSchema(), bufferManager, queryManager,
+                                mqttSourceDescriptor->getServerAddress(), mqttSourceDescriptor->getClientId(),
+                                mqttSourceDescriptor->getUser(), mqttSourceDescriptor->getTopic(), operatorId);
 #endif
 #ifdef ENABLE_OPC_BUILD
     } else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {

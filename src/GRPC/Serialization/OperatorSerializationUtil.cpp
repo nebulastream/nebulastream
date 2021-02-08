@@ -77,6 +77,9 @@
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #endif
+#ifdef ENABLE_MQTT_BUILD
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#endif
 
 namespace NES {
 
@@ -818,6 +821,23 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr s
                                                  zmqSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(zmqSerializedSourceDescriptor);
     }
+#ifdef ENABLE_MQTT_BUILD
+    else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {
+        // serialize MQTT source descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
+        auto mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
+        auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
+        mqttSerializedSourceDescriptor.set_serveraddress(mqttSourceDescriptor->getServerAddress());
+        mqttSerializedSourceDescriptor.set_clientid(mqttSourceDescriptor->getClientId());
+        mqttSerializedSourceDescriptor.set_topic(mqttSourceDescriptor->getTopic());
+        mqttSerializedSourceDescriptor.set_user(mqttSourceDescriptor->getUser());
+        // serialize source schema
+        SchemaSerializationUtil::serializeSchema(mqttSourceDescriptor->getSchema(),
+                                                 mqttSerializedSourceDescriptor.mutable_sourceschema());
+        sourceDetails->mutable_sourcedescriptor()->PackFrom(mqttSerializedSourceDescriptor);
+    }
+#endif
 #ifdef ENABLE_OPC_BUILD
     else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {
         // serialize opc source descriptor
@@ -945,6 +965,20 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
             ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port());
         return ret;
     }
+#ifdef ENABLE_MQTT_BUILD
+    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor>()) {
+        // de-serialize opc source descriptor
+        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as MQTTSourceDescriptor");
+        auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
+        serializedSourceDescriptor.UnpackTo(&mqttSerializedSourceDescriptor);
+        // de-serialize source schema
+        auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor.release_sourceschema());
+        auto ret = MQTTSourceDescriptor::create(schema, mqttSerializedSourceDescriptor.serveraddress(),
+                                                mqttSerializedSourceDescriptor.clientid(), mqttSerializedSourceDescriptor.user(),
+                                                mqttSerializedSourceDescriptor.topic());
+        return ret;
+    }
+#endif
 #ifdef ENABLE_OPC_BUILD
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
         // de-serialize opc source descriptor

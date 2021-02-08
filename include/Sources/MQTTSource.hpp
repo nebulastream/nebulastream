@@ -14,13 +14,12 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_MQTT_BUILD
 #ifndef NES_MQTTSOURCE_HPP
 #define NES_MQTTSOURCE_HPP
+#ifdef ENABLE_MQTT_BUILD
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <zmq.hpp>
 
 #include <Sources/DataSource.hpp>
 #include <mqtt/async_client.h>
@@ -28,19 +27,19 @@
 namespace NES {
 class TupleBuffer;
 /**
- * @brief this class provide a zmq as data source
+ * @brief this class provide a MQTT as data source
  */
 class MQTTSource : public DataSource {
 
   public:
     /**
-     * @brief constructor for the zmq source
+     * @brief constructor for the MQTT source
      * @param schema of the input buffer
      * @param host name of the source queue
      * @param port of the source queue
      */
     explicit MQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                        const std::string serverAddress, const std::string clientId, const std::string user, const std::string password,
+                        const std::string serverAddress, const std::string clientId, const std::string user,
                         const std::string topic, OperatorId operatorId);
 
     /**
@@ -60,6 +59,16 @@ class MQTTSource : public DataSource {
      * @return returns string describing the mqtt source
      */
     const std::string toString() const override;
+
+    const std::string& getServerAddress() const;
+    const std::string& getClientId() const;
+    const std::string& getUser() const;
+    const std::string& getTopic() const;
+
+    /**
+    * @brief Get source type
+    */
+    SourceType getType() const override;
 
   private:
     /**
@@ -90,7 +99,6 @@ class MQTTSource : public DataSource {
     std::string serverAddress;
     std::string clientId;
     std::string user;
-    std::string password;
     std::string topic;
     mqtt::async_client client;
 };

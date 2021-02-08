@@ -149,6 +149,13 @@ if (NES_USE_OPC)
     add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
 endif (NES_USE_OPC)
 
+### MQTT Tests ###
+if(NES_USE_MQTT)
+    add_executable(mqtt-source-tests "UnitTests/Source/MQTTSourceTest.cpp" UnitTests/Source/MQTTSourceTest.cpp)
+    target_link_libraries(mqtt-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+    add_test(NAME mqtt-source-tests COMMAND mqtt-source-tests)
+endif(NES_USE_MQTT)
+
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
 target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
