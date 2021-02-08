@@ -35,10 +35,12 @@ class TestHarness {
     /*
          * @brief The constructor of TestHarness
          * @param numWorkers number of worker (each for one physical source) to be used in the test
-         * @param operatorToTest operator to test
+         * @param queryWithoutSink query string to test (without the sink operator)
+         * @param restPort port for the rest service
+         * @param rpcPort for for the grpc
          */
-    TestHarness(std::string operatorToTest, uint16_t restPort = 8081, uint16_t rpcPort = 4000)
-        : ipAddress("127.0.0.1"), operatorToTest(operatorToTest), bufferSize(4096) {
+    TestHarness(std::string queryWithoutSink, uint16_t restPort = 8081, uint16_t rpcPort = 4000)
+        : ipAddress("127.0.0.1"), operatorToTest(queryWithoutSink), bufferSize(4096) {
         NES_INFO("TestHarness: Start coordinator");
         crdConf = CoordinatorConfig::create();
         crdConf->resetCoordinatorOptions();
@@ -130,6 +132,7 @@ class TestHarness {
          * @param logical stream name
          * @param schema schema of the source
          * @param physical stream name
+         * @param parentId id of the parent to connect
          */
     void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId = 1) {
         checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);
@@ -141,10 +144,9 @@ class TestHarness {
 
     /*
          * @brief add a csv source to be used in the test
-         * @param logical stream name
          * @param schema schema of the source
-         * @param physical stream name
          * @param csvSourceConf physical stream configuration for the csv source
+         * @param parentId id of the parent to connect
          */
     void addCSVSource( PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema, uint64_t parentId = 1) {
         checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema, csvSourceConf->getPhysicalStreamName(), parentId);
@@ -156,6 +158,10 @@ class TestHarness {
         records.push_back(currentSourceRecords);
     }
 
+    /*
+     * @brief add non source worker
+     * @param parentId id of the parent to connect
+     */
     void addNonSourceWorker(uint64_t parentId = 1){
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
