@@ -127,8 +127,8 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerP
 #endif
 #ifdef ENABLE_MQTT_BUILD
 const DataSourcePtr createMQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                    NodeEngine::QueryManagerPtr queryManager, std::string serverAddress, std::string clientId, std::string user,
-                                    std::string topic, OperatorId operatorId) {
+                                     NodeEngine::QueryManagerPtr queryManager, std::string serverAddress, std::string clientId,
+                                     std::string user, std::string topic, OperatorId operatorId) {
     return std::make_shared<MQTTSource>(schema, bufferManager, queryManager, serverAddress, clientId, user, topic, operatorId);
 }
 #endif

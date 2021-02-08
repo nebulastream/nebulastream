@@ -85,7 +85,6 @@ class MQTTSourceTest : public testing::Test {
     NodeEngine::QueryManagerPtr queryManager;
     SchemaPtr test_schema;
     uint64_t buffer_size;
-
 };
 
 /**
@@ -99,7 +98,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
 }
 
 /**
- * Test if schema, OPC server url, and node index are the same
+ * Test if schema, MQTT server address, clientId, user, and topic are the same
  */
 TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 

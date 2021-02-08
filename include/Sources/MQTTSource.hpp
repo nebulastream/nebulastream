@@ -33,10 +33,15 @@ class MQTTSource : public DataSource {
 
   public:
     /**
-     * @brief constructor for the MQTT source
-     * @param schema of the input buffer
-     * @param host name of the source queue
-     * @param port of the source queue
+     * @brief constructor for the MQTT data source
+     * @param schema of the data
+     * @param bufferManager
+     * @param queryManager
+     * @param serverAddress address and port of the mqtt broker
+     * @param clientId identifies the client connecting to the server, each server has aunique clientID
+     * @param user name to connect to the mqtt broker
+     * @param topic to listen to, to obtain the desired data
+     * @param operatorId
      */
     explicit MQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                         const std::string serverAddress, const std::string clientId, const std::string user,
@@ -50,7 +55,7 @@ class MQTTSource : public DataSource {
 
     /**
      * @brief blocking method to receive a buffer from the mqtt source
-     * @return TupleBufferPtr containing thre received buffer
+     * @return TupleBufferPtr containing the received buffer
      */
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
@@ -60,9 +65,25 @@ class MQTTSource : public DataSource {
      */
     const std::string toString() const override;
 
+    /**
+     * @brief getter for ServerAddress
+     * @return serverAddress
+     */
     const std::string& getServerAddress() const;
+    /**
+     * @brief getter for clientId
+     * @return clientId
+     */
     const std::string& getClientId() const;
+    /**
+     * @brief getter for user
+     * @return user
+     */
     const std::string& getUser() const;
+    /**
+     * @brief getter for topic
+     * @return topic
+     */
     const std::string& getTopic() const;
 
     /**
@@ -84,7 +105,7 @@ class MQTTSource : public DataSource {
     bool connect();
 
     /**
-     * @brief method to disconnect zmq
+     * @brief method to make sure mqtt is disconnected
      * check if already disconnected, if not disconnected try to disconnect, if already disconnected return
      * @return bool indicating if connection could be established
      */

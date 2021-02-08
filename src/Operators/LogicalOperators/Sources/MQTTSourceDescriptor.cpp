@@ -51,8 +51,6 @@ const std::string MQTTSourceDescriptor::getClientId() const { return clientId; }
 
 const std::string MQTTSourceDescriptor::getUser() const { return user; }
 
-const std::string MQTTSourceDescriptor::getPassword() const { return password; }
-
 const std::string MQTTSourceDescriptor::getTopic() const { return topic; }
 
 bool MQTTSourceDescriptor::equal(SourceDescriptorPtr other) {

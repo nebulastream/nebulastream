@@ -235,7 +235,6 @@ endif (NES_USE_OPC)
 
 # Library containing MQTT client
 if (NES_USE_MQTT)
-    #find_package(PahoMqttCpp REQUIRED)
     set(LIBRARIES ${LIBRARIES} paho-mqtt3as paho-mqttpp3)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
