@@ -108,7 +108,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         if (pattern) {
             boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
         } else {// if Query
-                boost::replace_first(newQuery, "Query::from", "return Query::from");
+            boost::replace_first(newQuery, "Query::from", "return Query::from");
         }
 
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
@@ -369,7 +369,6 @@ uint64_t UtilityFunctions::getGlobalId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
-
 
 web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     NES_INFO("UtilityFunctions: getting topology as JSON");

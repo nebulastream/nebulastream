@@ -87,7 +87,11 @@ class ExecutablePipelineStage {
      */
     virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
 
-    virtual std::string toString();
+    /**
+     * @brief return the code of the pipeline
+     * @return string
+     */
+    virtual std::string getCodeAsString();
 
   private:
     PipelineStageArity arity;

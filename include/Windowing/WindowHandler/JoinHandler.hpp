@@ -18,6 +18,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <State/StateManager.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
@@ -28,7 +29,6 @@
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES::Join {
 template<class KeyType, class ValueTypeLeft, class ValueTypeRight>
@@ -87,23 +87,23 @@ class JoinHandler : public AbstractJoinHandler {
         NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString());
 
         if (originIdToMaxTsMapLeft.size() < numberOfInputEdgesLeft || originIdToMaxTsMapRight.size() < numberOfInputEdgesRight) {
-            NES_DEBUG(
-                "JoinHandler " << id << ": trigger cannot be applied as we did not get one buffer per edge yet, originIdToMaxTsMapLeft size="
-                << originIdToMaxTsMapLeft.size() << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft
-                << " originIdToMaxTsMapRight size=" << originIdToMaxTsMapRight.size()
-                << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
-            return;
-        } else {
-            NES_DEBUG("JoinHandler " << id << ": trigger applied for size="
+            NES_DEBUG("JoinHandler "
+                      << id
+                      << ": trigger cannot be applied as we did not get one buffer per edge yet, originIdToMaxTsMapLeft size="
                       << originIdToMaxTsMapLeft.size() << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft
                       << " originIdToMaxTsMapRight size=" << originIdToMaxTsMapRight.size()
                       << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
+            return;
+        } else {
+            NES_DEBUG("JoinHandler " << id << ": trigger applied for size=" << originIdToMaxTsMapLeft.size()
+                                     << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft << " originIdToMaxTsMapRight size="
+                                     << originIdToMaxTsMapRight.size() << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
         }
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
 
         NES_DEBUG("JoinHandler " << id << ": run for watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
-                                                        << " lastWatermark=" << lastWatermark);
+                                 << " lastWatermark=" << lastWatermark);
         //In the following, find out the minimal watermark among the buffers/stores to know where
         // we have to start the processing from so-called lastWatermark
         // we cannot use 0 as this will create a lot of unnecessary windows
@@ -128,8 +128,8 @@ class JoinHandler : public AbstractJoinHandler {
             NES_DEBUG("JoinHandler " << id << ": set lastWatermarkLeft to min value of stores=" << lastWatermark);
         }
 
-        NES_DEBUG("JoinHandler " << id << ": run doing with watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
-                                                               << " lastWatermark=" << lastWatermark);
+        NES_DEBUG("JoinHandler " << id << ": run doing with watermarkLeft=" << watermarkLeft
+                                 << " watermarkRight=" << watermarkRight << " lastWatermark=" << lastWatermark);
         lock.unlock();
 
         auto minMinWatermark = std::min(watermarkLeft, watermarkRight);
@@ -175,13 +175,14 @@ class JoinHandler : public AbstractJoinHandler {
         }
     }
 
-        /**
+    /**
         * @brief Initialises the state of this window depending on the window definition.
         */
     bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
         this->originId = 0;
 
-        NES_DEBUG("JoinHandler " << id << ": setup Join handler with join def=" << joinDefinition << " string=" << joinDefinition->getOutputSchema()->toString());
+        NES_DEBUG("JoinHandler " << id << ": setup Join handler with join def=" << joinDefinition
+                                 << " string=" << joinDefinition->getOutputSchema()->toString());
         // Initialize JoinHandler Manager
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
         // Initialize StateVariable

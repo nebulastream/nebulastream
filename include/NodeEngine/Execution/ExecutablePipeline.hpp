@@ -121,7 +121,12 @@ class ExecutablePipeline {
      */
     const SchemaPtr& getOutputSchema() const;
 
-    std::string toString();
+    /**
+     * @brief methods to print the content of the pipeline
+     * @return string containing the generated code as string
+     */
+    std::string getCodeAsString();
+
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;

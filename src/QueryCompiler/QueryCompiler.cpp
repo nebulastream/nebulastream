@@ -176,7 +176,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext,
             pipelines[*holder.consumers.begin()], holder.inputSchema, holder.outputSchema);
 
-        NES_DEBUG("pipe=" << pipeline->toString());
+        NES_TRACE("pipeline code=" << pipeline->getCodeAsString());
         builder.addPipeline(pipeline);
         pipelines[stageId] = pipeline;
     }

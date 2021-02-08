@@ -415,10 +415,9 @@ class TestUtils {
                     continue;
                 }
 
-                if(content.size() != expectedContent.size())
-                {
+                if (content.size() != expectedContent.size()) {
                     NES_DEBUG("checkOutputOrTimeout: number of chars "
-                                  << expectedContent.size() << " not reached yet with chars content=" << content.size());
+                              << expectedContent.size() << " not reached yet with chars content=" << content.size());
                     continue;
                 }
 

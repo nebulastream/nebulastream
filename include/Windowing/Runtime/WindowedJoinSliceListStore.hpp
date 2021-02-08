@@ -63,7 +63,7 @@ class WindowedJoinSliceListStore {
         std::lock_guard lock(internalMutex);
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
-            NES_DEBUG("slice begin=" << slice.getStartTs() << " slice end =" << slice.getEndTs());
+            NES_TRACE("slice begin=" << slice.getStartTs() << " slice end =" << slice.getEndTs());
             if (slice.getStartTs() <= timestamp && slice.getEndTs() > timestamp) {
                 NES_DEBUG("return slice id=" << i);
                 return i;
@@ -148,7 +148,7 @@ class WindowedJoinSliceListStore {
     */
     inline void append(int64_t index, ValueType& value) {
         std::lock_guard lock(internalMutex);
-        NES_ASSERT2(content.size() > index, "invalid index for content size" << content.size() << " idx=" << index);
+        NES_VERIFY(content.size() > index, "invalid index for content size" << content.size() << " idx=" << index);
         content[index].emplace_back(value);
     }
 

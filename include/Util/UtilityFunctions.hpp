@@ -189,7 +189,7 @@ class UtilityFunctions {
     static uint64_t getNextTaskID();
 
     /**
-     * @brief Returns the next free task id
+     * @brief Returns a global unique id that can be used for different purposes
     * @return node id
     */
     static uint64_t getGlobalId();
