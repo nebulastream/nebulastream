@@ -148,11 +148,16 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolch
 make -j2 install && cd ../.. && rm -rf grpc
 
 RUN cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
-  cd paho.mqtt.c && git checkout v1.3.8 && cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF -DPAHO_BUILD_STATIC=ON \
-  -DPAHO_WITH_SSL=ON -DPAHO_HIGH_PERFORMANCE=ON && sudo cmake --build build/ --target install && \
-  sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
+  cd paho.mqtt.c && git checkout v1.3.8 && \
+  cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF \
+  -DPAHO_BUILD_STATIC=ON \
+  -DPAHO_WITH_SSL=ON \
+  -DPAHO_HIGH_PERFORMANCE=ON && \
+  cmake --build build/ --target install && \
+  ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
+  git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
   cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
-  sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
+  cmake --build build/ --target install && ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
 
 RUN update-alternatives --install /usr/bin/cc cc /usr/bin/clang 20 && \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 20 && \
