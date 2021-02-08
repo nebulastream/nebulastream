@@ -53,7 +53,6 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const 
       client(asynchronousClient, address, clientId, maxBufferedMSGs) {
 
     NES_DEBUG("MQTT Sink  " << this << ": Init MQTT Sink to " << host << ":" << port);
-    std::cout << "ClientID Constructor test: " << this->getClientId() << '\n';
 }
 
 MQTTSink::~MQTTSink() {
