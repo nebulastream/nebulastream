@@ -24,10 +24,14 @@
 namespace NES {
 namespace Network {
 
-#if ZMQ_VERSION_MAJOR >= 4 && ZMQ_VERSION_MINOR >= 3 && ZMQ_VERSION_PATCH >= 3
-static constexpr zmq::send_flags kSendMore = zmq::send_flags::sndmore;
+#if CPPZMQ_VERSION_MAJOR >= 4 && CPPZMQ_VERSION_MINOR >= 3
+static constexpr zmq::send_flags kZmqSendMore = zmq::send_flags::sndmore;
+static constexpr zmq::send_flags kZmqSendDefault = zmq::send_flags::none;
+static constexpr zmq::recv_flags kZmqRecvDefault = zmq::recv_flags::none;
 #else
-static constexpr int kSendMore = ZMQ_SNDMORE;
+static constexpr int kZmqSendMore = ZMQ_SNDMORE;
+static constexpr int kZmqSendDefault = 0;
+static constexpr int KZmqRecvDefault = 0;
 #endif
 
 /**
@@ -37,7 +41,7 @@ static constexpr int kSendMore = ZMQ_SNDMORE;
      * @param zmqSocket
      * @param args
      */
-template<typename MessageType, int flags = 0, typename... Arguments>
+template<typename MessageType, decltype(kZmqSendDefault) flags = kZmqSendDefault, typename... Arguments>
 void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
     // create a header message for MessageType
     Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
@@ -47,7 +51,7 @@ void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
     zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
     zmq::message_t sendMsg(&message, sizeof(MessageType));
     // send both messages in one shot
-    zmqSocket.send(sendHeader, kSendMore);
+    zmqSocket.send(sendHeader, kZmqSendMore);
     zmqSocket.send(sendMsg, flags);
 }
 
@@ -68,9 +72,9 @@ void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdenti
     zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
     zmq::message_t sendMsg(&message, sizeof(MessageType));
     // send all messages in one shot
-    zmqSocket.send(zmqIdentity, kSendMore);
-    zmqSocket.send(sendHeader, kSendMore);
-    zmqSocket.send(sendMsg);
+    zmqSocket.send(zmqIdentity, kZmqSendMore);
+    zmqSocket.send(sendHeader, kZmqSendMore);
+    zmqSocket.send(sendMsg, kZmqSendDefault);
 }
 
 }// namespace Network

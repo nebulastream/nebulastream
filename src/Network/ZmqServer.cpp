@@ -183,8 +183,9 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     // if server receives announcement, that a client wants to send buffers
                     zmq::message_t outIdentityEnvelope;
                     zmq::message_t clientAnnouncementEnvelope;
-                    dispatcherSocket.recv(&clientAnnouncementEnvelope);
-                    outIdentityEnvelope.copy(&identityEnvelope);
+                    auto optRecvStatus = dispatcherSocket.recv(clientAnnouncementEnvelope, kZmqRecvDefault);
+                    NES_ASSERT2(optRecvStatus.has_value(), "invalid recv");
+                    outIdentityEnvelope.copy(identityEnvelope);
                     auto receivedMsg = *clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>();
                     NES_DEBUG("ZmqServer: ClientAnnouncement received for channel " << receivedMsg.getChannelId());
 
@@ -203,7 +204,8 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                 case Messages::kDataBuffer: {
                     // if server receives a tuple buffer
                     zmq::message_t bufferHeaderMsg;
-                    dispatcherSocket.recv(&bufferHeaderMsg);
+                    auto optRecvStatus = dispatcherSocket.recv(bufferHeaderMsg, kZmqRecvDefault);
+                    NES_ASSERT2(optRecvStatus.has_value(), "invalid recv");
                     // parse buffer header
                     auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
@@ -214,7 +216,9 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
 
                     // receive buffer content
                     auto buffer = bufferManager->getBufferBlocking();
-                    dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize());
+                    auto optRetSize = dispatcherSocket.recv(zmq::mutable_buffer(buffer.getBuffer(), bufferHeader->getPayloadSize()), kZmqRecvDefault);
+                    NES_ASSERT2(optRetSize.has_value(), "Invalid recv size");
+                    NES_ASSERT2(optRetSize.value().size == bufferHeader->getPayloadSize(), "Recv not matching sizes " << optRetSize.value().size << "!=" << bufferHeader->getPayloadSize());
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
                     buffer.setOriginId(bufferHeader->getOriginId());
                     buffer.setWatermark(bufferHeader->getWatermark());
@@ -230,7 +234,8 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                 case Messages::kEndOfStream: {
                     // if server receives a message that the stream did terminate
                     zmq::message_t eosEnvelope;
-                    dispatcherSocket.recv(&eosEnvelope);
+                    auto optRetSize = dispatcherSocket.recv(eosEnvelope, kZmqRecvDefault);
+                    NES_ASSERT2(optRetSize.has_value(), "Invalid recv size");
                     auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
                     NES_DEBUG("ZmqServer: EndOfStream received for channel " << eosMsg.getChannelId());
                     exchangeProtocol.onEndOfStream(eosMsg);

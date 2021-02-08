@@ -150,7 +150,7 @@ add_custom_command(
 # LibZMQ
 # ------
 message(STATUS "Libzmq")
-set(ZMQ_RELEASE "4.3.2")
+set(ZMQ_RELEASE "4.3.4")
 find_package(ZMQ ${ZMQ_RELEASE} REQUIRED)
 set(LIBRARIES ${LIBRARIES} libzmq)
 
@@ -164,7 +164,7 @@ set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
 
 # CppZMQ
 message(STATUS "cppzmq")
-set(CPPZMQ_RELEASE "4.6.0")
+set(CPPZMQ_RELEASE "4.7.1")
 find_package(cppzmq ${CPPZMQ_RELEASE} REQUIRED)
 
 # Log4cc
