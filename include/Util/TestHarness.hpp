@@ -25,6 +25,7 @@
 #include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
+
 /**
  * @brief This test harness wrap query deployment test in our test framework.
  */
@@ -40,7 +41,7 @@ class TestHarness {
          * @param rpcPort for for the grpc
          */
     TestHarness(std::string queryWithoutSink, uint16_t restPort = 8081, uint16_t rpcPort = 4000)
-        : ipAddress("127.0.0.1"), operatorToTest(queryWithoutSink), bufferSize(4096) {
+        : ipAddress("127.0.0.1"), queryWithoutSink(queryWithoutSink), bufferSize(4096) {
         NES_INFO("TestHarness: Start coordinator");
         crdConf = CoordinatorConfig::create();
         crdConf->resetCoordinatorOptions();
@@ -83,11 +84,11 @@ class TestHarness {
     }
 
     /*
-     * @brief check the schema size of the logical stream and if it already exists
-     * @param logical stream name
-     * @param schema schema of the source
-     * @param physical stream name
-     */
+         * @brief check the schema size of the logical stream and if it already exists
+         * @param logical stream name
+         * @param schema schema of the source
+         * @param physical stream name
+         */
     void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
         // check if record may span multiple buffers
         NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
@@ -128,13 +129,13 @@ class TestHarness {
     }
 
     /*
-         * @brief add a memory source to be used in the test
+         * @brief add a memory source to be used in the test and connect to parent with specific parent id
          * @param logical stream name
          * @param schema schema of the source
          * @param physical stream name
          * @param parentId id of the parent to connect
          */
-    void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId = 1) {
+    void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
         checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);
 
         sourceTypes.push_back(MemorySource);
@@ -143,12 +144,23 @@ class TestHarness {
     }
 
     /*
-         * @brief add a csv source to be used in the test
+         * @brief add a memory source to be used in the test
+         * @param logical stream name
+         * @param schema schema of the source
+         * @param physical stream name
+         */
+    void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
+        uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+        addMemorySource(logicalStreamName, schema, physicalStreamName, crdTopologyNodeId);
+    }
+
+        /*
+         * @brief add a csv source to be used in the test and connect to parent with specific parent id
          * @param schema schema of the source
          * @param csvSourceConf physical stream configuration for the csv source
          * @param parentId id of the parent to connect
          */
-    void addCSVSource( PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema, uint64_t parentId = 1) {
+    void addCSVSource(PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema, uint64_t parentId) {
         checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema, csvSourceConf->getPhysicalStreamName(), parentId);
 
         csvSourceConfs.push_back(csvSourceConf);
@@ -159,23 +171,37 @@ class TestHarness {
     }
 
     /*
-     * @brief add non source worker
+      * @brief add a csv source to be used in the test
+      * @param schema schema of the source
+      * @param csvSourceConf physical stream configuration for the csv source
+      */
+    void addCSVSource(PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema) {
+        uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+        addCSVSource(csvSourceConf, schema, crdTopologyNodeId);
+    }
+
+    /*
+     * @brief add non source worker and connect to parent with specific parent id
      * @param parentId id of the parent to connect
      */
-    void addNonSourceWorker(uint64_t parentId = 1){
+    void addNonSourceWorker(uint64_t parentId){
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
         wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
         wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
-        if (parentId != 1) {
-            wrk->replaceParent(crd->getTopology()->getRoot()->getId(),parentId);
-        }
+        wrk->replaceParent(crd->getTopology()->getRoot()->getId(),parentId);
         workerPtrs.push_back(wrk);
     }
 
-
+    /*
+         * @brief add non source worker
+         */
+    void addNonSourceWorker(){
+        uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+        addNonSourceWorker(crdTopologyNodeId);
+    }
 
     uint64_t getWorkerCount() { return workerPtrs.size(); }
 
@@ -228,7 +254,7 @@ class TestHarness {
 
         //register query
         std::string queryString =
-            operatorToTest + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
+            queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
         QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
 
         auto globalQueryPlan = crd->getGlobalQueryPlan();
@@ -307,7 +333,7 @@ class TestHarness {
     uint64_t crdPort;
     std::string ipAddress;
 
-    std::string operatorToTest;
+    std::string queryWithoutSink;
 
     std::vector<NesWorkerPtr> workerPtrs;
     std::vector<std::vector<uint8_t*>> records;
