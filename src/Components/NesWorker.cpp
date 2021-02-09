@@ -323,11 +323,11 @@ bool NesWorker::waitForConnect() {
     NES_DEBUG("waitForConnect: not connected after timeout");
     return false;
 }
-uint64_t NesWorker::getId() {
+uint64_t NesWorker::getTopologyNodeId() {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     assert(con);
-    return id;
+    return topologyNodeId;
 }
 
 }// namespace NES

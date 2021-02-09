@@ -151,7 +151,7 @@ class NesWorker {
      * @brief method to get the id of the worker
      * @return id of the worker
      */
-    uint64_t getId();
+    uint64_t getTopologyNodeId();
 
   private:
     /**
@@ -182,7 +182,7 @@ class NesWorker {
     uint16_t numWorkerThreads;
     NodeType type;
     std::atomic<bool> stopped;
-    std::uint64_t id;
+    std::uint64_t topologyNodeId;
     /**
      * @brief helper method to ensure client is connected before callin rpcs functions
      * @return
