@@ -69,7 +69,7 @@ class MemoryMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const MemoryMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void writeToBuffer(const MemoryMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method

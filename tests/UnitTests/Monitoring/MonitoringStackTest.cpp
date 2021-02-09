@@ -236,29 +236,36 @@ TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = Schema::create();
-    metricGroup->getSample(schema, tupleBuffer);
+    metricGroup->getSample(tupleBuffer);
 
-    ASSERT_EQ(schema->toString(), metricGroup->createGroupSchema()->toString());
+    //TODO: add assert to test that the schema is correct
+    NES_INFO(metricGroup->createSchema()->toString());
 }
 
+//TODO: tests are needed for the serialization of all metrics
 TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     auto cpuStats = MetricUtils::CPUStats();
-
-    //test serialize method to append to existing schema and buffer
-    auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    serialize(cpuStats.measure().getTotal(), schema, tupleBuffer, "TOTAL_");
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+
+    auto measuredVal = cpuStats.measure().getTotal();
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, measuredVal.getSchema("")));
+    NES_DEBUG(measuredVal);
 }
 
 TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
-    NES_INFO("Starting test");
-    auto schema = Schema::create();
+    //TODO: assert missing
+    auto cpuStats = MetricUtils::CPUStats();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto cpuStats = MetricUtils::CPUStats();
-    serialize(cpuStats.measure(), schema, tupleBuffer, "");
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    auto measuredVal = cpuStats.measure();
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, getSchema(measuredVal, "")));
+    NES_DEBUG("Total: " << measuredVal.getTotal());
+    NES_DEBUG("CPU1: " << measuredVal.getValues(1));
+    NES_DEBUG("CPU" << measuredVal.getNumCores() << ": " << measuredVal.getValues(measuredVal.getNumCores()-1));
 }
 
 TEST_F(MonitoringStackTest, testSerializationGroups) {
@@ -285,9 +292,9 @@ TEST_F(MonitoringStackTest, testSerializationGroups) {
     metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto schema = Schema::create();
-    metricGroup->getSample(schema, tupleBuffer);
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    metricGroup->getSample(tupleBuffer);
+
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, metricGroup->createSchema()));
 }
 
 TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
@@ -314,10 +321,9 @@ TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
     metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto schema = Schema::create();
+    metricGroup->getSample(tupleBuffer);
 
-    metricGroup->getSample(schema, tupleBuffer);
-
+    auto schema = metricGroup->createSchema();
     auto deserMem = MemoryMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::MEMORY_METRICS_DESC);
     ASSERT_TRUE(deserMem != MemoryMetrics{});
     ASSERT_TRUE(deserMem.TOTAL_RAM == memStats.measure().TOTAL_RAM);
@@ -341,10 +347,10 @@ TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
     //worker side
     MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto schema = Schema::create();
-    metricGroup->getSample(schema, tupleBuffer);
+    metricGroup->getSample(tupleBuffer);
 
     // coordinator side
+    auto schema = metricGroup->createSchema();
     GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
 
     ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().USER > 0);
@@ -353,7 +359,6 @@ TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
 }
 
 TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
-
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 

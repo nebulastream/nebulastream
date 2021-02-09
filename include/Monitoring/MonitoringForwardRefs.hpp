@@ -17,8 +17,6 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 #define NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 
-#include <NodeEngine/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>

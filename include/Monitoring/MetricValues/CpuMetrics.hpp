@@ -77,7 +77,7 @@ class CpuMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void writeToBuffer(const CpuMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method

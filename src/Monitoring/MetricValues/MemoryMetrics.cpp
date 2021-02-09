@@ -21,6 +21,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cstring>
 
 namespace NES {
 
@@ -42,26 +43,10 @@ SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void serialize(const MemoryMetrics& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
+void writeToBuffer(const MemoryMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    memcpy(tbuffer + byteOffset, &metrics, sizeof(MemoryMetrics));
     buf.setNumberOfTuples(1);
-
-    auto noFields = schema->getSize();
-    schema->copyFields(MemoryMetrics::getSchema(prefix));
-
-    auto layout = NodeEngine::createRowLayout(schema);
-    layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.TOTAL_RAM);
-    layout->getValueField<uint64_t>(0, noFields + 1)->write(buf, metric.TOTAL_SWAP);
-    layout->getValueField<uint64_t>(0, noFields + 2)->write(buf, metric.FREE_RAM);
-    layout->getValueField<uint64_t>(0, noFields + 3)->write(buf, metric.SHARED_RAM);
-    layout->getValueField<uint64_t>(0, noFields + 4)->write(buf, metric.BUFFER_RAM);
-    layout->getValueField<uint64_t>(0, noFields + 5)->write(buf, metric.FREE_SWAP);
-    layout->getValueField<uint64_t>(0, noFields + 6)->write(buf, metric.TOTAL_HIGH);
-    layout->getValueField<uint64_t>(0, noFields + 7)->write(buf, metric.FREE_HIGH);
-    layout->getValueField<uint64_t>(0, noFields + 8)->write(buf, metric.PROCS);
-    layout->getValueField<uint64_t>(0, noFields + 9)->write(buf, metric.MEM_UNIT);
-    layout->getValueField<uint64_t>(0, noFields + 10)->write(buf, metric.LOADS_1MIN);
-    layout->getValueField<uint64_t>(0, noFields + 11)->write(buf, metric.LOADS_5MIN);
-    layout->getValueField<uint64_t>(0, noFields + 12)->write(buf, metric.LOADS_15MIN);
 }
 
 MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
