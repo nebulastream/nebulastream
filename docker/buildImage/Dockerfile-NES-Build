@@ -36,11 +36,11 @@ RUN cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
   -DPAHO_BUILD_STATIC=ON \
   -DPAHO_WITH_SSL=ON \
   -DPAHO_HIGH_PERFORMANCE=ON && \
-  sudo cmake --build build/ --target install && \
-  sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
+  cmake --build build/ --target install && \
+  ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
   git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
   cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
-  sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
+  cmake --build build/ --target install && ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
 
 RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
   doxygen \
