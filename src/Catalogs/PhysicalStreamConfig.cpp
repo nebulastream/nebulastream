@@ -84,7 +84,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
 
     if (type == "DefaultSource") {
         NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
-        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency);
+        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency.count());
     } else if (type == "CSVSource") {
         NES_DEBUG("PhysicalStreamConfig: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
@@ -94,7 +94,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else if (type == "YSBSource") {
         NES_DEBUG("PhysicalStreamConfig: create YSB source for " << conf);
-        return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency);
+        return YSBSourceDescriptor::create(numberOfTuplesToProducePerBuffer, numBuffers, frequency.count());
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
     }
