@@ -62,8 +62,6 @@ void TopologyController::handlePost(std::vector<utility::string_t> paths, http_r
                   NES_DEBUG("TopologyController: handlePost -mark: userRequest: " << payload);
                   json::value req = json::value::parse(payload);
                   NES_DEBUG("TopologyController: handlePost -mark: Json Parse Value: " << req);
-
-
                   //TODO: handle multiple IDs
 
                   uint64_t id = req.at("ids").as_integer();
@@ -75,41 +73,28 @@ void TopologyController::handlePost(std::vector<utility::string_t> paths, http_r
                   bool checkFlag;
 
                   if(unmark){
-
                       NES_DEBUG("TopologyController: handlePost -mark: Unmark node for maintenance: "
                                     << id);
-
                       //TODO: iterate over container of IDs and set all their flags
-
                       //TODO: make thread safe
-
                       node->setMaintenanceFlag(false);
                       checkFlag = node->getMaintenanceFlag();
-
                       //TODO: make sure all nodes have been succesfully marked
                       NES_DEBUG("TopologyController: handlePost -mark: Successfully unmarked node ?"
                                     << !checkFlag);
                       //Prepare the response
-
                   }
-
                   else {
-
                       NES_DEBUG("TopologyController: handlePost -mark: ID marked for maintenance " << id);
-
                       //TODO: iterate over container of IDs and set all their flags
-
                       node->setMaintenanceFlag(true);
                       checkFlag = node->getMaintenanceFlag();
-
                       //TODO: make sure all nodes have been succesfully marked
                       NES_DEBUG("TopologyController: handlePost -mark: Successfully marked node ?" << checkFlag);
                       //Prepare the response
                   }
-
                   //TODO: format for many nodes
                   json::value result{};
-
                   if(unmark){
                       result["Successful mark"] = json::value::boolean(!checkFlag);
                       result["Node Id"]      =json::value::number(id);
@@ -117,8 +102,6 @@ void TopologyController::handlePost(std::vector<utility::string_t> paths, http_r
                   else {
                       result["Successful unmark"] = json::value::boolean(checkFlag);
                       result["Node Id"] = json::value::number(id);
-
-
                   }
                   successMessageImpl(message, result);
                   return;
