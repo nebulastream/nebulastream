@@ -113,6 +113,8 @@ cp -r -v -L /usr/local/include/aa_tree* /opt/sysroots/aarch64-linux-gnu/usr/incl
 cp -r -v -L /usr/local/include/ziptree* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/local/include/ms_stdint* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/librdkafka* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/include/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/include/ && \
+cp -r -v -L /usr/include/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/include/ && \
 
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libz3* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libzmq* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
@@ -128,6 +130,8 @@ cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-g
 cp -r -v -L -fd /usr/lib/llvm-10* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/gcc/aarch64-linux-gnu/9* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libelf* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
 sed -i -- 's|/lib/aarch64-linux-gnu/|/usr/lib/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
 sed -i -- 's|/include|/usr/include|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
