@@ -256,6 +256,15 @@ class TestHarness {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
         }
 
+        // Check if the size of output struct match with the size of output schema
+        // Output struct might be padded, in this case the size is not equal to the total size of its field
+        // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
+        // (e.g., the size is multiple of 8)
+        uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)->getQueryPlan()->getSinkOperators()[0]
+            ->getOutputSchema()->getSchemaSizeInBytes();
+        NES_ASSERT(outputSchemaSizeInBytes == sizeof(T), "The size of output struct does not match output schema."
+                                                         " Output struct:" + std::to_string(sizeof(T)) + " Schema:" +  std::to_string(outputSchemaSizeInBytes));
+
         if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false "
                                     "number of buffers to expect="
@@ -274,20 +283,6 @@ class TestHarness {
         if (!ifs.good()) {
             NES_WARNING("TestHarness:ifs.good() returns false for query with id " << queryId << " file path=" << filePath);
         }
-
-        // Check if the size of output struct match with the size of output schema
-        // Output struct might be padded, in this case the size is not equal to the total size of its field
-        // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
-        // (e.g., the size is multiple of 8)
-        uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)
-                                               ->getQueryPlan()
-                                               ->getSinkOperators()[0]
-                                               ->getOutputSchema()
-                                               ->getSchemaSizeInBytes();
-        NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
-                   "The size of output struct does not match output schema."
-                   " Output struct:"
-                       + std::to_string(sizeof(T)) + " Schema:" + std::to_string(outputSchemaSizeInBytes));
 
         // check the length of the output file
         ifs.seekg(0, ifs.end);

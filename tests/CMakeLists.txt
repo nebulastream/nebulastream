@@ -388,6 +388,10 @@ add_executable(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
 target_link_libraries(assignment-watermark-test nes ${GTEST_LIBRARIES})
 add_test(NAME assignment-watermark-test COMMAND assignment-watermark-test)
 
+add_executable(allowed-lateness-test "Integration/AllowedLatenessTest.cpp")
+target_link_libraries(allowed-lateness-test nes ${GTEST_LIBRARIES})
+add_test(NAME allowed-lateness-test COMMAND allowed-lateness-test)
+
 ### mergeDeploymentTest ###
 add_executable(union-deployment-test "Integration/UnionDeploymentTest.cpp")
 target_link_libraries(union-deployment-test nes ${GTEST_LIBRARIES})
