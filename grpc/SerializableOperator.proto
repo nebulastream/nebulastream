@@ -194,9 +194,9 @@ message SerializableOperator{
 
   }
   /**
-   Merge Details contains properties for the merge operator, which is empty currently.
+   Union Details contains properties for the union operator, which is empty currently.
    */
-  message MergeDetails {}
+  message UnionDetails {}
 
   /**
    Broadcast details contains properties for the broadcast operator

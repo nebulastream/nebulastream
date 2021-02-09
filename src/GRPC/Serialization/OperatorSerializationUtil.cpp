@@ -113,8 +113,8 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         serializedOperator->mutable_details()->PackFrom(projectionDetail);
     } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         // serialize merge operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to MergeLogicalOperatorNode");
-        auto mergeDetails = SerializableOperator_MergeDetails();
+        NES_TRACE("OperatorSerializationUtil:: serialize to UnionLogicalOperatorNode");
+        auto mergeDetails = SerializableOperator_UnionDetails();
         serializedOperator->mutable_details()->PackFrom(mergeDetails);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         // serialize merge operator
@@ -238,10 +238,10 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             exps.push_back(projectExpression);
         }
         operatorNode = LogicalOperatorFactory::createProjectionOperator(exps, serializedOperator->operatorid());
-    } else if (details.Is<SerializableOperator_MergeDetails>()) {
+    } else if (details.Is<SerializableOperator_UnionDetails>()) {
         // de-serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MergeLogicalOperator");
-        auto serializedMergeDescriptor = SerializableOperator_MergeDetails();
+        auto serializedMergeDescriptor = SerializableOperator_UnionDetails();
         details.UnpackTo(&serializedMergeDescriptor);
         // de-serialize merge descriptor
         operatorNode = LogicalOperatorFactory::createUnionOperator(serializedOperator->operatorid());

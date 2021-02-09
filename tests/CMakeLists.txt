@@ -377,7 +377,7 @@ target_link_libraries(assignment-watermark-test nes ${GTEST_LIBRARIES})
 add_test(NAME assignment-watermark-test COMMAND assignment-watermark-test)
 
 ### mergeDeploymentTest ###
-add_executable(merge-deployment-test "Integration/MergeDeploymentTest.cpp")
+add_executable(merge-deployment-test "Integration/UnionDeploymentTest.cpp")
 target_link_libraries(merge-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME merge-deployment-test COMMAND merge-deployment-test)
 
