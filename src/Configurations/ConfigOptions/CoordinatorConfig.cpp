@@ -32,8 +32,7 @@ CoordinatorConfig::CoordinatorConfig() {
     rpcPort = ConfigOption<uint32_t>::create("rpcPort", 4000, "RPC server port of the NES Coordinator");
     restPort = ConfigOption<uint32_t>::create("restPort", 8081, "Port exposed for rest endpoints");
     dataPort = ConfigOption<uint32_t>::create("dataPort", 3001, "NES data server port");
-    numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", std::thread::hardware_concurrency(),
-                                                   "Number of computing slots for NES Coordinator");
+    numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for NES Coordinator");
     enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
