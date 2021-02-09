@@ -19,39 +19,47 @@
 #include <utility>
 namespace NES {
 
-HdfsSourceDescriptor::HdfsSourceDescriptor(SchemaPtr schema, std::string namenode, uint64_t port, std::string filePath, std::string delimiter,
-                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                         uint64_t frequency, bool skipHeader)
-    : SourceDescriptor(std::move(schema)), namenode(std::move(namenode)), port(port), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
+HdfsSourceDescriptor::HdfsSourceDescriptor(SchemaPtr schema, std::string namenode, uint64_t port, std::string hadoopUser,
+                                           std::string filePath, std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
+                                           uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader)
+    : SourceDescriptor(std::move(schema)), namenode(std::move(namenode)), port(port), hadoopUser(hadoopUser), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numBuffersToProcess(numBuffersToProcess),
       frequency(frequency), skipHeader(skipHeader) {}
 
-HdfsSourceDescriptor::HdfsSourceDescriptor(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port, std::string filePath, std::string delimiter,
-                                         uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                         uint64_t frequency, bool skipHeader)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), namenode(std::move(namenode)), port(port), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
+HdfsSourceDescriptor::HdfsSourceDescriptor(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port,
+                                           std::string hadoopUser, std::string filePath, std::string delimiter,
+                                           uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                           uint64_t frequency, bool skipHeader)
+    : SourceDescriptor(std::move(schema), std::move(streamName)), namenode(std::move(namenode)), port(port),
+      hadoopUser(std::move(hadoopUser)), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numBuffersToProcess(numBuffersToProcess),
       frequency(frequency), skipHeader(skipHeader) {}
 
-SourceDescriptorPtr HdfsSourceDescriptor::create(SchemaPtr schema, std::string namenode, uint64_t port, std::string filePath, std::string delimiter,
-                                                uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                uint64_t frequency, bool skipHeader) {
-    return std::make_shared<HdfsSourceDescriptor>(HdfsSourceDescriptor(std::move(schema), std::move(namenode), port, std::move(filePath), std::move(delimiter),
-                                                                     numberOfTuplesToProducePerBuffer, numBuffersToProcess,
-                                                                     frequency, skipHeader));
+SourceDescriptorPtr HdfsSourceDescriptor::create(SchemaPtr schema, std::string namenode, uint64_t port, std::string hadoopUser,
+                                                 std::string filePath, std::string delimiter,
+                                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                                 uint64_t frequency, bool skipHeader) {
+    return std::make_shared<HdfsSourceDescriptor>(HdfsSourceDescriptor(std::move(schema), std::move(namenode),
+                                                                       port, std::move(hadoopUser), std::move(filePath),
+                                                                       std::move(delimiter), numberOfTuplesToProducePerBuffer,
+                                                                       numBuffersToProcess, frequency, skipHeader));
 }
 
-SourceDescriptorPtr HdfsSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port, std::string filePath,
-                                                std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
-                                                uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader) {
+SourceDescriptorPtr HdfsSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port,
+                                                 std::string hadoopUser, std::string filePath, std::string delimiter,
+                                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                                                 uint64_t frequency, bool skipHeader) {
     return std::make_shared<HdfsSourceDescriptor>(
-        HdfsSourceDescriptor(std::move(schema), std::move(streamName), std::move(namenode), port, std::move(filePath), std::move(delimiter),
-                            numberOfTuplesToProducePerBuffer, numBuffersToProcess, frequency, skipHeader));
+        HdfsSourceDescriptor(std::move(schema), std::move(streamName), std::move(namenode), port, std::move(hadoopUser),
+                             std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer, numBuffersToProcess,
+                             frequency, skipHeader));
 }
 
 const std::string& HdfsSourceDescriptor::getNamenode() const { return namenode; }
 
 uint64_t HdfsSourceDescriptor::getPort() const { return port; }
+
+const std::string& HdfsSourceDescriptor::getHadoopUser() const { return hadoopUser; }
 
 const std::string& HdfsSourceDescriptor::getFilePath() const { return filePath; }
 

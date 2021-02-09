@@ -44,9 +44,9 @@ class HdfsSource : public DataSource {
    * @param operatorId
    */
     explicit HdfsSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                        const std::string namenode, uint64_t port, const std::string filePath, const std::string delimiter,
-                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                        bool skipHeader, OperatorId operatorId);
+                        const std::string namenode, uint64_t port, const std::string hadoopUser, const std::string filePath,
+                        const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                        uint64_t frequency, bool skipHeader, OperatorId operatorId);
 
     /**
      * @brief override the receiveData method for the csv source
@@ -130,6 +130,7 @@ class HdfsSource : public DataSource {
     hdfsFile file;
     hdfsFileInfo *fileInfo;
     struct hdfsBuilder *builder;
+    const std::string hadoopUser;
 };
 
 typedef std::shared_ptr<HdfsSource> HdfsSourcePtr;

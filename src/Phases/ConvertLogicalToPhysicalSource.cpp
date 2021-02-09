@@ -109,10 +109,12 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
     } else if (sourceDescriptor->instanceOf<HdfsSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating hdfs source");
         auto hdfsSourceDescriptor = sourceDescriptor->as<HdfsSourceDescriptor>();
-        return createHdfsSource(hdfsSourceDescriptor->getSchema(), bufferManager, queryManager, hdfsSourceDescriptor->getNamenode(),
-                                hdfsSourceDescriptor->getPort(), hdfsSourceDescriptor->getFilePath(), hdfsSourceDescriptor->getDelimiter(),
-                                hdfsSourceDescriptor->getNumberOfTuplesToProducePerBuffer(), hdfsSourceDescriptor->getNumBuffersToProcess(),
-                                hdfsSourceDescriptor->getFrequency(), hdfsSourceDescriptor->getSkipHeader(), operatorId);
+        return createHdfsSource(hdfsSourceDescriptor->getSchema(), bufferManager, queryManager,
+                                hdfsSourceDescriptor->getNamenode(), hdfsSourceDescriptor->getPort(),
+                                hdfsSourceDescriptor->getHadoopUser(), hdfsSourceDescriptor->getFilePath(),
+                                hdfsSourceDescriptor->getDelimiter(), hdfsSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
+                                hdfsSourceDescriptor->getNumBuffersToProcess(), hdfsSourceDescriptor->getFrequency(),
+                                hdfsSourceDescriptor->getSkipHeader(), operatorId);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

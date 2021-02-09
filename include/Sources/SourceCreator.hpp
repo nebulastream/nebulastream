@@ -144,8 +144,8 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferMana
  * @return a const data source pointer
  */
 const DataSourcePtr createHdfsSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                     NodeEngine::QueryManagerPtr queryManager, const std::string& namenode,
-                                     uint64_t port,  const std::string& pathToFile, const std::string& delimiter,
+                                     NodeEngine::QueryManagerPtr queryManager, const std::string& namenode, uint64_t port,
+                                     const std::string& hadoopUser, const std::string& pathToFile, const std::string& delimiter,
                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t numbersOfBufferToProduce,
                                      uint64_t frequency, bool skipHeader, OperatorId operatorId);
 

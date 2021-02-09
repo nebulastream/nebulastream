@@ -27,10 +27,12 @@ namespace NES {
 class HdfsSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string namenode, uint64_t port, std::string filePath, std::string delimiter, uint64_t numBuffersToProcess,
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string namenode, uint64_t port, std::string hadoopUser,
+                                      std::string filePath, std::string delimiter, uint64_t numBuffersToProcess,
                                       uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency, bool skipHeader);
 
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port, std::string filePath, std::string delimiter,
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port,
+                                      std::string hadoopUser, std::string filePath, std::string delimiter,
                                       uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                       bool skipHeader);
 
@@ -43,6 +45,11 @@ class HdfsSourceDescriptor : public SourceDescriptor {
      * @brief get port for the HDFS
      */
     uint64_t getPort() const;
+
+    /**
+     * @brief get hadoop user name
+     */
+    const std::string& getHadoopUser() const;
 
     /**
      * @brief get file path for reading the csv file
@@ -78,13 +85,14 @@ class HdfsSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit HdfsSourceDescriptor(SchemaPtr schema, std::string namenode, uint64_t port, std::string filePath, std::string delimiter,
-                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                 bool skipHeader);
+    explicit HdfsSourceDescriptor(SchemaPtr schema, std::string namenode, uint64_t port, std::string hadoopUser,
+                                  std::string filePath, std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
+                                  uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader);
 
-    explicit HdfsSourceDescriptor(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port, std::string filePath, std::string delimiter,
-                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                 bool skipHeader);
+    explicit HdfsSourceDescriptor(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port,
+                                  std::string hadoopUser, std::string filePath, std::string delimiter,
+                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
+                                  bool skipHeader);
 
     std::string namenode;
     uint64_t port;
@@ -94,6 +102,7 @@ class HdfsSourceDescriptor : public SourceDescriptor {
     uint64_t numberOfTuplesToProducePerBuffer;
     uint64_t frequency;
     bool skipHeader;
+    std::string hadoopUser;
 };
 
 typedef std::shared_ptr<HdfsSourceDescriptor> HdfsSourceDescriptorPtr;

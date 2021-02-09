@@ -117,25 +117,29 @@ TEST_F(HdfsSourceTest, testHdfsSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
-//    std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
-    char *path_to_file = "/testData/test.csv";
+    char *path_to_file = "/testData/ysb-tuples-100-campaign-100.bin";
 
     SchemaPtr schema = Schema::create()
-                           ->addField(createField("val1", UINT64))
-                           ->addField(createField("val2", UINT64))
-                           ->addField(createField("val3", UINT64));
+        ->addField("user_id", DataTypeFactory::createFixedChar(16))
+        ->addField("page_id", DataTypeFactory::createFixedChar(16))
+        ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+        ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+        ->addField("event_type", DataTypeFactory::createFixedChar(9))
+        ->addField("current_ms", UINT64)
+        ->addField("ip", INT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;
-//    uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
+    uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source =
-        createHdfsSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "default", 0, path_to_file, ",", 0, 0, 1, false, 1);
+        createHdfsSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "192.168.1.104",
+                         9000, "hdoop", path_to_file, ",", 0,
+                         1, 1, false, 1);
 
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
-        NES_DEBUG("HdfsSourceTest: aaaaaa");
         uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
             ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
@@ -148,8 +152,8 @@ TEST_F(HdfsSourceTest, testHdfsSource) {
         }
     }
 
-//    EXPECT_EQ(source->getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
-//    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numberOfBuffers);
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numberOfBuffers);
 }
 
 }// namespace NES

@@ -1475,14 +1475,14 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromHDFSSourceWrite) {
     std::string testCSV = "1,2,3\n"
                           "1,2,4\n"
                           "4,3,6";
-    std::string testCSVFileName = "testCSV.csv";
+    std::string testCSVFileName = "/testData/test.csv";
     std::ofstream outCsv(testCSVFileName);
     outCsv << testCSV;
     outCsv.close();
 
     //register physical stream
     PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "HDFSSource", /**Source Config**/ "testCSV.csv",
+        PhysicalStreamConfig::create(/**Source Type**/ "HDFSSource", /**Source Config**/ "/testData/test.csv",
             /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
             /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
             /**Logical Stream Name**/ "testStream", false);
