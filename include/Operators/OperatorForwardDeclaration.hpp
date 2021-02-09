@@ -34,8 +34,8 @@ typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 class JoinLogicalOperatorNode;
 typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
 
-class MergeLogicalOperatorNode;
-typedef std::shared_ptr<MergeLogicalOperatorNode> MergeLogicalOperatorNodePtr;
+class UnionLogicalOperatorNode;
+typedef std::shared_ptr<UnionLogicalOperatorNode> MergeLogicalOperatorNodePtr;
 
 class ExpressionItem;
 

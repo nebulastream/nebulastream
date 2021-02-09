@@ -30,7 +30,7 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 
 using namespace NES;

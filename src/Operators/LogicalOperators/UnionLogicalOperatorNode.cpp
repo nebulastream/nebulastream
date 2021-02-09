@@ -14,35 +14,34 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-MergeLogicalOperatorNode::MergeLogicalOperatorNode(OperatorId id) : BinaryOperatorNode(id) {}
+UnionLogicalOperatorNode::UnionLogicalOperatorNode(OperatorId id) : BinaryOperatorNode(id) {}
 
-bool MergeLogicalOperatorNode::isIdentical(NodePtr rhs) const {
-    return equal(rhs) && rhs->as<MergeLogicalOperatorNode>()->getId() == id;
+bool UnionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+    return equal(rhs) && rhs->as<UnionLogicalOperatorNode>()->getId() == id;
 }
 
-const std::string MergeLogicalOperatorNode::toString() const {
+const std::string UnionLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "Merge(" << id << ")";
+    ss << "Union(" << id << ")";
     return ss.str();
 }
 
-std::string MergeLogicalOperatorNode::getStringBasedSignature() {
+std::string UnionLogicalOperatorNode::getStringBasedSignature() {
     std::stringstream ss;
-    ss << "MERGE(";
+    ss << "UNION(";
     ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
     ss << children[1]->as<LogicalOperatorNode>()->getStringBasedSignature();
     return ss.str();
 }
 
-bool MergeLogicalOperatorNode::inferSchema() {
+bool UnionLogicalOperatorNode::inferSchema() {
     if (!BinaryOperatorNode::inferSchema()) {
         return false;
     }
@@ -70,15 +69,15 @@ bool MergeLogicalOperatorNode::inferSchema() {
     return true;
 }
 
-OperatorNodePtr MergeLogicalOperatorNode::copy() {
+OperatorNodePtr UnionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMergeOperator(id);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     return copy;
 }
 
-bool MergeLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if (rhs->instanceOf<MergeLogicalOperatorNode>()) {
+bool UnionLogicalOperatorNode::equal(const NodePtr rhs) const {
+    if (rhs->instanceOf<UnionLogicalOperatorNode>()) {
         return true;
     }
     return false;

@@ -21,13 +21,13 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -615,7 +615,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto phase = TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto mergeOperator = plan->getOperatorByType<MergeLogicalOperatorNode>();
+    auto mergeOperator = plan->getOperatorByType<UnionLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
     auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();

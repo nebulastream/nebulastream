@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef Merge_LOGICAL_OPERATOR_NODE_HPP
-#define Merge_LOGICAL_OPERATOR_NODE_HPP
+#ifndef UNION_LOGICAL_OPERATOR_NODE_HPP
+#define UNION_LOGICAL_OPERATOR_NODE_HPP
 
 #include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -23,12 +23,12 @@
 namespace NES {
 
 /**
- * @brief Merge operator, which contains an expression as a predicate.
+ * @brief Union operator that merge two streams together. This operator behaves similar to the Union operator in RDBMS.
  */
-class MergeLogicalOperatorNode : public BinaryOperatorNode {
+class UnionLogicalOperatorNode : public BinaryOperatorNode {
   public:
-    explicit MergeLogicalOperatorNode(OperatorId id);
-    ~MergeLogicalOperatorNode() = default;
+    explicit UnionLogicalOperatorNode(OperatorId id);
+    ~UnionLogicalOperatorNode() = default;
 
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
@@ -39,4 +39,4 @@ class MergeLogicalOperatorNode : public BinaryOperatorNode {
     std::string getStringBasedSignature() override;
 };
 }// namespace NES
-#endif// Merge_LOGICAL_OPERATOR_NODE_HPP
+#endif// UNION_LOGICAL_OPERATOR_NODE_HPP

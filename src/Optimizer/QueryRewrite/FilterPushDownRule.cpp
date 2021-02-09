@@ -20,9 +20,9 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -130,7 +130,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                     std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
                 }
             }
-        } else if (node->instanceOf<MergeLogicalOperatorNode>()) {
+        } else if (node->instanceOf<UnionLogicalOperatorNode>()) {
 
             isFilterAboveAMergeOperator = true;
             std::vector<NodePtr> childrenOfMergeOP = node->getChildren();

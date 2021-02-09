@@ -38,7 +38,7 @@ GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperato
     return std::make_shared<GeneratableMergeOperator>(GeneratableMergeOperator(logicalMergeOperator->getOutputSchema(), id));
 }
 
-GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schema, OperatorId id) : MergeLogicalOperatorNode(id) {
+GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schema, OperatorId id) : UnionLogicalOperatorNode(id) {
     if (!schema) {
         NES_ERROR("GeneratableMergeOperator invalid schema");
     }

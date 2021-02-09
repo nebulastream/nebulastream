@@ -20,10 +20,10 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
@@ -49,10 +49,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
     //FIXME: @Steffen why did you defined merge operator as a unary operator? This is not only causing problem here but will also cause problem during placement.
     // 1410 is opened to resolve this issue.
     auto children = operatorNode->getChildren();
-    if (operatorNode->instanceOf<MergeLogicalOperatorNode>() && children.size() != 2) {
+    if (operatorNode->instanceOf<UnionLogicalOperatorNode>() && children.size() != 2) {
         NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can have only two children : " + operatorNode->toString()
                                 + " found : " + std::to_string(children.size()));
-    } else if (operatorNode->isUnaryOperator() && !operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+    } else if (operatorNode->isUnaryOperator() && !operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
             NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
         } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>() && children.empty()) {
@@ -102,7 +102,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
         return createQuerySignatureForFilter(context, filterOperator);
-    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
 
         NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
         return buildQuerySignatureForChildren(context, children);
