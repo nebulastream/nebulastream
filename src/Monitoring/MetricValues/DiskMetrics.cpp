@@ -22,6 +22,8 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <cstring>
+
 namespace NES {
 
 SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
@@ -34,16 +36,9 @@ SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void serialize(const DiskMetrics& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
-    auto noFields = schema->getSize();
-    schema->copyFields(DiskMetrics::getSchema(prefix));
-
-    auto layout = NodeEngine::createRowLayout(schema);
-    layout->getValueField<uint64_t>(0, noFields)->write(buf, metric.fBsize);
-    layout->getValueField<uint64_t>(0, noFields + 1)->write(buf, metric.fFrsize);
-    layout->getValueField<uint64_t>(0, noFields + 2)->write(buf, metric.fBlocks);
-    layout->getValueField<uint64_t>(0, noFields + 3)->write(buf, metric.fBfree);
-    layout->getValueField<uint64_t>(0, noFields + 4)->write(buf, metric.fBavail);
+void writeToBuffer(const DiskMetrics& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    memcpy(tbuffer + byteOffset, &metric, sizeof(DiskMetrics));
     buf.setNumberOfTuples(1);
 }
 

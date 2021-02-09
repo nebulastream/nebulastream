@@ -22,6 +22,7 @@
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 

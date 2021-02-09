@@ -21,6 +21,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cstring>
 
 namespace NES {
 
@@ -66,21 +67,16 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, 
     return output;
 }
 
-void serialize(const CpuValues& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
-    auto schemaSize = schema->getSize();
-    schema->copyFields(CpuValues::getSchema(prefix));
+std::ostream& operator<<(std::ostream& os, const CpuValues& values) {
+    os << "USER: " << values.USER << " NICE: " << values.NICE << " SYSTEM: " << values.SYSTEM << " IDLE: " << values.IDLE
+       << " IOWAIT: " << values.IOWAIT << " IRQ: " << values.IRQ << " SOFTIRQ: " << values.SOFTIRQ << " STEAL: " << values.STEAL
+       << " GUEST: " << values.GUEST << " GUESTNICE: " << values.GUESTNICE;
+    return os;
+}
 
-    auto layout = NodeEngine::createRowLayout(schema);
-    layout->getValueField<uint64_t>(0, schemaSize)->write(buf, metric.USER);
-    layout->getValueField<uint64_t>(0, schemaSize + 1)->write(buf, metric.NICE);
-    layout->getValueField<uint64_t>(0, schemaSize + 2)->write(buf, metric.SYSTEM);
-    layout->getValueField<uint64_t>(0, schemaSize + 3)->write(buf, metric.IDLE);
-    layout->getValueField<uint64_t>(0, schemaSize + 4)->write(buf, metric.IOWAIT);
-    layout->getValueField<uint64_t>(0, schemaSize + 5)->write(buf, metric.IRQ);
-    layout->getValueField<uint64_t>(0, schemaSize + 6)->write(buf, metric.SOFTIRQ);
-    layout->getValueField<uint64_t>(0, schemaSize + 7)->write(buf, metric.STEAL);
-    layout->getValueField<uint64_t>(0, schemaSize + 8)->write(buf, metric.GUEST);
-    layout->getValueField<uint64_t>(0, schemaSize + 9)->write(buf, metric.GUESTNICE);
+void writeToBuffer(const CpuValues& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    memcpy(tbuffer + byteOffset, &metrics, sizeof(CpuValues));
     buf.setNumberOfTuples(1);
 }
 

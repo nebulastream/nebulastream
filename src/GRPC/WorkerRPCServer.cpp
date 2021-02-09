@@ -101,8 +101,8 @@ Status WorkerRPCServer::RequestMonitoringData(ServerContext*, const MonitoringRe
         MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
         auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-        auto schema = Schema::create();
-        metricGroup->getSample(schema, buf);
+        auto schema = metricGroup->createSchema();
+        metricGroup->getSample(buf);
 
         // add schema and buffer to the reply object
         SchemaSerializationUtil::serializeSchema(schema, reply->mutable_schema());
