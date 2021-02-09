@@ -48,7 +48,7 @@ uint64_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, 
     }
 
     //get unique id for the new node
-    uint64_t id = UtilityFunctions::getNextNodeId();
+    uint64_t id = UtilityFunctions::getNextTopologyNodeId();
 
     TopologyNodePtr physicalNode;
     if (type == NodeType::Sensor) {

@@ -38,7 +38,8 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
       localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
       localWorkerRpcPort(workerConfig->getRpcPort()->getValue()), localWorkerZmqPort(workerConfig->getDataPort()->getValue()),
       numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()) {
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()),
+      topologyNodeId(INVALID_TOPOLOGY_NODE_ID) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
@@ -323,10 +324,8 @@ bool NesWorker::waitForConnect() {
     NES_DEBUG("waitForConnect: not connected after timeout");
     return false;
 }
-uint64_t NesWorker::getTopologyNodeId() {
-    bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
-    assert(con);
+
+TopologyNodeId NesWorker::getTopologyNodeId() {
     return topologyNodeId;
 }
 
