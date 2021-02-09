@@ -325,8 +325,6 @@ bool NesWorker::waitForConnect() {
     return false;
 }
 
-TopologyNodeId NesWorker::getTopologyNodeId() {
-    return topologyNodeId;
-}
+TopologyNodeId NesWorker::getTopologyNodeId() { return topologyNodeId; }
 
 }// namespace NES

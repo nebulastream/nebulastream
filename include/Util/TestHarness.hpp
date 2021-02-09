@@ -53,9 +53,7 @@ class TestHarness {
         crdPort = crd->startCoordinator(/**blocking**/ false);
     };
 
-    ~TestHarness(){
-        NES_DEBUG("TestHarness: ~TestHarness()");
-    };
+    ~TestHarness() { NES_DEBUG("TestHarness: ~TestHarness()"); };
 
     /*
          * @brief push a single element/tuple to specific source
@@ -120,7 +118,7 @@ class TestHarness {
         wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
-        wrk->replaceParent(crd->getTopology()->getRoot()->getId(),parentId);
+        wrk->replaceParent(crd->getTopology()->getRoot()->getId(), parentId);
         workerPtrs.push_back(wrk);
     }
 
@@ -151,7 +149,7 @@ class TestHarness {
         addMemorySource(logicalStreamName, schema, physicalStreamName, crdTopologyNodeId);
     }
 
-        /*
+    /*
          * @brief add a csv source to be used in the test and connect to parent with specific parent id
          * @param schema schema of the source
          * @param csvSourceConf physical stream configuration for the csv source
@@ -181,21 +179,21 @@ class TestHarness {
      * @brief add non source worker and connect to parent with specific parent id
      * @param parentId id of the parent to connect
      */
-    void addNonSourceWorker(uint64_t parentId){
+    void addNonSourceWorker(uint64_t parentId) {
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
         wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
         wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
-        wrk->replaceParent(crd->getTopology()->getRoot()->getId(),parentId);
+        wrk->replaceParent(crd->getTopology()->getRoot()->getId(), parentId);
         workerPtrs.push_back(wrk);
     }
 
     /*
          * @brief add non source worker
          */
-    void addNonSourceWorker(){
+    void addNonSourceWorker() {
         uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
         addNonSourceWorker(crdTopologyNodeId);
     }
@@ -309,17 +307,13 @@ class TestHarness {
         return actualOutput;
     }
 
-    TopologyPtr getTopology() {
-        return crd->getTopology();
-    };
+    TopologyPtr getTopology() { return crd->getTopology(); };
 
     /*
      * @brief get the id of worker at a particular index
      * @param workerIdx index of the worker in the test harness
      */
-    uint64_t getWorkerId(uint64_t workerIdx) {
-        return workerPtrs.at(workerIdx)->getTopologyNodeId();
-    }
+    uint64_t getWorkerId(uint64_t workerIdx) { return workerPtrs.at(workerIdx)->getTopologyNodeId(); }
 
   private:
     enum TestHarnessSourceType { CSVSource, MemorySource };
