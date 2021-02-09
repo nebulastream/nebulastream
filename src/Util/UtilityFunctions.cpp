@@ -350,7 +350,7 @@ OperatorId UtilityFunctions::getNextOperatorId() {
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextNodeId() {
+uint64_t UtilityFunctions::getNextTopologyNodeId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
@@ -360,7 +360,7 @@ uint64_t UtilityFunctions::getNextNodeEngineId() {
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextTaskID() {
+uint64_t UtilityFunctions::getNextTaskId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }

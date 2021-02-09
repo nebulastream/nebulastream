@@ -25,7 +25,7 @@
 namespace NES::NodeEngine {
 
 Task::Task(Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
-    id = UtilityFunctions::getNextTaskID();
+    id = UtilityFunctions::getNextTaskId();
 }
 
 Task::Task() : pipeline(nullptr), buf() { id = UtilityFunctions::generateIdInt(); }

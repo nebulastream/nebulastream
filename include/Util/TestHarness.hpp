@@ -51,8 +51,6 @@ class TestHarness {
         wrkConf = WorkerConfig::create();
         crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
-        QueryServicePtr queryService = crd->getQueryService();
-        QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     };
 
     ~TestHarness(){
@@ -122,9 +120,7 @@ class TestHarness {
         wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
-        if (parentId != 1) {
-            wrk->replaceParent(crd->getTopology()->getRoot()->getId(),parentId);
-        }
+        wrk->replaceParent(crd->getTopology()->getRoot()->getId(),parentId);
         workerPtrs.push_back(wrk);
     }
 
@@ -136,6 +132,7 @@ class TestHarness {
          * @param parentId id of the parent to connect
          */
     void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
+        NES_ASSERT(parentId != INVALID_TOPOLOGY_NODE_ID, "The provided ParentId is an INVALID_TOPOLOGY_NODE_ID");
         checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);
 
         sourceTypes.push_back(MemorySource);
@@ -257,7 +254,6 @@ class TestHarness {
             queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
         QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
 
-        auto globalQueryPlan = crd->getGlobalQueryPlan();
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
         }

@@ -174,7 +174,7 @@ class UtilityFunctions {
      * @brief Returns the next free node id
      * @return node id
      */
-    static uint64_t getNextNodeId();
+    static uint64_t getNextTopologyNodeId();
 
     /**
      * @brief Returns the next free node id
@@ -186,7 +186,7 @@ class UtilityFunctions {
      * @brief Returns the next free task id
      * @return node id
      */
-    static uint64_t getNextTaskID();
+    static uint64_t getNextTaskId();
 
     /**
      * @brief Returns a global unique id that can be used for different purposes
