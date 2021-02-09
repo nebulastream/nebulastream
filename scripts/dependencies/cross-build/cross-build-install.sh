@@ -176,6 +176,18 @@ cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install \
   && sudo make -j2 install && cd ../.. && sudo rm -rf grpc && \
 
+cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
+  cd paho.mqtt.c && git checkout v1.3.8 && \
+  cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF \
+  -DPAHO_BUILD_STATIC=ON \
+  -DPAHO_WITH_SSL=ON \
+  -DPAHO_HIGH_PERFORMANCE=ON && \
+  sudo cmake --build build/ --target install && \
+  sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
+  git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
+  cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
+  sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
+
 sudo cd /opt/sysroots/aarch64-linux-gnu/usr && \
 sudo cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && cd lib && \
 sudo cp -r -v -L /usr/include/z3* /opt/sysroots/aarch64-linux-gnu/include/ && \
