@@ -61,7 +61,7 @@ UnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssign
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
 }
 
-BinaryOperatorNodePtr LogicalOperatorFactory::createMergeOperator(OperatorId id) {
+BinaryOperatorNodePtr LogicalOperatorFactory::createUnionOperator(OperatorId id) {
     return std::make_shared<UnionLogicalOperatorNode>(id);
 }
 

@@ -29,7 +29,7 @@ bool UnionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
 
 const std::string UnionLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "Union(" << id << ")";
+    ss << "unionWith(" << id << ")";
     return ss.str();
 }
 
@@ -70,7 +70,7 @@ bool UnionLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr UnionLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createMergeOperator(id);
+    auto copy = LogicalOperatorFactory::createUnionOperator(id);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     return copy;

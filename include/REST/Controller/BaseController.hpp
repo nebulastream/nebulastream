@@ -79,7 +79,7 @@ class BaseController {
     void handleTrace(std::vector<utility::string_t> path, http_request message);
 
     /**
-     * @brief Handle merge request from the user
+     * @brief Handle unionWith request from the user
      * @param path : the resource path the user wanted to get
      * @param message : the message from the user
      */

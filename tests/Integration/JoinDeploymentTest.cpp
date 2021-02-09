@@ -64,7 +64,7 @@ class JoinDeploymentTest : public testing::Test {
 };
 
 /**
- * Test deploying merge query with source on two different worker node using top down strategy.
+ * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 //TODO: this test will be enabled once we have the renaming function using as
 //TODO: prevent self join

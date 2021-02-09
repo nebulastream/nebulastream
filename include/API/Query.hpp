@@ -86,7 +86,7 @@ class Query {
     * @param subQuery is the query to be merged
     * @return
     */
-    Query& merge(Query* subQuery);
+    Query& unionWith(Query* subQuery);
 
     /**
      * @brief this call projects out the attributes in the parameter list

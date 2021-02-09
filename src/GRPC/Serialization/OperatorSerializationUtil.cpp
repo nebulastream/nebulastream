@@ -244,7 +244,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedMergeDescriptor = SerializableOperator_MergeDetails();
         details.UnpackTo(&serializedMergeDescriptor);
         // de-serialize merge descriptor
-        operatorNode = LogicalOperatorFactory::createMergeOperator(serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createUnionOperator(serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_BroadcastDetails>()) {
         // de-serialize broadcast operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to BroadcastLogicalOperator");

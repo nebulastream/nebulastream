@@ -59,9 +59,9 @@ Query& Query::as(const std::string newStreamName) {
     return *this;
 }
 
-Query& Query::merge(Query* subQuery) {
-    NES_DEBUG("Query: merge the subQuery to current query");
-    OperatorNodePtr op = LogicalOperatorFactory::createMergeOperator();
+Query& Query::unionWith(Query* subQuery) {
+    NES_DEBUG("Query: unionWith the subQuery to current query");
+    OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
     queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
