@@ -82,12 +82,14 @@ RUN cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
   cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF \
   -DPAHO_BUILD_STATIC=ON \
   -DPAHO_WITH_SSL=ON \
-  -DPAHO_HIGH_PERFORMANCE=ON && \
-  sudo cmake --build build/ --target install && \
-  sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
+  -DPAHO_HIGH_PERFORMANCE=ON \
+  -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-gcc.cmake && \
+  cmake --build build/ --target install && \
+  ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
   git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
-  cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
-  sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
+  cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE \
+  -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-gcc.cmake && \
+  cmake --build build/ --target install && ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
 
 RUN cd /opt/sysroots/aarch64-linux-gnu/usr && \
 cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && \
