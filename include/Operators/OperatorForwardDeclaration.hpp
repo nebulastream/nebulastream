@@ -35,7 +35,7 @@ class JoinLogicalOperatorNode;
 typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
 
 class UnionLogicalOperatorNode;
-typedef std::shared_ptr<UnionLogicalOperatorNode> MergeLogicalOperatorNodePtr;
+typedef std::shared_ptr<UnionLogicalOperatorNode> UnionLogicalOperatorNodePtr;
 
 class ExpressionItem;
 

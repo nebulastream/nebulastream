@@ -15,12 +15,12 @@
 */
 
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableUnionOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES {
 
-void GeneratableMergeOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableUnionOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto newPipelineContext1 = PipelineContext::create();
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
     auto newPipelineContext2 = PipelineContext::create();
@@ -30,15 +30,15 @@ void GeneratableMergeOperator::produce(CodeGeneratorPtr codegen, PipelineContext
     context->addNextPipeline(newPipelineContext2);
 }
 
-void GeneratableMergeOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableUnionOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForEmit(outputSchema, context);
 }
 
-GeneratableMergeOperatorPtr GeneratableMergeOperator::create(MergeLogicalOperatorNodePtr logicalMergeOperator, OperatorId id) {
-    return std::make_shared<GeneratableMergeOperator>(GeneratableMergeOperator(logicalMergeOperator->getOutputSchema(), id));
+GeneratableMergeOperatorPtr GeneratableUnionOperator::create(UnionLogicalOperatorNodePtr logicalUnionOperator, OperatorId id) {
+    return std::make_shared<GeneratableUnionOperator>(GeneratableUnionOperator(logicalUnionOperator->getOutputSchema(), id));
 }
 
-GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schema, OperatorId id) : UnionLogicalOperatorNode(id) {
+GeneratableUnionOperator::GeneratableUnionOperator(SchemaPtr schema, OperatorId id) : UnionLogicalOperatorNode(id) {
     if (!schema) {
         NES_ERROR("GeneratableMergeOperator invalid schema");
     }
@@ -48,7 +48,7 @@ GeneratableMergeOperator::GeneratableMergeOperator(SchemaPtr schema, OperatorId 
     setOutputSchema(schema);
 }
 
-const std::string GeneratableMergeOperator::toString() const {
+const std::string GeneratableUnionOperator::toString() const {
     std::stringstream ss;
     ss << "GENERATABLE_MERGE(" << outputSchema->toString() << ")";
     return ss.str();
