@@ -17,12 +17,12 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMERGEOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMERGEOPERATOR_HPP_
 
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {
 
-class GeneratableMergeOperator : public MergeLogicalOperatorNode, public GeneratableOperator {
+class GeneratableMergeOperator : public UnionLogicalOperatorNode, public GeneratableOperator {
   public:
     /**
      * @brief Create sharable instance of GeneratableMergeOperator

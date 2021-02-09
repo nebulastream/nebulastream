@@ -16,10 +16,10 @@
 
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
@@ -75,13 +75,13 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         auto childOperator = GeneratableMapOperator::create(operatorNode->as<MapLogicalOperatorNode>());
         generatableParentOperator->addChild(childOperator);
         return childOperator;
-    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         //Use left Schema for creating the input schema
         auto scanOperator =
             GeneratableScanOperator::create(binaryOperator->getLeftInputSchema(), binaryOperator->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto childOperator = GeneratableMergeOperator::create(operatorNode->as<MergeLogicalOperatorNode>());
+        auto childOperator = GeneratableMergeOperator::create(operatorNode->as<UnionLogicalOperatorNode>());
         scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {

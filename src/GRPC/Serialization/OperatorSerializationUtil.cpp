@@ -23,7 +23,6 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -38,6 +37,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
@@ -111,7 +111,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
             ExpressionSerializationUtil::serializeExpression(exp, mutableExpression);
         }
         serializedOperator->mutable_details()->PackFrom(projectionDetail);
-    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         // serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: serialize to MergeLogicalOperatorNode");
         auto mergeDetails = SerializableOperator_MergeDetails();

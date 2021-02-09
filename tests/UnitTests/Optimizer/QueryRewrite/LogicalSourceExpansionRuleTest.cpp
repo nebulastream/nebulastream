@@ -21,7 +21,7 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
@@ -217,7 +217,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1);
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 1);
-    auto mergeOperators = queryPlan->getOperatorByType<MergeLogicalOperatorNode>();
+    auto mergeOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
     EXPECT_EQ(mergeOperators.size(), 1);
     EXPECT_EQ(mergeOperators[0]->getChildren().size(), 4);
 }
