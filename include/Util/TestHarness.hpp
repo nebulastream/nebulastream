@@ -322,7 +322,7 @@ class TestHarness {
      * @param workerIdx index of the worker in the test harness
      */
     uint64_t getWorkerId(uint64_t workerIdx) {
-        return workerPtrs.at(workerIdx)->getId();
+        return workerPtrs.at(workerIdx)->getTopologyNodeId();
     }
 
   private:
