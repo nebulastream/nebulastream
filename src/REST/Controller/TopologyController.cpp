@@ -30,6 +30,7 @@ TopologyController::TopologyController(TopologyPtr topology) : topology(std::mov
 void TopologyController::handleGet(const std::vector<utility::string_t>& paths, web::http::http_request& message) {
     NES_DEBUG("TopologyController: GET Topology");
 
+    //TODO: ignore nodes marked for maintenance
     topology->print();
     if (paths.size() == 1) {
         web::json::value topologyJson = Util::getTopologyAsJson(topology->getRoot());
@@ -170,15 +171,14 @@ bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysic
                   << message.to_string());
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
-                try {
-                    NES_DEBUG("TopologyController: handlePost -mark: Start trying to mark nodes for maintenance");
-                    //Parse IDs of nodes to mark for maintenance
-                    std::string payload(body.begin(), body.end());
-                    NES_DEBUG("TopologyController: handlePost -mark: userRequest: " << payload);
-                    json::value req = json::value::parse(payload);
-                    NES_DEBUG("TopologyController: handlePost -mark: Json Parse Value: " << req);
-
-                    //TODO: handle multiple IDs
+              try {
+                  NES_DEBUG("TopologyController: handlePost -mark: Start trying to mark nodes for maintenance");
+                  //Parse IDs of nodes to mark for maintenance
+                  std::string payload(body.begin(), body.end());
+                  NES_DEBUG("TopologyController: handlePost -mark: userRequest: " << payload);
+                  json::value req = json::value::parse(payload);
+                  NES_DEBUG("TopologyController: handlePost -mark: Json Parse Value: " << req);
+                  //TODO: handle multiple IDs
 
                     uint64_t id = req.at("ids").as_integer();
 
@@ -188,49 +188,39 @@ bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysic
 
                     bool checkFlag;
 
-                    if (unmark) {
-
-                        NES_DEBUG("TopologyController: handlePost -mark: Unmark node for maintenance: " << id);
-
-                        //TODO: iterate over container of IDs and set all their flags
-
-                        //TODO: make thread safe
-
+                  if(unmark){
+                      NES_DEBUG("TopologyController: handlePost -mark: Unmark node for maintenance: "
+                                    << id);
+                      //TODO: iterate over container of IDs and set all their flags
+                      //TODO: make thread safe
                       node->setMaintenanceFlag(false);
                       checkFlag = node->getMaintenanceFlag();
+                      //TODO: make sure all nodes have been succesfully marked
+                      NES_DEBUG("TopologyController: handlePost -mark: Successfully unmarked node ?"
+                                    << !checkFlag);
+                      //Prepare the response
+                  }
+                  else {
+                      NES_DEBUG("TopologyController: handlePost -mark: ID marked for maintenance " << id);
+                      //TODO: iterate over container of IDs and set all their flags
+                      node->setMaintenanceFlag(true);
+                      checkFlag = node->getMaintenanceFlag();
+                      //TODO: make sure all nodes have been succesfully marked
+                      NES_DEBUG("TopologyController: handlePost -mark: Successfully marked node ?" << checkFlag);
+                      //Prepare the response
+                  }
+                  //TODO: format for many nodes
+                  json::value result{};
+                  if(unmark){
+                      result["Successful mark"] = json::value::boolean(!checkFlag);
+                      result["Node Id"]      =json::value::number(id);
 
-                        //TODO: make sure all nodes have been succesfully marked
-                        NES_DEBUG("TopologyController: handlePost -mark: Successfully unmarked node ?" << !checkFlag);
-                        //Prepare the response
-
-                    }
-
-                    else {
-
-                        NES_DEBUG("TopologyController: handlePost -mark: ID marked for maintenance " << id);
-
-                        //TODO: iterate over container of IDs and set all their flags
-
-                        node->setMaintenanceFlag(true);
-                        checkFlag = node->getMaintenanceFlag();
-
-                        //TODO: make sure all nodes have been succesfully marked
-                        NES_DEBUG("TopologyController: handlePost -mark: Successfully marked node ?" << checkFlag);
-                        //Prepare the response
-                    }
-
-                    //TODO: format for many nodes
-                    json::value result{};
-
-                    if (unmark) {
-                        result["Successful mark"] = json::value::boolean(!checkFlag);
-                        result["Node Id"] = json::value::number(id);
-                    } else {
-                        result["Successful unmark"] = json::value::boolean(checkFlag);
-                        result["Node Id"] = json::value::number(id);
-                    }
-                    successMessageImpl(message, result);
-                    return;
+                    }else {
+                      result["Successful unmark"] = json::value::boolean(checkFlag);
+                      result["Node Id"] = json::value::number(id);
+                  }
+                  successMessageImpl(message, result);
+                  return;
 
                 } catch (const std::exception& exc) {
                     NES_ERROR(
