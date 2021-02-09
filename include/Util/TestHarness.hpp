@@ -86,11 +86,6 @@ class TestHarness {
          * @param physical stream name
          */
     void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
-        // check if record may span multiple buffers
-        NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
-                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
-                        << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
-
         // Check if logical stream already exists
         if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
@@ -131,6 +126,10 @@ class TestHarness {
          */
     void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
         NES_ASSERT(parentId != INVALID_TOPOLOGY_NODE_ID, "The provided ParentId is an INVALID_TOPOLOGY_NODE_ID");
+        // check if record may span multiple buffers
+        NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
+                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
+                        << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
         checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);
 
         sourceTypes.push_back(MemorySource);
