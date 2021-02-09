@@ -136,9 +136,9 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
-    
-    // Check if the topology the expected hierarchy 
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),4);
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4);
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
     remove(outputFilePath.c_str());
@@ -263,7 +263,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
     uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
-    
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
@@ -338,9 +338,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(),2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -535,8 +535,8 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),4);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4);
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
     remove(outputFilePath.c_str());
@@ -720,9 +720,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(),2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -993,13 +993,13 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(),1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1297,13 +1297,13 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(),1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1560,13 +1560,13 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(),1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1819,13 +1819,13 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testMergeThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(),1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -2054,9 +2054,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
     // Check if the topology the expected hierarchy
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(),2);
-    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(),2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());

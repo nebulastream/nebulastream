@@ -412,23 +412,23 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
  * Testing testHarness utility for a query with map operator
  */
 TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
-struct Car {
-    uint32_t key;
-    uint32_t value;
-    uint64_t timestamp;
-};
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
 
-auto carSchema = Schema::create()
-    ->addField("key", DataTypeFactory::createUInt32())
-    ->addField("value", DataTypeFactory::createUInt32())
-    ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = Schema::create()
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
-ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
-TestHarness testHarness = TestHarness(queryWithFilterOperator);
+    std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
-/*
+    /*
  * Expected topology:
  * PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
  *  |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
@@ -436,41 +436,45 @@ TestHarness testHarness = TestHarness(queryWithFilterOperator);
  *  |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
  */
 
-testHarness.addNonSourceWorker();
-NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 0: " << testHarness.getWorkerId(0));
-testHarness.addNonSourceWorker(testHarness.getWorkerId(0));
-NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 1: " << testHarness.getWorkerId(1));
-testHarness.addMemorySource("car", carSchema, "car1", testHarness.getWorkerId(1));
-NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 2: " << testHarness.getWorkerId(2));
+    testHarness.addNonSourceWorker();
+    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 0: " << testHarness.getWorkerId(0));
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));
+    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 1: " << testHarness.getWorkerId(1));
+    testHarness.addMemorySource("car", carSchema, "car1", testHarness.getWorkerId(1));
+    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 2: " << testHarness.getWorkerId(2));
 
-TopologyPtr topology = testHarness.getTopology();
-NES_DEBUG("TestHarness: topology:\n" << topology->toString());
-EXPECT_EQ(topology->getRoot()->getChildren().size(), 1);
-EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1);
-EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    TopologyPtr topology = testHarness.getTopology();
+    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    EXPECT_EQ(topology->getRoot()->getChildren().size(), 1);
+    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
 
-testHarness.pushElement<Car>({40, 40, 40}, 0);
-testHarness.pushElement<Car>({30, 30, 30}, 0);
-testHarness.pushElement<Car>({71, 71, 71}, 0);
-testHarness.pushElement<Car>({21, 21, 21}, 0);
+    testHarness.pushElement<Car>({40, 40, 40}, 0);
+    testHarness.pushElement<Car>({30, 30, 30}, 0);
+    testHarness.pushElement<Car>({71, 71, 71}, 0);
+    testHarness.pushElement<Car>({21, 21, 21}, 0);
 
-struct Output {
-    uint32_t key;
-    uint32_t value;
-    uint64_t timestamp;
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
 
-    // overload the == operator to check if two instances are the same
-    bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
-};
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
+    };
 
-std::vector<Output> expectedOutput = {{40, 1600, 40},
-                                      {21, 441, 21},
-                                      {30,900,30,},
-                                      {71, 5041, 71}};
-std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> expectedOutput = {{40, 1600, 40},
+                                          {21, 441, 21},
+                                          {
+                                              30,
+                                              900,
+                                              30,
+                                          },
+                                          {71, 5041, 71}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
-EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 /*
