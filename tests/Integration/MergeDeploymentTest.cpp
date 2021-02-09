@@ -65,7 +65,7 @@ class MergeDeploymentTest : public testing::Test {
 };
 
 /**
- * Test deploying merge query with source on two different worker node using bottom up strategy.
+ * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
@@ -132,7 +132,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
 
     NES_INFO("MergeDeploymentTest: Submit query");
     string query =
-        "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+        "Query::from(\"car\").unionWith(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -248,7 +248,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
 }
 
 /**
- * Test deploying merge query with source on two different worker node using top down strategy.
+ * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
@@ -315,7 +315,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
 
     NES_INFO("MergeDeploymentTest: Submit query");
     string query =
-        R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+        R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -431,7 +431,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
 }
 
 /**
- * Test deploying merge query with source on two different worker node using top down strategy.
+ * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
@@ -499,7 +499,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDif
 
     NES_INFO("MergeDeploymentTest: Submit query");
     string query =
-        R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+        R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -615,7 +615,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDif
 }
 
 /**
- * Test deploying merge query with source on two different worker node using top down strategy.
+ * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
@@ -688,7 +688,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
 
     NES_INFO("MergeDeploymentTest: Submit query");
     string query =
-        R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+        R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     cout << "queryid=" << queryId << endl;
@@ -709,9 +709,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
 }
 
 /**
- * Test deploying filter-push-down on merge query with source on two different worker node using top down strategy.
- * Case: 2 filter operators are above a merge operator and will be pushed down towards both of the available sources.
- *       2 filter operators are already below merge operator and need to be pushed down normally towards its respective source.
+ * Test deploying filter-push-down on unionWith query with source on two different worker node using top down strategy.
+ * Case: 2 filter operators are above a unionWith operator and will be pushed down towards both of the available sources.
+ *       2 filter operators are already below unionWith operator and need to be pushed down normally towards its respective source.
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
@@ -778,7 +778,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
     string query = "Query::from(\"ruby\")"
                    ".filter(Attribute(\"id\") < 12)"
-                   ".merge(Query::from(\"diamond\")"
+                   ".unionWith(Query::from(\"diamond\")"
                    ".filter(Attribute(\"value\") < 15))"
                    ".map(Attribute(\"timestamp\") = 1)"
                    ".filter(Attribute(\"value\") < 17)"
@@ -873,9 +873,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
 }
 
 /**
- * Test deploying filter-push-down on merge query with source on two different worker node using top down strategy.
- * Case: 1 filter operator is above a merge operator and will be pushed down towards both of the available sources.
- *       1 filter operator is already below merge operator and needs to be pushed down normally towards its own source.
+ * Test deploying filter-push-down on unionWith query with source on two different worker node using top down strategy.
+ * Case: 1 filter operator is above a unionWith operator and will be pushed down towards both of the available sources.
+ *       1 filter operator is already below unionWith operator and needs to be pushed down normally towards its own source.
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
@@ -941,7 +941,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
 
     NES_INFO("MergeDeploymentTest For Filter-Push-Down: Submit query");
     string query = "Query::from(\"ruby\")"
-                   ".merge(Query::from(\"diamond\")"
+                   ".unionWith(Query::from(\"diamond\")"
                    ".map(Attribute(\"timestamp\") = 1)"
                    ".filter(Attribute(\"id\") > 3))"
                    ".map(Attribute(\"timestamp\") = 2)"
@@ -1006,9 +1006,9 @@ TEST_F(MergeDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
 }
 
 /**
- * Test deploying filter-push-down on merge query with source on two different worker node using top down strategy.
- * Case: 2 filter operators are already below merge operator and needs to be pushed down normally towards their respective source.
- *       Here the filters don't need to be pushed down over an existing merge operator.
+ * Test deploying filter-push-down on unionWith query with source on two different worker node using top down strategy.
+ * Case: 2 filter operators are already below unionWith operator and needs to be pushed down normally towards their respective source.
+ *       Here the filters don't need to be pushed down over an existing unionWith operator.
  */
 //FIXME: Enabled while solving #1467
 TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
@@ -1076,7 +1076,7 @@ TEST_F(MergeDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOf
     string query = "Query::from(\"ruby\")"
                    ".map(Attribute(\"timestamp\") = 2)"
                    ".filter(Attribute(\"value\") < 9)"
-                   ".merge(Query::from(\"diamond\")"
+                   ".unionWith(Query::from(\"diamond\")"
                    ".map(Attribute(\"timestamp\") = 1)"
                    ".filter(Attribute(\"id\") < 12)"
                    ".filter(Attribute(\"value\") < 6))"

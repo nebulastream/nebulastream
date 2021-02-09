@@ -166,13 +166,13 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 }
 
 /**
- * @brief In this test we ensure that the schema can be propagated properly when merge operator is present.
+ * @brief In this test we ensure that the schema can be propagated properly when unionWith operator is present.
  */
 TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
 
     Query subQuery = Query::from("default_logical");
     auto query = Query::from("default_logical")
-                     .merge(&subQuery)
+                     .unionWith(&subQuery)
                      .map(Attribute("f3") = Attribute("id")++)
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
@@ -604,7 +604,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto subQuery = Query::from("default_logical");
 
     auto query = Query::from("default_logical")
-                     .merge(&subQuery)
+                     .unionWith(&subQuery)
                      .filter(Attribute("f2") < 42)
                      .project(Attribute("f1").rename("f3"), Attribute("f2").rename("f4"))
                      .map(Attribute("default_logical$f3") = Attribute("f4") + 2)

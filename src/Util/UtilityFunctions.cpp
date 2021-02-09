@@ -68,7 +68,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
     }
 
     bool pattern = queryCodeSnippet.find("Pattern::") != std::string::npos;
-    bool merge = queryCodeSnippet.find(".merge") != std::string::npos;
+    bool merge = queryCodeSnippet.find(".unionWith") != std::string::npos;
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
@@ -93,13 +93,13 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         std::string newQuery = queryCodeSnippet;
 
         if (merge) {//if contains merge
-            auto pos1 = queryCodeSnippet.find("merge(");
+            auto pos1 = queryCodeSnippet.find("unionWith(");
             std::string tmp = queryCodeSnippet.substr(pos1);
             auto pos2 = tmp.find(")).");//find the end bracket of merge query
             std::string subquery = tmp.substr(6, pos2 - 5);
             NES_DEBUG("UtilityFunctions: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
-            newQuery.replace(pos1, pos2 + 1, "merge(&subQuery");
+            newQuery.replace(pos1, pos2 + 1, "unionWith(&subQuery");
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
         }
 

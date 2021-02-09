@@ -171,7 +171,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
+    std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
@@ -665,7 +665,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
                            ->addField("value", DataTypeFactory::createUInt32())
                            ->addField("timestamp", DataTypeFactory::createUInt64());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
+    std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");

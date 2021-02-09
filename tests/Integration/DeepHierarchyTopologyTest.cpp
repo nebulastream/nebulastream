@@ -1642,7 +1642,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
 }
 
 /**
- * @brief This tests applies a merge on a three level hierarchy
+ * @brief This tests applies a unionWith on a three level hierarchy
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
@@ -1836,7 +1836,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testMergeThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
+    string query = "Query::from(\"car\").unionWith(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
         + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");

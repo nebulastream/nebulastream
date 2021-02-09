@@ -548,9 +548,9 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge)
     std::string outputFilePath = "testPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("SimplePatternTest: Submit merge pattern");
+    NES_INFO("SimplePatternTest: Submit unionWith pattern");
     std::string query =
-        R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).merge(Pattern::from("QnV1").filter(Attribute("velocity") > 100)).sink(FileSinkDescriptor::create(")"
+        R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).unionWith(Pattern::from("QnV1").filter(Attribute("velocity") > 100)).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();

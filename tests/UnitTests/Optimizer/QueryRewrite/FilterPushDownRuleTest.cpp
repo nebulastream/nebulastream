@@ -285,7 +285,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
     Query subQuery = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45);
 
     Query query = Query::from("default_logical")
-                      .merge(&subQuery)
+                      .unionWith(&subQuery)
                       .map(Attribute("value") = 80)
                       .filter(Attribute("id") > 45)
                       .sink(printSinkDescriptor);
@@ -351,7 +351,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator)
     Query query = Query::from("default_logical")
                       .map(Attribute("value") = 80)
                       .filter(Attribute("id") > 45)
-                      .merge(&subQuery)
+                      .unionWith(&subQuery)
                       .sink(printSinkDescriptor);
 
     const QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -411,7 +411,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
     Query subQuery = Query::from("car");
 
     Query query = Query::from("default_logical")
-                      .merge(&subQuery)
+                      .unionWith(&subQuery)
                       .map(Attribute("value") = 80)
                       .filter(Attribute("id") > 45)
                       .map(Attribute("value") = 40)
@@ -479,7 +479,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
     Query subQuery = Query::from("car").map(Attribute("value") = 90).filter(Attribute("id") > 35);
 
     Query query = Query::from("default_logical")
-                      .merge(&subQuery)
+                      .unionWith(&subQuery)
                       .map(Attribute("value") = 80)
                       .filter(Attribute("id") > 45)
                       .map(Attribute("value") = 40)
@@ -555,7 +555,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
 
     Query query = Query::from("default_logical")
                       .filter(Attribute("id") > 25)
-                      .merge(&subQuery)
+                      .unionWith(&subQuery)
                       .map(Attribute("value") = 80)
                       .filter(Attribute("id") > 45)
                       .map(Attribute("value") = 40)
