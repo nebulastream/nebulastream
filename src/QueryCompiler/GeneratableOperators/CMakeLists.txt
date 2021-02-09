@@ -16,7 +16,7 @@ add_source_nes(
         GeneratableOperator.cpp
         GeneratableFilterOperator.cpp
         GeneratableMapOperator.cpp
-        GeneratableMergeOperator.cpp
+        GeneratableUnionOperator.cpp
         GeneratableSinkOperator.cpp
         GeneratableScanOperator.cpp
         GeneratableWatermarkAssignerOperator.cpp

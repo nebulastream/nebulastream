@@ -46,9 +46,9 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableJoinOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableMapOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableMergeOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableUnionOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 
 namespace NES {
@@ -81,7 +81,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
         auto scanOperator =
             GeneratableScanOperator::create(binaryOperator->getLeftInputSchema(), binaryOperator->getOutputSchema());
         generatableParentOperator->addChild(scanOperator);
-        auto childOperator = GeneratableMergeOperator::create(operatorNode->as<UnionLogicalOperatorNode>());
+        auto childOperator = GeneratableUnionOperator::create(operatorNode->as<UnionLogicalOperatorNode>());
         scanOperator->addChild(childOperator);
         return childOperator;
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {

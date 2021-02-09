@@ -14,23 +14,23 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMERGEOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMERGEOPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEUNIONOPERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEUNIONOPERATOR_HPP_
 
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {
 
-class GeneratableMergeOperator : public UnionLogicalOperatorNode, public GeneratableOperator {
+class GeneratableUnionOperator : public UnionLogicalOperatorNode, public GeneratableOperator {
   public:
     /**
-     * @brief Create sharable instance of GeneratableMergeOperator
-     * @param logicalMergeOperator: the merge logical operator
+     * @brief Create sharable instance of GeneratableUnionOperator
+     * @param logicalUnionOperator: the union logical operator
      * @param id: the operator id if not provided then next available operator id is used.
-     * @return instance of GeneratableMergeOperator
+     * @return instance of GeneratableUnionOperator
      */
-    static GeneratableMergeOperatorPtr create(MergeLogicalOperatorNodePtr logicalMergeOperator,
+    static GeneratableMergeOperatorPtr create(UnionLogicalOperatorNodePtr logicalUnionOperator,
                                               OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
@@ -54,9 +54,9 @@ class GeneratableMergeOperator : public UnionLogicalOperatorNode, public Generat
     const std::string toString() const override;
 
   private:
-    GeneratableMergeOperator(SchemaPtr outputSchema, OperatorId id);
+    GeneratableUnionOperator(SchemaPtr outputSchema, OperatorId id);
 };
 
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEMERGEOPERATOR_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEUNIONOPERATOR_HPP_
