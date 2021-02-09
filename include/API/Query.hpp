@@ -83,7 +83,7 @@ class Query {
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
-    * @param subQuery is the query to be merged
+    * @param subQuery is the query to be unioned
     * @return
     */
     Query& unionWith(Query* subQuery);
