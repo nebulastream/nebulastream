@@ -199,7 +199,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 /* 3.Test
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
-TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkers) {
+TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -488,7 +488,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
 /* 6.Test
  * Here, we test if we can use merge operator for patterns and create complex events with it
  */
-TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge) {
+TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();

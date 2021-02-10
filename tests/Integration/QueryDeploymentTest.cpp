@@ -67,7 +67,7 @@ class QueryDeploymentTest : public testing::Test {
 /**
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
-TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -149,7 +149,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -162,7 +162,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -175,7 +175,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -188,7 +188,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -201,7 +201,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -214,7 +214,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -249,7 +249,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -331,7 +331,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -344,7 +344,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -357,7 +357,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -370,7 +370,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -383,7 +383,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -396,7 +396,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
