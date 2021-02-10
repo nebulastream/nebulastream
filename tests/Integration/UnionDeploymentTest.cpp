@@ -68,7 +68,7 @@ class UnionDeploymentTest : public testing::Test {
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
 //FIXME: Enabled while solving #1467
-TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
+TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
@@ -116,7 +116,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(confCar);
 
-    wrk2->registerLogicalStream("truck", testSchemaFileName);
+    wrk2->registerLogicalStream("car", testSchemaFileName);
 
     sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -251,7 +251,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 //FIXME: Enabled while solving #1467
-TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
+TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
