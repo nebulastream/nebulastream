@@ -18,6 +18,7 @@
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 #include <Phases/QueryRewritePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -34,6 +35,7 @@ QueryRewritePhase::QueryRewritePhase(StreamCatalogPtr streamCatalog) {
     distributeWindowRule = DistributeWindowRule::create();
     distributeJoinRule = DistributeJoinRule::create();
     renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
+    projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
 }
 
 QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
@@ -44,6 +46,7 @@ QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = logicalSourceExpansionRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = distributeJoinRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
     return distributeWindowRule->apply(duplicateQueryPlan);
 }
 
