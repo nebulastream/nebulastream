@@ -18,7 +18,7 @@ project(NES CXX)
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
 endif ()
-
+set(CMAKE_VERBOSE_MAKEFILE on)
 # Find project version
 include(cmake/GetSemanticVersion.cmake)
 
@@ -41,7 +41,6 @@ set(NES_SPECIFIC_FLAGS)
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "-DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
-
 
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -Werror=unused-variable -Werror=unused-parameter -g ${NES_SPECIFIC_FLAGS}")
@@ -150,9 +149,24 @@ add_custom_command(
 # LibZMQ
 # ------
 message(STATUS "Libzmq")
-set(ZMQ_RELEASE "4.3.4")
-find_package(ZMQ ${ZMQ_RELEASE} REQUIRED)
-set(LIBRARIES ${LIBRARIES} libzmq)
+set(ZMQ_RELEASE "4.3.2")
+find_package(ZeroMQ ${ZMQ_RELEASE} REQUIRED)
+if(NOT ${ZeroMQ_FOUND})
+    message(FATAL_ERROR "Unable to find libzmq")
+endif()
+set(LIBRARIES ${LIBRARIES} ${ZeroMQ_LIBRARIES})
+message(STATUS "Using Libzmq: " ${ZeroMQ_LIBRARIES})
+
+
+# CppZMQ
+message(STATUS "cppzmq")
+set(CPPZMQ_RELEASE "4.7.0")
+find_package(CPPZMQ ${CPPZMQ_RELEASE} REQUIRED)
+if(NOT ${CPPZMQ_FOUND})
+    message(FATAL_ERROR "Unable to find cppzmq")
+endif()
+#set(LIBRARIES ${LIBRARIES} ${CPPZMQ_LIBRARIES}) CPPZMQ is header only so we dont need to link anything
+message(STATUS "Using cppzmq: " ${CPPZMQ_LIBRARIES})
 
 # Z3 Solver
 message(STATUS "Z3")
@@ -161,11 +175,6 @@ if(NOT ${Z3_FOUND})
     message(FATAL_ERROR "Unable to find Z3")
 endif()
 set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
-
-# CppZMQ
-message(STATUS "cppzmq")
-set(CPPZMQ_RELEASE "4.7.1")
-find_package(cppzmq ${CPPZMQ_RELEASE} REQUIRED)
 
 # Log4cc
 find_package(Log4cxx REQUIRED)
@@ -295,7 +304,7 @@ get_header_nes(nes_HEADER_FILES)
 add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(nes PUBLIC ${LIBRARIES} cppzmq ${PROTOBUF_LIBRARIES})
+target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
 if (GRPC_LIBRARIES)
     target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
 endif ()
