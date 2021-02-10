@@ -34,10 +34,10 @@ FilterPushDownRulePtr FilterPushDownRule::create() { return std::make_shared<Fil
 
 FilterPushDownRule::FilterPushDownRule() {}
 
-QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
+QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
 
-    NES_INFO("FilterPushDownRule: Get all filter nodes in the graph");
-    const auto rootOperators = queryPlanPtr->getRootOperators();
+    NES_INFO("Applying FilterPushDownRule to query " << queryPlan->toString());
+    const auto rootOperators = queryPlan->getRootOperators();
     std::vector<FilterLogicalOperatorNodePtr> filterOperators;
 
     for (auto rootOperator : rootOperators) {
@@ -47,48 +47,48 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
         filterOperators.insert(filterOperators.end(), filters.begin(), filters.end());
     }
 
-    NES_INFO("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
+    NES_DEBUG("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
 
     std::sort(filterOperators.begin(), filterOperators.end(),
               [](FilterLogicalOperatorNodePtr lhs, FilterLogicalOperatorNodePtr rhs) {
                   return lhs->getId() < rhs->getId();
               });
 
-    NES_INFO("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
+    NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (auto filterOperator : filterOperators) {
         pushDownFilter(filterOperator);
     }
 
-    NES_INFO("FilterPushDownRule: Return the updated query plan");
-    return queryPlanPtr;
+    NES_INFO("FilterPushDownRule: Return the updated query plan " << queryPlan->toString());
+    return queryPlan;
 }
 
 void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOperator) {
 
-    NES_INFO("FilterPushDownRule: Get children of current filter");
+    NES_TRACE("FilterPushDownRule: Get children of current filter");
     std::vector<NodePtr> childrenOfFilter = filterOperator->getChildren();
-    NES_INFO("FilterPushDownRule: Copy children to the queue for further processing");
+    NES_TRACE("FilterPushDownRule: Copy children to the queue for further processing");
     std::deque<NodePtr> nodesToProcess(childrenOfFilter.begin(), childrenOfFilter.end());
 
     while (!nodesToProcess.empty()) {
 
-        static bool isFilterAboveAMergeOperator{false};
-        NES_INFO("FilterPushDownRule: Get first operator for processing");
+        static bool isFilterAboveUnionOperator{false};
+        NES_TRACE("FilterPushDownRule: Get first operator for processing");
         NodePtr node = nodesToProcess.front();
         nodesToProcess.pop_front();
 
         if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
             || node->instanceOf<FilterLogicalOperatorNode>()) {
 
-            NES_INFO("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
+            NES_TRACE("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
 
             if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {
 
-                NES_INFO("FilterPushDownRule: Adding Filter operator between current operator and its parents");
+                NES_TRACE("FilterPushDownRule: Adding Filter operator between current operator and its parents");
 
-                if (isFilterAboveAMergeOperator) {
+                if (isFilterAboveUnionOperator) {
 
-                    NES_INFO("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
+                    NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
                     duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
 
@@ -99,7 +99,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                     }
 
-                    isFilterAboveAMergeOperator = false;
+                    isFilterAboveUnionOperator = false;
                     continue;
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
                              && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
@@ -124,7 +124,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                 continue;
             } else {
                 std::vector<NodePtr> children = node->getChildren();
-                if (isFilterAboveAMergeOperator) {//To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
+                if (isFilterAboveUnionOperator) {//To ensure duplicated filter operator with a new operator ID consistently moves to sub-query
                     std::copy(children.begin(), children.end(), std::front_inserter(nodesToProcess));
                 } else {
                     std::copy(children.begin(), children.end(), std::back_inserter(nodesToProcess));
@@ -132,7 +132,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             }
         } else if (node->instanceOf<UnionLogicalOperatorNode>()) {
 
-            isFilterAboveAMergeOperator = true;
+            isFilterAboveUnionOperator = true;
             std::vector<NodePtr> childrenOfMergeOP = node->getChildren();
             std::copy(childrenOfMergeOP.begin(), childrenOfMergeOP.end(), std::front_inserter(nodesToProcess));
             std::sort(nodesToProcess.begin(),
@@ -140,7 +140,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         }
     }
 
-    NES_INFO("FilterPushDownRule: Remove all parents can children of the filter operator");
+    NES_TRACE("FilterPushDownRule: Remove all parents can children of the filter operator");
     filterOperator->removeAllParent();
     filterOperator->removeChildren();
 }
@@ -148,17 +148,17 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator,
                                                       const std::string fieldName) const {
 
-    NES_INFO("FilterPushDownRule: Create an iterator for traversing the filter predicates");
+    NES_TRACE("FilterPushDownRule: Create an iterator for traversing the filter predicates");
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
 
     for (auto itr = depthFirstNodeIterator.begin(); itr != depthFirstNodeIterator.end(); ++itr) {
 
-        NES_INFO("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
+        NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
             const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
 
-            NES_INFO("FilterPushDownRule: Check if the input field name is same as the FieldAccessExpression field name");
+            NES_TRACE("FilterPushDownRule: Check if the input field name is same as the FieldAccessExpression field name");
             if (accessExpressionNode->getFieldName() == fieldName) {
                 return true;
             }
@@ -168,7 +168,7 @@ bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodeP
 }
 
 std::string FilterPushDownRule::getFieldNameUsedByMapOperator(NodePtr node) const {
-    NES_INFO("FilterPushDownRule: Find the field name used in map operator");
+    NES_TRACE("FilterPushDownRule: Find the field name used in map operator");
     MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
     const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
     const FieldAccessExpressionNodePtr field = mapExpression->getField();

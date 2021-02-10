@@ -42,7 +42,7 @@ typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
 class FilterPushDownRule : public BaseRewriteRule {
 
   public:
-    QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
+    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
     static FilterPushDownRulePtr create();
 
