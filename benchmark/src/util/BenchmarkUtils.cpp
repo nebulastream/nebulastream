@@ -63,6 +63,7 @@ uint64_t BenchmarkUtils::calcExpectedTuplesSelectivity(std::list<uint64_t> list,
 
 void BenchmarkUtils::recordStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
                                       NodeEngine::NodeEnginePtr nodeEngine) {
+
     for (uint64_t i = 0; i < BenchmarkUtils::runSingleExperimentSeconds + 1; ++i) {
         int64_t nextPeriodStartTime = BenchmarkUtils::periodLengthInSeconds * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

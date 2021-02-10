@@ -116,6 +116,12 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
 }
 
+NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine()
+{
+    return worker->getNodeEngine();
+}
+
+
 uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 

@@ -134,6 +134,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     GlobalQueryPlanPtr getGlobalQueryPlan();
 
+    NodeEngine::NodeEnginePtr getNodeEngine();
+    
     void onFatalError(int signalNumber, std::string string) override;
     void onFatalException(const std::shared_ptr<std::exception> ptr, std::string string) override;
 

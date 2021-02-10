@@ -42,11 +42,11 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
     NES_DEBUG("CSVSource: Opening path " << path);
     input.open(path);
 
-    NES_DEBUG("CSVSource::fillBuffer: read buffer");
+    NES_DEBUG("CSVSource::CSVSource: read buffer");
     input.seekg(0, input.end);
     fileSize = input.tellg();
     if (fileSize == -1) {
-        NES_ERROR("CSVSource::fillBuffer File " + filePath + " is corrupted");
+        NES_ERROR("CSVSource::CSVSource File " + filePath + " is corrupted");
     }
 
     if (numBuffersToProcess != 0) {
