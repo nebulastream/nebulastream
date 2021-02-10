@@ -21,8 +21,8 @@ if (CMAKE_CROSSCOMPILING)
             -DBoost_NO_SYSTEM_PATHS=TRUE
             -DBoost_INCLUDE_DIR=/opt/sysroots/aarch64-linux-gnu/usr/include/
             -DBoost_LIBRARY_DIR=/opt/sysroots/aarch64-linux-gnu/usr/lib/
-    )
-else()
+            )
+else ()
     set(CMAKE_ARGS_CROSS "")
 endif ()
 
@@ -140,14 +140,14 @@ if (NES_USE_KAFKA)
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
-if(NES_USE_OPC)
+if (NES_USE_OPC)
     add_executable(opc-source-tests "UnitTests/Source/OPCSourceTest.cpp" UnitTests/Source/OPCSourceTest.cpp)
     target_link_libraries(opc-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-source-tests COMMAND opc-source-tests)
     add_executable(opc-sink-tests "UnitTests/Sink/OPCSinkTest.cpp" UnitTests/Sink/OPCSinkTest.cpp)
     target_link_libraries(opc-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
-endif(NES_USE_OPC)
+endif (NES_USE_OPC)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
@@ -329,10 +329,15 @@ add_executable(attribute-sort-rule-test "UnitTests/Optimizer/QueryRewrite/Attrib
 target_link_libraries(attribute-sort-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME attribute-sort-rule-test COMMAND attribute-sort-rule-test)
 
-### Attribute Sort Rule Test ###
+### Rename Stream To Project Operator Rule Test ###
 add_executable(rename-stream-to-project-operator-rule-test "UnitTests/Optimizer/QueryRewrite/RenameStreamToProjectOperatorRuleTest.cpp")
 target_link_libraries(rename-stream-to-project-operator-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME rename-stream-to-project-operator-rule-test COMMAND rename-stream-to-project-operator-rule-test)
+
+### Project Before Union Operator Rule Test ###
+add_executable(project-before-union-operator-rule-test "UnitTests/Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRuleTest.cpp")
+target_link_libraries(project-before-union-operator-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME project-before-union-operator-rule-test COMMAND project-before-union-operator-rule-test)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
