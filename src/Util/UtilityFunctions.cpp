@@ -96,7 +96,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
             auto pos1 = queryCodeSnippet.find("unionWith(");
             std::string tmp = queryCodeSnippet.substr(pos1);
             auto pos2 = tmp.find(")).");//find the end bracket of merge query
-            std::string subquery = tmp.substr(6, pos2 - 5);
+            std::string subquery = tmp.substr(10, pos2 - 9);
             NES_DEBUG("UtilityFunctions: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
             newQuery.replace(pos1, pos2 + 1, "unionWith(&subQuery");
