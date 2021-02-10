@@ -33,6 +33,8 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   librdkafka-dev \
   libeigen3-dev \
   libzmqpp-dev \
+  doxygen \
+  graphviz \
   git \
   wget \
   z3 \
