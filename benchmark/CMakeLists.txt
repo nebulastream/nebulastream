@@ -13,6 +13,7 @@
 # limitations under the License.
 # Google Benchmark Framework ----------------------------------------------------
 
+
 if (NES_BUILD_BENCHMARKS)
     message("---Building benchmarks...")
     include(ExternalProject)
@@ -102,6 +103,12 @@ if (NES_BUILD_BENCHMARKS)
     target_link_libraries(tuple-size-query-benchmark nes)
     target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
+
+    ### E2e Benchmark ###
+    add_executable(e2e-benchmark "E2ETests/E2ESkelaton.cpp")
+    target_link_libraries(e2e-benchmark nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME e2e-benchmark COMMAND e2e-benchmark --benchmark_out=e2e.log --benchmark_out_format=json)
 
     add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
 

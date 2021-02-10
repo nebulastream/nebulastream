@@ -159,8 +159,11 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
                           << gatheringInterval << " tsNow=" << lastTimeStampSec.count() << " now=" << nowInSec.count());
                 recNow = true;
                 lastTimeStampSec = nowInSec;
+            } else {
+                NES_DEBUG("lastTimeStampSec=" << lastTimeStampSec.count() << "nowInSec=" << nowInSec.count());
             }
         } else {
+            NES_DEBUG("DataSource::runningRoutine check for specific source type");
             //check each second
             if (nowInSec != lastTimeStampSec) {                 //we are in another second
                 if (nowInSec.count() % gatheringInterval == 0) {//produce a regular buffer
@@ -200,6 +203,7 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
         NES_DEBUG("DataSource::runningRoutine: exist routine " << this);
     }
+    NES_DEBUG("DataSource end running");
 }
 
 // debugging
