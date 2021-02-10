@@ -30,6 +30,9 @@ typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 /**
  * @brief This rule is defined for adding a Projection Operator before a Union Operator. Following are the conditions:
  * - If there exists a Union operator with different schemas then add on one side a project operator to make both schema equal.

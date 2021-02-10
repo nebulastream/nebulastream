@@ -67,7 +67,6 @@ class UnionDeploymentTest : public testing::Test {
 /**
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
-//FIXME: Enabled while solving #1467
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
@@ -116,7 +115,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(confCar);
 
-    wrk2->registerLogicalStream("car", testSchemaFileName);
+    wrk2->registerLogicalStream("truck", testSchemaFileName);
 
     sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -250,7 +249,6 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-//FIXME: Enabled while solving #1467
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
@@ -433,8 +431,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-//FIXME: Enabled while solving #1467
-TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
+TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
@@ -617,8 +614,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDif
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-//FIXME: Enabled while solving #1467
-TEST_F(UnionDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
+TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
@@ -713,8 +709,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
  * Case: 2 filter operators are above a unionWith operator and will be pushed down towards both of the available sources.
  *       2 filter operators are already below unionWith operator and need to be pushed down normally towards its respective source.
  */
-//FIXME: Enabled while solving #1467
-TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
+TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
@@ -877,8 +872,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
  * Case: 1 filter operator is above a unionWith operator and will be pushed down towards both of the available sources.
  *       1 filter operator is already below unionWith operator and needs to be pushed down normally towards its own source.
  */
-//FIXME: Enabled while solving #1467
-TEST_F(UnionDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
+TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
@@ -1010,8 +1004,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
  * Case: 2 filter operators are already below unionWith operator and needs to be pushed down normally towards their respective source.
  *       Here the filters don't need to be pushed down over an existing unionWith operator.
  */
-//FIXME: Enabled while solving #1467
-TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
+TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();

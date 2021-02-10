@@ -44,6 +44,9 @@ typedef std::shared_ptr<DistributeJoinRule> DistributeJoinRulePtr;
 class RenameStreamToProjectOperatorRule;
 typedef std::shared_ptr<RenameStreamToProjectOperatorRule> RenameStreamToProjectOperatorRulePtr;
 
+class ProjectBeforeUnionOperatorRule;
+typedef std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRulePtr;
+
 /**
  * @brief This phase is responsible for re-writing the query plan
  */
@@ -67,6 +70,7 @@ class QueryRewritePhase {
     DistributeWindowRulePtr distributeWindowRule;
     DistributeJoinRulePtr distributeJoinRule;
     RenameStreamToProjectOperatorRulePtr renameStreamToProjectOperatorRule;
+    ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
 };
 }// namespace NES
 #endif//NES_QUERYREWRITEPHASE_HPP
