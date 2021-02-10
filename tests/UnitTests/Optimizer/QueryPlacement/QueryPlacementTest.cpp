@@ -126,6 +126,89 @@ class QueryPlacementTest : public testing::Test {
     TopologyPtr topology;
 };
 
+TEST_F (QueryPlacementTest, testMatchingSubQueryIdToParentQueryId){
+
+    topology = Topology::create();
+
+    TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
+    topology->setAsRoot(rootNode);
+
+    TopologyNodePtr interimNode2 = TopologyNode::create(2, "localhost", 123, 124, 1);
+    TopologyNodePtr interimNode3 = TopologyNode::create(3, "localhost", 123, 124, 1);
+    TopologyNodePtr interimNode4 = TopologyNode::create(4, "localhost", 123, 124, 1);
+    TopologyNodePtr interimNode5 = TopologyNode::create(5, "localhost", 123, 124, 1);
+    TopologyNodePtr interimNode6 = TopologyNode::create(6, "localhost", 123, 124, 1);
+    TopologyNodePtr interimNode7 = TopologyNode::create(7, "localhost", 123, 124, 1);
+    TopologyNodePtr interimNode8 = TopologyNode::create(8, "localhost", 123, 124, 1);
+
+    TopologyNodePtr sourceNode1 = TopologyNode::create(9, "localhost", 123, 124, 1);
+    topology->addNewPhysicalNodeAsChild(interimNode5, sourceNode1);
+    topology->addNewPhysicalNodeAsChild(interimNode6, sourceNode1);
+
+    TopologyNodePtr sourceNode2 = TopologyNode::create(10, "localhost", 123, 124, 1);
+    topology->addNewPhysicalNodeAsChild(interimNode7, sourceNode2);
+    topology->addNewPhysicalNodeAsChild(interimNode8, sourceNode2);
+
+    //create connections between interim Nodes
+
+    topology->addNewPhysicalNodeAsChild(rootNode, interimNode2);
+    topology->addNewPhysicalNodeAsChild(rootNode, interimNode3);
+    topology->addNewPhysicalNodeAsChild(rootNode, interimNode4);
+
+    topology->addNewPhysicalNodeAsChild(interimNode2, interimNode5);
+    topology->addNewPhysicalNodeAsChild(interimNode2, interimNode6);
+
+    topology->addNewPhysicalNodeAsChild(interimNode3, interimNode6);
+    topology->addNewPhysicalNodeAsChild(interimNode3, interimNode7);
+
+    topology->addNewPhysicalNodeAsChild(interimNode4, interimNode7);
+    topology->addNewPhysicalNodeAsChild(interimNode4, interimNode8);
+
+    NES_DEBUG(topology->toString());
+
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64);";
+    const std::string streamName = "car";
+
+    streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addLogicalStream(streamName, schema);
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("car");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+
+    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode1);
+    StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode2);
+
+    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+    streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy =
+        PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+
+    Query query = Query::from("car").filter(Attribute("id") < 45).filter(Attribute("value")>10).sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    ASSERT_EQ(executionNodes.size(), 7);
+
+
+}
 /* Test query placement with bottom up strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 

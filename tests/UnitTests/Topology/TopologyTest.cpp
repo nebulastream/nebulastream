@@ -539,7 +539,7 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
-    // creater workers
+    // create workers
     std::vector<TopologyNodePtr> topologyNodes;
     int resource = 4;
     for (uint32_t i = 0; i < 15; ++i) {
