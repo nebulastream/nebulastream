@@ -24,15 +24,12 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   python3.8 \
   z3 \
   tar \
+  doxygen \
+  graphviz \
   software-properties-common \
   && add-apt-repository ppa:open62541-team/ppa && \
   apt-get update -qq && \
   apt-get install libopen62541-1-dev -qq \
-  && apt-get clean -qq
-
-RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -qq \
-  doxygen \
-  graphviz \
   && apt-get clean -qq
 
 RUN cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
