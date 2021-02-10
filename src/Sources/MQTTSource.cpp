@@ -160,10 +160,8 @@ bool MQTTSource::connect() {
         try {
             auto connOpts =
                 mqtt::connect_options_builder()
-                    //.keep_alive_interval(std::chrono::nanoseconds(120 * 500 * 1000000)) //MaxBufferMessages = 120, send Duration = 500 * 1000000
                     .user_name(user)
                     .clean_session(true)
-                    //.automatic_reconnect(true)
                     .connect_timeout(std::chrono::nanoseconds(30 * 500 * 1000000)) //15 seconds
                     .finalize();
 

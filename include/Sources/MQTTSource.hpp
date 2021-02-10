@@ -27,7 +27,7 @@
 namespace NES {
 class TupleBuffer;
 /**
- * @brief this class provide a MQTT as data source
+ * @brief this class provides an MQTT as data source
  */
 class MQTTSource : public DataSource {
 
