@@ -53,18 +53,6 @@ RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git &&
   make -j -w && make install && cd ${HOME} && rm -rf cppkafka* && \
   apt-get purge -y wget && apt autoremove -y
 
-RUN cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
-  cd paho.mqtt.c && git checkout v1.3.8 && \
-  cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF \
-  -DPAHO_BUILD_STATIC=ON \
-  -DPAHO_WITH_SSL=ON \
-  -DPAHO_HIGH_PERFORMANCE=ON && \
-  cmake --build build/ --target install && \
-  ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
-  git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
-  cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
-  cmake --build build/ --target install && ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
-
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
