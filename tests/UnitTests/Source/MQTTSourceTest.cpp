@@ -29,7 +29,7 @@
 #include <thread>
 
 #ifndef SERVERADDRESS
-#define SERVERADDRESS "127.0.0.1:1883"
+#define SERVERADDRESS "tcp://127.0.0.1:1883"
 #endif
 
 #ifndef CLIENTID
@@ -104,7 +104,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 
     auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, 1);
 
-    std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=127.0.0.1:1883, CLIENTID=nes-mqtt-test-client, "
+    std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, CLIENTID=nes-mqtt-test-client, "
                            "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry. ";
 
     EXPECT_EQ(mqttSource->toString(), expected);
@@ -114,5 +114,22 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
     SUCCEED();
 }
 
+/**
+ * Tests if obtained value is valid.
+ */
+TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
+
+    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager,  SERVERADDRESS, CLIENTID, USER, TOPIC, 1);
+    auto tuple_buffer = mqttSource->receiveData();
+    EXPECT_TRUE(tuple_buffer.has_value());
+    uint64_t value = 0;
+    auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
+    value = *tuple;
+    uint64_t expected = 43;
+    NES_DEBUG("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: " << expected
+                                                                                         << ". Received value is: " << value);
+    EXPECT_EQ(value, expected);
+}
 }// namespace NES
 #endif

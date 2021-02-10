@@ -60,6 +60,13 @@ class MQTTSource : public DataSource {
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
+     * @brief fill buffer with appropriate data type
+     * @param buf buffer to be filled
+     * @param data the received data as string
+     */
+    void fillBuffer(NodeEngine::TupleBuffer& buf, std::string data);
+
+    /**
      * @brief override the toString method for the mqtt source
      * @return returns string describing the mqtt source
      */

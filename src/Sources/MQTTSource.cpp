@@ -16,6 +16,8 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/MQTTSource.hpp>
@@ -60,16 +62,11 @@ std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
             NES_INFO("Waiting for messages on topic: '" << topic << "'");
 
             auto buffer = bufferManager->getBufferBlocking();
-            //ToDo: check if only one tuple send each time or changes possible
-            int count = 0;
-            while (true) {
-                auto msg = client.consume_message();
-                if (!msg) {
-                    buffer.setNumberOfTuples(count);
-                    break;
-                }
-                std::memcpy(buffer.getBuffer(), msg->get_payload_str().c_str(), msg->get_payload().size());
-            }
+            //ToDo: handle what happens if no data arrives
+            auto msg = client.consume_message();
+            NES_INFO("Client consume message: '" << msg->get_payload_str() << "'");
+            fillBuffer(buffer, msg->get_payload_str());
+
             return buffer;
         } catch (const mqtt::exception& exc) {
             NES_ERROR("MQTTSource error: " << exc.what());
@@ -82,6 +79,7 @@ std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
         NES_ERROR("MQTTSource: Not connected!");
         return std::nullopt;
     }
+    return std::nullopt;
 }
 
 const std::string MQTTSource::toString() const {
@@ -95,16 +93,80 @@ const std::string MQTTSource::toString() const {
     return ss.str();
 }
 
+void MQTTSource::fillBuffer(NodeEngine::TupleBuffer& buf, std::string data) {
+
+    NES_INFO("Client consume message: '" << data << "'");
+
+    std::string line;
+    std::vector<PhysicalTypePtr> physicalTypes;
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(schema->fields[0]->getDataType());
+
+    uint64_t fieldSize = physicalField->size();
+
+    if (physicalField->isBasicType()) {
+        auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(physicalField);
+        /*
+             * TODO: our types need their own sto/strto methods
+             */
+        if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
+            uint64_t val = std::stoull(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_64) {
+            int64_t val = std::stoll(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_32) {
+            uint32_t val = std::stoul(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_32) {
+            int32_t val = std::stol(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
+            uint16_t val = std::stol(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_16) {
+            int16_t val = std::stol(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
+            uint8_t val = std::stoi(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_8) {
+            int8_t val = std::stoi(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_8) {
+            int8_t val = std::stoi(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::DOUBLE) {
+            double val = std::stod(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::FLOAT) {
+            float val = std::stof(data.c_str());
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::BOOLEAN) {
+            bool val = (strcasecmp(data.c_str(), "true") == 0 || atoi(data.c_str()) != 0);
+            memcpy(buf.getBuffer(), &val, fieldSize);
+        }
+    } else {
+        memcpy(buf.getBuffer(), data.c_str(), fieldSize);
+    }
+
+    buf.setNumberOfTuples(1);
+}
+
 bool MQTTSource::connect() {
     if (!connected) {
         NES_DEBUG("MQTTSource was !connect now connect " << this << ": connected");
         // connect with user name and password
-        auto connOpts = mqtt::connect_options_builder()
-                            .user_name(user)
-                            .keep_alive_interval(seconds(1))//waiting interval in standard chrono notation
-                            .clean_session(false)
-                            .finalize();
         try {
+            auto connOpts =
+                mqtt::connect_options_builder()
+                    //.keep_alive_interval(std::chrono::nanoseconds(120 * 500 * 1000000)) //MaxBufferMessages = 120, send Duration = 500 * 1000000
+                    .user_name(user)
+                    .clean_session(true)
+                    //.automatic_reconnect(true)
+                    .connect_timeout(std::chrono::nanoseconds(30 * 500 * 1000000)) //15 seconds
+                    .finalize();
+
             // Start consumer before connecting to make sure to not miss messages
             client.start_consuming();
 
