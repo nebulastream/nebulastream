@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
@@ -64,11 +65,14 @@ void setupSensorNodeAndStreamCatalogTwoNodes(StreamCatalogPtr streamCatalog) {
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
@@ -87,11 +91,15 @@ void setupSensorNodeAndStreamCatalogFiveNodes(StreamCatalogPtr streamCatalog) {
     TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4);
 
     std::cout << "topo=" << topology->toString() << std::endl;
-    PhysicalStreamConfigPtr streamConf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "test2",
-                                     /**Logical Stream Name**/ "test_stream");
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
 
     StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
@@ -110,7 +118,7 @@ void setupSensorNodeAndStreamCatalog(StreamCatalogPtr streamCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);

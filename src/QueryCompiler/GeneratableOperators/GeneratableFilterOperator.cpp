@@ -17,6 +17,7 @@
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
+#include <QueryCompiler/LegacyExpression.hpp>
 
 namespace NES {
 

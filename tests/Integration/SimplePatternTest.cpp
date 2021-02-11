@@ -16,6 +16,9 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -34,6 +37,10 @@ uint64_t rpcPort = 4000;
 
 class SimplePatternTest : public testing::Test {
   public:
+    CoordinatorConfigPtr coConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
+
     static void SetUpTestCase() {
         NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup SimplePatternTest test class.");
@@ -42,11 +49,16 @@ class SimplePatternTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+        coConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
+        srcConf = SourceConfig::create();
+
+        coConf->setRpcPort(rpcPort);
+        coConf->setRestPort(restPort);
+        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { std::cout << "Tear down SimplePatternTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
 };
 
@@ -54,14 +66,20 @@ class SimplePatternTest : public testing::Test {
  * Translation of a simple pattern (1 Stream) into a query
  */
 TEST_F(SimplePatternTest, testPatternWithFilter) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("SimplePatternTest: start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_DEBUG("SimplePatternTest: coordinator started successfully");
 
     NES_DEBUG("SimplePatternTest: start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("SimplePatternTest: worker1 started successfully");
@@ -96,14 +114,20 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
 TEST_F(SimplePatternTest, testPatternWithTestStream) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_DEBUG("coordinator started successfully");
 
     NES_DEBUG("start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("worker1 started successfully");
@@ -121,9 +145,13 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     out.close();
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("QnV");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short.csv", 1, 0, 1, "test_stream", "QnV");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testPatternWithTestStream.out";
@@ -147,7 +175,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|_$PatternId:INT32|\n"
+        "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$QnV$PatternId:INT32|\n"
         "+----------------------------------------------------+\n"
         "|R2000073|1543624020000|102.629631|8|1|\n"
         "|R2000070|1543625280000|108.166664|5|1|\n"
@@ -171,21 +199,30 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 /* 3.Test
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
-TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
+TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkers) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("SimplePatternTest: Coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("SimplePatternTest: Worker2 started successfully");
@@ -203,14 +240,22 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     out.close();
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream_R2000070");
+    srcConf->setLogicalStreamName("QnV");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000070.csv", 1, 0,
-                                                                  1, "test_stream_R2000070", "QnV");
+    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream_R2000073");
+    srcConf->setLogicalStreamName("QnV");
     //register physical stream R2000073
-    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000073.csv", 1, 0,
-                                                                  1, "test_stream_R2000073", "QnV");
+    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testPatternWithTestStream.out";
@@ -271,14 +316,20 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
 TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_DEBUG("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
@@ -295,9 +346,13 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
     out.close();
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short_intID.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("QnV");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_intID.csv", 1, 0, 1, "test_stream", "QnV");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testPatternWithWindowandAggregation.out";
@@ -321,12 +376,13 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
 
     //TODO Patternname waiting for String support in map operator
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|_$start:UINT64|_$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|_$PatternId:INT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1543622400000|1543623300000|2000073|107|1|\n"
-                             "|1543623600000|1543624500000|2000073|107|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|QnV$start:UINT64|QnV$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|QnV$QnV$PatternId:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622400000|1543623300000|2000073|107|1|\n"
+        "|1543623600000|1543624500000|2000073|107|1|\n"
+        "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -348,14 +404,20 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
  * TODO: Ariane
  */
 TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_DEBUG("coordinator started successfully");
 
     NES_DEBUG("start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_DEBUG("worker1 started successfully");
@@ -373,9 +435,13 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     out.close();
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("QnV");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short.csv", 1, 0, 1, "test_stream", "QnV");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testPatternWithTestStream.out";
@@ -423,20 +489,29 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
  * Here, we test if we can use merge operator for patterns and create complex events with it
  */
 TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("SimplePatternTest: Coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("SimplePatternTest: Worker2 started successfully");
@@ -452,14 +527,22 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge)
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
     wrk2->registerLogicalStream("QnV1", testSchemaFileName);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream_R2000070");
+    srcConf->setLogicalStreamName("QnV");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000070.csv", 1, 0,
-                                                                  1, "test_stream_R2000070", "QnV");
+    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream_R2000073");
+    srcConf->setLogicalStreamName("QnV1");
     //register physical stream R2000073
-    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create("CSVSource", "../tests/test_data/QnV_short_R2000073.csv", 1, 0,
-                                                                  1, "test_stream_R2000073", "QnV1");
+    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testPatternWithTestStream.out";

@@ -71,7 +71,7 @@ ExpressionItem ExpressionItem::rename(std::string newName) {
         NES_NOT_IMPLEMENTED();
     }
     auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
-    return FieldRenameExpressionNode::create(fieldAccessExpression->getFieldName(), newName, fieldAccessExpression->getStamp());
+    return FieldRenameExpressionNode::create(fieldAccessExpression, newName);
 }
 
 FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionItem assignItem) {

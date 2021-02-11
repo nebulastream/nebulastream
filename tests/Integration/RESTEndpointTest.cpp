@@ -33,6 +33,8 @@ static uint64_t rpcPort = 4000;
 
 class RESTEndpointTest : public testing::Test {
   public:
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
     static void SetUpTestCase() {
         NES::setupLogging("RESTEndpointTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup RESTEndpointTest test class.");
@@ -41,22 +43,30 @@ class RESTEndpointTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
-
-    std::string ipAddress = "127.0.0.1";
 };
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("RESTEndpointTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("RESTEndpointTest: Coordinator started successfully");
 
     NES_INFO("RESTEndpointTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
@@ -103,11 +113,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("get execution-plan: try to acc return");
     NES_DEBUG("getExecutionPlan response: " << getExecutionPlanJsonReturn.serialize());
     auto expected =
-        "{\"executionNodes\":[{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(4)\\n  "
-        "SOURCE(1)\\n\",\"querySubPlanId\":1}]}],\"executionNodeId\":2,\"topologyNodeId\":2,\"topologyNodeIpAddress\":\"127.0.0."
-        "1\"},{\"ScheduledQueries\":[{\"queryId\":1,\"querySubPlans\":[{\"operator\":\"SINK(2)\\n  "
-        "SOURCE(3)\\n\",\"querySubPlanId\":2}]}],\"executionNodeId\":1,\"topologyNodeId\":1,\"topologyNodeIpAddress\":\"127.0.0."
-        "1\"}]}";
+        R"({"executionNodes":[{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(4)\n  SOURCE(1,default_logical)\n","querySubPlanId":1}]}],"executionNodeId":2,"topologyNodeId":2,"topologyNodeIpAddress":"127.0.0.1"},{"ScheduledQueries":[{"queryId":1,"querySubPlans":[{"operator":"SINK(2)\n  SOURCE(3,)\n","querySubPlanId":2}]}],"executionNodeId":1,"topologyNodeId":1,"topologyNodeIpAddress":"127.0.0.1"}]})";
     NES_DEBUG("getExecutionPlan response: expected = " << expected);
     ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);
 

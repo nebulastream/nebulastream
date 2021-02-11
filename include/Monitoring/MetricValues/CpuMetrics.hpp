@@ -18,14 +18,10 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
 
 #include <Monitoring/MetricValues/CpuValues.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <memory>
-#include <vector>
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about cpu data.
@@ -82,6 +78,14 @@ class CpuMetrics {
  * @param the prefix as std::string
  */
 void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+
+/**
+ * @brief Class specific getSchema() method
+ * @param metric
+ * @param prefix
+ * @return the SchemaPtr
+ */
+SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);
 
 }// namespace NES
 

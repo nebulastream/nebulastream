@@ -19,4 +19,5 @@ add_source_nes(
         StacktraceLoader.cpp
         ThreadNaming.cpp
 )
+add_subdirectory(yaml)
 

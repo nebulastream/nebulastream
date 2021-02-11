@@ -38,6 +38,10 @@ message SerializableExpression {
     string fieldName = 1;
     SerializableDataType type = 2;
   }
+  message FieldRenameExpression{
+    string newFieldName = 1;
+    SerializableExpression originalFieldAccessExpression = 2;
+  }
   message FieldAssignmentExpression{
     FieldAccessExpression field = 1;
     SerializableExpression assignment = 2;

@@ -4,9 +4,16 @@ on:
   schedule:
     # executes every day at 1:15 am
     - cron: '15 1 * * *'
+  workflow_dispatch:
+    inputs:
+      trigger-value:
+        description: 'Trigger for performing benchmark on artifact release'
+        required: false
+        default: 'No_Value'
 
 jobs:  
-  benchmark-job:
+  benchmark-scheduled-job:
+    if: "contains(github.event.inputs.trigger-value, 'No_Value')"
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
@@ -20,7 +27,6 @@ jobs:
       - name: Run benchmarks
         run: |
           docker run -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
-          
       - name: Push Benchmarks to pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -31,3 +37,19 @@ jobs:
           keep_files: true
           external_repository: nebulastream/nes-server
           publish_branch: master
+  benchmark-triggered-job:
+    if: "!contains(github.event.inputs.trigger-value, 'No_Value')"
+    runs-on: [self-hosted, CI-2]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+      - name: Fetch git history
+        run: |
+          git fetch --prune --unshallow --tags
+      - name: Run benchmarks
+        run: |
+          docker run -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro -e BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker -jrb=1' --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
+          cp -R $GITHUB_WORKSPACE/benchmark/scripts/benchmark_* /tmp/.

@@ -536,7 +536,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
-    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,307\n"
                              "10000,20000,1,870\n"
                              "0,10000,4,6\n"
@@ -602,7 +602,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
-    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,307\n"
                              "0,10000,4,6\n"
                              "0,10000,11,30\n"

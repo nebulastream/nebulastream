@@ -19,10 +19,11 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
+
 /**
  * @brief A FieldRenameExpressionNode allows us to rename an attribute value via .rename in the query
  */
-class FieldRenameExpressionNode : public FieldAccessExpressionNode {
+class FieldRenameExpressionNode : public ExpressionNode {
   public:
     /**
      * @brief Create FieldRename Expression node
@@ -31,7 +32,7 @@ class FieldRenameExpressionNode : public FieldAccessExpressionNode {
      * @param datatype : the data type
      * @return pointer to the FieldRenameExpressionNode
      */
-    static ExpressionNodePtr create(std::string fieldName, std::string newFieldName, DataTypePtr datatype);
+    static ExpressionNodePtr create(FieldAccessExpressionNodePtr originalField, std::string newFieldName);
 
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
@@ -50,15 +51,15 @@ class FieldRenameExpressionNode : public FieldAccessExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
+    const FieldAccessExpressionNodePtr getOriginalField() const;
+
   protected:
     explicit FieldRenameExpressionNode(FieldRenameExpressionNode* other);
 
   private:
-    FieldRenameExpressionNode(std::string fieldName, std::string newFieldName, DataTypePtr datatype);
-    /**
-     * @brief Name of the field want to access.
-     */
-    ExpressionNodePtr expression;
+    FieldRenameExpressionNode(FieldAccessExpressionNodePtr originalField, std::string newFieldName);
+
+    FieldAccessExpressionNodePtr originalField;
     std::string newFieldName;
 };
 

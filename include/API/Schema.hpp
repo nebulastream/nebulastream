@@ -40,11 +40,6 @@ class Schema {
     constexpr static const char* const ATTRIBUTE_NAME_SEPARATOR = "$";
 
     /**
-     * @brief Schema qualifier for field with undefined qualifier
-     */
-    constexpr static const char* const UNDEFINED_SCHEMA_QUALIFIER = "_$";
-
-    /**
      * @brief Factory method to create a new SchemaPtr.
      * @return SchemaPtr
      */
@@ -163,6 +158,24 @@ class Schema {
     bool contains(const std::string& fieldName);
 
     const std::string toString() const;
+
+    /**
+     * @brief Method to return the stream name qualifier, thus everything that is before $
+     * @return string
+     */
+    const std::string getStreamNameQualifier() const;
+
+    /**
+     * @brief method to get the qualifier of the stream without $
+     * @return qualifier without $
+     */
+    std::string getQualifierNameForSystemGeneratedFields();
+
+    /**
+     * @brief method to get the qualifier of the stream with $
+     * @return qualifier with
+     */
+    std::string getQualifierNameForSystemGeneratedFieldsWithSeparator();
 
     /**
      * @brief Remove all fields and qualifying name

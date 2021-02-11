@@ -119,19 +119,23 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();
-    outputSchema->addField(createField("_$start", UINT64));
-    outputSchema->addField(createField("_$end", UINT64));
-    outputSchema->addField(AttributeField::create("_$key", leftJoinKey->getStamp()));
+    auto streamNameLeft = leftInputSchema->getQualifierNameForSystemGeneratedFields();
+    auto streamNameRight = rightInputSchema->getQualifierNameForSystemGeneratedFields();
+    auto newQualifierForSystemField = streamNameLeft + streamNameRight;
+    outputSchema->addField(createField(newQualifierForSystemField + "$start", UINT64));
+    outputSchema->addField(createField(newQualifierForSystemField + "$end", UINT64));
+    outputSchema->addField(AttributeField::create(newQualifierForSystemField + "$key", leftJoinKey->getStamp()));
 
     // create dynamic fields to store all fields from left and right streams
     for (auto field : leftInputSchema->fields) {
-        outputSchema->addField(field->name, field->getDataType());
+        outputSchema->addField(field->getName(), field->getDataType());
     }
 
     for (auto field : rightInputSchema->fields) {
-        outputSchema->addField(field->name, field->getDataType());
+        outputSchema->addField(field->getName(), field->getDataType());
     }
 
+    NES_DEBUG("Outputschme for join=" << outputSchema->toString());
     joinDefinition->updateOutputDefinition(outputSchema);
     return true;
 }

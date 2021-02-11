@@ -185,7 +185,7 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
@@ -196,7 +196,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
         Attribute("key", UINT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
-
+    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
                                   ->addField(createField("end", UINT64))
@@ -206,10 +206,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDef, windowOutputSchema);
+
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(0, 1, MockedExecutablePipelineStage::create(), context,
-                                                                          nullptr, nullptr, nullptr);
+                                                                          nullptr, windowInputSchema, windowOutputSchema);
     windowHandler->setup(context);
 
     auto windowState = windowHandler->getTypedWindowState();
@@ -259,7 +260,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31338, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
@@ -270,6 +271,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
         Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
         DistributionCharacteristic::createSlicingWindowType(), 0, trigger, triggerAction, 0);
 
+    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
                                   ->addField(createField("end", UINT64))
@@ -281,7 +283,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(
-        /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, nullptr, nullptr);
+        /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, windowInputSchema,
+        windowOutputSchema);
     windowHandler->setup(context);
 
     auto windowState = windowHandler->getTypedWindowState();
@@ -330,7 +333,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31339, conf);
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -341,6 +344,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
         DistributionCharacteristic::createCombiningWindowType(), 1, trigger, triggerAction, 0);
     auto exec = ExecutableSumAggregation<int64_t>::create();
 
+    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
                                   ->addField(createField("end", UINT64))
@@ -353,7 +357,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(
-        /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, nullptr, nullptr);
+        /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, windowInputSchema,
+        windowOutputSchema);
     windowHandler->setup(context);
 
     auto windowState =
@@ -404,7 +409,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
@@ -416,6 +421,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
         DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
+    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))
                                   ->addField(createField("end", UINT64))
@@ -429,7 +435,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(
-        /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, nullptr, nullptr);
+        /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, windowInputSchema,
+        windowOutputSchema);
 
     windowHandler->setup(context);
     auto windowState = windowHandler->getTypedWindowState();
@@ -482,12 +489,13 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31340, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto windowInputSchema = Schema::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
         Attribute("key", INT64), aggregation, TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
@@ -505,7 +513,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(
-        /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, nullptr, nullptr);
+        /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, windowInputSchema,
+        windowOutputSchema);
 
     windowHandler->setup(context);
 

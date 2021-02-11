@@ -18,6 +18,7 @@
 #define INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <memory>
 #include <string>
@@ -40,11 +41,8 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
 struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
-    static PhysicalStreamConfigPtr create(std::string sourceType = "DefaultSource", std::string sourceConfig = "1",
-                                          uint32_t sourceFrequency = 1, uint32_t numberOfTuplesToProducePerBuffer = 1,
-                                          uint32_t numberOfBuffersToProduce = 1,
-                                          std::string physicalStreamName = "default_physical",
-                                          std::string logicalStreamName = "default_logical", bool skipHeader = false);
+    static PhysicalStreamConfigPtr createEmpty();
+    static PhysicalStreamConfigPtr create(SourceConfigPtr sourceConfig);
 
     /**
      * @brief Get the source type
@@ -95,9 +93,7 @@ struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     SourceDescriptorPtr build(SchemaPtr) override;
 
   private:
-    explicit PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
-                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                  std::string physicalStreamName, std::string logicalStreamName, bool skipHeader);
+    explicit PhysicalStreamConfig(SourceConfigPtr sourceConfig);
 
     std::string sourceType;
     std::string sourceConfig;

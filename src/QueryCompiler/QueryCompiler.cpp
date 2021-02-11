@@ -79,6 +79,8 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
     // BFS visit to figure out producer-consumer relations among pipelines
     std::deque<std::tuple<int32_t, int32_t, PipelineContextPtr>> queue;
     queue.emplace_back(0, -1, std::move(context));
+    uint32_t id = 1;
+
     while (!queue.empty()) {
         auto [currentPipelineStateId, consumerPipelineStateId, currContext] = queue.front();
         queue.pop_front();
@@ -106,11 +108,11 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
             NES_ERROR("Error while compiling pipeline: " << err.what());
             NES_THROW_RUNTIME_ERROR("Cannot compile pipeline");
         }
-        uint32_t i = 1;
+
         for (const auto& nextPipelineContext : currContext->getNextPipelineContexts()) {
-            queue.emplace_back(currentPipelineStateId + i, currentPipelineStateId, nextPipelineContext);
-            accumulator[currentPipelineStateId].producers.emplace(currentPipelineStateId + i);
-            i++;
+            queue.emplace_back(currentPipelineStateId + id, currentPipelineStateId, nextPipelineContext);
+            accumulator[currentPipelineStateId].producers.emplace(currentPipelineStateId + id);
+            id++;
         }
     }
 }
@@ -174,6 +176,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext,
             pipelines[*holder.consumers.begin()], holder.inputSchema, holder.outputSchema);
 
+        NES_TRACE("pipeline code=" << pipeline->getCodeAsString());
         builder.addPipeline(pipeline);
         pipelines[stageId] = pipeline;
     }

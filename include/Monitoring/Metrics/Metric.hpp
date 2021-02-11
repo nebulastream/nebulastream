@@ -18,13 +18,10 @@
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_HPP_
 
 #include <Monitoring/Metrics/MetricType.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <Util/Logger.hpp>
-#include <memory>
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
 
 template<typename T>
 MetricType getMetricType(const T&) {
@@ -40,9 +37,14 @@ MetricType getMetricType(const T&) {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(uint64_t metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
-void serialize(const std::string& metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf,
-               const std::string& prefix);
+void serialize(uint64_t metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void serialize(const std::string& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+
+/**
+ * @brief class specific getSchema() methods
+ */
+SchemaPtr getSchema(uint64_t metric, const std::string& prefix);
+SchemaPtr getSchema(const std::string& metric, const std::string& prefix);
 
 /**
  * @brief The metric class is a conceptual superclass that represents all metrics in NES.
@@ -94,10 +96,15 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend void serialize(const Metric& x, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf,
-                          const std::string& prefix) {
+    friend void serialize(const Metric& x, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
         x.self->serializeC(schema, buf, prefix);
     }
+
+    /**
+     * @brief Returns the schema of the metric.
+     * @return the schema
+     */
+    friend SchemaPtr getSchema(const Metric& x, const std::string& prefix) { return x.self->getSchemaConcept(prefix); };
 
   private:
     /**
@@ -112,6 +119,8 @@ class Metric {
          * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
          */
         virtual void serializeC(std::shared_ptr<Schema>, NodeEngine::TupleBuffer&, std::string) = 0;
+
+        virtual SchemaPtr getSchemaConcept(const std::string& prefix) = 0;
     };
 
     /**
@@ -129,6 +138,8 @@ class Metric {
         void serializeC(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, std::string prefix) override {
             serialize(data, schema, buf, prefix);
         }
+
+        SchemaPtr getSchemaConcept(const std::string& prefix) override { return getSchema(data, prefix); };
 
         T data;
         MetricType type;

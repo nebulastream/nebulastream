@@ -17,14 +17,9 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_DISCMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_DISCMETRICS_HPP_
 
-#include <NodeEngine/TupleBuffer.hpp>
-#include <cstdint>
-#include <memory>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 class DiskMetrics {
   public:
@@ -64,6 +59,14 @@ typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
  * @param the prefix as std::string
  */
 void serialize(const DiskMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+
+/**
+ * @brief Class specific getSchema() method for DiskMetrics
+ * @param metric
+ * @param prefix
+ * @return the SchemaPtr
+ */
+SchemaPtr getSchema(const DiskMetrics& metric, const std::string& prefix);
 
 }// namespace NES
 

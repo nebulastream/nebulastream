@@ -17,7 +17,6 @@
 #ifndef RENAMESTREAM_LOGICAL_OPERATOR_NODE_HPP
 #define RENAMESTREAM_LOGICAL_OPERATOR_NODE_HPP
 
-#include <API/UserAPIExpression.hpp>
 #include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 

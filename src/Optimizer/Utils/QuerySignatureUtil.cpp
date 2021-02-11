@@ -78,7 +78,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         std::map<std::string, std::vector<std::string>> attributeMap;
         std::map<std::string, z3::ExprPtr> columns;
         for (auto& field : outputSchema->fields) {
-            auto attributeName = field->name;
+            auto attributeName = field->getName();
             auto derivedAttributeName = streamName + "." + attributeName;
             attributeMap[attributeName] = {derivedAttributeName};
             auto column = DataTypeToZ3ExprUtil::createForField(derivedAttributeName, field->getDataType(), context)->getExpr();
@@ -133,7 +133,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
 
         for (auto source : sources) {
             for (auto& field : outputSchema->fields) {
-                auto attributeName = field->name;
+                auto attributeName = field->getName();
                 auto derivedAttributeName = source + "." + attributeName;
                 if (columns.find(derivedAttributeName) == columns.end()) {
                     NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unable to find projected attribute in children column set.");
@@ -272,9 +272,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
     auto timeCharacteristic = windowType->getTimeCharacteristic();
     z3::expr windowTimeKeyVal(*context);
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
+        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
     } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
+        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
     } else {
         NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
     }
@@ -369,7 +369,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
     std::map<std::string, z3::ExprPtr> updatedColumns;
     auto outputSchema = windowOperator->getOutputSchema();
     for (auto& field : outputSchema->fields) {
-        auto originalAttributeName = field->name;
+        auto originalAttributeName = field->getName();
         for (auto source : sources) {
             auto derivedAttributeName = source + "." + originalAttributeName;
 
@@ -410,7 +410,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
     bool isNewAttribute = true;
     auto inputSchema = mapOperator->getInputSchema();
     for (auto inputField : inputSchema->fields) {
-        if (inputField->name == fieldName) {
+        if (inputField->getName() == fieldName) {
             isNewAttribute = false;
             break;
         }
@@ -633,9 +633,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     z3::expr windowTimeKeyVal(*context);
     Windowing::TimeCharacteristic::Type type = timeCharacteristic->getType();
     if (type == Windowing::TimeCharacteristic::EventTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
+        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
     } else if (type == Windowing::TimeCharacteristic::IngestionTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->name);
+        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
     } else {
         NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
     }

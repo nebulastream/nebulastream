@@ -24,7 +24,7 @@ namespace NES {
 
 void serialize(uint64_t metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     auto noFields = schema->getSize();
-    schema->addField(prefix, BasicType::UINT64);
+    schema->addField(prefix + "uint64", BasicType::UINT64);
     buf.setNumberOfTuples(1);
     auto layout = NodeEngine::createRowLayout(schema);
     layout->getValueField<uint64_t>(0, noFields)->write(buf, metric);
@@ -33,6 +33,12 @@ void serialize(uint64_t metric, std::shared_ptr<Schema> schema, NodeEngine::Tupl
 void serialize(const std::string& metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer&, const std::string& prefix) {
     NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " + metric + "and schema " + prefix
                             + schema->toString());
+}
+
+SchemaPtr getSchema(uint64_t, const std::string& prefix) { return Schema::create()->addField(prefix + "uint64", UINT64); }
+
+SchemaPtr getSchema(const std::string& metric, const std::string& prefix) {
+    NES_THROW_RUNTIME_ERROR("Metric: Schema for std::string not possible for metric " + metric + "and prefix " + prefix);
 }
 
 }// namespace NES

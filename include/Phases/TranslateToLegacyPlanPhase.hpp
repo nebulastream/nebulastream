@@ -30,8 +30,8 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
-class UserAPIExpression;
-typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
+class LegacyExpression;
+typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
 
 /**
  * @brief Translates a logical query plan to the legacy operator tree

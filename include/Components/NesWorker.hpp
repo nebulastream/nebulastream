@@ -18,9 +18,11 @@
 #define INCLUDE_COMPONENTS_NESWORKER_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Topology/TopologyNodeId.hpp>
 #include <future>
 
 namespace NES {
@@ -33,10 +35,7 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::string localWorkerIp,
-                       uint16_t localWorkerRpcPort, uint16_t localWorkerZmqPort, NodeType type,
-                       uint16_t numberOfSlots = std::thread::hardware_concurrency(),
-                       uint16_t numWorkerThreads = DEFAULT_NUM_THREADS);
+    explicit NesWorker(WorkerConfigPtr workerConfig, NodeType type);
 
     /**
      * @brief default dtor
@@ -149,6 +148,12 @@ class NesWorker {
      */
     NodeEngine::NodeEnginePtr getNodeEngine();
 
+    /**
+     * @brief method to get the id of the worker
+     * @return id of the worker
+     */
+    TopologyNodeId getTopologyNodeId();
+
   private:
     /**
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
@@ -163,25 +168,22 @@ class NesWorker {
     NodeEngine::NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
+    PhysicalStreamConfigPtr conf;
     bool connected;
     bool withRegisterStream;
-    PhysicalStreamConfigPtr conf;
     bool withParent;
     std::string parentId;
-
     std::string rpcAddress;
-
     std::string coordinatorIp;
-    uint16_t coordinatorPort;
     std::string localWorkerIp;
+    uint16_t coordinatorPort;
     uint16_t localWorkerRpcPort;
     uint16_t localWorkerZmqPort;
     uint16_t numberOfSlots;
     uint16_t numWorkerThreads;
-
     NodeType type;
     std::atomic<bool> stopped;
-
+    TopologyNodeId topologyNodeId;
     /**
      * @brief helper method to ensure client is connected before callin rpcs functions
      * @return

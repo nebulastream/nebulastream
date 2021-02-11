@@ -111,23 +111,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         if (pattern) {
             boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
         } else {// if Query
-            // NOTE: This will not work if you have created object of Input query and do further manipulation
-            auto pos1 = queryCodeSnippet.find("join(");
-            if (pos1 != std::string::npos) {
-                boost::replace_first(newQuery, "Query::from", "return Query::from");
-                std::string tmp = queryCodeSnippet.substr(pos1);
-                auto pos2 = tmp.find("),");
-
-                //find the end bracket of merge query
-                std::string subquery = tmp.substr(5, pos2 - 4);
-                NES_DEBUG("UtilityFunctions: subquery = " << subquery);
-                code << "auto subQuery = " << subquery << ";" << std::endl;
-                boost::replace_last(newQuery, subquery, "join(&subQuery");
-                boost::replace_first(newQuery, "join(", "");
-                NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
-            } else {
-                boost::replace_first(newQuery, "Query::from", "return Query::from");
-            }
+            boost::replace_first(newQuery, "Query::from", "return Query::from");
         }
 
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
@@ -278,8 +262,8 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
     str << "+----------------------------------------------------+" << std::endl;
     str << "|";
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        str << schema->get(i)->name << ":" << physicalDataTypeFactory.getPhysicalType(schema->get(i)->dataType)->toString()
-            << "|";
+        str << schema->get(i)->getName() << ":"
+            << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString() << "|";
     }
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
@@ -377,7 +361,7 @@ OperatorId UtilityFunctions::getNextOperatorId() {
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextNodeId() {
+uint64_t UtilityFunctions::getNextTopologyNodeId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
@@ -387,7 +371,12 @@ uint64_t UtilityFunctions::getNextNodeEngineId() {
     return ++id;
 }
 
-uint64_t UtilityFunctions::getNextTaskID() {
+uint64_t UtilityFunctions::getNextTaskId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
+uint64_t UtilityFunctions::getGlobalId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }

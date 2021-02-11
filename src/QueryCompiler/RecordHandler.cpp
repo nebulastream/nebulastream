@@ -21,14 +21,24 @@ namespace NES {
 RecordHandlerPtr RecordHandler::create() { return std::make_shared<RecordHandler>(); }
 
 void RecordHandler::registerAttribute(std::string name, ExpressionStatmentPtr variableAccessStatement) {
-    NES_ASSERT(!hasAttribute(name), "RecordHandler:Attribute name: " << name << " should not be already registered.");
+    if (hasAttribute(name)) {
+        NES_DEBUG("RecordHandler: replace attribute with name " << name);
+    } else {
+        NES_DEBUG("RecordHandler: place new attribute with name " << name);
+    }
     this->statementMap[name] = variableAccessStatement;
 }
 
 bool RecordHandler::hasAttribute(std::string name) { return this->statementMap.count(name) == 1; }
 
 ExpressionStatmentPtr RecordHandler::getAttribute(std::string name) {
-    NES_ASSERT(hasAttribute(name), "RecordHandler: Attribute name: " << name << " is not registered.");
+    if (!hasAttribute(name)) {
+        NES_DEBUG("registered attributes are:");
+        for (auto& item : statementMap) {
+            NES_DEBUG("item=" << item.first);
+        }
+        NES_ERROR("RecordHandler: Attribute name: " << name << " is not registered.");
+    }
     return this->statementMap[name];
 }
 

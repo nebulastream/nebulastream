@@ -24,7 +24,7 @@
 
 namespace NES {
 
-ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<ExpressionItem> expressions, uint64_t id)
+ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, uint64_t id)
     : expressions(expressions), UnaryOperatorNode(id) {}
 
 bool ProjectionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
@@ -49,7 +49,7 @@ std::string ProjectionLogicalOperatorNode::getStringBasedSignature() {
     std::stringstream ss;
     std::vector<std::string> fields;
     for (auto& field : outputSchema->fields) {
-        fields.push_back(field->name);
+        fields.push_back(field->getName());
     }
     std::sort(fields.begin(), fields.end());
     ss << "PROJECTION(";
@@ -67,36 +67,31 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
     NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString()
                             << " this proj=" << toString());
     outputSchema->clear();
-    for (auto& exp : expressions) {
-        auto expression = exp.getExpressionNode();
-        if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-            NES_ERROR("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression but it was a "
-                      + expression->toString());
-            throw TypeInferenceException(
-                "ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression but it was a "
-                + expression->toString());
-        }
+    for (auto& expression : expressions) {
 
         //Infer schema of the field expression
         expression->inferStamp(inputSchema);
 
         // Build the output schema
-        auto fieldAccess = expression->as<FieldAccessExpressionNode>();
-        auto fieldName = fieldAccess->getFieldName();
-        auto dataType = fieldAccess->getStamp();
-
-        //Check the type of expression and add the field to the output schema
         if (expression->instanceOf<FieldRenameExpressionNode>()) {
             auto fieldRename = expression->as<FieldRenameExpressionNode>();
-            fieldName = fieldRename->getNewFieldName();
-            dataType = fieldRename->getStamp();
+            outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getStamp());
+        } else if (expression->instanceOf<FieldAccessExpressionNode>()) {
+            auto fieldAccess = expression->as<FieldAccessExpressionNode>();
+            outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
+        } else {
+            NES_ERROR("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a FieldRenameExpression "
+                      "but it was a "
+                      + expression->toString());
+            throw TypeInferenceException("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a "
+                                         "FieldRenameExpression but it was a "
+                                         + expression->toString());
         }
-        outputSchema->addField(fieldName, dataType);
     }
     return true;
 }
 
-std::vector<ExpressionItem> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
+std::vector<ExpressionNodePtr> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
 
 OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createProjectionOperator(expressions, id);

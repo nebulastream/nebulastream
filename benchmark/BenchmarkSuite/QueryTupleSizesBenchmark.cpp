@@ -47,7 +47,7 @@ int main() {
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 5, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 4, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
@@ -64,6 +64,7 @@ int main() {
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
     for (auto benchmarkSchema : BenchmarkSchemas::getBenchmarkSchemas()) {
+        std::cout << "QueryTupleSizesBenchmark: benchmarkSchema is " << benchmarkSchema->toString() << std::endl;
         BM_AddBenchmark(
             "BM_SimpleMapQuery",
             TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
@@ -86,7 +87,7 @@ int main() {
                             SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
                             ",Selectivity,BufferSize,SchemaSize",
                             "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + ","
-                                + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
+                                + std::to_string(benchmarkSchema->getSchemaSizeInBytes()))
         }
     }
     //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------

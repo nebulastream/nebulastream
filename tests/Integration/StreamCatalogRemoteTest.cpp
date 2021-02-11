@@ -18,6 +18,9 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -30,26 +33,40 @@ uint64_t rpcPort = 4000;
 
 class StreamCatalogRemoteTest : public testing::Test {
   public:
-    std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
+    SourceConfigPtr sourceConfig;
 
     static void SetUpTestCase() {
         NES::setupLogging("StreamCatalogRemoteTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup StreamCatalogRemoteTest test class.");
     }
 
-    void SetUp() { rpcPort = rpcPort + 30; }
+    void SetUp() {
+        rpcPort = rpcPort + 30;
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
+        sourceConfig = SourceConfig::create();
+        coordinatorConfig->setRpcPort(rpcPort);
+        workerConfig->setCoordinatorPort(rpcPort);
+    }
 
     void TearDown() { std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl; }
 };
 TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -78,13 +95,19 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -124,13 +147,19 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -165,13 +194,19 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -192,18 +227,29 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 2, "physical_test", "default_logical");
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(2);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("default_logical");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     bool success = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success);
@@ -225,13 +271,19 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -247,7 +299,12 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     bool success = wrk->registerLogicalStream("testStream", testSchemaFileName);
     EXPECT_TRUE(success);
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 2, "physical_test", "testStream");
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(2);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("testStream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     bool success2 = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success2);
@@ -268,13 +325,19 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
@@ -297,13 +360,19 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;

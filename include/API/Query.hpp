@@ -95,10 +95,12 @@ class Query {
      */
     template<typename... Args>
     Query& project(Args&&... args) {
-        SchemaPtr schema = Schema::create();
-        std::vector<ExpressionItem> vec({std::forward<Args>(args)...});
-
-        OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(vec);
+        std::vector<ExpressionNodePtr> expressions;
+        std::vector<ExpressionItem> expressionItems({std::forward<Args>(args)...});
+        for (ExpressionItem item : expressionItems) {
+            expressions.push_back(item.getExpressionNode());
+        }
+        OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
         queryPlan->appendOperatorAsNewRoot(op);
         return *this;
     }
@@ -114,7 +116,8 @@ class Query {
      * @param subQuery is the query to be merged
      * @return
      */
-    Query& join(Query* subQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey, const Windowing::WindowTypePtr windowType);
+    Query& join(const Query& subQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+                const Windowing::WindowTypePtr windowType);
 
     /**
      * @brief Create Query using queryPlan

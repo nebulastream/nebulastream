@@ -23,10 +23,10 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 
-#include <API/UserAPIExpression.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
+#include <QueryCompiler/LegacyExpression.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
 
@@ -70,8 +70,8 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES:
 const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, NES::RecordHandlerPtr recordHandler) const {
     if (attribute) {
         //checks if the predicate field is contained in the current stream record.
-        if (recordHandler->hasAttribute(attribute->name)) {
-            return recordHandler->getAttribute(attribute->name);
+        if (recordHandler->hasAttribute(attribute->getName())) {
+            return recordHandler->getAttribute(attribute->getName());
         } else {
             NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from record handler!");
         }
@@ -93,7 +93,7 @@ const std::string Predicate::toString() const {
     return stream.str();
 }
 
-bool Predicate::equals(const UserAPIExpression& _rhs) const {
+bool Predicate::equals(const LegacyExpression& _rhs) const {
     try {
         auto rhs = dynamic_cast<const NES::Predicate&>(_rhs);
         if ((left == nullptr && rhs.left == nullptr) || (left->equals(*rhs.left.get()))) {
@@ -176,7 +176,7 @@ const DataTypePtr PredicateItem::getDataTypePtr() const {
 
 UserAPIExpressionPtr PredicateItem::copy() const { return std::make_shared<PredicateItem>(*this); }
 
-bool PredicateItem::equals(const UserAPIExpression& _rhs) const {
+bool PredicateItem::equals(const LegacyExpression& _rhs) const {
     try {
         auto rhs = dynamic_cast<const NES::PredicateItem&>(_rhs);
         if ((attribute == nullptr && rhs.attribute == nullptr) || attribute->isEqual(rhs.attribute)) {
@@ -192,9 +192,9 @@ bool PredicateItem::equals(const UserAPIExpression& _rhs) const {
 
 const ValueTypePtr& PredicateItem::getValue() const { return value; }
 
-Field::Field(AttributeFieldPtr field) : PredicateItem(field), _name(field->name) {}
+Field::Field(AttributeFieldPtr field) : PredicateItem(field), _name(field->getName()) {}
 
-const PredicatePtr createPredicate(const UserAPIExpression& expression) {
+const PredicatePtr createPredicate(const LegacyExpression& expression) {
     PredicatePtr value = std::dynamic_pointer_cast<Predicate>(expression.copy());
     if (!value) {
         NES_ERROR("UserAPIExpression is not a predicate");
@@ -202,183 +202,183 @@ const PredicatePtr createPredicate(const UserAPIExpression& expression) {
     return value;
 }
 
-Predicate operator==(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator==(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator!=(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator!=(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::UNEQUAL_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator>(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator>(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::GREATER_THAN_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator<(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator<(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::LESS_THAN_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator>=(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator>=(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::GREATER_THAN_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator<=(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator<=(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::LESS_THAN_EQUAL_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator+(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator+(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::PLUS_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator-(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator-(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::MINUS_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator*(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator*(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::MULTIPLY_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator/(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator/(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::DIVISION_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator%(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator%(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::MODULO_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator&&(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator&&(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::LOGICAL_AND_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator||(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator||(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::LOGICAL_OR_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator&(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator&(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_AND_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator|(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator|(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_OR_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator^(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator^(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_XOR_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator<<(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator<<(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_LEFT_SHIFT_OP, lhs.copy(), rhs.copy());
 }
-Predicate operator>>(const UserAPIExpression& lhs, const UserAPIExpression& rhs) {
+Predicate operator>>(const LegacyExpression& lhs, const LegacyExpression& rhs) {
     return Predicate(BinaryOperatorType::BITWISE_RIGHT_SHIFT_OP, lhs.copy(), rhs.copy());
 }
 
-Predicate operator==(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return (lhs == dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator==(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return (lhs == dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator!=(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator!=(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator!=(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator!=(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator>(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator>(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator>(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator>(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator<(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator<(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator<(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator<(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator>=(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator>=(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator>=(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator>=(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator<=(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator<=(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator<=(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator<=(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator+(const UserAPIExpression& lhs, const PredicateItem& rhs) {
+Predicate operator+(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator+(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator+(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator-(const UserAPIExpression& lhs, const PredicateItem& rhs) {
+Predicate operator-(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator-(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator-(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator*(const UserAPIExpression& lhs, const PredicateItem& rhs) {
+Predicate operator*(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator*(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator*(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator/(const UserAPIExpression& lhs, const PredicateItem& rhs) {
+Predicate operator/(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator/(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator/(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator%(const UserAPIExpression& lhs, const PredicateItem& rhs) {
+Predicate operator%(const LegacyExpression& lhs, const PredicateItem& rhs) {
     if (!rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator%(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator%(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator&&(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator&&(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator&&(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator&&(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator||(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator||(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator||(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator||(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator|(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator|(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator|(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator|(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator^(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator^(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator^(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator^(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator<<(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator<<(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator<<(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator<<(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
-Predicate operator>>(const UserAPIExpression& lhs, const PredicateItem& rhs) {
-    return operator>>(lhs, dynamic_cast<const UserAPIExpression&>(rhs));
+Predicate operator>>(const LegacyExpression& lhs, const PredicateItem& rhs) {
+    return operator>>(lhs, dynamic_cast<const LegacyExpression&>(rhs));
 }
 
-Predicate operator==(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return (dynamic_cast<const UserAPIExpression&>(lhs) == rhs);
+Predicate operator==(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return (dynamic_cast<const LegacyExpression&>(lhs) == rhs);
 }
-Predicate operator!=(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator!=(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator!=(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator!=(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator>(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator>(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator>(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator>(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator<(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator<(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator<(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator<(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator>=(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator>=(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator>=(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator>=(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator<=(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator<=(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator<=(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator<=(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator+(const PredicateItem& lhs, const UserAPIExpression& rhs) {
+Predicate operator+(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator+(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+    return operator+(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator-(const PredicateItem& lhs, const UserAPIExpression& rhs) {
+Predicate operator-(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator-(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+    return operator-(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator*(const PredicateItem& lhs, const UserAPIExpression& rhs) {
+Predicate operator*(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator*(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+    return operator*(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator/(const PredicateItem& lhs, const UserAPIExpression& rhs) {
+Predicate operator/(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator/(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+    return operator/(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator%(const PredicateItem& lhs, const UserAPIExpression& rhs) {
+Predicate operator%(const PredicateItem& lhs, const LegacyExpression& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator%(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+    return operator%(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator&&(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator&&(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator&&(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator&&(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator||(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator||(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator||(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator||(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator|(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator|(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator|(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator|(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator^(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator^(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator^(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator^(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator<<(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator<<(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator<<(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator<<(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
-Predicate operator>>(const PredicateItem& lhs, const UserAPIExpression& rhs) {
-    return operator>>(dynamic_cast<const UserAPIExpression&>(lhs), rhs);
+Predicate operator>>(const PredicateItem& lhs, const LegacyExpression& rhs) {
+    return operator>>(dynamic_cast<const LegacyExpression&>(lhs), rhs);
 }
 
 /**
@@ -395,64 +395,64 @@ Predicate operator==(const PredicateItem& lhs, const PredicateItem& rhs) {
         NES_ERROR("NOT COMPARABLE TYPES");
     if (checktype == 2)
         return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy(), "strcmp", false);
-    return (dynamic_cast<const UserAPIExpression&>(lhs) == dynamic_cast<const UserAPIExpression&>(rhs));
+    return (dynamic_cast<const LegacyExpression&>(lhs) == dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator!=(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator!=(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator!=(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator>(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator>(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator>(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator<(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator<(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator<(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator>=(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator>=(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator>=(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator<=(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator<=(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator<=(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator+(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator+(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator+(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator-(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator-(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator-(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator*(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator*(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator*(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator/(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator/(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator/(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator%(const PredicateItem& lhs, const PredicateItem& rhs) {
     if (!lhs.getDataTypePtr()->isNumeric() || !rhs.getDataTypePtr()->isNumeric())
         NES_ERROR("NOT A NUMERICAL VALUE");
-    return operator%(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator%(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator&&(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator&&(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator&&(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator||(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator||(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator||(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator|(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator|(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator|(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator^(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator^(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator^(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator<<(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator<<(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator<<(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 Predicate operator>>(const PredicateItem& lhs, const PredicateItem& rhs) {
-    return operator>>(dynamic_cast<const UserAPIExpression&>(lhs), dynamic_cast<const UserAPIExpression&>(rhs));
+    return operator>>(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
 }//end namespace NES

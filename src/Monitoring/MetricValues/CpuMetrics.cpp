@@ -49,7 +49,7 @@ CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf
     auto idx = schema->getIndex(prefix + "CORE_NO");
 
     if (idx < schema->getSize() && buf.getNumberOfTuples() == 1
-        && UtilityFunctions::endsWith(schema->fields[idx]->name, "CORE_NO")) {
+        && UtilityFunctions::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
         auto layout = NodeEngine::createRowLayout(schema);
         auto numCores = layout->getValueField<uint16_t>(0, idx)->read(buf);
@@ -83,6 +83,22 @@ void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuf
         //call serialize method for the metrics for each cpu
         serialize(metrics.getValues(i), schema, buf, prefix + "CPU[" + std::to_string(i + 1) + "]_");
     }
+}
+
+SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix) {
+    auto schema = Schema::create();
+    schema->addField(prefix + "CORE_NO", BasicType::UINT16);
+
+    //add schema for total
+    schema->copyFields(CpuValues::getSchema(prefix + "CPU[TOTAL]_"));
+
+    //add schema for each core
+    for (int i = 0; i < metrics.getNumCores(); i++) {
+        auto corePrefix = prefix + "CPU[" + std::to_string(i + 1) + "]_";
+        schema->copyFields(CpuValues::getSchema(corePrefix));
+    }
+
+    return schema;
 }
 
 }// namespace NES

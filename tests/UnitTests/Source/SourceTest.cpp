@@ -103,8 +103,7 @@ typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr, NodeEngin
 class SourceTest : public testing::Test {
   public:
     void SetUp() {
-
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     }
 
@@ -125,7 +124,7 @@ class SourceTest : public testing::Test {
 
 TEST_F(SourceTest, testBinarySource) {
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
@@ -166,7 +165,7 @@ TEST_F(SourceTest, testBinarySource) {
 }
 
 TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
@@ -220,7 +219,7 @@ TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
 }
 
 TEST_F(SourceTest, testCSVSourceWithLoopOverFile) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
@@ -251,7 +250,7 @@ TEST_F(SourceTest, testCSVSourceWithLoopOverFile) {
 }
 
 TEST_F(SourceTest, testCSVSourceWatermark) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
@@ -294,7 +293,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
 }
 
 TEST_F(SourceTest, testCSVSourceIntTypes) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     std::string path_to_file = "../tests/test_data/every-int.csv";
@@ -376,7 +375,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 }
 
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     std::string path_to_file = "../tests/test_data/every-float.csv";
@@ -419,7 +418,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 }
 
 TEST_F(SourceTest, testCSVSourceBooleanTypes) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/every-boolean.csv";
 
@@ -462,7 +461,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 }
 
 TEST_F(SourceTest, testSenseSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     std::string testUDFS("...");
@@ -490,7 +489,7 @@ TEST_F(SourceTest, testSenseSource) {
 }
 
 TEST_F(SourceTest, testYSBSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     uint64_t numBuffers = 2;
@@ -518,7 +517,7 @@ TEST_F(SourceTest, testYSBSource) {
 }
 
 TEST_F(SourceTest, testMonitoringSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     uint64_t numBuffers = 2;

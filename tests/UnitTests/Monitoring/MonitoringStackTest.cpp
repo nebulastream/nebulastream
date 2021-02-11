@@ -16,6 +16,9 @@
 
 #include <gtest/gtest.h>
 
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiscMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
@@ -52,6 +55,8 @@ class MonitoringStackTest : public testing::Test {
     NodeEngine::BufferManagerPtr bufferManager;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
+    CoordinatorConfigPtr crdConf;
+    WorkerConfigPtr wrkConf;
 
     static void SetUpTestCase() {
         NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
@@ -62,9 +67,15 @@ class MonitoringStackTest : public testing::Test {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
+        crdConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
+        crdConf->resetCoordinatorOptions();
+        wrkConf->resetWorkerOptions();
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
         bufferManager = std::make_shared<NodeEngine::BufferManager>(4096, 10);
         rpcPort = rpcPort + 30;
+        crdConf->setRpcPort(rpcPort);
+        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     /* Will be called before a test is executed. */
@@ -197,6 +208,39 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     ASSERT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
+/**
+ * @brief Tests that the schema from the sample method and the metric group are the same, so that no inconsistencies occur
+ */
+TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
+    MetricGroupPtr metricGroup = MetricGroup::create();
+
+    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
+    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
+    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
+    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
+
+    // add with simple data types
+    metricGroup->add("simpleInt_", 1);
+
+    // add cpu stats
+    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
+
+    // add network stats
+    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
+
+    // add disk stats
+    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
+
+    // add mem stats
+    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto schema = Schema::create();
+    metricGroup->getSample(schema, tupleBuffer);
+
+    ASSERT_EQ(schema->toString(), metricGroup->createGroupSchema()->toString());
+}
+
 TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     auto cpuStats = MetricUtils::CPUStats();
 
@@ -309,14 +353,21 @@ TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
 }
 
 TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_INFO("MonitoringStackTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0);
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
     NES_INFO("MonitoringStackTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
@@ -348,14 +399,21 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
 }
 
 TEST_F(MonitoringStackTest, requestMonitoringData) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_INFO("MonitoringStackTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0);
     NES_INFO("MonitoringStackTest: Coordinator started successfully");
 
     NES_INFO("MonitoringStackTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");

@@ -98,12 +98,17 @@ void QueryManager::destroy() {
 }
 
 bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
-    NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep);
+    NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
     std::scoped_lock lock(queryMutex, statisticsMutex);
 
     bool isBinaryOperator = false;
     auto executablePipelines = qep->getPipelines();
     for (auto& pipeline : executablePipelines) {
+        std::string ar = pipeline->getArity() == Unary ? "unary" : "binary";
+        NES_TRACE("PIPELINE ID=" << pipeline->getPipeStageId() << " input schema=" << pipeline->getInputSchema()->toString()
+                                 << " outSche=" << pipeline->getOutputSchema()->toString() << " arity=" << ar
+                                 << " source code=" << pipeline->getCodeAsString());
+
         switch (pipeline->getArity()) {
             case Unary: {
                 break;
@@ -120,46 +125,63 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
         // source already exists, add qep to source set if not there
-        OperatorId sourceOperatorID = source->getOperatorId();
-        if (operatorIdToQueryMap.find(sourceOperatorID) != operatorIdToQueryMap.end()) {
-            if (operatorIdToQueryMap[sourceOperatorID].find(qep) == operatorIdToQueryMap[sourceOperatorID].end()) {
+        OperatorId sourceOperatorId = source->getOperatorId();
+        if (operatorIdToQueryMap.find(sourceOperatorId) != operatorIdToQueryMap.end()) {
+            if (operatorIdToQueryMap[sourceOperatorId].find(qep) == operatorIdToQueryMap[sourceOperatorId].end()) {
                 // qep not found in list, add it
-                NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << sourceOperatorID);
-                operatorIdToQueryMap[sourceOperatorID].insert(qep);
+                NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << sourceOperatorId);
+                operatorIdToQueryMap[sourceOperatorId].insert(qep);
                 queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
-                //                NES_DEBUG("QueryManager: Join QEP already found " << qep << " to Source" << source->getOperatorId() << " add pipeline stage 1");
-                //                operatorIdToPipelineStage[source->getOperatorId()] = 1;
             } else {
-                NES_DEBUG("QueryManager: Source " << sourceOperatorID << " and QEP already exist.");
+                NES_DEBUG("QueryManager: Source " << sourceOperatorId << " and QEP already exist.");
                 return false;
             }
             // source does not exist, add source and unordered_set containing the qep
         } else {
-            NES_DEBUG("QueryManager: Source " << sourceOperatorID << " not found. Creating new element with with qep " << qep);
+            NES_DEBUG("QueryManager: Source " << sourceOperatorId << " not found. Creating new element with with qep " << qep);
             std::unordered_set<Execution::ExecutableQueryPlanPtr> qepSet = {qep};
-            operatorIdToQueryMap[sourceOperatorID] = qepSet;
+            operatorIdToQueryMap[sourceOperatorId] = qepSet;
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
-            queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorID);
+            queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorId);
             if (isBinaryOperator) {
                 NES_ASSERT(executablePipelines.size() >= 2, "Binary operator must have at least two pipelines");
                 SchemaPtr sourceSchema = source->getSchema();
                 for (uint64_t i = 0; i < qep->getNumberOfPipelines(); i++) {
                     auto pipelineInputSchema = executablePipelines[i]->getInputSchema();
+                    NES_DEBUG("check pipeline i=" << i << " id=" << executablePipelines[i]->getPipeStageId() << " input schema="
+                                                  << pipelineInputSchema->toString() << " source=" << sourceSchema->toString());
                     if (pipelineInputSchema->equals(sourceSchema)) {
-                        NES_ASSERT(operatorIdToPipelineStage.count(sourceOperatorID) == 0,
-                                   "Found existing entry for the source operator " + sourceOperatorID);
-                        operatorIdToPipelineStage[sourceOperatorID] = i;
+                        NES_DEBUG("schema equal add entry sourceOperatorId=" << sourceOperatorId << " pipeI=" << i);
+                        NES_ASSERT(operatorIdToPipelineStage.count(sourceOperatorId) == 0,
+                                   "Found existing entry for the source operator " << sourceOperatorId);
+                        operatorIdToPipelineStage[sourceOperatorId] = i;
+                    } else {
+                        NES_TRACE("source not equal");
                     }
                 }
+            } else {
+                //default fall back, if there is no join, then we always execute the pipeline at id 0
+                operatorIdToPipelineStage[sourceOperatorId] = 0;
             }
-            NES_DEBUG("QueryManager: mm.size() > 1 " << qep << " to Source" << sourceOperatorID);
         }
     }
+
+#if EXTENDEDDEBUGGING//the mapping is a common sources of errors so please leave it in
     NES_DEBUG("operatorIdToPipelineStage mapping:");
     for (auto& a : operatorIdToPipelineStage) {
         NES_DEBUG("first=" << a.first << " second=" << a.second);
     }
 
+    NES_DEBUG("operatorIdToQueryMap mapping:");
+    for (auto& a : operatorIdToQueryMap) {
+        NES_DEBUG("first=" << a.first << " second=" << a.second.size());
+    }
+
+    NES_DEBUG("queryMapToOperatorId mapping:");
+    for (auto& a : queryMapToOperatorId) {
+        NES_DEBUG("first=" << a.first << " second=" << a.second.size());
+    }
+#endif
     return true;
 }
 
@@ -202,6 +224,9 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     for (const auto& qep : operatorIdToQueryMap[operatorId]) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
+        if (operatorIdToPipelineStage.find(operatorId) == operatorIdToPipelineStage.end()) {
+            NES_THROW_RUNTIME_ERROR("Operator ID=" << operatorId << " not found in mapping table");
+        }
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
         taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
@@ -328,9 +353,14 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
     bool ret = true;
     {
         std::unique_lock lock(queryMutex);
-
+        // here im using COW to avoid keeping the lock for long
+        // however, this is not a long-term fix
+        // because it wont lead to correct behaviour
+        // under heavy query deployment ops
         auto sources = qep->getSources();
-        for (const auto& source : sources) {
+        auto copiedSources = std::vector(sources.begin(), sources.end());
+        lock.unlock();
+        for (const auto& source : copiedSources) {
             NES_DEBUG("QueryManager: stop source " << source->toString());
             // TODO what if two qeps use the same source
 

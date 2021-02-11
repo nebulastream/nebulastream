@@ -71,7 +71,11 @@ bool CentralWindowOperator::inferSchema() {
 
     //Construct output schema
     outputSchema->clear();
-    outputSchema = outputSchema->addField(createField("_$start", UINT64))->addField(createField("_$end", UINT64));
+
+    outputSchema =
+        outputSchema
+            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
+            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.

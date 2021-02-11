@@ -39,7 +39,7 @@ bool RenameStreamOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string RenameStreamOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "RENAME(" << id << ", newStreamName=" << newStreamName << ")";
+    ss << "RENAME_STREAM(" << id << ", newStreamName=" << newStreamName << ")";
     return ss.str();
 }
 
@@ -55,13 +55,9 @@ bool RenameStreamOperatorNode::inferSchema() {
     auto newQualifierName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (auto& field : outputSchema->fields) {
         //Extract field name without qualifier
-        auto& fieldName = field->name;
-        unsigned long separatorLocation = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
-        if (separatorLocation != std::string::npos) {
-            fieldName = fieldName.substr(separatorLocation + 1, fieldName.length());
-        }
+        auto fieldName = field->getName();
         //Add new qualifier name to the field and update the field name
-        field->name = newQualifierName + fieldName;
+        field->setName(newQualifierName + fieldName);
     }
     return true;
 }

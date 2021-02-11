@@ -48,7 +48,8 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
             sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId);
 
             zmq::message_t recvHeaderMsg;
-            zmqSocket.recv(&recvHeaderMsg);
+            auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
+            NES_ASSERT2(optRecvStatus.has_value(), "invalid recv");
 
             auto recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
 
@@ -59,7 +60,8 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
             switch (recvHeader->getMsgType()) {
                 case Messages::kServerReady: {
                     zmq::message_t recvMsg;
-                    zmqSocket.recv(&recvMsg);
+                    auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
+                    NES_ASSERT2(optRecvStatus2.has_value(), "invalid recv");
                     auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
                     // check if server responds with a ServerReadyMessage
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
@@ -80,7 +82,8 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                 case Messages::kErrorMessage: {
                     // if server receives a message that an error occured
                     zmq::message_t errorEnvelope;
-                    zmqSocket.recv(&errorEnvelope);
+                    auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
+                    NES_ASSERT2(optRecvStatus3.has_value(), "invalid recv");
                     auto errorMsg = *errorEnvelope.data<Messages::ErrorMessage>();
                     NES_ERROR("OutputChannel: Received error from server-> " << errorMsg.getErrorTypeAsString());
                     protocol.onChannelError(errorMsg);
@@ -121,11 +124,11 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     if (payloadSize == 0) {
         return true;
     }
-    sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark);
+    sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark);
     inputBuffer.retain();
     auto sentBytesOpt =
         zmqSocket.send(zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer),
-                       zmq::send_flags::none);
+                       kZmqSendDefault);
     if (sentBytesOpt.has_value()) {
         NES_TRACE("OutputChannel: Sending buffer with " << inputBuffer.getNumberOfTuples() << "/" << inputBuffer.getBufferSize()
                                                         << "-" << inputBuffer.getOriginId());

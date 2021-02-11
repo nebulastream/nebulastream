@@ -71,7 +71,7 @@ SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) { return a
 void Schema::removeField(AttributeFieldPtr field) {
     auto it = fields.begin();
     while (it != fields.end()) {
-        if (it->get()->name == field->name) {
+        if (it->get()->getName() == field->getName()) {
             fields.erase(it);
             break;
         }
@@ -81,7 +81,7 @@ void Schema::removeField(AttributeFieldPtr field) {
 
 void Schema::replaceField(const std::string& name, DataTypePtr type) {
     for (auto i = 0; i < fields.size(); i++) {
-        if (fields[i]->name == name) {
+        if (fields[i]->getName() == name) {
             fields[i] = AttributeField::create(name, type);
             return;
         }
@@ -90,7 +90,7 @@ void Schema::replaceField(const std::string& name, DataTypePtr type) {
 
 AttributeFieldPtr Schema::get(const std::string& fieldName) {
     for (auto& field : fields) {
-        if (field->name == fieldName) {
+        if (field->getName() == fieldName) {
             return field;
         }
     }
@@ -119,7 +119,7 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
         return true;
     } else {
         for (AttributeFieldPtr fieldAttribute : fields) {
-            auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->name);
+            auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
             if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
                 return false;
             }
@@ -139,7 +139,7 @@ bool Schema::hasEqualTypes(SchemaPtr otherSchema) {
     for (uint32_t i = 0; i < fields.size(); i++) {
         auto thisField = fields.at(i);
         auto otherField = otherFields.at(i);
-        if (!thisField->dataType->isEquals(otherField->dataType)) {
+        if (!thisField->getDataType()->isEquals(otherField->getDataType())) {
             return false;
         }
     }
@@ -154,13 +154,36 @@ const std::string Schema::toString() const {
     return ss.str();
 }
 
+const std::string Schema::getStreamNameQualifier() const {
+    if (fields.empty()) {
+        return "Unnamed Stream";
+    } else {
+        return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
+    }
+}
+
 AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
-};
+}
+
+std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() {
+    return getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR;
+}
+
+std::string Schema::getQualifierNameForSystemGeneratedFields() {
+    if (!fields.empty()) {
+        return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
+    } else {
+        NES_ERROR("Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is "
+                  "requested");
+        return "";
+    }
+}
 
 bool Schema::contains(const std::string& fieldName) {
     for (const auto& field : this->fields) {
-        if (UtilityFunctions::startsWith(field->name, fieldName)) {
+        NES_DEBUG("contain compair field=" << field->getName() << " with other=" << fieldName);
+        if (field->getName() == fieldName) {
             return true;
         }
     }
@@ -171,7 +194,7 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
     int i = 0;
     bool found = false;
     for (const auto& field : this->fields) {
-        if (UtilityFunctions::startsWith(field->name, fieldName)) {
+        if (UtilityFunctions::startsWith(field->getName(), fieldName)) {
             found = true;
             break;
         }
@@ -185,7 +208,6 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
 }
 
 AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
-
     //Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
@@ -199,7 +221,7 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     //Iterate over all fields and look for field which fully qualified name
     std::vector<AttributeFieldPtr> matchedFields;
     for (auto& field : fields) {
-        std::string& fullyQualifiedFieldName = field->name;
+        auto fullyQualifiedFieldName = field->getName();
         if (stringToMatch.length() <= fullyQualifiedFieldName.length()) {
             //Check if the field name ends with the input field name
             auto startingPos = fullyQualifiedFieldName.length() - stringToMatch.length();
@@ -213,8 +235,10 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     if (matchedFields.size() == 1) {
         return matchedFields[0];
     } else if (matchedFields.size() > 1) {
-        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
-        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+        //        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
+        //        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+        //TODO: workaround we choose the first one to join we will replace this in issue #1543
+        return matchedFields[0];
     }
     return nullptr;
 }

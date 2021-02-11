@@ -17,6 +17,7 @@
 #ifndef NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
 #define NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
 
+#include "SimpleBenchmarkSink.hpp"
 #include <API/Query.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
@@ -109,13 +110,18 @@ class BenchmarkUtils {
      */
 
     static void runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec, std::vector<DataSourcePtr> benchmarkSource,
-                             NES::DataSinkPtr benchmarkSink, NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
+                             std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
+                             NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
 };
 
 #define BM_AddBenchmarkCustomBufferSize(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString,          \
                                         customCSVOutputs)                                                                        \
     {                                                                                                                            \
-        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_DEBUG);                                 \
+        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);                               \
+        std::random_device rd;                                                                                                   \
+        std::mt19937 gen(rd());                                                                                                  \
+        std::uniform_int_distribution<> distr(12345, 23456);                                                                     \
+                                                                                                                                 \
         try {                                                                                                                    \
             std::ofstream benchmarkFile;                                                                                         \
             benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);                \
@@ -130,19 +136,21 @@ class BenchmarkUtils {
                         for (auto workerThreads : allWorkerThreads) {                                                            \
                             for (auto sourceCnt : allDataSources) {                                                              \
                                                                                                                                  \
-                                PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();                             \
-                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, workerThreads,  \
-                                                                                 bufferSize, numBuffers);                        \
+                                PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();                        \
+                                uint64_t zmqPort = distr(gen);                                                                   \
+                                NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                                 \
+                                auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", zmqPort, streamConf,               \
+                                                                                 workerThreads, bufferSize, numBuffers);         \
                                                                                                                                  \
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \
                                                                                                                                  \
                                 std::vector<NodeEngine::QueryStatistics*> statisticsVec;                                         \
-                                NES_WARNING("Starting benchmark with ingestRate=" + std::to_string(ingestionRate) + ", "         \
-                                            + "singleExpSec=" + std::to_string(BenchmarkUtils::runSingleExperimentSeconds)       \
-                                            + ", " + "benchPeriod=" + std::to_string(BenchmarkUtils::periodLengthInSeconds)      \
-                                            + ", " + "workerThreads=" + std::to_string(workerThreads)                            \
-                                            + " sources=" + std::to_string(sourceCnt));                                          \
+                                NES_WARNING("BenchmarkUtils: Starting benchmark with ingestRate="                                \
+                                            + std::to_string(ingestionRate) + ", " + "singleExpSec="                             \
+                                            + std::to_string(BenchmarkUtils::runSingleExperimentSeconds) + ", " + "benchPeriod=" \
+                                            + std::to_string(BenchmarkUtils::periodLengthInSeconds) + ", " + "workerThreads="    \
+                                            + std::to_string(workerThreads) + " sources=" + std::to_string(sourceCnt));          \
                                 std::vector<DataSourcePtr> sources;                                                              \
                                 for (int i = 0; i < sourceCnt; i++) {                                                            \
                                     DataSourcePtr thisSource = (benchmarkSource);                                                \
@@ -150,7 +158,8 @@ class BenchmarkUtils {
                                     sources.push_back(thisSource);                                                               \
                                 }                                                                                                \
                                                                                                                                  \
-                                DataSinkPtr thisSink = (benchmarkSink);                                                          \
+                                /*DataSinkPtr thisSink = (benchmarkSink);*/                                                      \
+                                std::shared_ptr<Benchmarking::SimpleBenchmarkSink> thisSink = (benchmarkSink);                   \
                                 SchemaPtr thisSchema = (benchmarkSchema);                                                        \
                                 Query thisQuery = (benchmarkQuery);                                                              \
                                 BenchmarkUtils::runBenchmark(statisticsVec, sources, thisSink, nodeEngine, thisQuery);           \
@@ -192,7 +201,7 @@ class BenchmarkUtils {
 #define BM_AddBenchmark(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString, customCSVOutputs)        \
     {                                                                                                                            \
         auto bufferSize = 4096;                                                                                                  \
-        auto numBuffers = 1024;                                                                                                  \
+        auto numBuffers = 10;                                                                                                    \
         BM_AddBenchmarkCustomBufferSize(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString,          \
                                         customCSVOutputs);                                                                       \
     }

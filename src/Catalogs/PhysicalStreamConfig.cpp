@@ -15,6 +15,8 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
@@ -24,21 +26,23 @@
 #include <sstream>
 namespace NES {
 
-PhysicalStreamConfigPtr PhysicalStreamConfig::create(std::string sourceType, std::string sourceConfig, uint32_t sourceFrequency,
-                                                     uint32_t numberOfTuplesToProducePerBuffer, uint32_t numberOfBuffersToProduce,
-                                                     std::string physicalStreamName, std::string logicalStreamName,
-                                                     bool skipHeader) {
-    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceType, sourceConfig, sourceFrequency,
-                                                                       numberOfTuplesToProducePerBuffer, numberOfBuffersToProduce,
-                                                                       physicalStreamName, logicalStreamName, skipHeader));
+PhysicalStreamConfigPtr PhysicalStreamConfig::create(SourceConfigPtr sourceConfig) {
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceConfig));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType, std::string sourceConfig, uint64_t sourceFrequency,
-                                           uint64_t numberOfTuplesToProducePerBuffer, uint64_t numberOfBuffersToProduce,
-                                           std::string physicalStreamName, std::string logicalStreamName, bool skipHeader)
-    : sourceType(sourceType), sourceConfig(sourceConfig), sourceFrequency(sourceFrequency),
-      numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numberOfBuffersToProduce(numberOfBuffersToProduce),
-      physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), skipHeader(skipHeader){};
+PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(SourceConfig::create()));
+}
+
+PhysicalStreamConfig::PhysicalStreamConfig(SourceConfigPtr sourceConfig)
+    : sourceType(sourceConfig->getSourceType()->getValue()), sourceConfig(sourceConfig->getSourceConfig()->getValue()),
+      sourceFrequency(sourceConfig->getSourceFrequency()->getValue()),
+      numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()),
+      numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce()->getValue()),
+      physicalStreamName(sourceConfig->getPhysicalStreamName()->getValue()),
+      logicalStreamName(sourceConfig->getLogicalStreamName()->getValue()), skipHeader(sourceConfig->getSkipHeader()->getValue()) {
+    NES_INFO("PhysicalStreamConfig: Created source with config: " << this->toString());
+};
 
 const std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;
@@ -80,25 +84,24 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
 
     if (type == "DefaultSource") {
-        NES_DEBUG("TypeInferencePhase: create default source for one buffer");
+        NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
         return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency);
     } else if (type == "CSVSource") {
-        NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
+        NES_DEBUG("PhysicalStreamConfig: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
                                            numBuffers, frequency, skipHeader);
+    } else if (type == "SenseSource") {
+        NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << conf);
+        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     }else if (type == "NettySource") {
-        NES_DEBUG("TypeInferencePhase: create Netty source for " << conf << " buffers");
+        NES_DEBUG("PhysicalStreamConfig: create Netty source for " << conf << " buffers");
         return NettySourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
                                            numBuffers, frequency, skipHeader);
-    }
-    else if (type == "SenseSource") {
-        NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
-        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else if (type == "YSBSource") {
-        NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
+        NES_DEBUG("PhysicalStreamConfig: create YSB source for " << conf);
         return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency);
     } else {
-        NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
+        NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
     }
     return nullptr;
 }

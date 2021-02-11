@@ -17,6 +17,7 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
@@ -69,19 +70,11 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
-
     typedef detail::virtual_enable_shared_from_this<NesCoordinator> inherited0;
     typedef ErrorListener inherited1;
 
   public:
-    explicit NesCoordinator(std::string restIp, uint16_t restPort, std::string rpcIp, uint16_t rpcPort,
-                            uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
-
-    /**
-     * @brief Constructor where ip = restIp and rpcIp
-     */
-    NesCoordinator(const std::string& ip, uint16_t restPort, uint16_t rpcPort,
-                   uint16_t numberOfSlots = std::thread::hardware_concurrency(), bool enableQueryMerging = false);
+    explicit NesCoordinator(CoordinatorConfigPtr coordinatorConfig);
 
     /**
      * @brief dtor
@@ -167,7 +160,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
-    std::atomic<bool> stopped;
+    std::atomic<bool> stopped{};
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;

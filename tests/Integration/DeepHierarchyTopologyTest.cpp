@@ -17,6 +17,9 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -31,8 +34,12 @@ namespace NES {
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
-class DeepTopologyHierarchyTest : public testing::Test {
+class DeepHierarchyTopologyTest : public testing::Test {
   public:
+    CoordinatorConfigPtr coConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
+
     static void SetUpTestCase() {
         NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
         NES_DEBUG("Setup DeepTopologyHierarchyTest test class.");
@@ -41,10 +48,15 @@ class DeepTopologyHierarchyTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+        coConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
+        srcConf = SourceConfig::create();
+        coConf->setRpcPort(rpcPort);
+        coConf->setRestPort(restPort);
+        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { NES_DEBUG("TearDown DeepTopologyHierarchyTest test class."); }
-    std::string ipAddress = "127.0.0.1";
 };
 
 /**
@@ -57,46 +69,76 @@ class DeepTopologyHierarchyTest : public testing::Test {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testOutputAndAllSensors) {
+TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1, 2);
+    wrk4->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 2);
+    wrk5->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4);
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
     remove(outputFilePath.c_str());
@@ -209,52 +251,96 @@ TEST_F(DeepTopologyHierarchyTest, testOutputAndAllSensors) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
+TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, 12);
+    coConf->setNumberOfSlots(12);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor, 12);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Sensor, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 5);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
-    NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Sensor, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
-    wrk6->replaceParent(1, 5);
+    wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -380,46 +466,77 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testOutputAndNoSensors) {
+TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1, 2);
+    wrk4->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 2);
+    wrk5->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4);
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
     remove(outputFilePath.c_str());
@@ -522,52 +639,90 @@ TEST_F(DeepTopologyHierarchyTest, testOutputAndNoSensors) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
+TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 5);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
-    NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
-    wrk6->replaceParent(1, 5);
+    wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -688,87 +843,163 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
+TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort, 12);
+    coConf->setNumberOfSlots(12);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
     /**
      * Worker
      */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker, 12);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Worker, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Worker, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 5);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
-    NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Worker, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
-    wrk6->replaceParent(1, 5);
+    wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
+
+    TopologyNodeId wrk6TopologyNodeId = wrk6->getTopologyNodeId();
+    ASSERT_NE(wrk6TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     /**
      * Sensors
      */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
-    NesWorkerPtr wrk7 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 80, port + 81, NodeType::Sensor, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 80);
+    wrkConf->setDataPort(port + 81);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk7 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
-    wrk7->replaceParent(1, 6);
+    wrk7->replaceParent(crdTopologyNodeId, wrk5TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
-    NesWorkerPtr wrk8 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 90, port + 91, NodeType::Sensor, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 90);
+    wrkConf->setDataPort(port + 91);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk8 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
-    wrk8->replaceParent(1, 7);
+    wrk8->replaceParent(crdTopologyNodeId, wrk6TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
-    NesWorkerPtr wrk9 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 100, port + 101, NodeType::Sensor, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 100);
+    wrkConf->setDataPort(port + 101);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk9 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
-    wrk9->replaceParent(1, 3);
+    wrk9->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
-    NesWorkerPtr wrk10 =
-        std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor, 12);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 110);
+    wrkConf->setDataPort(port + 111);
+    wrkConf->setNumberOfSlots(12);
+    NesWorkerPtr wrk10 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
-    wrk10->replaceParent(1, 4);
+    wrk10->replaceParent(crdTopologyNodeId, wrk3TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -905,21 +1136,33 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
     /**
      * Worker
      */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
+
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"val1\", UINT64))->"
@@ -931,81 +1174,136 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "../tests/test_data/testCSV.csv",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 3,
-                                     /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test_stream",
-                                     /**Logical Stream Name**/ "testStream", false);
+    srcConf->resetSourceOptions();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/testCSV.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("testStream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 5);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
-    NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
-    wrk6->replaceParent(1, 5);
+    wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
+    TopologyNodeId wrk6TopologyNodeId = wrk6->getTopologyNodeId();
+    ASSERT_NE(wrk6TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
     /**
      * Sensors
      */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
-    NesWorkerPtr wrk7 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 80, port + 81, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 80);
+    wrkConf->setDataPort(port + 81);
+    NesWorkerPtr wrk7 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
-    wrk7->replaceParent(1, 6);
+    wrk7->replaceParent(crdTopologyNodeId, wrk5TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
-    NesWorkerPtr wrk8 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 90, port + 91, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 90);
+    wrkConf->setDataPort(port + 91);
+    NesWorkerPtr wrk8 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
-    wrk8->replaceParent(1, 7);
+    wrk8->replaceParent(crdTopologyNodeId, wrk6TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
-    NesWorkerPtr wrk9 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 100, port + 101, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 100);
+    wrkConf->setDataPort(port + 101);
+    NesWorkerPtr wrk9 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
-    wrk9->replaceParent(1, 3);
+    wrk9->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
-    NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 110);
+    wrkConf->setDataPort(port + 111);
+    NesWorkerPtr wrk10 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
-    wrk10->replaceParent(1, 4);
+    wrk10->replaceParent(crdTopologyNodeId, wrk3TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
     wrk7->registerPhysicalStream(conf);
     wrk8->registerPhysicalStream(conf);
     wrk9->registerPhysicalStream(conf);
     wrk10->registerPhysicalStream(conf);
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1101,21 +1399,33 @@ TEST_F(DeepTopologyHierarchyTest, testSelectProjectThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
     /**
      * Worker
      */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
+
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     //register logical stream
     std::string testSchema =
@@ -1127,76 +1437,136 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 5);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
-    NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
-    wrk6->replaceParent(1, 5);
+    wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
+    TopologyNodeId wrk6TopologyNodeId = wrk6->getTopologyNodeId();
+    ASSERT_NE(wrk6TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
     /**
      * Sensors
      */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
-    NesWorkerPtr wrk7 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 80, port + 81, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 80);
+    wrkConf->setDataPort(port + 81);
+    NesWorkerPtr wrk7 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
-    wrk7->replaceParent(1, 6);
+    wrk7->replaceParent(crdTopologyNodeId, wrk5TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
-    NesWorkerPtr wrk8 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 90, port + 91, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 90);
+    wrkConf->setDataPort(port + 91);
+    NesWorkerPtr wrk8 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
-    wrk8->replaceParent(1, 7);
+    wrk8->replaceParent(crdTopologyNodeId, wrk6TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
-    NesWorkerPtr wrk9 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 100, port + 101, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 100);
+    wrkConf->setDataPort(port + 101);
+    NesWorkerPtr wrk9 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
-    wrk9->replaceParent(1, 3);
+    wrk9->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
-    NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 110);
+    wrkConf->setDataPort(port + 111);
+    NesWorkerPtr wrk10 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
-    wrk10->replaceParent(1, 4);
+    wrk10->replaceParent(crdTopologyNodeId, wrk3TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 3, 3, "test_stream", "window", false);
+    srcConf->resetSourceOptions();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+
     wrk7->registerPhysicalStream(conf);
     wrk8->registerPhysicalStream(conf);
     wrk9->registerPhysicalStream(conf);
     wrk10->registerPhysicalStream(conf);
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1215,7 +1585,7 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "1000,2000,1,68\n"
                              "2000,3000,2,112\n";
 
@@ -1286,21 +1656,33 @@ TEST_F(DeepTopologyHierarchyTest, testWindowThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, DISABLED_testMergeThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, DISABLED_testMergeThreeLevel) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
     /**
      * Worker
      */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
+
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     //register logical stream
     std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
@@ -1312,78 +1694,138 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testMergeThreeLevel) {
     wrk1->registerLogicalStream("truck", testSchemaFileName);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Worker);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
+    TopologyNodeId wrk2TopologyNodeId = wrk2->getTopologyNodeId();
+    ASSERT_NE(wrk2TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
+    TopologyNodeId wrk3TopologyNodeId = wrk3->getTopologyNodeId();
+    ASSERT_NE(wrk3TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 5);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
+    TopologyNodeId wrk5TopologyNodeId = wrk5->getTopologyNodeId();
+    ASSERT_NE(wrk5TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
-    NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
-    wrk6->replaceParent(1, 5);
+    wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
+    TopologyNodeId wrk6TopologyNodeId = wrk6->getTopologyNodeId();
+    ASSERT_NE(wrk6TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
     /**
      * Sensors
      */
 
     //register physical stream
-    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 1, "physical_car", "car");
-    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create("DefaultSource", "", 1, 0, 1, "physical_truck", "truck");
+    srcConf->resetSourceOptions();
+    srcConf->setSourceConfig("");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setPhysicalStreamName("physical_car");
+    srcConf->setLogicalStreamName("car");
+    PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(srcConf);
+    srcConf->setPhysicalStreamName("physical_truck");
+    srcConf->setLogicalStreamName("truck");
+    PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create(srcConf);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 7");
-    NesWorkerPtr wrk7 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 80, port + 81, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 80);
+    wrkConf->setDataPort(port + 81);
+    NesWorkerPtr wrk7 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart7);
-    wrk7->replaceParent(1, 6);
+    wrk7->replaceParent(crdTopologyNodeId, wrk5TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 7 started successfully");
     wrk7->registerPhysicalStream(confCar);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 8");
-    NesWorkerPtr wrk8 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 90, port + 91, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 90);
+    wrkConf->setDataPort(port + 91);
+    NesWorkerPtr wrk8 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart8 = wrk8->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart8);
-    wrk8->replaceParent(1, 7);
+    wrk8->replaceParent(crdTopologyNodeId, wrk6TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 8 started successfully");
     wrk8->registerPhysicalStream(confTruck);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 9");
-    NesWorkerPtr wrk9 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 100, port + 101, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 100);
+    wrkConf->setDataPort(port + 101);
+    NesWorkerPtr wrk9 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart9 = wrk9->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart9);
-    wrk9->replaceParent(1, 3);
+    wrk9->replaceParent(crdTopologyNodeId, wrk2TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 9 started successfully");
     wrk9->registerPhysicalStream(confCar);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 10");
-    NesWorkerPtr wrk10 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 110, port + 111, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 110);
+    wrkConf->setDataPort(port + 111);
+    NesWorkerPtr wrk10 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart10 = wrk10->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart10);
-    wrk10->replaceParent(1, 4);
+    wrk10->replaceParent(crdTopologyNodeId, wrk3TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 10 started successfully");
     wrk10->registerPhysicalStream(confTruck);
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1506,51 +1948,85 @@ TEST_F(DeepTopologyHierarchyTest, DISABLED_testMergeThreeLevel) {
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
+TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
+
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
 
+    /**
+     * Worker
+     */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor, 1);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    wrkConf->setNumberOfSlots(1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 1 started successfully");
 
+    TopologyNodeId wrk1TopologyNodeId = wrk1->getTopologyNodeId();
+    ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 20, port + 21, NodeType::Sensor);
+    wrkConf->resetWorkerOptions();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 2 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 30, port + 31, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(crdTopologyNodeId, wrk1TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 3 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 40, port + 41, NodeType::Worker);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 4 started successfully");
 
+    TopologyNodeId wrk4TopologyNodeId = wrk4->getTopologyNodeId();
+    ASSERT_NE(wrk4TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 60, port + 61, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 60);
+    wrkConf->setDataPort(port + 61);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk5->replaceParent(1, 5);
+    wrk5->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 5 started successfully");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
-    NesWorkerPtr wrk6 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 70, port + 71, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 70);
+    wrkConf->setDataPort(port + 71);
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
-    wrk6->replaceParent(1, 5);
+    wrk6->replaceParent(crdTopologyNodeId, wrk4TopologyNodeId);
     NES_DEBUG("DeepTopologyHierarchyTest: Worker 6 started successfully");
 
     std::string window =
@@ -1561,12 +2037,26 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create("CSVSource", "../tests/test_data/window.csv", 1, 5, 3, "test_stream", "window", false);
+    srcConf->resetSourceOptions();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
     wrk5->registerPhysicalStream(conf);
     wrk6->registerPhysicalStream(conf);
+
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+    NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
+
+    // Check if the topology the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -1590,7 +2080,7 @@ TEST_F(DeepTopologyHierarchyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent = "_$start:INTEGER,_$end:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
                              "0,2000,96\n"
                              "2000,4000,256\n"
                              "4000,6000,168\n";

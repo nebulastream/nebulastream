@@ -365,6 +365,11 @@ add_executable(multi-window-test "Integration/MultipleWindowsTest.cpp")
 target_link_libraries(multi-window-test nes ${GTEST_LIBRARIES})
 add_test(NAME multi-window-test COMMAND multi-window-test)
 
+### MultiJoinsTest ###
+add_executable(multi-join-test "Integration/MultipleJoinsTest.cpp")
+target_link_libraries(multi-join-test nes ${GTEST_LIBRARIES})
+add_test(NAME multi-join-test COMMAND multi-join-test)
+
 ### AssignWatermarkTest ###
 #TODO: activate for testing
 add_executable(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
@@ -382,9 +387,9 @@ target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})
 add_test(NAME continious-source-test COMMAND continious-source-test)
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
-add_executable(hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")
-target_link_libraries(hierarchy-test nes ${GTEST_LIBRARIES})
-add_test(NAME hierarchy-test COMMAND hierarchy-test)
+add_executable(deep-hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")
+target_link_libraries(deep-hierarchy-test nes ${GTEST_LIBRARIES})
+add_test(NAME deep-hierarchy-test COMMAND deep-hierarchy-test)
 
 ### Catalog Remote Tests ###
 add_executable(stream-catalog-remote-test "Integration/StreamCatalogRemoteTest.cpp")

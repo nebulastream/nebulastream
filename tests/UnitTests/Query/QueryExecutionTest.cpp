@@ -269,7 +269,7 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // creating query plan
@@ -324,7 +324,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 }
 
 TEST_F(QueryExecutionTest, projectionQuery) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // creating query plan
@@ -389,7 +389,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     uint64_t millisecondOfallowedLateness = 8; /*second of allowedLateness*/
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // Create Operator Tree
@@ -462,7 +462,7 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
  * The source generates 2. buffers.
  */
 TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // Create Operator Tree
@@ -548,7 +548,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
  * The source generates 2. buffers.
  */
 TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // Create Operator Tree
@@ -628,7 +628,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -706,7 +706,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -788,7 +788,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
  * In this test we use a slide size that is equivalent to the slice size, to test if slicing works proper for small slides as well
  */
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -873,7 +873,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     // created buffer per source * number of sources
     uint64_t expectedBuf = 20;
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -960,7 +960,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
 }
 
 TEST_F(QueryExecutionTest, ysbQueryTest) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::create());
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::createEmpty());
     int numBuf = 1;
     int numTup = 50;
 

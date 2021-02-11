@@ -31,32 +31,32 @@ using namespace NES::Benchmarking;
  */
 int main() {
 
-    // All ingestion rates from 90M to 120M in a step range of 10M
+    // All ingestion rates that the nodeEngine is exposed
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 350 * 1000 * 1000, 650 * 1000 * 1000, 10 * 1000 * 1000);
-    //    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 200 * 1000 * 1000, 250 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 600 * 1000 * 1000, 610 * 1000 * 1000, 10 * 1000 * 1000);
 
+    // Duration of one experiment
     std::vector<uint64_t> allExperimentsDuration;
-    BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 60, 70, 10);
+    BenchmarkUtils::createRangeVector<uint64_t>(allExperimentsDuration, 10, 20, 10);
 
+    // In what frequency new tuples should be inserted into nodeEngine
     std::vector<uint64_t> allPeriodLengths;
     BenchmarkUtils::createRangeVector<uint64_t>(allPeriodLengths, 1, 2, 1);
 
+    // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 5, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 4, 1);
 
+    // Number of dataSources
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
-
-    std::vector<uint64_t> allBufferSizes;
-    BenchmarkUtils::createRangeVector<uint64_t>(allBufferSizes, 4 * 1024, 8 * 1024, 4 * 1024);
 
     std::string benchmarkFolderName = "MapQueries_" + BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName))
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
     //-----------------------------------------Start of BM_SimpleMapQuery----------------------------------------------------------------------------------------------
-    auto benchmarkSchema = Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16);
+    auto benchmarkSchema = Schema::create()->addField("test$key", BasicType::INT16)->addField("test$value", BasicType::INT16);
     BM_AddBenchmark(
         "BM_SimpleMapQuery",
         TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),

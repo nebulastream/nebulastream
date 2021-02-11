@@ -16,7 +16,6 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
@@ -43,6 +42,7 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/LegacyExpression.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -334,7 +334,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  * @brief Simple test that generates code to process a input buffer and calculate a running sum.
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf);
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NodeEngine::TupleBuffer");

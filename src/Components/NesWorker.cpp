@@ -15,6 +15,8 @@
 */
 
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <signal.h>
@@ -30,11 +32,14 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(std::string coordinatorIp, uint16_t coordinatorPort, std::string localWorkerIp, uint16_t localWorkerRpcPort,
-                     uint16_t localWorkerZmqPort, NodeType type, uint16_t numberOfSlots, uint16_t numWorkerThreads)
-    : coordinatorIp(std::move(coordinatorIp)), coordinatorPort(coordinatorPort), localWorkerIp(std::move(localWorkerIp)),
-      localWorkerRpcPort(localWorkerRpcPort), localWorkerZmqPort(localWorkerZmqPort), numberOfSlots(numberOfSlots),
-      numWorkerThreads(numWorkerThreads), type(type), conf(PhysicalStreamConfig::create()) {
+NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
+    : coordinatorIp(std::move(workerConfig->getCoordinatorIp()->getValue())),
+      coordinatorPort(workerConfig->getCoordinatorPort()->getValue()),
+      localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
+      localWorkerRpcPort(workerConfig->getRpcPort()->getValue()), localWorkerZmqPort(workerConfig->getDataPort()->getValue()),
+      numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()),
+      topologyNodeId(INVALID_TOPOLOGY_NODE_ID) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
@@ -212,6 +217,8 @@ bool NesWorker::connect() {
     auto nodeStats = nodeStatsProvider->getNodeStats();
     bool successPRCRegister =
         coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, type, nodeStats);
+    NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
+    topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
@@ -317,5 +324,7 @@ bool NesWorker::waitForConnect() {
     NES_DEBUG("waitForConnect: not connected after timeout");
     return false;
 }
+
+TopologyNodeId NesWorker::getTopologyNodeId() { return topologyNodeId; }
 
 }// namespace NES

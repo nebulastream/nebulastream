@@ -59,8 +59,8 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 class CompilerTypesFactory;
 typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
 
-class UserAPIExpression;
-typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
+class LegacyExpression;
+typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
 
 class GeneratableWindowAggregation;
 typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
@@ -83,6 +83,14 @@ class CodeGenerator {
      * @return flag if the generation was successful.
      */
     virtual bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) = 0;
+
+    /**
+     * @brief Code generation for a projection, which depends on a particular input schema.
+     * @param projectExpressions The projection expression nodes.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForProjection(std::vector<ExpressionNodePtr> projectExpressions, PipelineContextPtr context) = 0;
 
     /**
      * @brief Code generation for a filter operator, which depends on a particular filter predicate.

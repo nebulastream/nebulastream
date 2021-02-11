@@ -69,8 +69,9 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     //get index where the schema for MemoryMetrics is starting
     auto i = schema->getIndex(prefix + "TOTAL_RAM");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->name, "TOTAL_RAM")
-        && UtilityFunctions::endsWith(schema->fields[i + 12]->name, "LOADS_15MIN")) {
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
+        && UtilityFunctions::endsWith(schema->fields[i]->getName(), "TOTAL_RAM")
+        && UtilityFunctions::endsWith(schema->fields[i + 12]->getName(), "LOADS_15MIN")) {
         //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
         auto layout = NodeEngine::createRowLayout(schema);
         output.TOTAL_RAM = layout->getValueField<uint64_t>(0, i)->read(buf);
@@ -91,6 +92,8 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     }
     return output;
 }
+
+SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
 
 bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
     return TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM && SHARED_RAM == rhs.SHARED_RAM

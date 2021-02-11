@@ -44,6 +44,9 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -o 
   libdw-dev:arm64 \
   liblog4cxx-dev:arm64 \
   libcpprest-dev:arm64 \
+  librdkafka1:arm64 \
+  librdkafka++1:arm64 \
+  librdkafka-dev:arm64 \
   libssl-dev:arm64 \
   libeigen3-dev:arm64 \
   libzmqpp-dev:arm64 \
@@ -66,6 +69,28 @@ rm -rf more && git checkout boost-1.71.0 && ./bootstrap.sh && \
 sed -i -- 's|using gcc ;|using gcc : arm64 : aarch64-linux-gnu-g++ ;|g' project-config.jam && \
 ./b2 install -j2 toolset=gcc-arm64 --prefix=/opt/sysroots/aarch64-linux-gnu/usr) || cd .. || rm -rf boost
 
+RUN cd && git clone https://github.com/open62541/open62541.git && cd open62541 && \
+git submodule update --init --recursive && mkdir -p build && cd build && \
+cmake .. -DBUILD_SHARED_LIBS=1 \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DUA_NAMESPACE_ZERO=FULL \
+    -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-gcc.cmake && \
+make -j2 && make install && cd && rm -rf open62541
+
+RUN cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
+  cd paho.mqtt.c && git checkout v1.3.8 && \
+  cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF \
+  -DPAHO_BUILD_STATIC=ON \
+  -DPAHO_WITH_SSL=ON \
+  -DPAHO_HIGH_PERFORMANCE=ON \
+  -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-gcc.cmake && \
+  cmake --build build/ --target install && \
+  ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
+  git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
+  cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE \
+  -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-gcc.cmake && \
+  cmake --build build/ --target install && ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
+
 RUN cd /opt/sysroots/aarch64-linux-gnu/usr && \
 cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && \
 cp -r -v -L /usr/include/z3* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
@@ -83,6 +108,13 @@ cp -r -v -L /usr/include/c++/9* /opt/sysroots/aarch64-linux-gnu/usr/include/ && 
 cp -r -v -L /usr/include/gelf* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/libelf* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/nlist* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/local/include/open62541* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/local/include/aa_tree* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/local/include/ziptree* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/local/include/ms_stdint* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/include/librdkafka* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/include/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/include/ && \
+cp -r -v -L /usr/include/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/include/ && \
 
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libz3* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libzmq* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
@@ -98,9 +130,14 @@ cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-g
 cp -r -v -L -fd /usr/lib/llvm-10* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/gcc/aarch64-linux-gnu/9* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libelf* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
 sed -i -- 's|/lib/aarch64-linux-gnu/|/usr/lib/|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
-sed -i -- 's|/include|/usr/include|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake
+sed -i -- 's|/include|/usr/include|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
+cp -r -v -L /usr/local/lib/libopen62541* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
+cp -r -v -L /usr/local/lib/cmake/open62541* /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/librdkafka* /opt/sysroots/aarch64-linux-gnu/usr/lib/
 
 RUN cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
 cd grpc && git submodule update --init --recursive --jobs 1 && mkdir -p build && cd build && \

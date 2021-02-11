@@ -18,17 +18,10 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
 
 #include <Monitoring/MetricValues/NetworkValues.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <cstdint>
-#include <memory>
-#include <unordered_map>
-#include <vector>
 
 namespace NES {
-class Schema;
-class MonitoringPlan;
-
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 class NetworkMetrics {
 
@@ -65,6 +58,14 @@ class NetworkMetrics {
  * @param the prefix as std::string
  */
 void serialize(const NetworkMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+
+/**
+ * @brief Class specific getSchema() method for NetworkMetrics
+ * @param metric
+ * @param prefix
+ * @return the SchemaPtr
+ */
+SchemaPtr getSchema(const NetworkMetrics& metric, const std::string& prefix);
 
 }// namespace NES
 

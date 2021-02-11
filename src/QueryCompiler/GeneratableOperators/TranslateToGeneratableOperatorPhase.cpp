@@ -26,6 +26,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 
+#include <QueryCompiler/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableWatermarkAssignerOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
@@ -95,10 +96,14 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         auto watermarkAssignerOperator =
             GeneratableWatermarkAssignerOperator::create(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
+        //TODO: I am not sure why we have to set this here explicitly We have to check if we need this for all
+        watermarkAssignerOperator->as<UnaryOperatorNode>()->setOutputSchema(operatorNode->getOutputSchema());
         generatableParentOperator->addChild(watermarkAssignerOperator);
         return watermarkAssignerOperator;
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
-        return generatableParentOperator;
+        auto childOperator = GeneratableProjectionOperator::create(operatorNode->as<ProjectionLogicalOperatorNode>());
+        generatableParentOperator->addChild(childOperator);
+        return childOperator;
     } else {
         NES_FATAL_ERROR("TranslateToGeneratableOperatorPhase: No transformation implemented for this operator node: "
                         << operatorNode->toString());
@@ -120,17 +125,20 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
         auto generatableWindowOperator =
             GeneratableCompleteWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setInputSchema(windowOperator->getInputSchema());
         generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     } else if (windowOperator->instanceOf<SliceCreationOperator>()) {
         auto generatableWindowOperator = GeneratableSlicingWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setInputSchema(windowOperator->getInputSchema());
         generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     } else if (windowOperator->instanceOf<WindowComputationOperator>()) {
         auto generatableWindowOperator =
             GeneratableCombiningWindowOperator::create(windowDefinition, generatableWindowAggregation);
         scanOperator->addChild(generatableWindowOperator);
+        generatableWindowOperator->setInputSchema(windowOperator->getInputSchema());
         generatableWindowOperator->setOutputSchema(windowOperator->getOutputSchema());
         return generatableWindowOperator;
     }
@@ -142,6 +150,7 @@ OperatorNodePtr TranslateToGeneratableOperatorPhase::transformWindowOperator(Win
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transformJoinOperator(JoinLogicalOperatorNodePtr joinOperator,
                                                                            OperatorNodePtr downstreamOperator) {
     auto scanOperator = GeneratableScanOperator::create(joinOperator->getOutputSchema(), joinOperator->getOutputSchema());
+    NES_DEBUG(" create join scan for in/out=" << joinOperator->getOutputSchema()->toString());
     auto generatedJoinOperator = GeneratableJoinOperator::create(joinOperator->as<JoinLogicalOperatorNode>());
     // JOIN -> SCAN -> DOWNSTREAM OPERATOR
     scanOperator->addChild(generatedJoinOperator);

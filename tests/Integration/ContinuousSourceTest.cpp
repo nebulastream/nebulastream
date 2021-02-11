@@ -20,6 +20,9 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/YSBSource.hpp>
 #include <Util/Logger.hpp>
@@ -37,38 +40,56 @@ uint64_t rpcPort = 4000;
 
 class ContinuousSourceTest : public testing::Test {
   public:
+    CoordinatorConfigPtr coordinatorConfig;
+    WorkerConfigPtr workerConfig;
+    SourceConfigPtr sourceConfig;
+
     static void SetUpTestCase() {
         NES::setupLogging("ContinuousSourceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup ContinuousSourceTest test class.");
     }
 
-    void SetUp() { rpcPort = rpcPort + 30; }
+    void SetUp() {
+
+        rpcPort = rpcPort + 30;
+        coordinatorConfig = CoordinatorConfig::create();
+        workerConfig = WorkerConfig::create();
+        sourceConfig = SourceConfig::create();
+        coordinatorConfig->setRpcPort(rpcPort);
+        workerConfig->setCoordinatorPort(rpcPort);
+    }
 
     void TearDown() { std::cout << "Tear down ContinuousSourceTest class." << std::endl; }
-
-    std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setPhysicalStreamName("test_stream");
+    sourceConfig->setLogicalStreamName("exdra");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "../tests/test_data/exdra.csv",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test_stream",
-                                     /**Logical Stream Name**/ "exdra", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
     std::string filePath = "contTestOut.csv";
@@ -149,14 +170,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -169,11 +198,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 1,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", false);
+    sourceConfig->setSourceType("DefaultSource");
+    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("testStream");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     //register physical stream
     wrk1->registerPhysicalStream(conf);
@@ -204,14 +235,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -224,12 +263,15 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
+    sourceConfig->setSourceType("DefaultSource");
+    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setSourceFrequency(3);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
-                                     /**Source Frequence**/ 3, /**Number Of Tuples To Produce Per Buffer**/ 1,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -258,14 +300,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -278,12 +328,15 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
+    sourceConfig->setSourceType("DefaultSource");
+    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 1,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFile.txt";
@@ -371,14 +424,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -391,12 +452,15 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
+    sourceConfig->setSourceType("DefaultSource");
+    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setSourceFrequency(3);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
-                                     /**Source Frequence**/ 3, /**Number Of Tuples To Produce Per Buffer**/ 1,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
@@ -484,14 +548,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -514,12 +586,15 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     outCsv << testCSV;
     outCsv.close();
 
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setSourceConfig("testCSV.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
-                                     /**Source Frequency**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -546,14 +621,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
@@ -576,12 +659,15 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     outCsv << testCSV;
     outCsv.close();
 
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setSourceConfig("testCSV.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("physical_test");
+    sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "testCSV.csv",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-                                     /**Logical Stream Name**/ "testStream", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromCSVSourceWriteTest.out";
@@ -1149,23 +1235,34 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
  * */
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
+
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "CSVSource", /**Source Config**/ "../tests/test_data/exdra.csv",
-                                     /**Source Frequency**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                                     /**Number of Buffers To Produce**/ 5, /**Physical Stream Name**/ "test_stream",
-                                     /**Logical Stream Name**/ "exdra", false);
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(5);
+    sourceConfig->setPhysicalStreamName("test_stream");
+    sourceConfig->setLogicalStreamName("exdra");
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testExdraUseCaseWithOutput.csv";
@@ -1380,28 +1477,36 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
 }
 
 TEST_F(ContinuousSourceTest, testYSB) {
-    uint64_t producedBuffers = 2;
-    uint64_t producedTuples = 5;
+
+    coordinatorConfig->resetCoordinatorOptions();
+    workerConfig->resetWorkerOptions();
+    sourceConfig->resetSourceOptions();
 
     //TODO: writing of csv file works, now make test green
     NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("ContinuousSourceTest: Coordinator started successfully");
 
     NES_INFO("ContinuousSourceTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(ipAddress, port, ipAddress, port + 10, port + 11, NodeType::Sensor);
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
+    sourceConfig->setSourceType("YSBSource");
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(5);
+    sourceConfig->setNumberOfBuffersToProduce(2);
+    sourceConfig->setPhysicalStreamName("test_stream");
+    sourceConfig->setLogicalStreamName("ysb");
     //register physical stream
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "YSBSource", /**Source Config**/ "",
-                                     /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ producedTuples,
-                                     /**Number of Buffers To Produce**/ producedBuffers, /**Physical Stream Name**/ "test_stream",
-                                     /**Logical Stream Name**/ "ysb", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
 
     std::string filePath = "contTestOut.csv";

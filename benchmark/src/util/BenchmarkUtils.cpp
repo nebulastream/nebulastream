@@ -119,7 +119,8 @@ void BenchmarkUtils::printOutConsole(NodeEngine::QueryStatistics* statistic, Sch
 }
 
 void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
-                                  std::vector<DataSourcePtr> benchmarkSource, DataSinkPtr benchmarkSink,
+                                  std::vector<DataSourcePtr> benchmarkSource,
+                                  std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
                                   NodeEngine::NodeEnginePtr nodeEngine, Query query) {
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
@@ -141,18 +142,17 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     }
     auto plan = builder.build();
     nodeEngine->registerQueryInNodeEngine(plan);
-    NES_INFO("QEP for " << queryPlan->toString() << " was registered in NodeEngine. Starting query now...");
+    NES_INFO("BenchmarkUtils: QEP for " << queryPlan->toString() << " was registered in NodeEngine. Starting query now...");
 
-    NES_INFO("Starting query...");
+    NES_INFO("BenchmarkUtils: Starting query...");
     nodeEngine->startQuery(1);
     recordStatistics(statisticsVec, nodeEngine);
 
-    NES_WARNING("Stopping query...");
-    for (auto src : benchmarkSource) {
-        src->stop();
-    }
+    while (!benchmarkSink->completed.get_future().get())
+        ;
+    NES_WARNING("BenchmarkUtils: completed is true!!");
 
-    benchmarkSink->shutdown();
+    NES_WARNING("BenchmarkUtils: Stopping query...");
     nodeEngine->stopQuery(1);
     NES_WARNING("Query was stopped!");
 

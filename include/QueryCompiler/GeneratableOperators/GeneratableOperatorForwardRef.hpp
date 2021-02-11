@@ -20,6 +20,9 @@
 #include <memory>
 namespace NES {
 
+class GeneratableProjectionOperator;
+typedef std::shared_ptr<GeneratableProjectionOperator> GeneratableProjectionOperatorPtr;
+
 class GeneratableFilterOperator;
 typedef std::shared_ptr<GeneratableFilterOperator> GeneratableFilterOperatorPtr;
 

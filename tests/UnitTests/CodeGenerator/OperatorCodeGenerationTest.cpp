@@ -16,7 +16,6 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
@@ -41,6 +40,7 @@
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/LegacyExpression.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -86,7 +86,7 @@ class OperatorCodeGenerationTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
-        auto streamConf = PhysicalStreamConfig::create();
+        auto streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     }
 
@@ -337,7 +337,7 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -376,7 +376,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -425,7 +425,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -445,7 +445,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -484,7 +484,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -525,8 +525,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
-    auto nextPipeline =
-        NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, nullptr, nullptr);
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, input_schema,
+                                                                          windowOutputSchema);
 
     windowHandler->setup(executionContext);
 
@@ -548,7 +548,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -588,8 +588,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
-    auto nextPipeline =
-        NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, nullptr, nullptr);
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, input_schema,
+                                                                          windowOutputSchema);
 
     windowHandler->setup(executionContext);
 
@@ -610,7 +610,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -652,8 +652,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTime
             windowDefinition, windowOutputSchema);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
-    auto nextPipeline =
-        NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, nullptr, nullptr);
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, input_schema,
+                                                                          windowOutputSchema);
     windowHandler->setup(executionContext);
 
     /* prepare input tuple buffer */
@@ -677,7 +677,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTime
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -721,8 +721,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
-    auto nextPipeline =
-        NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, nullptr, nullptr);
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, input_schema,
+                                                                          windowOutputSchema);
     windowHandler->setup(executionContext);
 
     /* prepare input tuple buffer */
@@ -746,12 +746,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     auto schema = Schema::create()
-                      ->addField(createField("_$start", UINT64))
-                      ->addField(createField("_$end", UINT64))
-                      ->addField(createField("_$cnt", UINT64))
+                      ->addField(createField("window$start", UINT64))
+                      ->addField(createField("window$end", UINT64))
+                      ->addField(createField("window$cnt", UINT64))
                       ->addField(createField("key", UINT64))
                       ->addField("value", UINT64);
 
@@ -781,9 +781,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("_$start", UINT64))
-                                  ->addField(createField("_$end", UINT64))
-                                  ->addField("key", UINT64)
+                                  ->addField(createField("window$start", UINT64))
+                                  ->addField(createField("window$end", UINT64))
+                                  ->addField("window$key", UINT64)
                                   ->addField("value", UINT64);
 
     // init window handler
@@ -794,8 +794,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
 
-    auto nextPipeline =
-        NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, nullptr, nullptr);
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, schema,
+                                                                          windowOutputSchema);//is here schema = input_schema?
     windowHandler->setup(executionContext);
 
     auto layout = NodeEngine::createRowLayout(schema);
@@ -878,13 +878,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     auto schema = Schema::create()
-                      ->addField(createField("_$start", UINT64))
-                      ->addField(createField("_$end", UINT64))
-                      ->addField(createField("_$cnt", UINT64))
-                      ->addField(createField("_$key", UINT64))
+                      ->addField(createField("window$start", UINT64))
+                      ->addField(createField("window$end", UINT64))
+                      ->addField(createField("window$cnt", UINT64))
+                      ->addField(createField("window$key", UINT64))
                       ->addField("value", UINT64);
 
     auto codeGenerator = CCodeGenerator::create();
@@ -897,7 +897,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("_$key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
+        Attribute("window$key", UINT64), sum, TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
 
     auto aggregate =
@@ -915,7 +915,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     /* prepare objects for test */
@@ -964,7 +964,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     /* prepare objects for test */
@@ -1026,7 +1026,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     /* prepare objects for test */
@@ -1090,7 +1090,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::create();
+    auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -1111,14 +1111,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     joinDef->updateStreamTypes(input_schema, input_schema);
 
     auto outputSchema = Schema::create()
-                            ->addField(createField("_$start", UINT64))
-                            ->addField(createField("_$end", UINT64))
+                            ->addField(createField("window$start", UINT64))
+                            ->addField(createField("window$end", UINT64))
                             ->addField(AttributeField::create("window$key", joinDef->getLeftJoinKey()->getStamp()));
     for (auto field : input_schema->fields) {
-        outputSchema = outputSchema->addField(field->name, field->getDataType());
+        outputSchema = outputSchema->addField(field->getName(), field->getDataType());
     }
     for (auto field : input_schema->fields) {
-        outputSchema = outputSchema->addField(field->name, field->getDataType());
+        outputSchema = outputSchema->addField(field->getName(), field->getDataType());
     }
     joinDef->updateOutputDefinition(outputSchema);
     auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
@@ -1139,15 +1139,17 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getBufferManager(), joinOperatorHandler);
     auto nextPipeline =
-        NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, nullptr, nullptr);
+        NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, nullptr, input_schema, outputSchema);
 
     auto context3 = PipelineContext::create();
     context3->registerOperatorHandler(joinOperatorHandler);
     context3->arity = PipelineContext::BinaryRight;
     context3->pipelineName = "3";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context3);
+    codeGenerator->generateJoinSetup(joinDef, context3);
     codeGenerator->generateCodeForJoin(joinDef, context3, 0);
     auto stage3 = codeGenerator->compile(context3);
+    stage3->setup(*executionContext.get());
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();

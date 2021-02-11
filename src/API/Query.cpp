@@ -67,9 +67,11 @@ Query& Query::merge(Query* subQuery) {
     return *this;
 }
 
-Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+Query& Query::join(const Query& subQueryRhsConst, ExpressionItem onLeftKey, ExpressionItem onRightKey,
                    const Windowing::WindowTypePtr windowType) {
     NES_DEBUG("Query: join the subQuery to current query");
+
+    auto subQueryRhs = const_cast<Query&>(subQueryRhsConst);
 
     auto leftKeyExpression = onLeftKey.getExpressionNode();
     if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
@@ -93,9 +95,9 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
-    NES_ASSERT(subQueryRhs && subQueryRhs->getQueryPlan() && subQueryRhs->getQueryPlan()->getRootOperators().size() > 0,
-               "invalid right query plan");
-    auto rootOperatorRhs = subQueryRhs->getQueryPlan()->getRootOperators()[0];
+    auto rightQueryPlan = subQueryRhs.getQueryPlan();
+    NES_ASSERT(rightQueryPlan && rightQueryPlan->getRootOperators().size() > 0, "invalid right query plan");
+    auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
     auto rightJoinType = rootOperatorRhs->getOutputSchema();
 
@@ -105,27 +107,23 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
-                EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name),
-                                                             Milliseconds(0),
-                                                             windowType->getTimeCharacteristic()->getTimeUnit())));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     }
 
-    auto rhsQueryPlan = subQueryRhs->getQueryPlan();
-    if (rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+    if (rightQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
         if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::IngestionTime) {
             auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create());
-            rhsQueryPlan->appendOperatorAsNewRoot(op);
+            rightQueryPlan->appendOperatorAsNewRoot(op);
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
-                Attribute(windowType->getTimeCharacteristic()->getField()->name), Milliseconds(0),
+                Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
                 windowType->getTimeCharacteristic()->getTimeUnit()));
-            rhsQueryPlan->appendOperatorAsNewRoot(op);
+            rightQueryPlan->appendOperatorAsNewRoot(op);
         }
-    } else {
-        auto op = rhsQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
-        NES_ASSERT(op.size() == 1, "Only one watermark assigner is allowed per pipeline");
     }
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
@@ -134,7 +132,7 @@ Query& Query::join(Query* subQueryRhs, ExpressionItem onLeftKey, ExpressionItem 
                                                               triggerPolicy, triggerAction, 1, 1);
 
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
-    queryPlan->addRootOperator(rhsQueryPlan->getRootOperators()[0]);
+    queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
@@ -152,10 +150,10 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
-                EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name),
-                                                             Milliseconds(0),
-                                                             windowType->getTimeCharacteristic()->getTimeUnit())));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
         NES_DEBUG("add existing watermark strategy for window");
@@ -172,6 +170,8 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
             NES_ERROR("cannot create watermark strategy from descriptor");
         }
     }
+
+    auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
 
     auto windowDefinition =
         LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1,
@@ -202,10 +202,10 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(IngestionTimeWatermarkStrategyDescriptor::create()));
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
-                EventTimeWatermarkStrategyDescriptor::create(Attribute(windowType->getTimeCharacteristic()->getField()->name),
-                                                             Milliseconds(0),
-                                                             windowType->getTimeCharacteristic()->getTimeUnit())));
+            queryPlan->appendOperatorAsNewRoot(
+                LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
         NES_DEBUG("add existing watermark strategy for window");
@@ -222,6 +222,8 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
             NES_ERROR("cannot create watermark strategy from descriptor");
         }
     }
+
+    auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
 
     auto windowDefinition = Windowing::LogicalWindowDefinition::create(
         fieldAccess, aggregation, windowType, Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy,

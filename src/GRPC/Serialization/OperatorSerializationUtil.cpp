@@ -106,14 +106,10 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         NES_TRACE("OperatorSerializationUtil:: serialize to ProjectionLogicalOperatorNode");
         auto projectionDetail = SerializableOperator_ProjectionDetails();
         auto projectionOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
-
-        std::vector<NES::ExpressionItem> exps = projectionOperator->getExpressions();
-        for (size_t i = 0; i < exps.size(); i++) {
-            projectionDetail.mutable_expression()->Add();
-            ExpressionSerializationUtil::serializeExpression(exps.at(i).getExpressionNode(),
-                                                             projectionDetail.mutable_expression(i));
+        for (auto& exp : projectionOperator->getExpressions()) {
+            auto mutableExpression = projectionDetail.mutable_expression()->Add();
+            ExpressionSerializationUtil::serializeExpression(exp, mutableExpression);
         }
-
         serializedOperator->mutable_details()->PackFrom(projectionDetail);
     } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
         // serialize merge operator
@@ -235,18 +231,13 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedProjectionOperator = SerializableOperator_ProjectionDetails();
         details.UnpackTo(&serializedProjectionOperator);
 
-        std::vector<NES::ExpressionItem> exps;
+        std::vector<ExpressionNodePtr> exps;
         // serialize and append children if the node has any
-        for (size_t i = 0; i < serializedProjectionOperator.mutable_expression()->size(); i++) {
-            auto exp = serializedProjectionOperator.mutable_expression()->at(i);
-            auto projectExpression = ExpressionSerializationUtil::deserializeExpression(&exp);
+        for (auto mutableExpression : *serializedProjectionOperator.mutable_expression()) {
+            auto projectExpression = ExpressionSerializationUtil::deserializeExpression(&mutableExpression);
             exps.push_back(projectExpression);
         }
-
-        // de-serialize projection expression
-        //TODO: if required, we could serialize the projection list too
-        operatorNode = LogicalOperatorFactory::createProjectionOperator(std::vector<NES::ExpressionItem>(),
-                                                                        serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createProjectionOperator(exps, serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_MergeDetails>()) {
         // de-serialize merge operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MergeLogicalOperator");
@@ -338,7 +329,7 @@ SerializableOperator_WindowDetails OperatorSerializationUtil::serializeWindowOpe
     auto timeCharacteristicDetails = SerializableOperator_WindowDetails_TimeCharacteristic();
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_EventTime);
-        timeCharacteristicDetails.set_field(timeCharacteristic->getField()->name);
+        timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
     } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_WindowDetails_TimeCharacteristic_Type_IngestionTime);
     } else {
@@ -458,7 +449,7 @@ SerializableOperator_JoinDetails OperatorSerializationUtil::serializeJoinOperato
     auto timeCharacteristicDetails = SerializableOperator_JoinDetails_TimeCharacteristic();
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_JoinDetails_TimeCharacteristic_Type_EventTime);
-        timeCharacteristicDetails.set_field(timeCharacteristic->getField()->name);
+        timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
     } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_JoinDetails_TimeCharacteristic_Type_IngestionTime);
     } else {
