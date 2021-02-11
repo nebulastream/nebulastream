@@ -153,6 +153,18 @@ message SerializableOperator{
       string password = 6;
     }
 
+    message SerializableMQTTSinkDescriptor {
+      string host = 1;
+      uint32 port = 2;
+      string clientId = 3;
+      string topic = 4;
+      string user = 5;
+      uint32 maxBufferedMSGs = 6;
+      string timeUnit = 7;
+      uint64 msgDelay = 8;
+      bool asynchronousClient = 9;
+    }
+
     message SerializableNetworkSinkDescriptor {
       NodeLocation nodeLocation = 1;
       NesPartition nesPartition = 2;

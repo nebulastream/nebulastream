@@ -18,19 +18,28 @@
 
 namespace NES {
 
-MQTTSinkDescriptor::MQTTSinkDescriptor(const std::string& host, uint16_t port, const std::string& clientId,
-                                       const std::string& topic, const std::string& user)
-                                        : host(host), port(port), clientId(clientId), topic(topic), user(user) {}
+MQTTSinkDescriptor::MQTTSinkDescriptor(const std::string& host, const uint16_t port, const std::string& clientId,
+                                       const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs,
+                                       const char timeUnit, const uint64_t msgDelay, const bool asynchronousClient)
+                                        : host(host), port(port), clientId(clientId), topic(topic), user(user),
+                                          maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), msgDelay(msgDelay),
+                                          asynchronousClient(asynchronousClient){}
 
 const std::string& MQTTSinkDescriptor::getHost() const { return host; }
 uint16_t MQTTSinkDescriptor::getPort() const { return port; }
 const std::string& MQTTSinkDescriptor::getClientId() const { return clientId; }
 const std::string& MQTTSinkDescriptor::getTopic() const { return topic; }
 const std::string& MQTTSinkDescriptor::getUser() const { return user; }
+const uint32_t MQTTSinkDescriptor::getMaxBufferedMSGs() const { return maxBufferedMSGs; }
+const char MQTTSinkDescriptor::getTimeUnit() const { return timeUnit; }
+const uint64_t MQTTSinkDescriptor::getMsgDelay() const { return msgDelay; }
+const bool MQTTSinkDescriptor::getAsynchronousClient() const { return asynchronousClient; }
 
-SinkDescriptorPtr MQTTSinkDescriptor::create(const std::string& host, uint16_t port, const std::string& clientId,
-                                             const std::string& topic, const std::string& user) {
-    return std::make_shared<MQTTSinkDescriptor>(MQTTSinkDescriptor(host, port, clientId, topic, user));
+SinkDescriptorPtr MQTTSinkDescriptor::create(const std::string& host, const uint16_t port, const std::string& clientId,
+                                             const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs,
+                                             const char timeUnit, const uint64_t msgDelay, const bool asynchronousClient) {
+    return std::make_shared<MQTTSinkDescriptor>(MQTTSinkDescriptor(host, port, clientId, topic, user, maxBufferedMSGs,
+                                                                   timeUnit, msgDelay, asynchronousClient));
 }
 
 std::string MQTTSinkDescriptor::toString() { return "MQTTSinkDescriptor()"; }
@@ -40,9 +49,14 @@ bool MQTTSinkDescriptor::equal(SinkDescriptorPtr other) {
     auto otherSinkDescriptor = other->as<MQTTSinkDescriptor>();
     return port == otherSinkDescriptor->port && host == otherSinkDescriptor->host &&
            clientId == otherSinkDescriptor->clientId && topic == otherSinkDescriptor->topic &&
-           user == otherSinkDescriptor->user;
+           user == otherSinkDescriptor->user && maxBufferedMSGs == otherSinkDescriptor->maxBufferedMSGs &&
+           timeUnit == otherSinkDescriptor->timeUnit && msgDelay == otherSinkDescriptor->msgDelay &&
+           asynchronousClient == otherSinkDescriptor->asynchronousClient;
 }
 
 void MQTTSinkDescriptor::setPort(uint16_t newPort) { this->port = newPort; }
+void MQTTSinkDescriptor::setMaxBufferedMSGs(uint32_t newMaxBufferedMSGs) { this->maxBufferedMSGs = newMaxBufferedMSGs; }
+void MQTTSinkDescriptor::setTimeUnit(char newTimeUnit) { this->timeUnit = newTimeUnit; }
+void MQTTSinkDescriptor::setMsgDelay(uint64_t newMsgDelay) { this->msgDelay = newMsgDelay; }
 
 }// namespace NES

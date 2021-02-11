@@ -174,11 +174,15 @@ bool MQTTSink::disconnect() {
     return !connected;
 }
 
-int MQTTSink::getPort() { return port; }
 bool MQTTSink::getConnected() { return connected; }
 const std::string& MQTTSink::getHost() const { return host; }
+uint16_t MQTTSink::getPort() const { return port; }
 const std::string& MQTTSink::getClientId() const { return clientId; }
 const std::string& MQTTSink::getTopic() const { return topic; }
 const std::string& MQTTSink::getUser() const { return user; }
+const uint32_t MQTTSink::getMaxBufferedMSGs() const { return maxBufferedMSGs; }
+const char MQTTSink::getTimeUnit() const { return timeUnit; }
+const uint64_t MQTTSink::getMsgDelay() const { return msgDelay; }
+const bool MQTTSink::getAsynchronousClient() const { return asynchronousClient; }
 
 }// namespace NES

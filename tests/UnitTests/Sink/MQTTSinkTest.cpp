@@ -76,18 +76,18 @@ using namespace NES;
  * BE AWARE that some of the tests require the tester to manually kill/disconnect the broker.
  * ALSO: Not all tests are meant to succeed, but might produce wanted errors.
  */
-class MQTTTest : public testing::Test {
+class DISABLED_MQTTTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("MQTTTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("Setup MQTTTest test class.");
+        NES::setupLogging("DISABLED_MQTTTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("Setup DISABLED_MQTTTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() {
-        NES_DEBUG("Setup MQTTTest test case.");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+        NES_DEBUG("Setup DISABLED_MQTTTest test case.");
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::create("127.0.0.1", 3111, conf);
 
         address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":") + std::to_string(LOCAL_PORT);
@@ -161,7 +161,7 @@ class MQTTTest : public testing::Test {
 /* ------------------------------------------------------------------------------ */
 /* ------------------------ ASYNCHRONOUS CLIENT TESTS --------------------------- */
 /* ------------------------------------------------------------------------------ */
-TEST_F(MQTTTest, testMQTTClientCreation) {
+TEST_F(DISABLED_MQTTTest, testMQTTClientCreation) {
     auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto mqttSink = createMQTTSink(testSchema, 0, nodeEngine, LOCAL_HOST, LOCAL_PORT, CLIENT_ID,
                                    TOPIC, USER);
@@ -169,7 +169,7 @@ TEST_F(MQTTTest, testMQTTClientCreation) {
 }
 
 /* - MQTT Client SetUp / Connect to Broker ---------------------------------------------------- */
-TEST_F(MQTTTest, testMQTTConnectToBrokerAsynchronous) {
+TEST_F(DISABLED_MQTTTest, testMQTTConnectToBrokerAsynchronous) {
     auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto mqttSink = createMQTTSink(testSchema, 0, nodeEngine, LOCAL_HOST, LOCAL_PORT, CLIENT_ID,
                                    TOPIC, USER);
@@ -180,13 +180,13 @@ TEST_F(MQTTTest, testMQTTConnectToBrokerAsynchronous) {
 }
 
 /* - MQTT Client send a finite amount of Data to Broker ---------------------------------------------------- */
-TEST_F(MQTTTest, testMQTTsendFiniteDataToBrokerAsynchronous) {
+TEST_F(DISABLED_MQTTTest, testMQTTsendFiniteDataToBrokerAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker = createMQTTSink_ConnectToBroker_WriteData();
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
 /* - MQTT Client kill broker, does client stop? ---------------------------------------------------- */
-TEST_F(MQTTTest, testMQTTbrokerDeathToClientStopAsynchronous) {
+TEST_F(DISABLED_MQTTTest, testMQTTbrokerDeathToClientStopAsynchronous) {
     NES_DEBUG("\n\nThis test is meant to be done manually and to crash. Kill the client during the sending process. "
               "The MQTTSink writeData() call should fail and log: 'No more messages can be buffered'\n If the test is "
               "not stopped, it RUNS FOR AN HOUR");
@@ -196,13 +196,13 @@ TEST_F(MQTTTest, testMQTTbrokerDeathToClientStopAsynchronous) {
 }
 
 /* - MQTT Client kill disconnect and reconnect to broker, payloads lost? ---------------------------------------------------- */
-TEST_F(MQTTTest, testMQTTsendMassiveDataQuicklyAsynchronous) {
+TEST_F(DISABLED_MQTTTest, testMQTTsendMassiveDataQuicklyAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker = createMQTTSink_ConnectToBroker_WriteData(50000, 1000,
                                                                                           'n', 100000);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
-TEST_F(MQTTTest, testMQTTUnsentMessagesAsynchronous) {
+TEST_F(DISABLED_MQTTTest, testMQTTUnsentMessagesAsynchronous) {
     NES_DEBUG("\n\nThis test comprises two different tests. The first is not meant to succeed automatically but requires the "
               "tester to evaluate the result.\n TEST 1:\n Kill the broker during the sending process. The writeData() function "
               "should return false and the MQTTSink should log: 'Unsent messages'. "
@@ -217,7 +217,7 @@ TEST_F(MQTTTest, testMQTTUnsentMessagesAsynchronous) {
 /* ------------------------- SYNCHRONOUS CLIENT TESTS --------------------------- */
 /* ------------------------------------------------------------------------------ */
 /* - MQTT Client SetUp / Connect to Broker ---------------------------------------------------- */
-TEST_F(MQTTTest, testMQTTConnectToBrokerSynchronously) {
+TEST_F(DISABLED_MQTTTest, testMQTTConnectToBrokerSynchronously) {
     auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto mqttSink = createMQTTSink(testSchema, 0, nodeEngine, LOCAL_HOST, LOCAL_PORT, CLIENT_ID,
                                    TOPIC, USER, 1, 'm', 500, false);
@@ -228,7 +228,7 @@ TEST_F(MQTTTest, testMQTTConnectToBrokerSynchronously) {
 }
 
 /* - MQTT Synchronous Client send a finite amount of Data to Broker --------------------------------------------- */
-TEST_F(MQTTTest, testMQTTsendFiniteDataToBrokerSynchronously) {
+TEST_F(DISABLED_MQTTTest, testMQTTsendFiniteDataToBrokerSynchronously) {
     NES_DEBUG("\n\nThis test comprises two different tests. The first is not meant to succeed automatically but requires the "
               "tester to evaluate the result.\n TEST 1:\n Kill the broker during the sending process. The writeData() function "
               "should return false and the MQTTSink should log: 'Connection Lost'. "

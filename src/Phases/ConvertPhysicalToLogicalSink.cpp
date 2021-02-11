@@ -61,10 +61,11 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
 #endif
 #ifdef ENABLE_MQTT_BUILD
         else if (sinkType == "MQTT_SINK") {
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating OPC sink");
+        NES_INFO("ConvertPhysicalToLogicalSink: Creating MQTT sink");
         MQTTSinkPtr mqttSink = std::dynamic_pointer_cast<MQTTSink>(dataSink);
         return MQTTSinkDescriptor::create(mqttSink->getHost(), mqttSink->getPort(), mqttSink->getClientId(), mqttSink->getTopic(),
-                                          mqttSink->getUser());
+                                          mqttSink->getUser(), mqttSink->getMaxBufferedMSGs(), mqttSink->getTimeUnit(),
+                                          mqttSink->getMsgDelay(), mqttSink->getAsynchronousClient());
     }
 #endif
     else if (sinkType == "FILE_SINK") {

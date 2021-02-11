@@ -24,21 +24,27 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical opc sink
+ * @brief Descriptor defining properties used for creating physical mqtt sink
  */
 class MQTTSinkDescriptor : public SinkDescriptor {
 
   public:
     /**
-     * @brief Creates the OPC sink description
-     * @param url: server url used to connect to OPC server
-     * @param nodeId: id of node to write data to
-     * @param user: user name for server
-     * @param password: password for server
-     * @return descriptor for OPC sink
+     * @brief Creates the MQTT sink description
+     * @param host: host name of MQTT broker
+     * @param port: port of MQTT broker
+     * @param clientId: client ID for MQTT client
+     * @param topic: MQTT topic chosen to publish client data to
+     * @param user: user identification for client
+     * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
+     * @param timeUnit: time unit chosen by client user for message delay
+     * @param msgDelay: time before next message is sent by client to broker
+     * @param asynchronousClient: determine whether client is async- or synchronous
+     * @return descriptor for MQTT sink
      */
-    static SinkDescriptorPtr create(const std::string& host, uint16_t port, const std::string& clientId,
-                                    const std::string& topic, const std::string& user);
+    static SinkDescriptorPtr create( const std::string& host, const uint16_t port, const std::string& clientId,
+                                     const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs,
+                                     const char timeUnit, const uint64_t msgDelay, const bool asynchronousClient);
 
     /**
      * @brief get host information from a MQTT sink client
@@ -65,22 +71,53 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     const std::string& getUser() const;
 
+    /**
+     * @brief get the number of MSGs that can maximally be buffered (default is 60)
+     */
+    const uint32_t getMaxBufferedMSGs() const;
+
+    /**
+     * @brief get the user chosen time unit (default is milliseconds)
+     */
+    const char getTimeUnit() const;
+
+
+    /**
+     * @brief get the user chosen delay between two sent messages (default is 500)
+     */
+    const uint64_t getMsgDelay() const;
+
+    /**
+     * @brief get bool that indicates whether the client is asynchronous or synchronous (default is true)
+     */
+    const bool getAsynchronousClient() const;
+
     void setPort(uint16_t);
+    void setMaxBufferedMSGs(uint32_t);
+    void setTimeUnit(char);
+    void setMsgDelay(uint64_t);
 
     std::string toString() override;
     bool equal(SinkDescriptorPtr other) override;
 
   private:
-    explicit MQTTSinkDescriptor(const std::string& host, uint16_t port, const std::string& clientId,
-                                const std::string& topic, const std::string& user);
+    explicit MQTTSinkDescriptor(const std::string& host, const uint16_t port, const std::string& clientId, const std::string& topic,
+                       const std::string& user, const uint32_t maxBufferedMSGs, const char timeUnit, const uint64_t msgDelay,
+                       const bool asynchronousClient);
 
-    const std::string& host;
+    std::string host;
     uint16_t port;
 
-    const std::string& clientId;
-    const std::string& topic;
+    std::string clientId;
+    std::string topic;
 
-    const std::string& user;
+    std::string user;
+
+    uint32_t maxBufferedMSGs;
+    uint8_t timeUnit; //'n'-nanoseconds, 'm'-milliseconds, 's'-seconds
+
+    uint64_t msgDelay;
+    bool asynchronousClient;
 };
 
 typedef std::shared_ptr<MQTTSinkDescriptor> MQTTSinkDescriptorPtr;
