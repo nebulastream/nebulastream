@@ -17,6 +17,7 @@
 #ifndef NES_QUERYDEPLOYMENTEXCEPTION_HPP
 #define NES_QUERYDEPLOYMENTEXCEPTION_HPP
 
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -28,7 +29,12 @@ namespace NES {
 class QueryDeploymentException : public std::runtime_error {
 
   public:
-    explicit QueryDeploymentException(std::string message);
+    explicit QueryDeploymentException(SharedQueryId sharedQueryId, std::string message);
+
+    SharedQueryId getSharedQueryId();
+
+  private:
+    SharedQueryId sharedQueryId;
 };
 }// namespace NES
 #endif//NES_QUERYDEPLOYMENTEXCEPTION_HPP
