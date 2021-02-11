@@ -221,7 +221,7 @@ class ExecutableCompleteAggregationTriggerAction
                               << id << ": (" << this->windowDefinition->getDistributionType()->toString()
                               << "): Dispatch intermediate output buffer with " << currentNumberOfTuples
                               << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
-                              << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString() << std::endl);
+                              << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString());
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);
                     // request new buffer

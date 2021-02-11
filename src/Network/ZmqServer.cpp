@@ -258,6 +258,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
             std::rethrow_exception(std::current_exception());
         }
     }
+    ((void) index);
 }
 
 }// namespace Network

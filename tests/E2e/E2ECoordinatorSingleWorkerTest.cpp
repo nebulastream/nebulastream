@@ -19,7 +19,6 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
-
 #define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
 #include <boost/process.hpp>

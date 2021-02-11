@@ -492,11 +492,16 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::cerr << "NodeEngine failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
     std::cerr << "Error: " << strerror(errno) << std::endl;
+    std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
 
 void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
     NES_ERROR("onFatalException: exception=" << exception->what() << " callstack=\n" << callstack);
+    std::cerr << "NodeEngine failed fatally" << std::endl;
+    std::cerr << "Error: " << strerror(errno) << std::endl;
+    std::cerr << "Exception: " << exception->what() << std::endl;
+    std::cerr << "Callstack:\n " << callstack << std::endl;
 }
 
 }// namespace NES::NodeEngine

@@ -34,9 +34,9 @@ bool RecordHandler::hasAttribute(std::string name) { return this->statementMap.c
 ExpressionStatmentPtr RecordHandler::getAttribute(std::string name) {
     if (!hasAttribute(name)) {
         NES_DEBUG("registered attributes are:");
-        for (auto& item : statementMap) {
-            NES_DEBUG("item=" << item.first);
-        }
+//        for (auto& item : statementMap) {
+//            NES_DEBUG("item=" << item.first);
+//        }
         NES_ERROR("RecordHandler: Attribute name: " << name << " is not registered.");
     }
     return this->statementMap[name];
