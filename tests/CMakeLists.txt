@@ -382,9 +382,9 @@ target_link_libraries(assignment-watermark-test nes ${GTEST_LIBRARIES})
 add_test(NAME assignment-watermark-test COMMAND assignment-watermark-test)
 
 ### mergeDeploymentTest ###
-add_executable(merge-deployment-test "Integration/UnionDeploymentTest.cpp")
-target_link_libraries(merge-deployment-test nes ${GTEST_LIBRARIES})
-add_test(NAME merge-deployment-test COMMAND merge-deployment-test)
+add_executable(union-deployment-test "Integration/UnionDeploymentTest.cpp")
+target_link_libraries(union-deployment-test nes ${GTEST_LIBRARIES})
+add_test(NAME union-deployment-test COMMAND union-deployment-test)
 
 ### ContiniousSourceTest ###
 add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
