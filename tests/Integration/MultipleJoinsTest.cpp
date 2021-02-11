@@ -159,7 +159,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
 
     string query =
         R"(Query::from("window1")
-        .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
+        .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
@@ -324,7 +324,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     string query =
         R"(Query::from("window1")
         .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
-        .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
+        .joinWith(Query::from("window3"), Attribute("id1"), Attribute("id3"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -495,7 +495,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
         R"(Query::from("window1")
         .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
-        .join(Query::from("window4"), Attribute("id1"), Attribute("id4"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
+        .joinWith(Query::from("window4"), Attribute("id1"), Attribute("id4"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -666,7 +666,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     auto query =
         R"(Query::from("window1")
         .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
-        .join(Query::from("window3").join(Query::from("window4"), Attribute("id3"), Attribute("id4"), TumblingWindow::of(EventTime(Attribute("timestamp"))
+        .joinWith(Query::from("window3").join(Query::from("window4"), Attribute("id3"), Attribute("id4"), TumblingWindow::of(EventTime(Attribute("timestamp"))
         ,Milliseconds(1000))), Attribute("id1"), Attribute("id4"), TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
@@ -823,7 +823,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     string query =
         R"(Query::from("window1")
         .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
-        .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+        .joinWith(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -995,7 +995,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
 
     string query =
         R"(Query::from("window1")
-        .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+        .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
@@ -1174,7 +1174,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
 
     string query =
         R"(Query::from("window1")
-        .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+        .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .join(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .join(Query::from("window4"), Attribute("id1"), Attribute("id4"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
@@ -1367,7 +1367,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
 
     auto query =
         R"(Query::from("window1")
-        .join(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+        .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .join(Query::from("window3").join(Query::from("window4"), Attribute("id3"), Attribute("id4"), SlidingWindow::of(EventTime(Attribute("timestamp"))
         ,Seconds(1),Milliseconds(500))), Attribute("id1"), Attribute("id4"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"

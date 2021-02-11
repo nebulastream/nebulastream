@@ -113,10 +113,10 @@ class Query {
 
     /**
      * @brief This methods add the join operator to a query
-     * @param subQuery is the query to be merged
+     * @param subQueryRhsConst is the query to be merged
      * @return
      */
-    Query& join(const Query& subQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+    Query& joinWith(const Query& subQueryRhsConst, ExpressionItem onLeftKey, ExpressionItem onRightKey,
                 const Windowing::WindowTypePtr windowType);
 
     /**
