@@ -144,7 +144,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
  * of 0.1 seconds (100ms), and stops
  */
 TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 3133, streamConf);
 
     std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
@@ -162,6 +162,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
         auto optBuf = source->receiveData();
     }
 
+    ASSERT_NE(source->getGatheringIntervalCount(), initialGatheringInterval);
     ASSERT_TRUE(source->getGatheringIntervalCount() > initialGatheringInterval);
     ASSERT_TRUE(source->getGatheringIntervalCount() < 1000); // we don't control how much the change will be
     ASSERT_EQ((source->getGatheringIntervalCount() - initialGatheringInterval) % intervalIncrease, 0);

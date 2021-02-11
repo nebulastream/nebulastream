@@ -22,6 +22,9 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Services/QueryService.hpp>
@@ -32,10 +35,15 @@
 
 namespace NES {
 
-uint64_t rpcPort = 4000;
+static uint64_t restPort = 8081;
+static uint64_t rpcPort = 4000;
 
 class MillisecondIntervalTest : public testing::Test {
   public:
+    CoordinatorConfigPtr crdConf;
+    WorkerConfigPtr wrkConf;
+    SourceConfigPtr srcConf;
+
     static void SetUpTestCase() {
         NES::setupLogging("MillisecondIntervalTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MillisecondIntervalTest test class.");
@@ -43,20 +51,36 @@ class MillisecondIntervalTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down MillisecondIntervalTest test class."); }
 
-    void SetUp() override {
+    void SetUp() {
+
+        restPort = restPort + 3;
         rpcPort = rpcPort + 40;
-        NES_INFO("Setup FractionedIntervalTest class.");
+
+        crdConf = CoordinatorConfig::create();
+        crdConf->setRpcPort(rpcPort);
+        crdConf->setRestPort(restPort);
+
+        wrkConf = WorkerConfig::create();
+        wrkConf->setCoordinatorPort(rpcPort);
+
+        srcConf = SourceConfig::create();
+        srcConf->setSourceType("DefaultSource");
+        srcConf->setSourceConfig("../tests/test_data/exdra.csv");
+        srcConf->setSourceFrequency(550);
+        srcConf->setNumberOfTuplesToProducePerBuffer(1);
+        srcConf->setNumberOfBuffersToProduce(3);
+        srcConf->setPhysicalStreamName("physical_test");
+        srcConf->setLogicalStreamName("testStream");
+
+        NES_INFO("Setup MillisecondIntervalTest class.");
     }
 
-    void TearDown() override { NES_INFO("Tear down MillisecondIntervalTest test case."); }
-
-    std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
+    void TearDown() { NES_INFO("Tear down MillisecondIntervalTest test case."); }
 
 };// FractionedIntervalTest
 
 TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
@@ -88,14 +112,21 @@ TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
 }
 
 TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
+
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
     NES_INFO("MillisecondIntervalTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(ipAddress, restPort, rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>("127.0.0.1", port, "127.0.0.1", port + 10, port + 11, NodeType::Sensor);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
@@ -108,11 +139,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
-    PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "../tests/test_data/exdra.csv",
-            /**Source Frequency**/ 550, /**Number Of Tuples To Produce Per Buffer**/ 1,
-            /**Number of Buffers To Produce**/ 3, /**Physical Stream Name**/ "physical_test",
-            /**Logical Stream Name**/ "testStream", false);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
 
     //register physical stream
     wrk1->registerPhysicalStream(conf);
