@@ -19,6 +19,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <Plans/Global/Query/SharedQueryId.hpp>
 
 namespace NES {
 
@@ -28,7 +29,12 @@ namespace NES {
 class QueryPlacementException : public std::runtime_error {
 
   public:
-    explicit QueryPlacementException(std::string message);
+    explicit QueryPlacementException(SharedQueryId sharedQueryId, std::string message);
+
+    SharedQueryId getSharedQueryId();
+
+  private:
+    SharedQueryId sharedQueryId;
 };
 }// namespace NES
 #endif//NES_QUERYPLACEMENTEXCEPTION_HPP

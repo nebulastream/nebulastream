@@ -65,54 +65,17 @@ void QueryRequestProcessorService::start() {
     try {
         while (isQueryProcessorRunning()) {
             NES_INFO("QueryRequestProcessorService: Waiting for new query request trigger");
-            const std::vector<QueryCatalogEntry> queryCatalogEntryBatch = queryRequestQueue->getNextBatch();
-            NES_INFO("QueryProcessingService: Found " << queryCatalogEntryBatch.size() << " query requests to process");
+            const std::vector<QueryCatalogEntry> queryRequests = queryRequestQueue->getNextBatch();
+            NES_INFO("QueryProcessingService: Found " << queryRequests.size() << " query requests to process");
+            if (queryRequests.empty()) {
+                continue;
+            }
 
-            //process the queries using query-at-a-time model
-            /*            for (auto queryCatalogEntry : queryCatalogEntryBatch) {
-                QueryId queryId = queryCatalogEntry.getQueryId();*/
+            //FIXME: What to do if a query contains different placement strategy?
+            std::string placementStrategy = queryRequests[0].getQueryPlacementStrategy();
             try {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
-                globalQueryPlanUpdatePhase->execute(queryCatalogEntryBatch);
-                /*if (queryCatalogEntry.getQueryStatus() == QueryStatus::MarkedForStop) {
-                        NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
-                        globalQueryPlan->removeQuery(queryId);
-                    } else if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
-                        auto queryPlan = queryCatalogEntry.getQueryPlan();
-                        NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query "
-                                 << queryId << " status=" << queryCatalogEntry.getQueryStatusAsString());
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
-
-                        NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                        queryPlan = typeInferencePhase->execute(queryPlan);
-
-                        NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
-                        queryPlan = queryRewritePhase->execute(queryPlan);
-                        if (!queryPlan) {
-                            throw Exception("QueryProcessingService: Failed during query rewrite phase for query: "
-                                            + std::to_string(queryId));
-                        }
-
-                        NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                        queryPlan = typeInferencePhase->execute(queryPlan);
-                        if (!queryPlan) {
-                            throw Exception("QueryProcessingService: Failed during Type inference phase for query: "
-                                            + std::to_string(queryId));
-                        }
-
-                        NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                        globalQueryPlan->addQueryPlan(queryPlan);
-                    } else {
-                        NES_ERROR("QueryProcessingService: Request received for query with status "
-                                  << queryCatalogEntry.getQueryStatus() << " ");
-                        throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling},
-                                                          queryCatalogEntry.getQueryStatus());
-                    }
-
-                    if (enableQueryMerging) {
-                        NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
-                        queryMergerPhase->execute(globalQueryPlan);
-                    }*/
+                globalQueryPlanUpdatePhase->execute(queryRequests);
 
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
                 for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
@@ -133,12 +96,13 @@ void QueryRequestProcessorService::start() {
 
                         NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query with shared query id : "
                                   << sharedQueryId);
-                        std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
+
                         bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
                         if (!placementSuccessful) {
-                            throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for "
+                            throw QueryPlacementException(sharedQueryId,
+                                                          "QueryProcessingService: Failed to perform query placement for "
                                                           "query plan with shared query id: "
-                                                          + std::to_string(sharedQueryId));
+                                                              + std::to_string(sharedQueryId));
                         }
 
                         bool successful = queryDeploymentPhase->execute(sharedQueryId);
@@ -153,16 +117,20 @@ void QueryRequestProcessorService::start() {
                     sharedQueryMetaData->setAsOld();
                 }
 
-                if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
-                } else {
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+                for (auto queryRequest : queryRequests) {
+                    auto queryId = queryRequest.getQueryId();
+                    if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+                    } else {
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+                    }
                 }
 
             } catch (QueryPlacementException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
-                queryUndeploymentPhase->execute(queryId);
-                queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                auto sharedQueryId = ex.getSharedQueryId();
+                queryUndeploymentPhase->execute(sharedQueryId);
+                queryCatalog->markQueryAs(sharedQueryId, QueryStatus::Failed);
             } catch (QueryDeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
                 queryUndeploymentPhase->execute(queryId);
