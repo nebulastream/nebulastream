@@ -20,6 +20,7 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -57,6 +58,8 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (auto filterOperator : filterOperators) {
         pushDownFilter(filterOperator);
+        NES_INFO("Pushing Filter Operator " << filterOperator->toString());
+        NES_INFO("Updated query plan " << queryPlan->toString());
     }
 
     NES_INFO("FilterPushDownRule: Return the updated query plan " << queryPlan->toString());
@@ -78,7 +81,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         nodesToProcess.pop_front();
 
         if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
-            || node->instanceOf<FilterLogicalOperatorNode>()) {
+            || node->instanceOf<FilterLogicalOperatorNode>() || node->instanceOf<ProjectionLogicalOperatorNode>()) {
 
             NES_TRACE("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
 

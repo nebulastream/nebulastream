@@ -43,11 +43,11 @@ QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
 QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     auto duplicateQueryPlan = queryPlan->copy();
     duplicateQueryPlan = renameStreamToProjectOperatorRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = logicalSourceExpansionRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = distributeJoinRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
-    return distributeWindowRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = distributeJoinRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = distributeWindowRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
+    return logicalSourceExpansionRule->apply(duplicateQueryPlan);
 }
 
 }// namespace NES
