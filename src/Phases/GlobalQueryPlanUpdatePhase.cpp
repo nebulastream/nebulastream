@@ -78,29 +78,15 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 globalQueryPlan->addQueryPlan(queryPlan);
             } else {
-                NES_ERROR("QueryProcessingService: Request received for query with status " << queryRequest.getQueryStatus()
-                                                                                            << " ");
+                NES_ERROR("QueryProcessingService: Request received for query with status " << queryRequest.getQueryStatus());
                 throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling},
                                                   queryRequest.getQueryStatus());
             }
+        }
 
-            if (enableQueryMerging) {
-                NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
-                queryMergerPhase->execute(globalQueryPlan);
-            }
-
-            if (queryRequest.getQueryStatus() == MarkedForStop) {
-                NES_TRACE("GlobalQueryPlanUpdatePhase: Removing query plan for the query: " << queryId);
-                globalQueryPlan->removeQuery(queryId);
-            } else if (queryRequest.getQueryStatus() == Scheduling) {
-                NES_TRACE("GlobalQueryPlanUpdatePhase: Adding query plan for the query: " << queryId);
-                globalQueryPlan->addQueryPlan(queryRequest.getQueryPlan());
-            } else {
-                NES_ERROR("GlobalQueryPlanUpdatePhase: Received query request with unhandled status: "
-                          << queryRequest.getQueryStatusAsString());
-                throw Exception("GlobalQueryPlanUpdatePhase: Received query request with unhandled status"
-                                + queryRequest.getQueryStatusAsString());
-            }
+        if (enableQueryMerging) {
+            NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
+            queryMergerPhase->execute(globalQueryPlan);
         }
         NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;

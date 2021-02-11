@@ -17,5 +17,8 @@
 #include <Exceptions/TypeInferenceException.hpp>
 
 namespace NES {
-TypeInferenceException::TypeInferenceException(std::string message) : std::runtime_error(message) {}
+TypeInferenceException::TypeInferenceException(QueryId queryId, std::string message)
+    : std::runtime_error(message), queryId(queryId) {}
+
+QueryId TypeInferenceException::getQueryId() { return queryId; }
 }// namespace NES
