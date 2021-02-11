@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <filesystem>
 
 namespace NES {
 
@@ -30,8 +31,10 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     this->filePath = filePath;
     this->append = append;
     if (!append) {
-        int success = std::remove(filePath.c_str());
-        NES_DEBUG("FileSink: remove existing file=" << success);
+        if (std::filesystem::exists(filePath.c_str())) {
+            bool success = std::filesystem::remove(filePath.c_str());
+            NES_ASSERT2(success, "cannot remove file " << filePath.c_str());
+        }
     }
     NES_DEBUG("FileSink: open file=" << filePath);
     if (!outputFile.is_open()) {

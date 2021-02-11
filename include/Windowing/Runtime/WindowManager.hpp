@@ -105,6 +105,7 @@ class WindowManager {
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }
+        ((void) key);
     }
 
     /**
@@ -158,6 +159,7 @@ class WindowManager {
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }
+        (void (key));
     }
 
   private:

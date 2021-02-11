@@ -42,9 +42,17 @@ if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "-DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
 
+# Set NES_LOGGING_LEVEL Flag
+if (NES_LOGGING_LEVEL)
+    get_nes_log_level_value(NES_LOGGING_VALUE)
+else(NES_LOGGING_LEVEL)
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -Werror=unused-variable -Werror=unused-parameter -DNES_LOGGING_TRACE_LEVEL=1")
+    message("---Everything will be logged")
+endif (NES_LOGGING_LEVEL)
+
 # Set Optimization Flags
-set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -Werror=unused-variable -Werror=unused-parameter -g ${NES_SPECIFIC_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK -DNES_DEBUG_MODE=1")
+set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -g ${NES_SPECIFIC_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3")
 
 # Set Flamegraph Flags
@@ -54,16 +62,6 @@ if (NES_BUILD_BENCHMARKS)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -fno-omit-frame-pointer")
     message("---Flags needed for retrieving function names in flamegraphs have been added!")
 endif()
-
-# Set NES_LOGGING_LEVEL Flag
-if (NES_LOGGING_LEVEL)
-    get_nes_log_level_value(NES_LOGGING_VALUE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNES_LOGGING_LEVEL=${NES_LOGGING_VALUE}")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DNES_LOGGING_LEVEL=${NES_LOGGING_VALUE}")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNES_LOGGING_LEVEL=${NES_LOGGING_VALUE}")
-else(NES_LOGGING_LEVEL)
-    message("---Everything will be logged")
-endif (NES_LOGGING_LEVEL)
 
 # Compiler should produce specific code for system architecture
 include(CheckCXXCompilerFlag)

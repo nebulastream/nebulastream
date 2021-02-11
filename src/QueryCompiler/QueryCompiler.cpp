@@ -115,6 +115,8 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
             id++;
         }
     }
+    ((void) queryId);
+    ((void) querySubPlanId);
 }
 }// namespace detail
 void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& builder, CodeGeneratorPtr codeGenerator,

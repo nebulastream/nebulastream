@@ -61,7 +61,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
-            NES_FATAL_ERROR("ExecutableNestedLoopJoinTriggerAction " << id << ":: the weakExecutionContext was already expired!");
+            NES_ERROR("ExecutableNestedLoopJoinTriggerAction " << id << ":: the weakExecutionContext was already expired!");
             return false;
         }
         auto executionContext = this->weakExecutionContext.lock();
