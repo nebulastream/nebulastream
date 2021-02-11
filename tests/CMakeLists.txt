@@ -152,8 +152,11 @@ endif (NES_USE_OPC)
 ### MQTT Tests ###
 if(NES_USE_MQTT)
     add_executable(mqtt-source-tests "UnitTests/Source/MQTTSourceTest.cpp" UnitTests/Source/MQTTSourceTest.cpp)
+    add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
     target_link_libraries(mqtt-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+    target_link_libraries(mqtt-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME mqtt-source-tests COMMAND mqtt-source-tests)
+    add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif(NES_USE_MQTT)
 
 ### Memory Layout Tests ###
