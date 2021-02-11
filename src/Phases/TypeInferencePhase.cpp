@@ -77,7 +77,8 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         return queryPlan;
     } catch (Exception& e) {
         NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase " << e.what());
-        throw TypeInferenceException(e.what());
+        auto queryId = queryPlan->getQueryId();
+        throw TypeInferenceException(queryId, e.what());
     }
 }
 

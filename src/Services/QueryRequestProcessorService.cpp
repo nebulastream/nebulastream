@@ -55,7 +55,8 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-    globalQueryPlanUpdatePhase = GlobalQueryPlanUpdatePhase::create(queryCatalog, globalQueryPlan, enableQueryMerging);
+    globalQueryPlanUpdatePhase =
+        GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, enableQueryMerging);
 }
 
 QueryRequestProcessorService::~QueryRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
