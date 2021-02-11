@@ -437,7 +437,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     string query =
         R"(Query::from("window1")
             .project(Attribute("id1").rename("id1New"), Attribute("timestamp"))
-            .join(
+            .joinWith(
                         Query::from("window2")
                         .project(
                             Attribute("id2").rename("id2New"),

@@ -67,9 +67,9 @@ Query& Query::unionWith(Query* subQuery) {
     return *this;
 }
 
-Query& Query::join(const Query& subQueryRhsConst, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+Query& Query::joinWith(const Query& subQueryRhsConst, ExpressionItem onLeftKey, ExpressionItem onRightKey,
                    const Windowing::WindowTypePtr windowType) {
-    NES_DEBUG("Query: join the subQuery to current query");
+    NES_DEBUG("Query: joinWith the subQuery to current query");
 
     auto subQueryRhs = const_cast<Query&>(subQueryRhsConst);
 
