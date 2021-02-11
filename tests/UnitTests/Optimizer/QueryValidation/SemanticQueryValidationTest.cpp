@@ -22,6 +22,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include "Exceptions/InvalidQueryException.hpp"
 
 
 namespace NES {
@@ -39,16 +40,16 @@ class SemanticQueryValidationTest : public testing::Test {
     void CallValidation(std::string queryString){
         PrintQString(queryString);
         StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-        SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalogPtr);
+        SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
         QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
         filterQuery->sink(FileSinkDescriptor::create(""));
-        semanticQueryValidationPtr->isSatisfiable(filterQuery);
+        semanticQueryValidation->isSatisfiable(filterQuery);
     }
 
     void TestForException(std::string queryString){
     try {
         CallValidation(queryString);
-    } catch(std::runtime_error& e) {
+    } catch(InvalidQueryException& e) {
         std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
         std::cout << e.what();
         SUCCEED();
@@ -113,7 +114,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Satisfiable Query with later added filters");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalogPtr);
+    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
 
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10).filter(Attribute(\"value\") < 10); "
@@ -126,14 +127,15 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
 
     filterQuery->sink(FileSinkDescriptor::create(""));
     
-    semanticQueryValidationPtr->isSatisfiable(filterQuery);
+    semanticQueryValidation->isSatisfiable(filterQuery);
 }
 
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Unatisfiable Query with later added filters");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalogPtr);
+    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+
 
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 100).filter(Attribute(\"value\") < 10); "
@@ -147,8 +149,8 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     filterQuery->sink(FileSinkDescriptor::create(""));
 
     try {
-        semanticQueryValidationPtr->isSatisfiable(filterQuery);
-    } catch(std::runtime_error& e) {
+        semanticQueryValidation->isSatisfiable(filterQuery);
+    } catch(InvalidQueryException& e) {
         std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
         std::cout << e.what();
         SUCCEED();
@@ -178,5 +180,36 @@ TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
     
     TestForException(queryString);
 }
+
+
+TEST_F(SemanticQueryValidationTest, asOperatorTest) {
+    NES_INFO("as operator test");
+
+    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+
+    std::string queryString =
+        "Query::from(\"default_logical\").as(\"dl\").filter(Attribute(\"value\") > 100); "
+        ;
+    
+    CallValidation(queryString);
+}
+
+TEST_F(SemanticQueryValidationTest, asOperatorTest2) {
+    NES_INFO("as operator test 2");
+
+    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+
+    auto query = Query::from("default_logical")
+                     .filter(Attribute("id") < 42)
+                     .map(Attribute("value") = Attribute("value") + 2)
+                     .as("x")
+                     .sink(FileSinkDescriptor::create(""));
+
+    semanticQueryValidation->isSatisfiable(std::make_shared<Query>(query));
+
+}
+
 
 }// namespace NES
