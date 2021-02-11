@@ -82,6 +82,12 @@ QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& querySt
 
 }
 
+void QueryCatalog::setQueryFaliureReason(QueryId queryId, const std::string& faliureReason) {
+    QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
+    queryCatalogEntry->setFaliureReason(faliureReason);
+
+}
+
 QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(QueryId queryId) {
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog: Validating with old query status.");

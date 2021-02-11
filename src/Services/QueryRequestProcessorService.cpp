@@ -22,6 +22,7 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
+#include "Exceptions/InvalidQueryException.hpp"
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
@@ -147,6 +148,7 @@ void QueryRequestProcessorService::start() {
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                    queryCatalog->setQueryFaliureReason(queryId, ex.what());
                 }
             } catch (TypeInferenceException& ex) {
                 NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
@@ -158,7 +160,9 @@ void QueryRequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService QueryNotFoundException: " << ex.what());
             } catch (QueryUndeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryUndeploymentException: " << ex.what());
-            } catch (Exception& ex) {
+            } catch (InvalidQueryException& ex) {
+                NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
+            }catch (Exception& ex) {
                 NES_FATAL_ERROR(
                     "QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
                 shutDown();

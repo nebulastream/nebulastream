@@ -20,6 +20,8 @@
 
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include "Exceptions/InvalidQueryException.hpp"
+
 
 
 namespace NES {
@@ -39,7 +41,7 @@ class SyntacticQueryValidationTest : public testing::Test {
         PrintQString(queryString);
         SyntacticQueryValidation syntacticQueryValidation;
         syntacticQueryValidation.isValid(queryString);
-    } catch(std::runtime_error& e) {
+    } catch(InvalidQueryException& e) {
         std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
         std::cout << e.what();
         SUCCEED();

@@ -29,11 +29,16 @@
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
+#include "Exceptions/InvalidQueryException.hpp"
 
 namespace NES {
 
 NES::SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr scp) {
     streamCatalog = scp;
+}
+
+SemanticQueryValidationPtr NES::SemanticQueryValidation::create(StreamCatalogPtr scp){
+    return std::make_shared<SemanticQueryValidation>(scp);
 }
 
 bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
@@ -49,14 +54,14 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
     try {
         typeInferencePhase->execute(queryPlan);
         signatureInferencePhase->execute(queryPlan);
-    } catch(std::runtime_error& e) {
+    } catch(std::exception& e) {
         std::string errorMessage = e.what();
         if(errorMessage.find("FieldAccessExpression:") != std::string::npos){
             // handle nonexistend field
-            NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: " + errorMessage + "\n");
+            throw InvalidQueryException("SemanticQueryValidation: " + errorMessage + "\n");
         }
 
-        NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: " + errorMessage + "\n");
+        throw InvalidQueryException("SemanticQueryValidation: " + errorMessage + "\n");
     }
     z3::solver solver(*context);
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -67,7 +72,7 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
     }
 
     if(solver.check() == z3::unsat){
-        NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: Unsatisfiable Query\n");
+        throw InvalidQueryException("SemanticQueryValidation: Unsatisfiable Query\n");
     }
 
     return solver.check() != z3::unsat;
@@ -85,7 +90,7 @@ void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPl
             auto streamName = sourceDescriptor->getStreamName();
 
             if(!isLogicalStreamInCatalog(streamName, allLogicalStreams)){
-                NES_THROW_RUNTIME_ERROR("SemanticQueryValidation: The logical stream " + streamName
+                throw InvalidQueryException("SemanticQueryValidation: The logical stream " + streamName
                                         + " could not be found in the StreamCatalog\n");
             }
         }

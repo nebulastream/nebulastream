@@ -37,6 +37,7 @@ class SemanticQueryValidation {
     public:
         bool isSatisfiable(QueryPtr inputQuery);
         SemanticQueryValidation(StreamCatalogPtr scp);
+        static SemanticQueryValidationPtr create(StreamCatalogPtr scp);
 };
 
 typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;

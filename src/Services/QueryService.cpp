@@ -17,6 +17,7 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -48,9 +49,9 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         SyntacticQueryValidation syntacticQueryValidation;
         syntacticQueryValidation.isValid(queryString);
     } catch (const std::exception& exc) {
-        QueryCatalogEntryPtr failedEntry = queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
-        failedEntry->setFaliureReason(std::string(exc.what()));
-        NES_THROW_RUNTIME_ERROR(exc.what());
+        queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
+        queryCatalog->setQueryFaliureReason(queryId, exc.what());
+        throw InvalidQueryException(exc.what());
     }
 
     NES_INFO("QueryService: Validating placement strategy");
@@ -66,12 +67,12 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
 
     NES_INFO("QueryService: Executing Semantic validation");
     try{
-        SemanticQueryValidationPtr semanticQueryValidationPtr = std::make_shared<SemanticQueryValidation>(streamCatalog);
-        semanticQueryValidationPtr->isSatisfiable(query);
+        SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalog);
+        semanticQueryValidation->isSatisfiable(query);
     } catch (const std::exception& exc) {
-        QueryCatalogEntryPtr failedEntry = queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
-        failedEntry->setFaliureReason(std::string(exc.what()));
-        NES_THROW_RUNTIME_ERROR(exc.what());
+        queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
+        queryCatalog->setQueryFaliureReason(queryId, exc.what());
+        throw InvalidQueryException(exc.what());
     }
 
     NES_INFO("QueryService: Queuing the query for the execution");

@@ -21,6 +21,7 @@
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
+#include "Exceptions/InvalidQueryException.hpp"
 
 namespace NES {
 
@@ -54,7 +55,7 @@ void NES::SyntacticQueryValidation::handleException(const std::exception& ex){
 
     clean_error_message = "SyntacticQueryValidation:\n" + clean_error_message;
     
-    NES_THROW_RUNTIME_ERROR(clean_error_message + "\n");
+    throw InvalidQueryException(clean_error_message + "\n");
 }
 
 }// namespace NES
