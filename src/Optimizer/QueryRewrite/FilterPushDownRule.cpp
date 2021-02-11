@@ -58,8 +58,6 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (auto filterOperator : filterOperators) {
         pushDownFilter(filterOperator);
-        NES_INFO("Pushing Filter Operator " << filterOperator->toString());
-        NES_INFO("Updated query plan " << queryPlan->toString());
     }
 
     NES_INFO("FilterPushDownRule: Return the updated query plan " << queryPlan->toString());
