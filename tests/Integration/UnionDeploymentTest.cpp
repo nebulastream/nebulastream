@@ -663,7 +663,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
 
     wrk1->registerPhysicalStream(confCar);
 
-    std::string testSchema2 = "Schema::create()->addField(\"id\", BasicType::UINT16)->addField(\"id2\", BasicType::UINT64);";
+    std::string testSchema2 = "Schema::create()->addField(\"id\", BasicType::UINT16)->addField(\"value\", BasicType::UINT64);";
     std::string testSchemaFileName2 = "testSchema2.hpp";
     std::ofstream out2(testSchemaFileName2);
     out2 << testSchema2;
