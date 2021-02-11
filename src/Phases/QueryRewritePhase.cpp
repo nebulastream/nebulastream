@@ -44,10 +44,10 @@ QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     auto duplicateQueryPlan = queryPlan->copy();
     duplicateQueryPlan = renameStreamToProjectOperatorRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = distributeJoinRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = distributeWindowRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
-    return logicalSourceExpansionRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = logicalSourceExpansionRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = distributeJoinRule->apply(duplicateQueryPlan);
+    return distributeWindowRule->apply(duplicateQueryPlan);
 }
 
 }// namespace NES
