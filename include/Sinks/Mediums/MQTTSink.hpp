@@ -28,8 +28,6 @@
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <mqtt/client.h>
-//#include "mqtt/client.h"
-#include "mqtt/async_client.h"
 
 
 namespace NES {
@@ -61,30 +59,50 @@ class MQTTSink : public SinkMedium {
     bool disconnect();
 
     /**
-     * @brief Get MQTT sink port
-     */
-    int getPort();
-
-    /**
-     * @brief Get MQTT host name
+     * @brief get host information from a MQTT sink client
      */
     const std::string& getHost() const;
 
     /**
-     * @brief Get MQTT topic
+     * @brief get port information from a MQTT sink client
      */
-    const std::string& getTopic() const;
+    uint16_t getPort() const;
 
     /**
-     * @brief Get MQTT clientId
+     * @brief get clientId information from a MQTT sink client
      */
     const std::string& getClientId() const;
 
     /**
-     * @brief Get MQTT user
+     * @brief get topic information from a MQTT sink client
+     */
+    const std::string& getTopic() const;
+
+    /**
+     * @brief get user name for a MQTT sink client
      */
     const std::string& getUser() const;
 
+    /**
+     * @brief get the number of MSGs that can maximally be buffered (default is 60)
+     */
+    const uint32_t getMaxBufferedMSGs() const;
+
+    /**
+     * @brief get the user chosen time unit (default is milliseconds)
+     */
+    const char getTimeUnit() const;
+
+
+    /**
+     * @brief get the user chosen delay between two sent messages (default is 500)
+     */
+    const uint64_t getMsgDelay() const;
+
+    /**
+     * @brief get bool that indicates whether the client is asynchronous or synchronous (default is true)
+     */
+    const bool getAsynchronousClient() const;
 
     /**
      * @brief Get connected status of MQTT sink
