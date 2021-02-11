@@ -176,5 +176,20 @@ const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanI
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const uint64_t kafkaProducerTimeout);
 #endif
+
+//TODO further adapt to MQTT specifics
+#ifdef ENABLE_MQTT_BUILD
+/**
+ * @brief create MQTT sink
+ * @param schema: schema of the data
+ * @param brokers: broker list
+ * @param topic: MQTT topic to write to
+ * @param kafkaProducerTimeout: MQTT producer timeout
+ * @return a data sink pointer
+ */
+const DataSinkPtr createMQTTSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
+                                            const uint64_t kafkaProducerTimeout);
+#endif
+
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */

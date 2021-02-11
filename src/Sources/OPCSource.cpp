@@ -79,7 +79,6 @@ std::optional<NodeEngine::TupleBuffer> OPCSource::receiveData() {
         }
 
     } else {
-
         NES_ERROR("OPCSOURCE::receiveData(): Not connected!");
         return std::nullopt;
     }

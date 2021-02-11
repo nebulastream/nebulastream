@@ -127,7 +127,7 @@ target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME source-tests COMMAND source-tests)
 
 ### Sink Tests ###
-add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
+add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp")
 target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME sink-tests COMMAND sink-tests)
 
@@ -148,6 +148,13 @@ if (NES_USE_OPC)
     target_link_libraries(opc-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
 endif (NES_USE_OPC)
+
+### MQTT Tests ###
+if(NES_USE_MQTT)
+add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
+target_link_libraries(mqtt-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES} paho-mqtt3as paho-mqttpp3)
+add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
+endif(NES_USE_MQTT)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")

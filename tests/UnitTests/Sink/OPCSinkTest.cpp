@@ -16,7 +16,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <gtest/gtest.h>
-#ifdef ENABLE_OPC_BUILD
+//#ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/WorkerContext.hpp>
@@ -195,4 +195,4 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     stopServer();
 }
 }// namespace NES
-#endif
+//#endif

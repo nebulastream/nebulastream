@@ -233,6 +233,13 @@ if (NES_USE_OPC)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif (NES_USE_OPC)
 
+# Library containing OPC client
+# TODO REMOVE ENABLE_OPC_BUILD
+if (NES_USE_MQTT)
+    add_compile_definitions(ENABLE_OPC_BUILD)
+    add_compile_definitions(ENABLE_MQTT_BUILD)
+endif (NES_USE_MQTT)
+
 # Eigen 3.3 linear algebra library
 if (NES_USE_ADAPTIVE)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
