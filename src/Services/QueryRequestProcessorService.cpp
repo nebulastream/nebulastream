@@ -126,17 +126,22 @@ void QueryRequestProcessorService::start() {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     }
                 }
-
             } catch (QueryPlacementException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId);
-                queryCatalog->markQueryAs(sharedQueryId, QueryStatus::Failed);
+                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
+                for (auto queryId : sharedQueryMetaData->getQueryIds()) {
+                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                }
             } catch (QueryDeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId);
-                queryCatalog->markQueryAs(sharedQueryId, QueryStatus::Failed);
+                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
+                for (auto queryId : sharedQueryMetaData->getQueryIds()) {
+                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                }
             } catch (TypeInferenceException& ex) {
                 NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
                 auto queryId = ex.getQueryId();
@@ -148,7 +153,8 @@ void QueryRequestProcessorService::start() {
             } catch (QueryUndeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryUndeploymentException: " << ex.what());
             } catch (Exception& ex) {
-                NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
+                NES_FATAL_ERROR(
+                    "QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
                 shutDown();
             }
         }

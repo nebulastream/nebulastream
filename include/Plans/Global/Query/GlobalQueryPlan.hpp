@@ -109,6 +109,13 @@ class GlobalQueryPlan {
     SharedQueryId getSharedQueryIdForQuery(QueryId queryId);
 
     /**
+     * @brief Get the shared query metadata information for given shared query id
+     * @param sharedQueryId : the shared query id
+     * @return SharedQueryMetaData or nullptr
+     */
+    SharedQueryMetaDataPtr getSharedQueryMetaData(SharedQueryId sharedQueryId);
+
+    /**
      * @brief Update the global query meta data information
      * @param sharedQueryMetaData: the global query metadata to be updated
      * @return true if successful

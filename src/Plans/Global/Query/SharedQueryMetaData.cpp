@@ -223,4 +223,13 @@ bool SharedQueryMetaData::addSharedQueryMetaData(SharedQueryMetaDataPtr queryMet
     return true;
 }
 
+std::vector<QueryId> SharedQueryMetaData::getQueryIds() {
+
+    std::vector<QueryId> queryIds;
+    for (auto [queryId, sinkGQNs] : queryIdToSinkGQNMap) {
+        queryIds.push_back(queryId);
+    }
+    return queryIds;
+}
+
 }// namespace NES
