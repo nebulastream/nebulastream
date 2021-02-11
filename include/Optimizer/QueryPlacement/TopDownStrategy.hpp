@@ -60,10 +60,11 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     /**
      * @brief Get topology node where all children operators of the input operator are to be placed
+     * @param queryId: query id
      * @param candidateOperator: the input operator
      * @return vector of topology nodes where child operator are to be placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForSourceOperators(OperatorNodePtr candidateOperator);
+    std::vector<TopologyNodePtr> getTopologyNodesForSourceOperators(SharedQueryId queryId, OperatorNodePtr candidateOperator);
 
     /**
      * @brief Get the candidate query plan where input operator is to be appended
