@@ -88,6 +88,7 @@ void BenchmarkUtils::recordStatistics(std::vector<NodeEngine::QueryStatistics*>&
     }
 }
 
+
 void BenchmarkUtils::computeDifferenceOfStatistics(std::vector<NodeEngine::QueryStatistics*>& statisticsVec) {
     for (uint64_t i = statisticsVec.size() - 1; i > 1; --i) {
         statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());

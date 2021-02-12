@@ -36,6 +36,7 @@ CoordinatorConfig::CoordinatorConfig() {
     enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
+    numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
     queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
 }
 
@@ -133,6 +134,10 @@ void CoordinatorConfig::setDataPort(uint16_t dataPortValue) { dataPort->setValue
 IntConfigOption CoordinatorConfig::getNumberOfSlots() { return numberOfSlots; }
 
 void CoordinatorConfig::setNumberOfSlots(uint16_t numberOfSlotsValue) { numberOfSlots->setValue(numberOfSlotsValue); }
+
+void CoordinatorConfig::setNumWorkerThreads(uint16_t numWorkerThreadsValue) { numWorkerThreads->setValue(numWorkerThreadsValue); }
+
+IntConfigOption CoordinatorConfig::getNumWorkerThreads() { return numWorkerThreads; }
 
 BoolConfigOption CoordinatorConfig::getEnableQueryMerging() { return enableQueryMerging; }
 

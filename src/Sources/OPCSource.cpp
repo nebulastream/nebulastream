@@ -51,8 +51,7 @@ OPCSource::~OPCSource() {
     if (success) {
         NES_DEBUG("OPCSOURCE  " << this << ": Destroy OPC Source");
     } else {
-        NES_ERROR("OPCSOURCE  " << this << ": Destroy OPC Source failed cause it could not be disconnected");
-        assert(0);
+        NES_FATAL_ERROR("OPCSOURCE  " << this << ": Destroy OPC Source failed cause it could not be disconnected");
     }
 }
 

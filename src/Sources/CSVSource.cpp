@@ -64,13 +64,18 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
 
 std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on " << operatorId);
-    auto buf = this->bufferManager->getBufferBlocking();
-    fillBuffer(buf);
-    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
-    if (buf.getNumberOfTuples() == 0) {
+    auto optBuf = this->bufferManager->getBufferTimeout(std::chrono::milliseconds(5000));
+    if(!optBuf)
+    {
+        NES_ERROR("buffer could not be delivered after 5 sec");
+        return std::nullopt;
+    }
+    fillBuffer(optBuf.value());
+    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << optBuf.value().getNumberOfTuples());
+    if (optBuf.value().getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
-        return buf;
+        return optBuf.value();
     }
 }
 

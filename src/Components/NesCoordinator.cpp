@@ -54,7 +54,8 @@ namespace NES {
 NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
-      numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()), inherited0(), inherited1() {
+      numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
+      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()), inherited0(), inherited1() {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;
@@ -157,6 +158,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     workerConfig->setRpcPort(rpcPort + 1);
     workerConfig->setDataPort(rpcPort + 2);
     workerConfig->setNumberOfSlots(numberOfSlots);
+    workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
     worker = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
