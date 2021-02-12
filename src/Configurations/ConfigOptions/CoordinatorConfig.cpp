@@ -36,6 +36,7 @@ CoordinatorConfig::CoordinatorConfig() {
     enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
+    queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -53,6 +54,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
             setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
             setLogLevel(config["logLevel"].As<std::string>());
+            setQueryBatchSize(config["queryBatchSize"].As<uint32_t>());
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
@@ -83,6 +85,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setEnableQueryMerging((it->second == "true"));
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
+            } else if (it->first == "--queryBatchSize") {
+                setQueryBatchSize(stoi(it->second));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -103,6 +107,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setNumberOfSlots(numberOfSlots->getDefaultValue());
     setEnableQueryMerging(enableQueryMerging->getDefaultValue());
     setLogLevel(logLevel->getDefaultValue());
+    setQueryBatchSize(queryBatchSize->getDefaultValue());
 }
 
 StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
@@ -138,4 +143,9 @@ void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
 StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
 
 void CoordinatorConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
+
+IntConfigOption CoordinatorConfig::getQueryBatchSize() { return queryBatchSize; }
+
+void CoordinatorConfig::setQueryBatchSize(uint32_t batchSize) { queryBatchSize->setValue(batchSize); }
+
 }// namespace NES

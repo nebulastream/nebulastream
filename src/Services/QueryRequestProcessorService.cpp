@@ -33,7 +33,6 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>

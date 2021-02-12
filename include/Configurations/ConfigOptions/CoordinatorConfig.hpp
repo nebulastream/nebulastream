@@ -153,6 +153,18 @@ class CoordinatorConfig {
      */
     void setLogLevel(std::string logLevel);
 
+    /**
+     * @brief Get the query batch size
+     * @return query batch size
+     */
+    IntConfigOption getQueryBatchSize();
+
+    /**
+     * @brief Set the number of queries to be processed together
+     * @param batchSize: the batch size
+     */
+    void setQueryBatchSize(uint32_t batchSize);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -166,6 +178,7 @@ class CoordinatorConfig {
     IntConfigOption numberOfSlots;
     BoolConfigOption enableQueryMerging;
     StringConfigOption logLevel;
+    IntConfigOption queryBatchSize;
 };
 
 }// namespace NES

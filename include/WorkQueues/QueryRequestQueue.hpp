@@ -33,7 +33,7 @@ typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
 class QueryRequestQueue {
 
   public:
-    QueryRequestQueue();
+    QueryRequestQueue(uint32_t batchSize);
     ~QueryRequestQueue();
 
     /**
@@ -70,7 +70,7 @@ class QueryRequestQueue {
 
   private:
     bool newRequestAvailable;
-    uint64_t batchSize;
+    uint32_t batchSize;
     std::mutex queryRequest;
     std::condition_variable availabilityTrigger;
     std::deque<QueryCatalogEntry> schedulingQueue;

@@ -64,7 +64,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
-    queryRequestQueue = std::make_shared<QueryRequestQueue>();
+    queryRequestQueue = std::make_shared<QueryRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(
         globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,

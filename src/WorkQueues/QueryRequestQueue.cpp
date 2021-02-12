@@ -21,7 +21,9 @@
 
 namespace NES {
 
-QueryRequestQueue::QueryRequestQueue() : newRequestAvailable(false), batchSize(1) { NES_DEBUG("QueryRequestQueue()"); }
+QueryRequestQueue::QueryRequestQueue(uint32_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {
+    NES_DEBUG("QueryRequestQueue()");
+}
 
 QueryRequestQueue::~QueryRequestQueue() { NES_DEBUG("~QueryRequestQueue()"); }
 
