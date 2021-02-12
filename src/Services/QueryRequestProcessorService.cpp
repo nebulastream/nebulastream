@@ -88,6 +88,9 @@ void QueryRequestProcessorService::start() {
                         NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query "
                                  << queryId << " status=" << queryCatalogEntry.getQueryStatusAsString());
                         queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
+                        NES_TIMER("BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : "
+                                  << "(" << queryId << ", " << std::chrono::system_clock::now().time_since_epoch().count()
+                                  << ")");
 
                         NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                         start = std::chrono::system_clock::now();
@@ -226,11 +229,17 @@ void QueryRequestProcessorService::start() {
                     if (queryCatalogEntry.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                         auto end = std::chrono::system_clock::now();
+                        NES_TIMER("BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : "
+                                  << "(" << queryId << ", " << std::chrono::system_clock::now().time_since_epoch().count()
+                                  << ")");
                         NES_TIMER("BDAPRO2Tracking: markAsRunning - (queryId, microseconds) : "
                                   << "(" << queryId << ", "
                                   << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+                        NES_TIMER("BDAPRO2Tracking: markAsStopped - (queryId, nanoseconds) : "
+                                  << "(" << queryId << ", " << std::chrono::system_clock::now().time_since_epoch().count()
+                                  << ")");
                     }
                 } catch (QueryPlacementException& ex) {
                     NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
