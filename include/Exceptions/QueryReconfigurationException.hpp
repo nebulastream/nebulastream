@@ -17,6 +17,7 @@
 #ifndef NES_QUERYRECONFIGURATIONTEXCEPTION_HPP
 #define NES_QUERYRECONFIGURATIONTEXCEPTION_HPP
 
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <stdexcept>
 
 namespace NES {
@@ -27,7 +28,12 @@ namespace NES {
 class QueryReconfigurationException : public std::runtime_error {
 
   public:
-    explicit QueryReconfigurationException(std::string message);
+    explicit QueryReconfigurationException(SharedQueryId sharedQueryId, std::string message);
+
+    SharedQueryId getSharedQueryId();
+
+  private:
+    SharedQueryId sharedQueryId;
 };
 }// namespace NES
 #endif//NES_QUERYRECONFIGURATIONTEXCEPTION_HPP

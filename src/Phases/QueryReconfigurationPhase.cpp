@@ -112,8 +112,8 @@ TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr que
     std::vector<TopologyNodePtr> allSourceNodes;
     for (auto& sourceOperator : sourceOperators) {
         if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
-            throw QueryReconfigurationException("QueryReconfigurationPhase: Source Descriptor need stream name: "
-                                                + std::to_string(queryId));
+            throw QueryReconfigurationException(
+                queryId, "QueryReconfigurationPhase: Source Descriptor need stream name: " + std::to_string(queryId));
         }
         const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
         if (mapOfSourceToTopologyNodes.find(streamName) != mapOfSourceToTopologyNodes.end()) {
@@ -125,8 +125,9 @@ TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr que
         if (sourceNodes.empty()) {
             NES_ERROR("BasePlacementStrategy: No source found in the topology for stream " << streamName
                                                                                            << " for query with id : " << queryId);
-            throw QueryReconfigurationException("QueryReconfigurationPhase: No source found in the topology for stream "
-                                                + streamName + " for query with id : " + std::to_string(queryId));
+            throw QueryReconfigurationException(queryId,
+                                                "QueryReconfigurationPhase: No source found in the topology for stream "
+                                                    + streamName + " for query with id : " + std::to_string(queryId));
         }
         mapOfSourceToTopologyNodes[streamName] = sourceNodes;
         NES_TRACE("QueryReconfigurationPhase: Find the topology sub graph for the source nodes.");
@@ -145,7 +146,7 @@ TopologyNodePtr QueryReconfigurationPhase::findSinkTopologyNode(QueryPlanPtr que
     if (rootNodes.empty()) {
         NES_ERROR("QueryReconfigurationPhase: Found no root nodes in the topology plan. Please check the topology graph.");
         throw QueryReconfigurationException(
-            "QueryReconfigurationPhase: Found no root nodes in the topology plan. Please check the topology graph.");
+            queryId, "QueryReconfigurationPhase: Found no root nodes in the topology plan. Please check the topology graph.");
     }
     return rootNodes[0]->as<TopologyNode>();
 }

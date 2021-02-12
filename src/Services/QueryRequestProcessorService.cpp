@@ -49,9 +49,7 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
                                                            QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
                                                            bool enableQueryReconfiguration)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
-      globalQueryPlan(globalQueryPlan) {
-      globalQueryPlan(globalQueryPlan), enableQueryMerging(enableQueryMerging),
-      enableQueryReconfiguration(enableQueryReconfiguration) {
+      globalQueryPlan(globalQueryPlan), enableQueryReconfiguration(enableQueryReconfiguration) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -89,54 +87,42 @@ void QueryRequestProcessorService::start() {
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
                     if ((!enableQueryReconfiguration || sharedQueryMetaData->isEmpty()) && !sharedQueryMetaData->isNew()) {
-                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
-                            bool successful = queryUndeploymentPhase->execute(sharedQueryId);
-                            if (!successful) {
-                                throw QueryUndeploymentException("Unable to stop Global QueryId "
-                                                                 + std::to_string(sharedQueryId));
-                            }
+                        NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                        bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+                        if (!successful) {
+                            throw QueryUndeploymentException("Unable to stop Global QueryId " + std::to_string(sharedQueryId));
                         }
-                        if ((sharedQueryMetaData->isNew() || !enableQueryReconfiguration) && !sharedQueryMetaData->isEmpty()) {
-
+                    }
+                    if ((sharedQueryMetaData->isNew() || !enableQueryReconfiguration) && !sharedQueryMetaData->isEmpty()) {
                         auto queryPlan = sharedQueryMetaData->getQueryPlan();
-
-                            NES_DEBUG(
-                                "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
-                                << sharedQueryId);
-                            std::string placementStrategy = queryCatalogEntry.getQueryPlacementStrategy();
-                            bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
-                            if (!placementSuccessful) {
-                                throw QueryPlacementException("QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with shared query id: "
-                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query with shared query id : "
-                                  << sharedQueryId);
-
                         bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
                         if (!placementSuccessful) {
                             throw QueryPlacementException(sharedQueryId,
                                                           "QueryProcessingService: Failed to perform query placement for "
                                                           "query plan with shared query id: "
                                                               + std::to_string(sharedQueryId));
-                            }
-                            bool successful = queryDeploymentPhase->execute(sharedQueryId);
-                            if (!successful) {
-                                throw QueryDeploymentException(
-                                    sharedQueryId,"QueryRequestProcessingService: Failed to deploy query with global query Id "
+                        }
+                        bool successful = queryDeploymentPhase->execute(sharedQueryId);
+                        if (!successful) {
+                            throw QueryDeploymentException(
+                                sharedQueryId,
+                                "QueryRequestProcessingService: Failed to deploy query with global query Id "
                                     + std::to_string(sharedQueryId));
-                            }
                         }
-                        if (enableQueryReconfiguration && !sharedQueryMetaData->isEmpty() && !sharedQueryMetaData->isNew()) {
-                            auto queryPlan = sharedQueryMetaData->getQueryPlan();
-                            bool successful = queryReconfigurationPhase->execute(queryPlan);
-                            if (!successful) {
-                                throw QueryReconfigurationException(
-                                    "QueryRequestProcessingService: Failed to reconfigure query with global query Id "
-                                    + std::to_string(sharedQueryId) + " when attempting for query Id " + std::to_string(queryId));
-                            }
-                        }
-                        //Mark the meta data as deployed
-                        sharedQueryMetaData->markAsDeployed();
                     }
+                    if (enableQueryReconfiguration && !sharedQueryMetaData->isEmpty() && !sharedQueryMetaData->isNew()) {
+                        auto queryPlan = sharedQueryMetaData->getQueryPlan();
+                        bool successful = queryReconfigurationPhase->execute(queryPlan);
+                        if (!successful) {
+                            throw QueryReconfigurationException(
+                                sharedQueryId,
+                                "QueryRequestProcessingService: Failed to reconfigure query with global query Id "
+                                    + std::to_string(sharedQueryId));
+                        }
+                    }
+                    //Mark the meta data as deployed
+                    sharedQueryMetaData->markAsDeployed();
+                }
 
                 for (auto queryRequest : queryRequests) {
                     auto queryId = queryRequest.getQueryId();
@@ -145,7 +131,7 @@ void QueryRequestProcessorService::start() {
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     }
-    }
+                }
                 //FIXME: Proper error handling #1585
             } catch (QueryPlacementException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
@@ -161,12 +147,14 @@ void QueryRequestProcessorService::start() {
                 queryUndeploymentPhase->execute(sharedQueryId);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                } catch (QueryDeploymentException& ex) {
-                    NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
-                    queryUndeploymentPhase->execute(queryId);
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                } catch (QueryReconfigurationException& ex) {
-                    NES_ERROR("QueryRequestProcessingService QueryReconfigurationException: " << ex.what());
+                }
+            } catch (QueryReconfigurationException& ex) {
+                NES_ERROR("QueryRequestProcessingService QueryReconfigurationException: " << ex.what());
+                auto sharedQueryId = ex.getSharedQueryId();
+                queryUndeploymentPhase->execute(sharedQueryId);
+                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
+                for (auto queryId : sharedQueryMetaData->getQueryIds()) {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 }
             } catch (TypeInferenceException& ex) {

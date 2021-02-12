@@ -17,5 +17,8 @@
 #include <Exceptions/QueryReconfigurationException.hpp>
 
 namespace NES {
-QueryReconfigurationException::QueryReconfigurationException(std::string message) : std::runtime_error(message) {}
+QueryReconfigurationException::QueryReconfigurationException(SharedQueryId sharedQueryId, std::string message)
+    : std::runtime_error(message), sharedQueryId(sharedQueryId) {}
+SharedQueryId QueryReconfigurationException::getSharedQueryId() { return sharedQueryId; }
+
 }// namespace NES
