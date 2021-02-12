@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_MQTT_BUILD
+
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 
 namespace NES {
@@ -60,3 +62,5 @@ void MQTTSinkDescriptor::setTimeUnit(char newTimeUnit) { this->timeUnit = newTim
 void MQTTSinkDescriptor::setMsgDelay(uint64_t newMsgDelay) { this->msgDelay = newMsgDelay; }
 
 }// namespace NES
+
+#endif
