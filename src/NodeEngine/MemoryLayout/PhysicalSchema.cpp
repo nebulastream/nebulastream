@@ -30,7 +30,7 @@ PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(schemaPtr){};
 PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) { return std::make_shared<PhysicalSchema>(schema); }
 
 PhysicalFieldPtr PhysicalSchema::createPhysicalField(uint64_t fieldIndex, uint64_t bufferOffset) {
-    assert(validFieldIndex(fieldIndex));
+    NES_ASSERT(validFieldIndex(fieldIndex), "field index invalid");
     auto logicalFieldsInSchema = schema->fields;
     auto logicalField = logicalFieldsInSchema[fieldIndex];
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(logicalField->getDataType());
@@ -38,7 +38,7 @@ PhysicalFieldPtr PhysicalSchema::createPhysicalField(uint64_t fieldIndex, uint64
 }
 
 uint64_t PhysicalSchema::getFieldOffset(uint64_t fieldIndex) {
-    assert(validFieldIndex(fieldIndex));
+    NES_ASSERT(validFieldIndex(fieldIndex), "field value invalid");
     uint64_t offset = 0;
     auto physicalDataFactory = DefaultPhysicalTypeFactory();
     for (uint64_t index = 0; index < fieldIndex; index++) {

@@ -40,8 +40,7 @@ ZmqSource::~ZmqSource() {
     if (success) {
         NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
     } else {
-        NES_ERROR("ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
-        assert(0);
+        NES_THROW_RUNTIME_ERROR("ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
     }
     NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
 }

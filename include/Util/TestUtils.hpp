@@ -549,10 +549,9 @@ class TestUtils {
             NES_DEBUG("CoordinatorService::registerNode: register worker node");
             nodePtr = TopologyNode::create(id, address, 4004, 4006, cpu);
         } else {
-            NES_ERROR("CoordinatorService::registerNode: type not supported " << type);
-            assert(0);
+            NES_FATAL_ERROR("CoordinatorService::registerNode: type not supported " << type);
         }
-        assert(nodePtr);
+        NES_ASSERT(nodePtr, "pointer not vaild");
 
         if (nodeProperties.IsInitialized()) {
             nodePtr->setNodeStats(nodeProperties);

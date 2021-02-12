@@ -73,6 +73,7 @@ int main(int argc, const char* argv[]) {
                                               << " restPort=" << coordinatorConfig->getRestPort()->getValue()
                                               << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp()->getValue()
                                               << " with rpc port " << coordinatorConfig->getRpcPort()->getValue()
+                                              << " numberOfThreads=" << coordinatorConfig->getNumWorkerThreads()->getValue()
                                               << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots()->getValue());
 
     NES_INFO("creating coordinator");

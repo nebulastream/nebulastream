@@ -31,8 +31,7 @@ BinarySource::BinarySource(SchemaPtr schema, NodeEngine::BufferManagerPtr buffer
     input.seekg(0, input.end);
     file_size = input.tellg();
     if (file_size == -1) {
-        NES_ERROR("ERROR: File " << _file_path << " is corrupted");
-        assert(0);
+        NES_FATAL_ERROR("ERROR: File " << _file_path << " is corrupted");
     }
     input.seekg(0, input.beg);
     tuple_size = schema->getSchemaSizeInBytes();

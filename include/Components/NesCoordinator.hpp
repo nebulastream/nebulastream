@@ -151,6 +151,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::string rpcIp;
     uint16_t rpcPort;
     uint16_t numberOfSlots;
+    uint16_t numberOfWorkerThreads;
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     std::shared_ptr<std::thread> queryRequestProcessorThread;

@@ -100,7 +100,7 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
     } while (0)
 #else
 #define NES_DEBUG(TEXT)                                                                                                          \
-    do {                                                                                                                         \
+    do {                                                                                                                          \
         std::ostringstream oss;                                                                                                  \
         ((void) (oss << TEXT));                                                                                                  \
     } while (0)

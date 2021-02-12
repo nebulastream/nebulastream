@@ -154,6 +154,16 @@ class CoordinatorConfig {
     void setLogLevel(std::string logLevel);
 
     /**
+    * @brief gets a ConfigOption object with numWorkerThreads
+    */
+    IntConfigOption getNumWorkerThreads();
+
+    /**
+     * @brief set the value for numWorkerThreads with the appropriate data format
+     */
+    void setNumWorkerThreads(uint16_t numWorkerThreads);
+
+    /**
      * @brief Get the query batch size
      * @return query batch size
      */
@@ -177,6 +187,7 @@ class CoordinatorConfig {
     IntConfigOption dataPort;
     IntConfigOption numberOfSlots;
     BoolConfigOption enableQueryMerging;
+    IntConfigOption numWorkerThreads;
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
 };

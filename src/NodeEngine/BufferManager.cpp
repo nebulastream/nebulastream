@@ -79,6 +79,7 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
         availableBuffers.emplace_back(&allBuffers.back());
     }
     isConfigured = true;
+    NES_DEBUG("BufferManager configuration bufferSize=" << this->bufferSize << " numOfBuffers=" << this->numOfBuffers);
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {

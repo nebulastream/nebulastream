@@ -40,6 +40,9 @@ WorkerConfig::WorkerConfig() {
     numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", std::thread::hardware_concurrency(),
                                                    "Number of computing slots for the NES Worker.");
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
+
+    numberOfBuffers = ConfigOption<uint32_t>::create("numberOfBuffers", 1024, "Number of buffers.");
+    bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
     parentId = ConfigOption<std::string>::create("parentId", "-1", "Parent ID of this node.");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
@@ -137,6 +140,7 @@ IntConfigOption WorkerConfig::getRpcPort() { return rpcPort; }
 
 void WorkerConfig::setRpcPort(uint16_t rpcPortValue) { rpcPort->setValue(rpcPortValue); }
 
+
 IntConfigOption WorkerConfig::getDataPort() { return dataPort; }
 
 void WorkerConfig::setDataPort(uint16_t dataPortValue) { dataPort->setValue(dataPortValue); }
@@ -156,4 +160,15 @@ void WorkerConfig::setParentId(std::string parentIdValue) { parentId->setValue(p
 StringConfigOption WorkerConfig::getLogLevel() { return logLevel; }
 
 void WorkerConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
+
+
+IntConfigOption WorkerConfig::getNumberOfBuffers() { return numberOfBuffers; }
+
+void WorkerConfig::setNumberOfBuffers(uint64_t count) { numberOfBuffers->setValue(count); }
+
+IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
+
+void WorkerConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
+
+
 }// namespace NES

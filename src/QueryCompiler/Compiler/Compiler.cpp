@@ -54,9 +54,9 @@ std::string Compiler::getFileName() {
     std::mt19937 rng(dev());
     std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000);
 
-    std::ostringstream oss;
-    oss << "gen_query_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
-    return oss.str();
+    std::stringstream ss;
+    ss << "gen_query_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
+    return ss.str();
 }
 
 CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
