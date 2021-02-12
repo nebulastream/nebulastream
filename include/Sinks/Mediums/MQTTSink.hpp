@@ -17,6 +17,9 @@
 #ifndef MQTTSINK_HPP
 #define MQTTSINK_HPP
 
+#ifdef ENABLE_MQTT_BUILD
+
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -195,4 +198,5 @@ typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
 }// namespace NES
 
 
+#endif//
 #endif// MQTTSINK_HPP

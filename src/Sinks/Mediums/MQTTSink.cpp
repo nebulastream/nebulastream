@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_MQTT_BUILD
 #include <Sinks/Mediums/MQTTSink.hpp>
 
 #include <cstdint>
@@ -24,8 +25,6 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 
-//#include "mqtt/client.h"
-//#include "mqtt/async_client.h"
 
 namespace NES {
 
@@ -186,3 +185,5 @@ const uint64_t MQTTSink::getMsgDelay() const { return msgDelay; }
 const bool MQTTSink::getAsynchronousClient() const { return asynchronousClient; }
 
 }// namespace NES
+
+#endif
