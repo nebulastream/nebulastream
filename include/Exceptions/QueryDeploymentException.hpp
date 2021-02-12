@@ -29,6 +29,11 @@ namespace NES {
 class QueryDeploymentException : public std::runtime_error {
 
   public:
+    /**
+     * @brief c-tor deployment exception
+     * @param sharedQueryId: the shared query id that failed
+     * @param message : the reason for failure
+     */
     explicit QueryDeploymentException(SharedQueryId sharedQueryId, std::string message);
 
     SharedQueryId getSharedQueryId();
