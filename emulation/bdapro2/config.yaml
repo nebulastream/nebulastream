@@ -1,4 +1,4 @@
-total_workers: 9
+total_workers: 6
 workers_producing: 6
 physical_stream_prefix: "ysb"
 producer_options: >-
@@ -7,7 +7,7 @@ producer_options: >-
 worker_options: >-
   --numberOfSlots=1000 --logLevel=LOG_INFO
 coordinator_options: >-
-  --enableQueryReconfiguration=true
+  --enableQueryReconfiguration=true --queryBatchSize=10
 log_level: "info"
 docker_image: "bdapro/query-merging"
 

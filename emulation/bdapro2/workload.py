@@ -119,4 +119,4 @@ def generate_workload(base_url: str, base_query: str, n_requests: int = 100, sta
 if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
     BASE_QUERY = "Query::from(\"" + "ysb" + "\")"
-    generate_workload(NES_BASE_URL, BASE_QUERY, stable=True, n_requests=2, niter=1)
+    generate_workload(NES_BASE_URL, BASE_QUERY, stable=True, n_requests=10, niter=20)

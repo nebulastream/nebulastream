@@ -138,7 +138,7 @@ void QueryRequestProcessorService::start() {
                         start = std::chrono::system_clock::now();
                         bool successful = queryReconfigurationPhase->execute(queryPlan);
                         end = std::chrono::system_clock::now();
-                        NES_TIMER("BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : "
+                        NES_TIMER("BDAPRO2Tracking: queryReconfigurationPhase - (microseconds) : "
                                   << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         if (!successful) {
                             throw QueryReconfigurationException(

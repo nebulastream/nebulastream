@@ -146,8 +146,8 @@ void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
     CoordinatorConfig::enableQueryMerging->setValue(enableQueryMergingValue);
 }
 
-void CoordinatorConfig::setEnableQueryReconfiguration(bool enableQueryReconfiguration) {
-    CoordinatorConfig::enableQueryReconfiguration->setValue(enableQueryReconfiguration);
+void CoordinatorConfig::setEnableQueryReconfiguration(bool enableQueryReconfigurationValue) {
+    CoordinatorConfig::enableQueryReconfiguration->setValue(enableQueryReconfigurationValue);
 }
 
 StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }

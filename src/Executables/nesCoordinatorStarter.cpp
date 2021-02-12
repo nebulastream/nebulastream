@@ -73,7 +73,8 @@ int main(int argc, const char* argv[]) {
                                               << " restPort=" << coordinatorConfig->getRestPort()->getValue()
                                               << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp()->getValue()
                                               << " with rpc port " << coordinatorConfig->getRpcPort()->getValue()
-                                              << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots()->getValue());
+                                              << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots()->getValue()
+                                              << " enableQueryReconfiguration=" << coordinatorConfig->getEnableQueryReconfiguration()->getValue());
 
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
