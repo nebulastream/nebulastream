@@ -226,7 +226,7 @@ bool SharedQueryMetaData::addSharedQueryMetaData(SharedQueryMetaDataPtr queryMet
 std::vector<QueryId> SharedQueryMetaData::getQueryIds() {
 
     std::vector<QueryId> queryIds;
-    for (auto [queryId, sinkGQNs] : queryIdToSinkGQNMap) {
+    for (auto& [queryId, sinkGQNs] : queryIdToSinkGQNMap) {
         queryIds.push_back(queryId);
     }
     return queryIds;
