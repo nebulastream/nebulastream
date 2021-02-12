@@ -27,39 +27,39 @@ namespace NES {
 
 SchemaPtr CpuValues::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
-                           ->addField(prefix + "USER", BasicType::UINT64)
-                           ->addField(prefix + "NICE", BasicType::UINT64)
-                           ->addField(prefix + "SYSTEM", BasicType::UINT64)
-                           ->addField(prefix + "IDLE", BasicType::UINT64)
-                           ->addField(prefix + "IOWAIT", BasicType::UINT64)
-                           ->addField(prefix + "IRQ", BasicType::UINT64)
-                           ->addField(prefix + "SOFTIRQ", BasicType::UINT64)
-                           ->addField(prefix + "STEAL", BasicType::UINT64)
-                           ->addField(prefix + "GUEST", BasicType::UINT64)
-                           ->addField(prefix + "GUESTNICE", BasicType::UINT64);
+                           ->addField(prefix + "user", BasicType::UINT64)
+                           ->addField(prefix + "nice", BasicType::UINT64)
+                           ->addField(prefix + "system", BasicType::UINT64)
+                           ->addField(prefix + "idle", BasicType::UINT64)
+                           ->addField(prefix + "iowait", BasicType::UINT64)
+                           ->addField(prefix + "irq", BasicType::UINT64)
+                           ->addField(prefix + "softirq", BasicType::UINT64)
+                           ->addField(prefix + "steal", BasicType::UINT64)
+                           ->addField(prefix + "guest", BasicType::UINT64)
+                           ->addField(prefix + "guestnice", BasicType::UINT64);
     return schema;
 }
 
 CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
     //get index where the schema for CpuValues is starting
-    auto i = schema->getIndex(prefix + "USER");
+    auto i = schema->getIndex(prefix + "user");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->getName(), "USER")
-        && UtilityFunctions::endsWith(schema->fields[i + 9]->getName(), "GUESTNICE")) {
-        NES_DEBUG("CpuValues: Index found for " + prefix + "USER" + " at " + std::to_string(i));
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && UtilityFunctions::endsWith(schema->fields[i]->getName(), "user")
+        && UtilityFunctions::endsWith(schema->fields[i + 9]->getName(), "guestnice")) {
+        NES_DEBUG("CpuValues: Index found for " + prefix + "user" + " at " + std::to_string(i));
         auto layout = NodeEngine::createRowLayout(schema);
         //set the values to the output object
-        output.USER = layout->getValueField<uint64_t>(0, i)->read(buf);
-        output.NICE = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
-        output.SYSTEM = layout->getValueField<uint64_t>(0, i + 2)->read(buf);
-        output.IDLE = layout->getValueField<uint64_t>(0, i + 3)->read(buf);
-        output.IOWAIT = layout->getValueField<uint64_t>(0, i + 4)->read(buf);
-        output.IRQ = layout->getValueField<uint64_t>(0, i + 5)->read(buf);
-        output.SOFTIRQ = layout->getValueField<uint64_t>(0, i + 6)->read(buf);
-        output.STEAL = layout->getValueField<uint64_t>(0, i + 7)->read(buf);
-        output.GUEST = layout->getValueField<uint64_t>(0, i + 8)->read(buf);
-        output.GUESTNICE = layout->getValueField<uint64_t>(0, i + 9)->read(buf);
+        output.user = layout->getValueField<uint64_t>(0, i)->read(buf);
+        output.nice = layout->getValueField<uint64_t>(0, i + 1)->read(buf);
+        output.system = layout->getValueField<uint64_t>(0, i + 2)->read(buf);
+        output.idle = layout->getValueField<uint64_t>(0, i + 3)->read(buf);
+        output.iowait = layout->getValueField<uint64_t>(0, i + 4)->read(buf);
+        output.irq = layout->getValueField<uint64_t>(0, i + 5)->read(buf);
+        output.softirq = layout->getValueField<uint64_t>(0, i + 6)->read(buf);
+        output.steal = layout->getValueField<uint64_t>(0, i + 7)->read(buf);
+        output.guest = layout->getValueField<uint64_t>(0, i + 8)->read(buf);
+        output.guestnice = layout->getValueField<uint64_t>(0, i + 9)->read(buf);
     } else {
         NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n"
                                 + schema->toString());
@@ -68,14 +68,16 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, 
 }
 
 std::ostream& operator<<(std::ostream& os, const CpuValues& values) {
-    os << "USER: " << values.USER << " NICE: " << values.NICE << " SYSTEM: " << values.SYSTEM << " IDLE: " << values.IDLE
-       << " IOWAIT: " << values.IOWAIT << " IRQ: " << values.IRQ << " SOFTIRQ: " << values.SOFTIRQ << " STEAL: " << values.STEAL
-       << " GUEST: " << values.GUEST << " GUESTNICE: " << values.GUESTNICE;
+    os << "user: " << values.user << " nice: " << values.nice << " system: " << values.system << " idle: " << values.idle
+       << " iowait: " << values.iowait << " irq: " << values.irq << " softirq: " << values.softirq << " steal: " << values.steal
+       << " guest: " << values.guest << " guestnice: " << values.guestnice;
     return os;
 }
 
 void writeToBuffer(const CpuValues& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBufferAs<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(CpuValues) < buf.getBufferSize(), "CpuValues: Content does not fit in TupleBuffer");
+
     memcpy(tbuffer + byteOffset, &metrics, sizeof(CpuValues));
     buf.setNumberOfTuples(1);
 }

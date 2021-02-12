@@ -539,7 +539,7 @@ TEST_F(SourceTest, testMonitoringSource) {
         auto optBuf = source->receiveData();
         GroupedValues parsedValues = plan->fromBuffer(schema, optBuf.value());
 
-        ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().USER > 0);
+        ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
         ASSERT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
         ASSERT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
     }

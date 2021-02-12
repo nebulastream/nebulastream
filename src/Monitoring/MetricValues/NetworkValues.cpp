@@ -87,26 +87,9 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
 
 void writeToBuffer(const NetworkValues& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBufferAs<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(NetworkValues) < buf.getBufferSize(), "NetworkValues: Content does not fit in TupleBuffer");
+
     memcpy(tbuffer + byteOffset, &metric, sizeof(NetworkValues));
-
-/*    memcpy(tbuffer + byteOffset, &metric.rBytes + 8*0, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*1, &metric.rPackets, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*2, &metric.rErrs, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*3, &metric.rDrop, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*4, &metric.rFifo, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*5, &metric.rFrame, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*6, &metric.rCompressed, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*7, &metric.rMulticast, sizeof(uint64_t));
-
-    memcpy(tbuffer + byteOffset + 8*8, &metric.tBytes, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*9, &metric.tPackets, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*10, &metric.tErrs, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*11, &metric.tDrop, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*12, &metric.tFifo, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*13, &metric.tColls, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*14, &metric.tCarrier, sizeof(uint64_t));
-    memcpy(tbuffer + byteOffset + 8*15, &metric.tCompressed, sizeof(uint64_t));*/
-
     buf.setNumberOfTuples(1);
 }
 

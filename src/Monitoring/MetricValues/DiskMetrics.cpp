@@ -38,6 +38,8 @@ SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
 
 void writeToBuffer(const DiskMetrics& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBufferAs<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(DiskMetrics) < buf.getBufferSize(), "DiskMetrics: Content does not fit in TupleBuffer");
+
     memcpy(tbuffer + byteOffset, &metric, sizeof(DiskMetrics));
     buf.setNumberOfTuples(1);
 }
