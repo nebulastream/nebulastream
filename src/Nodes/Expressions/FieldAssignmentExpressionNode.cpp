@@ -71,9 +71,9 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
     } else {
         //Since this is a new field add the stream name from schema
         //Check if field name is already fully qualified
-        if(fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos){
+        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
             field->updateFieldName(fieldName);
-        } else{
+        } else {
             field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
         }
     }

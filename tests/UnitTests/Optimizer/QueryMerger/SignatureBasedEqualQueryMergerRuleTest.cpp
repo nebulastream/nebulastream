@@ -322,7 +322,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
     Query query1 = Query::from("car")
-                       .unionWith(&subQuery1).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+                       .unionWith(&subQuery1)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -330,7 +333,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -404,7 +410,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -478,7 +487,10 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
 
     Query subQuery2 = Query::from("truck");
     Query query2 = Query::from("car")
-                       .unionWith(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();

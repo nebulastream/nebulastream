@@ -117,7 +117,7 @@ class Query {
      * @return
      */
     Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
-                const Windowing::WindowTypePtr windowType);
+                    const Windowing::WindowTypePtr windowType);
 
     /**
      * @brief Create Query using queryPlan
