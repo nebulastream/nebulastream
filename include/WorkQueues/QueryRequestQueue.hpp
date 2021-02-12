@@ -33,7 +33,13 @@ typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
 class QueryRequestQueue {
 
   public:
+    /**
+     * @brief Constructor of Query request queue
+     * @param batchSize : the batch of user requests to be processed together
+     */
     QueryRequestQueue(uint32_t batchSize);
+
+    //d-tor
     ~QueryRequestQueue();
 
     /**
