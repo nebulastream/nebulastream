@@ -78,9 +78,12 @@ void QueryRequestProcessorService::start() {
             //FIXME: What to do if a query contains different placement strategy?
             std::string placementStrategy = queryRequests[0].getQueryPlacementStrategy();
             try {
+                auto start = std::chrono::system_clock::now();
+                auto end = std::chrono::system_clock::now();
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                 globalQueryPlanUpdatePhase->execute(queryRequests);
-
+                NES_TIMER("BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : "
+                          << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
                 for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
                     SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
@@ -88,21 +91,37 @@ void QueryRequestProcessorService::start() {
 
                     if ((!enableQueryReconfiguration || sharedQueryMetaData->isEmpty()) && !sharedQueryMetaData->isNew()) {
                         NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                        start = std::chrono::system_clock::now();
                         bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+                        end = std::chrono::system_clock::now();
+                        NES_TIMER("BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : "
+                                  << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         if (!successful) {
                             throw QueryUndeploymentException("Unable to stop Global QueryId " + std::to_string(sharedQueryId));
                         }
                     }
                     if ((sharedQueryMetaData->isNew() || !enableQueryReconfiguration) && !sharedQueryMetaData->isEmpty()) {
+                        start = std::chrono::system_clock::now();
                         auto queryPlan = sharedQueryMetaData->getQueryPlan();
+                        end = std::chrono::system_clock::now();
+                        NES_TIMER("BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : "
+                                  << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
+                        start = std::chrono::system_clock::now();
                         bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                        end = std::chrono::system_clock::now();
+                        NES_TIMER("BDAPRO2Tracking: queryPlacementPhase - (microseconds) : "
+                                  << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         if (!placementSuccessful) {
                             throw QueryPlacementException(sharedQueryId,
                                                           "QueryProcessingService: Failed to perform query placement for "
                                                           "query plan with shared query id: "
                                                               + std::to_string(sharedQueryId));
                         }
+                        start = std::chrono::system_clock::now();
                         bool successful = queryDeploymentPhase->execute(sharedQueryId);
+                        end = std::chrono::system_clock::now();
+                        NES_TIMER("BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : "
+                                  << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         if (!successful) {
                             throw QueryDeploymentException(
                                 sharedQueryId,
@@ -111,8 +130,16 @@ void QueryRequestProcessorService::start() {
                         }
                     }
                     if (enableQueryReconfiguration && !sharedQueryMetaData->isEmpty() && !sharedQueryMetaData->isNew()) {
+                        start = std::chrono::system_clock::now();
                         auto queryPlan = sharedQueryMetaData->getQueryPlan();
+                        end = std::chrono::system_clock::now();
+                        NES_TIMER("BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : "
+                                  << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
+                        start = std::chrono::system_clock::now();
                         bool successful = queryReconfigurationPhase->execute(queryPlan);
+                        end = std::chrono::system_clock::now();
+                        NES_TIMER("BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : "
+                                  << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                         if (!successful) {
                             throw QueryReconfigurationException(
                                 sharedQueryId,
@@ -128,8 +155,14 @@ void QueryRequestProcessorService::start() {
                     auto queryId = queryRequest.getQueryId();
                     if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+                        NES_TIMER("BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : "
+                                  << "(" << queryId << ", " << std::chrono::system_clock::now().time_since_epoch().count()
+                                  << ")");
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+                        NES_TIMER("BDAPRO2Tracking: markAsStopped - (queryId, nanoseconds) : "
+                                  << "(" << queryId << ", " << std::chrono::system_clock::now().time_since_epoch().count()
+                                  << ")");
                     }
                 }
                 //FIXME: Proper error handling #1585

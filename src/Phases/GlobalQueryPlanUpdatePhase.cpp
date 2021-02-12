@@ -47,6 +47,9 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry> queryRequests) {
     //FIXME: Proper error handling #1585
     try {
+        auto start = std::chrono::system_clock::now();
+        auto end = std::chrono::system_clock::now();
+
         for (auto queryRequest : queryRequests) {
             QueryId queryId = queryRequest.getQueryId();
 
@@ -58,19 +61,34 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
                 NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query "
                          << queryId << " status=" << queryRequest.getQueryStatusAsString());
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
-
+                NES_TIMER("BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : "
+                          << "(" << queryId << ", " << std::chrono::system_clock::now().time_since_epoch().count() << ")");
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                start = std::chrono::system_clock::now();
                 queryPlan = typeInferencePhase->execute(queryPlan);
-
+                end = std::chrono::system_clock::now();
+                NES_TIMER("BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : "
+                          << "(" << queryId << "," << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                          << ")");
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
+                start = std::chrono::system_clock::now();
                 queryPlan = queryRewritePhase->execute(queryPlan);
+                end = std::chrono::system_clock::now();
+                NES_TIMER("BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : "
+                          << "(" << queryId << "," << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                          << ")");
                 if (!queryPlan) {
                     throw Exception("QueryProcessingService: Failed during query rewrite phase for query: "
                                     + std::to_string(queryId));
                 }
 
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                start = std::chrono::system_clock::now();
                 queryPlan = typeInferencePhase->execute(queryPlan);
+                end = std::chrono::system_clock::now();
+                NES_TIMER("BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : "
+                          << "(" << queryId << "," << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+                          << ")");
                 if (!queryPlan) {
                     throw Exception("QueryProcessingService: Failed during Type inference phase for query: "
                                     + std::to_string(queryId));
@@ -86,8 +104,12 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
         }
 
         if (enableQueryMerging) {
+            start = std::chrono::system_clock::now();
             NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
             queryMergerPhase->execute(globalQueryPlan);
+            end = std::chrono::system_clock::now();
+            NES_TIMER("BDAPRO2Tracking: queryMergerPhase - (microseconds) : "
+                      << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
         }
         NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
