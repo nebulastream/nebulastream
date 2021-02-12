@@ -48,7 +48,7 @@ class ProjectBeforeUnionOperatorRule : public BaseRewriteRule {
 
     /**
      * @brief Construct the project operator to be added between union and one of the child.
-     * @param sourceSchema : the source schema fro project.
+     * @param sourceSchema : the source schema for project.
      * @param destinationSchema : the destination schema for project.
      * @return LogicalOperatorNodePtr: the project operator based on source and destination schema
      */

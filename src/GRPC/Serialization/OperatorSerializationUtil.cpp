@@ -114,10 +114,10 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
     } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         // serialize union operator
         NES_TRACE("OperatorSerializationUtil:: serialize to UnionLogicalOperatorNode");
-        auto mergeDetails = SerializableOperator_UnionDetails();
-        serializedOperator->mutable_details()->PackFrom(mergeDetails);
+        auto unionDetails = SerializableOperator_UnionDetails();
+        serializedOperator->mutable_details()->PackFrom(unionDetails);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
-        // serialize merge operator
+        // serialize broadcast operator
         NES_TRACE("OperatorSerializationUtil:: serialize to BroadcastLogicalOperatorNode");
         auto broadcastDetails = SerializableOperator_BroadcastDetails();
         serializedOperator->mutable_details()->PackFrom(broadcastDetails);
@@ -239,11 +239,10 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         }
         operatorNode = LogicalOperatorFactory::createProjectionOperator(exps, serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_UnionDetails>()) {
-        // de-serialize merge operator
+        // de-serialize union operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");
-        auto serializedMergeDescriptor = SerializableOperator_UnionDetails();
-        details.UnpackTo(&serializedMergeDescriptor);
-        // de-serialize merge descriptor
+        auto serializedUnionDescriptor = SerializableOperator_UnionDetails();
+        details.UnpackTo(&serializedUnionDescriptor);
         operatorNode = LogicalOperatorFactory::createUnionOperator(serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_BroadcastDetails>()) {
         // de-serialize broadcast operator
