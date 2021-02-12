@@ -127,6 +127,7 @@ void QueryRequestProcessorService::start() {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
                     }
                 }
+                //FIXME: Proper error handling #1585
             } catch (QueryPlacementException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();

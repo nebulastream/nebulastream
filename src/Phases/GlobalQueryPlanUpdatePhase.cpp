@@ -45,6 +45,7 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry> queryRequests) {
+    //FIXME: Proper error handling #1585
     try {
         for (auto queryRequest : queryRequests) {
             QueryId queryId = queryRequest.getQueryId();
