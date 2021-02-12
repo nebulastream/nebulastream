@@ -87,9 +87,9 @@ TEST_F(MonitoringStackTest, testCPUStats) {
     CpuMetrics cpuMetrics = cpuStats.measure();
     ASSERT_TRUE(cpuMetrics.getNumCores() > 0);
     for (int i = 0; i < cpuMetrics.getNumCores(); i++) {
-        ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
+        ASSERT_TRUE(cpuMetrics.getValues(i).user > 0);
     }
-    ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
+    ASSERT_TRUE(cpuMetrics.getTotal().user > 0);
 
     auto cpuIdle = MetricUtils::CPUIdle(0);
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.measure());
@@ -330,7 +330,7 @@ TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
 
     auto deserCpu = CpuMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::CPU_METRICS_DESC);
     ASSERT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
-    ASSERT_TRUE(deserCpu.getValues(1).USER > 0);
+    ASSERT_TRUE(deserCpu.getValues(1).user > 0);
 
     auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::NETWORK_METRICS_DESC);
     ASSERT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
@@ -353,7 +353,7 @@ TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
     auto schema = metricGroup->createSchema();
     GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
 
-    ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().USER > 0);
+    ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
     ASSERT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
     ASSERT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
 }
