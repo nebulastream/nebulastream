@@ -67,11 +67,11 @@ Query& Query::unionWith(Query* subQuery) {
     return *this;
 }
 
-Query& Query::joinWith(const Query& subQueryRhsConst, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
                    const Windowing::WindowTypePtr windowType) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
-    auto subQueryRhs = const_cast<Query&>(subQueryRhsConst);
+    auto subQuery = const_cast<Query&>(subQueryRhs);
 
     auto leftKeyExpression = onLeftKey.getExpressionNode();
     if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
@@ -95,7 +95,7 @@ Query& Query::joinWith(const Query& subQueryRhsConst, ExpressionItem onLeftKey, 
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
-    auto rightQueryPlan = subQueryRhs.getQueryPlan();
+    auto rightQueryPlan = subQuery.getQueryPlan();
     NES_ASSERT(rightQueryPlan && rightQueryPlan->getRootOperators().size() > 0, "invalid right query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
