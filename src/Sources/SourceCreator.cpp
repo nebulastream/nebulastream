@@ -124,4 +124,12 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerP
     return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId);
 }
 #endif
+
+#ifdef ENABLE_MQTT_BUILD
+const DataSourcePtr createMQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                    NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId, std::string user,
+                                    std::string password, OperatorId operatorId) {
+    return std::make_shared<MQTTSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId);
+}
+#endif
 }// namespace NES

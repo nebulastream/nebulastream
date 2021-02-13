@@ -195,4 +195,4 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     stopServer();
 }
 }// namespace NES
-#endif
+//#endif

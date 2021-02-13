@@ -18,7 +18,7 @@ project(NES CXX)
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
 endif ()
-set(CMAKE_VERBOSE_MAKEFILE OFF)
+
 # Find project version
 include(cmake/GetSemanticVersion.cmake)
 

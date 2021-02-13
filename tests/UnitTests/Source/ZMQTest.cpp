@@ -48,8 +48,8 @@ class ZMQTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES_DEBUG("Setup ZMQTest test case.");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::create("127.0.0.1", 3000, conf);
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create();
+        nodeEngine = NodeEngine::create("127.0.0.1", 3001, conf);
 
         address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":") + std::to_string(LOCAL_PORT);
 
