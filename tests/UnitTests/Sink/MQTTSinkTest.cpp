@@ -72,6 +72,11 @@ using namespace NES;
  * BE AWARE that some of the tests require the tester to manually kill/disconnect the broker.
  * ALSO: Not all tests are meant to succeed, but might produce wanted errors.
  */
+
+//FIXME tests right now rely on setting up a broker manually. Moreover, they intentionally fail.
+// - find a way to fully automate tests (e.g. using redBoltz c++ MQTT library, which offers a broker
+// - fix tests, so they do not intentionally fail, but always succeed, if right behaviour is shown
+
 class DISABLED_MQTTTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
