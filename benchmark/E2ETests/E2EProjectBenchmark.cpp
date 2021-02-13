@@ -19,7 +19,10 @@
 
 using namespace Benchmarking;
 
-
+/**
+ * @brief This benchmarks runs a projection query on one worker and one coordinator
+ * @return
+ */
 int main() {
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
