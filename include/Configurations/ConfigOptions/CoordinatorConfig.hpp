@@ -164,6 +164,26 @@ class CoordinatorConfig {
     void setNumWorkerThreads(uint16_t numWorkerThreads);
 
     /**
+* @brief gets a ConfigOption object with buffer size in bytes
+*/
+    IntConfigOption getBufferSizeInBytes();
+
+    /**
+     * @brief set the value for buffer size in bytes with the appropriate data format
+     */
+    void setBufferSizeInBytes(uint64_t sizeInBytes);
+
+    /**
+    * @brief gets a ConfigOption object with number of buffers
+    */
+    IntConfigOption getNumberOfBuffers();
+
+    /**
+     * @brief set the value for number of buffers with the appropriate data format
+     */
+    void setNumberOfBuffers(uint64_t count);
+
+    /**
      * @brief Get the query batch size
      * @return query batch size
      */
@@ -186,6 +206,8 @@ class CoordinatorConfig {
     IntConfigOption restPort;
     IntConfigOption dataPort;
     IntConfigOption numberOfSlots;
+    IntConfigOption numberOfBuffers;
+    IntConfigOption bufferSizeInBytes;
     BoolConfigOption enableQueryMerging;
     IntConfigOption numWorkerThreads;
     StringConfigOption logLevel;

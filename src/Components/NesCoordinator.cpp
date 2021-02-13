@@ -55,7 +55,10 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
       numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
-      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()), inherited0(), inherited1() {
+      numberOfBuffers(coordinatorConfig->getNumberOfBuffers()->getValue()),
+      bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
+      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()),
+      inherited0(), inherited1() {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;
@@ -117,11 +120,7 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
 }
 
-NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine()
-{
-    return worker->getNodeEngine();
-}
-
+NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
 
 uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
@@ -159,6 +158,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     workerConfig->setDataPort(rpcPort + 2);
     workerConfig->setNumberOfSlots(numberOfSlots);
     workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig->setBufferSizeInBytes(bufferSizeInBytes);
+    workerConfig->setNumberOfBuffers(numberOfBuffers);
     worker = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
