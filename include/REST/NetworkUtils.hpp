@@ -32,10 +32,10 @@ class NetworkUtils {
     static std::string hostIP(unsigned short family);
 
   public:
-    // gets the host IP4 string formatted
+    // gets the address IP4 string formatted
     static std::string hostIP4() { return hostIP(AF_INET); }
 
-    // gets the host IP6 string formatted
+    // gets the address IP6 string formatted
     static std::string hostIP6() { return hostIP(AF_INET6); }
     static std::string hostName() { return ip::host_name(); }
 };

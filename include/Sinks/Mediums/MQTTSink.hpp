@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-#ifndef MQTTSINK_HPP
-#define MQTTSINK_HPP
 
 #ifdef ENABLE_MQTT_BUILD
 
@@ -44,9 +42,8 @@ class UserCallback : public virtual mqtt::callback
 class MQTTSink : public SinkMedium {
 
   public:
-    //TODO: remove internal flag once the new network stack is in place
-    MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& host,
-             const uint16_t port, const std::string& clientId, const std::string& topic, const std::string& user,
+    MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& address,
+             const std::string& clientId, const std::string& topic, const std::string& user,
              const uint32_t maxBufferedMSGs = 60, char timeUnit = 'm', uint64_t msgDelay = 500, bool asynchronousClient = 1);
     ~MQTTSink();
 
@@ -58,14 +55,9 @@ class MQTTSink : public SinkMedium {
     bool disconnect();
 
     /**
-     * @brief get host information from a MQTT sink client
+     * @brief get address information from a MQTT sink client
      */
-    const std::string& getHost() const;
-
-    /**
-     * @brief get port information from a MQTT sink client
-     */
-    uint16_t getPort() const;
+    const std::string& getAddress() const;
 
     /**
      * @brief get clientId information from a MQTT sink client
@@ -109,7 +101,7 @@ class MQTTSink : public SinkMedium {
     bool getConnected();
 
     /**
-     * @brief Print MQTT Sink (schema, host, port, clientId, topic, user)
+     * @brief Print MQTT Sink (schema, address, port, clientId, topic, user)
      */
     const std::string toString() const override;
 
@@ -124,8 +116,7 @@ class MQTTSink : public SinkMedium {
 
     QuerySubPlanId parentPlanId;
 
-    std::string host;
-    uint16_t port;
+    std::string address;
 
     std::string clientId;
     std::string topic;
@@ -138,8 +129,6 @@ class MQTTSink : public SinkMedium {
     uint64_t msgDelay;
     bool asynchronousClient;
     char qualityOfService; // 0-at most once, 1-at least once, 2-exactly once
-
-    std::string address;
 
     bool connected;
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>> sendDuration;
@@ -181,17 +170,13 @@ class MQTTSink : public SinkMedium {
         }
     };
     ClientWrapper client;
-//    mqtt::async_client client1;
-//    mqtt::client client2;
-//    mqtt::client_ptr clientPtr;
+
 // not needed yet, but possibly in the future:
 
 //    std::string& persistDir;
-//    std::string& period;
 //    std::string& password;
 
 };
-//TODO change to MQTT specific
 typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
 
 
@@ -199,4 +184,3 @@ typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
 
 
 #endif//
-#endif// MQTTSINK_HPP

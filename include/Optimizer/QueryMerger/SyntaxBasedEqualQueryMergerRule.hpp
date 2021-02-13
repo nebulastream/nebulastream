@@ -100,8 +100,8 @@ class SyntaxBasedEqualQueryMergerRule {
     /**
      * @brief identify if the query plans are equal or not
      * @param targetQueryPlan : target query plan
-     * @param hostQueryPlan : host query plan
-     * @param targetHostOperatorMap: map passed as reference to record the matching pair of target and host operators
+     * @param hostQueryPlan : address query plan
+     * @param targetHostOperatorMap: map passed as reference to record the matching pair of target and address operators
      * @return true if the query plans are equal
      */
     bool areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
@@ -111,13 +111,13 @@ class SyntaxBasedEqualQueryMergerRule {
                           std::map<uint64_t, uint64_t>& targetHostOperatorMap);
 
     /**
-     * @brief Check if the target GQN can be merged into host GQN
+     * @brief Check if the target GQN can be merged into address GQN
      * For two GQNs to be merged:
      *   - Their set of operators should be equal or they both have sink operators
      *   - Their child and parent GQN nodes should be equal
      * @param targetGQNode : the target GQN node
-     * @param hostGQNode : the host GQN node
-     * @param targetGQNToHostGQNMap : the map containing list of target and host pairs with eaqual operator sets
+     * @param hostGQNode : the address GQN node
+     * @param targetGQNToHostGQNMap : the map containing list of target and address pairs with eaqual operator sets
      * @return true if the GQN can be merged else false
      */
     bool checkIfGQNCanMerge(const GlobalQueryNodePtr& targetGQNode, const GlobalQueryNodePtr& hostGQNode,

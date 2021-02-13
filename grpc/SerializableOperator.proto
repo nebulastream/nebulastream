@@ -154,15 +154,14 @@ message SerializableOperator{
     }
 
     message SerializableMQTTSinkDescriptor {
-      string host = 1;
-      uint32 port = 2;
-      string clientId = 3;
-      string topic = 4;
-      string user = 5;
-      uint32 maxBufferedMSGs = 6;
-      string timeUnit = 7;
-      uint64 msgDelay = 8;
-      bool asynchronousClient = 9;
+      string address = 1;
+      string clientId = 2;
+      string topic = 3;
+      string user = 4;
+      uint32 maxBufferedMSGs = 5;
+      string timeUnit = 6;
+      uint64 msgDelay = 7;
+      bool asynchronousClient = 8;
     }
 
     message SerializableNetworkSinkDescriptor {

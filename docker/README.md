@@ -29,7 +29,7 @@ Docker's official docs [here](https://docs.docker.com/engine/examples/running_ss
 
 #### Dockerfile-NES-Executable
 This is our executable image. It extends the Build image. There is no way to connect to a running container of this 
-image, aside from `docker attach`. Its purpose is to offer a host operating system for an executable of NES.
+image, aside from `docker attach`. Its purpose is to offer a address operating system for an executable of NES.
 
 For this image, we install NebulaStream using a `deb` package inside the [resources](executableImage\resources) folder.
 If you want to update the NebulaStream binary, please create a new `deb` package by compiling the code inside the docker image and running `cpack` command.

@@ -31,7 +31,7 @@ class ZmqSourceDescriptor : public SourceDescriptor {
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port);
 
     /**
-     * @brief Get zmq host name
+     * @brief Get zmq address name
      */
     const std::string& getHost() const;
 

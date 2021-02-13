@@ -1087,8 +1087,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
                   "SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
         auto mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
         auto mqttSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
-        mqttSerializedSinkDescriptor.set_host(mqttSinkDescriptor->getHost());
-        mqttSerializedSinkDescriptor.set_port(mqttSinkDescriptor->getPort());
+        mqttSerializedSinkDescriptor.set_address(mqttSinkDescriptor->getAddress());
         mqttSerializedSinkDescriptor.set_clientid(mqttSinkDescriptor->getClientId());
         mqttSerializedSinkDescriptor.set_topic(mqttSinkDescriptor->getTopic());
         mqttSerializedSinkDescriptor.set_user(mqttSinkDescriptor->getUser());
@@ -1191,7 +1190,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MQTTSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        return MQTTSinkDescriptor::create(serializedSinkDescriptor.host(), serializedSinkDescriptor.port(),
+        return MQTTSinkDescriptor::create(serializedSinkDescriptor.address(),
                                           serializedSinkDescriptor.clientid(), serializedSinkDescriptor.topic(),
                                           serializedSinkDescriptor.user(), serializedSinkDescriptor.maxbufferedmsgs(),
                                           serializedSinkDescriptor.timeunit()[0], serializedSinkDescriptor.msgdelay(),

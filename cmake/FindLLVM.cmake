@@ -62,7 +62,7 @@ find_program(TMP_CONFIG
         NAMES ${llvm_config_names}
         PATHS ${LLVM_ROOT_DIR}/bin NO_DEFAULT_PATH
         DOC "Path to llvm-config tool.")
-#find_program(LLVM_CONFIG NAMES ${llvm_config_names})
+find_program(LLVM_CONFIG NAMES ${llvm_config_names})
 
 set(LLVM_CONFIG ${TMP_CONFIG})
 message("LLVM_Config: ${VAR}")

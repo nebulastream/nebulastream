@@ -76,7 +76,8 @@ bool PrintSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Work
 const std::string PrintSink::toString() const {
     std::stringstream ss;
     ss << "PRINT_SINK(";
-    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
+    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
+    ss  << ")";
     return ss.str();
 }
 
