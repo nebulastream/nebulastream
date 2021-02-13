@@ -37,6 +37,15 @@ class E2EBase {
   public:
     enum class InputOutputMode { FileMode, MemoryMode };
 
+    /**
+     * @brief Method to perform the benchmark
+     * @param threadCntWorker threads in the worker engine
+     * @param threadCntCoordinator threads in the worker engine of the coordinator
+     * @param sourceCnt number of sources
+     * @param mode if source is coming from file or memory
+     * @param query the query to be run
+     * @return csv list of the results
+     */
     static std::string runExperiment(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode,
                               std::string query);
 
@@ -44,13 +53,40 @@ class E2EBase {
     ~E2EBase();
 
   private:
+    /**
+     * @brief run the query and start the measurement
+     * @param query to be run
+     */
     void runQuery(std::string query);
+
+    /**
+     * @brief setup one coordinator and one worker
+     */
     void setup();
+
+    /*
+     * setup 1-n sources
+     */
     void setupSources();
+
+    /**
+     * @brief stop worker and coordinator and release all resources
+     */
     void tearDown();
+
+    /**
+     * @brief get the result as a csv list with entries: ProcessedBuffers,ProcessedTasks,ProcessedTuples,ProcessedBytes
+     * @return csv list
+     */
     std::string getResult();
+
+    /**
+     * @brief start the measurement of the throughput, will read the stats of the worker ever n second
+     * @param nodeEngine
+     */
     void recordStatistics(NodeEngine::NodeEnginePtr nodeEngine);
 
+  private:
     uint64_t numberOfWorkerThreads;
     uint64_t numberOfCoordinatorThreads;
     uint64_t sourceCnt;
