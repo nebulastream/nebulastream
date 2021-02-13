@@ -150,7 +150,7 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
  */
 TEST_F(OPCSinkTest, OPCSourcePrint) {
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
-    std::string expected = "OPC_SINK";
+    std::string expected = "OPC_SINK(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
     EXPECT_EQ(opcSink->toString(), expected);
     std::cout << opcSink->toString() << std::endl;
     SUCCEED();

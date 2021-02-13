@@ -65,7 +65,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
         else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
         const MQTTSinkDescriptorPtr mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
-        return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getHost(), mqttSinkDescriptor->getPort(),
+        return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getAddress(),
                               mqttSinkDescriptor->getClientId(), mqttSinkDescriptor->getTopic(), mqttSinkDescriptor->getUser(),
                               mqttSinkDescriptor->getMaxBufferedMSGs(), mqttSinkDescriptor->getTimeUnit(),
                               mqttSinkDescriptor->getMsgDelay(), mqttSinkDescriptor->getAsynchronousClient());

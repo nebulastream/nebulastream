@@ -33,7 +33,7 @@ void UserCallback::connection_lost(const std::string& cause) {
     if (!cause.empty())
         std::cout << "\tcause: " << cause << std::endl;
 }
-//TODO handle synchronous delivery correctly
+
 void UserCallback::delivery_complete(mqtt::delivery_token_ptr tok) {
     std::cout << "\n\t[Delivery complete for token: "
               << (tok ? tok->get_message_id() : -1) << "]" << std::endl;
@@ -41,17 +41,17 @@ void UserCallback::delivery_complete(mqtt::delivery_token_ptr tok) {
 
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
-MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& host,
-                   const uint16_t port, const std::string& clientId, const std::string& topic, const std::string& user,
+MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& address,
+                   const std::string& clientId, const std::string& topic, const std::string& user,
                    const uint32_t maxBufferedMSGs, const char timeUnit, const uint64_t msgDelay, bool asynchronousClient)
-    : SinkMedium(sinkFormat, parentPlanId), host(host), port(port), clientId(clientId),topic(topic), user(user),
+    : SinkMedium(sinkFormat, parentPlanId), address(address), clientId(clientId),topic(topic), user(user),
       maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), msgDelay(msgDelay), asynchronousClient(asynchronousClient),
-      qualityOfService(1), address(std::string("tcp://") + host + std::string(":") + std::to_string(port)),
+      qualityOfService(1),
       connected(false), sendDuration(std::chrono::nanoseconds(msgDelay * ((timeUnit=='m') ? 1000000 :
                                                                   (1000000000 * (timeUnit!='n') | (timeUnit=='n'))))),
       client(asynchronousClient, address, clientId, maxBufferedMSGs) {
 
-    NES_DEBUG("MQTT Sink  " << this << ": Init MQTT Sink to " << host << ":" << port);
+    NES_DEBUG("MQTT Sink  " << this << ": Init MQTT Sink to " << address);
 }
 
 MQTTSink::~MQTTSink() {
@@ -114,13 +114,12 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     return true;
 }
 
-//TODO add more to print?
+
 const std::string MQTTSink::toString() const {
     std::stringstream ss;
     ss << "MQTT_SINK(";
     ss << "SCHEMA("    << sinkFormat->getSchemaPtr()->toString() << "), ";
-    ss << "HOST="      << host     << ", ";
-    ss << "PORT="      << std::to_string(port)     << ", ";
+    ss << "ADDRESS"    << address << ", ";
     ss << "CLIENT_ID=" << clientId << ", ";
     ss << "TOPIC="     << topic    << ", ";
     ss << "USER="      << user     << ", ";
@@ -130,7 +129,7 @@ const std::string MQTTSink::toString() const {
     ss << "SEND_DURATION_IN_NS=" << std::to_string(sendDuration.count()) << ", ";
     ss << "QUALITY_OF_SERVICE=" << std::to_string(qualityOfService) << ", ";
     ss << "CLIENT_TYPE=" << ((asynchronousClient) ? "ASYMMETRIC_CLIENT" : "SYMMETRIC_CLIENT");
-    ss << "\")";
+    ss << ")";
     return ss.str();
 }
 
@@ -145,7 +144,7 @@ bool MQTTSink::connect() {
                 .finalize();
 
             // Connect to the MQTT broker
-            NES_DEBUG("MQTTSink: connect to host=" << host << " port=" << port);
+            NES_DEBUG("MQTTSink: connect to address=" << address);
             client.connect(connOpts);
             connected = true;
         } catch (const mqtt::exception& ex) {
@@ -153,9 +152,9 @@ bool MQTTSink::connect() {
         }
     }
     if (connected) {
-        NES_DEBUG("MQTTSink  " << this << ": connected host=" << host << " port= " << port);
+        NES_DEBUG("MQTTSink  " << this << ": connected address=" << address);
     } else {
-        NES_DEBUG("MQTTSink  " << this << ": NOT connected=" << host << " port= " << port);
+        NES_DEBUG("MQTTSink  " << this << ": NOT connected=" << address);
     }
     return connected;
 }
@@ -174,8 +173,7 @@ bool MQTTSink::disconnect() {
 }
 
 bool MQTTSink::getConnected() { return connected; }
-const std::string& MQTTSink::getHost() const { return host; }
-uint16_t MQTTSink::getPort() const { return port; }
+const std::string& MQTTSink::getAddress() const { return address; }
 const std::string& MQTTSink::getClientId() const { return clientId; }
 const std::string& MQTTSink::getTopic() const { return topic; }
 const std::string& MQTTSink::getUser() const { return user; }
