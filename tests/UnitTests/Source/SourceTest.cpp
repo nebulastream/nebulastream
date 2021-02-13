@@ -185,6 +185,8 @@ TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, 0, frequency, false, 1);
 
+    source->start();
+
     uint64_t bufferCnt = 0;
     while (source->getNumberOfGeneratedBuffers() < 5) {
         auto optBuf = source->receiveData();
@@ -239,6 +241,8 @@ TEST_F(SourceTest, testCSVSourceWithLoopOverFile) {
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, numberOfBuffers, frequency, false, 1);
 
+    source->start();
+
     for (uint64_t i = 0; i < numberOfBuffers; i++) {
         auto optBuf = source->receiveData();
         std::cout << "receive buffer with " << optBuf->getNumberOfTuples() << " tuples" << std::endl;
@@ -273,7 +277,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, num, frequency, false, 1);
-
+    source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
@@ -318,7 +322,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, num, frequency, false, 1);
-
+    source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
@@ -392,7 +396,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, num, frequency, false, 1);
-
+    source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
@@ -438,7 +442,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, num, frequency, false, 1);
-
+    source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
