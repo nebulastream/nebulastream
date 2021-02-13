@@ -40,7 +40,7 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
       numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
       numberOfBuffers(workerConfig->getNumberOfBuffers()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()) {
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()),
       topologyNodeId(INVALID_TOPOLOGY_NODE_ID) {
     connected = false;
     withRegisterStream = false;
@@ -113,7 +113,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
     try {
-        nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf, numWorkerThreads);
+        nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf, numWorkerThreads, bufferSizeInBytes, numberOfBuffers);
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
@@ -197,7 +197,6 @@ bool NesWorker::stop(bool) {
         }
         rpcServer.reset();
         rpcThread.reset();
-
 
         stopped = true;
         return successShutdownNodeEngine;
