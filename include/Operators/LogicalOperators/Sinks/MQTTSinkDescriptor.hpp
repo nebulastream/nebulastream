@@ -31,8 +31,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
   public:
     /**
      * @brief Creates the MQTT sink description
-     * @param host: host name of MQTT broker
-     * @param port: port of MQTT broker
+     * @param address: address name of MQTT broker
      * @param clientId: client ID for MQTT client
      * @param topic: MQTT topic chosen to publish client data to
      * @param user: user identification for client
@@ -42,19 +41,14 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return descriptor for MQTT sink
      */
-    static SinkDescriptorPtr create( const std::string& host, const uint16_t port, const std::string& clientId,
+    static SinkDescriptorPtr create( const std::string& address, const std::string& clientId,
                                      const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs,
                                      const char timeUnit, const uint64_t msgDelay, const bool asynchronousClient);
 
     /**
-     * @brief get host information from a MQTT sink client
+     * @brief get address information from a MQTT sink client
      */
-    const std::string& getHost() const;
-
-    /**
-     * @brief get port information from a MQTT sink client
-     */
-    uint16_t getPort() const;
+    const std::string& getAddress() const;
 
     /**
      * @brief get clientId information from a MQTT sink client
@@ -92,7 +86,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     const bool getAsynchronousClient() const;
 
-    void setPort(uint16_t);
     void setMaxBufferedMSGs(uint32_t);
     void setTimeUnit(char);
     void setMsgDelay(uint64_t);
@@ -101,12 +94,11 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     bool equal(SinkDescriptorPtr other) override;
 
   private:
-    explicit MQTTSinkDescriptor(const std::string& host, const uint16_t port, const std::string& clientId, const std::string& topic,
+    explicit MQTTSinkDescriptor(const std::string& address, const std::string& clientId, const std::string& topic,
                        const std::string& user, const uint32_t maxBufferedMSGs, const char timeUnit, const uint64_t msgDelay,
                        const bool asynchronousClient);
 
-    std::string host;
-    uint16_t port;
+    std::string address;
 
     std::string clientId;
     std::string topic;

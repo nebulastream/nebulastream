@@ -182,13 +182,20 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
 /**
  * @brief create MQTT sink
  * @param schema: schema of the data
- * @param brokers: broker list
- * @param topic: MQTT topic to write to
- * @param kafkaProducerTimeout: MQTT producer timeout
+ * @param parentPlanId: the Id of the parent plan
+ * @param nodeEngine: a node engine pointer, e.g. for access to the buffer manager
+ * @param address: address of a MQTT broker
+ * @param clientID: ID that identifies the MQTT client
+ * @param topic: broker topic/path to which the MQTT messages are published
+ * @param user: used to identify client at broker
+ * @param maxBufferedMSGs: maximal number for how many messages can be buffered at client
+ * @param timeUnit: unit used to interpret the msgDelay value (seconds vs milliseconds vs nanoseconds)
+ * @param msgDelay: how long to wait before sending the next message from client
+ * @param asynchronousClient: 1 if client should be asynchronous, else 0
  * @return a data sink pointer
  */
 const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
-                                 const std::string& host, const uint16_t port, const std::string& clientID,
+                                 const std::string& address, const std::string& clientID,
                                  const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs = 60,
                                  const char timeUnit = 'm', const uint64_t msgDelay = 500, const bool asynchronousClient = 1);
 #endif
