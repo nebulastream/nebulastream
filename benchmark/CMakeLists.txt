@@ -104,14 +104,19 @@ if (NES_BUILD_BENCHMARKS)
     target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
 
-    ### E2e Benchmark ###
+    ### E2e Benchmark Project ###
     add_executable(e2e-project-benchmark "E2ETests/E2EProjectBenchmark.cpp")
     target_link_libraries(e2e-project-benchmark nes libgbenchmark libgbenchmark_main pthread)
     target_sources(e2e-project-benchmark PUBLIC "E2ETests/E2EBase.cpp")
     target_sources(e2e-project-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME e2e-project-benchmark COMMAND e2e-project-benchmark)
-#    add_test(NAME e2e-project-benchmark COMMAND e2e-project-benchmark --benchmark_out=e2e.log --benchmark_out_format=json)
-#    add_test(NAME e2e-project-benchmark COMMAND e2e-project-benchmark)
+
+    ### E2e Benchmark Select ###
+    add_executable(e2e-select-benchmark "E2ETests/E2ESelectionBenchmark.cpp")
+    target_link_libraries(e2e-select-benchmark nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-select-benchmark PUBLIC "E2ETests/E2EBase.cpp")
+    target_sources(e2e-select-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME e2e-select-benchmark COMMAND e2e-select-benchmark)
 
     add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
 

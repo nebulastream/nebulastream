@@ -36,6 +36,8 @@ CoordinatorConfig::CoordinatorConfig() {
     enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
+    numberOfBuffers = ConfigOption<uint32_t>::create("numberOfBuffers", 1024, "Number of buffers.");
+    bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
     queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
 }
@@ -148,6 +150,16 @@ void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
 StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
 
 void CoordinatorConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
+
+IntConfigOption CoordinatorConfig::getNumberOfBuffers() { return numberOfBuffers; }
+
+void CoordinatorConfig::setNumberOfBuffers(uint64_t count) { numberOfBuffers->setValue(count); }
+
+IntConfigOption CoordinatorConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
+
+void CoordinatorConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
+
+
 
 IntConfigOption CoordinatorConfig::getQueryBatchSize() { return queryBatchSize; }
 

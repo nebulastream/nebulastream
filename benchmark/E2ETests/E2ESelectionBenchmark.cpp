@@ -33,9 +33,10 @@ int main() {
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
-    string query = "Query::from(\"input\").project(Attribute(\"id\")).sink(FileSinkDescriptor::create(\"test.out\"));";
+    //roughly 50% selectivity
+    string query = "Query::from(\"input\").filter(Attribute(\"value\") > 5).sink(FileSinkDescriptor::create(\"test.out\"));";
 
-    std::string benchmarkName = "E2EProjectBenchmark";
+    std::string benchmarkName = "E2ESelectionBenchmark";
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
@@ -60,7 +61,7 @@ int main() {
     std::cout << "result=" << std::endl;
     std::cout << ss.str() << std::endl;
 
-    std::ofstream out("E2EProjectBenchmark.res");
+    std::ofstream out("E2ESelectionBenchmark.res");
     out << ss.str();
     out.close();
     std::cout << "benchmark finish" << std::endl;

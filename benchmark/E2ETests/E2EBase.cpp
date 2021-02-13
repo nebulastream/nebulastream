@@ -21,10 +21,11 @@ const uint64_t numberOfBufferToProduce = 1000000;
 const uint64_t experimentRuntimeinSeconds = 10;
 const uint64_t experimentMeasureIntervalInSeconds = 1;
 
-const DebugLevel debugLvl = NES::LOG_DEBUG;
+const DebugLevel debugLvl = NES::LOG_NONE;
 const uint64_t numberOfBuffersInBufferManager = 1048576;
 const uint64_t bufferSizeInBytes = 4096;
 
+static uint64_t portOffset = 13;
 std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     if (mode == E2EBase::InputOutputMode::FileMode) {
         return "FileMode";
@@ -35,13 +36,13 @@ std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     }
 }
 
-std::string E2EBase::runExperiment(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode,
-                            std::string query) {
+std::string E2EBase::runExperiment(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt,
+                                   InputOutputMode mode, std::string query) {
     std::cout << "setup experiment with parameter threadCntWorker=" << threadCntWorker
               << " threadCntCoordinator=" << threadCntCoordinator << " sourceCnt=" << sourceCnt
-              << " mode=" << getInputOutputModeAsString(mode) << " query=" << query
-              << std::endl;
-    E2EBasePtr test = std::make_unique<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, E2EBase::InputOutputMode::FileMode);
+              << " mode=" << getInputOutputModeAsString(mode) << " query=" << query << std::endl;
+    E2EBasePtr test =
+        std::make_shared<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, E2EBase::InputOutputMode::FileMode);
 
     std::cout << "run query" << std::endl;
     test->runQuery(query);
@@ -73,6 +74,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             currentStat->setProcessedTasks(it->getProcessedTasks());
             currentStat->setProcessedTuple(it->getProcessedTuple());
             NES_WARNING("Statistics at ts=" << std::time(0) << " measurement=" << it->getQueryStatisticsAsString());
+            NES_ASSERT(currentStat->getProcessedTuple() != 0, "system not ready, this should not happen");
             statisticsVec.push_back(currentStat);
         }
 
@@ -96,13 +98,13 @@ E2EBase::~E2EBase() {
     queryCatalog.reset();
 }
 
-void E2EBase::setupSources()
-{
+void E2EBase::setupSources() {
     schema = Schema::create()
-        ->addField(createField("value", UINT64))
-        ->addField(createField("id", UINT64))
-        ->addField(createField("timestamp", UINT64));
+                 ->addField(createField("value", UINT64))
+                 ->addField(createField("id", UINT64))
+                 ->addField(createField("timestamp", UINT64));
 
+    portOffset *= portOffset + 123;
     //register logical stream qnv
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
@@ -121,8 +123,7 @@ void E2EBase::setupSources()
     srcConf->setLogicalStreamName("input");
     srcConf->setSkipHeader(true);
     //register physical stream
-    for(uint64_t i = 0; i < sourceCnt; i++)
-    {
+    for (uint64_t i = 0; i < sourceCnt; i++) {
         srcConf->setPhysicalStreamName("test_stream" + std::to_string(i));
         PhysicalStreamConfigPtr inputStream = PhysicalStreamConfig::create(srcConf);
         wrk1->registerPhysicalStream(inputStream);
@@ -136,26 +137,27 @@ void E2EBase::setup() {
     std::cout << "Setup E2EBase test class." << std::endl;
 
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
     crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    crdConf->setRpcPort(4000);
-    crdConf->setRestPort(8081);
+    crdConf->setNumberOfBuffers(numberOfBuffersInBufferManager);
+    crdConf->setBufferSizeInBytes(bufferSizeInBytes);
+    crdConf->setRpcPort(4000 + portOffset);
+    crdConf->setRestPort(8081 + portOffset);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
     crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
-    wrkConf->setCoordinatorPort(4000);
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
+    wrkConf->setRpcPort(port + 10 + portOffset);
+    wrkConf->setDataPort(port + 11 + portOffset);
     wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
     wrkConf->setNumberOfBuffers(numberOfBuffersInBufferManager);
     wrkConf->setBufferSizeInBytes(bufferSizeInBytes);
     wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    NES_ASSERT(retStart1, "retStart1");;
+    NES_ASSERT(retStart1, "retStart1");
 
     setupSources();
 
@@ -168,13 +170,17 @@ void E2EBase::runQuery(std::string query) {
     queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_ASSERT(TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
+    //give the system some seconds to come to steady mode
+    sleep(5);
+
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
-    std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << " E2EBase: Run Measurement for query id=" << queryId  << std::endl;
+    std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << " E2EBase: Run Measurement for query id=" << queryId << std::endl;
     recordStatistics(wrk1->getNodeEngine());
     auto t2 = std::time(nullptr);
     auto tm2 = *std::localtime(&t2);
-    std::cout << std::put_time(&tm2, "%d-%m-%Y %H-%M-%S") << " E2EBase: Finished Measurement for query id=" << queryId  << std::endl;
+    std::cout << std::put_time(&tm2, "%d-%m-%Y %H-%M-%S") << " E2EBase: Finished Measurement for query id=" << queryId
+              << std::endl;
 }
 
 //std::string E2EBase::outputResults(std::string outputFile) {
@@ -187,7 +193,7 @@ std::string E2EBase::getResult() {
     for (int i = statisticsVec.size() - 1; i > 1; --i) {
         statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());
         statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers()
-                                                  - statisticsVec[i - 1]->getProcessedBuffers());
+                                              - statisticsVec[i - 1]->getProcessedBuffers());
         statisticsVec[i]->setProcessedTasks(statisticsVec[i]->getProcessedTasks() - statisticsVec[i - 1]->getProcessedTasks());
     }
 
@@ -202,10 +208,9 @@ std::string E2EBase::getResult() {
     statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() / statisticsVec.size());
     statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() / statisticsVec.size());
     std::cout << "agg is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
-    out << "," << statisticsVec[0]->getProcessedBuffers()
-                                                      << "," << statisticsVec[0]->getProcessedTasks()
-                  << "," << statisticsVec[0]->getProcessedTuple()
-                  << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes() << std::endl;
+    out << "," << statisticsVec[0]->getProcessedBuffers() << "," << statisticsVec[0]->getProcessedTasks() << ","
+        << statisticsVec[0]->getProcessedTuple() << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes()
+        << std::endl;
 
     return out.str();
 }
@@ -221,6 +226,7 @@ void E2EBase::tearDown() {
 
     std::cout << "E2EBase: Stop Coordinator" << std::endl;
     bool retStopCord = crd->stopCoordinator(true);
-    NES_ASSERT(retStopCord, "retStopCord");;
+    NES_ASSERT(retStopCord, "retStopCord");
+    ;
     std::cout << "E2EBase: Test finished" << std::endl;
 }

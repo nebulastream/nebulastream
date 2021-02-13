@@ -119,7 +119,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         currentPosInFile = input.tellg();
     }
 
-    while (tupCnt < generated_tuples_this_pass) {
+    while (tupCnt < generated_tuples_this_pass && this->isRunning()) {
         if (input.tellg() >= fileSize || input.tellg() == -1) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
             input.clear();
