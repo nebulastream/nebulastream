@@ -125,15 +125,4 @@ const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, 
 }
 #endif
 
-#ifdef ENABLE_MQTT_BUILD
-const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
-                                 const std::string& host, const uint16_t port, const std::string& clientId,
-                                 const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs,
-                                 const char timeUnit, const uint64_t msgDelay, const bool asynchronousClient) {
-    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    DataSinkPtr test = std::make_shared<MQTTSink>(format, parentPlanId, host, port, clientId, topic, user,
-                                                  maxBufferedMSGs, timeUnit, msgDelay, asynchronousClient);
-    return test;
-}
-#endif
 }// namespace NES
