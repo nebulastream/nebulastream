@@ -57,12 +57,16 @@ def get_query_id(responses: List[Response]) -> List[int]:
 
 # stop running queries in sample
 def stop_query(base_url: str, query_ids: List[int]):
-    stop_query_url = f"{base_url}/queryCatalog/query"
+    valid_status_codes = [200, 204]
+    stop_query_url = f"{base_url}/query/stop-query"
     http_req = []
     for query_id in query_ids:
-        http_req.append(grequests.delete(stop_query_url, json={"queryId": query_id}))
+        http_req.append(grequests.delete(stop_query_url, json=query_id))
 
     response_list = grequests.map(http_req)
+    for r in response_list:
+        if r.status_code not in valid_status_codes:
+            Exception(f"Stopped Response Code {r.status_code}.")
     return response_list
 
 
@@ -98,24 +102,23 @@ def stable_workload(base_url: str, base_query: str, n_requests: int = 100, niter
             print(f"Queries launched in iteration {iter_number} took {time.time() - query_start_time} seconds")
 
 
-def generate_workload(base_url: str, base_query: str, n_requests: int = 100, stable: bool = True, ratio: float = 0.5,
-                      niter: int = 1):
+def fluctuating_workload(base_url: str, base_query: str, n_requests: int = 100, ratio: float = 0.5, niter: int = 1):
     print(f"Executing Workload.")
     queryids = []
     for i in range(1, niter + 1):
         print(f"Running iteration {i}")
-        _, recent_query_ids, start_time = launch_requests(base_query, base_url, i, n_requests)
+        _, recent_query_ids, start_time = launch_requests(base_url, base_query, i, n_requests)
         while number_of_queries_waiting_to_run(base_url) > 0:
             print(f"Waiting until submitted queries are marked as running.")
-            time.sleep(1)
+            time.sleep(2)
         print(
             f"Iteration {i + 1} submitted {n_requests} queries and it took {(time.time() - start_time)} seconds for "
             f"them to run", flush=True)
-        if not stable:
-            random.shuffle(queryids)
-            if ratio > 1:
-                ratio = 1
-            # the number of queries to delete
+        random.shuffle(queryids)
+        if ratio > 1:
+            ratio = 1
+        # the number of queries to delete
+        if niter > 1:
             n_stop = math.ceil(ratio * len(queryids))
             stop_set = queryids[: n_stop]
             res = stop_query(base_url, stop_set)
@@ -148,5 +151,5 @@ if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
     BASE_QUERY = "Query::from(\"" + "ysb" + "\")"
     # init_query(NES_BASE_URL, BASE_QUERY)
-    stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20, sleep_time=1)
-    # generate_workload(NES_BASE_URL, BASE_QUERY, stable=True, n_requests=10, niter=20)
+    # stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20, sleep_time=1)
+    fluctuating_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20)
