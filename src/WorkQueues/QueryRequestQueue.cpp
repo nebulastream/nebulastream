@@ -64,7 +64,7 @@ std::vector<QueryCatalogEntry> QueryRequestQueue::getNextBatch() {
         uint64_t currentBatchSize = 1;
         uint64_t totalQueriesToSchedule = schedulingQueue.size();
         //Prepare a batch of queries to schedule
-        while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
+        while (currentBatchSize <= batchSize && currentBatchSize <= totalQueriesToSchedule) {
             queriesToSchedule.push_back(schedulingQueue.front());
             schedulingQueue.pop_front();
             currentBatchSize++;
