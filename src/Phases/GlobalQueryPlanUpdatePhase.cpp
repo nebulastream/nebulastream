@@ -74,7 +74,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
                 start = std::chrono::system_clock::now();
                 queryPlan = queryRewritePhase->execute(queryPlan);
                 end = std::chrono::system_clock::now();
-                NES_TIMER("BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : "
+                NES_TIMER("BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : "
                           << "(" << queryId << "," << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
                           << ")");
                 if (!queryPlan) {
@@ -86,7 +86,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
                 start = std::chrono::system_clock::now();
                 queryPlan = typeInferencePhase->execute(queryPlan);
                 end = std::chrono::system_clock::now();
-                NES_TIMER("BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : "
+                NES_TIMER("BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : "
                           << "(" << queryId << "," << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
                           << ")");
                 if (!queryPlan) {
@@ -108,8 +108,9 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
             NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
             queryMergerPhase->execute(globalQueryPlan);
             end = std::chrono::system_clock::now();
-            NES_TIMER("BDAPRO2Tracking: queryMergerPhase - (microseconds) : "
-                      << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
+            NES_TIMER("BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : "
+                      << "(" << queryRequests.size() << ","
+                      << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
         }
         NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;

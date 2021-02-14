@@ -48,6 +48,8 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     queryPlan->setQueryId(queryId);
     NES_INFO("QueryService: Queuing the query for the execution");
     QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
+    NES_TIMER("BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : "
+              << "(" << queryId << ", " << std::chrono::system_clock::now().time_since_epoch().count() << ")");
     if (entry) {
         queryRequestQueue->add(entry);
         return queryId;
@@ -63,6 +65,8 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
                                      + " in query catalog.");
     }
     QueryCatalogEntryPtr entry = queryCatalog->addQueryStopRequest(queryId);
+    NES_TIMER("BDAPRO2Tracking: markForStopped - (queryId, nanoseconds) : "
+              << "(" << queryId << ", " << std::chrono::system_clock::now().time_since_epoch().count() << ")");
     if (entry) {
         return queryRequestQueue->add(entry);
     }
