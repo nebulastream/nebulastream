@@ -1,5 +1,5 @@
-total_workers: 9
-workers_producing: 6
+total_workers: 3
+workers_producing: 3
 physical_stream_prefix: "ysb"
 producer_options: >-
   --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
