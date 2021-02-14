@@ -112,7 +112,7 @@ def fluctuating_workload(base_url: str, base_query: str, n_requests: int = 100, 
             print(f"Waiting until submitted queries are marked as running.")
             time.sleep(2)
         print(
-            f"Iteration {i + 1} submitted {n_requests} queries and it took {(time.time() - start_time)} seconds for "
+            f"Iteration {i} submitted {n_requests} queries and it took {(time.time() - start_time)} seconds for "
             f"them to run", flush=True)
         random.shuffle(queryids)
         if ratio > 1:

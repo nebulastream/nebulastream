@@ -10,8 +10,11 @@ def main(file_location: str):
     with open(file_location, "r") as f:
         lines = f.readlines()
     for line in lines:
-        if "BDAPRO2Tracking: markAs" in line:
-            after = line.split("BDAPRO2Tracking: markAs")[1]
+        if "BDAPRO2Tracking: mark" in line:
+            if "BDAPRO2Tracking: markAs" in line:
+                after = line.split("BDAPRO2Tracking: markAs")[1]
+            else:
+                after = line.split("BDAPRO2Tracking: mark")[1]
             state_split = after.split("-")
             state = state_split[0].strip()
             metric_splits = state_split[1].split(":")[1].split(",")
@@ -20,8 +23,8 @@ def main(file_location: str):
             print(f"Processed: {query_id}")
 
     df = pd.DataFrame.from_dict(result)
-    df.to_csv("./results/4_fluctuating_flat_disabled_results.csv")
+    df.to_csv("./results/4_fluctuating_flat_enabled_results.csv")
 
 
 if __name__ == '__main__':
-    main("./results/4_fluctuating_flat_disabled.log")
+    main("./results/4_fluctuating_flat_enabled.log")
