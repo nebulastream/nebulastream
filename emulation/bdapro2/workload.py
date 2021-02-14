@@ -139,7 +139,7 @@ def init_query(base_url: str, base_query: str):
     query_sets = generate_query(base_query, 1, 0)
     response_list = submit_query(base_url, query_sets)
     get_query_id(response_list)
-    while number_of_queries_waiting_to_run(BASE_QUERY) > 0:
+    while number_of_queries_waiting_to_run(base_url) > 0:
         print(f"Waiting for first query to run.")
         time.sleep(2)
 
@@ -147,6 +147,6 @@ def init_query(base_url: str, base_query: str):
 if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
     BASE_QUERY = "Query::from(\"" + "ysb" + "\")"
-    init_query(NES_BASE_URL, BASE_QUERY)
-    stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=10, sleep_time=1)
+    # init_query(NES_BASE_URL, BASE_QUERY)
+    stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20, sleep_time=1)
     # generate_workload(NES_BASE_URL, BASE_QUERY, stable=True, n_requests=10, niter=20)
