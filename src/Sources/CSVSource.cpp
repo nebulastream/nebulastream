@@ -65,8 +65,7 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
 std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on " << operatorId);
     auto optBuf = this->bufferManager->getBufferTimeout(std::chrono::milliseconds(5000));
-    if(!optBuf)
-    {
+    if (!optBuf) {
         NES_ERROR("buffer could not be delivered after 5 sec");
         return std::nullopt;
     }

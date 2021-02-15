@@ -57,8 +57,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
       numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
       numberOfBuffers(coordinatorConfig->getNumberOfBuffers()->getValue()),
       bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
-      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()),
-      inherited0(), inherited1() {
+      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()), inherited0(), inherited1() {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;

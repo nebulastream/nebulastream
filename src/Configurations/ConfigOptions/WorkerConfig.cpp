@@ -140,7 +140,6 @@ IntConfigOption WorkerConfig::getRpcPort() { return rpcPort; }
 
 void WorkerConfig::setRpcPort(uint16_t rpcPortValue) { rpcPort->setValue(rpcPortValue); }
 
-
 IntConfigOption WorkerConfig::getDataPort() { return dataPort; }
 
 void WorkerConfig::setDataPort(uint16_t dataPortValue) { dataPort->setValue(dataPortValue); }
@@ -161,7 +160,6 @@ StringConfigOption WorkerConfig::getLogLevel() { return logLevel; }
 
 void WorkerConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
 
-
 IntConfigOption WorkerConfig::getNumberOfBuffers() { return numberOfBuffers; }
 
 void WorkerConfig::setNumberOfBuffers(uint64_t count) { numberOfBuffers->setValue(count); }
@@ -169,6 +167,5 @@ void WorkerConfig::setNumberOfBuffers(uint64_t count) { numberOfBuffers->setValu
 IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
 
 void WorkerConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
-
 
 }// namespace NES

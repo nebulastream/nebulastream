@@ -159,8 +159,6 @@ IntConfigOption CoordinatorConfig::getBufferSizeInBytes() { return bufferSizeInB
 
 void CoordinatorConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
 
-
-
 IntConfigOption CoordinatorConfig::getQueryBatchSize() { return queryBatchSize; }
 
 void CoordinatorConfig::setQueryBatchSize(uint32_t batchSize) { queryBatchSize->setValue(batchSize); }
