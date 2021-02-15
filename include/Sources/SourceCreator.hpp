@@ -29,9 +29,7 @@
 #include <open62541/client_subscriptions.h>
 #include <open62541/plugin/log_stdout.h>
 #endif
-#ifdef ENABLE_MQTT_BUILD
-#include <mqtt/async_client.h>
-#endif
+
 namespace NES {
 
 /**

@@ -59,15 +59,22 @@ std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
 
     if (connect()) {// was if (connect()) {
         try {
-            NES_INFO("Waiting for messages on topic: '" << topic << "'");
+            NES_DEBUG("Waiting for messages on topic: '" << topic << "'");
 
+            time_t timeout = 10; // 10 seconds time out
+            time_t start = time(0);
+            time_t end = start + timeout;
             auto buffer = bufferManager->getBufferBlocking();
-            //ToDo: handle what happens if no data arrives
-            auto msg = client.consume_message();
-            NES_INFO("Client consume message: '" << msg->get_payload_str() << "'");
-            fillBuffer(buffer, msg->get_payload_str());
 
-            return buffer;
+            while (start < end) {
+                //ToDo: handle what happens if no data arrives
+                start = time(0);
+                auto msg = client.consume_message();
+                NES_DEBUG("Client consume message: '" << msg->get_payload_str() << "'");
+                fillBuffer(buffer, msg->get_payload_str());
+
+                return buffer;
+            }
         } catch (const mqtt::exception& exc) {
             NES_ERROR("MQTTSource error: " << exc.what());
             return std::nullopt;
@@ -95,7 +102,7 @@ const std::string MQTTSource::toString() const {
 
 void MQTTSource::fillBuffer(NodeEngine::TupleBuffer& buf, std::string data) {
 
-    NES_INFO("Client consume message: '" << data << "'");
+    NES_DEBUG("Client consume message: '" << data << "'");
 
     std::string line;
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -169,7 +176,7 @@ bool MQTTSource::connect() {
             client.start_consuming();
 
             // Connect to the server
-            NES_INFO("MQTTSource: Connecting to the MQTT server...");
+            NES_DEBUG("MQTTSource: Connecting to the MQTT server...");
             auto tok = client.connect(connOpts);
 
             // Getting the connect response will block waiting for the
@@ -189,7 +196,7 @@ bool MQTTSource::connect() {
         }
 
         if (connected) {
-            NES_INFO("MQTTSource: Connection established with topic: " << topic);
+            NES_DEBUG("MQTTSource: Connection established with topic: " << topic);
             NES_DEBUG("MQTTSource  " << this << ": connected");
         } else {
             NES_DEBUG("Exception: MQTTSource  " << this << ": NOT connected");
@@ -204,13 +211,13 @@ bool MQTTSource::disconnect() {
         // If we're here, the client was almost certainly disconnected.
         // But we check, just to make sure.
         if (client.is_connected()) {
-            NES_INFO("MQTTSource: Shutting down and disconnecting from the MQTT server.");
+            NES_DEBUG("MQTTSource: Shutting down and disconnecting from the MQTT server.");
             client.unsubscribe(topic)->wait();
             client.stop_consuming();
             client.disconnect()->wait();
-            NES_INFO("MQTTSource: disconnected.");
+            NES_DEBUG("MQTTSource: disconnected.");
         } else {
-            NES_INFO("MQTTSource: Client was already disconnected");
+            NES_DEBUG("MQTTSource: Client was already disconnected");
         }
         connected = client.is_connected();
     }
