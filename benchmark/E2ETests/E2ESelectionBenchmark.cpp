@@ -53,8 +53,8 @@ int main() {
             std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
             for (auto dataSourceCnt : allDataSources) {
                 std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
-                ss << benchmarkName << "," << nesVersion << "," << workerThreadCnt << "," << coordinatorThreadCnt << "," << dataSourceCnt
-                    << ",FileMode";
+                ss << benchmarkName << "," << nesVersion << "," << workerThreadCnt << "," << coordinatorThreadCnt << ","
+                   << dataSourceCnt << ",FileMode";
                 ss << E2EBase::runExperiment(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
                                              E2EBase::InputOutputMode::FileMode, query);
             }
