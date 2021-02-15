@@ -13,9 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <E2ETests/E2EBase.hpp>
 #include <filesystem>
 #include <util/BenchmarkUtils.hpp>
+#include <util/E2EBase.hpp>
 
 using namespace Benchmarking;
 
