@@ -63,7 +63,7 @@ int main() {
     std::cout << "result=" << std::endl;
     std::cout << ss.str() << std::endl;
 
-    std::ofstream out("E2EProjectBenchmark.res");
+    std::ofstream out("E2EProjectBenchmark.csv");
     out << ss.str();
     out.close();
     std::cout << "benchmark finish" << std::endl;

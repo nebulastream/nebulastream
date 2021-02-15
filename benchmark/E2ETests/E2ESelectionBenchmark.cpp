@@ -64,7 +64,7 @@ int main() {
     std::cout << "result=" << std::endl;
     std::cout << ss.str() << std::endl;
 
-    std::ofstream out("E2ESelectionBenchmark.res");
+    std::ofstream out("E2ESelectionBenchmark.csv");
     out << ss.str();
     out.close();
     std::cout << "benchmark finish" << std::endl;

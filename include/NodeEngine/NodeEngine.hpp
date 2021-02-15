@@ -63,12 +63,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     typedef virtual_enable_shared_from_this<NodeEngine> inherited1;
     typedef ErrorListener inherited2;
 
-//    static constexpr auto DEFAULT_NUM_BUFFERS = 1024;
-//    static constexpr auto DEFAULT_NUM_THREADS = 1;
-
   public:
-//    static constexpr auto DEFAULT_BUFFER_SIZE = 4096;
-
     enum NodeEngineQueryStatus { started, stopped, registered };
 
     /**
