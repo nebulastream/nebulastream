@@ -20,7 +20,6 @@
 #ifdef ENABLE_MQTT_BUILD
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <mqtt/async_client.h>
 
 namespace NES {
 
@@ -34,7 +33,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @brief create a source descriptor pointer for MQTT source
      * @param schema the schema of the data
      * @param serverAddress the server address to connect to (port included)
-     * @param clientId unique server id
+     * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user to connect to server
      * @param topic to subscribe to
      * @return source descriptor pointer to mqtt source
@@ -43,10 +42,10 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                       std::string topic);
     /**
      * @brief create a source descriptor pointer for MQTT source
-     * @param streamName Name of the data stream
+     * @param streamName Name of the logical data stream
      * @param schema the schema of the data
      * @param serverAddress the server address to connect to (port included)
-     * @param clientId unique server id
+     * @param clientId identifies the client connecting to the server, each server has aunique clientID
      * @param user to connect to server
      * @param topic to subscribe to
      * @return source descriptor pointer to mqtt source
