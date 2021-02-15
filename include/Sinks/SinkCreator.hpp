@@ -72,6 +72,17 @@ const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, QuerySubPlanId paren
                                           const std::string& filePath, bool append);
 
 /**
+ * @brief create a binary HDFS test sink with a schema into the nes
+ * @param schema of sink
+ * @param bufferManager
+ * @param path to file
+ * @param bool indicating if data is appended (true) or overwritten (false)
+ * @return a data sink pointer
+ */
+const DataSinkPtr createHdfsSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                          char *filePath, bool append);
+
+/**
  * @brief create a JSON test sink with a schema int
  * @param schema of sink
  * @param bufferManager

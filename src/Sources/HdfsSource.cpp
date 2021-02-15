@@ -110,10 +110,6 @@ const std::string HdfsSource::toString() const {
 }
 
 void HdfsSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
-
-    if (input.tellg() == fileSize) {
-        input.seekg(0, input.beg);
-    }
     uint64_t uint64_to_read = buf.getBufferSize() < (uint64_t) fileSize ? buf.getBufferSize() : fileSize;
     hdfsRead(fs, file, buf.getBufferAs<char>(), uint64_to_read);
     uint64_t generated_tuples_this_pass = uint64_to_read / tupleSize;

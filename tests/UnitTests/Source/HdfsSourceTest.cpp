@@ -125,8 +125,8 @@ TEST_F(HdfsSourceTest, testHdfsSource) {
         ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
         ->addField("ad_type", DataTypeFactory::createFixedChar(9))
         ->addField("event_type", DataTypeFactory::createFixedChar(9))
-        ->addField("current_ms", UINT64)
-        ->addField("ip", INT32);
+        ->addField("current_ms", DataTypeFactory::createUInt64())
+        ->addField("ip", DataTypeFactory::createInt32());
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();

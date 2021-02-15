@@ -68,7 +68,7 @@ class SinkTest : public testing::Test {
     void TearDown() override {
         std::cout << "Tear down SinkTest test case." << std::endl;
         std::remove(path_to_csv_file.c_str());
-        std::remove(path_to_bin_file.c_str());
+        //std::remove(path_to_bin_file.c_str());
         std::remove(path_to_osfile_file.c_str());
     }
 };

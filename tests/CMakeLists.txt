@@ -133,13 +133,13 @@ add_test(NAME hdfs-source-tests COMMAND hdfs-source-tests)
 
 ### Sink Tests ###
 add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
-target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES} "/home/nes/java/jre/lib/amd64/server/libjvm.so" "/home/nes/hadoop/lib/native/libhdfs.so")
 add_test(NAME sink-tests COMMAND sink-tests)
 
-#### Hdfs Sink Test ###
-#add_executable(hdfs-sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
-#target_link_libraries(hdfs-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
-#add_test(NAME hdfs-sink-tests COMMAND hdfs-sink-tests)
+### Hdfs Sink Test ###
+add_executable(hdfs-sink-tests "UnitTests/Sink/HdfsSinkTest.cpp" UnitTests/Sink/HdfsSinkTest.cpp)
+target_link_libraries(hdfs-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES} "/home/nes/java/jre/lib/amd64/server/libjvm.so" "/home/nes/hadoop/lib/native/libhdfs.so")
+add_test(NAME hdfs-sink-tests COMMAND hdfs-sink-tests)
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)

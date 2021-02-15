@@ -21,14 +21,17 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
-#include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <ostream>
 #include <HDFS/hdfs.h>
 
+using namespace std;
+
+/**
+ * @brief tests for hdfs sink
+ */
 namespace NES {
 using NodeEngine::TupleBuffer;
 
@@ -37,443 +40,112 @@ class HdfsSinkTest : public testing::Test {
     SchemaPtr test_schema;
     std::array<uint32_t, 8> test_data;
     bool write_result;
-//    std::string path_to_csv_file;
-//    std::string path_to_bin_file;
-//    std::string path_to_osfile_file;
-
-    hdfsFS fs;
-    struct hdfsBuilder *bld;
-    char *hdfsPath;
+    char *path_to_bin_file;
 
     static void SetUpTestCase() {
         NES::setupLogging("HdfsSinkTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup HdfsSinkTest class.");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down HdfsSinkTest class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down HdfsSinkTest class"); }
 
-    /* Called before a single test. */
     void SetUp() override {
-        std::cout << "Setup HdfsSinkTest test case." << std::endl;
+        NES_DEBUG("Setup HdfsSinkTest test case");
         test_schema =
             Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
         write_result = false;
-        hdfsFS hdfs;
-
-        bld = hdfsNewBuilder();
-        ASSERT_NE(bld, 0);
-        hdfsBuilderSetForceNewInstance(bld);
-        hdfsBuilderSetNameNode(bld, "default");
-        hdfsBuilderSetNameNodePort(bld, 0);
-        hdfsBuilderSetUserName("hdoop");
-
-        hdfs = hdfsBuilderConnect(bld);
-        ASSERT_NE(hdfs, 0);
-        *fs = hdfs;
+        path_to_bin_file = "/testData/sink.bin";
     }
 
     /* Called after a single test. */
     void TearDown() override {
-        std::cout << "Tear down HdfsSinkTest test case." << std::endl;
-//        std::remove(path_to_csv_file.c_str());
-//        std::remove(path_to_bin_file.c_str());
-//        std::remove(path_to_osfile_file.c_str());
+        NES_DEBUG("Tear down HdfsSinkTest test case");
+        hdfsBuilder *bld = hdfsNewBuilder();
+        hdfsBuilderSetForceNewInstance(bld);
+        hdfsBuilderSetNameNode(bld, "192.168.1.104");
+        hdfsBuilderSetNameNodePort(bld, 9000);
+        hdfsBuilderSetUserName(bld, "hdoop");
+        hdfsFS fs = hdfsBuilderConnect(bld);
+        hdfsDelete(fs, path_to_bin_file, 0);
     }
 };
 
-TEST_F(HdfsSinkTest, testCSVFileSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+TEST_F(HdfsSinkTest, testHdfsSink) {
+    // Set up hdfs builder
+    hdfsBuilder *bld = hdfsNewBuilder();
+    hdfsBuilderSetForceNewInstance(bld);
+    hdfsBuilderSetNameNode(bld, "192.168.1.104");
+    hdfsBuilderSetNameNodePort(bld, 9000);
+    hdfsBuilderSetUserName(bld, "hdoop");
 
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
-    for (uint64_t i = 0; i < 2; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    cout << "bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-    write_result = csvSink->writeData(buffer, wctx);
+    // Create hdfs test file
+    hdfsFS fs_aux = hdfsBuilderConnect(bld);
+    hdfsFile outputFile = hdfsStreamBuilderBuild(hdfsStreamBuilderAlloc(fs_aux, path_to_bin_file, O_WRONLY | O_CREAT));
+    hdfsWrite(fs_aux, outputFile, "", 0);
+    hdfsFlush(fs_aux, outputFile);
+    hdfsCloseFile(fs_aux, outputFile);
 
-    EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
-    cout << "Buffer Content= " << bufferContent << endl;
-
-    ifstream testFile(path_to_csv_file.c_str());
-    EXPECT_TRUE(testFile.good());
-    std::ifstream ifs(path_to_csv_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    cout << "File Content=" << fileContent << endl;
-    //search for each value
-    string contentWOHeader = fileContent.erase(0, fileContent.find("\n") + 1);
-    UtilityFunctions::findAndReplaceAll(contentWOHeader, "\n", ",");
-    cout << "File Content shrinked=" << contentWOHeader << endl;
-
-    stringstream ss(contentWOHeader);
-    string item;
-    while (getline(ss, item, ',')) {
-        cout << item << endl;
-        if (bufferContent.find(item) != std::string::npos) {
-            cout << "found token=" << item << endl;
-        } else {
-            cout << "NOT found token=" << item << endl;
-            EXPECT_TRUE(false);
-        }
-    }
-    buffer.release();
-}
-
-TEST_F(SinkTest, testTextFileSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-
-    const DataSinkPtr binSink = createTextFileSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
-    for (uint64_t i = 0; i < 5; ++i) {
-        for (uint64_t j = 0; j < 5; ++j) {
-            buffer.getBuffer<uint64_t>()[j] = j;
-        }
-    }
-    buffer.setNumberOfTuples(25);
-    write_result = binSink->writeData(buffer, wctx);
-    EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
-    cout << "Buffer Content= " << bufferContent << endl;
-
-    ifstream testFile(path_to_csv_file.c_str());
-    EXPECT_TRUE(testFile.good());
-    std::ifstream ifs(path_to_csv_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    cout << "File Content=" << fileContent << endl;
-    EXPECT_EQ(bufferContent, fileContent);
-    buffer.release();
-}
-
-TEST_F(SinkTest, testNESBinaryFileSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, 0, nodeEngine, path_to_bin_file, true);
+    const DataSinkPtr hdfsSink = createHdfsSink(test_schema, 0, nodeEngine, path_to_bin_file, true);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
         }
     }
     buffer.setNumberOfTuples(4);
-    write_result = binSink->writeData(buffer, wctx);
+    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    NES_DEBUG("HdfsSinkTest buffer content: " << bufferContent);
+    write_result = hdfsSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
-    cout << "Buffer Content= " << bufferContent << endl;
 
     //deserialize schema
-    uint64_t idx = path_to_bin_file.rfind(".");
-    std::string shrinkedPath = path_to_bin_file.substr(0, idx + 1);
-    std::string schemaFile = shrinkedPath + "schema";
-    cout << "load=" << schemaFile << endl;
+    std::string path = path_to_bin_file;
+    uint64_t idx = path.rfind(".");
+    std::string shrinkedPath = path.substr(0, idx + 1);
+    std::string schemaFile = "../tests/test_data/sink.schema";
+    NES_DEBUG("HdfsSinkTest: load=" << schemaFile);
     ifstream testFileSchema(schemaFile.c_str());
     EXPECT_TRUE(testFileSchema.good());
     SerializableSchema* serializedSchema = new SerializableSchema();
     serializedSchema->ParsePartialFromIstream(&testFileSchema);
     SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
     //test SCHEMA
-    cout << "deserialized schema=" << ptr->toString() << endl;
+    NES_DEBUG("HdfsSinkTest: deserialized schema=" << ptr->toString());
     EXPECT_EQ(ptr->toString(), test_schema->toString());
+
+    // Create new builder for the reader
+    hdfsBuilder *builder = hdfsNewBuilder();
+    hdfsBuilderSetForceNewInstance(builder);
+    hdfsBuilderSetNameNode(builder, "192.168.1.104");
+    hdfsBuilderSetNameNodePort(builder, 9000);
+    hdfsBuilderSetUserName(builder, "hdoop");
+
+    hdfsFS fs = hdfsBuilderConnect(builder);
 
     auto deszBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     deszBuffer.setNumberOfTuples(4);
 
-    ifstream ifs(path_to_bin_file, ios_base::in | ios_base::binary);
-    if (ifs) {
-        ifs.read(reinterpret_cast<char*>(deszBuffer.getBuffer()), deszBuffer.getBufferSize());
+    hdfsFile file = hdfsStreamBuilderBuild(hdfsStreamBuilderAlloc(fs, path_to_bin_file, O_RDONLY));
+
+    if (file) {
+        hdfsRead(fs, file, deszBuffer.getBuffer(), buffer.getBufferSize());
+        std::string bufferContent2 = UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
+        NES_DEBUG("HdfsSinkTest deszBuffer content: " << bufferContent2);
+        hdfsCloseFile(fs, file);
     } else {
         FAIL();
     }
 
-    cout << "expected=" << endl << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-    cout << "result=" << endl << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
+    NES_DEBUG("HdfsSinkTest: EXPECTED: " << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+    NES_DEBUG("HdfsSinkTest: RESULT: " << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema));
 
-    cout << "File path = " << path_to_bin_file
-         << " Content=" << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
     EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema),
               UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
-    buffer.release();
-}
 
-TEST_F(SinkTest, testCSVPrintSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-
-    std::filebuf fb;
-    fb.open(path_to_osfile_file, std::ios::out);
-    std::ostream os(&fb);
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto csvSink = createCSVPrintSink(test_schema, 0, nodeEngine, os);
-    for (uint64_t i = 0; i < 2; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    cout << "bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-    write_result = csvSink->writeData(buffer, wctx);
-
-    EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
-    cout << "Buffer Content= " << bufferContent << endl;
-
-    ifstream testFile(path_to_osfile_file.c_str());
-    EXPECT_TRUE(testFile.good());
-    std::ifstream ifs(path_to_osfile_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    cout << "File Content=" << fileContent << endl;
-    //search for each value
-    string contentWOHeader = fileContent.erase(0, fileContent.find("\n") + 1);
-    UtilityFunctions::findAndReplaceAll(contentWOHeader, "\n", ",");
-    cout << "File Content shrinked=" << contentWOHeader << endl;
-
-    stringstream ss(contentWOHeader);
-    string item;
-    while (getline(ss, item, ',')) {
-        cout << item << endl;
-        if (bufferContent.find(item) != std::string::npos) {
-            cout << "found token=" << item << endl;
-        } else {
-            cout << "NOT found token=" << item << endl;
-            EXPECT_TRUE(false);
-        }
-    }
-    fb.close();
-    buffer.release();
-}
-
-TEST_F(SinkTest, testTextPrintSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-
-    std::filebuf fb;
-    fb.open(path_to_osfile_file, std::ios::out);
-    std::ostream os(&fb);
-
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-
-    const DataSinkPtr binSink = createTextPrintSink(test_schema, 0, nodeEngine, os);
-    for (uint64_t i = 0; i < 5; ++i) {
-        for (uint64_t j = 0; j < 5; ++j) {
-            buffer.getBuffer<uint64_t>()[j] = j;
-        }
-    }
-    buffer.setNumberOfTuples(25);
-    write_result = binSink->writeData(buffer, wctx);
-    EXPECT_TRUE(write_result);
-    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
-    cout << "Buffer Content= " << bufferContent << endl;
-
-    ifstream testFile(path_to_osfile_file.c_str());
-    EXPECT_TRUE(testFile.good());
-    std::ifstream ifs(path_to_osfile_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    cout << "File Content=" << fileContent << endl;
-    EXPECT_EQ(bufferContent, fileContent.substr(0, fileContent.size() - 1));
-    buffer.release();
-    fb.close();
-    buffer.release();
-}
-
-TEST_F(SinkTest, testCSVZMQSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createCSVZmqSink(test_schema, 0, nodeEngine, "localhost", 666555);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j * i] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
-
-    // Create ZeroMQ Data Source.
-    auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
-    std::cout << zmq_source->toString() << std::endl;
-
-    // Start thread for receivingh the data.
-    bool receiving_finished = false;
-    auto receiving_thread = std::thread([&]() {
-      // Receive data.
-      auto schemaData = zmq_source->receiveData();
-      TupleBuffer bufSchema = schemaData.value();
-      std::string schemaStr;
-      schemaStr.assign(bufSchema.getBufferAs<char>(), bufSchema.getNumberOfTuples());
-      cout << "Schema=" << schemaStr << endl;
-      EXPECT_EQ(UtilityFunctions::toCSVString(test_schema), schemaStr);
-
-      auto bufferData = zmq_source->receiveData();
-      TupleBuffer bufData = bufferData.value();
-      cout << "Buffer=" << bufData.getBufferAs<char>() << endl;
-
-      std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(buffer, test_schema);
-      std::string dataStr;
-      dataStr.assign(bufData.getBufferAs<char>(), bufData.getNumberOfTuples());
-      cout << "Buffer Content received= " << bufferContent << endl;
-      EXPECT_EQ(bufferContent, dataStr);
-      receiving_finished = true;
-    });
-
-    // Wait until receiving is complete.
-    zmq_sink->writeData(buffer, wctx);
-    receiving_thread.join();
-    buffer.release();
-}
-
-TEST_F(SinkTest, testTextZMQSink) {
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createTextZmqSink(test_schema, 0, nodeEngine, "localhost", 666555);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j * i] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
-
-    // Create ZeroMQ Data Source.
-    auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
-    std::cout << zmq_source->toString() << std::endl;
-
-    // Start thread for receivingh the data.
-    bool receiving_finished = false;
-    auto receiving_thread = std::thread([&]() {
-      auto bufferData = zmq_source->receiveData();
-      TupleBuffer bufData = bufferData.value();
-
-      std::string bufferContent = UtilityFunctions::printTupleBufferAsText(bufData);
-      cout << "Buffer Content received= " << bufferContent << endl;
-      EXPECT_EQ(bufferContent, UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
-      receiving_finished = true;
-    });
-
-    // Wait until receiving is complete.
-    zmq_sink->writeData(buffer, wctx);
-    receiving_thread.join();
-    buffer.release();
-}
-
-TEST_F(SinkTest, testBinaryZMQSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", 666555, false);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j * i] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    cout << "buffer before send=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
-
-    // Create ZeroMQ Data Source.
-    auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
-    std::cout << zmq_source->toString() << std::endl;
-
-    // Start thread for receivingh the data.
-    auto receiving_thread = std::thread([&]() {
-      auto schemaData = zmq_source->receiveData();
-      TupleBuffer bufSchema = schemaData.value();
-      SerializableSchema* serializedSchema = new SerializableSchema();
-      serializedSchema->ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
-      SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
-      EXPECT_EQ(ptr->toString(), test_schema->toString());
-
-      auto bufferData = zmq_source->receiveData();
-      TupleBuffer bufData = bufferData.value();
-      cout << "rec buffer tups=" << bufData.getNumberOfTuples()
-           << " content=" << UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema) << endl;
-      cout << "ref buffer tups=" << buffer.getNumberOfTuples()
-           << " content=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-      EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(bufData, test_schema),
-                UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
-    });
-
-    // Wait until receiving is complete.
-    zmq_sink->writeData(buffer, wctx);
-    receiving_thread.join();
-    buffer.release();
-}
-
-TEST_F(SinkTest, testWatermarkForZMQ) {
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    buffer.setWatermark(1234567);
-    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, nodeEngine, "localhost", 666555, false);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j * i] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-
-    // Create ZeroMQ Data Source.
-    auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
-    std::cout << zmq_source->toString() << std::endl;
-
-    // Start thread for receivingh the data.
-    auto receiving_thread = std::thread([&]() {
-      auto schemaData = zmq_source->receiveData();
-
-      auto bufferData = zmq_source->receiveData();
-      TupleBuffer bufData = bufferData.value();
-      EXPECT_EQ(bufData.getWatermark(), 1234567);
-    });
-
-    // Wait until receiving is complete.
-    zmq_sink->writeData(buffer, wctx);
-    receiving_thread.join();
-    buffer.release();
-}
-
-TEST_F(SinkTest, testWatermarkCsvSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    buffer.setWatermark(1234567);
-
-    const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
-    for (uint64_t i = 0; i < 2; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    cout << "watermark=" << buffer.getWatermark() << endl;
-    write_result = csvSink->writeData(buffer, wctx);
-
-    EXPECT_EQ(buffer.getWatermark(), 1234567);
     buffer.release();
 }
 
