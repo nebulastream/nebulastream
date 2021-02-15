@@ -247,7 +247,7 @@ bool NesWorker::disconnect() {
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    NES_ASSERT(con, "conection failded");
+    NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->registerLogicalStream(name, path);
     NES_DEBUG("NesWorker::registerLogicalStream success=" << success);
     return success;
@@ -281,7 +281,7 @@ bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
 bool NesWorker::addParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    NES_ASSERT(con, "conection failded");
+    NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->addParent(parentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
     return success;
@@ -290,7 +290,7 @@ bool NesWorker::addParent(uint64_t parentId) {
 bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    NES_ASSERT(con, "conection failded");
+    NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->replaceParent(oldParentId, newParentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
     return success;
@@ -299,7 +299,7 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
 bool NesWorker::removeParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    NES_ASSERT(con, "conection failded");
+    NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->removeParent(parentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success=" << success);
     return success;
