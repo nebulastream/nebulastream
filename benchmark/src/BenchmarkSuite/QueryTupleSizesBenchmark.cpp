@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "../../tests/util/DummySink.hpp"
-#include "../../tests/util/TestQuery.hpp"
+#include "../../../tests/util/DummySink.hpp"
+#include "../../../tests/util/TestQuery.hpp"
 #include <filesystem>
 #include <iostream>
 #include <util/BenchmarkSchemas.hpp>
