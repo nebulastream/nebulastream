@@ -117,7 +117,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 /**
  * Tests if obtained value is valid.
  */
-TEST_F(MQTTSourceTest, MQTTSourceValue) {
+TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
     auto test_schema = Schema::create()->addField("var", UINT32);
     auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager,  SERVERADDRESS, CLIENTID, USER, TOPIC, 1);
