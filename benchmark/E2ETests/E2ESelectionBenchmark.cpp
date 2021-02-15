@@ -43,8 +43,7 @@ int main() {
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
-    ss << "nes_version,benchmarkName,workerThreadCnt,coordinatorThreadCnt,dataSourceCnt,mode,ProcessedBuffers,ProcessedTasks,"
-          "ProcessedTuples,"
+    ss << "BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffers,ProcessedTasks,ProcessedTuples,"
           "ProcessedBytes"
        << std::endl;
 
@@ -54,8 +53,8 @@ int main() {
             std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
             for (auto dataSourceCnt : allDataSources) {
                 std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
-                ss << nesVersion << "," << benchmarkName << "," << workerThreadCnt << "," << coordinatorThreadCnt << ","
-                   << dataSourceCnt << ",FileMode";
+                ss << benchmarkName << "," << nesVersion << "," << workerThreadCnt << "," << coordinatorThreadCnt << "," << dataSourceCnt
+                    << ",FileMode";
                 ss << E2EBase::runExperiment(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
                                              E2EBase::InputOutputMode::FileMode, query);
             }
