@@ -27,11 +27,10 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <benchmark/benchmark.h>
+#include <benchmark/gbenchmark/src/gbenchmark/include/benchmark/benchmark.h>
 #include <iostream>
 
 using namespace std;
-using namespace NES;
 
 class E2EBase {
   public:
@@ -84,7 +83,7 @@ class E2EBase {
      * @brief start the measurement of the throughput, will read the stats of the worker ever n second
      * @param nodeEngine
      */
-    void recordStatistics(NodeEngine::NodeEnginePtr nodeEngine);
+    void recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine);
 
   private:
     uint64_t numberOfWorkerThreads;
@@ -92,14 +91,14 @@ class E2EBase {
     uint64_t sourceCnt;
     InputOutputMode mode;
 
-    NesCoordinatorPtr crd;
-    NesWorkerPtr wrk1;
+    NES::NesCoordinatorPtr crd;
+    NES::NesWorkerPtr wrk1;
 
     std::vector<NES::NodeEngine::QueryStatisticsPtr> statisticsVec;
-    QueryServicePtr queryService;
+    NES::QueryServicePtr queryService;
     QueryId queryId;
-    QueryCatalogPtr queryCatalog;
-    SchemaPtr schema;
+    NES::QueryCatalogPtr queryCatalog;
+    NES::SchemaPtr schema;
 };
 typedef std::shared_ptr<E2EBase> E2EBasePtr;
 

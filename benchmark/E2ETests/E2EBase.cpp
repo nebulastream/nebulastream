@@ -13,17 +13,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <E2ETests/E2EBase.hpp>
+#include <util/E2EBase.hpp>
 
 using namespace NES;
 
-const uint64_t numberOfBufferToProduce = 1000000;
-const uint64_t experimentRuntimeinSeconds = 10;
-const uint64_t experimentMeasureIntervalInSeconds = 1;
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 1000000;
+const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 10;
+const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
-const DebugLevel debugLvl = NES::LOG_NONE;
-const uint64_t numberOfBuffersInBufferManager = 1048576;
-const uint64_t bufferSizeInBytes = 4096;
+const DebugLevel DEBUGL_LEVEL = NES::LOG_NONE;
+const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
+const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
 static uint64_t portOffset = 13;
 std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
@@ -63,8 +63,8 @@ E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64
 
 void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
 
-    for (uint64_t i = 0; i < experimentRuntimeinSeconds + 1; ++i) {
-        int64_t nextPeriodStartTime = experimentMeasureIntervalInSeconds * 1000
+    for (uint64_t i = 0; i < EXPERIMENT_RUNTIME_IN_SECONDS + 1; ++i) {
+        int64_t nextPeriodStartTime = EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
@@ -81,7 +81,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         while (curTime < nextPeriodStartTime) {
-            std::this_thread::sleep_for(std::chrono::microseconds(900));
+            std::this_thread::sleep_for(std::chrono::seconds(1));
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
@@ -119,7 +119,7 @@ void E2EBase::setupSources() {
     srcConf->setSourceConfig("../tests/test_data/benchmark.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setSourceFrequency(0);
-    srcConf->setNumberOfBuffersToProduce(numberOfBufferToProduce);
+    srcConf->setNumberOfBuffersToProduce(NUMBER_OF_BUFFER_TO_PRODUCE);
     srcConf->setLogicalStreamName("input");
     srcConf->setSkipHeader(true);
     //register physical stream
@@ -133,13 +133,13 @@ void E2EBase::setupSources() {
 void E2EBase::setup() {
     std::cout << "setup" << std::endl;
 
-    NES::setupLogging("E2EBase.log", debugLvl);
+    NES::setupLogging("E2EBase.log", DEBUGL_LEVEL);
     std::cout << "Setup E2EBase test class." << std::endl;
 
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    crdConf->setNumberOfBuffers(numberOfBuffersInBufferManager);
-    crdConf->setBufferSizeInBytes(bufferSizeInBytes);
+    crdConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
+    crdConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
     crdConf->setRpcPort(4000 + portOffset);
     crdConf->setRestPort(8081 + portOffset);
 
@@ -153,8 +153,8 @@ void E2EBase::setup() {
     wrkConf->setRpcPort(port + 10 + portOffset);
     wrkConf->setDataPort(port + 11 + portOffset);
     wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-    wrkConf->setNumberOfBuffers(numberOfBuffersInBufferManager);
-    wrkConf->setBufferSizeInBytes(bufferSizeInBytes);
+    wrkConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
+    wrkConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
     wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
@@ -173,13 +173,15 @@ void E2EBase::runQuery(std::string query) {
     //give the system some seconds to come to steady mode
     sleep(5);
 
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-    std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S") << " E2EBase: Run Measurement for query id=" << queryId << std::endl;
+    auto start = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(start);
+    std::cout << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " E2EBase: Run Measurement for query id=" << queryId << std::endl;
     recordStatistics(wrk1->getNodeEngine());
-    auto t2 = std::time(nullptr);
-    auto tm2 = *std::localtime(&t2);
-    std::cout << std::put_time(&tm2, "%d-%m-%Y %H-%M-%S") << " E2EBase: Finished Measurement for query id=" << queryId
+
+    auto stop = std::chrono::system_clock::now();
+    auto out_time_t = std::chrono::system_clock::to_time_t(stop);
+
+    std::cout << std::put_time(std::localtime(&out_time_t), "%Y-%m-%d %X") << " E2EBase: Finished Measurement for query id=" << queryId
               << std::endl;
 }
 
