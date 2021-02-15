@@ -175,14 +175,15 @@ void E2EBase::runQuery(std::string query) {
 
     auto start = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(start);
-    std::cout << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " E2EBase: Run Measurement for query id=" << queryId << std::endl;
+    std::cout << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " E2EBase: Run Measurement for query id=" << queryId
+              << std::endl;
     recordStatistics(wrk1->getNodeEngine());
 
     auto stop = std::chrono::system_clock::now();
     auto out_time_t = std::chrono::system_clock::to_time_t(stop);
 
-    std::cout << std::put_time(std::localtime(&out_time_t), "%Y-%m-%d %X") << " E2EBase: Finished Measurement for query id=" << queryId
-              << std::endl;
+    std::cout << std::put_time(std::localtime(&out_time_t), "%Y-%m-%d %X")
+              << " E2EBase: Finished Measurement for query id=" << queryId << std::endl;
 }
 
 //std::string E2EBase::outputResults(std::string outputFile) {

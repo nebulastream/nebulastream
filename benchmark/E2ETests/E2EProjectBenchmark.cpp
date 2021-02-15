@@ -30,7 +30,7 @@ int main() {
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 2 , 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 2, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
@@ -42,7 +42,8 @@ int main() {
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
-    ss << "nes_version,benchmarkName,workerThreadCnt,coordinatorThreadCnt,dataSourceCnt,mode,ProcessedBuffers,ProcessedTasks,ProcessedTuples,"
+    ss << "nes_version,benchmarkName,workerThreadCnt,coordinatorThreadCnt,dataSourceCnt,mode,ProcessedBuffers,ProcessedTasks,"
+          "ProcessedTuples,"
           "ProcessedBytes"
        << std::endl;
 
@@ -52,8 +53,8 @@ int main() {
             std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
             for (auto dataSourceCnt : allDataSources) {
                 std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
-                ss << nesVersion << "," << benchmarkName << "," << workerThreadCnt << "," << coordinatorThreadCnt << "," << dataSourceCnt
-                    << ",FileMode";
+                ss << nesVersion << "," << benchmarkName << "," << workerThreadCnt << "," << coordinatorThreadCnt << ","
+                   << dataSourceCnt << ",FileMode";
                 ss << E2EBase::runExperiment(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
                                              E2EBase::InputOutputMode::FileMode, query);
             }

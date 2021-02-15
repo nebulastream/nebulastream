@@ -15,10 +15,10 @@
 */
 
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
+#include <Util/Logger.hpp>
 #include <Util/SharedLibrary.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <iostream>
-#include <Util/Logger.hpp>
 namespace NES {
 
 SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library, const std::string& baseName)
