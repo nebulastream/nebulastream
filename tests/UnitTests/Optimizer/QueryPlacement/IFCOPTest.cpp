@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <gtest/gtest.h>
 
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
@@ -34,7 +35,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <gtest/gtest.h>
+
 
 using namespace NES;
 using namespace web;
@@ -93,37 +94,93 @@ class IFCOPTest : public testing::Test {
 
 
         std::string carSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                             "->addField(\"value\", BasicType::UINT64);";
+                                "->addField(\"value\", BasicType::UINT64);";
         const std::string carStreamName = "car";
 
         std::string truckSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                             "->addField(\"value\", BasicType::UINT64);";
+                                  "->addField(\"value\", BasicType::UINT64);";
         const std::string truckStreamName = "truck";
 
         streamCatalog = std::make_shared<StreamCatalog>();
         streamCatalog->addLogicalStream(carStreamName, carSchema);
         streamCatalog->addLogicalStream(truckStreamName, truckSchema);
 
-        PhysicalStreamConfigPtr confCar =
-            PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
-                /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
-                /**Logical Stream Name**/ "car");
+        SourceConfigPtr carSourceConfig = SourceConfig::create();
+        carSourceConfig->setSourceType("DefaultSource");
+        carSourceConfig->setLogicalStreamName("car");
+        carSourceConfig->setPhysicalStreamName("test2");
+        carSourceConfig->setSourceConfig("1");
+        carSourceConfig->setSourceFrequency(0);
+        carSourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+        carSourceConfig->setNumberOfBuffersToProduce(1);
+        carSourceConfig->setSkipHeader(false);
 
-        PhysicalStreamConfigPtr confTruck =
-            PhysicalStreamConfig::create(/**Source Type**/ "DefaultSource", /**Source Config**/ "1",
-                /**Source Frequence**/ 0, /**Number Of Tuples To Produce Per Buffer**/ 0,
-                /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "test2",
-                /**Logical Stream Name**/ "truck");
+        PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(carSourceConfig);
+
+        SourceConfigPtr truckSourceConfig = SourceConfig::create();
+        truckSourceConfig->setSourceType("DefaultSource");
+        truckSourceConfig->setLogicalStreamName("car");
+        truckSourceConfig->setPhysicalStreamName("test2");
+        truckSourceConfig->setSourceConfig("1");
+        truckSourceConfig->setSourceFrequency(0);
+        truckSourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+        truckSourceConfig->setNumberOfBuffersToProduce(1);
+        truckSourceConfig->setSkipHeader(false);
+
+        PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create(truckSourceConfig);
 
         StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(8));
         StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(9));
         StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(confTruck, topologyNodes.at(10));
 
-
         streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
         streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
         streamCatalog->addPhysicalStream("truck", streamCatalogEntry3);
+    }
+
+    void setupSmallTopologyAndStreamCatalog() {
+        uint32_t grpcPort = 4000;
+        uint32_t dataPort = 5000;
+
+        topology = Topology::create();
+
+        // creater workers
+        std::vector<TopologyNodePtr> topologyNodes;
+        int resource = 4;
+        for (uint32_t i = 0; i < 11; ++i) {
+            topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+            grpcPort = grpcPort + 2;
+            dataPort = dataPort + 2;
+        }
+
+        topology->setAsRoot(topologyNodes.at(0));
+
+        // link each worker with its neighbor
+        topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+        topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(2));
+
+        std::string carSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                                "->addField(\"value\", BasicType::UINT64);";
+        const std::string carStreamName = "car";
+
+        streamCatalog = std::make_shared<StreamCatalog>();
+        streamCatalog->addLogicalStream(carStreamName, carSchema);
+
+        SourceConfigPtr carSourceConfig = SourceConfig::create();
+        carSourceConfig->setSourceType("DefaultSource");
+        carSourceConfig->setLogicalStreamName("car");
+        carSourceConfig->setPhysicalStreamName("test2");
+        carSourceConfig->setSourceConfig("1");
+        carSourceConfig->setSourceFrequency(0);
+        carSourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+        carSourceConfig->setNumberOfBuffersToProduce(1);
+        carSourceConfig->setSkipHeader(false);
+
+        PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(carSourceConfig);
+
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(2));
+
+        streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
     }
 
     StreamCatalogPtr streamCatalog;
@@ -131,72 +188,14 @@ class IFCOPTest : public testing::Test {
 };
 
 /* Test generating random execution path  */
-TEST_F(IFCOPTest, testGeneratingRandomExecutionPath) {
+TEST_F(IFCOPTest, costFunctionTest) {
 
-    setupTopologyAndStreamCatalog();
-
-    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto subQuery = Query::from("truck");
-    Query query = Query::from("car").filter(Attribute("id") > 1).merge(&subQuery).sink(PrintSinkDescriptor::create());
-
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
-
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
-    queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto ifcop = IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-
-    auto randomExecutionPath = ifcop->generateRandomExecutionPath(topology, queryPlan);
-
-    //check if the source nodes are in the execution path
-    bool isSourceOneFound = false;
-    bool isSourceTwoFound = false;
-    for (NodePtr child: randomExecutionPath->getAndFlattenAllChildren(false)){
-        isSourceOneFound = isSourceOneFound || child->as<TopologyNode>()->getId() == 8;
-        isSourceTwoFound = isSourceTwoFound || child->as<TopologyNode>()->getId() == 10;
-    }
-
-    ASSERT_TRUE(isSourceOneFound);
-    ASSERT_TRUE(isSourceTwoFound);
-}
-
-/* Test generating random execution path  */
-TEST_F(IFCOPTest, testSelectOptimizedExecutionPath) {
-
-    setupTopologyAndStreamCatalog();
+    setupSmallTopologyAndStreamCatalog();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto subQuery = Query::from("truck");
-    Query query = Query::from("car").filter(Attribute("id") > 1).merge(&subQuery).sink(PrintSinkDescriptor::create());
-
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
-
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
-    queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto ifcop = IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-
-    auto randomExecutionPath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
-}
-
-// TODO: Add test for operator assignment
-/* Test to run operator assignment */
-TEST_F(IFCOPTest, testOperatorAssignment) {
-    // Get an execution path
-    setupTopologyAndStreamCatalog();
-
-    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto subQuery = Query::from("truck");
-    Query query = Query::from("car").filter(Attribute("id") > 1).merge(&subQuery).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").filter(Attribute("id") > 1)
+        .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -209,8 +208,97 @@ TEST_F(IFCOPTest, testOperatorAssignment) {
     auto ifcop = IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
 
     TopologyNodePtr rootOfOptimizedExecutionpath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
-
-    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> initialNodeToOperatorsMap;
     auto nodeToOperatorMap = ifcop->getRandomAssignment(rootOfOptimizedExecutionpath, queryPlan->getSourceOperators());
+
+
+    ifcop->getTotalCost(queryPlan, topology, nodeToOperatorMap);
     NES_DEBUG("IFCOPTest: nodeToOperatorMap.size()=" << nodeToOperatorMap.size());
+
 }
+
+///* Test generating random execution path  */
+//TEST_F(IFCOPTest, testGeneratingRandomExecutionPath) {
+//
+//    setupTopologyAndStreamCatalog();
+//
+//    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+//    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+//    auto subQuery = Query::from("truck");
+//    Query query = Query::from("car").filter(Attribute("id") > 1)
+//                      .merge(&subQuery)
+//                      .sink(PrintSinkDescriptor::create());
+//
+//    QueryPlanPtr queryPlan = query.getQueryPlan();
+//    QueryId queryId = PlanIdGenerator::getNextQueryId();
+//    queryPlan->setQueryId(queryId);
+//
+//    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+//    queryReWritePhase->execute(queryPlan);
+//    typeInferencePhase->execute(queryPlan);
+//
+//    auto ifcop = IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+//
+//    auto randomExecutionPath = ifcop->generateRandomExecutionPath(topology, queryPlan);
+//
+//    //check if the source nodes are in the execution path
+//    bool isSourceOneFound = false;
+//    bool isSourceTwoFound = false;
+//    for (NodePtr child: randomExecutionPath->getAndFlattenAllChildren(false)){
+//        isSourceOneFound = isSourceOneFound || child->as<TopologyNode>()->getId() == 8;
+//        isSourceTwoFound = isSourceTwoFound || child->as<TopologyNode>()->getId() == 10;
+//    }
+//
+//    ASSERT_TRUE(isSourceOneFound);
+//    ASSERT_TRUE(isSourceTwoFound);
+//}
+
+///* Test generating random execution path  */
+//TEST_F(IFCOPTest, testSelectOptimizedExecutionPath) {
+//
+//    setupTopologyAndStreamCatalog();
+//
+//    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+//    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+//    auto subQuery = Query::from("truck");
+//    Query query = Query::from("car").filter(Attribute("id") > 1).merge(&subQuery).sink(PrintSinkDescriptor::create());
+//
+//    QueryPlanPtr queryPlan = query.getQueryPlan();
+//    QueryId queryId = PlanIdGenerator::getNextQueryId();
+//    queryPlan->setQueryId(queryId);
+//
+//    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+//    queryReWritePhase->execute(queryPlan);
+//    typeInferencePhase->execute(queryPlan);
+//
+//    auto ifcop = IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+//
+//    auto randomExecutionPath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
+//}
+
+//// TODO: Add test for operator assignment
+///* Test to run operator assignment */
+//TEST_F(IFCOPTest, testOperatorAssignment) {
+//    // Get an execution path
+//    setupTopologyAndStreamCatalog();
+//
+//    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+//    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+//    auto subQuery = Query::from("truck");
+//    Query query = Query::from("car").filter(Attribute("id") > 1).merge(&subQuery).sink(PrintSinkDescriptor::create());
+//
+//    QueryPlanPtr queryPlan = query.getQueryPlan();
+//    QueryId queryId = PlanIdGenerator::getNextQueryId();
+//    queryPlan->setQueryId(queryId);
+//
+//    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+//    queryReWritePhase->execute(queryPlan);
+//    typeInferencePhase->execute(queryPlan);
+//
+//    auto ifcop = IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+//
+//    TopologyNodePtr rootOfOptimizedExecutionpath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
+//
+//    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> initialNodeToOperatorsMap;
+//    auto nodeToOperatorMap = ifcop->getRandomAssignment(rootOfOptimizedExecutionpath, queryPlan->getSourceOperators());
+//    NES_DEBUG("IFCOPTest: nodeToOperatorMap.size()=" << nodeToOperatorMap.size());
+//}

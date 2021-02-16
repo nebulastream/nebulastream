@@ -16,7 +16,7 @@
 
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
+//#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -136,15 +136,59 @@ TopologyNodePtr IFCOPStrategy::runGlobalOptimization(QueryPlanPtr queryPlan, Top
 
     return bestCandidate;
 }
-float IFCOPStrategy::getTotalCost(TopologyNodePtr executionPath) {
-    executionPath.get();
-    // TODO: implement IFCOP cost
+
+float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology,
+                                  std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment) {
+
+    // dst, src
+    std::map<OperatorNodePtr, OperatorNodePtr> queryEdges;
+    OperatorNodePtr currentNode = queryPlan->getRootOperators()[0];
+
+    // TODO: check on n-ary operator
+    while (currentNode) {
+        // traverse to the next node
+        if (!currentNode->getChildren().empty()){
+            for (NodePtr child: currentNode->getChildren()){
+                auto nextNode = child->as<OperatorNode>();
+                queryEdges.insert(std::pair<OperatorNodePtr, OperatorNodePtr >(currentNode, nextNode) );
+                currentNode = nextNode;
+            }
+        } else {
+            currentNode = nullptr;
+        }
+    }
+
+    bool isValid = true;
+    // loop to queryEdges and get dst and src
+    for (auto &mapItem: queryEdges){
+
+        TopologyNodePtr srcPtr;
+        TopologyNodePtr dstPtr;
+        for (auto &assignment: operatorAssignment) {
+            if (std::find(assignment.second.begin(), assignment.second.end(), mapItem.first)!=assignment.second.end()){
+                srcPtr = assignment.first;
+            }
+            if (std::find(assignment.second.begin(), assignment.second.end(), mapItem.second)!=assignment.second.end()){
+                dstPtr = assignment.first;
+            }
+        }
+
+        NES_DEBUG("op:" << mapItem.second->getId() << " dst:" << dstPtr->getId() << "| op:" << mapItem.first->getId() << " src:" << srcPtr->getId());
+        auto allPathBetween = topology->findAllPathBetween(dstPtr, srcPtr);
+        isValid = isValid && topology->findAllPathBetween(dstPtr, srcPtr);
+    }
+
+    NES_DEBUG(operatorAssignment.size());
+    NES_DEBUG(topology->getRoot()->getId());
+
+    // if the placement is valid, continue computing the cost
+    if (isValid) {
+
+    }
     return 0;
 }
 std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> IFCOPStrategy::getRandomAssignment(TopologyNodePtr executionPath,
                                                    std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
-    // TODO: implement IFCOP random assignment
-
     // Get a map of stream names and their source nodes
     std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
     for (auto& sourceOperator : sourceOperators) {
@@ -178,8 +222,6 @@ std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> IFCOPStrategy::get
         std::vector<NodePtr> sourceFromExecutionPath = executionPath->getAllLeafNodes();
 
         placeNextOperator(candidateSourceNodeInExecutionPath, sourceOperator->getParents()[0]->as<LogicalOperatorNode>(), nodeToOperatorsMap);
-
-
     }
 
     return nodeToOperatorsMap;
@@ -188,6 +230,7 @@ std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> IFCOPStrategy::get
 void IFCOPStrategy::placeNextOperator(TopologyNodePtr nextTopologyNodePtr, LogicalOperatorNodePtr nextOperatorPtr,
                                       std::map<TopologyNodePtr , std::vector<LogicalOperatorNodePtr>>& nodeToOperatorsMap) {
 
+    // TODO: use random number generator
     uint64_t randomNumberOfOperatorToPlace = 1;
     for (int i=0; i<randomNumberOfOperatorToPlace; ++i) {
         // check if nextOperatorPtr is a sink node
