@@ -98,7 +98,7 @@ class ExecutableSliceAggregationTriggerAction
         return true;
     }
 
-    std::string toString() { return "ExecutableSliceAggregationTriggerAction " + id; }
+    std::string toString() { return "ExecutableSliceAggregationTriggerAction"; }
 
     /**
   * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
