@@ -208,10 +208,10 @@ class TestHarness {
     std::vector<T> getOutput(uint64_t numberOfContentToExpect) {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
-                                    + std::to_string(physicalStreamNames.size())
-                                    + " number of added logical streams = " + std::to_string(logicalStreamNames.size())
-                                    + " number of added workers = " + std::to_string(workerPtrs.size())
-                                    + " number of content to expect = " + std::to_string(numberOfContentToExpect));
+                                    << std::to_string(physicalStreamNames.size())
+                                    << " number of added logical streams = " << std::to_string(logicalStreamNames.size())
+                                    << " number of added workers = " << std::to_string(workerPtrs.size())
+                                    << " number of content to expect = " << std::to_string(numberOfContentToExpect));
         }
 
         QueryServicePtr queryService = crd->getQueryService();
@@ -238,7 +238,7 @@ class TestHarness {
                     "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
                 workerPtrs[i]->registerPhysicalStream(conf);
             } else {
-                NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" + std::to_string(sourceTypes[i]));
+                NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" << std::to_string(sourceTypes[i]));
             }
         }
 
@@ -262,12 +262,12 @@ class TestHarness {
         uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)->getQueryPlan()->getSinkOperators()[0]
             ->getOutputSchema()->getSchemaSizeInBytes();
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T), "The size of output struct does not match output schema."
-                                                         " Output struct:" + std::to_string(sizeof(T)) + " Schema:" +  std::to_string(outputSchemaSizeInBytes));
+                                                         " Output struct:" << std::to_string(sizeof(T)) << " Schema:" <<  std::to_string(outputSchemaSizeInBytes));
 
         if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false "
                                     "number of buffers to expect="
-                                    + std::to_string(numberOfContentToExpect));
+                                    << std::to_string(numberOfContentToExpect));
         }
 
         NES_INFO("QueryDeploymentTest: Remove query");
