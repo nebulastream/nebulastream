@@ -48,7 +48,6 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
     explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
         windowSchema = joinDefinition->getOutputSchema();
-        //for executable join we use the origin id as an identifier
         //we use the pointer to get an id
         id = reinterpret_cast<std::uintptr_t>(this);
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
