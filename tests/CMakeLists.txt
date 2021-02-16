@@ -127,7 +127,7 @@ target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES} "/home/ne
 add_test(NAME source-tests COMMAND source-tests)
 
 ### HDFS Source Test ####
-add_executable(hdfs-source-tests "UnitTests/Source/HdfsBinSourceTest.cpp")
+add_executable(hdfs-source-tests "UnitTests/Source/HdfsSourceTest.cpp")
 target_link_libraries(hdfs-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES} "/home/nes/java/jre/lib/amd64/server/libjvm.so" "/home/nes/hadoop/lib/native/libhdfs.so")
 add_test(NAME hdfs-source-tests COMMAND hdfs-source-tests)
 

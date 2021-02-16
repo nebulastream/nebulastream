@@ -100,19 +100,19 @@ typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr, NodeEngin
                                                       NodeEngine::QueryManagerPtr queryManager, const std::string&,
                                                       const std::string&, uint64_t, uint64_t);
 
-class HdfsBinSourceTest : public testing::Test {
+class HdfsSourceTest : public testing::Test {
   public:
     void SetUp() {
-        NES::setupLogging("HdfsBinSourceTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup HdfsBinSourceTest test class.");
+        NES::setupLogging("HdfsSourceTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup HdfsSourceTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down HdfsBinSourceTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down HdfsSourceTest test class." << std::endl; }
 
     void TearDown() {}
 };
 
-TEST_F(HdfsBinSourceTest, testHdfsBinSource) {
+TEST_F(HdfsSourceTest, testHdfsBinSource) {
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
