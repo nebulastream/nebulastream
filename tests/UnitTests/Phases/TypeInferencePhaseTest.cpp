@@ -728,4 +728,132 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     ASSERT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f3"));
     ASSERT_TRUE(sinkOutputSchema->hasFieldName("y$default_logical$f4"));
 }
+
+/**
+ * @brief In this test we test the type inference for query with Join, Stream Rename and Project operators with fully qualified stream name
+ */
+TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
+    auto inputSchema =
+        Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    auto inputSchema2 =
+        Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
+    streamCatalog->addLogicalStream("default_logical2", inputSchema2);
+
+    auto inputSchema3 =
+        Schema::create()->addField("f5", BasicType::INT32)->addField("f6", BasicType::INT8)->addField("ts", BasicType::INT64);
+    streamCatalog->addLogicalStream("default_logical3", inputSchema3);
+
+    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+    auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+    auto subQuery = Query::from("default_logical2");
+    auto subQuery2 = Query::from("default_logical3");
+    auto query = Query::from("default_logical")
+                     .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
+                     .joinWith(subQuery2, Attribute("f5"), Attribute("f3"), windowType2)
+                     .filter(Attribute("default_logical$f1") < 42)
+                     .project(Attribute("default_logical$f1").rename("f23"), Attribute("default_logical2$f3").rename("f44"))
+                     .map(Attribute("f23") = Attribute("f44") + 2)
+                     .as("x")
+                     .sink(FileSinkDescriptor::create(""));
+    auto plan = query.getQueryPlan();
+
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    plan = phase->execute(plan);
+    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
+    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+
+    SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
+    NES_DEBUG("expected src0= " << sourceOperator[0]->getOutputSchema()->toString());
+    ASSERT_TRUE(sourceOutputSchema->fields.size() == 3);
+    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$f5"));
+    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$f6"));
+    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$ts"));
+
+    SchemaPtr sourceOutputSchema2 = sourceOperator[1]->getOutputSchema();
+    NES_DEBUG("expected src2= " << sourceOperator[1]->getOutputSchema()->toString());
+    ASSERT_TRUE(sourceOutputSchema2->fields.size() == 3);
+    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$f1"));
+    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$f2"));
+    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$ts"));
+
+    SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << filterOperator[0]->getOutputSchema()->toString());
+    ASSERT_TRUE(filterOutputSchema->fields.size() == 15);
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$start"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$end"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$key"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3$f5"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3$f6"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3$ts"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$key"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$ts"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical2$f3"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical2$f4"));
+    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical2$ts"));
+
+    SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << projectOperator[0]->getOutputSchema()->toString());
+    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f23"));
+    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical2$f44"));
+
+    SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << mapOperator[0]->getOutputSchema()->toString());
+    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(mapOutputSchema->hasFieldName("f23"));
+    ASSERT_TRUE(mapOutputSchema->hasFieldName("f44"));
+
+    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << renameStreamOperator[0]->getOutputSchema()->toString());
+    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical2$f44"));
+    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f23"));
+
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f23"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical2$f44"));
+}
+
+/**
+ * @brief In this test we infer the output and input schemas of each operator in a query.
+ */
+TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
+
+    auto query = Query::from("default_logical")
+        .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)), Sum(Attribute("value")))
+        .windowByKey(Attribute("value"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)), Sum(Attribute("id")))
+        .sink(FileSinkDescriptor::create(""));
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto resultPlan = phase->execute(query.getQueryPlan());
+
+    std::cout << resultPlan->getSinkOperators()[0]->getOutputSchema()->toString() << std::endl;
+    // we just access the old references
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5);
+
+    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
+    ASSERT_TRUE(sinkOutputSchema->fields.size() == 5);
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$start"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$end"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$cnt"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$value"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$id"));
+}
+
 }// namespace NES
