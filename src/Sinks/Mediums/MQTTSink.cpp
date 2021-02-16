@@ -28,17 +28,6 @@
 
 namespace NES {
 
-void UserCallback::connection_lost(const std::string& cause) {
-    std::cout << "\nConnection lost" << std::endl;
-    if (!cause.empty())
-        std::cout << "\tcause: " << cause << std::endl;
-}
-
-void UserCallback::delivery_complete(mqtt::delivery_token_ptr tok) {
-    std::cout << "\n\t[Delivery complete for token: "
-              << (tok ? tok->get_message_id() : -1) << "]" << std::endl;
-}
-
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& address,
@@ -70,7 +59,6 @@ MQTTSink::~MQTTSink() {
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     try {
         std::unique_lock lock(writeMutex);
-        //    connect(); -> extra step?
         if (!connected) {
             NES_DEBUG("ZmqSink  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");
             throw Exception("Write to zmq sink failed");
@@ -80,8 +68,6 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
             return false;
         }
 
-        // Create a topic object. This is a convenience since we will
-        // repeatedly publish messages with the same parameters.
         if (asynchronousClient) {
             mqtt::topic top(*client.getAsyncClient(), topic, qualityOfService, true);
             for (uint32_t j = 0; j < inputBuffer.getNumberOfTuples() * 2; j = j + 2) {
@@ -91,7 +77,7 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
                 std::this_thread::sleep_for(sendDuration);
             }
         } else {
-            UserCallback cb;
+            ClientWrapper::UserCallback cb;
             client.setCallback(cb);
             for (uint32_t j = 0; j < inputBuffer.getNumberOfTuples() * 2; j = j + 2) {
                 std::string value = std::to_string(inputBuffer.getBuffer<uint32_t>()[j + 1]);

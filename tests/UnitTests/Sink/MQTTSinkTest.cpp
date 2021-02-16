@@ -73,7 +73,7 @@ using namespace NES;
  * ALSO: Not all tests are meant to succeed, but might produce wanted errors.
  */
 
-//FIXME tests right now rely on setting up a broker manually. Moreover, they intentionally fail.
+//FIXME tests right now rely on setting up a broker manually. Moreover, they intentionally fail. (covered in issue #1599)
 // - find a way to fully automate tests (e.g. using redBoltz c++ MQTT library, which offers a broker
 // - fix tests, so they do not intentionally fail, but always succeed, if right behaviour is shown
 
@@ -94,10 +94,10 @@ class DISABLED_MQTTTest : public testing::Test {
         address = std::string("tcp://") + std::string(LOCAL_ADDRESS);
 
         test_data = {{0, 100, 1, 99, 2, 98, 3, 97}};
-        test_data_size = test_data.size() * sizeof(uint32_t);
+        testDataSize = test_data.size() * sizeof(uint32_t);
         tupleCnt = 4;
-        //    test_data_size = 4096;
-        test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
+        //    testDataSize = 4096;
+        testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 
     /* Will be called before a test is executed. */
@@ -107,7 +107,7 @@ class DISABLED_MQTTTest : public testing::Test {
         NES_DEBUG("Setup MQTT test case.");
     }
 
-    NES::NodeEngine::TupleBuffer createBuff(uint64_t bufferSize, std::shared_ptr<NodeEngine::BufferManager> buffMgr) {
+    NES::NodeEngine::TupleBuffer createTupleBuffer(uint64_t bufferSize, std::shared_ptr<NodeEngine::BufferManager> buffMgr) {
         auto buffer = buffMgr->getBufferBlocking();
         std::mt19937 rnd;
         std::uniform_int_distribution gen(1, 100);
@@ -121,11 +121,11 @@ class DISABLED_MQTTTest : public testing::Test {
         return buffer;
     }
 
-    bool createMQTTSink_ConnectToBroker_WriteData(uint64_t numTuples=10, uint32_t maxBufferedMSGs=1, char timeUnit='m',
-                                                  uint64_t msgDelay=500, bool asynchronousClient=1, bool printBuffer=0) {
+    bool createMQTTSinkConnectToBrokerWriteData(uint64_t numTuples= 10, uint32_t maxBufferedMSGs= 1, char timeUnit= 'm',
+                                                  uint64_t msgDelay= 500, bool asynchronousClient= 1, bool printBuffer= 0) {
 
         /// Create MQTT Sink
-        NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+        NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
         auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
         auto mqttSink = createMQTTSink(testSchema, 0, nodeEngine, LOCAL_ADDRESS, CLIENT_ID, TOPIC, USER,
                                        maxBufferedMSGs, timeUnit, msgDelay, asynchronousClient);
@@ -133,7 +133,7 @@ class DISABLED_MQTTTest : public testing::Test {
         /// Create Buffer
         const uint64_t bufferSize = 8 * numTuples;
         auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, 1);
-        auto inputBuffer = createBuff(bufferSize, buffMgr);
+        auto inputBuffer = createTupleBuffer(bufferSize, buffMgr);
         if (printBuffer) {
             NES_DEBUG("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, testSchema)
                                                     << '\n');
@@ -142,7 +142,7 @@ class DISABLED_MQTTTest : public testing::Test {
         /// Connect to Broker
         MQTTSink* testSink = dynamic_cast<MQTTSink*>(mqttSink.get());
         testSink->connect();
-        return testSink->writeData(inputBuffer, wctx);
+        return testSink->writeData(inputBuffer, workerContext);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -151,8 +151,8 @@ class DISABLED_MQTTTest : public testing::Test {
     uint64_t tupleCnt;
     std::string address;
 
-    SchemaPtr test_schema;
-    uint64_t test_data_size;
+    SchemaPtr testSchema;
+    uint64_t testDataSize;
     std::array<uint32_t, 8> test_data;
 
     NodeEngine::NodeEnginePtr nodeEngine{nullptr};
@@ -166,7 +166,8 @@ TEST_F(DISABLED_MQTTTest, testMQTTClientCreation) {
     auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto mqttSink = createMQTTSink(testSchema, 0, nodeEngine, LOCAL_ADDRESS, CLIENT_ID,
                                    TOPIC, USER);
-    std::cout << mqttSink->toString() << '\n';
+    NES_INFO(mqttSink->toString());
+    ASSERT_FALSE(mqttSink->toString().compare(nullptr) || mqttSink->toString() == "");
 }
 
 /* - MQTT Client SetUp / Connect to Broker ---------------------------------------------------- */
@@ -182,35 +183,33 @@ TEST_F(DISABLED_MQTTTest, testMQTTConnectToBrokerAsynchronous) {
 
 /* - MQTT Client send a finite amount of Data to Broker ---------------------------------------------------- */
 TEST_F(DISABLED_MQTTTest, testMQTTsendFiniteDataToBrokerAsynchronous) {
-    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSink_ConnectToBroker_WriteData();
+    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData();
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
 /* - MQTT Client kill broker, does client stop? ---------------------------------------------------- */
 TEST_F(DISABLED_MQTTTest, testMQTTbrokerDeathToClientStopAsynchronous) {
-    NES_DEBUG("\n\nThis test is meant to be done manually and to crash. Kill the client during the sending process. "
+    NES_INFO("\n\nThis test is meant to be done manually and to crash. Kill the client during the sending process. "
               "The MQTTSink writeData() call should fail and log: 'No more messages can be buffered'\n If the test is "
               "not stopped, it RUNS FOR AN HOUR");
-    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSink_ConnectToBroker_WriteData(3600, 1,
-                                                                                          's', 1);
-    NES_DEBUG("testMQTTbrokerDeathToClientStopAsynchronous result: " << bufferDataSuccessfullyWrittenToBroker);
+    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(3600, 1, 's', 1);
+    NES_INFO("testMQTTbrokerDeathToClientStopAsynchronous result: " << bufferDataSuccessfullyWrittenToBroker);
 }
 
 /* - MQTT Client kill disconnect and reconnect to broker, payloads lost? ---------------------------------------------------- */
 TEST_F(DISABLED_MQTTTest, testMQTTsendMassiveDataQuicklyAsynchronous) {
-    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSink_ConnectToBroker_WriteData(50000, 1000,
-                                                                                          'n', 100000);
+    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(50000, 1000, 'n', 100000);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
 TEST_F(DISABLED_MQTTTest, testMQTTUnsentMessagesAsynchronous) {
-    NES_DEBUG("\n\nThis test comprises two different tests. The first is not meant to succeed automatically but requires the "
+    NES_INFO("\n\nThis test comprises two different tests. The first is not meant to succeed automatically but requires the "
               "tester to evaluate the result.\n TEST 1:\n Kill the broker during the sending process. The writeData() function "
               "should return false and the MQTTSink should log: 'Unsent messages'. "
               "\n\n TEST2:\n Kill the broker during the sending process, but this time reconnect before the client is "
               "finished sending messages. The test should succeed.\n ");
 
-    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSink_ConnectToBroker_WriteData(20, 20);
+    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(20, 20);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
@@ -230,14 +229,13 @@ TEST_F(DISABLED_MQTTTest, testMQTTConnectToBrokerSynchronously) {
 
 /* - MQTT Synchronous Client send a finite amount of Data to Broker --------------------------------------------- */
 TEST_F(DISABLED_MQTTTest, testMQTTsendFiniteDataToBrokerSynchronously) {
-    NES_DEBUG("\n\nThis test comprises two different tests. The first is not meant to succeed automatically but requires the "
+    NES_INFO("\n\nThis test comprises two different tests. The first is not meant to succeed automatically but requires the "
               "tester to evaluate the result.\n TEST 1:\n Kill the broker during the sending process. The writeData() function "
               "should return false and the MQTTSink should log: 'Connection Lost'. "
               "\n\n TEST2:\n Do not kill the broker during the sending process. The client should send all messages successfully "
               "and the test should pass.\n");
 
-    bool bufferDataSuccessfullyWrittenToBroker =
-        createMQTTSink_ConnectToBroker_WriteData(20, 1, 'm', 500, 0);
+    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(20, 1, 'm', 500, 0);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 

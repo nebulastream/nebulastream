@@ -1113,7 +1113,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
 #endif
 #ifdef ENABLE_MQTT_BUILD
     else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
-        // serialize opc source descriptor
+        // serialize MQTT source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
         auto mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
@@ -1217,7 +1217,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
 #endif
 #ifdef ENABLE_MQTT_BUILD
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor>()) {
-        // de-serialize mqtt sink descriptor
+        // de-serialize MQTT sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MQTTSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);

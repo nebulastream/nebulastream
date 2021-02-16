@@ -21,7 +21,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <zmq.hpp>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <mqtt/client.h>
@@ -29,15 +28,6 @@
 
 namespace NES {
 
-
-class UserCallback : public virtual mqtt::callback
-{
-    void connection_lost(const std::string& cause) override;
-
-    void delivery_complete(mqtt::delivery_token_ptr tok) override;
-
-  public:
-};
 
 class MQTTSink : public SinkMedium {
 
@@ -109,11 +99,9 @@ class MQTTSink : public SinkMedium {
     * @brief method to return the type of medium
     * @return type of medium
     */
-    SinkMediumTypes getSinkMediumType();
+    SinkMediumTypes getSinkMediumType() override;
 
   private:
-    MQTTSink();
-
     QuerySubPlanId parentPlanId;
 
     std::string address;
@@ -138,6 +126,22 @@ class MQTTSink : public SinkMedium {
         mqtt::client_ptr syncClient;
 
         bool useAsyncClient;
+
+        /// Helper class for synchronous client - Defines how to interact with broker replies and connection loss
+        class UserCallback : public virtual mqtt::callback
+        {
+          public:
+            void connection_lost(const std::string& cause) {
+                NES_INFO("\nConnection lost");
+                if (!cause.empty())
+                    NES_DEBUG("\tcause: " << cause);
+            }
+
+            void delivery_complete(mqtt::delivery_token_ptr tok) {
+                NES_INFO("\n\t[Delivery complete for token: "
+                          << (tok ? tok->get_message_id() : -1) << "]");
+            }
+        };
 
       public:
         ClientWrapper(bool useAsyncClient, const std::string& address, const std::string& clientId, uint32_t maxBufferedMSGs){
@@ -170,12 +174,6 @@ class MQTTSink : public SinkMedium {
         }
     };
     ClientWrapper client;
-
-// not needed yet, but possibly in the future:
-
-//    std::string& persistDir;
-//    std::string& password;
-
 };
 typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
 
