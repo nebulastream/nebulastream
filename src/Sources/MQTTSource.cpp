@@ -38,8 +38,9 @@ MQTTSource::MQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMana
                        const std::string serverAddress, const std::string clientId, const std::string user,
                        const std::string topic, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId), connected(false), serverAddress(serverAddress),
-      clientId(clientId), user(user), topic(topic), client(serverAddress, clientId) {
+      clientId(clientId), user(user), topic(topic) {
     NES_DEBUG("MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId << " and ");
+    client = std::make_shared<mqtt::async_client>(serverAddress, clientId);
 }
 
 MQTTSource::~MQTTSource() {
@@ -69,7 +70,7 @@ std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
             while (start < end) {
                 //ToDo: handle what happens if no data arrives
                 start = time(0);
-                auto msg = client.consume_message();
+                auto msg = client->consume_message();
                 NES_DEBUG("Client consume message: '" << msg->get_payload_str() << "'");
                 fillBuffer(buffer, msg->get_payload_str());
 
@@ -173,11 +174,11 @@ bool MQTTSource::connect() {
                     .finalize();
 
             // Start consumer before connecting to make sure to not miss messages
-            client.start_consuming();
+            client->start_consuming();
 
             // Connect to the server
             NES_DEBUG("MQTTSource: Connecting to the MQTT server...");
-            auto tok = client.connect(connOpts);
+            auto tok = client->connect(connOpts);
 
             // Getting the connect response will block waiting for the
             // connection to complete.
@@ -187,8 +188,8 @@ bool MQTTSource::connect() {
             // there is a session, then the server remembers us and our
             // subscriptions.
             if (!rsp.is_session_present())
-                client.subscribe(topic, 1)->wait();
-            connected = client.is_connected();
+                client->subscribe(topic, 1)->wait();
+            connected = client->is_connected();
         } catch (const mqtt::exception& exc) {
             NES_WARNING("\n  " << exc);
             connected = false;
@@ -210,16 +211,16 @@ bool MQTTSource::disconnect() {
     if (connected) {
         // If we're here, the client was almost certainly disconnected.
         // But we check, just to make sure.
-        if (client.is_connected()) {
+        if (client->is_connected()) {
             NES_DEBUG("MQTTSource: Shutting down and disconnecting from the MQTT server.");
-            client.unsubscribe(topic)->wait();
-            client.stop_consuming();
-            client.disconnect()->wait();
+            client->unsubscribe(topic)->wait();
+            client->start_consuming();
+            client->disconnect()->wait();
             NES_DEBUG("MQTTSource: disconnected.");
         } else {
             NES_DEBUG("MQTTSource: Client was already disconnected");
         }
-        connected = client.is_connected();
+        connected = client->is_connected();
     }
     if (!connected) {
         NES_DEBUG("MQTTSource  " << this << ": disconnected");

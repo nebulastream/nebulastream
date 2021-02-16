@@ -22,7 +22,11 @@
 #include <string>
 
 #include <Sources/DataSource.hpp>
-#include <mqtt/async_client.h>
+
+namespace mqtt{
+class async_client;
+typedef std::shared_ptr<async_client> async_clientPtr;
+}
 
 namespace NES {
 class TupleBuffer;
@@ -128,7 +132,7 @@ class MQTTSource : public DataSource {
     std::string clientId;
     std::string user;
     std::string topic;
-    mqtt::async_client client;
+    mqtt::async_clientPtr client;
 };
 
 typedef std::shared_ptr<MQTTSource> MQTTSourcePtr;
