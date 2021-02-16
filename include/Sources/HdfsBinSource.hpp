@@ -26,7 +26,7 @@ namespace NES {
 /**
  * @brief this class implement the HDFS as an input source
  */
-class HdfsSource : public DataSource {
+class HdfsBinSource : public DataSource {
   public:
     /**
    * @brief constructor of HDFS source
@@ -43,7 +43,7 @@ class HdfsSource : public DataSource {
    * @param skip header or not
    * @param operatorId
    */
-    explicit HdfsSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    explicit HdfsBinSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                         const std::string namenode, uint64_t port, const std::string hadoopUser, const std::string filePath,
                         const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
                         uint64_t frequency, bool skipHeader, OperatorId operatorId);
@@ -133,7 +133,7 @@ class HdfsSource : public DataSource {
     const std::string hadoopUser;
 };
 
-typedef std::shared_ptr<HdfsSource> HdfsSourcePtr;
+typedef std::shared_ptr<HdfsBinSource> HdfsSourcePtr;
 }// namespace NES
 
 #endif /* INCLUDE_CSVSOURCE_H_ */

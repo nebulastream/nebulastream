@@ -1478,7 +1478,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromHdfsSourceWriteToCSVFil
 
     //register physical stream
     PhysicalStreamConfigPtr conf =
-        PhysicalStreamConfig::create(/**Source Type**/ "HdfsSource", /**Source Config**/ "/testData/ysb-tuples-100-campaign-100.bin",
+        PhysicalStreamConfig::create(/**Source Type**/ "HdfsBinSource", /**Source Config**/ "/testData/ysb-tuples-100-campaign-100.bin",
             /**Source Frequence**/ 1, /**Number Of Tuples To Produce Per Buffer**/ 0,
             /**Number of Buffers To Produce**/ 1, /**Physical Stream Name**/ "exdra",
             /**Logical Stream Name**/ "testStream", false);

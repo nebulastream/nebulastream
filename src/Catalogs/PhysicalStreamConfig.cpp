@@ -92,7 +92,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     } else if (type == "YSBSource") {
         NES_DEBUG("TypeInferencePhase: create YSB source for " << conf);
         return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency);
-    } else if (type == "HdfsSource") {
+    } else if (type == "HdfsBinSource") {
         NES_DEBUG("TypeInferencePhase: create HDFS source for " << conf);
         return HdfsSourceDescriptor::create(schema, "192.168.1.104", 9000, "hdoop", conf, ",",
                                             numberOfTuplesToProducePerBuffer, numBuffers, frequency, skipHeader);

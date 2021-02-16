@@ -25,6 +25,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <Sources/HdfsBinSource.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/OPCSource.hpp>
@@ -32,7 +33,6 @@
 #include <Sources/SourceCreator.hpp>
 #include <Sources/YSBSource.hpp>
 #include <Sources/ZmqSource.hpp>
-#include <Sources/HdfsSource.hpp>
 
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
@@ -114,7 +114,7 @@ const DataSourcePtr createHdfsSource(SchemaPtr schema, NodeEngine::BufferManager
                                      uint64_t port, const std::string& hadoopUser,  const std::string& pathToFile, const std::string& delimiter,
                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t numbersOfBufferToProduce,
                                      uint64_t frequency, bool skipHeader, OperatorId operatorId) {
-    return std::make_shared<HdfsSource>(schema, bufferManager, queryManager, namenode, port, hadoopUser, pathToFile, delimiter,
+    return std::make_shared<HdfsBinSource>(schema, bufferManager, queryManager, namenode, port, hadoopUser, pathToFile, delimiter,
                                        numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, skipHeader,
                                        operatorId);
 }
