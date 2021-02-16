@@ -28,6 +28,8 @@ class AllowedLatenessTest : public testing::Test {
   public:
     PhysicalStreamConfigPtr outOfOrderConf;
     PhysicalStreamConfigPtr inOrderConf;
+    SchemaPtr inputSchema;
+
     static void SetUpTestCase() {
         NES::setupLogging("AllowedLatenessTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup AllowedLatenessTest test class.");
@@ -64,16 +66,16 @@ class AllowedLatenessTest : public testing::Test {
 
         restPort = restPort + 2;
         rpcPort = rpcPort + 30;
+
+        inputSchema = Schema::create()
+            ->addField("value", DataTypeFactory::createUInt64())
+            ->addField("id", DataTypeFactory::createUInt64())
+            ->addField("timestamp", DataTypeFactory::createUInt64());
     }
 
     void TearDown() { std::cout << "Tear down AllowedLatenessTest class." << std::endl; }
 
     std::string testName = "AllowedLatenessTest";
-
-    SchemaPtr inputSchema = Schema::create()
-        ->addField("value", DataTypeFactory::createUInt64())
-        ->addField("id", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
     
     struct Output {
         uint64_t _$start;
@@ -167,6 +169,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_250ms) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
+/*
+ * @brief Test allowed lateness using single source, flat topology, out-of-order stream with 0ms allowed lateness
+ */
 TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_0ms) {
     string query = "Query::from(\"OutOfOrderStream\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(0), "
