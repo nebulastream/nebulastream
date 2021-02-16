@@ -50,8 +50,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param topic to subscribe to
      * @return source descriptor pointer to mqtt source
      */
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string logicalStreamName, std::string serverAddress, std::string clientId,
-                                      std::string user, std::string topic);
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string logicalStreamName, std::string serverAddress,
+                                      std::string clientId, std::string user, std::string topic);
 
     /**
      * @brief get MQTT server address

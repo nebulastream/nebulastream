@@ -23,10 +23,10 @@
 
 #include <Sources/DataSource.hpp>
 
-namespace mqtt{
+namespace mqtt {
 class async_client;
 typedef std::shared_ptr<async_client> async_clientPtr;
-}
+}// namespace mqtt
 
 namespace NES {
 class TupleBuffer;
