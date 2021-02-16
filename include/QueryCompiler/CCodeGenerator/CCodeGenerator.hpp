@@ -88,7 +88,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return the operator id
     */
     uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                 PipelineContextPtr context) override;
+                                 PipelineContextPtr context, uint64_t id) override;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -132,7 +132,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context) override;
+    uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.

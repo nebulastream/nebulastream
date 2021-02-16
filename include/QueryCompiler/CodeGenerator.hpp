@@ -134,7 +134,7 @@ class CodeGenerator {
     * @return the operator id
     */
     virtual uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                         PipelineContextPtr context) = 0;
+                                         PipelineContextPtr context, uint64_t id) = 0;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -175,7 +175,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    virtual uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr window, PipelineContextPtr context) = 0;
+    virtual uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr window, PipelineContextPtr context, uint64_t id) = 0;
 
     /**
     * @brief Code generation for a join operator, which depends on a particular join definition

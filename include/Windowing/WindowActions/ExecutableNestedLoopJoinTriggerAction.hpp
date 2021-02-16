@@ -41,15 +41,13 @@ template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<KeyType, InputTypeLeft, InputTypeRight> {
   public:
     static ExecutableNestedLoopJoinTriggerActionPtr<KeyType, InputTypeLeft, InputTypeRight>
-    create(LogicalJoinDefinitionPtr joinDefintion) {
+    create(LogicalJoinDefinitionPtr joinDefintion, uint64_t id) {
         return std::make_shared<Join::ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>>(
-            joinDefintion);
+            joinDefintion, id);
     }
 
-    explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
+    explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition, uint64_t id) : joinDefinition(joinDefinition), id(id) {
         windowSchema = joinDefinition->getOutputSchema();
-        //we use the pointer to get an id
-        id = reinterpret_cast<std::uintptr_t>(this);
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
         windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
     }
