@@ -96,7 +96,7 @@ void GeneratableJoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextP
 }
 
 void GeneratableJoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto joinOperatorHandlerIndex = codegen->generateJoinSetup(joinDefinition, context);
+    auto joinOperatorHandlerIndex = codegen->generateJoinSetup(joinDefinition, context, this->id);
     codegen->generateCodeForJoin(joinDefinition, context, joinOperatorHandlerIndex);
 }
 

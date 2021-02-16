@@ -36,22 +36,20 @@ class JoinHandler : public AbstractJoinHandler {
   public:
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction)
+                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction, uint64_t id)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
-          executableJoinAction(std::move(executableJoinAction)) {
+          executableJoinAction(std::move(executableJoinAction)), id(id) {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
         lastWatermark = 0;
-        //we use the pointer to get an id
-        id = reinterpret_cast<std::uintptr_t>(this);
         NES_TRACE("Created join handler with id=" << id);
     }
 
     static AbstractJoinHandlerPtr
     create(Join::LogicalJoinDefinitionPtr joinDefinition, Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-           BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction) {
-        return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction);
+           BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction, uint64_t id) {
+        return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction, id);
     }
 
     virtual ~JoinHandler() { NES_TRACE("~JoinHandler()"); }
@@ -185,7 +183,8 @@ class JoinHandler : public AbstractJoinHandler {
         NES_DEBUG("JoinHandler " << id << ": setup Join handler with join def=" << joinDefinition
                                  << " string=" << joinDefinition->getOutputSchema()->toString());
         // Initialize JoinHandler Manager
-        this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType());
+        //TODO: note allowed lateness is currently not supported for windwos
+        this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType(), 0, id);
         // Initialize StateVariable
         auto leftDefaultCallback = [](const KeyType&) {
             return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();

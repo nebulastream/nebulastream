@@ -327,9 +327,9 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
     auto aggregation = sumType::create();
     auto trigger = Windowing::ExecutableOnTimeTriggerPolicy::create(1000);
     auto triggerAction = Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(
-        windowDefinition, aggregation, resultSchema);
+        windowDefinition, aggregation, resultSchema, 1);
     return Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDefinition, aggregation,
-                                                                                               trigger, triggerAction);
+                                                                                               trigger, triggerAction, 1);
 }
 
 /**
@@ -1126,7 +1126,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     pipelineContext1->registerOperatorHandler(joinOperatorHandler);
     pipelineContext1->arity = PipelineContext::BinaryLeft;
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), pipelineContext1);
-    auto index = codeGenerator->generateJoinSetup(joinDef, pipelineContext1);
+    auto index = codeGenerator->generateJoinSetup(joinDef, pipelineContext1, 1);
     codeGenerator->generateCodeForJoin(joinDef, pipelineContext1, index);
 
     /* compile code to pipeline stage */
@@ -1146,7 +1146,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     context3->arity = PipelineContext::BinaryRight;
     context3->pipelineName = "3";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context3);
-    codeGenerator->generateJoinSetup(joinDef, context3);
+    codeGenerator->generateJoinSetup(joinDef, context3, 1);
     codeGenerator->generateCodeForJoin(joinDef, context3, 0);
     auto stage3 = codeGenerator->compile(context3);
     stage3->setup(*executionContext.get());

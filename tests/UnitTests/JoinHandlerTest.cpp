@@ -69,7 +69,7 @@ TEST_F(JoinHandlerTest, testJoinHandlerSlicing) {
         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
         Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), NES::API::Milliseconds(10)),
         distrType, triggerPolicy, triggerAction, 1, 1);
-    auto windowManager = std::make_unique<Windowing::WindowManager>(joinDef->getWindowType(), 0);
+    auto windowManager = std::make_unique<Windowing::WindowManager>(joinDef->getWindowType(), 0, 1);
 
     // slice stream with a value 10 with key 0 arriving at ts 10
     uint64_t ts = 10;
