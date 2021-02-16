@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <Util/UtilityFunctions.hpp>
 #include <API/Query.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
@@ -41,6 +40,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
 #include <random>

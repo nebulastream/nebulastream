@@ -46,7 +46,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             joinDefintion, id);
     }
 
-    explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition, uint64_t id) : joinDefinition(joinDefinition), id(id) {
+    explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition, uint64_t id)
+        : joinDefinition(joinDefinition), id(id) {
         windowSchema = joinDefinition->getOutputSchema();
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
         windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
