@@ -120,7 +120,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
     auto test_schema = Schema::create()->addField("var", UINT32);
-    auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager,  SERVERADDRESS, CLIENTID, USER, TOPIC, 1);
+    auto mqttSource = createMQTTSource(test_schema, bufferManager, queryManager, SERVERADDRESS, CLIENTID, USER, TOPIC, 1);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
@@ -128,7 +128,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
     value = *tuple;
     uint64_t expected = 43;
     NES_DEBUG("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: " << expected
-                                                                                         << ". Received value is: " << value);
+                                                                                            << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
 }
 }// namespace NES

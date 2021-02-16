@@ -24,15 +24,13 @@ namespace NES {
 
 SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, std::string serverAddress, std::string clientId,
                                                  std::string user, std::string topic) {
-    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(schema, serverAddress,
-                                                                       clientId, user, topic));
+    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(schema, serverAddress, clientId, user, topic));
 }
 
 SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, std::string logicalStreamName, std::string serverAddress,
                                                  std::string clientId, std::string user, std::string topic) {
-    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(schema, logicalStreamName,
-                                                                       serverAddress, clientId,
-                                                                       user, topic));
+    return std::make_shared<MQTTSourceDescriptor>(
+        MQTTSourceDescriptor(schema, logicalStreamName, serverAddress, clientId, user, topic));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, std::string serverAddress, std::string clientId, std::string user,

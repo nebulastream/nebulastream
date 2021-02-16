@@ -62,7 +62,7 @@ std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
         try {
             NES_DEBUG("Waiting for messages on topic: '" << topic << "'");
 
-            time_t timeout = 10; // 10 seconds time out
+            time_t timeout = 10;// 10 seconds time out
             time_t start = time(0);
             time_t end = start + timeout;
             auto buffer = bufferManager->getBufferBlocking();
@@ -166,12 +166,11 @@ bool MQTTSource::connect() {
         NES_DEBUG("MQTTSource was !connect now connect " << this << ": connected");
         // connect with user name and password
         try {
-            auto connOpts =
-                mqtt::connect_options_builder()
-                    .user_name(user)
-                    .clean_session(true)
-                    .connect_timeout(std::chrono::nanoseconds(30 * 500 * 1000000)) //15 seconds
-                    .finalize();
+            auto connOpts = mqtt::connect_options_builder()
+                                .user_name(user)
+                                .clean_session(true)
+                                .connect_timeout(std::chrono::nanoseconds(30 * 500 * 1000000))//15 seconds
+                                .finalize();
 
             // Start consumer before connecting to make sure to not miss messages
             client->start_consuming();
