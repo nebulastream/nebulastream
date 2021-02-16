@@ -141,8 +141,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     */
     bool setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
         // Initialize AggregationWindowHandler Manager
+        //for agg handler we create a unique id from the
+        auto id = reinterpret_cast<std::uintptr_t>(this);
         this->windowManager =
-            std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness());
+            std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness(), id);
         // Initialize StateVariable
         this->windowStateVariable =
             StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");

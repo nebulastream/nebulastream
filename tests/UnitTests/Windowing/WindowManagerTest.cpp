@@ -154,7 +154,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
         aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
 
-    auto windowManager = new WindowManager(windowDef->getWindowType());
+    auto windowManager = new WindowManager(windowDef->getWindowType(), 0 ,1);
     uint64_t ts = 10;
 
     windowManager->sliceStream(ts, store, 0);
