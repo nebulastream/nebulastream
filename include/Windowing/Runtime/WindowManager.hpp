@@ -30,7 +30,7 @@ namespace NES::Windowing {
 class WindowManager {
 
   public:
-    explicit WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness = 0);
+    WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness, uint64_t id);
 
     /**
      * @brief Get the window type for the window manager

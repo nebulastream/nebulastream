@@ -43,7 +43,8 @@ class JoinHandler : public AbstractJoinHandler {
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
         lastWatermark = 0;
-        id = UtilityFunctions::getGlobalId();
+        //we use the pointer to get an id
+        id = reinterpret_cast<std::uintptr_t>(this);
         NES_TRACE("Created join handler with id=" << id);
     }
 

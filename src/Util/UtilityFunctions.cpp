@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Util/UtilityFunctions.hpp>
 #include <API/Query.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
@@ -40,7 +41,6 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
 #include <random>
@@ -361,11 +361,6 @@ uint64_t UtilityFunctions::getNextNodeEngineId() {
 }
 
 uint64_t UtilityFunctions::getNextTaskId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
-}
-
-uint64_t UtilityFunctions::getGlobalId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
