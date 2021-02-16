@@ -24,7 +24,7 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical mqtt sink
+ * @brief Descriptor defining properties used for creating physical MQTT sink
  */
 class MQTTSinkDescriptor : public SinkDescriptor {
 
