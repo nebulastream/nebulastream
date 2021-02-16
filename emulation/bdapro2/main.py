@@ -49,7 +49,7 @@ def flat_topology(config: Config):
                             port_bindings={8081: 8081, 4000: 4000}, volumes=["/tmp/logs:/logs"])
         nodes.append(NodeCmd(crd, NodeType.Coordinator, config.coordinator_ip,
                              f"{COORDINATOR} --restIp=0.0.0.0 --coordinatorIp={config.coordinator_ip} "
-                             f"--enableQueryMerging=true {config.coordinator_options} {config.worker_options}"))
+                             f"{config.coordinator_options} {config.worker_options}"))
         for i in range(0, config.workers_producing):
             worker_ip = next(ips)
             worker = net.addDocker(f"{SENSOR_WORKER_PREFIX}-{i}", ip=worker_ip,

@@ -110,7 +110,7 @@ def fluctuating_workload(base_url: str, base_query: str, n_requests: int = 100, 
         _, recent_query_ids, start_time = launch_requests(base_url, base_query, i, n_requests)
         while number_of_queries_waiting_to_run(base_url) > 0:
             print(f"Waiting until submitted queries are marked as running.")
-            time.sleep(2)
+            time.sleep(5)
         print(
             f"Iteration {i} submitted {n_requests} queries and it took {(time.time() - start_time)} seconds for "
             f"them to run", flush=True)
@@ -152,4 +152,4 @@ if __name__ == '__main__':
     BASE_QUERY = "Query::from(\"" + "ysb" + "\")"
     # init_query(NES_BASE_URL, BASE_QUERY)
     # stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20, sleep_time=1)
-    fluctuating_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20)
+    fluctuating_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=1)
