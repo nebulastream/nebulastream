@@ -218,8 +218,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
                 //TODO: we have to re-activate the deletion once we are sure that it is working again
                 if (largestClosedWindow != 0) {
-                    //                    leftStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
-                    //                    rightStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
+                    leftStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
+                    rightStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
                 }
             }
         }
