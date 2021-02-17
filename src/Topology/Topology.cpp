@@ -27,6 +27,30 @@ Topology::~Topology() { NES_DEBUG("~Topology()"); }
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
+bool Topology::checkIfReachable(TopologyNodePtr startNode, TopologyNodePtr destinationNode){
+
+    bool  isReachable = false;
+
+    std::vector<TopologyNodePtr> nodeToVisit;
+    nodeToVisit.push_back(destinationNode);
+
+    while (nodeToVisit.size() != 0) {
+        TopologyNodePtr currentNode = nodeToVisit.back();
+        if (currentNode == startNode){
+            isReachable = true;
+        }
+        nodeToVisit.pop_back();
+
+        for (const auto child: currentNode->getChildren()) {
+            nodeToVisit.push_back(child->as<TopologyNode>());
+        }
+    }
+
+    NES_DEBUG("Topology::checkIfReachable: startNode=" << startNode->toString() << " dstNode=" << destinationNode->toString() << " isReachable=" << isReachable);
+
+    return isReachable;
+}
+
 bool Topology::addNewPhysicalNodeAsChild(TopologyNodePtr parent, TopologyNodePtr newNode) {
     std::unique_lock lock(topologyLock);
     uint64_t newNodeId = newNode->getId();

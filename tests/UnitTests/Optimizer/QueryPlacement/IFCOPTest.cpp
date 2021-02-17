@@ -139,19 +139,13 @@ class IFCOPTest : public testing::Test {
     }
 
     void setupSmallTopologyAndStreamCatalog() {
-        uint32_t grpcPort = 4000;
-        uint32_t dataPort = 5000;
-
         topology = Topology::create();
 
         // creater workers
         std::vector<TopologyNodePtr> topologyNodes;
-        int resource = 4;
-        for (uint32_t i = 0; i < 11; ++i) {
-            topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
-            grpcPort = grpcPort + 2;
-            dataPort = dataPort + 2;
-        }
+        topologyNodes.push_back(TopologyNode::create(0, "localhost", 4000, 4000, 2));
+        topologyNodes.push_back(TopologyNode::create(1, "localhost", 4002, 4002, 1));
+        topologyNodes.push_back(TopologyNode::create(2, "localhost", 4004, 4004, 1));
 
         topology->setAsRoot(topologyNodes.at(0));
 
@@ -194,8 +188,10 @@ TEST_F(IFCOPTest, costFunctionTest) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    Query query = Query::from("car").filter(Attribute("id") > 1)
-        .sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car")
+                        .filter(Attribute("id") > 1)
+//                      .map(Attribute("id")=Attribute("id")+1)
+                        .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();

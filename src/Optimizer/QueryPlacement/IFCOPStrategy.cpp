@@ -146,11 +146,11 @@ float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology,
 
     // TODO: check on n-ary operator
     while (currentNode) {
-        // traverse to the next node
+        // traverse to the next node (topdown)
         if (!currentNode->getChildren().empty()){
             for (NodePtr child: currentNode->getChildren()){
                 auto nextNode = child->as<OperatorNode>();
-                queryEdges.insert(std::pair<OperatorNodePtr, OperatorNodePtr >(currentNode, nextNode) );
+                queryEdges.insert(std::pair<OperatorNodePtr, OperatorNodePtr >(nextNode, currentNode) );
                 currentNode = nextNode;
             }
         } else {
@@ -160,24 +160,25 @@ float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology,
 
     bool isValid = true;
     // loop to queryEdges and get dst and src
-    for (auto &mapItem: queryEdges){
+    for (auto & queryEdge : queryEdges){
 
-        TopologyNodePtr srcPtr;
-        TopologyNodePtr dstPtr;
+        TopologyNodePtr srcTopologyNodePtr;
+        TopologyNodePtr dstTopologyNodePtr;
         for (auto &assignment: operatorAssignment) {
-            if (std::find(assignment.second.begin(), assignment.second.end(), mapItem.first)!=assignment.second.end()){
-                srcPtr = assignment.first;
+            if (std::find(assignment.second.begin(), assignment.second.end(), queryEdge.first)!=assignment.second.end()){
+                srcTopologyNodePtr = assignment.first;
             }
-            if (std::find(assignment.second.begin(), assignment.second.end(), mapItem.second)!=assignment.second.end()){
-                dstPtr = assignment.first;
+            if (std::find(assignment.second.begin(), assignment.second.end(), queryEdge.second)!=assignment.second.end()){
+                dstTopologyNodePtr = assignment.first;
             }
         }
 
-        NES_DEBUG("op:" << mapItem.second->getId() << " dst:" << dstPtr->getId() << "| op:" << mapItem.first->getId() << " src:" << srcPtr->getId());
-        auto allPathBetween = topology->findAllPathBetween(dstPtr, srcPtr);
-        isValid = isValid && topology->findAllPathBetween(dstPtr, srcPtr);
+        NES_DEBUG("op:" << queryEdge.second->toString() << " dst:" << dstTopologyNodePtr->toString() << "| op:" << queryEdge.first->toString() << " src:" << srcTopologyNodePtr->toString());
+        auto isReachable = topology->checkIfReachable(dstTopologyNodePtr, srcTopologyNodePtr);
+        isValid = isValid && isReachable;
     }
 
+    NES_DEBUG(topology->toString());
     NES_DEBUG(operatorAssignment.size());
     NES_DEBUG(topology->getRoot()->getId());
 

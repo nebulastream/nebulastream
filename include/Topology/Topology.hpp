@@ -64,6 +64,14 @@ class Topology {
     bool removePhysicalNode(TopologyNodePtr nodeToRemove);
 
     /**
+     * @brief This method check if a destination node is reachable from startNode
+     * @param startNode: the physical start node
+     * @param destinationNode: the destination start node
+     * @return true if reachable
+     */
+    bool checkIfReachable(TopologyNodePtr startNode, TopologyNodePtr destinationNode);
+
+    /**
      * @brief This method will find a given physical node by its id
      * @param nodeId : the id of the node
      * @return physical node if found else nullptr

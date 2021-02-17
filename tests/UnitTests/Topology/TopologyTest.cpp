@@ -372,6 +372,61 @@ TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
 }
 
 /**
+ * @brief Check reachability between two nodes
+ */
+TEST_F(TopologyTest, recahbilityCheck) {
+
+    TopologyPtr topology = Topology::create();
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // creater workers
+    std::vector<TopologyNodePtr> workers;
+    int resource = 4;
+    for (uint32_t i = 0; i < 10; ++i) {
+        workers.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(workers.at(0));
+
+    // link each worker with its neighbor
+    topology->addNewPhysicalNodeAsChild(workers.at(0), workers.at(1));
+    topology->addNewPhysicalNodeAsChild(workers.at(0), workers.at(2));
+
+    topology->addNewPhysicalNodeAsChild(workers.at(1), workers.at(3));
+    topology->addNewPhysicalNodeAsChild(workers.at(2), workers.at(4));
+
+    topology->print();
+
+    // `self` is reachable
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(0), workers.at(0)));
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(1), workers.at(1)));
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(2), workers.at(2)));
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(3), workers.at(3)));
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(3), workers.at(3)));
+
+    // Immediate parents are reachable
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(2), workers.at(0)));
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(1), workers.at(0)));
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(4), workers.at(2)));
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(3), workers.at(1)));
+
+    // Parents of parent are reachable
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(4), workers.at(0)));
+    EXPECT_TRUE(topology->checkIfReachable(workers.at(3), workers.at(0)));
+
+    // Siblings are not parent is reachable
+    EXPECT_FALSE(topology->checkIfReachable(workers.at(1), workers.at(2)));
+    EXPECT_FALSE(topology->checkIfReachable(workers.at(2), workers.at(1)));
+
+    // Nodes in other branches are not reachable
+    EXPECT_FALSE(topology->checkIfReachable(workers.at(3), workers.at(4)));
+    EXPECT_FALSE(topology->checkIfReachable(workers.at(4), workers.at(3)));
+}
+
+/**
  * @brief Find Path between two not connected nodes
  */
 TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
