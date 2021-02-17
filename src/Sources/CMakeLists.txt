@@ -26,6 +26,7 @@ add_source_nes(
         MonitoringSource.cpp
         MemorySource.cpp
         HdfsBinSource.cpp
+        HdfsCSVSource.cpp
 )
 
 if(NES_USE_KAFKA)

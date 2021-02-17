@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_HDFSSOURCEDESCRIPTOR_HPP_
-#define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_HDFSSOURCEDESCRIPTOR_HPP_
+#ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_HDFSBINSOURCEDESCRIPTOR_HPP_
+#define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_HDFSBINSOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
@@ -24,7 +24,7 @@ namespace NES {
 /**
  * @brief Descriptor defining properties used for creating physical CSV source
  */
-class HdfsSourceDescriptor : public SourceDescriptor {
+class HdfsBinSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string namenode, uint64_t port, std::string hadoopUser,
@@ -85,11 +85,11 @@ class HdfsSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit HdfsSourceDescriptor(SchemaPtr schema, std::string namenode, uint64_t port, std::string hadoopUser,
+    explicit HdfsBinSourceDescriptor(SchemaPtr schema, std::string namenode, uint64_t port, std::string hadoopUser,
                                   std::string filePath, std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
                                   uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader);
 
-    explicit HdfsSourceDescriptor(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port,
+    explicit HdfsBinSourceDescriptor(SchemaPtr schema, std::string streamName, std::string namenode, uint64_t port,
                                   std::string hadoopUser, std::string filePath, std::string delimiter,
                                   uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
                                   bool skipHeader);
@@ -105,7 +105,7 @@ class HdfsSourceDescriptor : public SourceDescriptor {
     std::string hadoopUser;
 };
 
-typedef std::shared_ptr<HdfsSourceDescriptor> HdfsSourceDescriptorPtr;
+typedef std::shared_ptr<HdfsBinSourceDescriptor> HdfsBinSourceDescriptorPtr;
 
 }// namespace NES
 

@@ -134,7 +134,7 @@ TEST_F(HdfsSourceTest, testHdfsBinSource) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source =
-        createHdfsSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "192.168.1.104",
+        createHdfsBinSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "192.168.1.104",
                          9000, "hdoop", path_to_file, ",", 0,
                          1, 1, false, 1);
 
@@ -154,6 +154,62 @@ TEST_F(HdfsSourceTest, testHdfsBinSource) {
 
     EXPECT_EQ(source->getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numberOfBuffers);
+}
+
+TEST_F(HdfsSourceTest, testHdfsCSVSourceOnePassOverFile) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    char *path_to_file = "/testData/ysb-tuples-100-campaign-100.csv";
+
+    const std::string& del = ",";
+    uint64_t frequency = 1;
+    SchemaPtr schema = Schema::create()
+        ->addField("user_id", DataTypeFactory::createFixedChar(16))
+        ->addField("page_id", DataTypeFactory::createFixedChar(16))
+        ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+        ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+        ->addField("event_type", DataTypeFactory::createFixedChar(9))
+        ->addField("current_ms", DataTypeFactory::createUInt64())
+        ->addField("ip", DataTypeFactory::createInt32());
+
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+
+    const DataSourcePtr source =
+        createHdfsCSVSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "192.168.1.104",
+                                9000, "hdoop", path_to_file, del, 0,
+                                0, frequency, false, 1);
+
+    uint64_t bufferCnt = 0;
+    while (source->getNumberOfGeneratedBuffers() < 5) {
+        auto optBuf = source->receiveData();
+        if (optBuf.has_value()) {
+            std::cout << "buffer no=" << bufferCnt << std::endl;
+            for (uint64_t i = 0; i < optBuf->getNumberOfTuples(); i++) {
+                ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+                std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
+                          << std::endl;
+                EXPECT_STREQ(record.ad_type, "banner78");
+                EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click")
+                             || !strcmp(record.event_type, "purchase")));
+            }
+            if (bufferCnt == 0) {
+                EXPECT_EQ(optBuf->getNumberOfTuples(), 52);
+            } else if (bufferCnt == 1) {
+                EXPECT_EQ(optBuf->getNumberOfTuples(), 48);
+            } else {
+                FAIL();
+            }
+            bufferCnt++;
+        } else {
+            break;
+        }
+    }
+
+    uint64_t expectedNumberOfTuples = 100;
+    uint64_t expectedNumberOfBuffers = 2;
+    //we expect 52 tuples in the first buffer and 48 in the second
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), expectedNumberOfTuples);
+    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
 
 }// namespace NES

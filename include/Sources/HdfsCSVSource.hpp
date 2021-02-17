@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef INCLUDE_HDFSBINSOURCE_H_
-#define INCLUDE_HDFSBINSOURCE_H_
+#ifndef INCLUDE_HDFSCSVSOURCE_H_
+#define INCLUDE_HDFSCSVSOURCE_H_
 
 #include <Sources/DataSource.hpp>
 #include <fstream>
@@ -26,7 +26,7 @@ namespace NES {
 /**
  * @brief this class implement the HDFS as an input source
  */
-class HdfsBinSource : public DataSource {
+class HdfsCSVSource : public DataSource {
   public:
     /**
    * @brief constructor of HDFS source
@@ -43,10 +43,10 @@ class HdfsBinSource : public DataSource {
    * @param skip header or not
    * @param operatorId
    */
-    explicit HdfsBinSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                        const std::string namenode, uint64_t port, const std::string hadoopUser, const std::string filePath,
-                        const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                        uint64_t frequency, bool skipHeader, OperatorId operatorId);
+    explicit HdfsCSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                           const std::string namenode, uint64_t port, const std::string hadoopUser, const std::string filePath,
+                           const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
+                           uint64_t frequency, bool skipHeader, OperatorId operatorId);
 
     /**
      * @brief override the receiveData method for the csv source
@@ -133,13 +133,13 @@ class HdfsBinSource : public DataSource {
     const std::string hadoopUser;
 };
 
-typedef std::shared_ptr<HdfsBinSource> HdfsBinSourcePtr;
+typedef std::shared_ptr<HdfsCSVSource> HdfsCSVSourcePtr;
 }// namespace NES
 
 #endif /* INCLUDE_CSVSOURCE_H_ */
 
 
-#ifndef NES_HDFSBINSOURCE_HPP
-#define NES_HDFSBINSOURCE_HP
+#ifndef NES_HDFSCSVSOURCE_HPP
+#define NES_HDFSCSVSOURCE_HPP
 
 #endif//NES_HDFSSOURCE_HPP

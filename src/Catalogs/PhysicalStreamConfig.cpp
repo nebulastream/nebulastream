@@ -17,9 +17,9 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/HdfsBinSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/HdfsSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
 namespace NES {
@@ -94,7 +94,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         return YSBSourceDescriptor::create(streamName, numberOfTuplesToProducePerBuffer, numBuffers, frequency);
     } else if (type == "HdfsBinSource") {
         NES_DEBUG("TypeInferencePhase: create HDFS source for " << conf);
-        return HdfsSourceDescriptor::create(schema, "192.168.1.104", 9000, "hdoop", conf, ",",
+        return HdfsBinSourceDescriptor::create(schema, "192.168.1.104", 9000, "hdoop", conf, ",",
                                             numberOfTuplesToProducePerBuffer, numBuffers, frequency, skipHeader);
     } else {
         NES_THROW_RUNTIME_ERROR("TypeInferencePhase:: source type " + type + " not supported");
