@@ -14,24 +14,32 @@
     limitations under the License.
 */
 
-
 #ifdef ENABLE_MQTT_BUILD
-
-
 #include <cstdint>
 #include <memory>
 #include <string>
-
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <mqtt/client.h>
-
+#include <Util/MQTTClientWrapper.hpp>
 
 namespace NES {
-
-
+/**
+ * @brief Defining properties used for creating physical MQTT sink
+ */
 class MQTTSink : public SinkMedium {
-
   public:
+    /**
+     * @brief Creates the MQTT sink
+     * @param address: address name of MQTT broker
+     * @param clientId: client ID for MQTT client
+     * @param topic: MQTT topic chosen to publish client data to
+     * @param user: user identification for client
+     * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
+     * @param timeUnit: time unit chosen by client user for message delay
+     * @param msgDelay: time before next message is sent by client to broker
+     * @param asynchronousClient: determine whether client is async- or synchronous
+     * @return MQTT sink
+     */
     MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string& address,
              const std::string& clientId, const std::string& topic, const std::string& user,
              const uint32_t maxBufferedMSGs = 60, char timeUnit = 'm', uint64_t msgDelay = 500, bool asynchronousClient = 1);
@@ -40,7 +48,6 @@ class MQTTSink : public SinkMedium {
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
     void setup() override { connect(); };
     void shutdown() override{};
-
     bool connect();
     bool disconnect();
 
@@ -103,77 +110,20 @@ class MQTTSink : public SinkMedium {
 
   private:
     QuerySubPlanId parentPlanId;
-
     std::string address;
-
     std::string clientId;
     std::string topic;
-
     std::string user;
-
     uint32_t maxBufferedMSGs;
     uint8_t timeUnit; //'n'-nanoseconds, 'm'-milliseconds, 's'-seconds
-
     uint64_t msgDelay;
     bool asynchronousClient;
     char qualityOfService; // 0-at most once, 1-at least once, 2-exactly once
-
     bool connected;
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>> sendDuration;
 
-    struct ClientWrapper {
-        mqtt::async_client_ptr asyncClient;
-        mqtt::client_ptr syncClient;
 
-        bool useAsyncClient;
-
-        /// Helper class for synchronous client - Defines how to interact with broker replies and connection loss
-        class UserCallback : public virtual mqtt::callback
-        {
-          public:
-            void connection_lost(const std::string& cause) {
-                NES_INFO("\nConnection lost");
-                if (!cause.empty())
-                    NES_DEBUG("\tcause: " << cause);
-            }
-
-            void delivery_complete(mqtt::delivery_token_ptr tok) {
-                NES_INFO("\n\t[Delivery complete for token: "
-                          << (tok ? tok->get_message_id() : -1) << "]");
-            }
-        };
-
-      public:
-        ClientWrapper(bool useAsyncClient, const std::string& address, const std::string& clientId, uint32_t maxBufferedMSGs){
-            this->useAsyncClient = useAsyncClient;
-            if(useAsyncClient) {
-                asyncClient = std::make_shared<mqtt::async_client>(address, clientId, maxBufferedMSGs);
-            } else {
-                syncClient = std::make_shared<mqtt::client>(address, clientId, maxBufferedMSGs);
-            }
-        }
-        mqtt::async_client_ptr getAsyncClient() {
-            return (useAsyncClient) ? asyncClient : nullptr;
-        }
-        mqtt::client_ptr getSyncClient() {
-            return (useAsyncClient) ? nullptr : syncClient;
-        }
-
-        void connect(mqtt::connect_options connOpts) {
-            if(useAsyncClient) { asyncClient->connect(connOpts)->wait(); } else { syncClient->connect(); }
-        }
-        void disconnect() {
-            if(useAsyncClient) { asyncClient->disconnect()->wait(); } else { syncClient->disconnect(); }
-        }
-        int getBufferSize() {
-            return (asyncClient) ? asyncClient->get_pending_delivery_tokens().size() : 0;
-        }
-
-        void setCallback(UserCallback& cb) {
-            syncClient->set_callback(cb);
-        }
-    };
-    ClientWrapper client;
+    MQTTClientWrapper client;
 };
 typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
 

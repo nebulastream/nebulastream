@@ -177,7 +177,6 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
                                             const uint64_t kafkaProducerTimeout);
 #endif
 
-//TODO further adapt to MQTT specifics
 #ifdef ENABLE_MQTT_BUILD
 /**
  * @brief create MQTT sink

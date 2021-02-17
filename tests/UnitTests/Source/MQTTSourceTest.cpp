@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #ifdef ENABLE_MQTT_BUILD
+#include <gtest/gtest.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <cstring>
 #include <future>
