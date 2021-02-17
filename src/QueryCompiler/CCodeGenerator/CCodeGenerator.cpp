@@ -498,7 +498,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context, V
     auto tf = getTypeFactory();
 
     // calculate of the maximal number of tuples per buffer -> (buffer size / tuple size) - 1
-    // int64_t maxTuple = (resultTupleBuffer.getNumberOfUnsentMessages() / 39) - 1;
+    // int64_t maxTuple = (resultTupleBuffer.getBufferSize() / 39) - 1;
     // 1. get the size of one result tuple
     auto resultTupleSize = context->getResultSchema()->getSchemaSizeInBytes();
     // 2. initialize max tuple
@@ -1582,7 +1582,7 @@ BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(VariableDeclaration 
 }
 
 BinaryOperatorStatement CCodeGenerator::getBufferSize(VariableDeclaration tupleBufferVariable) {
-    auto getBufferSizeFunctionCall = FunctionCallStatement("getNumberOfUnsentMessages");
+    auto getBufferSizeFunctionCall = FunctionCallStatement("getBufferSize");
     return VarRef(tupleBufferVariable).accessRef(getBufferSizeFunctionCall);
 }
 
