@@ -695,6 +695,16 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration), Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
+    // lock slice
+    // auto lock = std::unique_lock(stateVariable->mutex());
+    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
+    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
+    auto stateMutex = FunctionCallStatement("mutex");
+    uniqueLockCtor.addParameter(
+        std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
+    context->code->currentCodeInsertionPoint->addStatement(
+        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
+
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
@@ -1223,6 +1233,16 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
         context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt");
     auto getCurrentCntStatement = VarDeclStatement(currentCntVariable).assign(recordCntFieldRef);
     context->code->currentCodeInsertionPoint->addStatement(getCurrentCntStatement.copy());
+
+    // lock slice
+    // auto lock = std::unique_lock(stateVariable->mutex());
+    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
+    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
+    auto stateMutex = FunctionCallStatement("mutex");
+    uniqueLockCtor.addParameter(
+        std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
+    context->code->currentCodeInsertionPoint->addStatement(
+        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
 
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
