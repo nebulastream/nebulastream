@@ -194,7 +194,7 @@ TEST_F(IFCOPTest, costFunctionTest) {
     TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     Query query = Query::from("car")
                         .filter(Attribute("id") > 1)
-//                      .map(Attribute("id")=Attribute("id")+1)
+//                        .map(Attribute("id_new")=Attribute("id")+1)
                         .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -210,11 +210,11 @@ TEST_F(IFCOPTest, costFunctionTest) {
     TopologyNodePtr rootOfOptimizedExecutionpath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
     auto nodeToOperatorMap = ifcop->getRandomAssignment(rootOfOptimizedExecutionpath, queryPlan->getSourceOperators());
 
-    std::vector<double> testIngestionRateModifiers = {1,1,1};
-    std::vector<double> testTupleSizeModifiers = {1,1,1};
+    auto tupleSizeModifier = ifcop->getTupleSizeModifier(queryPlan);
+    auto ingestionRateModifier = ifcop->getIngestionRateModifier(queryPlan);
 
-    auto cost = ifcop->getTotalCost(queryPlan, topology, rootOfOptimizedExecutionpath, nodeToOperatorMap, testIngestionRateModifiers,
-                        testTupleSizeModifiers);
+    auto cost = ifcop->getTotalCost(queryPlan, topology, rootOfOptimizedExecutionpath, nodeToOperatorMap, tupleSizeModifier,
+                                    ingestionRateModifier);
     EXPECT_EQ(cost, 48);
     NES_DEBUG("IFCOPTest: nodeToOperatorMap.size()=" << nodeToOperatorMap.size());
 }

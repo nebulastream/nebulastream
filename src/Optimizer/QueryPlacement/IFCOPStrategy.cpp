@@ -138,8 +138,8 @@ TopologyNodePtr IFCOPStrategy::runGlobalOptimization(QueryPlanPtr queryPlan, Top
 
 float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology, TopologyNodePtr executionPath,
                                   std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
-                                  std::vector<double> ingestionRateModifiers, std::vector<double> tupleSizeModifiers) {
-
+                                  std::map<OperatorNodePtr, float>  ingestionRateModifiers,
+                                  std::map<OperatorNodePtr, float>  tupleSizeModifiers) {
     // dst, src
     std::map<OperatorNodePtr, OperatorNodePtr> queryEdges;
     OperatorNodePtr currentNode = queryPlan->getRootOperators()[0];
@@ -193,7 +193,8 @@ float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology, 
 
 float IFCOPStrategy::getNetworkCost(TopologyNodePtr currentTopologyNode,
                                     std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
-                                     std::vector<double> ingestionRateModifiers, std::vector<double> tupleSizeModifiers) {
+                                    std::map<OperatorNodePtr, float> ingestionRateModifiers,
+                                    std::map<OperatorNodePtr, float>  tupleSizeModifiers) {
 
     bool isSinkNode = false;
     // compute network cost in current node
@@ -203,9 +204,7 @@ float IFCOPStrategy::getNetworkCost(TopologyNodePtr currentTopologyNode,
             NES_DEBUG("IFCOP::getNetworkCost: Node=" << currentTopologyNode->getId() << " isSinkNode=True");
             isSinkNode = true;
         }
-        currentNodeModifier *= ingestionRateModifiers.back() * tupleSizeModifiers.back();
-        ingestionRateModifiers.pop_back();
-        tupleSizeModifiers.pop_back();
+        currentNodeModifier *= ingestionRateModifiers[op] * tupleSizeModifiers[op];
     }
 
     if (currentTopologyNode->getChildren().size() == 0) {
@@ -218,17 +217,7 @@ float IFCOPStrategy::getNetworkCost(TopologyNodePtr currentTopologyNode,
         }
         double currentNetworkCost = 0;
         for(auto child: currentTopologyNode->getChildren()){
-            std::vector<double> childIngestionRateModifiers;
-            for (double ir : ingestionRateModifiers){
-                childIngestionRateModifiers.push_back(ir);
-            }
-
-            std::vector<double> childTupleSizeModifiers;
-            for (double ts : tupleSizeModifiers) {
-                childTupleSizeModifiers.push_back(ts);
-            }
-
-            double childCost = getNetworkCost(child->as<TopologyNode>(), operatorAssignment, childIngestionRateModifiers, childTupleSizeModifiers);
+            double childCost = getNetworkCost(child->as<TopologyNode>(), operatorAssignment, ingestionRateModifiers, tupleSizeModifiers);
             currentNetworkCost += childCost + currentNodeModifier * childCost; // required bandwidth in bytes
         }
         NES_DEBUG("CostUtil::getNetworkCost aggregated cost: " << currentNetworkCost << " at: " << currentTopologyNode->getId());
@@ -492,5 +481,63 @@ float IFCOPStrategy::getExecutionPathCost(TopologyNodePtr executionPath) {
     return totalResources;
 }
 
+std::map<OperatorNodePtr, float> IFCOPStrategy::getTupleSizeModifier(QueryPlanPtr queryPlan) {
+    std::map<OperatorNodePtr, float> tupleModifier;
+
+    std::vector<LogicalOperatorNodePtr> nodeToVisit;
+
+    nodeToVisit.push_back(queryPlan->getRootOperators()[0]->as<LogicalOperatorNode>());
+
+    std::size_t schemaSize = queryPlan->getRootOperators()[0]->as<LogicalOperatorNode>()->getOutputSchema()->getSchemaSizeInBytes();
+    NES_DEBUG("IFCOPStrategy::getTupleSizeModifier: schemaSize of source output:" << schemaSize);
+
+    while (nodeToVisit.size() != 0) {
+        LogicalOperatorNodePtr currentOperator = nodeToVisit.back();
+        nodeToVisit.pop_back();
+
+        if (currentOperator->getChildren().empty()){
+            tupleModifier.insert(std::pair<OperatorNodePtr, float>(currentOperator, 1.0));
+        } else {
+            for (const auto child : currentOperator->getChildren()) {
+
+                size_t childOutputSchemaSize = child->as<LogicalOperatorNode>()->getOutputSchema()->getSchemaSizeInBytes();
+                size_t currentOperatorOutputSchemaSize = currentOperator->getOutputSchema()->getSchemaSizeInBytes();
+
+                tupleModifier.insert(std::pair<OperatorNodePtr, float>(currentOperator, (float) currentOperatorOutputSchemaSize / childOutputSchemaSize));
+                nodeToVisit.push_back(child->as<LogicalOperatorNode>());
+            }
+        }
+    }
+
+    NES_DEBUG("IFCOPStrategy: getTupleSizeModifier size " << tupleModifier.size());
+    return tupleModifier;
+}
+std::map<OperatorNodePtr, float> IFCOPStrategy::getIngestionRateModifier(QueryPlanPtr queryPlan) {
+    std::map<OperatorNodePtr, float> ingestionRateModifier;
+
+    std::vector<LogicalOperatorNodePtr> nodeToVisit;
+
+    nodeToVisit.push_back(queryPlan->getRootOperators()[0]->as<LogicalOperatorNode>());
+
+    std::size_t schemaSize = queryPlan->getRootOperators()[0]->as<LogicalOperatorNode>()->getOutputSchema()->getSchemaSizeInBytes();
+    NES_DEBUG("IFCOPStrategy::getTupleSizeModifier: schemaSize of source output:" << schemaSize);
+
+    while (nodeToVisit.size() != 0) {
+        LogicalOperatorNodePtr currentOperator = nodeToVisit.back();
+        nodeToVisit.pop_back();
+
+        if (currentOperator->getChildren().empty()){
+            ingestionRateModifier.insert(std::pair<OperatorNodePtr, float>(currentOperator, 1.0));
+        } else {
+            for (const auto child : currentOperator->getChildren()) {
+                ingestionRateModifier.insert(std::pair<OperatorNodePtr, float>(currentOperator, (float) 1.0));
+                nodeToVisit.push_back(child->as<LogicalOperatorNode>());
+            }
+        }
+    }
+
+    NES_DEBUG("IFCOPStrategy: getTupleSizeModifier size " << ingestionRateModifier.size());
+    return ingestionRateModifier;
+}
 
 }// namespace NES

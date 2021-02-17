@@ -46,10 +46,14 @@ class IFCOPStrategy : public BasePlacementStrategy {
                                                                                        std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
     float getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology, TopologyNodePtr executionPath,
                        std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
-                       std::vector<double> ingestionRateModifiers, std::vector<double> tupleSizeModifiers);
+                       std::map<OperatorNodePtr, float>  ingestionRateModifiers, std::map<OperatorNodePtr, float>  tupleSizeModifiers);
 
     float getNetworkCost(TopologyNodePtr currentTopologyNode, std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
-                         std::vector<double> ingestionRateModifiers, std::vector<double> tupleSizeModifiers);
+                         std::map<OperatorNodePtr, float>  ingestionRateModifiers, std::map<OperatorNodePtr, float>  tupleSizeModifiers);
+
+    std::map<OperatorNodePtr, float> getTupleSizeModifier(QueryPlanPtr queryPlan);
+
+    std::map<OperatorNodePtr, float> getIngestionRateModifier(QueryPlanPtr queryPlan);
   private:
     explicit IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
         TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
