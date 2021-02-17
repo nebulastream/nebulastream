@@ -25,6 +25,9 @@ numberOfSlots: 0
 # Enable Query Merging Feature
 enableQueryMerging: false
 
+# Semantic Query Validation Feature
+enableSemanticQueryValidation: false
+
 # The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
 logLevel: LOG_DEBUG
 
