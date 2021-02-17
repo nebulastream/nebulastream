@@ -44,8 +44,12 @@ class IFCOPStrategy : public BasePlacementStrategy {
 
     std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> getRandomAssignment(TopologyNodePtr executionPath,
                                                                                        std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
-    float getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology,
-                       std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment);
+    float getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology, TopologyNodePtr executionPath,
+                       std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
+                       std::vector<double> ingestionRateModifiers, std::vector<double> tupleSizeModifiers);
+
+    float getNetworkCost(TopologyNodePtr currentTopologyNode, std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
+                         std::vector<double> ingestionRateModifiers, std::vector<double> tupleSizeModifiers);
   private:
     explicit IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
         TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);

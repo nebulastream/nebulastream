@@ -146,12 +146,14 @@ class IFCOPTest : public testing::Test {
         topologyNodes.push_back(TopologyNode::create(0, "localhost", 4000, 4000, 2));
         topologyNodes.push_back(TopologyNode::create(1, "localhost", 4002, 4002, 1));
         topologyNodes.push_back(TopologyNode::create(2, "localhost", 4004, 4004, 1));
+        topologyNodes.push_back(TopologyNode::create(3, "localhost", 4004, 4004, 1));
 
         topology->setAsRoot(topologyNodes.at(0));
 
         // link each worker with its neighbor
         topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
         topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(2));
+        topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(3));
 
         std::string carSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                                 "->addField(\"value\", BasicType::UINT64);";
@@ -159,6 +161,8 @@ class IFCOPTest : public testing::Test {
 
         streamCatalog = std::make_shared<StreamCatalog>();
         streamCatalog->addLogicalStream(carStreamName, carSchema);
+        NES_DEBUG("IFCOPTest::setupSmallTopologyAndStreamCatalog() size of carSchema=" << streamCatalog->getSchemaForLogicalStream("car")->getSchemaSizeInBytes());
+
 
         SourceConfigPtr carSourceConfig = SourceConfig::create();
         carSourceConfig->setSourceType("DefaultSource");
@@ -172,7 +176,7 @@ class IFCOPTest : public testing::Test {
 
         PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(carSourceConfig);
 
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(2));
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(confCar, topologyNodes.at(3));
 
         streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
     }
@@ -206,10 +210,13 @@ TEST_F(IFCOPTest, costFunctionTest) {
     TopologyNodePtr rootOfOptimizedExecutionpath = ifcop->getOptimizedExecutionPath(topology, 5, queryPlan);
     auto nodeToOperatorMap = ifcop->getRandomAssignment(rootOfOptimizedExecutionpath, queryPlan->getSourceOperators());
 
+    std::vector<double> testIngestionRateModifiers = {1,1,1};
+    std::vector<double> testTupleSizeModifiers = {1,1,1};
 
-    ifcop->getTotalCost(queryPlan, topology, nodeToOperatorMap);
+    auto cost = ifcop->getTotalCost(queryPlan, topology, rootOfOptimizedExecutionpath, nodeToOperatorMap, testIngestionRateModifiers,
+                        testTupleSizeModifiers);
+    EXPECT_EQ(cost, 48);
     NES_DEBUG("IFCOPTest: nodeToOperatorMap.size()=" << nodeToOperatorMap.size());
-
 }
 
 ///* Test generating random execution path  */

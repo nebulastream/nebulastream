@@ -16,7 +16,6 @@
 
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
-//#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -137,8 +136,9 @@ TopologyNodePtr IFCOPStrategy::runGlobalOptimization(QueryPlanPtr queryPlan, Top
     return bestCandidate;
 }
 
-float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology,
-                                  std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment) {
+float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology, TopologyNodePtr executionPath,
+                                  std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
+                                  std::vector<double> ingestionRateModifiers, std::vector<double> tupleSizeModifiers) {
 
     // dst, src
     std::map<OperatorNodePtr, OperatorNodePtr> queryEdges;
@@ -174,7 +174,7 @@ float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology,
         }
 
         NES_DEBUG("op:" << queryEdge.second->toString() << " dst:" << dstTopologyNodePtr->toString() << "| op:" << queryEdge.first->toString() << " src:" << srcTopologyNodePtr->toString());
-        auto isReachable = topology->checkIfReachable(dstTopologyNodePtr, srcTopologyNodePtr);
+        auto isReachable = topology->checkIfReachable(srcTopologyNodePtr, dstTopologyNodePtr);
         isValid = isValid && isReachable;
     }
 
@@ -183,11 +183,60 @@ float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology,
     NES_DEBUG(topology->getRoot()->getId());
 
     // if the placement is valid, continue computing the cost
+    float networkCost = std::numeric_limits<float>::max();
     if (isValid) {
-
+        networkCost = getNetworkCost(executionPath, operatorAssignment, ingestionRateModifiers, tupleSizeModifiers);
+        NES_DEBUG("IFCOP: networkCost=" << networkCost);
     }
-    return 0;
+    return networkCost;
 }
+
+float IFCOPStrategy::getNetworkCost(TopologyNodePtr currentTopologyNode,
+                                    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
+                                     std::vector<double> ingestionRateModifiers, std::vector<double> tupleSizeModifiers) {
+
+    bool isSinkNode = false;
+    // compute network cost in current node
+    double currentNodeModifier = 1; //base modifier
+    for(auto op: operatorAssignment[currentTopologyNode]){
+        if (op->instanceOf<SinkLogicalOperatorNode>()){
+            NES_DEBUG("IFCOP::getNetworkCost: Node=" << currentTopologyNode->getId() << " isSinkNode=True");
+            isSinkNode = true;
+        }
+        currentNodeModifier *= ingestionRateModifiers.back() * tupleSizeModifiers.back();
+        ingestionRateModifiers.pop_back();
+        tupleSizeModifiers.pop_back();
+    }
+
+    if (currentTopologyNode->getChildren().size() == 0) {
+        std::size_t schemaSize = operatorAssignment[currentTopologyNode].back()->as<LogicalOperatorNode>()->getOutputSchema()->getSchemaSizeInBytes();
+        NES_DEBUG("CostUtil::getNetworkCost aggregated cost: " << schemaSize << " at: " << currentTopologyNode->getId());
+        return schemaSize;
+    } else {
+        if (isSinkNode) {
+            currentNodeModifier = 0;
+        }
+        double currentNetworkCost = 0;
+        for(auto child: currentTopologyNode->getChildren()){
+            std::vector<double> childIngestionRateModifiers;
+            for (double ir : ingestionRateModifiers){
+                childIngestionRateModifiers.push_back(ir);
+            }
+
+            std::vector<double> childTupleSizeModifiers;
+            for (double ts : tupleSizeModifiers) {
+                childTupleSizeModifiers.push_back(ts);
+            }
+
+            double childCost = getNetworkCost(child->as<TopologyNode>(), operatorAssignment, childIngestionRateModifiers, childTupleSizeModifiers);
+            currentNetworkCost += childCost + currentNodeModifier * childCost; // required bandwidth in bytes
+        }
+        NES_DEBUG("CostUtil::getNetworkCost aggregated cost: " << currentNetworkCost << " at: " << currentTopologyNode->getId());
+
+        return currentNetworkCost;
+    }
+}
+
 std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> IFCOPStrategy::getRandomAssignment(TopologyNodePtr executionPath,
                                                    std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
     // Get a map of stream names and their source nodes
