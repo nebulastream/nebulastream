@@ -47,16 +47,7 @@ class SemanticQueryValidationTest : public testing::Test {
     }
 
     void TestForException(std::string queryString){
-    try {
-        CallValidation(queryString);
-    } catch(InvalidQueryException& e) {
-        std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
-        std::cout << e.what();
-        SUCCEED();
-        return;
-    }
-    std::cout << std::endl << "VALID QUERY:" << std::endl;
-    FAIL();
+        EXPECT_THROW(CallValidation(queryString), InvalidQueryException);
     }
 };
 
@@ -148,16 +139,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     
     filterQuery->sink(FileSinkDescriptor::create(""));
 
-    try {
-        semanticQueryValidation->isSatisfiable(filterQuery);
-    } catch(InvalidQueryException& e) {
-        std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
-        std::cout << e.what();
-        SUCCEED();
-        return;
-    }
-    std::cout << std::endl << "VALID QUERY:" << std::endl;
-    FAIL();
+    EXPECT_THROW(semanticQueryValidation->isSatisfiable(filterQuery), InvalidQueryException);
 }
 
 

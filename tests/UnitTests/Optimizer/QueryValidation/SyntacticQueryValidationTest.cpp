@@ -37,18 +37,9 @@ class SyntacticQueryValidationTest : public testing::Test {
     void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
     
     void TestForException(std::string queryString){
-    try {
-        PrintQString(queryString);
+        PrintQString(queryString);  
         SyntacticQueryValidation syntacticQueryValidation;
-        syntacticQueryValidation.isValid(queryString);
-    } catch(InvalidQueryException& e) {
-        std::cout << std::endl << "ERROR MESSAGE:" << std::endl;
-        std::cout << e.what();
-        SUCCEED();
-        return;
-    }
-    std::cout << std::endl << "VALID QUERY:" << std::endl;
-    FAIL();
+        EXPECT_THROW(syntacticQueryValidation.isValid(queryString), InvalidQueryException);
     }
 };
 
