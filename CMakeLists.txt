@@ -15,7 +15,6 @@
 cmake_minimum_required(VERSION 3.16.0)
 project(NES CXX)
 
-
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
 endif ()
@@ -30,7 +29,6 @@ include(cmake/GetSemanticVersion.cmake)
 
 # Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
-set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/macros.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 

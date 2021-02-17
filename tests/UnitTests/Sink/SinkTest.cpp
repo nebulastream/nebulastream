@@ -86,7 +86,7 @@ TEST_F(SinkTest, testCSVFileSink) {
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
-    //FIXME : ISUNUMBER INSERT
+
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;

@@ -22,12 +22,10 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES {
-
 /**
  * @brief Descriptor defining properties used for creating physical MQTT sink
  */
 class MQTTSinkDescriptor : public SinkDescriptor {
-
   public:
     /**
      * @brief Creates the MQTT sink description
@@ -86,10 +84,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     const bool getAsynchronousClient() const;
 
-    void setMaxBufferedMSGs(uint32_t);
-    void setTimeUnit(char);
-    void setMsgDelay(uint64_t);
-
     std::string toString() override;
     bool equal(SinkDescriptorPtr other) override;
 
@@ -99,15 +93,11 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                        const bool asynchronousClient);
 
     std::string address;
-
     std::string clientId;
     std::string topic;
-
     std::string user;
-
     uint32_t maxBufferedMSGs;
     uint8_t timeUnit; //'n'-nanoseconds, 'm'-milliseconds, 's'-seconds
-
     uint64_t msgDelay;
     bool asynchronousClient;
 };

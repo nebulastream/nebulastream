@@ -54,11 +54,6 @@ bool MQTTSinkDescriptor::equal(SinkDescriptorPtr other) {
            timeUnit == otherSinkDescriptor->timeUnit && msgDelay == otherSinkDescriptor->msgDelay &&
            asynchronousClient == otherSinkDescriptor->asynchronousClient;
 }
-
-void MQTTSinkDescriptor::setMaxBufferedMSGs(uint32_t newMaxBufferedMSGs) { this->maxBufferedMSGs = newMaxBufferedMSGs; }
-void MQTTSinkDescriptor::setTimeUnit(char newTimeUnit) { this->timeUnit = newTimeUnit; }
-void MQTTSinkDescriptor::setMsgDelay(uint64_t newMsgDelay) { this->msgDelay = newMsgDelay; }
-
 }// namespace NES
 
 #endif

@@ -76,7 +76,6 @@ using namespace NES;
 //FIXME tests right now rely on setting up a broker manually. Moreover, they intentionally fail. (covered in issue #1599)
 // - find a way to fully automate tests (e.g. using redBoltz c++ MQTT library, which offers a broker
 // - fix tests, so they do not intentionally fail, but always succeed, if right behaviour is shown
-
 class DISABLED_MQTTTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
@@ -123,7 +122,6 @@ class DISABLED_MQTTTest : public testing::Test {
 
     bool createMQTTSinkConnectToBrokerWriteData(uint64_t numTuples= 10, uint32_t maxBufferedMSGs= 1, char timeUnit= 'm',
                                                   uint64_t msgDelay= 500, bool asynchronousClient= 1, bool printBuffer= 0) {
-
         /// Create MQTT Sink
         NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
         auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);

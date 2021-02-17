@@ -27,6 +27,13 @@
 
 
 namespace NES {
+/*
+ the user can specify the time unit for the delay and the duration of the delay in that time unit
+ in order to avoid type switching types (different time units require different duration types), the user input for
+ the duration is treated as nanoseconds and then multiplied to 'convert' to milliseconds or seconds accordingly
+*/
+const uint32_t nanoToMillisecondsMultiplier = 1000000;
+const uint32_t nanoToSecondsMultiplier = 1000000000;
 
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
@@ -36,8 +43,8 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const 
     : SinkMedium(sinkFormat, parentPlanId), address(address), clientId(clientId),topic(topic), user(user),
       maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), msgDelay(msgDelay), asynchronousClient(asynchronousClient),
       qualityOfService(1),
-      connected(false), sendDuration(std::chrono::nanoseconds(msgDelay * ((timeUnit=='m') ? 1000000 :
-                                                                  (1000000000 * (timeUnit!='n') | (timeUnit=='n'))))),
+      connected(false), sendDuration(std::chrono::nanoseconds(msgDelay * ((timeUnit=='m') ? nanoToMillisecondsMultiplier :
+                                                                  (nanoToSecondsMultiplier * (timeUnit!='n') | (timeUnit=='n'))))),
       client(asynchronousClient, address, clientId, maxBufferedMSGs) {
 
     NES_DEBUG("MQTT Sink  " << this << ": Init MQTT Sink to " << address);
@@ -77,7 +84,7 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
                 std::this_thread::sleep_for(sendDuration);
             }
         } else {
-            ClientWrapper::UserCallback cb;
+            MQTTClientWrapper::UserCallback cb;
             client.setCallback(cb);
             for (uint32_t j = 0; j < inputBuffer.getNumberOfTuples() * 2; j = j + 2) {
                 std::string value = std::to_string(inputBuffer.getBuffer<uint32_t>()[j + 1]);
@@ -89,8 +96,8 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
             }
             NES_DEBUG("Synchronous Case");
         }
-        if(asynchronousClient && client.getAsyncClient()->get_pending_delivery_tokens().size() > 0) {
-            NES_DEBUG("Unsent messages");
+        if(asynchronousClient && client.getNumberOfUnsentMessages() > 0) {
+            NES_ERROR("Unsent messages");
         }
     }
     catch (const mqtt::exception& ex) {

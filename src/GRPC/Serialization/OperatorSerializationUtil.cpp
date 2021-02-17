@@ -85,7 +85,6 @@
 #endif
 
 namespace NES {
-
 SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodePtr operatorNode,
                                                                    SerializableOperator* serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
