@@ -22,8 +22,8 @@ bool DynamicMemoryLayout::isCheckBoundaryFieldChecks() const { return checkBound
 uint64_t DynamicMemoryLayout::getRecordSize() const { return recordSize; }
 const std::vector<FIELD_SIZE>& DynamicMemoryLayout::getFieldSizes() const { return fieldSizes; }
 
-DynamicMemoryLayout::DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t recordSize,
-                                         std::vector<FIELD_SIZE>& fieldSizes)
+DynamicMemoryLayout::DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t recordSize, std::vector<FIELD_SIZE>& fieldSizes)
     : checkBoundaryFieldChecks(checkBoundaryFieldChecks), recordSize(recordSize), fieldSizes(fieldSizes) {}
-DynamicMemoryLayout::DynamicMemoryLayout() : checkBoundaryFieldChecks(true), recordSize(0), fieldSizes(std::vector<FIELD_SIZE>()) {}
-}
+DynamicMemoryLayout::DynamicMemoryLayout()
+    : checkBoundaryFieldChecks(true), recordSize(0), fieldSizes(std::vector<FIELD_SIZE>()) {}
+}// namespace NES::NodeEngine::DynamicMemoryLayout

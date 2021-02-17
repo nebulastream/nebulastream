@@ -17,14 +17,11 @@
 #ifndef NES_DYNAMICROWLAYOUT_HPP
 #define NES_DYNAMICROWLAYOUT_HPP
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
-
-
 
 typedef uint64_t FIELD_OFFSET;
 
@@ -40,12 +37,10 @@ class DynamicRowLayout : public DynamicMemoryLayout {
     std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
     const std::vector<FIELD_SIZE>& getFieldOffSets() const;
 
-
   private:
     std::vector<FIELD_OFFSET> fieldOffSets;
 };
 
-
-}
+}// namespace NES::NodeEngine::DynamicMemoryLayout
 
 #endif//NES_DYNAMICROWLAYOUT_HPP

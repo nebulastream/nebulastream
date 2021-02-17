@@ -14,15 +14,15 @@
     limitations under the License.
 */
 
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout(){
+DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, SchemaPtr schema) : DynamicMemoryLayout() {
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
     this->fieldOffSets = std::vector<FIELD_OFFSET>();
@@ -55,7 +55,6 @@ std::unique_ptr<DynamicLayoutBuffer> DynamicRowLayout::map(TupleBuffer& tupleBuf
     return std::make_unique<DynamicRowLayoutBuffer>(tupleBuffer, capacity, *this);
 }
 
-
 DynamicMemoryLayoutPtr DynamicRowLayout::copy() const { return std::make_shared<DynamicRowLayout>(*this); }
-    const std::vector<FIELD_SIZE>& DynamicRowLayout::getFieldOffSets() const { return fieldOffSets; }
-}
+const std::vector<FIELD_SIZE>& DynamicRowLayout::getFieldOffSets() const { return fieldOffSets; }
+}// namespace NES::NodeEngine::DynamicMemoryLayout

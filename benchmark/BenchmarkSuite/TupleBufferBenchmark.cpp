@@ -30,22 +30,24 @@ namespace NES::Benchmarking {
 #define benchmarkSchemaI16 (Schema::create()->addField("key", BasicType::INT16)->addField("value", BasicType::INT16))
 #define benchmarkSchemaI32 (Schema::create()->addField("key", BasicType::INT32)->addField("value", BasicType::INT32))
 #define benchmarkSchemaI64 (Schema::create()->addField("key", BasicType::INT64)->addField("value", BasicType::INT64))
-#define benchmarkSchemaCacheLine (Schema::create()->addField("key", BasicType::INT32)                                         \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32)                                                \
-                                         ->addField("value", BasicType::INT32))
+#define benchmarkSchemaCacheLine                                                                                                 \
+    (Schema::create()                                                                                                            \
+         ->addField("key", BasicType::INT32)                                                                                     \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32)                                                                                   \
+         ->addField("value", BasicType::INT32))
 
 struct TupleI8 {
     uint8_t key;
@@ -97,7 +99,6 @@ static void BM_DefaultFilling_V1(benchmark::State& state) {
         case 4: benchmarkSchema = benchmarkSchemaCacheLine; break;
         default: break;
     }
-
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -185,7 +186,6 @@ static void BM_DefaultFilling_V2(benchmark::State& state) {
         case 4: benchmarkSchema = benchmarkSchemaCacheLine; break;
         default: break;
     }
-
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -279,7 +279,6 @@ static void BM_WriteRecordsStruct(benchmark::State& state) {
         default: break;
     }
 
-
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
     auto buffer = bufferManager->getBufferBlocking();
@@ -359,8 +358,7 @@ static void BM_WriteRecordsStruct(benchmark::State& state) {
             }
             break;
         }
-        default:
-            break;
+        default: break;
     }
 
     state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
@@ -458,31 +456,46 @@ static void BM_ReadRecordsStruct(benchmark::State& state) {
                     int32_t tmp14 = tupleIt[i].value14;
                     int32_t tmp15 = tupleIt[i].value15;
 
-                    if (tmp0 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
-                    if (tmp1 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
-                    if (tmp2 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1");
-                    if (tmp3 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1");
+                    if (tmp0 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
+                    if (tmp1 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
+                    if (tmp2 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1");
+                    if (tmp3 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1");
 
-                    if (tmp4 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1");
-                    if (tmp5 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1");
-                    if (tmp6 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1");
-                    if (tmp7 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1");
+                    if (tmp4 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1");
+                    if (tmp5 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1");
+                    if (tmp6 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1");
+                    if (tmp7 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1");
 
-                    if (tmp8 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1");
-                    if (tmp9 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1");
-                    if (tmp10 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1");
-                    if (tmp11 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp11 != 1");
+                    if (tmp8 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1");
+                    if (tmp9 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1");
+                    if (tmp10 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1");
+                    if (tmp11 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp11 != 1");
 
-                    if (tmp12 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1");
-                    if (tmp13 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1");
-                    if (tmp14 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1");
-                    if (tmp15 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1");
+                    if (tmp12 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1");
+                    if (tmp13 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1");
+                    if (tmp14 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1");
+                    if (tmp15 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1");
                 }
             }
             break;
         }
-        default:
-            break;
+        default: break;
     }
 
     state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
@@ -503,7 +516,6 @@ static void BM_WriteFieldStruct(benchmark::State& state) {
         case 4: benchmarkSchema = benchmarkSchemaCacheLine; break;
         default: break;
     }
-
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto bufferManager = std::make_shared<NES::NodeEngine::BufferManager>(bufferSize, 10);
@@ -569,8 +581,7 @@ static void BM_WriteFieldStruct(benchmark::State& state) {
             }
             break;
         }
-        default:
-            break;
+        default: break;
     }
 
     state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
@@ -653,13 +664,13 @@ static void BM_ReadFieldStruct(benchmark::State& state) {
                 for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
                     int32_t tmp0 = tupleIt[i].key;
 
-                    if (tmp0 != 1) NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
+                    if (tmp0 != 1)
+                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
                 }
             }
             break;
         }
-        default:
-            break;
+        default: break;
     }
 
     state.SetItemsProcessed(state.iterations() * maxTuplesPerBuffer);
@@ -674,8 +685,6 @@ BENCHMARK(BM_ReadRecordsStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->
 
 BENCHMARK(BM_WriteFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_ReadFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-
-
 
 //BENCHMARK(BM_DefaultFilling_V1)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 //BENCHMARK(BM_DefaultFilling_V2)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);

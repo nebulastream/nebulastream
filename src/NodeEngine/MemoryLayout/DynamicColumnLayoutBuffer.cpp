@@ -32,8 +32,8 @@ uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fi
     return offSet;
 }
 DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity,
-                                                     DynamicColumnLayout& dynamicColLayout, std::vector<COL_OFFSET_SIZE> columnOffsets)
-                                                    : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)), dynamicColLayout(dynamicColLayout) {}
+                                                     DynamicColumnLayout& dynamicColLayout,
+                                                     std::vector<COL_OFFSET_SIZE> columnOffsets)
+    : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)), dynamicColLayout(dynamicColLayout) {}
 
-
-}
+}// namespace NES::NodeEngine::DynamicMemoryLayout

@@ -25,7 +25,6 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 
 typedef uint64_t FIELD_SIZE;
 
-
 /**
  * @brief This abstract class is the base class for DynamicRowLayoutBuffer and DynamicColumnLayoutBuffer.
  * As the base class, it has multiple methods or members that are useful for both derived classes.
@@ -53,7 +52,7 @@ class DynamicLayoutBuffer {
      * @brief This method returns the current number of records that are in the associated buffer
      * @return
      */
-    uint64_t getNumberOfRecords() {return numberOfRecords; }
+    uint64_t getNumberOfRecords() { return numberOfRecords; }
 
     /**
      * @brief This methods returns a reference to the associated buffer
@@ -61,13 +60,11 @@ class DynamicLayoutBuffer {
      */
     TupleBuffer& getTupleBuffer() { return tupleBuffer; }
 
-
   protected:
     TupleBuffer& tupleBuffer;
     uint64_t capacity;
     uint64_t numberOfRecords = 0;
 };
-}
-
+}// namespace NES::NodeEngine::DynamicMemoryLayout
 
 #endif//NES_DYNAMICLAYOUTBUFFER_HPP

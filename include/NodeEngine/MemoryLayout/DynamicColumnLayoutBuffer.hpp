@@ -17,9 +17,9 @@
 #ifndef NES_DYNAMICCOLUMNLAYOUTBUFFER_HPP
 #define NES_DYNAMICCOLUMNLAYOUTBUFFER_HPP
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <stdint.h>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
@@ -30,10 +30,11 @@ typedef uint64_t COL_OFFSET_SIZE;
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
  * Additionally, it adds a std::vector of columnOffsets which is useful for calcOffset(). As the name suggests, it is a columnar storage and as such it serializes all fields.
  */
-class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
+class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 
   public:
-    DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayout& dynamicColLayout, std::vector<COL_OFFSET_SIZE> columnOffsets);
+    DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayout& dynamicColLayout,
+                              std::vector<COL_OFFSET_SIZE> columnOffsets);
     const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout.getFieldSizes(); }
 
     /**
@@ -63,13 +64,10 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer{
     template<bool boundaryChecks, typename... Types>
     void pushRecord(std::tuple<Types...> record);
 
-
   private:
     std::vector<COL_OFFSET_SIZE> columnOffsets;
     const DynamicColumnLayout& dynamicColLayout;
 };
-
-
 
 template<bool boundaryChecks, typename... Types>
 void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
@@ -81,10 +79,13 @@ void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     auto fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks);
 
     // std::apply iterates over tuple and copies via memcpy the fields from retTuple to the buffer
-    std::apply([&tupleIndex, &address, &fieldAddress, fieldSizes, this](auto&&... args) {
-        ((fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks),
-          memcpy(fieldAddress, &args, fieldSizes[tupleIndex]), ++tupleIndex), ...);
-    }, record);
+    std::apply(
+        [&tupleIndex, &address, &fieldAddress, fieldSizes, this](auto&&... args) {
+            ((fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks),
+              memcpy(fieldAddress, &args, fieldSizes[tupleIndex]), ++tupleIndex),
+             ...);
+        },
+        record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
 }
@@ -101,15 +102,17 @@ std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex)
     unsigned char* fieldAddress;
 
     // std::apply iterates over tuple and copies via memcpy the fields into retTuple
-    std::apply([&tupleIndex, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {
-        ((fieldAddress = address + calcOffset(recordIndex, tupleIndex, boundaryChecks),
-          memcpy(&args, fieldAddress, fieldSizes[tupleIndex]), ++tupleIndex), ...);
-    }, retTuple);
-
+    std::apply(
+        [&tupleIndex, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {
+            ((fieldAddress = address + calcOffset(recordIndex, tupleIndex, boundaryChecks),
+              memcpy(&args, fieldAddress, fieldSizes[tupleIndex]), ++tupleIndex),
+             ...);
+        },
+        retTuple);
 
     return retTuple;
 }
 
-}
+}// namespace NES::NodeEngine::DynamicMemoryLayout
 
 #endif//NES_DYNAMICCOLUMNLAYOUTBUFFER_HPP
