@@ -856,4 +856,48 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
     ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$id"));
 }
 
+
+
+/**
+ * @brief In this test we infer the output and input schemas of each operator in a query.
+ */
+TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    auto inputSchema =
+        Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    auto inputSchema2 =
+        Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
+    streamCatalog->addLogicalStream("default_logical2", inputSchema2);
+
+    auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
+    auto subQuery = Query::from("default_logical2");
+
+
+    auto query = Query::from("default_logical")
+        .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
+        .windowByKey(Attribute("default_logical$f1"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)), Sum(Attribute("default_logical2$f3")))
+        .sink(FileSinkDescriptor::create(""));
+
+    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto resultPlan = phase->execute(query.getQueryPlan());
+
+    std::cout << resultPlan->getSinkOperators()[0]->getOutputSchema()->toString() << std::endl;
+    // we just access the old references
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5);
+
+    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
+    ASSERT_TRUE(sinkOutputSchema->fields.size() == 5);
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$cnt"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f1"));
+    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f3"));
+}
+
+
 }// namespace NES
