@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
@@ -57,4 +57,4 @@ std::unique_ptr<DynamicLayoutBuffer> DynamicColumnLayout::map(TupleBuffer& tuple
     }
     return std::make_unique<DynamicColumnLayoutBuffer>(tupleBuffer, capacity, *this, columnOffsets);
 }
-}
+}// namespace NES::NodeEngine::DynamicMemoryLayout

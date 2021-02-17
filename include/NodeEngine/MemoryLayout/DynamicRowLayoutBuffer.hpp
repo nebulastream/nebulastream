@@ -17,13 +17,12 @@
 #ifndef NES_DYNAMICROWLAYOUTBUFFER_HPP
 #define NES_DYNAMICROWLAYOUTBUFFER_HPP
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <stdint.h>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
-
 
 /**
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
@@ -65,8 +64,6 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     const DynamicRowLayout& dynamicRowLayout;
 };
 
-
-
 template<bool boundaryChecks, typename... Types>
 void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     uint64_t offSet = calcOffset(numberOfRecords, 0, boundaryChecks);
@@ -76,10 +73,11 @@ void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     size_t fieldIndex = 0;
 
     // std::apply iterates over tuple and copies via memcpy the fields from retTuple to the buffer
-    std::apply([&fieldIndex, &address, fieldSizes](auto&&... args) {
-        ((memcpy(address, &args, fieldSizes[fieldIndex]),
-          address = address + fieldSizes[fieldIndex], ++fieldIndex),
-         ...);}, record);
+    std::apply(
+        [&fieldIndex, &address, fieldSizes](auto&&... args) {
+            ((memcpy(address, &args, fieldSizes[fieldIndex]), address = address + fieldSizes[fieldIndex], ++fieldIndex), ...);
+        },
+        record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
     NES_DEBUG("DynamicRowLayoutBuffer: numberOfRecords = " << numberOfRecords);
@@ -97,14 +95,14 @@ std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
     size_t fieldIndex = 0;
 
     // std::apply iterates over tuple and copies via memcpy the fields into retTuple
-    std::apply([&fieldIndex, &address, fieldSizes](auto&&... args) {
-        ((memcpy(&args, address, fieldSizes[fieldIndex]),
-          address = address + fieldSizes[fieldIndex], ++fieldIndex),
-         ...);}, retTuple);
+    std::apply(
+        [&fieldIndex, &address, fieldSizes](auto&&... args) {
+            ((memcpy(&args, address, fieldSizes[fieldIndex]), address = address + fieldSizes[fieldIndex], ++fieldIndex), ...);
+        },
+        retTuple);
     return retTuple;
-
 }
 
-}
+}// namespace NES::NodeEngine::DynamicMemoryLayout
 
 #endif//NES_DYNAMICROWLAYOUTBUFFER_HPP

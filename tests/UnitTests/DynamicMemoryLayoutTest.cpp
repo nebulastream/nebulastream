@@ -15,16 +15,16 @@
 */
 
 #include <API/Schema.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutField.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 #include <gtest/gtest.h>
 
@@ -43,7 +43,10 @@ class DynamicMemoryLayoutTest : public testing::Test {
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
         bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
-    static void TearDownTestCase() { std::cout << "Tear down DynamicMemoryLayoutTest class." << std::endl; NESLogger->removeAllAppenders(); }
+    static void TearDownTestCase() {
+        std::cout << "Tear down DynamicMemoryLayoutTest class." << std::endl;
+        NESLogger->removeAllAppenders();
+    }
 };
 
 TEST_F(DynamicMemoryLayoutTest, rowLayoutCreateTest) {
@@ -77,7 +80,8 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutMapCalcOffsetTest) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicRowLayoutBufferPtr mappedRowLayout;
-    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                        static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedRowLayout, nullptr);
 
     ASSERT_EQ(mappedRowLayout->getCapacity(), tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -97,7 +101,8 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutMapCalcOffsetTest) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicColumnLayoutBufferPtr mappedColumnLayout;
-    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+                        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedColumnLayout, nullptr);
 
     auto capacity = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
@@ -119,7 +124,8 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicRowLayoutBufferPtr mappedRowLayout;
-    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                        static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedRowLayout, nullptr);
 
     std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(1, 2, 3);
@@ -142,10 +148,11 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleReco
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicRowLayoutBufferPtr mappedRowLayout;
-    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                        static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedRowLayout, nullptr);
 
-    size_t NUM_TUPLES = 230; //tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    size_t NUM_TUPLES = 230;//tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     for (size_t i = 0; i < NUM_TUPLES; i++) {
@@ -173,7 +180,8 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecord
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicColumnLayoutBufferPtr mappedColumnLayout;
-    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+                        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedColumnLayout, nullptr);
 
     std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
@@ -196,7 +204,8 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultipleR
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicColumnLayoutBufferPtr mappedColumnLayout;
-    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+                        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedColumnLayout, nullptr);
 
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -208,9 +217,9 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultipleR
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
 
-
     for (size_t i = 0; i < NUM_TUPLES; i++) {
-        std::tuple<uint8_t, uint16_t, uint32_t> readRecord = mappedColumnLayout->readRecord<false, uint8_t, uint16_t, uint32_t>(i);
+        std::tuple<uint8_t, uint16_t, uint32_t> readRecord =
+            mappedColumnLayout->readRecord<false, uint8_t, uint16_t, uint32_t>(i);
         ASSERT_EQ(allTuples[i], readRecord);
     }
 
@@ -228,7 +237,8 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicRowLayoutBufferPtr mappedRowLayout;
-    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                        static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedRowLayout, nullptr);
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
@@ -262,7 +272,8 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldSimple) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicColumnLayoutBufferPtr mappedColumnLayout;
-    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+                        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedColumnLayout, nullptr);
 
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -273,7 +284,6 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldSimple) {
         allTuples.emplace_back(writeRecord);
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
-
 
     auto field0 = DynamicColumnLayoutField<uint8_t, false>::create(0, mappedColumnLayout);
     auto field1 = DynamicColumnLayoutField<uint16_t, false>::create(1, mappedColumnLayout);
@@ -286,7 +296,6 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldSimple) {
     }
 }
 
-
 TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -298,7 +307,8 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicRowLayoutBufferPtr mappedRowLayout;
-    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                        static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedRowLayout, nullptr);
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
@@ -344,7 +354,8 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicColumnLayoutBufferPtr mappedColumnLayout;
-    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+                        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedColumnLayout, nullptr);
 
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -355,7 +366,6 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
         allTuples.emplace_back(writeRecord);
         mappedColumnLayout->pushRecord<true>(writeRecord);
     }
-
 
     auto field0 = DynamicColumnLayoutField<uint8_t, true>::create(0, mappedColumnLayout);
     auto field1 = DynamicColumnLayoutField<uint16_t, true>::create(1, mappedColumnLayout);
@@ -391,7 +401,8 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicRowLayoutBufferPtr mappedRowLayout;
-    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                        static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedRowLayout, nullptr);
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
@@ -403,26 +414,33 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
         mappedRowLayout->pushRecord<true>(writeRecord);
     }
 
-
     auto field0 = DynamicRowLayoutField<uint8_t, false>::create(0, mappedRowLayout);
     auto field1 = DynamicRowLayoutField<uint16_t, false>::create(1, mappedRowLayout);
     auto field2 = DynamicRowLayoutField<uint32_t, false>::create(2, mappedRowLayout);
 
     try {
         DynamicRowLayoutField<uint32_t, false>::create(3, mappedRowLayout);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
         DynamicRowLayoutField<uint32_t, false>::create(4, mappedRowLayout);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
         DynamicRowLayoutField<uint32_t, false>::create(5, mappedRowLayout);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
-
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -432,34 +450,52 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
     }
 
     try {
-        ((void)field0[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field0[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field2[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field2[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field2[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field2[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field0[++i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field0[++i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field1[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field1[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field2[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field2[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 }
 
 TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
@@ -473,7 +509,8 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
     DynamicColumnLayoutBufferPtr mappedColumnLayout;
-    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
+    ASSERT_NO_THROW(mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+                        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release())));
     ASSERT_NE(mappedColumnLayout, nullptr);
 
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
@@ -491,18 +528,27 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
 
     try {
         DynamicColumnLayoutField<uint32_t, false>::create(3, mappedColumnLayout);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
         DynamicColumnLayoutField<uint32_t, false>::create(4, mappedColumnLayout);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
         DynamicColumnLayoutField<uint32_t, false>::create(5, mappedColumnLayout);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -512,36 +558,52 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
     }
 
     try {
-        ((void)field0[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field0[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field2[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field2[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field2[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field2[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field0[++i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field0[++i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field1[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field1[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 
     try {
-        ((void)field2[i]);
-    } catch (NES::NesRuntimeException& e) { ASSERT_TRUE(false); }
-    catch (Exception& e) { ASSERT_TRUE(true); }
+        ((void) field2[i]);
+    } catch (NES::NesRuntimeException& e) {
+        ASSERT_TRUE(false);
+    } catch (Exception& e) {
+        ASSERT_TRUE(true);
+    }
 }
 
-
-
-}// namespace NES
+}// namespace NES::NodeEngine::DynamicMemoryLayout

@@ -17,9 +17,9 @@
 #ifndef NES_DYNAMICROWLAYOUTFIELD_HPP
 #define NES_DYNAMICROWLAYOUTFIELD_HPP
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
@@ -28,19 +28,18 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
  * @tparam T
  * @tparam boundaryChecks
  */
-template <class T, bool boundaryChecks>
+template<class T, bool boundaryChecks>
 class DynamicRowLayoutField {
-
 
   public:
     static inline DynamicRowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer);
     inline T& operator[](size_t recordIndex);
 
-
   private:
     DynamicRowLayoutField(DynamicRowLayoutBufferPtr& dynamicRowLayoutBuffer, uint8_t* basePointer, FIELD_SIZE fieldIndex,
-                          FIELD_SIZE recordSize) : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), dynamicRowLayoutBuffer(dynamicRowLayoutBuffer) {};
-
+                          FIELD_SIZE recordSize)
+        : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer),
+          dynamicRowLayoutBuffer(dynamicRowLayoutBuffer){};
 
     const FIELD_SIZE fieldIndex;
     const FIELD_SIZE recordSize;
@@ -48,8 +47,9 @@ class DynamicRowLayoutField {
     const DynamicRowLayoutBufferPtr& dynamicRowLayoutBuffer;
 };
 
-template <class T, bool boundaryChecks>
-inline DynamicRowLayoutField<T, boundaryChecks> DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer) {
+template<class T, bool boundaryChecks>
+inline DynamicRowLayoutField<T, boundaryChecks>
+DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer) {
     if (boundaryChecks && fieldIndex >= layoutBuffer->getFieldOffSets().size()) {
         NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds!" << layoutBuffer->getFieldOffSets().size() << " >= " << fieldIndex);
     }
@@ -61,7 +61,7 @@ inline DynamicRowLayoutField<T, boundaryChecks> DynamicRowLayoutField<T, boundar
     return DynamicRowLayoutField<T, boundaryChecks>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
 }
 
-template <class T, bool boundaryChecks>
+template<class T, bool boundaryChecks>
 inline T& DynamicRowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
     if (boundaryChecks && recordIndex >= dynamicRowLayoutBuffer->getCapacity()) {
         NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << dynamicRowLayoutBuffer->getCapacity() << " >= " << recordIndex);
@@ -70,6 +70,6 @@ inline T& DynamicRowLayoutField<T, boundaryChecks>::operator[](size_t recordInde
     return *reinterpret_cast<T*>(basePointer + recordSize * recordIndex);
 }
 
-}
+}// namespace NES::NodeEngine::DynamicMemoryLayout
 
-#endif //NES_DYNAMICROWLAYOUTFIELD_HPP
+#endif//NES_DYNAMICROWLAYOUTFIELD_HPP

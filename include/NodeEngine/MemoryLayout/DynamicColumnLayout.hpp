@@ -28,7 +28,7 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 class DynamicColumnLayout;
 typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
 
-class DynamicColumnLayout : public DynamicMemoryLayout{
+class DynamicColumnLayout : public DynamicMemoryLayout {
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
@@ -37,6 +37,6 @@ class DynamicColumnLayout : public DynamicMemoryLayout{
     std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
 };
 
-}
+}// namespace NES::NodeEngine::DynamicMemoryLayout
 
 #endif//NES_DYNAMICCOLUMNLAYOUT_HPP
