@@ -108,7 +108,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         return createMemorySource(memorySourceDescriptor->getSchema(), bufferManager, queryManager, operatorId,
                                   memorySourceDescriptor->getMemoryArea(), memorySourceDescriptor->getMemoryAreaSize());
     } else if (sourceDescriptor->instanceOf<HdfsBinSourceDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating hdfs source");
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating hdfs bin source");
         auto hdfsSourceDescriptor = sourceDescriptor->as<HdfsBinSourceDescriptor>();
         return createHdfsBinSource(hdfsSourceDescriptor->getSchema(), bufferManager, queryManager,
                                 hdfsSourceDescriptor->getNamenode(), hdfsSourceDescriptor->getPort(),
@@ -117,8 +117,8 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
                                 hdfsSourceDescriptor->getNumBuffersToProcess(), hdfsSourceDescriptor->getFrequency(),
                                 hdfsSourceDescriptor->getSkipHeader(), operatorId);
     } else if (sourceDescriptor->instanceOf<HdfsCSVSourceDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating hdfs source");
-        auto hdfsSourceDescriptor = sourceDescriptor->as<HdfsBinSourceDescriptor>();
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating hdfs CSV source");
+        auto hdfsSourceDescriptor = sourceDescriptor->as<HdfsCSVSourceDescriptor>();
         return createHdfsCSVSource(hdfsSourceDescriptor->getSchema(), bufferManager, queryManager,
                                 hdfsSourceDescriptor->getNamenode(), hdfsSourceDescriptor->getPort(),
                                 hdfsSourceDescriptor->getHadoopUser(), hdfsSourceDescriptor->getFilePath(),

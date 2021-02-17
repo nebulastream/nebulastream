@@ -145,8 +145,8 @@ void HdfsCSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         bytes_read = hdfsPread(fs, file, currentPosInFile, line, tupleSize);
         std::string line_str = line;
         size_t found = line_str.find("\n");
-        line_str = line_str.substr(0, found + 1);
-        currentPosInFile = bytes_read > 0 ? currentPosInFile + line_str.length() : -1;
+        line_str = line_str.substr(0, found);
+        currentPosInFile = bytes_read > 0 ? currentPosInFile + line_str.length() + 1 : -1;
     }
 
     while (tupCnt < generated_tuples_this_pass) {
@@ -154,6 +154,7 @@ void HdfsCSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         if (currentPosInFile >= fileSize || currentPosInFile == -1) {
             NES_DEBUG("HdfsCSVSource::fillBuffer: reset tellg()=" << currentPosInFile << " file_size=" << fileSize);
             hdfsSeek(fs, file, 0);
+            currentPosInFile = 0;
             if (!loopOnFile) {
                 NES_DEBUG("HdfsCSVSource::fillBuffer: break because file ended");
                 fileEnded = true;
@@ -164,8 +165,8 @@ void HdfsCSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
                 bytes_read = hdfsPread(fs, file, currentPosInFile, line, tupleSize);
                 std::string line_str = line;
                 size_t found = line_str.find("\n");
-                line_str = line_str.substr(0, found + 1);
-                currentPosInFile = bytes_read > 0 ? currentPosInFile + line_str.length() : -1;
+                line_str = line_str.substr(0, found);
+                currentPosInFile = bytes_read > 0 ? currentPosInFile + line_str.length() + 1 : -1;
             }
         }
 
@@ -174,7 +175,10 @@ void HdfsCSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         std::vector<std::string> tokens;
         std::string line_str = line;
         size_t found = line_str.find("\n");
-        line_str = line_str.substr(0, found + 1);
+        if (found == std::string::npos) {
+            found = bytes_read;
+        }
+        line_str = line_str.substr(0, found);
         NES_DEBUG("HdfsCSVSource line=" << tupCnt << " actual val=" << line_str);
         boost::algorithm::split(tokens, line_str, boost::is_any_of(this->delimiter));
         uint64_t offset = 0;
@@ -233,7 +237,7 @@ void HdfsCSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
             offset += fieldSize;
         }
         tupCnt++;
-        currentPosInFile = bytes_read > 0 ? currentPosInFile + line_str.length() : -1;
+        currentPosInFile = bytes_read > 0 ? currentPosInFile + line_str.length() + 1 : -1;
     }//end of while
 
     buf.setNumberOfTuples(tupCnt);
