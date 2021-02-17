@@ -14,21 +14,21 @@
     limitations under the License.
 */
 
+#include <HDFS/hdfs.h>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <Sinks/Mediums/HdfsSink.hpp>
+#include <Sinks/Mediums/HdfsCSVSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <iostream>
 #include <string>
 #include <utility>
-#include <HDFS/hdfs.h>
 
 namespace NES {
 
-std::string HdfsSink::toString() { return "HDFS_SINK"; }
+std::string HdfsCSVSink::toString() { return "HDFS_SINK"; }
 
-SinkMediumTypes HdfsSink::getSinkMediumType() { return FILE_SINK; }
+SinkMediumTypes HdfsCSVSink::getSinkMediumType() { return FILE_SINK; }
 
-HdfsSink::HdfsSink(SinkFormatPtr format, char *filePath, bool append, QuerySubPlanId parentPlanId)
+HdfsCSVSink::HdfsCSVSink(SinkFormatPtr format, char *filePath, bool append, QuerySubPlanId parentPlanId)
     : SinkMedium(std::move(format), parentPlanId) {
     this->filePath = filePath;
     this->append = append;
@@ -39,38 +39,30 @@ HdfsSink::HdfsSink(SinkFormatPtr format, char *filePath, bool append, QuerySubPl
     hdfsBuilderSetNameNodePort(bld, 9000);
     hdfsBuilderSetUserName(bld, "hdoop");
     fs = hdfsBuilderConnect(bld);
-
-//    NES_DEBUG("HdfsSink: open file=" << filePath);
-//    if (!append) {
-//        outputFile = hdfsStreamBuilderBuild(hdfsStreamBuilderAlloc(fs, filePath, O_WRONLY | O_CREAT));
-//    } else {
-//        outputFile = hdfsStreamBuilderBuild(hdfsStreamBuilderAlloc(fs, filePath, O_WRONLY | O_APPEND));
-//    }
-//    NES_ASSERT(outputFile, "Failed to open file for writing");
 }
 
-HdfsSink::~HdfsSink() {
-    NES_DEBUG("~HdfsSink: close file=" << filePath);
+HdfsCSVSink::~HdfsCSVSink() {
+    NES_DEBUG("HdfsCSVSinkink: close file=" << filePath);
     if (hdfsFileIsOpenForWrite(outputFile)) {
         hdfsCloseFile(fs, outputFile);
     }
 }
 
-const std::string HdfsSink::toString() const {
+const std::string HdfsCSVSink::toString() const {
     std::stringstream ss;
-    ss << "HdfsSink(";
+    ss << "HdfsCSVSink(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
     return ss.str();
 }
 
-void HdfsSink::setup() {}
+void HdfsCSVSink::setup() {}
 
-void HdfsSink::shutdown() {}
+void HdfsCSVSink::shutdown() {}
 
-bool HdfsSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
+bool HdfsCSVSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
 
-    NES_DEBUG("HdfsSink: getSchema medium " << toString() << " format " << sinkFormat->toString() << " and mode "
+    NES_DEBUG("HdfsCSVSink: getSchema medium " << toString() << " format " << sinkFormat->toString() << " and mode "
                                             << this->getAppendAsString());
 
     if (!append) {
@@ -80,7 +72,7 @@ bool HdfsSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     }
 
     if (!inputBuffer.isValid()) {
-        NES_ERROR("HdfsSink::writeData input buffer invalid");
+        NES_ERROR("HdfsCSVSink::writeData input buffer invalid");
         return false;
     }
     if (!schemaWritten) {
@@ -109,16 +101,16 @@ bool HdfsSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
             NES_DEBUG("FileSink::writeData: no schema written");
         }
     } else {
-        NES_DEBUG("HdfsSink::getData: schema already written");
+        NES_DEBUG("HdfsCSVSink::getData: schema already written");
     }
 
-    NES_DEBUG("HdfsSink::getData: write data to file=" << filePath);
+    NES_DEBUG("HdfsCSVSink::getData: write data to file=" << filePath);
     auto dataBuffers = sinkFormat->getData(inputBuffer);
 
     for (auto buffer : dataBuffers) {
-        NES_DEBUG("HdfsSink::writeData: write buffer of size " << buffer.getNumberOfTuples());
+        NES_DEBUG("HdfsCSVSink::writeData: write buffer of size " << buffer.getNumberOfTuples());
         hdfsWrite(fs, outputFile, (char*) buffer.getBuffer(), buffer.getBufferSize());
-        NES_DEBUG("HdfsSink::writeData: data written: " << (char*) buffer.getBuffer());
+        NES_DEBUG("HdfsCSVSink::writeData: data written: " << (char*) buffer.getBuffer());
     }
     hdfsFlush(fs, outputFile);
     hdfsCloseFile(fs, outputFile);
@@ -126,6 +118,6 @@ bool HdfsSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     return true;
 }
 
-const char *HdfsSink::getFilePath() const { return filePath; }
+const char * HdfsCSVSink::getFilePath() const { return filePath; }
 
 }// namespace NES

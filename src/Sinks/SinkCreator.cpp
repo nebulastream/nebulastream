@@ -23,7 +23,8 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
-#include <Sinks/Mediums/HdfsSink.hpp>
+#include <Sinks/Mediums/HdfsBinSink.hpp>
+#include <Sinks/Mediums/HdfsCSVSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
@@ -53,10 +54,16 @@ const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, QuerySubPlanId paren
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createHdfsSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+const DataSinkPtr createHdfsBinSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                      char *filePath, bool append) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<HdfsSink>(format, filePath, append, parentPlanId);
+    return std::make_shared<HdfsBinSink>(format, filePath, append, parentPlanId);
+}
+
+const DataSinkPtr createHdfsCSVSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                    char *filePath, bool append) {
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<HdfsCSVSink>(format, filePath, append, parentPlanId);
 }
 
 const DataSinkPtr createJSONFileSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,

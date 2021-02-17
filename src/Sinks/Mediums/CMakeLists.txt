@@ -17,7 +17,8 @@ add_source_nes(
         ZmqSink.cpp
         SinkMedium.cpp
         PrintSink.cpp
-        HdfsSink.cpp
+        HdfsBinSink.cpp
+        HdfsCSVSink.cpp
 )
 
 if(NES_USE_KAFKA)

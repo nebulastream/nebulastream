@@ -79,7 +79,7 @@ const DataSinkPtr createBinaryNESFileSink(SchemaPtr schema, QuerySubPlanId paren
  * @param bool indicating if data is appended (true) or overwritten (false)
  * @return a data sink pointer
  */
-const DataSinkPtr createHdfsSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+const DataSinkPtr createHdfsBinSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                           char *filePath, bool append);
 
 /**

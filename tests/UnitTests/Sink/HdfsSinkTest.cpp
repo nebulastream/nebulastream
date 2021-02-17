@@ -41,6 +41,7 @@ class HdfsSinkTest : public testing::Test {
     std::array<uint32_t, 8> test_data;
     bool write_result;
     char *path_to_bin_file;
+    char *path_to_csv_file;
 
     static void SetUpTestCase() {
         NES::setupLogging("HdfsSinkTest.log", NES::LOG_DEBUG);
@@ -55,6 +56,7 @@ class HdfsSinkTest : public testing::Test {
             Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
         write_result = false;
         path_to_bin_file = "/testData/sink.bin";
+        path_to_csv_file = "/testData/sink.csv";
     }
 
     /* Called after a single test. */
@@ -67,10 +69,11 @@ class HdfsSinkTest : public testing::Test {
         hdfsBuilderSetUserName(bld, "hdoop");
         hdfsFS fs = hdfsBuilderConnect(bld);
         hdfsDelete(fs, path_to_bin_file, 0);
+        hdfsDelete(fs, path_to_csv_file, 0);
     }
 };
 
-TEST_F(HdfsSinkTest, testHdfsSink) {
+TEST_F(HdfsSinkTest, testHdfsBinSink) {
     // Set up hdfs builder
     hdfsBuilder *bld = hdfsNewBuilder();
     hdfsBuilderSetForceNewInstance(bld);
@@ -89,7 +92,7 @@ TEST_F(HdfsSinkTest, testHdfsSink) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr hdfsSink = createHdfsSink(test_schema, 0, nodeEngine, path_to_bin_file, true);
+    const DataSinkPtr hdfsSink = createHdfsBinSink(test_schema, 0, nodeEngine, path_to_bin_file, true);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -130,6 +133,85 @@ TEST_F(HdfsSinkTest, testHdfsSink) {
     deszBuffer.setNumberOfTuples(4);
 
     hdfsFile file = hdfsStreamBuilderBuild(hdfsStreamBuilderAlloc(fs, path_to_bin_file, O_RDONLY));
+
+    if (file) {
+        hdfsRead(fs, file, deszBuffer.getBuffer(), buffer.getBufferSize());
+        std::string bufferContent2 = UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema);
+        NES_DEBUG("HdfsSinkTest deszBuffer content: " << bufferContent2);
+        hdfsCloseFile(fs, file);
+    } else {
+        FAIL();
+    }
+
+    NES_DEBUG("HdfsSinkTest: EXPECTED: " << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+    NES_DEBUG("HdfsSinkTest: RESULT: " << UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema));
+
+    EXPECT_EQ(UtilityFunctions::prettyPrintTupleBuffer(deszBuffer, test_schema),
+              UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema));
+
+    buffer.release();
+}
+
+TEST_F(HdfsSinkTest, testHdfsCSVSink) {
+    // Set up hdfs builder
+    hdfsBuilder *bld = hdfsNewBuilder();
+    hdfsBuilderSetForceNewInstance(bld);
+    hdfsBuilderSetNameNode(bld, "192.168.1.104");
+    hdfsBuilderSetNameNodePort(bld, 9000);
+    hdfsBuilderSetUserName(bld, "hdoop");
+
+    // Create hdfs test file
+    hdfsFS fs_aux = hdfsBuilderConnect(bld);
+    hdfsFile outputFile = hdfsStreamBuilderBuild(hdfsStreamBuilderAlloc(fs_aux, path_to_csv_file, O_WRONLY | O_CREAT));
+    hdfsWrite(fs_aux, outputFile, "", 0);
+    hdfsFlush(fs_aux, outputFile);
+    hdfsCloseFile(fs_aux, outputFile);
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    const DataSinkPtr hdfsSink = createHdfsBinSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
+    for (uint64_t i = 0; i < 2; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
+        }
+    }
+    buffer.setNumberOfTuples(4);
+    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    NES_DEBUG("HdfsSinkTest buffer content: " << bufferContent);
+    write_result = hdfsSink->writeData(buffer, wctx);
+
+    EXPECT_TRUE(write_result);
+
+    //deserialize schema
+    std::string path = path_to_csv_file;
+    uint64_t idx = path.rfind(".");
+    std::string shrinkedPath = path.substr(0, idx + 1);
+    std::string schemaFile = "../tests/test_data/sink.schema";
+    NES_DEBUG("HdfsSinkTest: load=" << schemaFile);
+    ifstream testFileSchema(schemaFile.c_str());
+    EXPECT_TRUE(testFileSchema.good());
+    SerializableSchema* serializedSchema = new SerializableSchema();
+    serializedSchema->ParsePartialFromIstream(&testFileSchema);
+    SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
+    //test SCHEMA
+    NES_DEBUG("HdfsSinkTest: deserialized schema=" << ptr->toString());
+    EXPECT_EQ(ptr->toString(), test_schema->toString());
+
+    // Create new builder for the reader
+    hdfsBuilder *builder = hdfsNewBuilder();
+    hdfsBuilderSetForceNewInstance(builder);
+    hdfsBuilderSetNameNode(builder, "192.168.1.104");
+    hdfsBuilderSetNameNodePort(builder, 9000);
+    hdfsBuilderSetUserName(builder, "hdoop");
+
+    hdfsFS fs = hdfsBuilderConnect(builder);
+
+    auto deszBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    deszBuffer.setNumberOfTuples(4);
+
+    hdfsFile file = hdfsStreamBuilderBuild(hdfsStreamBuilderAlloc(fs, path_to_csv_file, O_RDONLY));
 
     if (file) {
         hdfsRead(fs, file, deszBuffer.getBuffer(), buffer.getBufferSize());

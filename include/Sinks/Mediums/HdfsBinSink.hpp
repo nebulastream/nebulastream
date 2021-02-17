@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef HdfsSink_HPP
-#define HdfsSink_HPP
+#ifndef HdfsBinSink_HPP
+#define HdfsBinSink_HPP
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
@@ -28,7 +28,7 @@ namespace NES {
 /**
  * @brief this class implements the File sing
  */
-class HdfsSink : public SinkMedium {
+class HdfsBinSink : public SinkMedium {
   public:
     /**
      * @brief constructor that creates an empty file sink using a schema
@@ -37,12 +37,12 @@ class HdfsSink : public SinkMedium {
      * @param filePath location of file on sink server
      * @param modus of writting (overwrite or append)
      */
-    explicit HdfsSink(SinkFormatPtr format, char* filePath, bool append, QuerySubPlanId parentPlanId);
+    explicit HdfsBinSink(SinkFormatPtr format, char* filePath, bool append, QuerySubPlanId parentPlanId);
 
     /**
      * @brief dtor
      */
-    ~HdfsSink();
+    ~HdfsBinSink();
 
     /**
      * @brief method to override virtual setup function
@@ -90,7 +90,7 @@ class HdfsSink : public SinkMedium {
     hdfsFile outputFile;
     hdfsFS fs;
 };
-typedef std::shared_ptr<HdfsSink> HdfsSinkPtr;
+typedef std::shared_ptr<HdfsBinSink> HdfsBinSinkPtr;
 }// namespace NES
 
-#endif// HdfsSink_HPP
+#endif// HdfsBinSink_HPP
