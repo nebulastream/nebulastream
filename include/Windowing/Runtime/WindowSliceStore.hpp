@@ -115,10 +115,7 @@ class WindowSliceStore {
      */
     inline std::vector<PartialAggregateType>& getPartialAggregates() { return partialAggregates; }
 
-
-    std::mutex& mutex() const {
-        return storeMutex;
-    }
+    std::mutex& mutex() const { return storeMutex; }
 
     const PartialAggregateType defaultValue;
     uint64_t nextEdge = 0;
