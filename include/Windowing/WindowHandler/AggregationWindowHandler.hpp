@@ -96,6 +96,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @brief triggers all ready windows.
      */
     void trigger() override {
+        std::unique_lock lock(windowMutex);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window action "
                                               << executableWindowAction->toString()
                                               << " distribution type=" << windowDefinition->getDistributionType()->toString());
@@ -166,6 +167,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     auto getWindowAction() { return executableWindowAction; }
 
+    void updateMaxTs(uint64_t ts, uint64_t originId) override {
+        std::unique_lock lock(windowMutex);
+        AbstractWindowHandler::updateMaxTs(ts, originId);
+    }
+
   private:
     StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
@@ -173,6 +179,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
     std::string handlerType;
     uint64_t id;
+    mutable std::mutex windowMutex;
 };
 
 }// namespace NES::Windowing
