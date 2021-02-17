@@ -32,8 +32,8 @@
 
 namespace NES {
 
-QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog)
-    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), streamCatalog(streamCatalog) {
+QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog, bool enableSemanticQueryValidation)
+    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), streamCatalog(streamCatalog), enableSemanticQueryValidation(enableSemanticQueryValidation) {
     NES_DEBUG("QueryService()");
 }
 
@@ -49,6 +49,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         SyntacticQueryValidation syntacticQueryValidation;
         syntacticQueryValidation.isValid(queryString);
     } catch (const std::exception& exc) {
+        NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
         queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
         queryCatalog->setQueryFaliureReason(queryId, exc.what());
         throw InvalidQueryException(exc.what());
@@ -65,14 +66,17 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
 
-    NES_INFO("QueryService: Executing Semantic validation");
-    try{
-        SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalog);
-        semanticQueryValidation->isSatisfiable(query);
-    } catch (const std::exception& exc) {
-        queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
-        queryCatalog->setQueryFaliureReason(queryId, exc.what());
-        throw InvalidQueryException(exc.what());
+    if (enableSemanticQueryValidation){
+        NES_INFO("QueryService: Executing Semantic validation");
+        try{
+            SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalog);
+            semanticQueryValidation->isSatisfiable(query);
+        } catch (const std::exception& exc) {
+            NES_ERROR("QueryService: Semantic Query Validation: " + std::string(exc.what()));
+            queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
+            queryCatalog->setQueryFaliureReason(queryId, exc.what());
+            throw InvalidQueryException(exc.what());
+        }
     }
 
     NES_INFO("QueryService: Queuing the query for the execution");

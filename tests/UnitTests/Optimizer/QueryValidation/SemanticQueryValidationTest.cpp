@@ -182,7 +182,7 @@ TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
 }
 
 
-TEST_F(SemanticQueryValidationTest, asOperatorTest) {
+TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorTest) {
     NES_INFO("as operator test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
@@ -195,16 +195,31 @@ TEST_F(SemanticQueryValidationTest, asOperatorTest) {
     CallValidation(queryString);
 }
 
-TEST_F(SemanticQueryValidationTest, asOperatorTest2) {
+// projection operator
+
+TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorTestnegative) {
+    NES_INFO("as operator test");
+
+    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+
+    std::string queryString =
+        "Query::from(\"default_logical\").as(\"dl\").filter(Attribute(\"value\") > 100); "
+        ;
+    
+    CallValidation(queryString);
+}
+
+TEST_F(SemanticQueryValidationTest, DISABLED_projectionNegativeTest) {
     NES_INFO("as operator test 2");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
 
     auto query = Query::from("default_logical")
-                     .filter(Attribute("id") < 42)
                      .map(Attribute("value") = Attribute("value") + 2)
-                     .as("x")
+                     .project(Attribute("id").rename("new_id"), Attribute("value"))
+                     .filter(Attribute("id") < 42)
                      .sink(FileSinkDescriptor::create(""));
 
     semanticQueryValidation->isSatisfiable(std::make_shared<Query>(query));

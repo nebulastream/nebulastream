@@ -164,8 +164,8 @@ class CoordinatorConfig {
     void setNumWorkerThreads(uint16_t numWorkerThreads);
 
     /**
-* @brief gets a ConfigOption object with buffer size in bytes
-*/
+    * @brief gets a ConfigOption object with buffer size in bytes
+    */
     IntConfigOption getBufferSizeInBytes();
 
     /**
@@ -227,6 +227,18 @@ class CoordinatorConfig {
      */
     void setQueryMergerRule(std::string queryMergerRule);
 
+    /**
+     * @brief Get the value for enabling SemanticQueryValidation
+     * @return semantic validation config option
+     */
+    BoolConfigOption getEnableSemanticQueryValidation();
+
+    /**
+     * @brief Set the value for enableing SemanticQueryValidation
+     * @param enableSemanticQueryValidation: enable or disable semantic validation
+     */
+    void setEnableSemanticQueryValidation(bool enableSemanticQueryValidation);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -247,6 +259,7 @@ class CoordinatorConfig {
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
+    BoolConfigOption enableSemanticQueryValidation;
 };
 
 }// namespace NES
