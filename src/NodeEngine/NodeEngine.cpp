@@ -317,7 +317,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
             if (queryManager->stopQuery(deployedQEPs[querySubPlanId])) {
                 NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " succeeded");
             } else {
-                NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " failed");
+                NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed");
                 return false;
             }
         }
