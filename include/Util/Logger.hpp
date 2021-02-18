@@ -196,7 +196,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 /// I am aware that we do not like __ before variable names but here we need them
 /// to avoid name collions, e.g., __buffer, __stacktrace
 /// that should not be a problem because of the scope, however, better be safe than sorry :P
-#ifdef NES_DEBUG
+#ifdef NES_DEBUG_MODE
 //Note Verify is only evaluated in Debug but not in Release
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
