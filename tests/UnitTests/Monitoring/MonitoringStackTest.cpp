@@ -265,7 +265,7 @@ TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, getSchema(measuredVal, "")));
     NES_DEBUG("Total: " << measuredVal.getTotal());
     NES_DEBUG("CPU1: " << measuredVal.getValues(1));
-    NES_DEBUG("CPU" << measuredVal.getNumCores() << ": " << measuredVal.getValues(measuredVal.getNumCores()-1));
+    NES_DEBUG("CPU" << measuredVal.getNumCores() << ": " << measuredVal.getValues(measuredVal.getNumCores() - 1));
 }
 
 TEST_F(MonitoringStackTest, testSerializationGroups) {
