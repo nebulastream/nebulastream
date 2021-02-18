@@ -945,7 +945,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     srcConf->setSourceConfig("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(10000);
-    srcConf->setSourceFrequency(0);
+    srcConf->setSourceFrequency(1);//TODO: change this to 0 if we have the the end of stream
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("stream");
     srcConf->setSkipHeader(true);
