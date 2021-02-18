@@ -19,17 +19,17 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -834,9 +834,11 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
  */
 TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
     auto query = Query::from("default_logical")
-        .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)), Sum(Attribute("value")))
-        .windowByKey(Attribute("value"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)), Sum(Attribute("id")))
-        .sink(FileSinkDescriptor::create(""));
+                     .windowByKey(Attribute("id"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                  Sum(Attribute("value")))
+                     .windowByKey(Attribute("value"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                  Sum(Attribute("id")))
+                     .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto phase = TypeInferencePhase::create(streamCatalog);
@@ -888,11 +890,12 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto subQuery = Query::from("default_logical2");
 
-
     auto query = Query::from("default_logical")
-        .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
-        .windowByKey(Attribute("default_logical$f1"), TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)), Sum(Attribute("default_logical2$f3")))
-        .sink(FileSinkDescriptor::create(""));
+                     .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
+                     .windowByKey(Attribute("default_logical$f1"),
+                                  TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                  Sum(Attribute("default_logical2$f3")))
+                     .sink(FileSinkDescriptor::create(""));
 
     auto phase = TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
@@ -934,7 +937,6 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
         Schema::create()->addField("f7", BasicType::INT32)->addField("f8", BasicType::INT8)->addField("ts", BasicType::INT64);
     streamCatalog->addLogicalStream("default_logical4", inputSchema4);
 
-
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto windowType3 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -943,9 +945,9 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
 
     auto subQuery2 = Query::from("default_logical3").joinWith(subQuery3, Attribute("f5"), Attribute("f7"), windowType3);
     auto query = Query::from("default_logical")
-        .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
-        .joinWith(subQuery2, Attribute("f1"), Attribute("f5"), windowType2)
-        .sink(FileSinkDescriptor::create(""));
+                     .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
+                     .joinWith(subQuery2, Attribute("f1"), Attribute("f5"), windowType2)
+                     .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
     auto phase = TypeInferencePhase::create(streamCatalog);
@@ -1000,7 +1002,6 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
     ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical4$f8"));
     ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical4$ts"));
 
-
     SchemaPtr joinOutSchema2 = joinOperators[1]->getOutputSchema();
     NES_DEBUG("expected join2= " << joinOperators[1]->getOutputSchema()->toString());
     ASSERT_TRUE(joinOutSchema2->fields.size() == 9);
@@ -1052,6 +1053,5 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
     ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$f8"));
     ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$ts"));
 }
-
 
 }// namespace NES
