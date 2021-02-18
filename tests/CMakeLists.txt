@@ -451,9 +451,9 @@ target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
 
 ### MemorySourceIntegrationTest ###
-add_executable(memory-source-test "Integration/MemorySourceIntegrationTest.cpp")
-target_link_libraries(memory-source-test nes ${GTEST_LIBRARIES})
-add_test(NAME memory-source-test COMMAND memory-source-test)
+add_executable(memory-source-integration-test "Integration/MemorySourceIntegrationTest.cpp")
+target_link_libraries(memory-source-integration-test nes ${GTEST_LIBRARIES})
+add_test(NAME memory-source-integration-test COMMAND memory-source-integration-test)
 
 ### TestHarnessUtilTest ###
 add_executable(test-harness-util-test "Integration/TestHarnessUtilTest.cpp")
