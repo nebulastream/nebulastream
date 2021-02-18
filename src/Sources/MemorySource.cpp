@@ -32,6 +32,29 @@ MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea
 }
 
 std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
+    NES_DEBUG("MemorySource::receiveData called on " << operatorId);
+    auto optBuf = this->bufferManager->getBufferTimeout(std::chrono::milliseconds(5000));
+    if (!optBuf) {
+        NES_ERROR("buffer could not be delivered after 5 sec");
+        return std::nullopt;
+    }
+    memcpy(optBuf.value().getBuffer(), memoryArea.get(), memoryAreaSize);
+    auto numberOfTuples = std::floor(double(memoryAreaSize) / double(schema->getSchemaSizeInBytes()));
+    optBuf.value().setNumberOfTuples(numberOfTuples);
+
+    NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << optBuf.value().getNumberOfTuples());
+    if (optBuf.value().getNumberOfTuples() == 0) {
+        return std::nullopt;
+    } else {
+        return optBuf.value();
+    }
+
+
+
+
+
+
+
     NES_ASSERT(false, "this must not be invoked");
     return std::nullopt;
 }
@@ -39,30 +62,32 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
 const std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
-void MemorySource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
-    std::string thName = "MemSrc-" + std::to_string(operatorId);
-    setThreadName(thName.c_str());
 
-    auto recordSize = schema->getSchemaSizeInBytes();
-    auto bufferSize = bufferManager->getBufferSize();
-    auto numOfBuffers = memoryAreaSize < bufferSize ? 1 : std::ceil(double(memoryAreaSize) / double(bufferSize));
-    auto* pointer = memoryArea.get();
-    auto remainingSize = memoryAreaSize;
-    NES_ASSERT2_FMT(bufferSize % recordSize == 0,
-                    "A record might span multiple buffers and this is not supported bufferSize=" << bufferSize
-                                                                                                 << " recordSize=" << recordSize);
-    for (auto i = 0u; i < numOfBuffers; ++i) {
-        auto buffer = bufferManager->getBufferBlocking();
-        auto length = std::min<size_t>(bufferSize, remainingSize);
-        auto recordsPerBuffer = length / recordSize;
-        memcpy(buffer.getBuffer(), pointer, length);
-        buffer.setOriginId(operatorId);
-        buffer.setNumberOfTuples(recordsPerBuffer);
-        queryManager->addWork(operatorId, buffer);
-        pointer += length;
-        remainingSize -= length;
-    }
-    NES_ASSERT2_FMT(remainingSize == 0, "something wrong with remaining size " << remainingSize);
-}
+//void MemorySource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
+//    std::string thName = "MemSrc-" + std::to_string(operatorId);
+//    setThreadName(thName.c_str());
+//
+//    auto recordSize = schema->getSchemaSizeInBytes();
+//    auto bufferSize = bufferManager->getBufferSize();
+//    auto numOfBuffers = memoryAreaSize < bufferSize ? 1 : std::ceil(double(memoryAreaSize) / double(bufferSize));
+//    auto* pointer = memoryArea.get();
+//    auto remainingSize = memoryAreaSize;
+//    NES_ASSERT2(numOfBuffers == 1, "memory area larger than one buffer is not supported");
+////    NES_ASSERT2(bufferSize % recordSize == 0,
+////                "A record might span multiple buffers and this is not supported bufferSize=" << bufferSize
+////                                                                                             << " recordSize=" << recordSize);
+//    for (auto i = 0u; i < numOfBuffers; ++i) {
+//        auto buffer = bufferManager->getBufferBlocking();
+//        auto length = std::min<size_t>(bufferSize, remainingSize);
+//        auto recordsPerBuffer = length / recordSize;
+//        memcpy(buffer.getBuffer(), pointer, length);
+//        buffer.setOriginId(operatorId);
+//        buffer.setNumberOfTuples(recordsPerBuffer);
+//        queryManager->addWork(operatorId, buffer);
+//        pointer += length;
+//        remainingSize -= length;
+//    }
+//    NES_ASSERT2(remainingSize == 0, "something wrong with remaining size " << remainingSize);
+//}
 
 }// namespace NES

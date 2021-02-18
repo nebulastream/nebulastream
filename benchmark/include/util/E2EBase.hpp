@@ -50,6 +50,7 @@ class E2EBase {
 
     E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode);
     ~E2EBase();
+    static std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode);
 
   private:
     /**
@@ -64,7 +65,7 @@ class E2EBase {
     void setup();
 
     /*
-     * setup 1-n sources
+     * @brief this method will setup 1-n sources
      */
     void setupSources();
 

@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <util/E2EBase.hpp>
 
 using namespace NES;
@@ -21,12 +22,12 @@ const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 1000000;
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 10;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
-const DebugLevel DEBUGL_LEVEL = NES::LOG_NONE;
+const DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
 static uint64_t portOffset = 13;
-std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
+std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     if (mode == E2EBase::InputOutputMode::FileMode) {
         return "FileMode";
     } else if (mode == E2EBase::InputOutputMode::MemoryMode) {
@@ -41,8 +42,7 @@ std::string E2EBase::runExperiment(uint64_t threadCntWorker, uint64_t threadCntC
     std::cout << "setup experiment with parameter threadCntWorker=" << threadCntWorker
               << " threadCntCoordinator=" << threadCntCoordinator << " sourceCnt=" << sourceCnt
               << " mode=" << getInputOutputModeAsString(mode) << " query=" << query << std::endl;
-    E2EBasePtr test =
-        std::make_shared<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, E2EBase::InputOutputMode::FileMode);
+    E2EBasePtr test = std::make_shared<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, mode);
 
     std::cout << "run query" << std::endl;
     test->runQuery(query);
@@ -73,7 +73,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             currentStat->setProcessedBuffers(it->getProcessedBuffers());
             currentStat->setProcessedTasks(it->getProcessedTasks());
             currentStat->setProcessedTuple(it->getProcessedTuple());
-            NES_WARNING("Statistics at ts=" << std::time(0) << " measurement=" << it->getQueryStatisticsAsString());
+            std::cout << "Statistics at ts=" << std::time(0) << " measurement=" << it->getQueryStatisticsAsString() << std::endl;
             NES_ASSERT(currentStat->getProcessedTuple() != 0, "system not ready, this should not happen");
             statisticsVec.push_back(currentStat);
         }
@@ -100,8 +100,8 @@ E2EBase::~E2EBase() {
 
 void E2EBase::setupSources() {
     schema = Schema::create()
-                 ->addField(createField("value", UINT64))
                  ->addField(createField("id", UINT64))
+                 ->addField(createField("value", UINT64))
                  ->addField(createField("timestamp", UINT64));
 
     portOffset *= portOffset + 123;
@@ -114,22 +114,47 @@ void E2EBase::setupSources() {
     out.close();
     wrk1->registerLogicalStream("input", testSchemaFileName);
 
-    SourceConfigPtr srcConf = SourceConfig::create();
-    srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/benchmark.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->setSourceFrequency(0);
-    srcConf->setNumberOfBuffersToProduce(NUMBER_OF_BUFFER_TO_PRODUCE);
-    srcConf->setLogicalStreamName("input");
-    srcConf->setSkipHeader(true);
-    //register physical stream
-    for (uint64_t i = 0; i < sourceCnt; i++) {
-        srcConf->setPhysicalStreamName("test_stream" + std::to_string(i));
-        PhysicalStreamConfigPtr inputStream = PhysicalStreamConfig::create(srcConf);
-        wrk1->registerPhysicalStream(inputStream);
+    if (mode == InputOutputMode::FileMode) {
+        SourceConfigPtr srcConf = SourceConfig::create();
+        srcConf->setSourceType("CSVSource");
+        srcConf->setSourceConfig("../tests/test_data/benchmark.csv");
+        srcConf->setNumberOfTuplesToProducePerBuffer(0);
+        srcConf->setSourceFrequency(0);
+        srcConf->setNumberOfBuffersToProduce(NUMBER_OF_BUFFER_TO_PRODUCE);
+        srcConf->setLogicalStreamName("input");
+        srcConf->setSkipHeader(true);
+        //register physical stream
+        for (uint64_t i = 0; i < sourceCnt; i++) {
+            srcConf->setPhysicalStreamName("test_stream" + std::to_string(i));
+            PhysicalStreamConfigPtr inputStream = PhysicalStreamConfig::create(srcConf);
+            wrk1->registerPhysicalStream(inputStream);
+        }
+    } else if (mode == InputOutputMode::MemoryMode) {
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+        };
+
+        auto memAreaSize = sizeof(Record) * 170;//nearly full buffer
+        auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
+
+        auto* records = reinterpret_cast<Record*>(memArea);
+        size_t recordSize = schema->getSchemaSizeInBytes();
+        size_t numRecords = memAreaSize / recordSize;
+        for (auto i = 0u; i < numRecords; ++i) {
+            records[i].id = i;
+            //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+            records[i].value = i % 10;
+            records[i].timestamp = i;
+        }
+
+        AbstractPhysicalStreamConfigPtr conf =
+            MemorySourceStreamConfig::create("MemorySource", "test_stream",
+                                             "input", memArea, memAreaSize);
+        wrk1->registerPhysicalStream(conf);
     }
 }
-
 void E2EBase::setup() {
     std::cout << "setup" << std::endl;
 
@@ -221,6 +246,7 @@ std::string E2EBase::getResult() {
 void E2EBase::tearDown() {
     std::cout << "E2EBase: Remove query" << std::endl;
     NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
+    std::cout << "E2EBase: wait for stop" << std::endl;
     NES_ASSERT(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog), "check stop failed");
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;
@@ -230,6 +256,5 @@ void E2EBase::tearDown() {
     std::cout << "E2EBase: Stop Coordinator" << std::endl;
     bool retStopCord = crd->stopCoordinator(true);
     NES_ASSERT(retStopCord, "retStopCord");
-    ;
     std::cout << "E2EBase: Test finished" << std::endl;
 }
