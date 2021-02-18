@@ -62,6 +62,7 @@ class TestHarness {
          */
     template<typename T>
     void pushElement(T element, uint64_t sourceIdx) {
+        // TODO #1533: fix the logic of pushing sourceIdx
         if (sourceIdx >= sourceSchemas.size()) {
             NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
         }
@@ -264,6 +265,7 @@ class TestHarness {
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
+        NES_DEBUG("TestHarness: outputSchema: " << queryCatalog->getQueryCatalogEntry(queryId)->getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString());
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
                    "The size of output struct does not match output schema."
                    " Output struct:"
