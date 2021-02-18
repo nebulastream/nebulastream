@@ -25,7 +25,7 @@ namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                            NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                           uint64_t numBuffersToProcess, uint64_t frequency, OperatorId operatorId)
+                           uint64_t numBuffersToProcess, std::chrono::milliseconds frequency, OperatorId operatorId)
     : DataSource(std::move(schema), std::move(bufferManager), std::move(queryManager), operatorId), memoryArea(memoryArea),
       memoryAreaSize(memoryAreaSize), currentPositionInBytes(0) {
     this->numBuffersToProcess = numBuffersToProcess;
