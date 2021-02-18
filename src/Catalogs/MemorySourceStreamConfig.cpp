@@ -36,7 +36,7 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType, std::
     this->physicalStreamName = physicalStreamName;
     this->logicalStreamName = logicalStreamName;
     this->numberOfBuffersToProduce = numBuffersToProcess;
-    this->sourceFrequency = frequency;
+    this->sourceFrequency = std::chrono::milliseconds(frequency);;
 }
 
 const std::string MemorySourceStreamConfig::getSourceType() { return sourceType; }

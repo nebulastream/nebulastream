@@ -19,14 +19,14 @@
 
 namespace NES {
 
-MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess, uint64_t frequency)
+MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency)
     : SourceDescriptor(std::move(schema)), memoryArea(memoryArea), memoryAreaSize(memoryAreaSize),
       numBuffersToProcess(numBuffersToProcess), frequency(frequency) {
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
 }
 
 std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea,
-                                                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, uint64_t frequency) {
+                                                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<MemorySourceDescriptor>(schema, memoryArea, memoryAreaSize, numBuffersToProcess, frequency);
@@ -45,5 +45,5 @@ std::shared_ptr<uint8_t> MemorySourceDescriptor::getMemoryArea() { return memory
 
 size_t MemorySourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize; }
 uint64_t MemorySourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
-uint64_t MemorySourceDescriptor::getFrequency() const { return frequency; }
+std::chrono::milliseconds MemorySourceDescriptor::getFrequency() const { return frequency; }
 }// namespace NES

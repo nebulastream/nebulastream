@@ -94,7 +94,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
                                        std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                       uint64_t frequency) {
+                                       std::chrono::milliseconds frequency) {
     return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess, frequency, operatorId);
 }
 
