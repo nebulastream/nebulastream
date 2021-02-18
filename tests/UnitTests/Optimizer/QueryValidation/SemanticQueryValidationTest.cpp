@@ -165,7 +165,7 @@ TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
 
 
 TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorTest) {
-    NES_INFO("as operator test");
+    NES_INFO("asOperatorTest");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
@@ -177,23 +177,37 @@ TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorTest) {
     CallValidation(queryString);
 }
 
-// projection operator
-
-TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorTestnegative) {
-    NES_INFO("as operator test");
+TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorNegativeTest) {
+    NES_INFO("asOperatorNegativeTest");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
 
     std::string queryString =
-        "Query::from(\"default_logical\").as(\"dl\").filter(Attribute(\"value\") > 100); "
+        "Query::from(\"default_logical\").as(\"value\").filter(Attribute(\"value\") > 100); "
         ;
     
     CallValidation(queryString);
+}
+
+TEST_F(SemanticQueryValidationTest, DISABLED_projectionTest) {
+    NES_INFO("projectionTest");
+
+    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+
+    auto query = Query::from("default_logical")
+                     .project(Attribute("id").rename("new_id"), Attribute("value"))
+                     .filter(Attribute("new_id") < 42)
+                     .map(Attribute("value") = Attribute("value") + 2)
+                     .sink(FileSinkDescriptor::create(""));
+
+    semanticQueryValidation->isSatisfiable(std::make_shared<Query>(query));
+
 }
 
 TEST_F(SemanticQueryValidationTest, DISABLED_projectionNegativeTest) {
-    NES_INFO("as operator test 2");
+    NES_INFO("projectionNegativeTest");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
