@@ -29,7 +29,7 @@ MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea
     : DataSource(std::move(schema), std::move(bufferManager), std::move(queryManager), operatorId), memoryArea(memoryArea),
       memoryAreaSize(memoryAreaSize), currentPositionInBytes(0) {
     this->numBuffersToProcess = numBuffersToProcess;
-    this->gatheringInterval = frequency;
+    this->gatheringInterval = std::chrono::milliseconds(frequency);;
     NES_DEBUG("MemorySource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
