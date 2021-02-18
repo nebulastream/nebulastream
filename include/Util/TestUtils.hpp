@@ -353,7 +353,8 @@ class TestUtils {
                 return true;
             }
             NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer="
-                      << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks());
+                      << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
+                      << " expected=" << expectedResult);
 
             sleep(1);
         }

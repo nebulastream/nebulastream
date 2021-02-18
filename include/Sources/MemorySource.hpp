@@ -71,6 +71,7 @@ class MemorySource : public DataSource {
   private:
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
+    uint64_t currentPositionInBytes;
 };
 
 typedef std::shared_ptr<MemorySource> MemorySourcePtr;
