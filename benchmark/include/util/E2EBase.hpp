@@ -29,6 +29,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <benchmark/gbenchmark/src/gbenchmark/include/benchmark/benchmark.h>
 #include <iostream>
+#include <chrono>
 
 using namespace std;
 
@@ -64,7 +65,7 @@ class E2EBase {
      */
     void setup();
 
-    /*
+    /**
      * @brief this method will setup 1-n sources
      */
     void setupSources();
@@ -92,6 +93,7 @@ class E2EBase {
     uint64_t sourceCnt;
     InputOutputMode mode;
 
+    std::chrono::nanoseconds runtime;
     NES::NesCoordinatorPtr crd;
     NES::NesWorkerPtr wrk1;
 

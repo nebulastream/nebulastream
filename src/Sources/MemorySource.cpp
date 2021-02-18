@@ -25,9 +25,12 @@ namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                            NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                           uint64_t numBuffersToProcess, uint64_t frequency,
                            OperatorId operatorId)
     : DataSource(std::move(schema), std::move(bufferManager), std::move(queryManager), operatorId), memoryArea(memoryArea),
-      memoryAreaSize(memoryAreaSize) {
+      memoryAreaSize(memoryAreaSize)  {
+    this->numBuffersToProcess = numBuffersToProcess;
+    this->gatheringInterval = frequency;
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
@@ -49,14 +52,7 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
         return optBuf.value();
     }
 
-
-
-
-
-
-
     NES_ASSERT(false, "this must not be invoked");
-    return std::nullopt;
 }
 
 const std::string MemorySource::toString() const { return "MemorySource"; }

@@ -18,12 +18,12 @@
 
 using namespace NES;
 
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 1000000;
-const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 10;
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 100000;
+const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 1  ;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
 const DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
-const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
+const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576*4;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
 static uint64_t portOffset = 13;
@@ -33,7 +33,7 @@ std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     } else if (mode == E2EBase::InputOutputMode::MemoryMode) {
         return "MemoryMode";
     } else {
-        return "unkown mode";
+        return "Unkown mode";
     }
 }
 
@@ -49,7 +49,6 @@ std::string E2EBase::runExperiment(uint64_t threadCntWorker, uint64_t threadCntC
 
     std::cout << "E2EBase: output result" << std::endl;
     auto res = test->getResult();
-    test.reset();
     return res;
 }
 
@@ -62,7 +61,6 @@ E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64
 }
 
 void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
-
     for (uint64_t i = 0; i < EXPERIMENT_RUNTIME_IN_SECONDS + 1; ++i) {
         int64_t nextPeriodStartTime = EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -74,8 +72,13 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             currentStat->setProcessedTasks(it->getProcessedTasks());
             currentStat->setProcessedTuple(it->getProcessedTuple());
             std::cout << "Statistics at ts=" << std::time(0) << " measurement=" << it->getQueryStatisticsAsString() << std::endl;
-            NES_ASSERT(currentStat->getProcessedTuple() != 0, "system not ready, this should not happen");
-            statisticsVec.push_back(currentStat);
+            if (currentStat->getProcessedTuple() == 0) {
+                NES_WARNING("we already consumed all data size=" << statisticsVec.size());
+            }
+            else
+            {
+                statisticsVec.push_back(currentStat);
+            }
         }
 
         auto curTime =
@@ -150,8 +153,8 @@ void E2EBase::setupSources() {
         }
 
         AbstractPhysicalStreamConfigPtr conf =
-            MemorySourceStreamConfig::create("MemorySource", "test_stream",
-                                             "input", memArea, memAreaSize);
+            MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, memAreaSize, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+
         wrk1->registerPhysicalStream(conf);
     }
 }
@@ -196,7 +199,7 @@ void E2EBase::runQuery(std::string query) {
     NES_ASSERT(TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     //give the system some seconds to come to steady mode
-    sleep(5);
+    sleep(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS);
 
     auto start = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(start);
@@ -209,6 +212,8 @@ void E2EBase::runQuery(std::string query) {
 
     std::cout << std::put_time(std::localtime(&out_time_t), "%Y-%m-%d %X")
               << " E2EBase: Finished Measurement for query id=" << queryId << std::endl;
+
+    runtime = std::chrono::duration_cast<std::chrono::nanoseconds>(stop.time_since_epoch() - start.time_since_epoch());
 }
 
 //std::string E2EBase::outputResults(std::string outputFile) {
@@ -240,6 +245,11 @@ std::string E2EBase::getResult() {
         << statisticsVec[0]->getProcessedTuple() << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes()
         << std::endl;
 
+    out << "," << statisticsVec[0]->getProcessedBuffers() << "," << statisticsVec[0]->getProcessedTasks() << ","
+        << statisticsVec[0]->getProcessedTuple() << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes()<< ","
+        << statisticsVec[0]->getProcessedTuple() * 1'000'000'000.0 / runtime.count() << ","
+        << (statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count()
+        << std::endl;
     return out.str();
 }
 

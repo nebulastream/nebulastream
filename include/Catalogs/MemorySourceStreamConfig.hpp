@@ -17,13 +17,14 @@
 #define NES_INCLUDE_CATALOGS_MEMORYSOURCESTREAMCONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 
 namespace NES {
 
 /**
- * @brief A stream config for a memory source
+ * @brief A stream config for a memory source  AbstractPhysicalStreamConfig
  */
-class MemorySourceStreamConfig : public AbstractPhysicalStreamConfig {
+class MemorySourceStreamConfig : public PhysicalStreamConfig{
   public:
     /**
      * @brief Create a MemorySourceStreamConfig using a set of parameters
@@ -34,14 +35,15 @@ class MemorySourceStreamConfig : public AbstractPhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      */
     explicit MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
-                                      uint8_t* memoryArea, size_t memoryAreaSize);
+                                      uint8_t* memoryArea, size_t memoryAreaSize,
+                                      uint64_t numBuffersToProcess, uint64_t frequency);
 
     /**
      * @brief Creates the source descriptor for the underlying source
      * @param ptr the schama to build the source with
      * @return
      */
-    SourceDescriptorPtr build(SchemaPtr ptr) override;
+    SourceDescriptorPtr build(SchemaPtr) override;
 
     /**
      * @brief The string representation of the object
@@ -77,12 +79,11 @@ class MemorySourceStreamConfig : public AbstractPhysicalStreamConfig {
      * @return a constructed MemorySourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName,
-                                                  std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize);
+                                                  std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize,
+                                                  uint64_t numBuffersToProcess, uint64_t frequency);
 
   private:
     std::string sourceType;
-    std::string physicalStreamName;
-    std::string logicalStreamName;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
 };
