@@ -25,11 +25,13 @@
 #include <mutex>
 #include <optional>
 #include <vector>
-
+#include <NodeEngine/BufferRecycler.hpp>
 namespace NES {
 
 namespace NodeEngine {
 class TupleBuffer;
+class LocalBufferManager;
+typedef std::shared_ptr<LocalBufferManager> LocalBufferManagerPtr;
 namespace detail {
 class MemorySegment;
 }
@@ -53,7 +55,7 @@ class MemorySegment;
  * been returned to the BufferManager by some component.
  *
  */
-class BufferManager {
+class BufferManager : public std::enable_shared_from_this<BufferManager>, public BufferRecycler {
     friend class TupleBuffer;
     friend class detail::MemorySegment;
 
@@ -144,9 +146,10 @@ class BufferManager {
 
     bool isReady() const { return isConfigured; }
 
-  private:
-    void recyclePooledBuffer(detail::MemorySegment* buffer);
-    void recycleUnpooledBuffer(detail::MemorySegment* buffer);
+    LocalBufferManagerPtr createLocalBufferManager(size_t numberOfReservedBuffers);
+
+    void recyclePooledBuffer(detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
   private:
     std::vector<detail::MemorySegment> allBuffers;

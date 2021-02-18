@@ -50,9 +50,9 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) {
 
 MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr) {}
 
-MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)>&& recycleFunction)
+MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
     : ptr(ptr), size(size) {
-    controlBlock = new (ptr + size) BufferControlBlock(this, std::move(recycleFunction));
+    controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
     }
@@ -73,8 +73,8 @@ MemorySegment::~MemorySegment() {
     }
 }
 
-BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback)
-    : referenceCounter(0), numberOfTuples(0), owner(owner), recycleCallback(recycleCallback), watermark(0), originId(0) {}
+BufferControlBlock::BufferControlBlock(MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
+    : referenceCounter(0), numberOfTuples(0), owner(owner), owningBufferRecycler(recycler), recycleCallback(recycleCallback), watermark(0), originId(0) {}
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
@@ -96,6 +96,12 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
 }
 
 MemorySegment* BufferControlBlock::getOwner() { return owner; }
+
+void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler) {
+    NES_ASSERT2(recycler, "invalid recycler");
+    auto oldRecycler = owningBufferRecycler.exchange(recycler);
+    NES_ASSERT2(recycler != oldRecycler, "invalid recycler");
+}
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 /**
@@ -163,7 +169,7 @@ bool BufferControlBlock::release() {
     uint32_t prevRefCnt;
     if ((prevRefCnt = referenceCounter.fetch_sub(1)) == 1) {
         numberOfTuples.store(0);
-        recycleCallback(owner);
+        recycleCallback(owner, owningBufferRecycler.load());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);

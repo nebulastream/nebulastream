@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
@@ -350,7 +351,11 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     for (int j = 0; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
         auto buf = bufferManager->getBufferBlocking();
-        buf.getBufferAs<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
+        uint32_t* writer = buf.getBufferAs<uint32_t>();
+        for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+            writer[k] = k;
+        }
+        writer[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
         workQueue.push_back(buf);
         cvar.notify_all();
     }
@@ -454,6 +459,162 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
     workQueue.clear();
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
+}
+
+TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
+
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
+
+    std::vector<std::thread> prod_threads;
+    std::vector<std::thread> con_threads;
+    std::mutex mutex;
+    std::deque<TupleBuffer> workQueue;
+    std::condition_variable cvar;
+
+    constexpr uint32_t max_buffer = 100'000;
+    constexpr uint32_t producer_threads = 3;
+    constexpr uint32_t consumer_threads = 4;
+
+    auto localPool = bufferManager->createLocalBufferManager(32);
+    for (int i = 0; i < producer_threads; i++) {
+        prod_threads.emplace_back([&workQueue, &mutex, &cvar, localPool]() {
+            for (int j = 0; j < max_buffer; ++j) {
+                std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
+                auto buf = localPool->getBuffer();
+                uint32_t* writer = buf.getBufferAs<uint32_t>();
+                for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+                    writer[k] = k;
+                }
+                writer[buffer_size / sizeof(uint32_t) - 1] = 0;
+                lock.lock();
+                workQueue.push_back(buf);
+                cvar.notify_all();
+                lock.unlock();
+            }
+        });
+    }
+    for (int i = 0; i < consumer_threads; i++) {
+        con_threads.emplace_back([&workQueue, &mutex, &cvar]() {
+            std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
+            while (true) {
+                lock.lock();
+                while (workQueue.empty()) {
+                    cvar.wait(lock);
+                }
+                auto buf = workQueue.front();
+                workQueue.pop_front();
+                lock.unlock();
+                uint32_t* reader = buf.getBufferAs<uint32_t>();
+                for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+                    ASSERT_EQ(reader[k], k);
+                }
+                if (reader[buffer_size / sizeof(uint32_t) - 1] == max_buffer) {
+                    break;
+                }
+            }
+        });
+    }
+    for (auto& t : prod_threads) {
+        t.join();
+    }
+    for (int j = 0; j < consumer_threads; ++j) {
+        std::unique_lock<std::mutex> lock(mutex);
+        auto buf = bufferManager->getBufferBlocking();
+        uint32_t* writer = buf.getBufferAs<uint32_t>();
+        for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+            writer[k] = k;
+        }
+        writer[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
+        workQueue.push_back(buf);
+        cvar.notify_all();
+    }
+    for (auto& t : con_threads) {
+        t.join();
+    }
+    workQueue.clear();
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableExclusiveBuffers(), buffers_managed);
+}
+
+TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAllocation) {
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed);
+
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
+
+    std::vector<std::thread> prod_threads;
+    std::vector<std::thread> con_threads;
+    std::mutex mutex;
+    std::deque<TupleBuffer> workQueue;
+    std::condition_variable cvar;
+
+    constexpr uint32_t max_buffer = 1'000'000;
+    constexpr uint32_t producer_threads = 3;
+    constexpr uint32_t consumer_threads = 4;
+
+    for (int i = 0; i < producer_threads; i++) {
+        prod_threads.emplace_back([&workQueue, &mutex, &cvar, &bufferManager]() {
+            for (int j = 0; j < max_buffer; ++j) {
+                std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
+                auto buf = bufferManager->getBufferBlocking();
+                uint32_t* writer = buf.getBufferAs<uint32_t>();
+                for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+                    writer[k] = k;
+                }
+                writer[buffer_size / sizeof(uint32_t) - 1] = 0;
+                lock.lock();
+                workQueue.push_back(buf);
+                cvar.notify_all();
+                lock.unlock();
+            }
+        });
+    }
+    auto localPool = bufferManager->createLocalBufferManager(32);
+    for (int i = 0; i < consumer_threads; i++) {
+        con_threads.emplace_back([&workQueue, &mutex, &cvar, localPool]() {
+            std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
+            while (true) {
+                lock.lock();
+                while (workQueue.empty()) {
+                    cvar.wait(lock);
+                }
+                auto buf = workQueue.front();
+                workQueue.pop_front();
+                lock.unlock();
+                auto copied_buf = localPool->getBuffer();
+                memcpy(copied_buf.getBuffer(), buf.getBuffer(), buf.getBufferSize());
+                uint32_t* reader = copied_buf.getBufferAs<uint32_t>();
+                for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+                    ASSERT_EQ(reader[k], k);
+                }
+                if (reader[buffer_size / sizeof(uint32_t) - 1] == max_buffer) {
+                    break;
+                }
+            }
+        });
+    }
+    for (auto& t : prod_threads) {
+        t.join();
+    }
+    for (int j = 0; j < consumer_threads; ++j) {
+        std::unique_lock<std::mutex> lock(mutex);
+        auto buf = bufferManager->getBufferBlocking();
+        uint32_t* writer = buf.getBufferAs<uint32_t>();
+        for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+            writer[k] = k;
+        }
+        writer[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
+        workQueue.push_back(buf);
+        cvar.notify_all();
+    }
+    for (auto& t : con_threads) {
+        t.join();
+    }
+    workQueue.clear();
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableExclusiveBuffers(), buffers_managed);
 }
 
 }// namespace NES
