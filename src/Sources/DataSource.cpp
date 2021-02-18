@@ -157,10 +157,13 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
         //this check checks if the gathering interval is less than one second or it is a ZMQ_Source, in both cases we do not need to create a watermark-only buffer
         NES_DEBUG("DataSource::runningRoutine will now check the type with gatheringInterval=" << gatheringInterval.count());
         if (gatheringInterval.count() <= 1000 || type == ZMQ_SOURCE) {
-            NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type=" << getType() << " and gatheringInterval=" << gatheringInterval.count() << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
+            NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type="
+                      << getType() << " and gatheringInterval=" << gatheringInterval.count()
+                      << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
             if (gatheringInterval.count() == 0 || lastTimeStampMillis != nowInMillis) {
                 NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval="
-                          << gatheringInterval.count() << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
+                          << gatheringInterval.count() << "ms, tsNow=" << lastTimeStampMillis.count()
+                          << "ms, now=" << nowInMillis.count() << "ms");
                 recNow = true;
                 lastTimeStampMillis = nowInMillis;
             } else {
@@ -169,9 +172,9 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
         } else {
             NES_DEBUG("DataSource::runningRoutine check for specific source type");
             //check each second
-            if (nowInMillis != lastTimeStampMillis) {                 //we are in another interval
-                if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval ||
-                    ((nowInMillis - lastTimeStampMillis) % gatheringInterval).count() == 0) {//produce a regular buffer
+            if (nowInMillis != lastTimeStampMillis) {//we are in another interval
+                if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval
+                    || ((nowInMillis - lastTimeStampMillis) % gatheringInterval).count() == 0) {//produce a regular buffer
                     NES_DEBUG("DataSource::runningRoutine sending regular buffer");
                     recNow = true;
                 }

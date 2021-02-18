@@ -108,7 +108,8 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ysb source");
         const YSBSourceDescriptorPtr ysbSourceDescriptor = sourceDescriptor->as<YSBSourceDescriptor>();
         return createYSBSource(bufferManager, queryManager, ysbSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                               ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequencyCount(), operatorId);
+                               ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequencyCount(),
+                               operatorId);
     } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();

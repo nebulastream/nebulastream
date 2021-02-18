@@ -45,7 +45,8 @@ PhysicalStreamConfig::PhysicalStreamConfig(SourceConfigPtr sourceConfig)
 
 const std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;
-    ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig << " sourceFrequency=" << sourceFrequency.count() << "ms"
+    ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig << " sourceFrequency=" << sourceFrequency.count()
+       << "ms"
        << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
        << " numberOfBuffersToProduce=" << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
        << " logicalStreamName=" << logicalStreamName;
