@@ -35,41 +35,42 @@ class MQTTClientWrapper {
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @return MQTTClientWrapper
      */
-    MQTTClientWrapper(bool useAsyncClient, const std::string& address, const std::string& clientId, uint32_t maxBufferedMSGs);
+    MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId, uint64_t maxBufferedMSGs);
+
     /**
      * @brief get a pointer to the MQTT asynchronous client ONLY IF 'useAsyncClient' = true
      */
     mqtt::async_client_ptr getAsyncClient();
+
     /**
      * @brief get a pointer to the MQTT synchronous client ONLY IF 'useAsyncClient' = false
      */
     mqtt::client_ptr getSyncClient();
+
     /**
      * @brief connect to a MQTT broker
      */
     void connect(mqtt::connect_options connOpts);
+
     /**
      * @brief disconnect from a MQTT broker
      */
     void disconnect();
+
     /**
      * @brief get the number of elements currently residing in the buffer (messages that have not been delivered yet)
      */
-    int getNumberOfUnsentMessages();
+    uint64_t getNumberOfUnsentMessages();
+
     /**
      * @brief Helper class for synchronous client - Defines how to interact with broker replies and connection loss
      */
     class UserCallback : public virtual mqtt::callback {
       public:
-        void connection_lost(const std::string& cause) {
-            NES_TRACE("\nConnection lost");
-            if (!cause.empty())
-                NES_DEBUG("\tcause: " << cause);
-        }
-        void delivery_complete(mqtt::delivery_token_ptr tok) {
-            NES_TRACE("\n\t[Delivery complete for token: " << (tok ? tok->get_message_id() : -1) << "]");
-        }
+        void connection_lost(const std::string& cause);
+        void delivery_complete(mqtt::delivery_token_ptr tok);
     };
+
     /**
      * @brief define a callback behaviour for the synchronous client
      */
@@ -80,6 +81,8 @@ class MQTTClientWrapper {
     mqtt::client_ptr syncClient;
     bool useAsyncClient;
 };
+typedef std::shared_ptr<MQTTClientWrapper> MQTTClientWrapperPtr;
+
 }
 #endif
 #endif//NES_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_

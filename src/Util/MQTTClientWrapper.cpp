@@ -20,7 +20,8 @@
 
 #ifdef ENABLE_MQTT_BUILD
 namespace NES {
-MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient, const std::string& address, const std::string& clientId, uint32_t maxBufferedMSGs) {
+const std::chrono::duration<int64_t> MAX_WAIT_FOR_BROKER_CONNECT = std::chrono::seconds(20);
+MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId, uint64_t maxBufferedMSGs) {
     this->useAsyncClient = useAsyncClient;
     if (useAsyncClient) {
         asyncClient = std::make_shared<mqtt::async_client>(address, clientId, maxBufferedMSGs);
@@ -28,26 +29,38 @@ MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient, const std::string& add
         syncClient = std::make_shared<mqtt::client>(address, clientId, maxBufferedMSGs);
     }
 }
-mqtt::async_client_ptr MQTTClientWrapper::getAsyncClient() { return (useAsyncClient) ? asyncClient : nullptr; }
-mqtt::client_ptr MQTTClientWrapper::getSyncClient() { return (useAsyncClient) ? nullptr : syncClient; }
+
+mqtt::async_client_ptr MQTTClientWrapper::getAsyncClient() { return useAsyncClient ? asyncClient : nullptr; }
+
+mqtt::client_ptr MQTTClientWrapper::getSyncClient() { return useAsyncClient ? nullptr : syncClient; }
 
 void MQTTClientWrapper::connect(mqtt::connect_options connOpts) {
     if (useAsyncClient) {
-        asyncClient->connect(connOpts)->wait();
+        asyncClient->connect(connOpts)->wait_for(MAX_WAIT_FOR_BROKER_CONNECT);
     } else {
         syncClient->connect();
     }
 }
+
 void MQTTClientWrapper::disconnect() {
     if (useAsyncClient) {
-        asyncClient->disconnect()->wait();
+        asyncClient->disconnect()->wait_for(MAX_WAIT_FOR_BROKER_CONNECT);
     } else {
         syncClient->disconnect();
     }
 }
-int MQTTClientWrapper::getNumberOfUnsentMessages() { return (asyncClient) ? asyncClient->get_pending_delivery_tokens().size() : 0; }
+
+uint64_t MQTTClientWrapper::getNumberOfUnsentMessages() { return asyncClient ? asyncClient->get_pending_delivery_tokens().size() : 0; }
 
 void MQTTClientWrapper::setCallback(UserCallback& cb) { syncClient->set_callback(cb); }
-}
 
-#endif
+void MQTTClientWrapper::UserCallback::connection_lost(const std::string& cause)  {
+    NES_TRACE("MQTTClientWrapper::UserCallback::connection_lost: Connection lost");
+    if (!cause.empty())
+        NES_DEBUG("MQTTClientWrapper::UserCallback:connection_lost: cause: " << cause);
+}
+void MQTTClientWrapper::UserCallback::delivery_complete(mqtt::delivery_token_ptr tok) {
+    NES_TRACE("\n\t[Delivery complete for token: " << (tok ? tok->get_message_id() : -1) << "]");
+}
+}
+#endif //ENABLE_MQTT_BUILD
