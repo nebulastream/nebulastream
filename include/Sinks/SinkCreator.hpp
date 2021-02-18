@@ -29,6 +29,9 @@
 #include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
 #endif
+#ifdef ENABLE_MQTT_BUILD
+#include <Sinks/Mediums/MQTTSink.hpp>
+#endif
 
 namespace NES {
 /**
@@ -194,9 +197,10 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
  * @return a data sink pointer
  */
 const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
-                                 const std::string& address, const std::string& clientID,
-                                 const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs = 60,
-                                 const char timeUnit = 'm', const uint64_t msgDelay = 500, const bool asynchronousClient = 1);
+                                 const std::string address, const std::string clientID,
+                                 const std::string topic, const std::string user, uint64_t maxBufferedMSGs,
+                                 const MQTTSink::TimeUnits timeUnit,uint64_t msgDelay, MQTTSink::ServiceQualities qualityOfService,
+                                 bool asynchronousClient);
 #endif
 
 }// namespace NES

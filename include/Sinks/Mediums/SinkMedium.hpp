@@ -33,7 +33,7 @@ enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK
 class SinkMedium : public NodeEngine::Reconfigurable {
 
   public:
-    /**
+    /**FF
      * @brief public constructor for data sink
      */
     explicit SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId);

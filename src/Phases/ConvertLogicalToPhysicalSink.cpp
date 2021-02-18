@@ -68,7 +68,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
         return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getAddress(),
                               mqttSinkDescriptor->getClientId(), mqttSinkDescriptor->getTopic(), mqttSinkDescriptor->getUser(),
                               mqttSinkDescriptor->getMaxBufferedMSGs(), mqttSinkDescriptor->getTimeUnit(),
-                              mqttSinkDescriptor->getMsgDelay(), mqttSinkDescriptor->getAsynchronousClient());
+                              mqttSinkDescriptor->getMsgDelay(), mqttSinkDescriptor->getQualityOfService(),
+                              mqttSinkDescriptor->getAsynchronousClient());
     }
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {

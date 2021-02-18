@@ -969,7 +969,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
     }
 #ifdef ENABLE_MQTT_BUILD
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor>()) {
-        // de-serialize opc source descriptor
+        // de-serialize mqtt source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as MQTTSourceDescriptor");
         auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&mqttSerializedSourceDescriptor);
@@ -1112,9 +1112,9 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
 #endif
 #ifdef ENABLE_MQTT_BUILD
     else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
-        // serialize MQTT source descriptor
+        // serialize MQTT sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
+                  "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
         auto mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
         auto mqttSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
         mqttSerializedSinkDescriptor.set_address(mqttSinkDescriptor->getAddress());
@@ -1122,7 +1122,8 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
         mqttSerializedSinkDescriptor.set_topic(mqttSinkDescriptor->getTopic());
         mqttSerializedSinkDescriptor.set_user(mqttSinkDescriptor->getUser());
         mqttSerializedSinkDescriptor.set_maxbufferedmsgs(mqttSinkDescriptor->getMaxBufferedMSGs());
-        mqttSerializedSinkDescriptor.set_timeunit(reinterpret_cast<const char*>(mqttSinkDescriptor->getTimeUnit()));
+        mqttSerializedSinkDescriptor.set_timeunit(
+            (SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor_TimeUnits) mqttSinkDescriptor->getTimeUnit());
         mqttSerializedSinkDescriptor.set_msgdelay(mqttSinkDescriptor->getMsgDelay());
         mqttSerializedSinkDescriptor.set_asynchronousclient(mqttSinkDescriptor->getAsynchronousClient());
 
@@ -1223,7 +1224,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         return MQTTSinkDescriptor::create(serializedSinkDescriptor.address(),
                                           serializedSinkDescriptor.clientid(), serializedSinkDescriptor.topic(),
                                           serializedSinkDescriptor.user(), serializedSinkDescriptor.maxbufferedmsgs(),
-                                          serializedSinkDescriptor.timeunit()[0], serializedSinkDescriptor.msgdelay(),
+                                          (MQTTSink::TimeUnits) serializedSinkDescriptor.timeunit(), serializedSinkDescriptor.msgdelay(),
+                                          (MQTTSink::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
                                           serializedSinkDescriptor.asynchronousclient());
     }
 #endif

@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -66,7 +65,8 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
         MQTTSinkPtr mqttSink = std::dynamic_pointer_cast<MQTTSink>(dataSink);
         return MQTTSinkDescriptor::create(mqttSink->getAddress(), mqttSink->getAddress(), mqttSink->getTopic(),
                                           mqttSink->getUser(), mqttSink->getMaxBufferedMSGs(), mqttSink->getTimeUnit(),
-                                          mqttSink->getMsgDelay(), mqttSink->getAsynchronousClient());
+                                          mqttSink->getMsgDelay(), mqttSink->getQualityOfService(),
+                                          mqttSink->getAsynchronousClient());
     }
 #endif
     else if (sinkType == "FILE_SINK") {

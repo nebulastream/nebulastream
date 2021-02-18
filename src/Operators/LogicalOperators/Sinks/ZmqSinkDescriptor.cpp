@@ -23,16 +23,17 @@ SinkDescriptorPtr ZmqSinkDescriptor::create(std::string host, uint16_t port, boo
 }
 
 ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, bool internal)
-    : host(std::move(host)), port(port), internal(internal) {}
+    : host(host), port(port), internal(internal) {}
 
 const std::string& ZmqSinkDescriptor::getHost() const { return host; }
 uint16_t ZmqSinkDescriptor::getPort() const { return port; }
 
 bool ZmqSinkDescriptor::equal(SinkDescriptorPtr other) {
-    if (!other->instanceOf<ZmqSinkDescriptor>())
+    if (!other->instanceOf<ZmqSinkDescriptor>()) {
         return false;
+    }
     auto otherSinkDescriptor = other->as<ZmqSinkDescriptor>();
-    return  host == otherSinkDescriptor->getHost() && port == otherSinkDescriptor->getPort();
+    return  host == otherSinkDescriptor->host && port == otherSinkDescriptor->port;
 }
 
 std::string ZmqSinkDescriptor::toString() { return "ZmqSinkDescriptor()"; }

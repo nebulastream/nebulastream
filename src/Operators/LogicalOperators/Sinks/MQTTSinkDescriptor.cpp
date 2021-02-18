@@ -19,39 +19,46 @@
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 
 namespace NES {
-
-MQTTSinkDescriptor::MQTTSinkDescriptor(const std::string& address, const std::string& clientId,
-                                       const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs,
-                                       const char timeUnit, const uint64_t msgDelay, const bool asynchronousClient)
+MQTTSinkDescriptor::MQTTSinkDescriptor(const std::string address, const std::string clientId, const std::string topic,
+                                       const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
+                                       uint64_t msgDelay, const MQTTSink::ServiceQualities qualityOfService,
+                                       bool asynchronousClient)
                                         : address(address), clientId(clientId), topic(topic), user(user),
                                           maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), msgDelay(msgDelay),
-                                          asynchronousClient(asynchronousClient){}
+                                          qualityOfService(qualityOfService), asynchronousClient(asynchronousClient){}
 
-const std::string& MQTTSinkDescriptor::getAddress() const { return address; }
-const std::string& MQTTSinkDescriptor::getClientId() const { return clientId; }
-const std::string& MQTTSinkDescriptor::getTopic() const { return topic; }
-const std::string& MQTTSinkDescriptor::getUser() const { return user; }
-const uint32_t MQTTSinkDescriptor::getMaxBufferedMSGs() const { return maxBufferedMSGs; }
-const char MQTTSinkDescriptor::getTimeUnit() const { return timeUnit; }
-const uint64_t MQTTSinkDescriptor::getMsgDelay() const { return msgDelay; }
-const bool MQTTSinkDescriptor::getAsynchronousClient() const { return asynchronousClient; }
+const std::string MQTTSinkDescriptor::getAddress() const { return address; }
+const std::string MQTTSinkDescriptor::getClientId() const { return clientId; }
+const std::string MQTTSinkDescriptor::getTopic() const { return topic; }
+const std::string MQTTSinkDescriptor::getUser() const { return user; }
+uint64_t MQTTSinkDescriptor::getMaxBufferedMSGs() { return maxBufferedMSGs; }
+const MQTTSink::TimeUnits MQTTSinkDescriptor::getTimeUnit() const { return timeUnit; }
+uint64_t MQTTSinkDescriptor::getMsgDelay() { return msgDelay; }
+const MQTTSink::ServiceQualities MQTTSinkDescriptor::getQualityOfService() const { return qualityOfService; }
+bool MQTTSinkDescriptor::getAsynchronousClient() { return asynchronousClient; }
 
-SinkDescriptorPtr MQTTSinkDescriptor::create(const std::string& address, const std::string& clientId,
-                                             const std::string& topic, const std::string& user, const uint32_t maxBufferedMSGs,
-                                             const char timeUnit, const uint64_t msgDelay, const bool asynchronousClient) {
+SinkDescriptorPtr MQTTSinkDescriptor::create(const std::string address, const std::string clientId,
+                                             const std::string topic, const std::string user, uint64_t maxBufferedMSGs,
+                                             const MQTTSink::TimeUnits timeUnit, uint64_t msgDelay,
+                                             const MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient) {
     return std::make_shared<MQTTSinkDescriptor>(MQTTSinkDescriptor(address, clientId, topic, user, maxBufferedMSGs,
-                                                                   timeUnit, msgDelay, asynchronousClient));
+                                                                   timeUnit, msgDelay, qualityOfService, asynchronousClient));
 }
 
 std::string MQTTSinkDescriptor::toString() { return "MQTTSinkDescriptor()"; }
+
 bool MQTTSinkDescriptor::equal(SinkDescriptorPtr other) {
-    if (!other->instanceOf<MQTTSinkDescriptor>())
+    if (!other->instanceOf<MQTTSinkDescriptor>()) {
         return false;
+    }
     auto otherSinkDescriptor = other->as<MQTTSinkDescriptor>();
+    NES_TRACE("MQTTSinkDescriptor::equal: this: " << this->toString() <<
+              "otherSinkDescriptor: " << otherSinkDescriptor->toString());
     return address == otherSinkDescriptor->address &&
            clientId == otherSinkDescriptor->clientId && topic == otherSinkDescriptor->topic &&
            user == otherSinkDescriptor->user && maxBufferedMSGs == otherSinkDescriptor->maxBufferedMSGs &&
            timeUnit == otherSinkDescriptor->timeUnit && msgDelay == otherSinkDescriptor->msgDelay &&
+           qualityOfService == otherSinkDescriptor->qualityOfService &&
            asynchronousClient == otherSinkDescriptor->asynchronousClient;
 }
 }// namespace NES
