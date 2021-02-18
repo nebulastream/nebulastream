@@ -52,6 +52,7 @@ bool DefaultSourceDescriptor::equal(SourceDescriptorPtr other) {
 }
 
 std::string DefaultSourceDescriptor::toString() {
-    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(frequency.count()) + "ms)";
+    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(frequency.count())
+        + "ms)";
 }
 }// namespace NES

@@ -155,8 +155,9 @@ TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
     uint64_t initialGatheringInterval = 350;
     uint64_t intervalIncrease = 100;
 
-    const DataSourcePtr source = createMockCSVAdaptiveSource(
-        schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file, intervalIncrease);
+    const DataSourcePtr source =
+        createMockCSVAdaptiveSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                    initialGatheringInterval, path_to_file, intervalIncrease);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -164,7 +165,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
 
     ASSERT_NE(source->getGatheringIntervalCount(), initialGatheringInterval);
     ASSERT_TRUE(source->getGatheringIntervalCount() > initialGatheringInterval);
-    ASSERT_TRUE(source->getGatheringIntervalCount() < 1000); // we don't control how much the change will be
+    ASSERT_TRUE(source->getGatheringIntervalCount() < 1000);// we don't control how much the change will be
     ASSERT_EQ((source->getGatheringIntervalCount() - initialGatheringInterval) % intervalIncrease, 0);
     ASSERT_TRUE(nodeEngine->stop());
 }
