@@ -101,4 +101,13 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     }
     return nullptr;
 }
+void PhysicalStreamConfig::setSourceFrequency(uint32_t sourceFrequency) {
+    PhysicalStreamConfig::sourceFrequency = sourceFrequency;
+}
+void PhysicalStreamConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer) {
+    PhysicalStreamConfig::numberOfTuplesToProducePerBuffer = numberOfTuplesToProducePerBuffer;
+}
+void PhysicalStreamConfig::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce) {
+    PhysicalStreamConfig::numberOfBuffersToProduce = numberOfBuffersToProduce;
+}
 }// namespace NES

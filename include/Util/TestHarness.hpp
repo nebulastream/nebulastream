@@ -189,7 +189,7 @@ class TestHarness {
         workerPtrs.push_back(wrk);
     }
 
-    /*
+    /**
          * @brief add non source worker
          */
     void addNonSourceWorker() {
@@ -199,7 +199,7 @@ class TestHarness {
 
     uint64_t getWorkerCount() { return workerPtrs.size(); }
 
-    /*
+    /**
          * @brief execute the test based on the given operator, pushed elements, and number of workers,
          * then return the result of the query execution
          * @return output string
@@ -234,8 +234,10 @@ class TestHarness {
                     memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
                 }
 
+                //TODO: we have to fix those hard values
                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-                    "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
+                    "MemorySource", physicalStreamNames.at(i),
+                    logicalStreamNames.at(i), memArea, memAreaSize, 0, 1);
                 workerPtrs[i]->registerPhysicalStream(conf);
             } else {
                 NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" << std::to_string(sourceTypes[i]));

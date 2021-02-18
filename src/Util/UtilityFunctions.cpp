@@ -243,7 +243,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
         auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
         offsets.push_back(physicalType->size());
         types.push_back(physicalType);
-        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
+        NES_TRACE("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
                   + std::to_string(physicalType->size()));
     }
 
@@ -252,7 +252,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
         uint32_t val = offsets[i];
         offsets[i] = prefix_sum;
         prefix_sum += val;
-        NES_DEBUG("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString()
+        NES_TRACE("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString()
                   + std::string(": ") + std::to_string(offsets[i]));
     }
 

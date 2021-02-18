@@ -28,10 +28,15 @@ struct MemoryAreaDeleter {
 }// namespace detail
 
 MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName,
-                                                   std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize)
-    : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName),
-      memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize) {
+                                                   std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize,
+                                                   uint64_t numBuffersToProcess, uint64_t frequency)
+    : PhysicalStreamConfig(SourceConfig::create()), sourceType(sourceType), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+      memoryAreaSize(memoryAreaSize) {
     // nop
+    this->physicalStreamName = physicalStreamName;
+    this->logicalStreamName = logicalStreamName;
+    this->numberOfBuffersToProduce = numBuffersToProcess;
+    this->sourceFrequency = frequency;
 }
 
 const std::string MemorySourceStreamConfig::getSourceType() { return sourceType; }
@@ -43,15 +48,17 @@ const std::string MemorySourceStreamConfig::getPhysicalStreamName() { return phy
 const std::string MemorySourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr) {
-    return std::make_shared<MemorySourceDescriptor>(ptr, memoryArea, memoryAreaSize);
+    return std::make_shared<MemorySourceDescriptor>(ptr, memoryArea, memoryAreaSize, this->numberOfBuffersToProduce,
+                                                    this->sourceFrequency);
 }
 
 AbstractPhysicalStreamConfigPtr MemorySourceStreamConfig::create(std::string sourceType, std::string physicalStreamName,
                                                                  std::string logicalStreamName, uint8_t* memoryArea,
-                                                                 size_t memoryAreaSize) {
+                                                                 size_t memoryAreaSize, uint64_t numBuffersToProcess,
+                                                                 uint64_t frequency) {
     NES_ASSERT(memoryArea, "invalid memory area");
     return std::make_shared<MemorySourceStreamConfig>(sourceType, physicalStreamName, logicalStreamName, memoryArea,
-                                                      memoryAreaSize);
+                                                      memoryAreaSize, numBuffersToProcess, frequency);
 }
 
 }// namespace NES
