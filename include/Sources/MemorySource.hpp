@@ -42,12 +42,12 @@ class MemorySource : public DataSource {
                           NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                           OperatorId operatorId);
 
-    /**
-     * @brief Overridden runningRoutine that scans the memoryArea and creates memoryAreaSize/bufferSize buffers
-     * @param bufferManager
-     * @param queryManager
-     */
-    void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) override;
+//    /**
+//     * @brief Overridden runningRoutine that scans the memoryArea and creates memoryAreaSize/bufferSize buffers
+//     * @param bufferManager
+//     * @param queryManager
+//     */
+//    void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) override;
 
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.

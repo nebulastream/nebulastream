@@ -36,6 +36,9 @@ int main() {
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
+    // source mode
+    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::MemoryMode};
+
     //roughly 50% selectivity
     string query = "Query::from(\"input\").filter(Attribute(\"value\") > 5).sink(FileSinkDescriptor::create(\"test.out\"));";
 
@@ -52,11 +55,13 @@ int main() {
         for (auto coordinatorThreadCnt : allCoordinatorThreads) {
             std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
             for (auto dataSourceCnt : allDataSources) {
-                std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
-                ss << benchmarkName << "," << nesVersion << "," << workerThreadCnt << "," << coordinatorThreadCnt << ","
-                   << dataSourceCnt << ",FileMode";
-                ss << E2EBase::runExperiment(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
-                                             E2EBase::InputOutputMode::FileMode, query);
+                for (auto sourceMode : allSourceModes) {
+                    std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
+                    ss << benchmarkName << "," << nesVersion << "," << workerThreadCnt << "," << coordinatorThreadCnt << ","
+                       << dataSourceCnt << "," << E2EBase::getInputOutputModeAsString(sourceMode);
+                    ss << E2EBase::runExperiment(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
+                                                 sourceMode, query);
+                }
             }
         }
     }
