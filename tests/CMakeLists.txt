@@ -405,6 +405,10 @@ add_executable(allowed-lateness-test "Integration/AllowedLatenessTest.cpp")
 target_link_libraries(allowed-lateness-test nes ${GTEST_LIBRARIES})
 add_test(NAME allowed-lateness-test COMMAND allowed-lateness-test)
 
+add_executable(complex-sequence-test "Integration/ComplexSequenceTest.cpp")
+target_link_libraries(complex-sequence-test nes ${GTEST_LIBRARIES})
+add_test(NAME complex-sequence-test COMMAND complex-sequence-test)
+
 ### mergeDeploymentTest ###
 add_executable(union-deployment-test "Integration/UnionDeploymentTest.cpp")
 target_link_libraries(union-deployment-test nes ${GTEST_LIBRARIES})
