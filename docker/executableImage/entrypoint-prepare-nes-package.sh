@@ -24,7 +24,7 @@ then
     if test -f *.deb; then
         rm *.deb
     fi
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" -DCPPRESTSDK_DIR="/usr/lib/x86_64-linux-gnu/cmake/" -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/$($ACTUAL_TRIPLE)" -DCPPRESTSDK_DIR="/usr/lib/$($ACTUAL_TRIPLE)/cmake/" -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make version
     make -j4
     cpack
@@ -32,7 +32,10 @@ then
     if test -f docker/executableImage/resources/*.deb; then
         rm docker/executableImage/resources/*.deb
     fi
-    cp build/*.deb docker/executableImage/resources
+    for i in build/*.deb;
+    do
+      [ -f "$i" ] && cp "$i" docker/executableImage/resources/$i.$ACTUAL_TRIPLE;
+    done
     result=$?
     rm -rf /nebulastream/build
     exit $result
