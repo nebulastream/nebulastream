@@ -60,8 +60,16 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
         }
 
         if (currentPositionInBytes + numberOfTuples * schema->getSchemaSizeInBytes() > memoryAreaSize) {
-            NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
-            currentPositionInBytes = 0;
+            if(numBuffersToProcess != 0)
+            {
+                NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
+                currentPositionInBytes = 0;
+            }
+            else
+            {
+                NES_DEBUG("MemorySource::receiveData: return as mem sry is empty");
+                return std::nullopt;
+            }
         }
     }
     uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();

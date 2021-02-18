@@ -33,7 +33,7 @@ namespace NES {
 
 class TestHarness {
   public:
-    /*
+    /**
          * @brief The constructor of TestHarness
          * @param numWorkers number of worker (each for one physical source) to be used in the test
          * @param queryWithoutSink query string to test (without the sink operator)
@@ -55,7 +55,7 @@ class TestHarness {
 
     ~TestHarness() { NES_DEBUG("TestHarness: ~TestHarness()"); };
 
-    /*
+    /**
          * @brief push a single element/tuple to specific source
          * @param element element of Record to push
          * @param sourceIdx index of the source to which the element is pushed
@@ -79,7 +79,7 @@ class TestHarness {
         records[sourceIdx].push_back(memArea);
     }
 
-    /*
+    /**
          * @brief check the schema size of the logical stream and if it already exists
          * @param logical stream name
          * @param schema schema of the source
@@ -117,7 +117,7 @@ class TestHarness {
         workerPtrs.push_back(wrk);
     }
 
-    /*
+    /**
          * @brief add a memory source to be used in the test and connect to parent with specific parent id
          * @param logical stream name
          * @param schema schema of the source
@@ -137,7 +137,7 @@ class TestHarness {
         records.push_back(currentSourceRecords);
     }
 
-    /*
+    /**
          * @brief add a memory source to be used in the test
          * @param logical stream name
          * @param schema schema of the source
@@ -148,7 +148,7 @@ class TestHarness {
         addMemorySource(logicalStreamName, schema, physicalStreamName, crdTopologyNodeId);
     }
 
-    /*
+    /**
          * @brief add a csv source to be used in the test and connect to parent with specific parent id
          * @param schema schema of the source
          * @param csvSourceConf physical stream configuration for the csv source
@@ -164,7 +164,7 @@ class TestHarness {
         records.push_back(currentSourceRecords);
     }
 
-    /*
+    /**
       * @brief add a csv source to be used in the test
       * @param schema schema of the source
       * @param csvSourceConf physical stream configuration for the csv source
@@ -174,7 +174,7 @@ class TestHarness {
         addCSVSource(csvSourceConf, schema, crdTopologyNodeId);
     }
 
-    /*
+    /**
      * @brief add non source worker and connect to parent with specific parent id
      * @param parentId id of the parent to connect
      */
@@ -236,8 +236,7 @@ class TestHarness {
 
                 //TODO: we have to fix those hard values
                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-                    "MemorySource", physicalStreamNames.at(i),
-                    logicalStreamNames.at(i), memArea, memAreaSize, 0, 1);
+                    "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize, 0, 1);
                 workerPtrs[i]->registerPhysicalStream(conf);
             } else {
                 NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" << std::to_string(sourceTypes[i]));
