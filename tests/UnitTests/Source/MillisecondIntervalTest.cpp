@@ -100,6 +100,7 @@ TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                      path_to_file, del, 0, numberOfBuffers,
                                                      frequency, false, 1);
+    source->start();
 
     for (uint64_t i = 0; i < numberOfBuffers; i++) {
         auto optBuf = source->receiveData();
