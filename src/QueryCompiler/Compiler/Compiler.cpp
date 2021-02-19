@@ -202,10 +202,11 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
 std::string Compiler::formatAndPrintSource(const std::string& filename) {
     int ret = system("which clang-format > /dev/null");
 
-    NES_ASSERT(ret == 0, "Compiler: Did not find external tool 'clang-format'. "
-                         "Please install 'clang-format' and try again."
-                         "If 'clang-format-X' is installed, try to create a "
-                         "symbolic link.");
+    NES_ASSERT(ret == 0,
+               "Compiler: Did not find external tool 'clang-format'. "
+               "Please install 'clang-format' and try again."
+               "If 'clang-format-X' is installed, try to create a "
+               "symbolic link.");
 
     auto formatCommand = "clang-format -i " + filename;
 

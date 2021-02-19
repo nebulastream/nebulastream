@@ -964,7 +964,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
             VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName);
 
         NES_ASSERT2_FMT(recordHandler->hasAttribute(joinKeyFieldName),
-                    "join key is not defined on input tuple << " << joinKeyFieldName);
+                        "join key is not defined on input tuple << " << joinKeyFieldName);
 
         auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
 

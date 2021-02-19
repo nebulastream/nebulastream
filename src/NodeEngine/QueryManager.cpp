@@ -234,7 +234,6 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
                                                          << " for QEP " << qep << " inputBuffer " << buf
                                                          << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
-
     }
     cv.notify_all();
 }
