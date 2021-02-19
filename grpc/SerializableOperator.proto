@@ -146,6 +146,9 @@ message SerializableOperator{
     message SerializablePrintSinkDescriptor {
     }
 
+    message SerializableNullOutputSinkDescriptor {
+    }
+
     message SerializableZMQSinkDescriptor {
       string host = 1;
       uint32 port = 2;
