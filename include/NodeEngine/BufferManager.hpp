@@ -146,9 +146,23 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
 
     bool isReady() const { return isConfigured; }
 
+    /**
+     * @brief Create a local buffer manager that is assigned to one pipeline or thread
+     * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
+     * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
+     */
     LocalBufferManagerPtr createLocalBufferManager(size_t numberOfReservedBuffers);
 
+    /**
+     * @brief Recycle a pooled buffer by making it available to others
+     * @param buffer
+     */
     void recyclePooledBuffer(detail::MemorySegment* buffer) override;
+
+    /**
+    * @brief Recycle an unpooled buffer by making it available to others
+    * @param buffer
+    */
     void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
   private:
