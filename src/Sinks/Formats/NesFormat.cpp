@@ -32,7 +32,7 @@ std::optional<NodeEngine::TupleBuffer> NesFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     SerializableSchema* protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
     bool success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSize());
-    NES_ASSERT2(success, "cannot serialize");
+    NES_ASSERT2_FMT(success, "cannot serialize");
     NES_DEBUG("NesFormat::getSchema: write schema"
               << " success=" << success);
     buf.setNumberOfTuples(protoBuff->ByteSize());

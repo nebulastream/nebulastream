@@ -127,7 +127,7 @@ class TestHarness {
     void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
         NES_ASSERT(parentId != INVALID_TOPOLOGY_NODE_ID, "The provided ParentId is an INVALID_TOPOLOGY_NODE_ID");
         // check if record may span multiple buffers
-        NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
+        NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                         << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
         checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);

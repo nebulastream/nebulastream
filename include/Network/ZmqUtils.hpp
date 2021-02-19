@@ -52,9 +52,9 @@ void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
     zmq::message_t sendMsg(&message, sizeof(MessageType));
     // send both messages in one shot
     auto ret = zmqSocket.send(sendHeader, kZmqSendMore);
-    NES_ASSERT2(ret.has_value(), "send failed");
+    NES_ASSERT2_FMT(ret.has_value(), "send failed");
     ret = zmqSocket.send(sendMsg, flags);
-    NES_ASSERT2(ret.has_value(), "send failed");
+    NES_ASSERT2_FMT(ret.has_value(), "send failed");
 }
 
 /**
@@ -75,11 +75,11 @@ void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdenti
     zmq::message_t sendMsg(&message, sizeof(MessageType));
     // send all messages in one shot
     auto ret = zmqSocket.send(zmqIdentity, kZmqSendMore);
-    NES_ASSERT2(ret.has_value(), "send failed");
+    NES_ASSERT2_FMT(ret.has_value(), "send failed");
     ret = zmqSocket.send(sendHeader, kZmqSendMore);
-    NES_ASSERT2(ret.has_value(), "send failed");
+    NES_ASSERT2_FMT(ret.has_value(), "send failed");
     ret = zmqSocket.send(sendMsg, kZmqSendDefault);
-    NES_ASSERT2(ret.has_value(), "send failed");
+    NES_ASSERT2_FMT(ret.has_value(), "send failed");
 }
 
 }// namespace Network
