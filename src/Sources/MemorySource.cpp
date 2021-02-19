@@ -70,7 +70,7 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     }
     uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();
 
-    NES_ASSERT2(numberOfTuples * schema->getSchemaSizeInBytes() <= buffer.getBufferSize(), "value to write is larger than the buffer");
+    NES_ASSERT2_FMT(numberOfTuples * schema->getSchemaSizeInBytes() <= buffer.getBufferSize(), "value to write is larger than the buffer");
 
     memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes,
            offset);
