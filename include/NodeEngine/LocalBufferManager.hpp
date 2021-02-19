@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_NODEENGINE_LOCALBUFFERMANAGER_HPP_
 #define NES_INCLUDE_NODEENGINE_LOCALBUFFERMANAGER_HPP_
 
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/BufferRecycler.hpp>
 #include <deque>
 #include <memory>
@@ -27,8 +28,6 @@ namespace NodeEngine {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 class TupleBuffer;
-class LocalBufferManager;
-typedef std::shared_ptr<LocalBufferManager> LocalBufferManagerPtr;
 namespace detail {
 class MemorySegment;
 }

@@ -26,12 +26,11 @@
 #include <optional>
 #include <vector>
 #include <NodeEngine/BufferRecycler.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 namespace NES {
 
 namespace NodeEngine {
 class TupleBuffer;
-class LocalBufferManager;
-typedef std::shared_ptr<LocalBufferManager> LocalBufferManagerPtr;
 namespace detail {
 class MemorySegment;
 }
@@ -144,6 +143,11 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
 
     void printStatistics();
 
+    /**
+     * tells if the buffer is configured: only for legacy support
+     * @return true if the buffer manager is configured
+     * @deprecated
+     */
     bool isReady() const { return isConfigured; }
 
     /**

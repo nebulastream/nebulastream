@@ -23,10 +23,22 @@ namespace NodeEngine {
 namespace detail {
 class MemorySegment;
 }
+/**
+ * @brief Interface for buffer recycling mechanism
+ */
 class BufferRecycler {
 
   public:
+    /**
+     * @brief Interface method for pooled buffer recycling
+     * @param buffer the buffer to recycle
+     */
     virtual void recyclePooledBuffer(detail::MemorySegment* buffer) = 0;
+
+    /**
+     * @brief Interface method for unpooled buffer recycling
+     * @param buffer the buffer to recycle
+     */
     virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer) = 0;
 };
 
