@@ -32,16 +32,44 @@ typedef std::shared_ptr<LocalBufferManager> LocalBufferManagerPtr;
 namespace detail {
 class MemorySegment;
 }
+
+/**
+ * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
+ */
 class LocalBufferManager : public BufferRecycler {
   public:
+    /**
+     * @brief Construct a new LocalBufferManager
+     * @param bufferManager the global buffer manager
+     * @param availableBuffers deque of exclusive buffers
+     * @param numberOfReservedBuffers number of exclusive bufferss
+     */
     explicit LocalBufferManager(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers,
                                 size_t numberOfReservedBuffers);
     ~LocalBufferManager();
 
+    /**
+     * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
+     * @return a new buffer
+     */
     TupleBuffer getBuffer();
 
+    /**
+     * @brief provide number of available exclusive buffers
+     * @return number of available exclusive buffers
+     */
     size_t getAvailableExclusiveBuffers() const;
+
+    /**
+     * @brief Recycle a pooled buffer that is might be exclusive to the pool
+     * @param buffer
+     */
     void recyclePooledBuffer(detail::MemorySegment* buffer) override;
+
+    /**
+     * @brief This calls is not supported and raises runtime error
+     * @param buffer
+     */
     void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
   private:
