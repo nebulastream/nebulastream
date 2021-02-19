@@ -909,7 +909,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTermination) {
+//TODO: add test when end of stream message is in place
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerFileOutputWithFilterWithInProcessTermination) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
