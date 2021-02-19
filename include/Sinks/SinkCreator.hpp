@@ -143,6 +143,13 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
                                       std::ostream& out);
 
 /**
+ * @brief create a print that does not output something
+ * @return a data sink pointer
+ */
+const DataSinkPtr createNullOutputSink();
+
+
+/**
  * @brief create a print test sink with a schema
  * @param schema of sink
  * @param parentPlanId id of the parent qep

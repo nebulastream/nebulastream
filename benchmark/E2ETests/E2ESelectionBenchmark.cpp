@@ -38,10 +38,11 @@ int main() {
 
     // source mode
 //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::MemoryMode};
-    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemoryMode};
+//    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemoryMode};
+    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
 
     //roughly 50% selectivity
-    string query = "Query::from(\"input\").filter(Attribute(\"value\") > 5).sink(FileSinkDescriptor::create(\"test.out\"));";
+    string query = "Query::from(\"input\").filter(Attribute(\"value\") > 5).sink(NullOutputSinkDescriptor::create());";
 
     std::string benchmarkName = "E2ESelectionBenchmark";
     std::string nesVersion = NES_VERSION;

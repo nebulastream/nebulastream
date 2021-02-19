@@ -17,6 +17,7 @@ add_source_nes(
         ZmqSink.cpp
         SinkMedium.cpp
         PrintSink.cpp
+        NullOutputSink.cpp
 )
 
 if(NES_USE_KAFKA)

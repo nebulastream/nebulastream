@@ -21,4 +21,5 @@ add_source_nes(
         NetworkSinkDescriptor.cpp
         OPCSinkDescriptor.cpp
         MQTTSinkDescriptor.cpp
+        NullOutputSinkDescriptor.cpp
 )

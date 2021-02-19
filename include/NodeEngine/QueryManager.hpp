@@ -229,6 +229,8 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     uint64_t nodeEngineId;
 
     uint16_t numThreads;
+
+    std::atomic<uint64_t> waitCounter;
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

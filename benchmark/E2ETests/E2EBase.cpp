@@ -18,8 +18,8 @@
 
 using namespace NES;
 
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 200000;
-const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 1  ;
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 100000;//600000
+const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3  ;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
 const DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
@@ -118,6 +118,7 @@ void E2EBase::setupSources() {
     wrk1->registerLogicalStream("input", testSchemaFileName);
 
     if (mode == InputOutputMode::FileMode) {
+        std::cout << "file source mode" << std::endl;
         SourceConfigPtr srcConf = SourceConfig::create();
         srcConf->setSourceType("CSVSource");
         srcConf->setSourceConfig("../tests/test_data/benchmark.csv");
@@ -133,6 +134,7 @@ void E2EBase::setupSources() {
             wrk1->registerPhysicalStream(inputStream);
         }
     } else if (mode == InputOutputMode::MemoryMode) {
+        std::cout << "memory source mode" << std::endl;
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -153,7 +155,8 @@ void E2EBase::setupSources() {
         }
 
         AbstractPhysicalStreamConfigPtr conf =
-            MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, memAreaSize, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+            MemorySourceStreamConfig::create("MemorySource", "test_stream", "input",
+                                             memArea, memAreaSize, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
 
         wrk1->registerPhysicalStream(conf);
     }
