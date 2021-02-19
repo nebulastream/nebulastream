@@ -65,6 +65,7 @@ ARG TARGETOS
 RUN [ "$TARGETARCH" = "amd64" ] && echo "x86_64-linux-gnu" > /debian-triple || echo "aarch64-linux-gnu" > /debian-triple
 ENV ACTUAL_TRIPLE='cat /debian-triple'
 
+ADD ./entrypoint-prepare-nes-package.sh /entrypoint-prepare-nes-package.sh
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
