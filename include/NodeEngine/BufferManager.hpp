@@ -17,6 +17,8 @@
 #ifndef _BUFFER_MANAGER_H
 #define _BUFFER_MANAGER_H
 
+#include <NodeEngine/BufferRecycler.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -25,8 +27,6 @@
 #include <mutex>
 #include <optional>
 #include <vector>
-#include <NodeEngine/BufferRecycler.hpp>
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 namespace NES {
 
 namespace NodeEngine {

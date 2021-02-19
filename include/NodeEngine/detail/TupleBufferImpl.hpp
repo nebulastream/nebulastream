@@ -52,7 +52,8 @@ void revertEndianness(TupleBuffer& buffer, SchemaPtr schema);
  */
 class BufferControlBlock {
   public:
-    explicit BufferControlBlock(MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
+    explicit BufferControlBlock(MemorySegment* owner, BufferRecycler* recycler,
+                                std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
 
     BufferControlBlock(const BufferControlBlock&);
 
@@ -191,7 +192,8 @@ class MemorySegment {
 
     MemorySegment();
 
-    explicit MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction);
+    explicit MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
+                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction);
 
     ~MemorySegment();
 

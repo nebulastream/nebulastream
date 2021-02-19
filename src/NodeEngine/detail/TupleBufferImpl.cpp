@@ -50,7 +50,8 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) {
 
 MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr) {}
 
-MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
+MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
+                             std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
     : ptr(ptr), size(size) {
     controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
     if (!this->ptr) {
@@ -73,8 +74,10 @@ MemorySegment::~MemorySegment() {
     }
 }
 
-BufferControlBlock::BufferControlBlock(MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
-    : referenceCounter(0), numberOfTuples(0), owner(owner), owningBufferRecycler(recycler), recycleCallback(recycleCallback), watermark(0), originId(0) {}
+BufferControlBlock::BufferControlBlock(MemorySegment* owner, BufferRecycler* recycler,
+                                       std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
+    : referenceCounter(0), numberOfTuples(0), owner(owner), owningBufferRecycler(recycler), recycleCallback(recycleCallback),
+      watermark(0), originId(0) {}
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
