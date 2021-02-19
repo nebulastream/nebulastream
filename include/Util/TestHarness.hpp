@@ -236,7 +236,7 @@ class TestHarness {
 
                 //TODO: we have to fix those hard values
                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-                    "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize, 0, 1);
+                    "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize, 1, 0);
                 workerPtrs[i]->registerPhysicalStream(conf);
             } else {
                 NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" << std::to_string(sourceTypes[i]));
