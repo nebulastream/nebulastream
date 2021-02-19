@@ -29,7 +29,7 @@ LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::dequ
         buffers.pop_front();
         NES_VERIFY(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
-        NES_ASSERT2(memSegment->isAvailable(), "Buffer not available");
+        NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
         exclusiveBuffers.emplace_back(memSegment);
     }
 }
@@ -37,6 +37,7 @@ LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::dequ
 LocalBufferManager::~LocalBufferManager() {
     std::unique_lock lock(mutex);
     while (!exclusiveBuffers.empty()) {
+        // return exclusive buffers to the global pool
         auto memSegment = exclusiveBuffers.front();
         exclusiveBuffers.pop_front();
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
@@ -51,6 +52,7 @@ size_t LocalBufferManager::getAvailableExclusiveBuffers() const {
 
 TupleBuffer LocalBufferManager::getBuffer() {
     {
+        // try to get an exclusive buffer
         std::unique_lock lock(mutex);
         if (exclusiveBuffers.size() > 0) {
             auto memSegment = exclusiveBuffers.front();
@@ -64,6 +66,7 @@ TupleBuffer LocalBufferManager::getBuffer() {
             }
         }
     }
+    // fallback to global pool
     return bufferManager->getBufferBlocking();
 }
 
@@ -74,6 +77,7 @@ void LocalBufferManager::recyclePooledBuffer(detail::MemorySegment* memSegment) 
         NES_THROW_RUNTIME_ERROR(
             "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
     }
+    // add back an exclusive buffer to the local pool
     exclusiveBuffers.emplace_back(memSegment);
 }
 

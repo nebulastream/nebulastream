@@ -98,9 +98,9 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
 MemorySegment* BufferControlBlock::getOwner() { return owner; }
 
 void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler) {
-    NES_ASSERT2(recycler, "invalid recycler");
+    NES_ASSERT2_FMT(recycler, "invalid recycler");
     auto oldRecycler = owningBufferRecycler.exchange(recycler);
-    NES_ASSERT2(recycler != oldRecycler, "invalid recycler");
+    NES_ASSERT2_FMT(recycler != oldRecycler, "invalid recycler");
 }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
