@@ -16,8 +16,8 @@
 
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -25,8 +25,8 @@
 #include <Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
-#include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
+#include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Util/Logger.hpp>
@@ -60,7 +60,7 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
     }
 #endif
 #ifdef ENABLE_MQTT_BUILD
-        else if (sinkType == "MQTT_SINK") {
+    else if (sinkType == "MQTT_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating MQTT sink");
         MQTTSinkPtr mqttSink = std::dynamic_pointer_cast<MQTTSink>(dataSink);
         return MQTTSinkDescriptor::create(mqttSink->getAddress(), mqttSink->getAddress(), mqttSink->getTopic(),

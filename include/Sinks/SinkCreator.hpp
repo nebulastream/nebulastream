@@ -197,10 +197,9 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
  * @return a data sink pointer
  */
 const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
-                                 const std::string address, const std::string clientID,
-                                 const std::string topic, const std::string user, uint64_t maxBufferedMSGs,
-                                 const MQTTSink::TimeUnits timeUnit,uint64_t msgDelay, MQTTSink::ServiceQualities qualityOfService,
-                                 bool asynchronousClient);
+                                 const std::string address, const std::string clientID, const std::string topic,
+                                 const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
+                                 uint64_t msgDelay, MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
 #endif
 
 }// namespace NES

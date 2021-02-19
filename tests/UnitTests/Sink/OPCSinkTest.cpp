@@ -15,9 +15,8 @@
 */
 
 #ifdef ENABLE_OPC_BUILD
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <gtest/gtest.h>
 #include <API/Schema.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -25,6 +24,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
+#include <gtest/gtest.h>
 #include <open62541/plugin/pki_default.h>
 #include <open62541/server.h>
 #include <open62541/server_config_default.h>
@@ -150,7 +150,8 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
  */
 TEST_F(OPCSinkTest, OPCSourcePrint) {
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
-    std::string expected = "OPC_SINK(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
+    std::string expected =
+        "OPC_SINK(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
     EXPECT_EQ(opcSink->toString(), expected);
     std::cout << opcSink->toString() << std::endl;
     SUCCEED();

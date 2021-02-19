@@ -1221,12 +1221,12 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MQTTSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        return MQTTSinkDescriptor::create(serializedSinkDescriptor.address(),
-                                          serializedSinkDescriptor.clientid(), serializedSinkDescriptor.topic(),
-                                          serializedSinkDescriptor.user(), serializedSinkDescriptor.maxbufferedmsgs(),
-                                          (MQTTSink::TimeUnits) serializedSinkDescriptor.timeunit(), serializedSinkDescriptor.msgdelay(),
-                                          (MQTTSink::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
-                                          serializedSinkDescriptor.asynchronousclient());
+        return MQTTSinkDescriptor::create(
+            serializedSinkDescriptor.address(), serializedSinkDescriptor.clientid(), serializedSinkDescriptor.topic(),
+            serializedSinkDescriptor.user(), serializedSinkDescriptor.maxbufferedmsgs(),
+            (MQTTSink::TimeUnits) serializedSinkDescriptor.timeunit(), serializedSinkDescriptor.msgdelay(),
+            (MQTTSink::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
+            serializedSinkDescriptor.asynchronousclient());
     }
 #endif
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {

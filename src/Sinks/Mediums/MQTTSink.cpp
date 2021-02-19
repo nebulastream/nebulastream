@@ -36,16 +36,16 @@ const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
 
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
-MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address,
-                   const std::string clientId, const std::string topic, const std::string user,
-                   uint64_t maxBufferedMSGs, const TimeUnits timeUnit, uint64_t msgDelay,
-                   const ServiceQualities qualityOfService, bool asynchronousClient) :
-      SinkMedium(sinkFormat, parentPlanId), address(address), clientId(clientId),topic(topic), user(user),
+MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address, const std::string clientId,
+                   const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
+                   uint64_t msgDelay, const ServiceQualities qualityOfService, bool asynchronousClient)
+    : SinkMedium(sinkFormat, parentPlanId), address(address), clientId(clientId), topic(topic), user(user),
       maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), msgDelay(msgDelay), qualityOfService(qualityOfService),
-      asynchronousClient(asynchronousClient), connected(false)
-{
-    minDelayBetweenSends = std::chrono::nanoseconds(msgDelay * ((timeUnit==milliseconds) ? NANO_TO_MILLI_SECONDS_MULTIPLIER
-                                                :(NANO_TO_SECONDS_MULTIPLIER * (timeUnit!=nanoseconds) | (timeUnit==nanoseconds))));
+      asynchronousClient(asynchronousClient), connected(false) {
+    minDelayBetweenSends = std::chrono::nanoseconds(
+        msgDelay
+        * ((timeUnit == milliseconds) ? NANO_TO_MILLI_SECONDS_MULTIPLIER
+                                      : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != nanoseconds) | (timeUnit == nanoseconds))));
     std::cout << "DELAY: " << minDelayBetweenSends.count();
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs);
     NES_DEBUG("MQTTSink::~MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
@@ -62,12 +62,12 @@ MQTTSink::~MQTTSink() {
     }
 }
 
-
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     try {
         std::unique_lock lock(writeMutex);
         if (!connected) {
-            NES_DEBUG("MQTTSink::writeData  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");
+            NES_DEBUG("MQTTSink::writeData  " << this << ": cannot write buffer " << inputBuffer
+                                              << " because queue is not connected");
             throw Exception("Write to zmq sink failed");
         }
         if (!inputBuffer.isValid()) {
@@ -102,26 +102,24 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
             }
         }
         // If the connection to the MQTT broker is lost during sending, the MQTT client might buffer all the remaining messages.
-        if(asynchronousClient && client->getNumberOfUnsentMessages() > 0) {
+        if (asynchronousClient && client->getNumberOfUnsentMessages() > 0) {
             NES_ERROR("MQTTSink::writeData: " << client->getNumberOfUnsentMessages() << " messages could not be sent");
         }
-    }
-    catch (const mqtt::exception& ex) {
+    } catch (const mqtt::exception& ex) {
         NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: " << ex.what());
         return false;
     }
     return true;
 }
 
-
 const std::string MQTTSink::toString() const {
     std::stringstream ss;
     ss << "MQTT_SINK(";
-    ss << "SCHEMA("    << sinkFormat->getSchemaPtr()->toString() << "), ";
-    ss << "ADDRESS"    << address << ", ";
+    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
+    ss << "ADDRESS" << address << ", ";
     ss << "CLIENT_ID=" << clientId << ", ";
-    ss << "TOPIC="     << topic    << ", ";
-    ss << "USER="      << user     << ", ";
+    ss << "TOPIC=" << topic << ", ";
+    ss << "USER=" << user << ", ";
     ss << "MAX_BUFFERED_MESSAGES=" << maxBufferedMSGs << ", ";
     ss << "TIME_UNIT=" << timeUnit << ", ";
     ss << "SEND_PERIOD=" << msgDelay << ", ";
@@ -136,11 +134,11 @@ bool MQTTSink::connect() {
     if (!connected) {
         try {
             auto connOpts = mqtt::connect_options_builder()
-                .keep_alive_interval(maxBufferedMSGs * minDelayBetweenSends)
-                .user_name(user)
-                .clean_session(true)
-                .automatic_reconnect(true)
-                .finalize();
+                                .keep_alive_interval(maxBufferedMSGs * minDelayBetweenSends)
+                                .user_name(user)
+                                .clean_session(true)
+                                .automatic_reconnect(true)
+                                .finalize();
             // Connect to the MQTT broker
             NES_DEBUG("MQTTSink::connect: connect to address=" << address);
             client->connect(connOpts);

@@ -77,7 +77,7 @@ const std::string PrintSink::toString() const {
     std::stringstream ss;
     ss << "PRINT_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
-    ss  << ")";
+    ss << ")";
     return ss.str();
 }
 
