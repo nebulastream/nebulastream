@@ -17,10 +17,10 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <utility>
-#include <filesystem>
 
 namespace NES {
 

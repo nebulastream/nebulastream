@@ -77,15 +77,18 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const
                                                  PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline,
                                                  SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration) {
     NES_ASSERT2_FMT(executablePipelineStage != nullptr,
-                "Executable pipelinestage is null for " << pipelineStageId
-                                                        << "within the following query sub plan: " << querySubPlanId);
+                    "Executable pipelinestage is null for " << pipelineStageId
+                                                            << "within the following query sub plan: " << querySubPlanId);
     NES_ASSERT2_FMT(pipelineContext != nullptr,
-                "Pipeline context is null for " << pipelineStageId << "within the following query sub plan: " << querySubPlanId);
+                    "Pipeline context is null for " << pipelineStageId
+                                                    << "within the following query sub plan: " << querySubPlanId);
     if (!reconfiguration) {
         NES_ASSERT2_FMT(inputSchema != nullptr,
-                    "Input schema is null for " << pipelineStageId << "within the following query sub plan: " << querySubPlanId);
+                        "Input schema is null for " << pipelineStageId
+                                                    << "within the following query sub plan: " << querySubPlanId);
         NES_ASSERT2_FMT(outputSchema != nullptr,
-                    "Output schema is null for " << pipelineStageId << "within the following query sub plan: " << querySubPlanId);
+                        "Output schema is null for " << pipelineStageId
+                                                     << "within the following query sub plan: " << querySubPlanId);
     }
     return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
                                                 nextPipeline, inputSchema, outputSchema, reconfiguration);

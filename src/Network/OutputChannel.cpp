@@ -138,10 +138,7 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     return false;
 }
 
-void OutputChannel::onError(Messages::ErrorMessage& errorMsg) {
-    NES_ERROR(errorMsg.getErrorTypeAsString());
-
-}
+void OutputChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR(errorMsg.getErrorTypeAsString()); }
 
 void OutputChannel::close() {
     if (isClosed) {

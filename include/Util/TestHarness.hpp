@@ -128,8 +128,8 @@ class TestHarness {
         NES_ASSERT(parentId != INVALID_TOPOLOGY_NODE_ID, "The provided ParentId is an INVALID_TOPOLOGY_NODE_ID");
         // check if record may span multiple buffers
         NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
-                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
-                        << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
+                        "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
+                            << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
         checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);
 
         sourceTypes.push_back(MemorySource);
