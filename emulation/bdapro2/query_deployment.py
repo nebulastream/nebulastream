@@ -23,8 +23,8 @@ def main(file_location: str):
             print(f"Processed: {query_id}")
 
     df = pd.DataFrame.from_dict(result)
-    df.to_csv("./results/5_9_fluctuating_hier_disabled_results.csv")
+    df.to_csv("./results/4_fluctuating_flat_disabled_20_results.csv")
 
 
 if __name__ == '__main__':
-    main("./results/5_9_fluctuating_hier_disabled.log")
+    main("./results/4_fluctuating_flat_disabled_20.log")
