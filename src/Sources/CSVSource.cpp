@@ -68,6 +68,10 @@ std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
     auto buffer = this->bufferManager->getBufferBlocking();
     fillBuffer(buffer);
     NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+
+    generatedTuples += buffer.getNumberOfTuples();
+    generatedBuffers++;
+
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
@@ -202,8 +206,6 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
     NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
     //update statistics
-    generatedTuples += tupCnt;
-    generatedBuffers++;
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }
