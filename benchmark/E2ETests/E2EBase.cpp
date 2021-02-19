@@ -17,11 +17,11 @@
 #include <util/E2EBase.hpp>
 
 const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 1000000;//600000
-const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3  ;
+const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
 const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
-const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576*4;
+const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576 * 4;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
 static uint64_t portOffset = 13;
@@ -73,7 +73,10 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             currentStat->setProcessedBuffers(it->getProcessedBuffers());
             currentStat->setProcessedTasks(it->getProcessedTasks());
             currentStat->setProcessedTuple(it->getProcessedTuple());
-            std::cout << "Statistics at ts=" << std::time(0) << " measurement=" << it->getQueryStatisticsAsString() << std::endl;
+            auto start = std::chrono::system_clock::now();
+            auto in_time_t = std::chrono::system_clock::to_time_t(start);
+            std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
+                << " measurement=" << it->getQueryStatisticsAsString() << std::endl;
             if (currentStat->getProcessedTuple() == 0) {
                 NES_WARNING("we already consumed all data size=" << statisticsVec.size());
             }
@@ -101,8 +104,7 @@ E2EBase::~E2EBase() {
     statisticsVec.clear();
     queryService.reset();
     queryCatalog.reset();
-    for(auto ptr: memoryAreas)
-    {
+    for (auto ptr : memoryAreas) {
         delete ptr;
     }
 }
@@ -162,13 +164,11 @@ void E2EBase::setupSources() {
                 records[i].timestamp = i;
             }
 
-            NES::AbstractPhysicalStreamConfigPtr conf =
-                NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input",
-                                                      memArea, memAreaSize, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+            NES::AbstractPhysicalStreamConfigPtr conf = NES::MemorySourceStreamConfig::create(
+                "MemorySource", "test_stream", "input", memArea, memAreaSize, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
 
             wrk1->registerPhysicalStream(conf);
         }
-
     }
 }
 void E2EBase::setup() {
@@ -236,38 +236,37 @@ std::string E2EBase::getResult() {
 
     NES_ASSERT(statisticsVec.size() != 0, "stats too small");
     //make diff
-//    for (int i = statisticsVec.size() - 1; i > 1; --i) {
-//        statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());
-//        statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers()
-//                                              - statisticsVec[i - 1]->getProcessedBuffers());
-//        statisticsVec[i]->setProcessedTasks(statisticsVec[i]->getProcessedTasks() - statisticsVec[i - 1]->getProcessedTasks());
-//    }
-//
-//    for (uint64_t i = 1; i < statisticsVec.size(); i++) {
-//        statisticsVec[0]->setProcessedBuffers(statisticsVec[0]->getProcessedBuffers() + statisticsVec[i]->getProcessedBuffers());
-//        statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() + statisticsVec[i]->getProcessedTasks());
-//        statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() + statisticsVec[i]->getProcessedTuple());
-//    }
-//
-//    std::cout << "sum is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
-//    NES_ASSERT(statisticsVec[0]->getProcessedTuple() > 0, "wrong number of tuples processed");
-//    statisticsVec[0]->setProcessedBuffers(statisticsVec[0]->getProcessedBuffers() / statisticsVec.size());
-//    statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() / statisticsVec.size());
-//    statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() / statisticsVec.size());
-//    std::cout << "agg is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
-//    out << "," << statisticsVec[0]->getProcessedBuffers() << "," << statisticsVec[0]->getProcessedTasks() << ","
-//        << statisticsVec[0]->getProcessedTuple() << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes()
-//        << std::endl;
+    //    for (int i = statisticsVec.size() - 1; i > 1; --i) {
+    //        statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());
+    //        statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers()
+    //                                              - statisticsVec[i - 1]->getProcessedBuffers());
+    //        statisticsVec[i]->setProcessedTasks(statisticsVec[i]->getProcessedTasks() - statisticsVec[i - 1]->getProcessedTasks());
+    //    }
+    //
+    //    for (uint64_t i = 1; i < statisticsVec.size(); i++) {
+    //        statisticsVec[0]->setProcessedBuffers(statisticsVec[0]->getProcessedBuffers() + statisticsVec[i]->getProcessedBuffers());
+    //        statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() + statisticsVec[i]->getProcessedTasks());
+    //        statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() + statisticsVec[i]->getProcessedTuple());
+    //    }
+    //
+    //    std::cout << "sum is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
+    //    NES_ASSERT(statisticsVec[0]->getProcessedTuple() > 0, "wrong number of tuples processed");
+    //    statisticsVec[0]->setProcessedBuffers(statisticsVec[0]->getProcessedBuffers() / statisticsVec.size());
+    //    statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() / statisticsVec.size());
+    //    statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() / statisticsVec.size());
+    //    std::cout << "agg is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
+    //    out << "," << statisticsVec[0]->getProcessedBuffers() << "," << statisticsVec[0]->getProcessedTasks() << ","
+    //        << statisticsVec[0]->getProcessedTuple() << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes()
+    //        << std::endl;
 
-    auto tuplesProcessd = statisticsVec[statisticsVec.size()-1]->getProcessedTuple() - statisticsVec[0]->getProcessedTuple();
-    auto bufferProcessed = statisticsVec[statisticsVec.size()-1]->getProcessedBuffers() - statisticsVec[0]->getProcessedBuffers();
-    auto tasksProcessed = statisticsVec[statisticsVec.size()-1]->getProcessedTasks() - statisticsVec[0]->getProcessedTasks();
+    auto tuplesProcessd = statisticsVec[statisticsVec.size() - 1]->getProcessedTuple() - statisticsVec[0]->getProcessedTuple();
+    auto bufferProcessed =
+        statisticsVec[statisticsVec.size() - 1]->getProcessedBuffers() - statisticsVec[0]->getProcessedBuffers();
+    auto tasksProcessed = statisticsVec[statisticsVec.size() - 1]->getProcessedTasks() - statisticsVec[0]->getProcessedTasks();
 
-    out << "," << bufferProcessed << "," << tasksProcessed << ","
-        << tuplesProcessd << "," << tuplesProcessd * schema->getSchemaSizeInBytes()<< ","
-        << tuplesProcessd * 1'000'000'000.0 / runtime.count() << ","
-        << (tuplesProcessd * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count()
-        << std::endl;
+    out << "," << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessd << ","
+        << tuplesProcessd * schema->getSchemaSizeInBytes() << "," << tuplesProcessd * 1'000'000'000.0 / runtime.count() << ","
+        << (tuplesProcessd * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() << std::endl;
 
     std::cout << "runtime in sec=" << runtime.count() << std::endl;
     return out.str();

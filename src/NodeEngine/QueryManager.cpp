@@ -70,7 +70,8 @@ QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId
 
 QueryManager::~QueryManager() {
     NES_DEBUG("~QueryManager()");
-    NES_ERROR("QueryManager waitCnt=" << waitCounter);
+    NES_WARNING("QueryManager waitCnt=" << waitCounter);
+    NES_VERIFY(waitCounter == 0, "buffer manager stalled this should not happen");
     destroy();
 }
 
