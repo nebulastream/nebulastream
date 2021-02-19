@@ -93,19 +93,19 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
     // Start thread for receiving the data.
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
-      // Receive data.
-      auto tuple_buffer = zmq_source->receiveData();
+        // Receive data.
+        auto tuple_buffer = zmq_source->receiveData();
 
-      // Test received data.
-      uint64_t sum = 0;
-      uint32_t* tuple = (uint32_t*) tuple_buffer->getBuffer();
-      for (uint64_t i = 0; i != 8; ++i) {
-          sum += *(tuple++);
-      }
-      uint64_t expected = 400;
-      EXPECT_EQ(sum, expected);
+        // Test received data.
+        uint64_t sum = 0;
+        uint32_t* tuple = (uint32_t*) tuple_buffer->getBuffer();
+        for (uint64_t i = 0; i != 8; ++i) {
+            sum += *(tuple++);
+        }
+        uint64_t expected = 400;
+        EXPECT_EQ(sum, expected);
 
-      receiving_finished = true;
+        receiving_finished = true;
     });
     uint64_t tupCnt = 8;
     // Wait until receiving is complete.

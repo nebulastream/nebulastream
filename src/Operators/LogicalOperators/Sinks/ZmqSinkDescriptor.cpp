@@ -33,7 +33,7 @@ bool ZmqSinkDescriptor::equal(SinkDescriptorPtr other) {
         return false;
     }
     auto otherSinkDescriptor = other->as<ZmqSinkDescriptor>();
-    return  host == otherSinkDescriptor->host && port == otherSinkDescriptor->port;
+    return host == otherSinkDescriptor->host && port == otherSinkDescriptor->port;
 }
 
 std::string ZmqSinkDescriptor::toString() { return "ZmqSinkDescriptor()"; }

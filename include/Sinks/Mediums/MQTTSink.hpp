@@ -18,11 +18,11 @@
 #define MQTTSINK_HPP
 #ifdef ENABLE_MQTT_BUILD
 
+#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/MQTTClientWrapper.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/MQTTClientWrapper.hpp>
 
 namespace NES {
 /**
@@ -30,8 +30,8 @@ namespace NES {
  */
 class MQTTSink : public SinkMedium {
   public:
-    enum TimeUnits {nanoseconds, milliseconds, seconds};
-    enum ServiceQualities {atMostOnce, atLeastOnce}; // MQTT also offers exactly once, add if needed
+    enum TimeUnits { nanoseconds, milliseconds, seconds };
+    enum ServiceQualities { atMostOnce, atLeastOnce };// MQTT also offers exactly once, add if needed
     /**
      * @brief Creates the MQTT sink
      * @param address: address name of MQTT broker
@@ -45,10 +45,9 @@ class MQTTSink : public SinkMedium {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
-    MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address,
-             const std::string clientId, const std::string topic, const std::string user,
-             uint64_t maxBufferedMSGs, const TimeUnits timeUnit, uint64_t msgDelay,
-             const ServiceQualities qualityOfService, bool asynchronousClient);
+    MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address, const std::string clientId,
+             const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
+             uint64_t msgDelay, const ServiceQualities qualityOfService, bool asynchronousClient);
     ~MQTTSink();
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
@@ -120,7 +119,6 @@ class MQTTSink : public SinkMedium {
      * @return true if client is asynchronous, else false
      */
     bool getAsynchronousClient();
-
 
     /**
      * @brief Print MQTT Sink (schema, address, port, clientId, topic, user)

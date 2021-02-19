@@ -15,10 +15,10 @@
 */
 
 #ifdef ENABLE_MQTT_BUILD
-#include <gtest/gtest.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <cstring>
 #include <future>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <string>
 

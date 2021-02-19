@@ -14,14 +14,15 @@
     limitations under the License.
 */
 
+#include <Util/Logger.hpp>
 #include <Util/MQTTClientWrapper.hpp>
 #include <mqtt/client.h>
-#include <Util/Logger.hpp>
 
 #ifdef ENABLE_MQTT_BUILD
 namespace NES {
 const std::chrono::duration<int64_t> MAX_WAIT_FOR_BROKER_CONNECT = std::chrono::seconds(20);
-MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId, uint64_t maxBufferedMSGs) {
+MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId,
+                                     uint64_t maxBufferedMSGs) {
     this->useAsyncClient = useAsyncClient;
     if (useAsyncClient) {
         asyncClient = std::make_shared<mqtt::async_client>(address, clientId, maxBufferedMSGs);
@@ -50,11 +51,13 @@ void MQTTClientWrapper::disconnect() {
     }
 }
 
-uint64_t MQTTClientWrapper::getNumberOfUnsentMessages() { return asyncClient ? asyncClient->get_pending_delivery_tokens().size() : 0; }
+uint64_t MQTTClientWrapper::getNumberOfUnsentMessages() {
+    return asyncClient ? asyncClient->get_pending_delivery_tokens().size() : 0;
+}
 
 void MQTTClientWrapper::setCallback(UserCallback& cb) { syncClient->set_callback(cb); }
 
-void MQTTClientWrapper::UserCallback::connection_lost(const std::string& cause)  {
+void MQTTClientWrapper::UserCallback::connection_lost(const std::string& cause) {
     NES_TRACE("MQTTClientWrapper::UserCallback::connection_lost: Connection lost");
     if (!cause.empty())
         NES_DEBUG("MQTTClientWrapper::UserCallback:connection_lost: cause: " << cause);
@@ -62,5 +65,5 @@ void MQTTClientWrapper::UserCallback::connection_lost(const std::string& cause) 
 void MQTTClientWrapper::UserCallback::delivery_complete(mqtt::delivery_token_ptr tok) {
     NES_TRACE("\n\t[Delivery complete for token: " << (tok ? tok->get_message_id() : -1) << "]");
 }
-}
-#endif //ENABLE_MQTT_BUILD
+}// namespace NES
+#endif//ENABLE_MQTT_BUILD

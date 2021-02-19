@@ -14,19 +14,17 @@
     limitations under the License.
 */
 
-
-
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
@@ -62,7 +60,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
     }
 #endif
 #ifdef ENABLE_MQTT_BUILD
-        else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
+    else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating MQTT sink");
         const MQTTSinkDescriptorPtr mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
         return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getAddress(),
