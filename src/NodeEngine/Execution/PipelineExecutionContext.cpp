@@ -15,8 +15,8 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <utility>
@@ -29,7 +29,8 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, Buffe
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                                    std::vector<OperatorHandlerPtr> operatorHandlers)
-    : queryId(queryId), localBufferPool(bufferManager->createLocalBufferManager(NUM_BUFFERS_PER_PIPELINE)), emitFunctionHandler(std::move(emitFunction)),
+    : queryId(queryId), localBufferPool(bufferManager->createLocalBufferManager(NUM_BUFFERS_PER_PIPELINE)),
+      emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
       operatorHandlers(std::move(operatorHandlers)) {
     // nop

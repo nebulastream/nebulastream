@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_NODEENGINE_LOCALBUFFERMANAGER_HPP_
 #define NES_INCLUDE_NODEENGINE_LOCALBUFFERMANAGER_HPP_
 
-#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/BufferRecycler.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <deque>
 #include <memory>
 
