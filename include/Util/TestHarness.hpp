@@ -51,6 +51,7 @@ class TestHarness {
         wrkConf = WorkerConfig::create();
         crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
+        nonSourceWorkerCount = 0;
     };
 
     ~TestHarness() { NES_DEBUG("TestHarness: ~TestHarness()"); };
@@ -62,7 +63,8 @@ class TestHarness {
          */
     template<typename T>
     void pushElement(T element, uint64_t sourceIdx) {
-        // TODO #1533: fix the logic of pushing sourceIdx
+        sourceIdx = sourceIdx - nonSourceWorkerCount;
+
         if (sourceIdx >= sourceSchemas.size()) {
             NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
         }
@@ -180,6 +182,7 @@ class TestHarness {
      * @param parentId id of the parent to connect
      */
     void addNonSourceWorker(uint64_t parentId) {
+        nonSourceWorkerCount++;
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
         wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
@@ -337,6 +340,7 @@ class TestHarness {
     std::vector<PhysicalStreamConfigPtr> csvSourceConfs;
     std::vector<TestHarnessSourceType> sourceTypes;
     uint64_t bufferSize;
+    uint64_t nonSourceWorkerCount;
 };
 }// namespace NES
 
