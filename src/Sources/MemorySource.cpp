@@ -36,20 +36,16 @@ MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea
 
 std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
-    auto optBuf = this->bufferManager->getBufferTimeout(std::chrono::milliseconds(3000));
-    if (!optBuf) {
-        NES_ERROR("buffer could not be delivered after 5 sec");
-        return std::nullopt;
-    }
+    auto buffer = this->bufferManager->getBufferBlocking();
 
     uint64_t numberOfTuples = 0;
     //if the memory area is smaller than a buffer
-    if (memoryAreaSize <= optBuf.value().getBufferSize()) {
+    if (memoryAreaSize <= buffer.getBufferSize()) {
         numberOfTuples = std::floor(double(memoryAreaSize) / double(schema->getSchemaSizeInBytes()));
     } else {
         //if the memory area spans multiple buffers
         auto restTuples = (memoryAreaSize - currentPositionInBytes) / schema->getSchemaSizeInBytes();
-        auto numberOfTuplesPerBuffer = std::floor(double(optBuf.value().getBufferSize()) / double(schema->getSchemaSizeInBytes()));
+        auto numberOfTuplesPerBuffer = std::floor(double(buffer.getBufferSize()) / double(schema->getSchemaSizeInBytes()));
         if(restTuples > numberOfTuplesPerBuffer)
         {
             numberOfTuples = numberOfTuplesPerBuffer;
@@ -74,23 +70,23 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     }
     uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();
 
-    NES_ASSERT2(numberOfTuples * schema->getSchemaSizeInBytes() <= optBuf.value().getBufferSize(), "value to write is larger than the buffer");
+    NES_ASSERT2(numberOfTuples * schema->getSchemaSizeInBytes() <= buffer.getBufferSize(), "value to write is larger than the buffer");
 
-    memcpy(optBuf.value().getBuffer(), memoryArea.get() + currentPositionInBytes,
+    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes,
            offset);
 
-    if (memoryAreaSize > optBuf.value().getBufferSize()) {
+    if (memoryAreaSize > buffer.getBufferSize()) {
         NES_DEBUG("MemorySource::receiveData: add offset=" << offset << " to currentpos=" << currentPositionInBytes);
         currentPositionInBytes += offset;
     }
 
-    optBuf.value().setNumberOfTuples(numberOfTuples);
+    buffer.setNumberOfTuples(numberOfTuples);
 
-    NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << optBuf.value().getNumberOfTuples());
-    if (optBuf.value().getNumberOfTuples() == 0) {
+    NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
-        return optBuf.value();
+        return buffer;
     }
 
     NES_ASSERT(false, "this must not be invoked");
@@ -100,31 +96,5 @@ const std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
 
-//void MemorySource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
-//    std::string thName = "MemSrc-" + std::to_string(operatorId);
-//    setThreadName(thName.c_str());
-//
-//    auto recordSize = schema->getSchemaSizeInBytes();
-//    auto bufferSize = bufferManager->getBufferSize();
-//    auto numOfBuffers = memoryAreaSize < bufferSize ? 1 : std::ceil(double(memoryAreaSize) / double(bufferSize));
-//    auto* pointer = memoryArea.get();
-//    auto remainingSize = memoryAreaSize;
-//    NES_ASSERT2(numOfBuffers == 1, "memory area larger than one buffer is not supported");
-////    NES_ASSERT2(bufferSize % recordSize == 0,
-////                "A record might span multiple buffers and this is not supported bufferSize=" << bufferSize
-////                                                                                             << " recordSize=" << recordSize);
-//    for (auto i = 0u; i < numOfBuffers; ++i) {
-//        auto buffer = bufferManager->getBufferBlocking();
-//        auto length = std::min<size_t>(bufferSize, remainingSize);
-//        auto recordsPerBuffer = length / recordSize;
-//        memcpy(buffer.getBuffer(), pointer, length);
-//        buffer.setOriginId(operatorId);
-//        buffer.setNumberOfTuples(recordsPerBuffer);
-//        queryManager->addWork(operatorId, buffer);
-//        pointer += length;
-//        remainingSize -= length;
-//    }
-//    NES_ASSERT2(remainingSize == 0, "something wrong with remaining size " << remainingSize);
-//}
 
 }// namespace NES

@@ -31,8 +31,6 @@
 #include <iostream>
 #include <chrono>
 
-using namespace std;
-
 class E2EBase {
   public:
     enum class InputOutputMode { FileMode, MemoryMode };
@@ -102,6 +100,8 @@ class E2EBase {
     QueryId queryId;
     NES::QueryCatalogPtr queryCatalog;
     NES::SchemaPtr schema;
+
+    std::vector<uint8_t*> memoryAreas;
 };
 typedef std::shared_ptr<E2EBase> E2EBasePtr;
 

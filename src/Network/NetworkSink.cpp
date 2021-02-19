@@ -47,7 +47,7 @@ void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << parentPlanId);
     //    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Created, "Setup : parent plan not running on net sink " << nesPartition);
     queryManager->addReconfigurationTask(parentPlanId,
-                                         NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this));
+                                         NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this), true);
 }
 
 void NetworkSink::shutdown() {

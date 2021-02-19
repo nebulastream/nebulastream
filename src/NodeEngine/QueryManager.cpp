@@ -272,6 +272,8 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
             NES_DEBUG("QueryManager: source " << source << " started successfully");
         }
     }
+
+
     {
         std::unique_lock lock(queryMutex);
         runningQEPs.emplace(qep->getQuerySubPlanId(), qep);

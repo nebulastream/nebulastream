@@ -22,7 +22,7 @@
 namespace NES {
 
 /**
- * @brief A stream config for a memory source  AbstractPhysicalStreamConfig
+ * @brief A stream config for a memory source
  */
 class MemorySourceStreamConfig : public PhysicalStreamConfig{
   public:

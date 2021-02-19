@@ -42,14 +42,6 @@ class MemorySource : public DataSource {
                           NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                           uint64_t numBuffersToProcess, std::chrono::milliseconds frequency,
                           OperatorId operatorId);
-
-//    /**
-//     * @brief Overridden runningRoutine that scans the memoryArea and creates memoryAreaSize/bufferSize buffers
-//     * @param bufferManager
-//     * @param queryManager
-//     */
-//    void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) override;
-
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt

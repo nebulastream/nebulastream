@@ -16,17 +16,19 @@
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <util/E2EBase.hpp>
 
-using namespace NES;
-
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 100000;//600000
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 1000000;//600000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3  ;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
-const DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
+const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576*4;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
 static uint64_t portOffset = 13;
+
+//TODO: remove this once we can access NES_ASSERT without
+using namespace NES;
+
 std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     if (mode == E2EBase::InputOutputMode::FileMode) {
         return "FileMode";
@@ -67,7 +69,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
         for (auto it : queryStatisticsPtrs) {
-            NodeEngine::QueryStatisticsPtr currentStat = std::make_shared<NodeEngine::QueryStatistics>();
+            NES::NodeEngine::QueryStatisticsPtr currentStat = std::make_shared<NES::NodeEngine::QueryStatistics>();
             currentStat->setProcessedBuffers(it->getProcessedBuffers());
             currentStat->setProcessedTasks(it->getProcessedTasks());
             currentStat->setProcessedTuple(it->getProcessedTuple());
@@ -99,13 +101,17 @@ E2EBase::~E2EBase() {
     statisticsVec.clear();
     queryService.reset();
     queryCatalog.reset();
+    for(auto ptr: memoryAreas)
+    {
+        delete ptr;
+    }
 }
 
 void E2EBase::setupSources() {
-    schema = Schema::create()
-                 ->addField(createField("id", UINT64))
-                 ->addField(createField("value", UINT64))
-                 ->addField(createField("timestamp", UINT64));
+    schema = NES::Schema::create()
+                 ->addField(createField("id", NES::UINT64))
+                 ->addField(createField("value", NES::UINT64))
+                 ->addField(createField("timestamp", NES::UINT64));
 
     portOffset *= portOffset + 123;
     //register logical stream qnv
@@ -119,7 +125,7 @@ void E2EBase::setupSources() {
 
     if (mode == InputOutputMode::FileMode) {
         std::cout << "file source mode" << std::endl;
-        SourceConfigPtr srcConf = SourceConfig::create();
+        NES::SourceConfigPtr srcConf = NES::SourceConfig::create();
         srcConf->setSourceType("CSVSource");
         srcConf->setSourceConfig("../tests/test_data/benchmark.csv");
         srcConf->setNumberOfTuplesToProducePerBuffer(0);
@@ -130,7 +136,7 @@ void E2EBase::setupSources() {
         //register physical stream
         for (uint64_t i = 0; i < sourceCnt; i++) {
             srcConf->setPhysicalStreamName("test_stream" + std::to_string(i));
-            PhysicalStreamConfigPtr inputStream = PhysicalStreamConfig::create(srcConf);
+            NES::PhysicalStreamConfigPtr inputStream = NES::PhysicalStreamConfig::create(srcConf);
             wrk1->registerPhysicalStream(inputStream);
         }
     } else if (mode == InputOutputMode::MemoryMode) {
@@ -141,24 +147,28 @@ void E2EBase::setupSources() {
             uint64_t timestamp;
         };
 
-        auto memAreaSize = sizeof(Record) * 170;//nearly full buffer
-        auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
+        for (uint64_t i = 0; i < sourceCnt; i++) {
+            //we put 170 tuples of size 24 Byte into a 4KB buffer
+            auto memAreaSize = sizeof(Record) * 170;//nearly full buffer
+            auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
+            memoryAreas.push_back(memArea);
+            auto* records = reinterpret_cast<Record*>(memArea);
+            size_t recordSize = schema->getSchemaSizeInBytes();
+            size_t numRecords = memAreaSize / recordSize;
+            for (auto i = 0u; i < numRecords; ++i) {
+                records[i].id = i;
+                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                records[i].value = i % 10;
+                records[i].timestamp = i;
+            }
 
-        auto* records = reinterpret_cast<Record*>(memArea);
-        size_t recordSize = schema->getSchemaSizeInBytes();
-        size_t numRecords = memAreaSize / recordSize;
-        for (auto i = 0u; i < numRecords; ++i) {
-            records[i].id = i;
-            //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-            records[i].value = i % 10;
-            records[i].timestamp = i;
+            NES::AbstractPhysicalStreamConfigPtr conf =
+                NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input",
+                                                      memArea, memAreaSize, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+
+            wrk1->registerPhysicalStream(conf);
         }
 
-        AbstractPhysicalStreamConfigPtr conf =
-            MemorySourceStreamConfig::create("MemorySource", "test_stream", "input",
-                                             memArea, memAreaSize, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
-
-        wrk1->registerPhysicalStream(conf);
     }
 }
 void E2EBase::setup() {
@@ -167,7 +177,7 @@ void E2EBase::setup() {
     NES::setupLogging("E2EBase.log", DEBUGL_LEVEL);
     std::cout << "Setup E2EBase test class." << std::endl;
 
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
     crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
     crdConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
     crdConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
@@ -175,18 +185,18 @@ void E2EBase::setup() {
     crdConf->setRestPort(8081 + portOffset);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
-    crd = std::make_shared<NesCoordinator>(crdConf);
+    crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    NES::WorkerConfigPtr wrkConf = NES::WorkerConfig::create();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10 + portOffset);
     wrkConf->setDataPort(port + 11 + portOffset);
     wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
     wrkConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
     wrkConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
-    wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    wrk1 = std::make_shared<NES::NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
 
@@ -199,7 +209,7 @@ void E2EBase::setup() {
 void E2EBase::runQuery(std::string query) {
     std::cout << "E2EBase: Submit query=" << query << std::endl;
     queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    NES_ASSERT(TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     //give the system some seconds to come to steady mode
     sleep(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS);
@@ -226,33 +236,40 @@ std::string E2EBase::getResult() {
 
     NES_ASSERT(statisticsVec.size() != 0, "stats too small");
     //make diff
-    for (int i = statisticsVec.size() - 1; i > 1; --i) {
-        statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());
-        statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers()
-                                              - statisticsVec[i - 1]->getProcessedBuffers());
-        statisticsVec[i]->setProcessedTasks(statisticsVec[i]->getProcessedTasks() - statisticsVec[i - 1]->getProcessedTasks());
-    }
+//    for (int i = statisticsVec.size() - 1; i > 1; --i) {
+//        statisticsVec[i]->setProcessedTuple(statisticsVec[i]->getProcessedTuple() - statisticsVec[i - 1]->getProcessedTuple());
+//        statisticsVec[i]->setProcessedBuffers(statisticsVec[i]->getProcessedBuffers()
+//                                              - statisticsVec[i - 1]->getProcessedBuffers());
+//        statisticsVec[i]->setProcessedTasks(statisticsVec[i]->getProcessedTasks() - statisticsVec[i - 1]->getProcessedTasks());
+//    }
+//
+//    for (uint64_t i = 1; i < statisticsVec.size(); i++) {
+//        statisticsVec[0]->setProcessedBuffers(statisticsVec[0]->getProcessedBuffers() + statisticsVec[i]->getProcessedBuffers());
+//        statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() + statisticsVec[i]->getProcessedTasks());
+//        statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() + statisticsVec[i]->getProcessedTuple());
+//    }
+//
+//    std::cout << "sum is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
+//    NES_ASSERT(statisticsVec[0]->getProcessedTuple() > 0, "wrong number of tuples processed");
+//    statisticsVec[0]->setProcessedBuffers(statisticsVec[0]->getProcessedBuffers() / statisticsVec.size());
+//    statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() / statisticsVec.size());
+//    statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() / statisticsVec.size());
+//    std::cout << "agg is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
+//    out << "," << statisticsVec[0]->getProcessedBuffers() << "," << statisticsVec[0]->getProcessedTasks() << ","
+//        << statisticsVec[0]->getProcessedTuple() << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes()
+//        << std::endl;
 
-    for (uint64_t i = 1; i < statisticsVec.size(); i++) {
-        statisticsVec[0]->setProcessedBuffers(statisticsVec[0]->getProcessedBuffers() + statisticsVec[i]->getProcessedBuffers());
-        statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() + statisticsVec[i]->getProcessedTasks());
-        statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() + statisticsVec[i]->getProcessedTuple());
-    }
-    std::cout << "sum is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
-    NES_ASSERT(statisticsVec[0]->getProcessedTuple() > 0, "wrong number of tuples processed");
-    statisticsVec[0]->setProcessedBuffers(statisticsVec[0]->getProcessedBuffers() / statisticsVec.size());
-    statisticsVec[0]->setProcessedTasks(statisticsVec[0]->getProcessedTasks() / statisticsVec.size());
-    statisticsVec[0]->setProcessedTuple(statisticsVec[0]->getProcessedTuple() / statisticsVec.size());
-    std::cout << "agg is " << statisticsVec[0]->getQueryStatisticsAsString() << std::endl;
-    out << "," << statisticsVec[0]->getProcessedBuffers() << "," << statisticsVec[0]->getProcessedTasks() << ","
-        << statisticsVec[0]->getProcessedTuple() << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes()
+    auto tuplesProcessd = statisticsVec[statisticsVec.size()-1]->getProcessedTuple() - statisticsVec[0]->getProcessedTuple();
+    auto bufferProcessed = statisticsVec[statisticsVec.size()-1]->getProcessedBuffers() - statisticsVec[0]->getProcessedBuffers();
+    auto tasksProcessed = statisticsVec[statisticsVec.size()-1]->getProcessedTasks() - statisticsVec[0]->getProcessedTasks();
+
+    out << "," << bufferProcessed << "," << tasksProcessed << ","
+        << tuplesProcessd << "," << tuplesProcessd * schema->getSchemaSizeInBytes()<< ","
+        << tuplesProcessd * 1'000'000'000.0 / runtime.count() << ","
+        << (tuplesProcessd * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count()
         << std::endl;
 
-    out << "," << statisticsVec[0]->getProcessedBuffers() << "," << statisticsVec[0]->getProcessedTasks() << ","
-        << statisticsVec[0]->getProcessedTuple() << "," << statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes()<< ","
-        << statisticsVec[0]->getProcessedTuple() * 1'000'000'000.0 / runtime.count() << ","
-        << (statisticsVec[0]->getProcessedTuple() * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count()
-        << std::endl;
+    std::cout << "runtime in sec=" << runtime.count() << std::endl;
     return out.str();
 }
 
@@ -260,7 +277,7 @@ void E2EBase::tearDown() {
     std::cout << "E2EBase: Remove query" << std::endl;
     NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
     std::cout << "E2EBase: wait for stop" << std::endl;
-    NES_ASSERT(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog), "check stop failed");
+    NES_ASSERT(NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog), "check stop failed");
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;
     bool retStopWrk1 = wrk1->stop(true);

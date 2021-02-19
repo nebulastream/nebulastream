@@ -31,6 +31,8 @@ SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
 bool NullOutputSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     NES_DEBUG("NullOutputSink output=" << inputBuffer);
+
+
     return true;
 }
 
