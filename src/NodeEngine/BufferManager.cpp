@@ -86,7 +86,6 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
 TupleBuffer BufferManager::getBufferBlocking() {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
     //TODO: remove this
-//    NES_ASSERT2(!availableBuffers.empty(), "buffer manager is empty");
 
     while (availableBuffers.empty()) {
         NES_ERROR("WE HAVE TO WAIT");

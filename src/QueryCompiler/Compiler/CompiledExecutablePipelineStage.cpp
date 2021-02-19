@@ -88,9 +88,9 @@ uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
     // we dont get the lock here as we dont was to serialize the execution.
     // currentExecutionStage is an atomic so its still save to read it
     if (currentExecutionStage != Running) {
-//        NES_ERROR(
-//            "CompiledExecutablePipelineStage:execute The pipeline stage, was not correctly initialized and started. You must first "
-//            "call setup and start.");
+        NES_DEBUG(
+            "CompiledExecutablePipelineStage:execute The pipeline stage, was not correctly initialized and started. You must first "
+            "call setup and start.");
         // TODO we have to assure that execute is never called after stop.
         // This is somehow not working currently.
         // return -1;
