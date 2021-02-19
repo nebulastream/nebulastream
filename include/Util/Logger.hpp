@@ -306,7 +306,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
         }                                                                                                                        \
     } while (0)
 
-#define NES_ASSERT2(CONDITION, ...)                                                                                              \
+#define NES_ASSERT2_FMT(CONDITION, ...)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << __VA_ARGS__);                      \
@@ -340,7 +340,7 @@ namespace NES {
 static void setupLogging(std::string logFileName, DebugLevel level) {
     std::cout << "Logger: SETUP_LOGGING" << std::endl;
     // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l %X{threadName} [%-5t] [%p] : %m%n"));
+    log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
 
     // create FileAppender
     LOG4CXX_DECODE_CHAR(fileName, logFileName);

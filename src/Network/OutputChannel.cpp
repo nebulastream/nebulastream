@@ -49,7 +49,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
 
             zmq::message_t recvHeaderMsg;
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
-            NES_ASSERT2(optRecvStatus.has_value(), "invalid recv");
+            NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
 
             auto recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
 
@@ -61,7 +61,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                 case Messages::kServerReady: {
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
-                    NES_ASSERT2(optRecvStatus2.has_value(), "invalid recv");
+                    NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
                     auto serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
                     // check if server responds with a ServerReadyMessage
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
@@ -83,7 +83,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                     // if server receives a message that an error occured
                     zmq::message_t errorEnvelope;
                     auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
-                    NES_ASSERT2(optRecvStatus3.has_value(), "invalid recv");
+                    NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
                     auto errorMsg = *errorEnvelope.data<Messages::ErrorMessage>();
                     NES_ERROR("OutputChannel: Received error from server-> " << errorMsg.getErrorTypeAsString());
                     protocol.onChannelError(errorMsg);
@@ -140,7 +140,7 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
 
 void OutputChannel::onError(Messages::ErrorMessage& errorMsg) {
     NES_ERROR(errorMsg.getErrorTypeAsString());
-    ((void) errorMsg);
+
 }
 
 void OutputChannel::close() {

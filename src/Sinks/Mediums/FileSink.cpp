@@ -33,7 +33,7 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     if (!append) {
         if (std::filesystem::exists(filePath.c_str())) {
             bool success = std::filesystem::remove(filePath.c_str());
-            NES_ASSERT2(success, "cannot remove file " << filePath.c_str());
+            NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
         }
     }
     NES_DEBUG("FileSink: open file=" << filePath);
