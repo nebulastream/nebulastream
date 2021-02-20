@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
+#include <Optimizer/QueryPlacement/GeneticAlgorithmOptimizer.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Phases/QueryRewritePhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
@@ -217,6 +218,46 @@ TEST_F(IFCOPTest, costFunctionTest) {
                                     ingestionRateModifier);
     EXPECT_EQ(cost, 48);
     NES_DEBUG("IFCOPTest: nodeToOperatorMap.size()=" << nodeToOperatorMap.size());
+}
+
+/* Test generating random execution path  */
+TEST_F(IFCOPTest, geneticAlgorithmTest) {
+
+    setupSmallTopologyAndStreamCatalog();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    Query query = Query::from("car")
+        .filter(Attribute("id") > 1)
+//                        .map(Attribute("id_new")=Attribute("id")+1)
+        .sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto tupleSizeModifier = IFCOPStrategy::getTupleSizeModifier(queryPlan);
+    auto ingestionRateModifier = IFCOPStrategy::getIngestionRateModifier(queryPlan);
+
+    GeneticAlgorithmOptimizer geneticAlgorithmOptimizer = GeneticAlgorithmOptimizer(queryPlan, topology, 5, 0.5, 0.99, 2,
+                                                                                    tupleSizeModifier,ingestionRateModifier);
+
+    auto placement0 = geneticAlgorithmOptimizer.population[0];
+    auto mutatedPlacement = geneticAlgorithmOptimizer.mutate(placement0);
+
+    auto placement1 = geneticAlgorithmOptimizer.population[1];
+
+    auto offspring = geneticAlgorithmOptimizer.crossOver(placement0, placement1);
+
+    geneticAlgorithmOptimizer.getCost(placement1);
+
+    auto bestPlacement = geneticAlgorithmOptimizer.getOptimizedPlacement(1);
+
+    NES_DEBUG("IFCOPTest: geneticAlgorithmTest()");
 }
 
 ///* Test generating random execution path  */

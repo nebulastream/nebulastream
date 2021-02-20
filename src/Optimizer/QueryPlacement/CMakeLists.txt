@@ -19,6 +19,7 @@ add_source_nes(
         PlacementStrategyFactory.cpp
         ExecutionPath.cpp
         IFCOPStrategy.cpp
+        GeneticAlgorithmOptimizer.cpp
 #        LowLatencyStrategy.cpp
 #        HighAvailabilityStrategy.cpp
 #        HighThroughputStrategy.cpp

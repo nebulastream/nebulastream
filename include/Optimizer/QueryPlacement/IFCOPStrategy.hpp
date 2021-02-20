@@ -44,16 +44,16 @@ class IFCOPStrategy : public BasePlacementStrategy {
 
     std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> getRandomAssignment(TopologyNodePtr executionPath,
                                                                                        std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
-    float getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology, TopologyNodePtr executionPath,
+    static float getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology, TopologyNodePtr executionPath,
                        std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
-                       std::map<OperatorNodePtr, float>  ingestionRateModifiers, std::map<OperatorNodePtr, float>  tupleSizeModifiers);
+                       std::map<LogicalOperatorNodePtr, float>  ingestionRateModifiers, std::map<LogicalOperatorNodePtr, float>  tupleSizeModifiers);
 
-    float getNetworkCost(TopologyNodePtr currentTopologyNode, std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
-                         std::map<OperatorNodePtr, float>  ingestionRateModifiers, std::map<OperatorNodePtr, float>  tupleSizeModifiers);
+    static float getNetworkCost(TopologyNodePtr currentTopologyNode, std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment,
+                         std::map<LogicalOperatorNodePtr, float>  ingestionRateModifiers, std::map<LogicalOperatorNodePtr, float>  tupleSizeModifiers);
 
-    std::map<OperatorNodePtr, float> getTupleSizeModifier(QueryPlanPtr queryPlan);
+    static std::map<LogicalOperatorNodePtr, float> getTupleSizeModifier(QueryPlanPtr queryPlan);
 
-    std::map<OperatorNodePtr, float> getIngestionRateModifier(QueryPlanPtr queryPlan);
+    static std::map<LogicalOperatorNodePtr, float> getIngestionRateModifier(QueryPlanPtr queryPlan);
   private:
     explicit IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
         TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
