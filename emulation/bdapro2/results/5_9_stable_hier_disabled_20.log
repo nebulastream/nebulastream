@@ -1,0 +1,917 @@
+/********************************************************
+ *     _   _   ______    _____
+ *    | \ | | |  ____|  / ____|
+ *    |  \| | | |__    | (___
+ *    | . ` | |  __|    \___ \     Coordinator
+ *    | |\  | | |____   ____) |
+ *    |_| \_| |______| |_____/
+ *
+ ********************************************************/
+Logger: SETUP_LOGGING
+waitForUserInterrupt()
+waitForUserInterrupt() got lock
+gen_query_19-02-2021_11-16-25_626
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d17da700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (1, 1613733388951660697)
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (1, 1613733388952239402)
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (1,79)
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (1,261)
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (1,107)
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,10)
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (75)
+Feb 19 2021 11:16:28 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (1995)
+gen_query_19-02-2021_11-16-25_4383
+Feb 19 2021 11:16:30 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e1ffb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (2, 1613733390865880649)
+gen_query_19-02-2021_11-16-25_9660
+Feb 19 2021 11:16:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e0ff9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (3, 1613733391308458606)
+gen_query_19-02-2021_11-16-25_5910
+Feb 19 2021 11:16:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d3fdf700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (4, 1613733391626819221)
+gen_query_19-02-2021_11-16-25_4377
+Feb 19 2021 11:16:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d97ea700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (5, 1613733391953039688)
+gen_query_19-02-2021_11-16-25_5160
+Feb 19 2021 11:16:33 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9ddff3700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (6, 1613733393508905765)
+gen_query_19-02-2021_11-16-25_1763
+Feb 19 2021 11:16:35 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d4fe1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (7, 1613733395252890025)
+gen_query_19-02-2021_11-16-25_617
+Feb 19 2021 11:16:35 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d67e4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (8, 1613733395482689126)
+gen_query_19-02-2021_11-16-25_894
+Feb 19 2021 11:16:35 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d87e8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (9, 1613733395544627842)
+gen_query_19-02-2021_11-16-25_5534
+Feb 19 2021 11:16:37 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d77e6700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (10, 1613733397484061105)
+gen_query_19-02-2021_11-16-31_8912
+gen_query_19-02-2021_11-16-25_7593
+Feb 19 2021 11:16:38 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d07d8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (11, 1613733398689945479)
+gen_query_19-02-2021_11-16-25_3907
+Feb 19 2021 11:16:39 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e17fa700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (12, 1613733399508453658)
+gen_query_19-02-2021_11-16-25_7363
+Feb 19 2021 11:16:40 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dc7f0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (13, 1613733400552847641)
+gen_query_19-02-2021_11-16-25_8602
+Feb 19 2021 11:16:41 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e27fc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (14, 1613733401547060756)
+gen_query_19-02-2021_11-16-25_7271
+Feb 19 2021 11:16:42 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dfff7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (15, 1613733402961060722)
+gen_query_19-02-2021_11-16-37_1683
+Feb 19 2021 11:16:42 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d77e6700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (16, 1613733402985803414)
+gen_query_19-02-2021_11-16-25_8295
+Feb 19 2021 11:16:43 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9deff5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (17, 1613733403150606720)
+gen_query_19-02-2021_11-16-25_7969
+Feb 19 2021 11:16:43 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e3fff700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (18, 1613733403933822029)
+gen_query_19-02-2021_11-16-25_262
+Feb 19 2021 11:16:44 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d1fdb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (19, 1613733404384769069)
+gen_query_19-02-2021_11-16-33_7671
+Feb 19 2021 11:16:44 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e2ffd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (20, 1613733404654574395)
+gen_query_19-02-2021_11-16-35_516
+Feb 19 2021 11:16:44 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9db7ee700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (21, 1613733404990301565)
+gen_query_19-02-2021_11-16-31_6091
+Feb 19 2021 11:16:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d3fdf700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (22, 1613733405142799234)
+gen_query_19-02-2021_11-16-25_6328
+Feb 19 2021 11:16:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9de7f4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (23, 1613733405582321687)
+gen_query_19-02-2021_11-16-25_8086
+Feb 19 2021 11:16:46 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d27dc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (24, 1613733406238375582)
+gen_query_19-02-2021_11-16-31_9144
+Feb 19 2021 11:16:46 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dafed700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (25, 1613733406332290370)
+gen_query_19-02-2021_11-16-35_3103
+Feb 19 2021 11:16:46 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d67e4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (26, 1613733406524512982)
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (19276154)
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (1, 1613733408231302986)
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (2, 1613733408231367262)
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (2,78)
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (2,383)
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (2,185)
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,371)
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+gen_query_19-02-2021_11-16-44_3914
+Feb 19 2021 11:16:48 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e1ffb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (27, 1613733408569604257)
+gen_query_19-02-2021_11-16-40_799
+Feb 19 2021 11:16:51 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d7fe7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (28, 1613733411261551179)
+gen_query_19-02-2021_11-16-41_6540
+Feb 19 2021 11:16:52 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dcff1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (29, 1613733412653730843)
+gen_query_19-02-2021_11-16-46_6893
+Feb 19 2021 11:16:52 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d9feb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (30, 1613733412739837735)
+gen_query_19-02-2021_11-16-45_1607
+Feb 19 2021 11:16:52 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d17da700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (31, 1613733412798270228)
+gen_query_19-02-2021_11-16-35_3867
+Feb 19 2021 11:16:53 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d57e2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (32, 1613733413116768827)
+Feb 19 2021 11:16:53 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5296311)
+Feb 19 2021 11:16:53 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (297)
+Feb 19 2021 11:16:53 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (4416)
+gen_query_19-02-2021_11-16-44_3502
+Feb 19 2021 11:16:53 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dd7f2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (33, 1613733413788197987)
+gen_query_19-02-2021_11-16-38_7765
+Feb 19 2021 11:16:53 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9da7ec700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (34, 1613733413957347371)
+gen_query_19-02-2021_11-16-42_7449
+Feb 19 2021 11:16:54 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d37de700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (35, 1613733414615182915)
+gen_query_19-02-2021_11-16-46_6500
+Feb 19 2021 11:16:54 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d47e0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (36, 1613733414706285000)
+gen_query_19-02-2021_11-16-42_769
+Feb 19 2021 11:16:54 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d6fe5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (37, 1613733414890413290)
+gen_query_19-02-2021_11-16-39_6332
+Feb 19 2021 11:16:55 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d5fe3700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (38, 1613733415055925085)
+gen_query_19-02-2021_11-16-44_420
+Feb 19 2021 11:16:56 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9db7ee700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (39, 1613733416464728904)
+gen_query_19-02-2021_11-16-46_2279
+Feb 19 2021 11:16:56 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9df7f6700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (40, 1613733416624852858)
+gen_query_19-02-2021_11-16-43_3486
+Feb 19 2021 11:16:58 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e3fff700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (41, 1613733418309667532)
+gen_query_19-02-2021_11-16-46_1904
+Feb 19 2021 11:16:59 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d27dc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (42, 1613733419840292089)
+gen_query_19-02-2021_11-16-52_4747
+Feb 19 2021 11:17:02 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dcff1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (43, 1613733422577729424)
+gen_query_19-02-2021_11-16-54_620
+Feb 19 2021 11:17:04 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e2ffd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (44, 1613733424639352968)
+gen_query_19-02-2021_11-16-43_4061
+Feb 19 2021 11:17:05 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d0fd9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (45, 1613733425627494730)
+gen_query_19-02-2021_11-16-52_9567
+Feb 19 2021 11:17:06 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d17da700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (46, 1613733426484304686)
+gen_query_19-02-2021_11-16-56_3595
+Feb 19 2021 11:17:08 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dfff7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (47, 1613733428387251739)
+gen_query_19-02-2021_11-16-51_5312
+Feb 19 2021 11:17:08 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d4fe1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (48, 1613733428392330869)
+gen_query_19-02-2021_11-16-48_5752
+Feb 19 2021 11:17:08 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e1ffb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (49, 1613733428560135430)
+gen_query_19-02-2021_11-16-55_5899
+Feb 19 2021 11:17:08 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9ddff3700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (50, 1613733428854619301)
+gen_query_19-02-2021_11-16-56_7264
+Feb 19 2021 11:17:10 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9deff5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (51, 1613733430009708235)
+gen_query_19-02-2021_11-16-54_1176
+Feb 19 2021 11:17:10 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d37de700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (52, 1613733430837272306)
+gen_query_19-02-2021_11-16-53_3413
+Feb 19 2021 11:17:10 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dc7f0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (53, 1613733430913384214)
+gen_query_19-02-2021_11-16-52_8206
+Feb 19 2021 11:17:11 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d1fdb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (54, 1613733431618656311)
+gen_query_19-02-2021_11-17-02_6443
+Feb 19 2021 11:17:12 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9de7f4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (55, 1613733432251708523)
+gen_query_19-02-2021_11-16-53_7091
+Feb 19 2021 11:17:13 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e0ff9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (56, 1613733433913652769)
+gen_query_19-02-2021_11-17-10_2533
+Feb 19 2021 11:17:14 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e27fc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (57, 1613733434692042578)
+gen_query_19-02-2021_11-16-57_5207
+gen_query_19-02-2021_11-17-10_2869
+Feb 19 2021 11:17:16 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dbfef700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (58, 1613733436541711216)
+gen_query_19-02-2021_11-16-53_1438
+Feb 19 2021 11:17:17 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d97ea700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (59, 1613733437494641366)
+gen_query_19-02-2021_11-17-12_7771
+Feb 19 2021 11:17:17 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d6fe5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (60, 1613733437883220592)
+gen_query_19-02-2021_11-17-06_8079
+Feb 19 2021 11:17:18 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dafed700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (61, 1613733438823878973)
+gen_query_19-02-2021_11-16-59_3743
+Feb 19 2021 11:17:18 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d27dc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (62, 1613733438848126409)
+gen_query_19-02-2021_11-17-14_5895
+Feb 19 2021 11:17:18 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dfff7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (63, 1613733438916441136)
+gen_query_19-02-2021_11-17-08_9923
+Feb 19 2021 11:17:19 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d57e2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (64, 1613733439125262379)
+gen_query_19-02-2021_11-16-54_8701
+Feb 19 2021 11:17:20 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d87e8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (65, 1613733440084316715)
+gen_query_19-02-2021_11-17-05_6354
+Feb 19 2021 11:17:21 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d07d8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (66, 1613733441042269481)
+gen_query_19-02-2021_11-16-59_5787
+Feb 19 2021 11:17:21 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e07f8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (67, 1613733441241234908)
+gen_query_19-02-2021_11-17-08_8693
+Feb 19 2021 11:17:21 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dd7f2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (68, 1613733441484310293)
+gen_query_19-02-2021_11-17-17_1704
+Feb 19 2021 11:17:21 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d2fdd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (69, 1613733441772474363)
+gen_query_19-02-2021_11-17-17_2736
+Feb 19 2021 11:17:21 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d7fe7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (70, 1613733441780156015)
+gen_query_19-02-2021_11-17-04_1883
+Feb 19 2021 11:17:22 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d9feb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (71, 1613733442427310834)
+gen_query_19-02-2021_11-17-08_5177
+Feb 19 2021 11:17:24 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d3fdf700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (72, 1613733444515969181)
+gen_query_19-02-2021_11-17-21_1039
+Feb 19 2021 11:17:25 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9db7ee700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (73, 1613733445030401207)
+gen_query_19-02-2021_11-17-08_3301
+Feb 19 2021 11:17:25 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e1ffb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (74, 1613733445300212644)
+gen_query_19-02-2021_11-17-10_4881
+Feb 19 2021 11:17:25 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9da7ec700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (75, 1613733445562022526)
+gen_query_19-02-2021_11-17-21_6577
+Feb 19 2021 11:17:25 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dc7f0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (76, 1613733445857802025)
+gen_query_19-02-2021_11-17-21_6942
+Feb 19 2021 11:17:25 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d2fdd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (77, 1613733445879078191)
+gen_query_19-02-2021_11-17-11_6276
+Feb 19 2021 11:17:26 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e37fe700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (78, 1613733446758472368)
+gen_query_19-02-2021_11-17-16_2545
+Feb 19 2021 11:17:27 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (34235885)
+Feb 19 2021 11:17:27 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (2, 1613733447769814630)
+Feb 19 2021 11:17:27 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (3, 1613733447769857120)
+Feb 19 2021 11:17:27 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (3,65)
+Feb 19 2021 11:17:27 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (3,310)
+Feb 19 2021 11:17:27 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (3,151)
+Feb 19 2021 11:17:27 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,425)
+Feb 19 2021 11:17:27 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+gen_query_19-02-2021_11-17-13_1408
+Feb 19 2021 11:17:28 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d67e4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (79, 1613733448105271125)
+gen_query_19-02-2021_11-17-25_9310
+Feb 19 2021 11:17:29 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d57e2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (80, 1613733449773315374)
+gen_query_19-02-2021_11-17-21_1335
+Feb 19 2021 11:17:30 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e3fff700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (81, 1613733450098023409)
+gen_query_19-02-2021_11-17-22_6486
+Feb 19 2021 11:17:30 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d9feb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (82, 1613733450123261989)
+gen_query_19-02-2021_11-17-16_7286
+Feb 19 2021 11:17:30 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d17da700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (83, 1613733450336870783)
+gen_query_19-02-2021_11-17-18_8285
+Feb 19 2021 11:17:30 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d27dc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (84, 1613733450451651155)
+gen_query_19-02-2021_11-17-25_4764
+Feb 19 2021 11:17:30 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dcff1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (85, 1613733450808495007)
+gen_query_19-02-2021_11-17-21_6113
+Feb 19 2021 11:17:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d07d8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (86, 1613733451165339992)
+gen_query_19-02-2021_11-17-18_9843
+Feb 19 2021 11:17:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9deff5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (87, 1613733451312909877)
+gen_query_19-02-2021_11-17-24_6841
+Feb 19 2021 11:17:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e17fa700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (88, 1613733451603026275)
+gen_query_19-02-2021_11-17-18_2187
+Feb 19 2021 11:17:32 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d8fe9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (89, 1613733452051560570)
+gen_query_19-02-2021_11-17-19_3512
+Feb 19 2021 11:17:32 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e2ffd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (90, 1613733452089353706)
+Feb 19 2021 11:17:32 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5224643)
+Feb 19 2021 11:17:32 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (406)
+Feb 19 2021 11:17:33 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (4531)
+gen_query_19-02-2021_11-17-21_6653
+Feb 19 2021 11:17:33 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d47e0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (91, 1613733453701082542)
+gen_query_19-02-2021_11-17-25_5786
+Feb 19 2021 11:17:33 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dfff7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (92, 1613733453775649311)
+gen_query_19-02-2021_11-17-25_4840
+Feb 19 2021 11:17:34 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9db7ee700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (93, 1613733454819485350)
+gen_query_19-02-2021_11-17-30_2596
+Feb 19 2021 11:17:35 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d9feb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (94, 1613733455504625973)
+gen_query_19-02-2021_11-17-26_4342
+Feb 19 2021 11:17:36 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d4fe1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (95, 1613733456042548645)
+gen_query_19-02-2021_11-17-28_749
+Feb 19 2021 11:17:40 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9ddff3700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (96, 1613733460175846490)
+gen_query_19-02-2021_11-17-25_5536
+Feb 19 2021 11:17:40 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9da7ec700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (97, 1613733460557267218)
+gen_query_19-02-2021_11-17-32_1876
+Feb 19 2021 11:17:43 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dbfef700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (98, 1613733463663790608)
+gen_query_19-02-2021_11-17-30_5747
+Feb 19 2021 11:17:44 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dd7f2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (99, 1613733464893560502)
+gen_query_19-02-2021_11-17-31_6399
+Feb 19 2021 11:17:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d97ea700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (100, 1613733465031343094)
+gen_query_19-02-2021_11-17-40_5753
+Feb 19 2021 11:17:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d1fdb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (101, 1613733465139853091)
+gen_query_19-02-2021_11-17-30_4252
+Feb 19 2021 11:17:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e3fff700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (102, 1613733465191055357)
+gen_query_19-02-2021_11-17-30_78
+Feb 19 2021 11:17:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d77e6700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (103, 1613733465213790799)
+gen_query_19-02-2021_11-17-31_4933
+Feb 19 2021 11:17:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d87e8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (104, 1613733465348680298)
+gen_query_19-02-2021_11-17-36_5230
+gen_query_19-02-2021_11-17-30_8782
+Feb 19 2021 11:17:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d27dc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (105, 1613733465438256495)
+gen_query_19-02-2021_11-17-31_4956
+Feb 19 2021 11:17:46 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9deff5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (106, 1613733466943647339)
+gen_query_19-02-2021_11-17-30_2042
+Feb 19 2021 11:17:48 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d37de700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (107, 1613733468215750127)
+gen_query_19-02-2021_11-17-34_9998
+Feb 19 2021 11:17:49 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e07f8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (108, 1613733469008095840)
+gen_query_19-02-2021_11-17-36_169
+Feb 19 2021 11:17:50 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d3fdf700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (109, 1613733470802057714)
+gen_query_19-02-2021_11-17-45_8818
+Feb 19 2021 11:17:51 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d1fdb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (110, 1613733471330056875)
+gen_query_19-02-2021_11-17-44_9728
+Feb 19 2021 11:17:53 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d67e4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (111, 1613733473034056398)
+gen_query_19-02-2021_11-17-33_9971
+Feb 19 2021 11:17:53 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dafed700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (112, 1613733473312851722)
+gen_query_19-02-2021_11-17-35_4891
+Feb 19 2021 11:17:53 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d9feb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (113, 1613733473566739511)
+gen_query_19-02-2021_11-17-32_899
+Feb 19 2021 11:17:54 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e0ff9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (114, 1613733474016010185)
+gen_query_19-02-2021_11-17-40_5949
+Feb 19 2021 11:17:54 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d6fe5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (115, 1613733474633037285)
+gen_query_19-02-2021_11-17-45_711
+Feb 19 2021 11:17:54 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e1ffb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (116, 1613733474785606266)
+gen_query_19-02-2021_11-17-33_9078
+Feb 19 2021 11:17:55 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dfff7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (117, 1613733475123916032)
+gen_query_19-02-2021_11-17-45_2540
+gen_query_19-02-2021_11-17-48_4870
+Feb 19 2021 11:17:56 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d2fdd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (118, 1613733476625437871)
+gen_query_19-02-2021_11-17-45_9975
+Feb 19 2021 11:17:56 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dc7f0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (119, 1613733476760406888)
+gen_query_19-02-2021_11-17-49_1388
+Feb 19 2021 11:17:57 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e07f8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (120, 1613733477495510239)
+gen_query_19-02-2021_11-17-53_1633
+Feb 19 2021 11:17:58 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dafed700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (121, 1613733478892953563)
+gen_query_19-02-2021_11-17-43_1139
+Feb 19 2021 11:18:00 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9de7f4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (122, 1613733480184058523)
+gen_query_19-02-2021_11-17-45_7214
+Feb 19 2021 11:18:00 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d87e8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (123, 1613733480266379346)
+gen_query_19-02-2021_11-17-56_1746
+Feb 19 2021 11:18:00 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d2fdd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (124, 1613733480684674020)
+gen_query_19-02-2021_11-17-56_7166
+Feb 19 2021 11:18:02 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9da7ec700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (125, 1613733482193526896)
+gen_query_19-02-2021_11-17-45_2861
+Feb 19 2021 11:18:02 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d47e0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (126, 1613733482982407853)
+gen_query_19-02-2021_11-17-46_4463
+Feb 19 2021 11:18:03 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d7fe7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (127, 1613733483735672893)
+gen_query_19-02-2021_11-17-54_2588
+Feb 19 2021 11:18:04 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e2ffd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (128, 1613733484105266904)
+gen_query_19-02-2021_11-17-45_3831
+Feb 19 2021 11:18:04 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e37fe700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (129, 1613733484177161458)
+gen_query_19-02-2021_11-17-51_5232
+Feb 19 2021 11:18:04 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d0fd9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (130, 1613733484980222180)
+gen_query_19-02-2021_11-17-57_8349
+Feb 19 2021 11:18:06 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e3fff700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (131, 1613733486185140500)
+gen_query_19-02-2021_11-17-50_4373
+Feb 19 2021 11:18:07 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d8fe9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (132, 1613733487586784807)
+gen_query_19-02-2021_11-17-53_8578
+Feb 19 2021 11:18:08 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9db7ee700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (133, 1613733488435541246)
+gen_query_19-02-2021_11-18-00_5510
+Feb 19 2021 11:18:08 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d67e4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (134, 1613733488467234335)
+gen_query_19-02-2021_11-17-55_9370
+gen_query_19-02-2021_11-18-06_8650
+Feb 19 2021 11:18:09 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e0ff9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (135, 1613733489550431491)
+gen_query_19-02-2021_11-18-00_2753
+Feb 19 2021 11:18:09 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d87e8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (136, 1613733489727759505)
+gen_query_19-02-2021_11-17-58_8841
+Feb 19 2021 11:18:10 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dafed700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (137, 1613733490125617691)
+gen_query_19-02-2021_11-17-54_8361
+Feb 19 2021 11:18:10 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d17da700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (138, 1613733490890711414)
+gen_query_19-02-2021_11-17-54_2982
+Feb 19 2021 11:18:11 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e1ffb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (139, 1613733491167804505)
+gen_query_19-02-2021_11-18-03_5413
+Feb 19 2021 11:18:11 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d97ea700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (140, 1613733491634333323)
+gen_query_19-02-2021_11-18-02_3209
+Feb 19 2021 11:18:11 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d47e0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (141, 1613733491709651393)
+gen_query_19-02-2021_11-17-53_9993
+Feb 19 2021 11:18:12 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e17fa700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (142, 1613733492162012026)
+gen_query_19-02-2021_11-18-04_2151
+Feb 19 2021 11:18:12 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e37fe700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (143, 1613733492284982010)
+gen_query_19-02-2021_11-18-04_1801
+Feb 19 2021 11:18:13 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d0fd9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (144, 1613733493444453192)
+gen_query_19-02-2021_11-18-11_7706
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d1fdb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (145, 1613733495035920179)
+gen_query_19-02-2021_11-17-56_3657
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d57e2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (146, 1613733495208057852)
+gen_query_19-02-2021_11-18-02_6495
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9da7ec700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (147, 1613733495317359542)
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (42624208)
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (3, 1613733495625260026)
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (4, 1613733495625317672)
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (4,91)
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (4,336)
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (4,167)
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,611)
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+gen_query_19-02-2021_11-18-00_165
+Feb 19 2021 11:18:15 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dbfef700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (148, 1613733495778505086)
+gen_query_19-02-2021_11-18-09_8779
+Feb 19 2021 11:18:16 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e0ff9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (149, 1613733496331145252)
+gen_query_19-02-2021_11-18-04_8459
+Feb 19 2021 11:18:16 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dd7f2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (150, 1613733496974439853)
+gen_query_19-02-2021_11-18-07_9354
+Feb 19 2021 11:18:17 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d77e6700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (151, 1613733497822033486)
+gen_query_19-02-2021_11-18-10_2794
+Feb 19 2021 11:18:17 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d17da700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (152, 1613733497899486829)
+gen_query_19-02-2021_11-18-09_4355
+Feb 19 2021 11:18:18 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9ddff3700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (153, 1613733498370331167)
+gen_query_19-02-2021_11-18-08_9894
+Feb 19 2021 11:18:19 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d27dc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (154, 1613733499635968399)
+gen_query_19-02-2021_11-18-10_556
+Feb 19 2021 11:18:20 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d6fe5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (155, 1613733500170452786)
+gen_query_19-02-2021_11-18-12_2570
+Feb 19 2021 11:18:20 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9de7f4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (156, 1613733500570837532)
+Feb 19 2021 11:18:20 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5282532)
+Feb 19 2021 11:18:20 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (657)
+Feb 19 2021 11:18:20 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (5903)
+gen_query_19-02-2021_11-18-11_8593
+Feb 19 2021 11:18:21 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d97ea700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (157, 1613733501455350290)
+gen_query_19-02-2021_11-18-12_8189
+Feb 19 2021 11:18:23 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e17fa700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (158, 1613733503133275233)
+gen_query_19-02-2021_11-18-16_3786
+Feb 19 2021 11:18:24 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d5fe3700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (159, 1613733504214798780)
+gen_query_19-02-2021_11-18-11_2623
+Feb 19 2021 11:18:24 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e07f8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (160, 1613733504551518885)
+gen_query_19-02-2021_11-18-09_9181
+Feb 19 2021 11:18:25 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d9feb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (161, 1613733505453204753)
+gen_query_19-02-2021_11-18-16_5218
+Feb 19 2021 11:18:25 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d3fdf700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (162, 1613733505499995842)
+gen_query_19-02-2021_11-18-24_659
+Feb 19 2021 11:18:28 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d0fd9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (163, 1613733508199844275)
+gen_query_19-02-2021_11-18-17_9447
+Feb 19 2021 11:18:29 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d4fe1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (164, 1613733509543520047)
+gen_query_19-02-2021_11-18-15_8637
+Feb 19 2021 11:18:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dcff1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (165, 1613733511032000964)
+gen_query_19-02-2021_11-18-15_1062
+Feb 19 2021 11:18:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9db7ee700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (166, 1613733511274442535)
+gen_query_19-02-2021_11-18-15_4982
+Feb 19 2021 11:18:31 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9da7ec700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (167, 1613733511687022435)
+gen_query_19-02-2021_11-18-28_8940
+Feb 19 2021 11:18:32 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9ddff3700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (168, 1613733512261716499)
+gen_query_19-02-2021_11-18-13_2935
+Feb 19 2021 11:18:32 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d2fdd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (169, 1613733512806466805)
+gen_query_19-02-2021_11-18-15_4713
+Feb 19 2021 11:18:32 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dfff7700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (170, 1613733512870676580)
+gen_query_19-02-2021_11-18-20_2702
+Feb 19 2021 11:18:33 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d6fe5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (171, 1613733513649973917)
+gen_query_19-02-2021_11-18-31_2661
+Feb 19 2021 11:18:36 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d47e0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (172, 1613733516973410243)
+gen_query_19-02-2021_11-18-21_9061
+gen_query_19-02-2021_11-18-17_1765
+Feb 19 2021 11:18:37 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d17da700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (173, 1613733517815204131)
+gen_query_19-02-2021_11-18-29_8705
+Feb 19 2021 11:18:38 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d1fdb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (174, 1613733518208726698)
+gen_query_19-02-2021_11-18-18_9830
+Feb 19 2021 11:18:38 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9df7f6700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (175, 1613733518998918765)
+gen_query_19-02-2021_11-18-20_7550
+Feb 19 2021 11:18:40 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dafed700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (176, 1613733520795157489)
+gen_query_19-02-2021_11-18-33_1838
+Feb 19 2021 11:18:40 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e0ff9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (177, 1613733520827938105)
+gen_query_19-02-2021_11-18-20_1688
+Feb 19 2021 11:18:41 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e3fff700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (178, 1613733521141178909)
+gen_query_19-02-2021_11-18-32_8951
+Feb 19 2021 11:18:42 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e27fc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (179, 1613733522575943279)
+gen_query_19-02-2021_11-18-23_9193
+Feb 19 2021 11:18:42 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e17fa700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (180, 1613733522745020630)
+gen_query_19-02-2021_11-18-25_8086
+Feb 19 2021 11:18:43 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d3fdf700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (181, 1613733523149367288)
+gen_query_19-02-2021_11-18-31_8625
+Feb 19 2021 11:18:44 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e1ffb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (182, 1613733524583426260)
+gen_query_19-02-2021_11-18-24_7660
+Feb 19 2021 11:18:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e07f8700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (183, 1613733525592864116)
+gen_query_19-02-2021_11-18-21_3545
+Feb 19 2021 11:18:45 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d67e4700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (184, 1613733525804334326)
+gen_query_19-02-2021_11-18-32_8409
+Feb 19 2021 11:18:46 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d97ea700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (185, 1613733526133550064)
+gen_query_19-02-2021_11-18-41_9919
+Feb 19 2021 11:18:46 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e3fff700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (186, 1613733526150431070)
+gen_query_19-02-2021_11-18-32_1300
+Feb 19 2021 11:18:46 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d37de700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (187, 1613733526454963240)
+gen_query_19-02-2021_11-18-37_8372
+Feb 19 2021 11:18:47 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d57e2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (188, 1613733527127844714)
+gen_query_19-02-2021_11-18-25_3605
+Feb 19 2021 11:18:47 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e2ffd700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (189, 1613733527748060051)
+gen_query_19-02-2021_11-18-31_5730
+Feb 19 2021 11:18:47 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9deff5700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (190, 1613733527808773696)
+gen_query_19-02-2021_11-18-39_2603
+Feb 19 2021 11:18:48 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dc7f0700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (191, 1613733528530515766)
+gen_query_19-02-2021_11-18-38_6545
+Feb 19 2021 11:18:48 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9df7f6700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (192, 1613733528707193664)
+gen_query_19-02-2021_11-18-42_2738
+Feb 19 2021 11:18:48 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d0fd9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (193, 1613733528841651940)
+gen_query_19-02-2021_11-18-36_6922
+Feb 19 2021 11:18:50 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d9feb700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (194, 1613733530192085924)
+gen_query_19-02-2021_11-18-40_2179
+Feb 19 2021 11:18:50 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dd7f2700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (195, 1613733530328598598)
+gen_query_19-02-2021_11-18-37_1606
+gen_query_19-02-2021_11-18-40_395
+Feb 19 2021 11:18:51 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dcff1700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (196, 1613733531142537730)
+gen_query_19-02-2021_11-18-42_4472
+Feb 19 2021 11:18:51 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e17fa700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (197, 1613733531235911107)
+gen_query_19-02-2021_11-18-42_1575
+Feb 19 2021 11:18:51 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9d8fe9700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (198, 1613733531594093443)
+gen_query_19-02-2021_11-18-42_8160
+Feb 19 2021 11:18:51 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9e27fc700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (199, 1613733531662227880)
+gen_query_19-02-2021_11-18-41_7936
+Feb 19 2021 11:18:51 NESTimer: /nebulastream/src/Services/QueryService.cpp(52)  [0x7fc9dbfef700] [TRACE] : BDAPRO2Tracking: markAsRegistered - (queryId, nanoseconds) : (200, 1613733531847539421)
+gen_query_19-02-2021_11-18-50_4089
+gen_query_19-02-2021_11-18-54_463
+Feb 19 2021 11:19:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (43438162)
+Feb 19 2021 11:19:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (4, 1613733544354248865)
+Feb 19 2021 11:19:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (5, 1613733544354281321)
+Feb 19 2021 11:19:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (5,30)
+Feb 19 2021 11:19:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (5,116)
+Feb 19 2021 11:19:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (5,57)
+Feb 19 2021 11:19:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,389)
+Feb 19 2021 11:19:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:19:08 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (4036417)
+Feb 19 2021 11:19:08 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (390)
+Feb 19 2021 11:19:08 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (4099)
+gen_query_19-02-2021_11-19-08_3960
+gen_query_19-02-2021_11-19-10_9457
+gen_query_19-02-2021_11-19-14_6607
+gen_query_19-02-2021_11-19-21_5728
+gen_query_19-02-2021_11-19-24_5179
+Feb 19 2021 11:19:51 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (43204549)
+Feb 19 2021 11:19:51 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (5, 1613733591600573699)
+Feb 19 2021 11:19:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (6, 1613733591600590538)
+Feb 19 2021 11:19:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (6,33)
+Feb 19 2021 11:19:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (6,171)
+Feb 19 2021 11:19:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (6,106)
+Feb 19 2021 11:19:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,565)
+Feb 19 2021 11:19:51 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:19:56 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5037359)
+Feb 19 2021 11:19:56 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (529)
+Feb 19 2021 11:19:56 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (3074)
+gen_query_19-02-2021_11-20-01_1612
+gen_query_19-02-2021_11-20-05_1027
+gen_query_19-02-2021_11-20-09_6844
+gen_query_19-02-2021_11-20-11_6428
+gen_query_19-02-2021_11-20-14_4899
+gen_query_19-02-2021_11-20-16_3160
+Feb 19 2021 11:20:44 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (47881489)
+Feb 19 2021 11:20:44 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (6, 1613733644524154740)
+Feb 19 2021 11:20:44 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (7, 1613733644524184215)
+Feb 19 2021 11:20:44 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (7,36)
+Feb 19 2021 11:20:44 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (7,150)
+Feb 19 2021 11:20:44 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (7,95)
+Feb 19 2021 11:20:44 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,847)
+Feb 19 2021 11:20:44 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:20:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (4018754)
+Feb 19 2021 11:20:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (704)
+Feb 19 2021 11:20:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (3363)
+gen_query_19-02-2021_11-20-51_1888
+gen_query_19-02-2021_11-20-57_9389
+gen_query_19-02-2021_11-21-00_6140
+gen_query_19-02-2021_11-21-03_9190
+gen_query_19-02-2021_11-21-06_1391
+gen_query_19-02-2021_11-21-08_5704
+gen_query_19-02-2021_11-21-11_1952
+Feb 19 2021 11:21:42 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (53508221)
+Feb 19 2021 11:21:42 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (7, 1613733702056619816)
+Feb 19 2021 11:21:42 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (8, 1613733702056649102)
+Feb 19 2021 11:21:42 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (8,50)
+Feb 19 2021 11:21:42 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (8,142)
+Feb 19 2021 11:21:42 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (8,64)
+Feb 19 2021 11:21:42 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,1110)
+Feb 19 2021 11:21:42 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:21:47 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5076443)
+Feb 19 2021 11:21:47 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (1360)
+Feb 19 2021 11:21:47 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (7028)
+gen_query_19-02-2021_11-21-51_5120
+gen_query_19-02-2021_11-21-57_8058
+gen_query_19-02-2021_11-22-00_3192
+gen_query_19-02-2021_11-22-03_6291
+gen_query_19-02-2021_11-22-06_4699
+gen_query_19-02-2021_11-22-09_2171
+gen_query_19-02-2021_11-22-13_8052
+gen_query_19-02-2021_11-22-16_1854
+Feb 19 2021 11:22:55 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (68213676)
+Feb 19 2021 11:22:55 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (8, 1613733775356835696)
+Feb 19 2021 11:22:55 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (9, 1613733775356859977)
+Feb 19 2021 11:22:55 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (9,46)
+Feb 19 2021 11:22:55 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (9,203)
+Feb 19 2021 11:22:55 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (9,95)
+Feb 19 2021 11:22:55 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,1806)
+Feb 19 2021 11:22:55 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:23:00 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5025733)
+Feb 19 2021 11:23:00 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (2218)
+Feb 19 2021 11:23:00 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (5308)
+gen_query_19-02-2021_11-23-01_4423
+gen_query_19-02-2021_11-23-08_6310
+gen_query_19-02-2021_11-23-11_9657
+gen_query_19-02-2021_11-23-14_5591
+gen_query_19-02-2021_11-23-17_3657
+gen_query_19-02-2021_11-23-20_5246
+gen_query_19-02-2021_11-23-23_2177
+gen_query_19-02-2021_11-23-26_4937
+gen_query_19-02-2021_11-23-29_4218
+Feb 19 2021 11:24:15 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (75358402)
+Feb 19 2021 11:24:15 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (9, 1613733855751102422)
+Feb 19 2021 11:24:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (10, 1613733855751123204)
+Feb 19 2021 11:24:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (10,51)
+Feb 19 2021 11:24:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (10,184)
+Feb 19 2021 11:24:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (10,80)
+Feb 19 2021 11:24:15 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,1453)
+Feb 19 2021 11:24:15 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:24:20 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5030659)
+Feb 19 2021 11:24:20 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (1852)
+Feb 19 2021 11:24:20 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (5746)
+gen_query_19-02-2021_11-24-20_2675
+gen_query_19-02-2021_11-24-25_6660
+gen_query_19-02-2021_11-24-29_8366
+gen_query_19-02-2021_11-24-33_6600
+gen_query_19-02-2021_11-24-35_6521
+gen_query_19-02-2021_11-24-38_745
+gen_query_19-02-2021_11-24-41_979
+gen_query_19-02-2021_11-24-43_4747
+gen_query_19-02-2021_11-24-47_1872
+gen_query_19-02-2021_11-24-50_781
+Feb 19 2021 11:25:34 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (74080615)
+Feb 19 2021 11:25:34 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (10, 1613733934872100104)
+Feb 19 2021 11:25:34 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (11, 1613733934872118362)
+Feb 19 2021 11:25:34 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (11,35)
+Feb 19 2021 11:25:34 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (11,138)
+Feb 19 2021 11:25:34 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (11,132)
+Feb 19 2021 11:25:34 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,1891)
+Feb 19 2021 11:25:34 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:25:38 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (4041831)
+Feb 19 2021 11:25:38 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (2161)
+Feb 19 2021 11:25:38 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (6376)
+gen_query_19-02-2021_11-25-41_6405
+gen_query_19-02-2021_11-25-46_8709
+gen_query_19-02-2021_11-25-49_1148
+gen_query_19-02-2021_11-25-51_2379
+gen_query_19-02-2021_11-25-54_2637
+gen_query_19-02-2021_11-25-56_1570
+gen_query_19-02-2021_11-25-59_7421
+gen_query_19-02-2021_11-26-02_6858
+gen_query_19-02-2021_11-26-04_4785
+gen_query_19-02-2021_11-26-08_7600
+gen_query_19-02-2021_11-26-10_8505
+Feb 19 2021 11:26:59 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (80425459)
+Feb 19 2021 11:26:59 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (11, 1613734019350395684)
+Feb 19 2021 11:26:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (12, 1613734019350424264)
+Feb 19 2021 11:26:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (12,53)
+Feb 19 2021 11:26:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (12,226)
+Feb 19 2021 11:26:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (12,65)
+Feb 19 2021 11:26:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,2554)
+Feb 19 2021 11:26:59 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:27:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5037284)
+Feb 19 2021 11:27:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (2962)
+Feb 19 2021 11:27:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (8964)
+gen_query_19-02-2021_11-27-06_6980
+gen_query_19-02-2021_11-27-11_2057
+gen_query_19-02-2021_11-27-14_9128
+gen_query_19-02-2021_11-27-18_2184
+gen_query_19-02-2021_11-27-20_3008
+gen_query_19-02-2021_11-27-23_5161
+gen_query_19-02-2021_11-27-25_1502
+gen_query_19-02-2021_11-27-27_2661
+gen_query_19-02-2021_11-27-30_5070
+gen_query_19-02-2021_11-27-33_5170
+gen_query_19-02-2021_11-27-35_9392
+gen_query_19-02-2021_11-27-37_7724
+Feb 19 2021 11:28:32 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (88478020)
+Feb 19 2021 11:28:32 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (12, 1613734112880833123)
+Feb 19 2021 11:28:32 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (13, 1613734112880863953)
+Feb 19 2021 11:28:32 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (13,51)
+Feb 19 2021 11:28:32 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (13,171)
+Feb 19 2021 11:28:32 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (13,63)
+Feb 19 2021 11:28:32 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,2990)
+Feb 19 2021 11:28:32 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:28:37 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5032101)
+Feb 19 2021 11:28:37 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (2637)
+Feb 19 2021 11:28:37 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (5631)
+gen_query_19-02-2021_11-28-41_9727
+gen_query_19-02-2021_11-28-46_7521
+gen_query_19-02-2021_11-28-49_7734
+gen_query_19-02-2021_11-28-51_392
+gen_query_19-02-2021_11-28-54_7797
+gen_query_19-02-2021_11-28-57_4408
+gen_query_19-02-2021_11-28-59_5764
+gen_query_19-02-2021_11-29-02_4000
+gen_query_19-02-2021_11-29-05_470
+gen_query_19-02-2021_11-29-08_1955
+gen_query_19-02-2021_11-29-10_5676
+gen_query_19-02-2021_11-29-13_6738
+gen_query_19-02-2021_11-29-15_4531
+Feb 19 2021 11:30:08 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (90990013)
+Feb 19 2021 11:30:08 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (13, 1613734208914799911)
+Feb 19 2021 11:30:08 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (14, 1613734208914816892)
+Feb 19 2021 11:30:08 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (14,34)
+Feb 19 2021 11:30:08 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (14,144)
+Feb 19 2021 11:30:08 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (14,63)
+Feb 19 2021 11:30:08 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,4160)
+Feb 19 2021 11:30:08 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:30:13 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5035352)
+Feb 19 2021 11:30:13 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (3233)
+Feb 19 2021 11:30:13 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (7046)
+gen_query_19-02-2021_11-30-14_3984
+gen_query_19-02-2021_11-30-17_2567
+gen_query_19-02-2021_11-30-23_485
+gen_query_19-02-2021_11-30-25_1587
+gen_query_19-02-2021_11-30-28_4139
+gen_query_19-02-2021_11-30-30_3990
+gen_query_19-02-2021_11-30-32_8847
+gen_query_19-02-2021_11-30-35_2856
+gen_query_19-02-2021_11-30-38_3559
+gen_query_19-02-2021_11-30-40_293
+gen_query_19-02-2021_11-30-43_9689
+gen_query_19-02-2021_11-30-46_338
+gen_query_19-02-2021_11-30-49_8041
+gen_query_19-02-2021_11-30-52_143
+Feb 19 2021 11:31:59 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (105565456)
+Feb 19 2021 11:31:59 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (14, 1613734319530571498)
+Feb 19 2021 11:31:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (15, 1613734319530589419)
+Feb 19 2021 11:31:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (15,39)
+Feb 19 2021 11:31:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (15,129)
+Feb 19 2021 11:31:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (15,63)
+Feb 19 2021 11:31:59 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,3920)
+Feb 19 2021 11:31:59 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:32:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5037688)
+Feb 19 2021 11:32:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (5153)
+Feb 19 2021 11:32:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (9601)
+gen_query_19-02-2021_11-32-06_6980
+gen_query_19-02-2021_11-32-12_3733
+gen_query_19-02-2021_11-32-15_7362
+gen_query_19-02-2021_11-32-17_9968
+gen_query_19-02-2021_11-32-19_3545
+gen_query_19-02-2021_11-32-22_991
+gen_query_19-02-2021_11-32-25_7259
+gen_query_19-02-2021_11-32-27_8987
+gen_query_19-02-2021_11-32-30_6697
+gen_query_19-02-2021_11-32-32_6012
+gen_query_19-02-2021_11-32-35_9535
+gen_query_19-02-2021_11-32-38_8306
+gen_query_19-02-2021_11-32-41_5370
+gen_query_19-02-2021_11-32-43_2436
+gen_query_19-02-2021_11-32-47_1207
+Feb 19 2021 11:33:51 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (107217019)
+Feb 19 2021 11:33:51 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (15, 1613734431804503417)
+Feb 19 2021 11:33:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (16, 1613734431804520591)
+Feb 19 2021 11:33:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (16,35)
+Feb 19 2021 11:33:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (16,222)
+Feb 19 2021 11:33:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (16,68)
+Feb 19 2021 11:33:51 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,5331)
+Feb 19 2021 11:33:51 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:33:56 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5030044)
+Feb 19 2021 11:33:56 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (3934)
+Feb 19 2021 11:33:56 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (7072)
+gen_query_19-02-2021_11-34-01_6871
+gen_query_19-02-2021_11-34-06_5214
+gen_query_19-02-2021_11-34-10_8142
+gen_query_19-02-2021_11-34-13_8691
+gen_query_19-02-2021_11-34-16_4312
+gen_query_19-02-2021_11-34-18_9508
+gen_query_19-02-2021_11-34-21_4352
+gen_query_19-02-2021_11-34-24_6625
+gen_query_19-02-2021_11-34-26_4729
+gen_query_19-02-2021_11-34-29_4283
+gen_query_19-02-2021_11-34-32_7043
+gen_query_19-02-2021_11-34-34_1343
+gen_query_19-02-2021_11-34-37_2340
+gen_query_19-02-2021_11-34-40_2116
+gen_query_19-02-2021_11-34-42_4984
+gen_query_19-02-2021_11-34-45_3109
+Feb 19 2021 11:35:53 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (116978529)
+Feb 19 2021 11:35:53 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (16, 1613734553830024494)
+Feb 19 2021 11:35:53 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (17, 1613734553830042315)
+Feb 19 2021 11:35:53 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (17,32)
+Feb 19 2021 11:35:53 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (17,178)
+Feb 19 2021 11:35:53 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (17,111)
+Feb 19 2021 11:35:53 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,6477)
+Feb 19 2021 11:35:53 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:35:58 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5017996)
+Feb 19 2021 11:35:58 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (4541)
+Feb 19 2021 11:35:58 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (7773)
+gen_query_19-02-2021_11-36-01_7704
+gen_query_19-02-2021_11-36-05_4821
+gen_query_19-02-2021_11-36-08_8949
+gen_query_19-02-2021_11-36-11_5708
+gen_query_19-02-2021_11-36-13_8236
+gen_query_19-02-2021_11-36-16_4018
+gen_query_19-02-2021_11-36-18_7855
+gen_query_19-02-2021_11-36-21_1412
+gen_query_19-02-2021_11-36-24_9809
+gen_query_19-02-2021_11-36-26_557
+gen_query_19-02-2021_11-36-29_4677
+gen_query_19-02-2021_11-36-32_778
+gen_query_19-02-2021_11-36-34_7690
+gen_query_19-02-2021_11-36-37_6974
+gen_query_19-02-2021_11-36-40_3657
+gen_query_19-02-2021_11-36-42_5
+gen_query_19-02-2021_11-36-45_5579
+Feb 19 2021 11:38:03 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (124429519)
+Feb 19 2021 11:38:03 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (17, 1613734683296965875)
+Feb 19 2021 11:38:03 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (18, 1613734683296991502)
+Feb 19 2021 11:38:03 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (18,48)
+Feb 19 2021 11:38:03 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (18,192)
+Feb 19 2021 11:38:03 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (18,99)
+Feb 19 2021 11:38:03 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,6886)
+Feb 19 2021 11:38:03 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:38:07 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (4032487)
+Feb 19 2021 11:38:07 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (5394)
+Feb 19 2021 11:38:07 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (9108)
+gen_query_19-02-2021_11-38-11_8432
+gen_query_19-02-2021_11-38-16_4718
+gen_query_19-02-2021_11-38-19_4049
+gen_query_19-02-2021_11-38-22_708
+gen_query_19-02-2021_11-38-24_6083
+gen_query_19-02-2021_11-38-27_4579
+gen_query_19-02-2021_11-38-30_4030
+gen_query_19-02-2021_11-38-32_8053
+gen_query_19-02-2021_11-38-35_7692
+gen_query_19-02-2021_11-38-38_4575
+gen_query_19-02-2021_11-38-41_9467
+gen_query_19-02-2021_11-38-44_235
+gen_query_19-02-2021_11-38-46_2866
+gen_query_19-02-2021_11-38-49_4139
+gen_query_19-02-2021_11-38-52_3737
+gen_query_19-02-2021_11-38-54_1031
+gen_query_19-02-2021_11-38-57_5667
+gen_query_19-02-2021_11-39-00_7818
+Feb 19 2021 11:40:25 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (138182452)
+Feb 19 2021 11:40:25 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (18, 1613734825534614549)
+Feb 19 2021 11:40:25 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (19, 1613734825534654522)
+Feb 19 2021 11:40:25 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (19,68)
+Feb 19 2021 11:40:25 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (19,230)
+Feb 19 2021 11:40:25 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (19,79)
+Feb 19 2021 11:40:25 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,8767)
+Feb 19 2021 11:40:25 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:40:30 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5032368)
+Feb 19 2021 11:40:30 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (6473)
+Feb 19 2021 11:40:30 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (10450)
+gen_query_19-02-2021_11-40-31_1425
+gen_query_19-02-2021_11-40-37_7795
+gen_query_19-02-2021_11-40-41_6087
+gen_query_19-02-2021_11-40-45_3404
+gen_query_19-02-2021_11-40-47_724
+gen_query_19-02-2021_11-40-50_4097
+gen_query_19-02-2021_11-40-53_6188
+gen_query_19-02-2021_11-40-56_6143
+gen_query_19-02-2021_11-40-59_5352
+gen_query_19-02-2021_11-41-02_6087
+gen_query_19-02-2021_11-41-04_2306
+gen_query_19-02-2021_11-41-07_9664
+gen_query_19-02-2021_11-41-10_9277
+gen_query_19-02-2021_11-41-13_617
+gen_query_19-02-2021_11-41-15_5515
+gen_query_19-02-2021_11-41-18_9597
+gen_query_19-02-2021_11-41-21_6671
+gen_query_19-02-2021_11-41-24_9701
+gen_query_19-02-2021_11-41-26_558
+Feb 19 2021 11:42:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (138125887)
+Feb 19 2021 11:42:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (19, 1613734968719295830)
+Feb 19 2021 11:42:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (20, 1613734968719313214)
+Feb 19 2021 11:42:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (20,32)
+Feb 19 2021 11:42:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (20,133)
+Feb 19 2021 11:42:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (20,72)
+Feb 19 2021 11:42:48 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,10487)
+Feb 19 2021 11:42:48 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:42:52 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (4030683)
+Feb 19 2021 11:42:52 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (10782)
+Feb 19 2021 11:42:52 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (15180)
+gen_query_19-02-2021_11-42-53_8957
+gen_query_19-02-2021_11-42-55_7340
+gen_query_19-02-2021_11-43-01_3258
+gen_query_19-02-2021_11-43-04_2445
+gen_query_19-02-2021_11-43-07_3053
+gen_query_19-02-2021_11-43-09_1747
+gen_query_19-02-2021_11-43-12_3539
+gen_query_19-02-2021_11-43-15_6512
+gen_query_19-02-2021_11-43-19_3889
+gen_query_19-02-2021_11-43-22_961
+gen_query_19-02-2021_11-43-25_443
+gen_query_19-02-2021_11-43-28_8035
+gen_query_19-02-2021_11-43-31_8809
+gen_query_19-02-2021_11-43-34_7901
+gen_query_19-02-2021_11-43-37_9341
+gen_query_19-02-2021_11-43-39_2411
+gen_query_19-02-2021_11-43-42_2033
+gen_query_19-02-2021_11-43-44_102
+gen_query_19-02-2021_11-43-47_1338
+gen_query_19-02-2021_11-43-50_8284
+Feb 19 2021 11:45:33 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (160402850)
+Feb 19 2021 11:45:33 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (20, 1613735133189864962)
+Feb 19 2021 11:45:33 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (21, 1613735133189882540)
+Feb 19 2021 11:45:33 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (21,33)
+Feb 19 2021 11:45:33 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (21,132)
+Feb 19 2021 11:45:33 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (21,62)
+Feb 19 2021 11:45:33 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,10011)
+Feb 19 2021 11:45:33 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:45:38 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5030277)
+Feb 19 2021 11:45:38 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (8378)
+Feb 19 2021 11:45:38 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (11833)
+gen_query_19-02-2021_11-45-41_8566
+gen_query_19-02-2021_11-45-47_6756
+gen_query_19-02-2021_11-45-51_3263
+gen_query_19-02-2021_11-45-53_2281
+gen_query_19-02-2021_11-45-55_9488
+gen_query_19-02-2021_11-45-58_5573
+gen_query_19-02-2021_11-46-00_547
+gen_query_19-02-2021_11-46-02_2591
+gen_query_19-02-2021_11-46-05_8432
+gen_query_19-02-2021_11-46-07_6792
+gen_query_19-02-2021_11-46-10_392
+gen_query_19-02-2021_11-46-12_8641
+gen_query_19-02-2021_11-46-14_8316
+gen_query_19-02-2021_11-46-17_7670
+gen_query_19-02-2021_11-46-19_8292
+gen_query_19-02-2021_11-46-22_7702
+gen_query_19-02-2021_11-46-25_6746
+gen_query_19-02-2021_11-46-27_7861
+gen_query_19-02-2021_11-46-30_6982
+gen_query_19-02-2021_11-46-32_5717
+gen_query_19-02-2021_11-46-35_2727
+Feb 19 2021 11:48:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (145839577)
+Feb 19 2021 11:48:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (21, 1613735284090448125)
+Feb 19 2021 11:48:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (22, 1613735284090471204)
+Feb 19 2021 11:48:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (22,46)
+Feb 19 2021 11:48:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (22,189)
+Feb 19 2021 11:48:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (22,87)
+Feb 19 2021 11:48:04 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,15736)
+Feb 19 2021 11:48:04 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:48:07 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (3032769)
+Feb 19 2021 11:48:07 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (10350)
+Feb 19 2021 11:48:07 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (11958)
+gen_query_19-02-2021_11-48-11_8275
+gen_query_19-02-2021_11-48-16_1988
+gen_query_19-02-2021_11-48-19_3203
+gen_query_19-02-2021_11-48-22_2294
+gen_query_19-02-2021_11-48-26_569
+gen_query_19-02-2021_11-48-28_4644
+gen_query_19-02-2021_11-48-31_8347
+gen_query_19-02-2021_11-48-34_544
+gen_query_19-02-2021_11-48-37_9866
+gen_query_19-02-2021_11-48-40_596
+gen_query_19-02-2021_11-48-43_8824
+gen_query_19-02-2021_11-48-46_7100
+gen_query_19-02-2021_11-48-49_592
+gen_query_19-02-2021_11-48-52_778
+gen_query_19-02-2021_11-48-55_4401
+gen_query_19-02-2021_11-48-57_3928
+gen_query_19-02-2021_11-49-00_1073
+gen_query_19-02-2021_11-49-03_4387
+gen_query_19-02-2021_11-49-06_9903
+gen_query_19-02-2021_11-49-09_7046
+gen_query_19-02-2021_11-49-12_7607
+gen_query_19-02-2021_11-49-14_2251
+Feb 19 2021 11:50:45 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(124) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryDeploymentPhase - (microseconds) : (158784022)
+Feb 19 2021 11:50:45 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(160) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsRunning - (queryId, nanoseconds) : (22, 1613735445945935172)
+Feb 19 2021 11:50:45 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(65) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: markAsScheduling - (queryId, nanoseconds) : (23, 1613735445945951856)
+Feb 19 2021 11:50:45 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(72) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase - (queryId, microseconds) : (23,33)
+Feb 19 2021 11:50:45 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(79) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryRewritePhase - (queryId, microseconds) : (23,128)
+Feb 19 2021 11:50:45 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(91) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: typeInferencePhase2 - (queryId, microseconds) : (23,62)
+Feb 19 2021 11:50:45 NESTimer: /nebulastream/src/Phases/GlobalQueryPlanUpdatePhase.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryMergerPhase - (size, microseconds) : (1,14300)
+Feb 19 2021 11:50:45 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(86) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaDataToDeploy - (microseconds) : (0)
+Feb 19 2021 11:50:50 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(98) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryUndeploymentPhase - (microseconds) : (5033395)
+Feb 19 2021 11:50:51 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(108) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: sharedQueryMetaData - (microseconds) : (14165)
+Feb 19 2021 11:50:51 NESTimer: /nebulastream/src/Services/QueryRequestProcessorService.cpp(113) RqstProc [0x7fca1f7fe700] [TRACE] : BDAPRO2Tracking: queryPlacementPhase - (microseconds) : (15635)
+gen_query_19-02-2021_11-50-51_1206
+gen_query_19-02-2021_11-50-57_5980

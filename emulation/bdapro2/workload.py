@@ -127,6 +127,7 @@ def fluctuating_workload(base_url: str, base_query: str, n_requests: int = 100, 
             stopped_query_ids = ",".join([str(qid) for qid in stop_set])
             print(f"STOPPED Queries {stopped_query_ids}. {len(queryids)} queries are still RUNNING")
         queryids.extend(recent_query_ids)
+        print(f"Queries Running: {i} - {len(queryids)}")
 
 
 def launch_requests(base_url: str, base_query: str, iteration_number: int, n_requests: int) -> (int, List[int], int):
@@ -151,5 +152,5 @@ if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
     BASE_QUERY = "Query::from(\"" + "ysb" + "\")"
     # init_query(NES_BASE_URL, BASE_QUERY)
-    # stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=1, sleep_time=1)
-    fluctuating_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=1)
+    # stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=20, niter=10, sleep_time=1)
+    fluctuating_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20)

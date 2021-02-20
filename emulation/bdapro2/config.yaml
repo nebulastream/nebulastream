@@ -1,9 +1,9 @@
-total_workers: 4
-workers_producing: 4
+total_workers: 2
+workers_producing: 2
 physical_stream_prefix: "ysb"
 producer_options: >-
-  --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=2000
-  --sourceFrequency=1 --logicalStreamName=ysb
+  --sourceType=YSBSource --numberOfBuffersToProduce=1000 --numberOfTuplesToProducePerBuffer=20
+  --sourceFrequency=10 --logicalStreamName=ysb
 worker_options: >-
   --numberOfSlots=1000 --logLevel=LOG_INFO
 coordinator_options: >-
@@ -17,7 +17,7 @@ docker_image: "bdapro/query-merging"
 
 
 #Sample configuration for Hierarachy topology
-hierarchy: False
+hierarchy: false
 hierarchy_mapping:
   "W-0":
     - "S-0"
