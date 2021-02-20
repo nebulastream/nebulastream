@@ -108,6 +108,19 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferMana
     return std::make_shared<Network::NetworkSource>(schema, bufferManager, queryManager, networkManager, nesPartition);
 }
 
+const DataSourcePtr createKafkaSource(
+    SchemaPtr schema,
+    NodeEngine::BufferManagerPtr bufferManager,
+    NodeEngine::QueryManagerPtr queryManager,
+    OperatorId operatorID,
+    KafkaConnectorConfiguration& conf,
+    const Topics& topics,
+    const Partitions& partitions
+)
+{
+    return std::make_shared<KafkaSource>(schema, bufferManager, queryManager, operatorID, conf, topics, partitions);
+}
+
 #ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                       NodeEngine::QueryManagerPtr queryManager, std::string brokers, std::string topic,

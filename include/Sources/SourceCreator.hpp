@@ -20,16 +20,19 @@
 #include <Network/NetworkManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <Sources/KafkaSourcee.hpp>
+
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
+
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/client_subscriptions.h>
 #include <open62541/plugin/log_stdout.h>
-
 #endif
+
 namespace NES {
 
 /**
@@ -134,6 +137,29 @@ const DataSourcePtr createYSBSource(NodeEngine::BufferManagerPtr bufferManager, 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                         NodeEngine::QueryManagerPtr queryManager, Network::NetworkManagerPtr networkManager,
                                         Network::NesPartition nesPartition);
+
+
+/**
+ * @brief Function to create a kafka source
+ *
+ * @param schema
+ * @param bufferManager
+ * @param queryManager
+ * @param OperatorId
+ * @param KafkaConnectorConfiguration&
+ * @param Topics&
+ * @param Partitions&
+ * @return a const data source pointer
+ */
+const DataSourcePtr createKafkaSource(
+        SchemaPtr schema,
+        NodeEngine::BufferManagerPtr,
+        NodeEngine::QueryManagerPtr,
+        OperatorId,
+        KafkaConnectorConfiguration&,
+        const Topics&,
+        const Partitions& = {}
+);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**
