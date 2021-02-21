@@ -43,6 +43,8 @@ void SinkReconfiguration::destroyCallback(ReconfigurationTask& task) {
     Reconfigurable::destroyCallback(task);
     switch (task.getType()) {
         case Initialize: {
+            auto start = std::chrono::system_clock::now();
+            auto end = std::chrono::system_clock::now();
             auto existingSinks = qep->getSinks();
             auto sinkComparator = [](DataSinkPtr aSink, DataSinkPtr bSink) {
                 return aSink->getOperatorId() < bSink->getOperatorId();
@@ -70,6 +72,9 @@ void SinkReconfiguration::destroyCallback(ReconfigurationTask& task) {
                                                                                   << qep->getQueryId());
                 sinkToDelete->shutdown();
             }
+            end = std::chrono::system_clock::now();
+            NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - worker logic - (microseconds) : "
+                      << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
             break;
         }
         default: {

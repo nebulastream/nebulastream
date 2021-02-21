@@ -177,6 +177,9 @@ bool WorkerRPCClient::unregisterQueryAsync(std::string address, QueryId queryId,
 }
 
 bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPlan) {
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
+
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::reconfigureQuery address=" << address << " queryId=" << queryId
@@ -185,7 +188,14 @@ bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPl
     // wrap the query id and the query operators in the protobuf register query request object.
     ReconfigureQueryRequest request;
     // serialize query plan.
+    start = std::chrono::system_clock::now();
     auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    end = std::chrono::system_clock::now();
+    NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - coordinator serialization - (microseconds) : "
+              << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
+    NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - coordinator request size - (bytes) : "
+              << "(" << serializedQueryPlan->ByteSizeLong() << ")");
+
     request.set_allocated_queryplan(serializedQueryPlan);
 
     NES_TRACE("WorkerRPCClient:reconfigureQuery -> " << request.DebugString());
@@ -194,8 +204,13 @@ bool WorkerRPCClient::reconfigureQuery(std::string address, QueryPlanPtr queryPl
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
+    start = std::chrono::system_clock::now();
+    NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - coordinator request sent - (nanoseconds) : "
+              << "(" << std::chrono::system_clock::now().time_since_epoch().count() << ")");
     Status status = workerStub->ReconfigureQuery(&context, request, &reply);
+    end = std::chrono::system_clock::now();
+    NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - coordinator network - (microseconds) : "
+              << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::reconfigureQuery: status ok return success=" << reply.success());
         return reply.success();

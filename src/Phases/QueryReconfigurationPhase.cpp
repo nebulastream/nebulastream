@@ -46,6 +46,8 @@ QueryReconfigurationPhasePtr QueryReconfigurationPhase::create(TopologyPtr topol
 QueryReconfigurationPhase::~QueryReconfigurationPhase() { NES_DEBUG("~QueryReconfigurationPhase()"); }
 
 bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
     NES_DEBUG("QueryReconfigurationPhase: reconfigure queryId=" << queryPlan->getQueryId());
     auto queryId = queryPlan->getQueryId();
     auto sinkTopologyNode = findSinkTopologyNode(queryPlan);
@@ -63,6 +65,7 @@ bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
         if (executionNode->getTopologyNode()->getId() == sinkTopologyNode->getId()) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             for (auto querySubPlan : querySubPlans) {
+                start = std::chrono::system_clock::now();
                 auto found = std::find_if(planSinkOperators.begin(), planSinkOperators.end(),
                                           [querySubPlan](SinkLogicalOperatorNodePtr sinkLogicalOperatorNode) {
                                               return querySubPlan->hasOperatorWithId(sinkLogicalOperatorNode->getId());
@@ -93,9 +96,16 @@ bool QueryReconfigurationPhase::execute(QueryPlanPtr queryPlan) {
                         }
                         querySubPlan->addRootOperator(newSink);
                     }
+                    end = std::chrono::system_clock::now();
+                    NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - coordinator logic - (microseconds) : "
+                              << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                     NES_DEBUG("QueryReconfigurationPhase: Update Global Execution Plan : \n"
                               << globalExecutionPlan->getAsString());
+                    start = std::chrono::system_clock::now();
                     successfulReconfiguration = reconfigureQuery(executionNode, querySubPlan);
+                    end = std::chrono::system_clock::now();
+                    NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - coordinator total network - (microseconds) : "
+                              << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
                 }
             }
         }

@@ -152,5 +152,5 @@ if __name__ == '__main__':
     NES_BASE_URL = "http://localhost:8081/v1/nes"
     BASE_QUERY = "Query::from(\"" + "ysb" + "\")"
     # init_query(NES_BASE_URL, BASE_QUERY)
-    # stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=20, niter=10, sleep_time=1)
-    fluctuating_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20)
+    stable_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20, sleep_time=10)
+    # fluctuating_workload(NES_BASE_URL, BASE_QUERY, n_requests=10, niter=20)

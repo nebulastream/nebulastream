@@ -66,7 +66,15 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryReq
 }
 
 Status WorkerRPCServer::ReconfigureQuery(ServerContext*, const ReconfigureQueryRequest* request, ReconfigureQueryReply* reply) {
+    NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - worker request received - (nanoseconds) : "
+              << "(" << std::chrono::system_clock::now().time_since_epoch().count() << ")");
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
+    start = std::chrono::system_clock::now();
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
+    end = std::chrono::system_clock::now();
+    NES_TIMER("BDAPRO2Tracking: reconfiguration tasks - worker deserialization - (microseconds) : "
+              << "(" << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << ")");
     NES_DEBUG("WorkerRPCServer::ReconfigureQuery: got request for queryId: " << queryPlan->getQueryId());
     bool success;
     try {
