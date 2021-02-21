@@ -316,8 +316,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSo
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with unionWith operators
  */
-//TODO: To be fixed by #1502
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperators) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
