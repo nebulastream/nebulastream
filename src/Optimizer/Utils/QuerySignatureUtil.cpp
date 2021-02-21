@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -45,21 +46,15 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
 
     NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
 
-    //Perform validation
-    //FIXME: @Steffen why did you defined merge operator as a unary operator? This is not only causing problem here but will also cause problem during placement.
-    // 1410 is opened to resolve this issue.
     auto children = operatorNode->getChildren();
-    if (operatorNode->instanceOf<UnionLogicalOperatorNode>() && children.size() != 2) {
-        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Merge operator can have only two children : " + operatorNode->toString()
-                                + " found : " + std::to_string(children.size()));
-    } else if (operatorNode->isUnaryOperator() && !operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+    if (operatorNode->isUnaryOperator()) {
         if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
             NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
         } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>() && children.empty()) {
             NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have empty children set : " + operatorNode->toString());
         } else if (!(operatorNode->instanceOf<SourceLogicalOperatorNode>() || operatorNode->instanceOf<SinkLogicalOperatorNode>())
                    && children.size() != 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can have oly one children : " + operatorNode->toString()
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can have only one children : " + operatorNode->toString()
                                     + " found : " + std::to_string(children.size()));
         }
     } else if (operatorNode->isBinaryOperator() && children.size() != 2) {
@@ -75,14 +70,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
 
         //Compute attribute mapping and columns based on output schema for source operator
-        std::map<std::string, std::vector<std::string>> attributeMap;
+        //        std::map<std::string, std::vector<std::string>> attributeMap;
         std::map<std::string, z3::ExprPtr> columns;
         for (auto& field : outputSchema->fields) {
             auto attributeName = field->getName();
-            auto derivedAttributeName = streamName + "." + attributeName;
-            attributeMap[attributeName] = {derivedAttributeName};
-            auto column = DataTypeToZ3ExprUtil::createForField(derivedAttributeName, field->getDataType(), context)->getExpr();
-            columns[derivedAttributeName] = column;
+            auto column = DataTypeToZ3ExprUtil::createForField(attributeName, field->getDataType(), context)->getExpr();
+            columns[attributeName] = column;
         }
 
         //Create an equality expression for example: <logical stream name>.streamName == "<logical stream name>"
@@ -92,26 +85,21 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, streamNameVar, streamNameVal)));
 
         //Compute signature
-        return QuerySignature::create(conditions, columns, {}, attributeMap, {streamName});
+        return QuerySignature::create(conditions, columns, {}, {}, {streamName});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-
         NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
         return buildQuerySignatureForChildren(context, children);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-
         NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
         return createQuerySignatureForFilter(context, filterOperator);
     } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
-
         NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
         return buildQuerySignatureForChildren(context, children);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
-
         NES_TRACE("QuerySignatureUtil: Computing Signature for Broadcast operator");
         return buildQuerySignatureForChildren(context, children);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-
         NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
         return createQuerySignatureForMap(context, mapOperator);
@@ -131,18 +119,17 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         std::map<std::string, z3::ExprPtr> updatedColumns;
         std::map<std::string, std::vector<std::string>> updatedAttributeMap;
 
-        for (auto source : sources) {
-            for (auto& field : outputSchema->fields) {
-                auto attributeName = field->getName();
-                auto derivedAttributeName = source + "." + attributeName;
-                if (columns.find(derivedAttributeName) == columns.end()) {
-                    NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unable to find projected attribute in children column set.");
-                }
-                updatedColumns[derivedAttributeName] = columns[derivedAttributeName];
-                updatedAttributeMap[attributeName] = attributeMap[attributeName];
-                attributeMap[attributeName] = {derivedAttributeName};
+        for (auto& field : outputSchema->fields) {
+            auto attributeName = field->getName();
+            auto derivedAttributeName = attributeName;
+            if (columns.find(derivedAttributeName) == columns.end()) {
+                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unable to find projected attribute in children column set.");
             }
+            updatedColumns[derivedAttributeName] = columns[derivedAttributeName];
+            updatedAttributeMap[attributeName] = attributeMap[attributeName];
+            attributeMap[attributeName] = {derivedAttributeName};
         }
+
         auto conditions = childQuerySignature->getConditions();
         auto windowExpressions = childQuerySignature->getWindowsExpressions();
         return QuerySignature::create(conditions, updatedColumns, windowExpressions, updatedAttributeMap, sources);
@@ -154,6 +141,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
         auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
         return createQuerySignatureForJoin(context, joinOperator);
+    } else if (operatorNode->instanceOf<RenameStreamOperatorNode>()) {
+        NES_TRACE("QuerySignatureUtil: Computing Signature for rename stream operator");
+        auto renameStreamOperator = operatorNode->as<RenameStreamOperatorNode>();
+        return createQuerySignatureForRenameStream(context, renameStreamOperator);
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
     return nullptr;
@@ -283,8 +274,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
 
     //Compute the expression for window size and slide
     auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
-    uint64_t length = 0;
-    uint64_t slide = 0;
+    uint64_t length;
+    uint64_t slide;
     if (windowType->isTumblingWindow()) {
         auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
         length = tumblingWindow->getSize().getTime() * multiplier;
@@ -420,7 +411,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
     for (auto source : sources) {
 
         //Compute the derived attribute name
-        auto derivedAttributeName = source + "." + fieldName;
+        auto derivedAttributeName = fieldName;
 
         //Add the derived attribute to the attribute map
         if (isNewAttribute) {
@@ -438,7 +429,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
             continue;
         }
 
-        z3::ExprPtr updatedExpr = substituteIntoInputExpression(context, expr, rhsOperandFieldMap, columns, source);
+        z3::ExprPtr updatedExpr = substituteIntoInputExpression(context, expr, rhsOperandFieldMap, columns);
         columns[derivedAttributeName] = updatedExpr;
     }
 
@@ -470,7 +461,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
 
     z3::expr_vector filterExpressions(*context);
     for (auto source : sources) {
-        auto updatedExpression = substituteIntoInputExpression(context, filterExpr, filterFieldMap, columns, source);
+        auto updatedExpression = substituteIntoInputExpression(context, filterExpr, filterFieldMap, columns);
         filterExpressions.push_back(*updatedExpression);
     }
 
@@ -487,7 +478,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
 
 QuerySignaturePtr
 QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
-                                                     WatermarkAssignerLogicalOperatorNodePtr& watermarkOperator) {
+                                                     WatermarkAssignerLogicalOperatorNodePtr watermarkOperator) {
 
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = watermarkOperator->getChildren();
@@ -685,19 +676,78 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);
 }
 
-z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr& context, const z3::ExprPtr& inputExpr,
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForRenameStream(z3::ContextPtr, RenameStreamOperatorNodePtr) {
+
+    /*    //Fetch query signature of the child operator
+    std::vector<NodePtr> children = renameStreamOperator->getChildren();
+    NES_ASSERT(children.size() == 1 && children[0], "RenameStream operator should only have one non null children.");
+    auto child = children[0];
+    auto childQuerySignature = child->as<LogicalOperatorNode>()->getSignature();
+
+    auto conditions = childQuerySignature->getConditions();
+
+    //Find the source name
+    auto sources = childQuerySignature->getSources();
+    NES_ASSERT(sources.size() == 1 && !sources[0].empty(),
+               "QuerySignatureUtil: Watermark assigner operator can have only 1 non empty source");
+    auto source = sources[0];
+    auto newStreamName = renameStreamOperator->getNewStreamName();
+
+    //Compute conditions based on watermark descriptor
+    z3::expr watermarkDescriptorConditions(*context);
+    if (watermarkDescriptor->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+        auto eventTimeWatermarkStrategy = watermarkDescriptor->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+
+        //Compute equal condition for allowed lateness
+        auto allowedLatenessVarName = source + ".allowedLateness";
+        auto allowedLatenessVar = context->int_const(allowedLatenessVarName.c_str());
+        auto allowedLateness = eventTimeWatermarkStrategy->getAllowedLateness().getTime();
+        auto allowedLatenessVal = context->int_val(allowedLateness);
+        auto allowedLatenessExpr = to_expr(*context, Z3_mk_eq(*context, allowedLatenessVar, allowedLatenessVal));
+
+        //Compute equality conditions for event time field
+        auto eventTimeFieldVarName = source + ".eventTimeField";
+        auto eventTimeFieldVar = context->constant(context->str_symbol(eventTimeFieldVarName.c_str()), context->string_sort());
+        auto eventTimeFieldName = source + "."
+            + eventTimeWatermarkStrategy->getOnField().getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
+        auto eventTimeFieldVal = context->string_val(eventTimeFieldName);
+        auto eventTimeFieldExpr = to_expr(*context, Z3_mk_eq(*context, eventTimeFieldVar, eventTimeFieldVal));
+
+        //CNF both conditions together to compute the descriptors condition
+        Z3_ast andConditions[] = {allowedLatenessExpr, eventTimeFieldExpr};
+        watermarkDescriptorConditions = to_expr(*context, Z3_mk_and(*context, 2, andConditions));
+    } else if (watermarkDescriptor->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
+        //Create an equality expression <source>.watermarkAssignerType == "IngestionTime"
+        auto varName = source + ".watermarkAssignerType";
+        auto var = context->constant(context->str_symbol(varName.c_str()), context->string_sort());
+        auto val = context->constant(context->str_symbol("IngestionTime"), context->string_sort());
+        watermarkDescriptorConditions = to_expr(*context, Z3_mk_eq(*context, var, val));
+    } else {
+        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unrecognized watermark descriptor found.");
+    }
+
+    //CNF the watermark conditions to the original condition
+    Z3_ast andConditions[] = {*conditions, watermarkDescriptorConditions};
+    conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
+
+    //Extract remaining signature attributes from child query signature
+    auto attributeMap = childQuerySignature->getAttributeMap();
+    auto windowExpressions = childQuerySignature->getWindowsExpressions();
+    auto columns = childQuerySignature->getColumns();
+
+    return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);*/
+    return nullptr;
+}
+
+z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr context, const z3::ExprPtr inputExpr,
                                                               std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                              std::map<std::string, z3::ExprPtr>& columns,
-                                                              const std::string& source) {
+                                                              std::map<std::string, z3::ExprPtr>& columns) {
     z3::ExprPtr updatedExpr = inputExpr;
     //Loop over the Operand Fields contained in the input expression
     for (auto [operandExprName, operandExpr] : operandFieldMap) {
 
-        //Compute the derived operand name
-        auto derivedOperandName = source + "." + operandExprName;
-        if (columns.find(derivedOperandName) == columns.end()) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + derivedOperandName
-                                    + " that doesn't exists in the source " + source);
+        if (columns.find(operandExprName) == columns.end()) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + operandExprName + " that doesn't exists");
         }
 
         //Change from
@@ -706,7 +756,7 @@ z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextP
 
         //Change to
         //Fetch the modified operand expression to be substituted
-        auto derivedOperandExpr = columns[derivedOperandName];
+        auto derivedOperandExpr = columns[operandExprName];
         z3::expr_vector to(*context);
         to.push_back(*derivedOperandExpr);
 

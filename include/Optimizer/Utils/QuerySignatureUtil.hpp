@@ -48,6 +48,9 @@ typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
 class JoinLogicalOperatorNode;
 typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
 
+class RenameStreamOperatorNode;
+typedef std::shared_ptr<RenameStreamOperatorNode> RenameStreamOperatorNodePtr;
+
 class WatermarkAssignerLogicalOperatorNode;
 typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
 
@@ -123,7 +126,16 @@ class QuerySignatureUtil {
      * @return Signature based on watermark operator and its child signature
      */
     static QuerySignaturePtr createQuerySignatureForWatermark(z3::ContextPtr context,
-                                                              WatermarkAssignerLogicalOperatorNodePtr& watermarkOperator);
+                                                              WatermarkAssignerLogicalOperatorNodePtr watermarkOperator);
+
+    /**
+     * @brief Compute signature for RenameStream operator
+     * @param context: z3 context
+     * @param renameStreamOperator: the rename stream operator
+     * @return Signature based on rename stream and its child signature
+     */
+    static QuerySignaturePtr createQuerySignatureForRenameStream(z3::ContextPtr context,
+                                                          RenameStreamOperatorNodePtr renameStreamOperator);
 
     /**
      * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
@@ -132,12 +144,11 @@ class QuerySignatureUtil {
      * @param inputExpr: the input expression
      * @param operandFieldMap: the operand field map containing list of operands inside the input expression
      * @param columns: the column map containing operand values used for substitution
-     * @param source: the source name used for deriving the operand name
      * @return the updated expression with substituted operands
      */
-    static z3::ExprPtr substituteIntoInputExpression(const z3::ContextPtr& context, const z3::ExprPtr& inputExpr,
+    static z3::ExprPtr substituteIntoInputExpression( z3::ContextPtr context, z3::ExprPtr inputExpr,
                                                      std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                     std::map<std::string, z3::ExprPtr>& columns, const std::string& source);
+                                                     std::map<std::string, z3::ExprPtr>& columns);
 };
 }// namespace NES::Optimizer
 
