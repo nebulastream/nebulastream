@@ -346,32 +346,25 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
 
     auto sources = childQuerySignature->getSources();
     auto columns = childQuerySignature->getColumns();
-    for (auto source : sources) {
-        auto derivedOnFieldName = source + "." + onFieldName;
-        auto derivedAsFieldName = source + "." + asFieldName;
-        if (columns.find(derivedOnFieldName) == columns.end()) {
-            NES_THROW_RUNTIME_ERROR("Can find derived attribute " + derivedOnFieldName + " for the source " + source);
-        }
 
-        auto onFieldExpression = columns[derivedOnFieldName];
-        columns[derivedAsFieldName] = {std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*onFieldExpression)))};
+    if (columns.find(onFieldName) == columns.end()) {
+        NES_THROW_RUNTIME_ERROR("Can find attribute " + onFieldName);
     }
+
+    auto onFieldExpression = columns[onFieldName];
+    columns[asFieldName] = {std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*onFieldExpression)))};
 
     std::map<std::string, z3::ExprPtr> updatedColumns;
     auto outputSchema = windowOperator->getOutputSchema();
     for (auto& field : outputSchema->fields) {
         auto originalAttributeName = field->getName();
-        for (auto source : sources) {
-            auto derivedAttributeName = source + "." + originalAttributeName;
-
-            if (columns.find(derivedAttributeName) == columns.end()) {
-                if (originalAttributeName == "start" || originalAttributeName == "end") {
-                    updatedColumns[originalAttributeName] =
-                        DataTypeToZ3ExprUtil::createForField(originalAttributeName, field->getDataType(), context)->getExpr();
-                }
-            } else {
-                updatedColumns[derivedAttributeName] = columns[derivedAttributeName];
+        if (columns.find(originalAttributeName) == columns.end()) {
+            if (originalAttributeName == "start" || originalAttributeName == "end") {
+                updatedColumns[originalAttributeName] =
+                    DataTypeToZ3ExprUtil::createForField(originalAttributeName, field->getDataType(), context)->getExpr();
             }
+        } else {
+            updatedColumns[originalAttributeName] = columns[originalAttributeName];
         }
     }
 
@@ -565,23 +558,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
 
     z3::ExprPtr leftKeyExpr;
     //Iterate over left source names and try to find the expression for left join key
-    for (auto source : leftChild->getSignature()->getSources()) {
-        if (attributeMap.find(leftKeyName) == attributeMap.end()) {
-            NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Left join key " + leftKeyName
-                                    + " does not exists in the attribute map.");
-        }
 
-        // Check if expected attribute name exists in the list of derived attribute names
-        auto expectedAttributeName = source + "." + leftKeyName;
-        auto derivedAttributes = attributeMap[leftKeyName];
-        auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
-        if (found != derivedAttributes.end()) {
-            //Find the expression for the left join key expected attribute name
-            if (columns.find(expectedAttributeName) != columns.end()) {
-                leftKeyExpr = columns[expectedAttributeName];
-                break;
-            }
-        }
+    if (columns.find(leftKeyName) == columns.end()) {
+        NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Left join key " + leftKeyName + " does not exists in the attribute map.");
+    }
+
+    if (columns.find(leftKeyName) != columns.end()) {
+        leftKeyExpr = columns[leftKeyName];
     }
 
     //Find the right key expression
@@ -590,24 +573,23 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
 
     z3::ExprPtr rightKeyExpr;
     //Iterate over right source names and try to find the expression for right join key
-    for (auto source : rightChild->getSignature()->getSources()) {
-        if (attributeMap.find(rightKeyName) == attributeMap.end()) {
-            NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Right join key " + rightKeyName
-                                    + " does not exists in the attribute map.");
-        }
-
-        // Check if expected attribute name exists in the list of derived attribute names
-        auto expectedAttributeName = source + "." + rightKeyName;
-        auto derivedAttributes = attributeMap[rightKeyName];
-        auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
-        if (found != derivedAttributes.end()) {
-            //Find the expression for the right join key expected attribute name
-            if (columns.find(expectedAttributeName) != columns.end()) {
-                rightKeyExpr = columns[expectedAttributeName];
-                break;
-            }
-        }
+    //    for (auto source : rightChild->getSignature()->getSources()) {
+    if (columns.find(rightKeyName) == columns.end()) {
+        NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Right join key " + rightKeyName
+                                + " does not exists in the attribute map.");
     }
+
+    // Check if expected attribute name exists in the list of derived attribute names
+    //        auto expectedAttributeName = source + "." + rightKeyName;
+    //        auto derivedAttributes = attributeMap[rightKeyName];
+    //        auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
+    //        if (found != derivedAttributes.end()) {
+    //Find the expression for the right join key expected attribute name
+    if (columns.find(rightKeyName) != columns.end()) {
+        rightKeyExpr = columns[rightKeyName];
+    }
+    //        }
+    //    }
 
     NES_ASSERT(leftKeyExpr && rightKeyExpr, "Unexpected behaviour! Unable to find right or left join key ");
 
