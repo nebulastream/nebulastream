@@ -579,7 +579,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                               "5000,15000,1,95\n"
                               "10000,20000,1,145\n";
 
-    string expectedContent2 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
+    string expectedContent2 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,20000,1,196\n"
                               "0,20000,4,1\n"
                               "0,20000,11,5\n"
