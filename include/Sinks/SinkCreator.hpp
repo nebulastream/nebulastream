@@ -20,6 +20,7 @@
 #include <Network/NetworkSink.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sinks/Mediums/NewKafkaSink.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -163,6 +164,11 @@ const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlan
 const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, Network::NodeLocation nodeLocation,
                                     Network::NesPartition nesPartition, NodeEngine::NodeEnginePtr nodeEngine,
                                     std::chrono::seconds waitTime = std::chrono::seconds(2), uint8_t retryTimes = 5);
+/*
+ * TODO
+ */
+const DataSinkPtr createKafkaSink(SchemaPtr schema, QuerySubPlanId querySubPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                    Topics topics, Partitions partitions, KafkaConnectorConfiguration connectorConfiguration);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

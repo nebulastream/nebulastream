@@ -31,6 +31,15 @@
 using namespace log4cxx;
 using namespace log4cxx::helpers;
 
+#undef 	LOG_EMERG		/* system is unusable */
+#undef 	LOG_ALERT		/* action must be taken immediately */
+#undef 	LOG_CRIT		/* critical conditions */
+#undef 	LOG_ERR			/* error conditions */
+#undef 	LOG_WARNING		/* warning conditions */
+#undef 	LOG_NOTICE		/* normal but significant condition */
+#undef 	LOG_INFO		/* informational */
+#undef 	LOG_DEBUG		/* debug-level messages */
+
 namespace NES {
 
 enum DebugLevel { LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };

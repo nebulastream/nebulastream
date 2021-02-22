@@ -59,7 +59,6 @@ class SinkTest : public testing::Test {
         test_schema =
             Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
         write_result = false;
-        path_to_csv_file = "../tests/test_data/sink.csv";
         path_to_bin_file = "../tests/test_data/sink.bin";
         path_to_osfile_file = "../tests/test_data/testOs.txt";
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();

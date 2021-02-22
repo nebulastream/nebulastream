@@ -126,8 +126,20 @@ add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
 target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME source-tests COMMAND source-tests)
 
+# init
+execute_process(COMMAND pkg-config --libs --static rdkafka++ OUTPUT_VARIABLE KAFKA_LIBRARY)
+string(STRIP ${KAFKA_LIBRARY} KAFKA_LIBRARY)
+
+add_executable(kafka-source-unit-test "UnitTests/Source/KafkaTestt.cpp" "../include/KafkaConnectorConfiguration.hpp" "../src/KafkaConnectorConfiguration.cpp")
+target_link_libraries(kafka-source-unit-test nes ${LIBRARIES} ${KAFKA_LIBRARY} ${GTEST_LIBRARIES})
+add_test(NAME kafka-source-unit-test COMMAND kafka-source-unit-test)
+
+add_executable(kafka-sink-unit-test "UnitTests/Sink/NewKafkaTest.cpp" "../include/KafkaConnectorConfiguration.hpp" "../src/KafkaConnectorConfiguration.cpp" "../include/Sinks/Mediums/NewKafkaSink.hpp" "../src/Sinks/Mediums/NewKafkaSink.cpp")
+target_link_libraries(kafka-sink-unit-test nes ${LIBRARIES} ${KAFKA_LIBRARY} ${GTEST_LIBRARIES})
+add_test(NAME kafka-sink-unit-test COMMAND kafka-sink-unit-test)
+
 ### Sink Tests ###
-add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
+add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp UnitTests/Sink/NewKafkaTest.cpp)
 target_link_libraries(sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME sink-tests COMMAND sink-tests)
 

@@ -1,0 +1,69 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#ifndef NES_KAFKASOURCEE_HPP
+#define NES_KAFKASOURCEE_HPP
+
+#include <Sources/DataSource.hpp>
+#include <KafkaConnectorConfiguration.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/BufferManager.hpp>
+
+namespace NES
+{
+    using KafkaConsumer = NES_KAFKA::KafkaManualCommitConsumer;
+    using KafkaConsumerPtr = std::unique_ptr<KafkaConsumer>;
+    using Partitions = std::vector<std::set<NES_KAFKA::Partition>>;
+    using Topics = std::vector<NES_KAFKA::Topic>;
+
+    class KafkaSource: public DataSource
+    {
+        public:
+
+            /**
+             * KafkaSource Constructor
+             *
+             * @param SchemaPtr
+             * @param NodeEngine::BufferManagerPtr
+             * @param NodeEngine::QueryManagerPtr
+             * @param OperatorId
+             * @param KafkaConnectorConfiguration&
+             * @param const Topics&
+             * @param const Partitions&
+             */
+            KafkaSource(
+                SchemaPtr,
+                NodeEngine::BufferManagerPtr,
+                NodeEngine::QueryManagerPtr,
+                OperatorId,
+                KafkaConnectorConfiguration&,
+                const Topics&,
+                const Partitions& = {}
+            );
+
+            std::optional<NodeEngine::TupleBuffer> receiveData();
+
+            const std::string toString() const;
+
+            SourceType getType() const;
+
+        protected:
+            KafkaConsumerPtr source;
+    };
+}
+
+
+#endif //NES_KAFKASOURCEE_HPP
