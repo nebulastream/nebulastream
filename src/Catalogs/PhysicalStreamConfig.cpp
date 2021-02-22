@@ -102,7 +102,8 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     return nullptr;
 }
 void PhysicalStreamConfig::setSourceFrequency(uint32_t sourceFrequency) {
-    PhysicalStreamConfig::sourceFrequency = std::chrono::milliseconds(sourceFrequency);;
+    PhysicalStreamConfig::sourceFrequency = std::chrono::milliseconds(sourceFrequency);
+    ;
 }
 void PhysicalStreamConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer) {
     PhysicalStreamConfig::numberOfTuplesToProducePerBuffer = numberOfTuplesToProducePerBuffer;

@@ -76,12 +76,10 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             auto start = std::chrono::system_clock::now();
             auto in_time_t = std::chrono::system_clock::to_time_t(start);
             std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
-                << " measurement=" << it->getQueryStatisticsAsString() << std::endl;
+                      << " measurement=" << it->getQueryStatisticsAsString() << std::endl;
             if (currentStat->getProcessedTuple() == 0) {
                 NES_WARNING("we already consumed all data size=" << statisticsVec.size());
-            }
-            else
-            {
+            } else {
                 statisticsVec.push_back(currentStat);
             }
         }

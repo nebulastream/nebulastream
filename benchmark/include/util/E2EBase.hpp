@@ -28,8 +28,8 @@
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <benchmark/gbenchmark/src/gbenchmark/include/benchmark/benchmark.h>
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 class E2EBase {
   public:

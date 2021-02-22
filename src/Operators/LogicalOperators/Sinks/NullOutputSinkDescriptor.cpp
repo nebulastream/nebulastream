@@ -20,7 +20,9 @@ namespace NES {
 
 NullOutputSinkDescriptor::NullOutputSinkDescriptor() {}
 
-SinkDescriptorPtr NullOutputSinkDescriptor::create() { return std::make_shared<NullOutputSinkDescriptor>(NullOutputSinkDescriptor()); }
+SinkDescriptorPtr NullOutputSinkDescriptor::create() {
+    return std::make_shared<NullOutputSinkDescriptor>(NullOutputSinkDescriptor());
+}
 
 std::string NullOutputSinkDescriptor::toString() { return "NullOutputSinkDescriptor()"; }
 bool NullOutputSinkDescriptor::equal(SinkDescriptorPtr other) { return other->instanceOf<NullOutputSinkDescriptor>(); }

@@ -861,7 +861,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\"test.out\"));";
+    string query =
+        "Query::from(\"default_logical\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
