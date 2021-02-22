@@ -274,7 +274,6 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
-
     {
         std::unique_lock lock(queryMutex);
         runningQEPs.emplace(qep->getQuerySubPlanId(), qep);

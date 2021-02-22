@@ -23,9 +23,9 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
-#include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
+#include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -84,10 +84,7 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
     return std::make_shared<PrintSink>(format, parentPlanId, out);
 }
 
-
-const DataSinkPtr createNullOutputSink() {
-    return std::make_shared<NullOutputSink>();
-}
+const DataSinkPtr createNullOutputSink() { return std::make_shared<NullOutputSink>(); }
 
 const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                      std::ostream& out) {

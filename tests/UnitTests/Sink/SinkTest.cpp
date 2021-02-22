@@ -254,7 +254,6 @@ TEST_F(SinkTest, testCSVPrintSink) {
     buffer.release();
 }
 
-
 TEST_F(SinkTest, testNullOutSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;

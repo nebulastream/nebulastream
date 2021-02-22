@@ -148,7 +148,6 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
  */
 const DataSinkPtr createNullOutputSink();
 
-
 /**
  * @brief create a print test sink with a schema
  * @param schema of sink

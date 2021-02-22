@@ -95,7 +95,8 @@ const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManag
                                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
                                        std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
                                        std::chrono::milliseconds frequency) {
-    return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess, frequency, operatorId);
+    return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess,
+                                          frequency, operatorId);
 }
 
 const DataSourcePtr createYSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,

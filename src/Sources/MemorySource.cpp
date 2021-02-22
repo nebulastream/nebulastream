@@ -29,7 +29,8 @@ MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea
     : DataSource(std::move(schema), std::move(bufferManager), std::move(queryManager), operatorId), memoryArea(memoryArea),
       memoryAreaSize(memoryAreaSize), currentPositionInBytes(0) {
     this->numBuffersToProcess = numBuffersToProcess;
-    this->gatheringInterval = std::chrono::milliseconds(frequency);;
+    this->gatheringInterval = std::chrono::milliseconds(frequency);
+    ;
     NES_DEBUG("MemorySource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
@@ -46,23 +47,17 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
         //if the memory area spans multiple buffers
         auto restTuples = (memoryAreaSize - currentPositionInBytes) / schema->getSchemaSizeInBytes();
         auto numberOfTuplesPerBuffer = std::floor(double(buffer.getBufferSize()) / double(schema->getSchemaSizeInBytes()));
-        if(restTuples > numberOfTuplesPerBuffer)
-        {
+        if (restTuples > numberOfTuplesPerBuffer) {
             numberOfTuples = numberOfTuplesPerBuffer;
-        }
-        else
-        {
+        } else {
             numberOfTuples = restTuples;
         }
 
         if (currentPositionInBytes + numberOfTuples * schema->getSchemaSizeInBytes() > memoryAreaSize) {
-            if(numBuffersToProcess != 0)
-            {
+            if (numBuffersToProcess != 0) {
                 NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
                 currentPositionInBytes = 0;
-            }
-            else
-            {
+            } else {
                 NES_DEBUG("MemorySource::receiveData: return as mem sry is empty");
                 return std::nullopt;
             }
@@ -70,10 +65,10 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     }
     uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();
 
-    NES_ASSERT2_FMT(numberOfTuples * schema->getSchemaSizeInBytes() <= buffer.getBufferSize(), "value to write is larger than the buffer");
+    NES_ASSERT2_FMT(numberOfTuples * schema->getSchemaSizeInBytes() <= buffer.getBufferSize(),
+                    "value to write is larger than the buffer");
 
-    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes,
-           offset);
+    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, offset);
 
     if (memoryAreaSize > buffer.getBufferSize()) {
         NES_DEBUG("MemorySource::receiveData: add offset=" << offset << " to currentpos=" << currentPositionInBytes);
@@ -95,6 +90,5 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
 const std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
-
 
 }// namespace NES

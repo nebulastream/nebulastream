@@ -24,7 +24,7 @@ namespace NES {
 /**
  * @brief A stream config for a memory source
  */
-class MemorySourceStreamConfig : public PhysicalStreamConfig{
+class MemorySourceStreamConfig : public PhysicalStreamConfig {
   public:
     /**
      * @brief Create a MemorySourceStreamConfig using a set of parameters
@@ -35,8 +35,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig{
      * @param memoryAreaSize the size of the memory area
      */
     explicit MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
-                                      uint8_t* memoryArea, size_t memoryAreaSize,
-                                      uint64_t numBuffersToProcess, uint64_t frequency);
+                                      uint8_t* memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
+                                      uint64_t frequency);
 
     /**
      * @brief Creates the source descriptor for the underlying source

@@ -183,8 +183,7 @@ TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0,
-                                                     0, frequency, false, 1);
+                                                     path_to_file, del, 0, 0, frequency, false, 1);
 
     source->start();
 
