@@ -210,7 +210,7 @@ void E2EBase::runQuery(std::string query) {
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     //give the system some seconds to come to steady mode
-    sleep(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS);
+    sleep(2);
 
     auto start = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(start);
