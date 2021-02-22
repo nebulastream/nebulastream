@@ -589,7 +589,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
                              "5000,15000,1,95\n"
                              "10000,20000,1,145\n";
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
