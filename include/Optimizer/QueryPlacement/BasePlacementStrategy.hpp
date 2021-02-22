@@ -72,8 +72,8 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 class BasePlacementStrategy {
 
   private:
-    static constexpr auto NSINK_RETRIES = 3;
-    static constexpr auto NSINK_RETRY_WAIT = std::chrono::seconds(5);
+    static constexpr auto NSINK_RETRIES = 10;//was 3
+    static constexpr auto NSINK_RETRY_WAIT = std::chrono::seconds(10);//was 5
 
   public:
     explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr,

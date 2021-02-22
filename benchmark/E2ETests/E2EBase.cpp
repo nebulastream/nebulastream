@@ -16,7 +16,7 @@
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <util/E2EBase.hpp>
 
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 1000000;//600000
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 100000;//600000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
@@ -39,19 +39,17 @@ std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     }
 }
 
-std::string E2EBase::runExperiment(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt,
-                                   InputOutputMode mode, std::string query) {
-    std::cout << "setup experiment with parameter threadCntWorker=" << threadCntWorker
-              << " threadCntCoordinator=" << threadCntCoordinator << " sourceCnt=" << sourceCnt
+std::string E2EBase::runExperiment(std::string query) {
+    std::cout << "setup experiment with parameter threadCntWorker=" << numberOfWorkerThreads
+              << " threadCntCoordinator=" << numberOfCoordinatorThreads << " sourceCnt=" << sourceCnt
               << " mode=" << getInputOutputModeAsString(mode) << " query=" << query << std::endl;
-    E2EBasePtr test = std::make_shared<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, mode);
+//    E2EBasePtr test = std::make_shared<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, mode);
 
     std::cout << "run query" << std::endl;
-    test->runQuery(query);
+    runQuery(query);
 
     std::cout << "E2EBase: output result" << std::endl;
-    auto res = test->getResult();
-    return res;
+    return getResult();
 }
 
 E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode)
@@ -102,9 +100,9 @@ E2EBase::~E2EBase() {
     statisticsVec.clear();
     queryService.reset();
     queryCatalog.reset();
-    for (auto ptr : memoryAreas) {
-        delete ptr;
-    }
+//    for (auto ptr : memoryAreas) {
+//        delete ptr;
+//    }
 }
 
 void E2EBase::setupSources() {
@@ -113,7 +111,6 @@ void E2EBase::setupSources() {
                  ->addField(createField("value", NES::UINT64))
                  ->addField(createField("timestamp", NES::UINT64));
 
-    portOffset *= portOffset + 123;
     //register logical stream qnv
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
@@ -175,7 +172,9 @@ void E2EBase::setup() {
     NES::setupLogging("E2EBase.log", DEBUGL_LEVEL);
     std::cout << "Setup E2EBase test class." << std::endl;
 
-    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
+    portOffset += 13 ;
+
+    NES::CoordinatorConfigPtr crdConf =NES::CoordinatorConfig::create();
     crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
     crdConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
     crdConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
@@ -191,6 +190,7 @@ void E2EBase::setup() {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10 + portOffset);
     wrkConf->setDataPort(port + 11 + portOffset);
+    std::cout << "Cport=" << port << " CsetRpcPort=" << 4000 + portOffset << " CsetRestPort=" << 8081 + portOffset << " WsetRpcPort=" << port + 10 + portOffset << " WsetDataPort=" << port + 11 + portOffset << std::endl;
     wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
     wrkConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
     wrkConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
@@ -274,7 +274,7 @@ void E2EBase::tearDown() {
     std::cout << "E2EBase: Remove query" << std::endl;
     NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
     std::cout << "E2EBase: wait for stop" << std::endl;
-    NES_ASSERT(NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog), "check stop failed");
+    NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;
     bool retStopWrk1 = wrk1->stop(true);

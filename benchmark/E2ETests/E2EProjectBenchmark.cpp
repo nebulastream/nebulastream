@@ -55,8 +55,9 @@ int main() {
                 std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
                 ss << benchmarkName << "," << nesVersion << "," << workerThreadCnt << "," << coordinatorThreadCnt << ","
                    << dataSourceCnt << ",FileMode";
-                ss << E2EBase::runExperiment(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
-                                             E2EBase::InputOutputMode::FileMode, query);
+                auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
+                                       E2EBase::InputOutputMode::FileMode);
+                ss << test->runExperiment(query);
             }
         }
     }
