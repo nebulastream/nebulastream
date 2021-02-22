@@ -39,6 +39,11 @@ NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesP
 
 bool NetworkSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) {
     auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
+    if(!channel)
+    {
+        NES_ERROR("Invalid channel");
+        NES_THROW_RUNTIME_ERROR("error");
+    }
     NES_VERIFY(channel, "invalid channel on " << nesPartition);
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
 }
@@ -47,7 +52,7 @@ void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << parentPlanId);
     //    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Created, "Setup : parent plan not running on net sink " << nesPartition);
     queryManager->addReconfigurationTask(parentPlanId,
-                                         NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this), false);
+                                         NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this), true);
 }
 
 void NetworkSink::shutdown() {
