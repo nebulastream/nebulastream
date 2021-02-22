@@ -375,7 +375,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
         + " --dataPort=" + worker1DataPort
         + " --logicalStreamName=window --physicalStreamName=test_stream_1 --sourceType=CSVSource "
           "--sourceConfig=../tests/test_data/window.csv "
-          "--numberOfBuffersToProduce=1 --sourceFrequency=1000";
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1000 --numberOfTuplesToProducePerBuffer=28";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
@@ -385,7 +385,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
         + " --dataPort=" + worker2DataPort
         + " --logicalStreamName=window "
           "--physicalStreamName=test_stream_2 --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv "
-          "--numberOfBuffersToProduce=1 --sourceFrequency=1000";
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1000 --numberOfTuplesToProducePerBuffer=28";
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
@@ -422,12 +422,12 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,614\n"
-                             "10000,20000,1,1740\n"
-                             "0,10000,4,12\n"
-                             "0,10000,11,60\n"
-                             "0,10000,12,14\n"
-                             "0,10000,16,24\n";
+                             "0,10000,1,102\n"
+                             "10000,20000,1,290\n"
+                             "0,10000,4,2\n"
+                             "0,10000,11,10\n"
+                             "0,10000,12,2\n"
+                             "0,10000,16,4\n";
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
