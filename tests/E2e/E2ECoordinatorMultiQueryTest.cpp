@@ -408,7 +408,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
         + " --dataPort=" + worker1DataPort
         + " --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
-          "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000";
+          "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000 --numberOfTuplesToProducePerBuffer=28";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t workerPid = workerProc.id();
@@ -459,19 +459,19 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                              "0,10000,1,307\n"
-                              "10000,20000,1,870\n"
-                              "0,10000,4,6\n"
-                              "0,10000,11,30\n"
-                              "0,10000,12,7\n"
-                              "0,10000,16,12\n";
+                              "0,10000,1,51\n"
+                              "10000,20000,1,145\n"
+                              "0,10000,4,1\n"
+                              "0,10000,11,5\n"
+                              "0,10000,12,1\n"
+                              "0,10000,16,2\n";
 
     string expectedContent2 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                              "0,20000,1,1177\n"
-                              "0,20000,4,6\n"
-                              "0,20000,11,30\n"
-                              "0,20000,12,7\n"
-                              "0,20000,16,12\n";
+                              "0,20000,1,196\n"
+                              "0,20000,4,1\n"
+                              "0,20000,11,5\n"
+                              "0,20000,12,1\n"
+                              "0,20000,16,2\n";
 
     std::ifstream ifsQ1(outputFilePath.c_str());
     EXPECT_TRUE(ifsQ1.good());
@@ -519,7 +519,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
         + " --dataPort=" + worker1DataPort
         + " --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
-          "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000";
+          "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000 --numberOfTuplesToProducePerBuffer=28";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t workerPid = workerProc.id();
@@ -571,20 +571,20 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                              "0,10000,1,307\n"
-                              "0,10000,4,6\n"
-                              "0,10000,11,30\n"
-                              "0,10000,12,7\n"
-                              "0,10000,16,12\n"
-                              "5000,15000,1,570\n"
-                              "10000,20000,1,870\n";
+                              "0,10000,1,51\n"
+                              "0,10000,4,1\n"
+                              "0,10000,11,5\n"
+                              "0,10000,12,1\n"
+                              "0,10000,16,2\n"
+                              "5000,15000,1,95\n"
+                              "10000,20000,1,145\n";
 
     string expectedContent2 = "start:INTEGER,end:INTEGER,id:INTEGER,value:INTEGER\n"
-                              "0,20000,1,1177\n"
-                              "0,20000,4,6\n"
-                              "0,20000,11,30\n"
-                              "0,20000,12,7\n"
-                              "0,20000,16,12\n";
+                              "0,20000,1,196\n"
+                              "0,20000,4,1\n"
+                              "0,20000,11,5\n"
+                              "0,20000,12,1\n"
+                              "0,20000,16,2\n";
 
     TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath);
     TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2);
