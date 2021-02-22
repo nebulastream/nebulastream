@@ -392,8 +392,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperat
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with different order of unionWith operator children
  */
-//TODO: To be fixed by #1502
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorChildrenOrder) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
