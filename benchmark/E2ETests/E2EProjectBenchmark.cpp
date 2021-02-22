@@ -42,9 +42,10 @@ int main() {
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
-    ss << "BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffers,ProcessedTasks,ProcessedTuples,"
+    ss << "Time,BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffers,ProcessedTasks,ProcessedTuples,"
           "ProcessedBytes"
        << std::endl;
+    ss << time(0) << ",";
 
     for (auto workerThreadCnt : allWorkerThreads) {
         std::cout << "workerThreadCnt=" << workerThreadCnt << std::endl;
