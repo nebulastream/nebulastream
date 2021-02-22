@@ -586,8 +586,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                               "0,20000,12,1\n"
                               "0,20000,16,2\n";
 
-    TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath);
-    TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath));
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
