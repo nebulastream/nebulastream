@@ -95,7 +95,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         return createQuerySignatureForFilter(context, filterOperator);
     } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
-        return buildQuerySignatureForChildren(context, children);
+        auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
+        return createQuerySignatureForUnion(context, unionOperator);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Broadcast operator");
         return buildQuerySignatureForChildren(context, children);
@@ -572,24 +573,15 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     auto rightKeyName = rightJoinKey->getFieldName();
 
     z3::ExprPtr rightKeyExpr;
-    //Iterate over right source names and try to find the expression for right join key
-    //    for (auto source : rightChild->getSignature()->getSources()) {
     if (columns.find(rightKeyName) == columns.end()) {
         NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Right join key " + rightKeyName
                                 + " does not exists in the attribute map.");
     }
 
-    // Check if expected attribute name exists in the list of derived attribute names
-    //        auto expectedAttributeName = source + "." + rightKeyName;
-    //        auto derivedAttributes = attributeMap[rightKeyName];
-    //        auto found = std::find(derivedAttributes.begin(), derivedAttributes.end(), expectedAttributeName);
-    //        if (found != derivedAttributes.end()) {
     //Find the expression for the right join key expected attribute name
     if (columns.find(rightKeyName) != columns.end()) {
         rightKeyExpr = columns[rightKeyName];
     }
-    //        }
-    //    }
 
     NES_ASSERT(leftKeyExpr && rightKeyExpr, "Unexpected behaviour! Unable to find right or left join key ");
 
@@ -655,6 +647,103 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
         NES_NOT_IMPLEMENTED();
     }
     auto sources = intermediateQuerySignature->getSources();
+    return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);
+}
+
+QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPtr context,
+                                                                   UnionLogicalOperatorNodePtr unionOperator) {
+
+    NES_DEBUG("QuerySignatureUtil: Computing Signature from children signatures");
+
+    auto children = unionOperator->getChildren();
+    auto leftSchema = unionOperator->getLeftInputSchema();
+    auto rightSchema = unionOperator->getRightInputSchema();
+
+    QuerySignaturePtr leftSignature;
+    QuerySignaturePtr rightSignature;
+    for (auto& child : children) {
+        auto childOperator = child->as<LogicalOperatorNode>();
+        if (childOperator->getOutputSchema()->equals(leftSchema)) {
+            leftSignature = childOperator->getSignature();
+        } else {
+            rightSignature = childOperator->getSignature();
+        }
+    }
+
+    std::map<std::string, z3::ExprPtr> columns = leftSignature->getColumns();
+    std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
+    std::map<std::string, std::vector<std::string>> attributeMap = leftSignature->getAttributeMap();
+    std::vector<std::string> sources = leftSignature->getSources();
+
+    //Fetch signature of the child operator
+//    auto childSignature = child->as<LogicalOperatorNode>()->getSignature();
+//
+//    if (sources.empty()) {
+//        sources = childSignature->getSources();
+//    } else {
+//        auto childSources = childSignature->getSources();
+//
+//        //Check if sources and sources from child signature have common stream source name
+//        // This is done to prevent from creating conflicting attribute names
+//        std::vector<std::string> commonSources;
+//        std::sort(sources.begin(), sources.end());
+//        std::sort(childSources.begin(), childSources.end());
+//        //We use std intersection api to compute intersection between two vectors
+//        std::set_intersection(sources.begin(), sources.end(), childSources.begin(), childSources.end(),
+//                              back_inserter(commonSources));
+//
+//        if (!commonSources.empty()) {
+//            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Can not compute signature for query with children upstreams based "
+//                                    "on source with same logical name");
+//        }
+//        sources.insert(sources.end(), childSources.begin(), childSources.end());
+//    }
+
+    auto leftAttributeMap = leftSignature->getAttributeMap();
+    auto rightAttributeMap = rightSignature->getAttributeMap();
+
+    for (uint32_t i = 0; i < leftSchema->getSize(); i++) {
+        auto leftAttribute = leftSchema->get(i)->getName();
+        auto rightAttribute = rightSchema->get(i)->getName();
+        z3::expr_vector allConditions(*context);
+         leftAttributeMap[leftAttribute];
+    }
+
+//    for (auto [originalAttributeName, derivedAttributeNames] : childSignature->getAttributeMap()) {
+//        if (attributeMap.find(originalAttributeName) == attributeMap.end()) {
+//            attributeMap[originalAttributeName] = derivedAttributeNames;
+//        } else {
+//            auto existingDerivedAttributes = attributeMap[originalAttributeName];
+//            existingDerivedAttributes.insert(existingDerivedAttributes.end(), derivedAttributeNames.begin(),
+//                                             derivedAttributeNames.end());
+//            attributeMap[originalAttributeName] = existingDerivedAttributes;
+//        }
+//    }
+//
+//    //Merge the columns from different children signatures together
+//    if (columns.empty()) {
+//        columns = childSignature->getColumns();
+//    } else {
+//        columns.merge(childSignature->getColumns());
+//    }
+
+    //Merge the window definitions together
+    for (auto [windowKey, windowExpression] : rightSignature->getWindowsExpressions()) {
+        if (windowExpressions.find(windowKey) != windowExpressions.end()) {
+            //FIXME: when we receive more than one window expressions for same window in issue #1272
+            NES_NOT_IMPLEMENTED();
+        } else {
+            windowExpressions[windowKey] = windowExpression;
+        }
+    }
+
+    //Add condition to the array
+    z3::expr_vector allConditions(*context);
+    allConditions.push_back(*leftSignature->getConditions());
+    allConditions.push_back(*rightSignature->getConditions());
+
+    //Create a CNF using all conditions from children signatures
+    z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
     return QuerySignature::create(conditions, columns, windowExpressions, attributeMap, sources);
 }
 
