@@ -492,8 +492,46 @@ TEST_F(SourceTest, testLambdaSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
-    uint64_t numBuffers = 1;
-    uint64_t numberOfTuplesToProduce = 30;
+    struct __attribute__((packed)) Record {
+        //          Record() = default;
+        Record(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs,
+               uint64_t ip)
+            : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs),
+              ip(ip) {}
+
+        uint64_t userId;
+        uint64_t pageId;
+        uint64_t campaignId;
+        uint64_t adType;
+        uint64_t eventType;
+        uint64_t currentMs;
+        uint64_t ip;
+
+        // placeholder to reach 78 bytes
+        uint64_t dummy1{0};
+        uint64_t dummy2{0};
+        uint32_t dummy3{0};
+        uint16_t dummy4{0};
+
+        Record(const Record& rhs) {
+            userId = rhs.userId;
+            pageId = rhs.pageId;
+            campaignId = rhs.campaignId;
+            adType = rhs.adType;
+            eventType = rhs.eventType;
+            currentMs = rhs.currentMs;
+            ip = rhs.ip;
+        }
+
+        std::string toString() const {
+            return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId) + ", campaignId="
+                + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType=" + std::to_string(eventType)
+                + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
+        }
+    };
+
+    uint64_t numBuffers = 2;
+    uint64_t numberOfTuplesToProduce = 52;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", UINT64)
                            ->addField("page_id", UINT64)
@@ -509,36 +547,70 @@ TEST_F(SourceTest, testLambdaSource) {
 
     auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         uint64_t currentEventType = 0;
+        struct __attribute__((packed)) Record {
+            //          Record() = default;
+            Record(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs,
+                   uint64_t ip)
+                : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
+                  currentMs(currentMs), ip(ip) {}
+
+            uint64_t userId;
+            uint64_t pageId;
+            uint64_t campaignId;
+            uint64_t adType;
+            uint64_t eventType;
+            uint64_t currentMs;
+            uint64_t ip;
+
+            // placeholder to reach 78 bytes
+            uint64_t dummy1{0};
+            uint64_t dummy2{0};
+            uint32_t dummy3{0};
+            uint16_t dummy4{0};
+
+            Record(const Record& rhs) {
+                userId = rhs.userId;
+                pageId = rhs.pageId;
+                campaignId = rhs.campaignId;
+                adType = rhs.adType;
+                eventType = rhs.eventType;
+                currentMs = rhs.currentMs;
+                ip = rhs.ip;
+            }
+
+            std::string toString() const {
+                return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
+                    + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
+                    + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
+            }
+        };
+        auto ysbRecords = buffer.getBufferAs<Record>();
         for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-            auto ysbRecords = buffer.getBufferAs<YSBSource::YsbRecord>();
-            auto record = ysbRecords[i];
-            record.userId = 1;
-            record.pageId = 0;
-            record.adType = 0;
-
-            record.campaignId = rand() % 10000;
-
-            record.eventType = (currentEventType++) % 3;
-
-            record.currentMs = time(0);
-
-            record.ip = 0x01020304;
+            //            auto record = ysbRecords[i];
+            ysbRecords[i].userId = i;
+            ysbRecords[i].pageId = 0;
+            ysbRecords[i].adType = 0;
+            ysbRecords[i].campaignId = rand() % 10000;
+            ysbRecords[i].eventType = (currentEventType++) % 3;
+            ysbRecords[i].currentMs = time(0);
+            ysbRecords[i].ip = 0x01020304;
+            std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(Record)
+                      << " addr=" << &ysbRecords[i] << std::endl;
         }
     };
 
-    DataSourcePtr lambdaSource = createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers,
-                                                    std::chrono::milliseconds(0), func, 1);
+    DataSourcePtr lambdaSource = createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                    numBuffers, std::chrono::milliseconds(0), func, 1);
 
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
-        auto ysbRecords = optBuf->getBufferAs<YSBSource::YsbRecord>();
+        auto ysbRecords = optBuf.value().getBufferAs<Record>();
 
         for (int i = 0; i < numberOfTuplesToProduce; i++) {
-            auto record = ysbRecords[i];
-            std::cout << "i=" << i << " record.current_ms: " << record.currentMs << ", record.ad_type: " << record.adType
-                      << ", record.event_type: " << record.eventType << std::endl;
-            EXPECT_TRUE(0 <= record.campaignId && record.campaignId < 10000);
-            EXPECT_TRUE(0 <= record.eventType && record.eventType < 3);
+            std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
+
+            EXPECT_TRUE(0 <= ysbRecords[i].campaignId && ysbRecords[i].campaignId < 10000);
+            EXPECT_TRUE(0 <= ysbRecords[i].eventType && ysbRecords[i].eventType < 3);
         }
     }
 

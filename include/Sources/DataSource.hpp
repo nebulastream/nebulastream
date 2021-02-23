@@ -43,7 +43,8 @@ enum SourceType {
     MONITORING_SOURCE,
     YSB_SOURCE,
     MEMORY_SOURCE,
-    MQTT_SOURCE
+    MQTT_SOURCE,
+    LAMBDA_SOURCE
 };
 
 /**
