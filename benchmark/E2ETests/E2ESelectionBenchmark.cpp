@@ -37,9 +37,9 @@ int main() {
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     // source mode
-    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::CacheMode,
-                                                         E2EBase::InputOutputMode::MemMode};
-    //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemoryMode};
+//    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::CacheMode,
+//                                                         E2EBase::InputOutputMode::MemMode};
+        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemMode};
     //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::CacheMode};
     //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
 
