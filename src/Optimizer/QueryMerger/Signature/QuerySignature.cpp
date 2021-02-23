@@ -20,22 +20,22 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::map<std::string, z3::ExprPtr> columns,
-                                         std::map<std::string, z3::ExprPtr> windowsExpressions,
+QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
+                                         std::map<std::string, z3::ExprPtr> windowsExpressions/*,
                                          std::map<std::string, std::vector<std::string>> attributeMap,
-                                         std::vector<std::string> sources) {
-    return std::make_shared<QuerySignature>(QuerySignature(conditions, columns, windowsExpressions, attributeMap, sources));
+                                         std::vector<std::string> sources*/) {
+    return std::make_shared<QuerySignature>(QuerySignature(conditions, columns, windowsExpressions));
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr conditions, std::map<std::string, z3::ExprPtr> columns,
-                               std::map<std::string, z3::ExprPtr> windowsExpressions,
-                               std::map<std::string, std::vector<std::string>> attributeMap, std::vector<std::string> sources)
-    : conditions(conditions), columns(columns), windowsExpressions(windowsExpressions), attributeMap(attributeMap),
-      sources(sources) {}
+QuerySignature::QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
+                               std::map<std::string, z3::ExprPtr> windowsExpressions/*,
+                               std::map<std::string, std::vector<std::string>> attributeMap, std::vector<std::string> sources*/)
+    : conditions(conditions), columns(columns), windowsExpressions(windowsExpressions)/*, attributeMap(attributeMap),
+      sources(sources)*/ {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
-std::map<std::string, z3::ExprPtr> QuerySignature::getColumns() { return columns; }
+std::map<std::string, std::vector<z3::ExprPtr>> QuerySignature::getColumns() { return columns; }
 
 std::map<std::string, z3::ExprPtr> QuerySignature::getWindowsExpressions() { return windowsExpressions; }
 
@@ -62,7 +62,7 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     //Convert columns from both the signatures into equality conditions.
     //If column from one signature doesn't exists in other signature then they are not equal.
     z3::expr_vector allConditions(context);
-    for (auto columnEntry : columns) {
+/*    for (auto columnEntry : columns) {
         if (otherColumns.find(columnEntry.first) == otherColumns.end()) {
             NES_WARNING("Column " << columnEntry.first << " doesn't exists in column list of other signature");
             return false;
@@ -73,7 +73,7 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
         auto columnExpression = columnEntry.second;
 
         allConditions.push_back(to_expr(context, Z3_mk_eq(context, *otherColumnExpression, *columnExpression)));
-    }
+    }*/
 
     //Check the number of window expressions extracted from both queries
     auto otherWindowExpressions = other->windowsExpressions;
@@ -105,8 +105,8 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     return solver.check() == z3::unsat;
 }
 
-std::vector<std::string> QuerySignature::getSources() { return sources; }
+/*std::vector<std::string> QuerySignature::getSources() { return sources; }
 
-std::map<std::string, std::vector<std::string>> QuerySignature::getAttributeMap() { return attributeMap; }
+std::map<std::string, std::vector<std::string>> QuerySignature::getAttributeMap() { return attributeMap; }*/
 
 }// namespace NES::Optimizer
