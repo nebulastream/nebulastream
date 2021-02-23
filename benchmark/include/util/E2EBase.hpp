@@ -33,7 +33,7 @@
 
 class E2EBase {
   public:
-    enum class InputOutputMode { FileMode, MemoryMode };
+    enum class InputOutputMode { FileMode, CacheMode, MemMode };
 
     /**
      * @brief Method to perform the benchmark
