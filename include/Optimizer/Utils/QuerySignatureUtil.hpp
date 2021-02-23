@@ -146,7 +146,7 @@ class QuerySignatureUtil {
      * @return Signature based on rename stream and its child signature
      */
     static QuerySignaturePtr createQuerySignatureForRenameStream(z3::ContextPtr context,
-                                                          RenameStreamOperatorNodePtr renameStreamOperator);
+                                                                 RenameStreamOperatorNodePtr renameStreamOperator);
 
     /**
      * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
@@ -157,9 +157,9 @@ class QuerySignatureUtil {
      * @param columns: the column map containing operand values used for substitution
      * @return the updated expression with substituted operands
      */
-    static z3::ExprPtr substituteIntoInputExpression( z3::ContextPtr context, z3::ExprPtr inputExpr,
+    static z3::ExprPtr substituteIntoInputExpression(z3::ContextPtr context, z3::ExprPtr inputExpr,
                                                      std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                     std::map<std::string, z3::ExprPtr>& columns);
+                                                     std::map<std::string, std::vector<z3::ExprPtr>>& columns);
 };
 }// namespace NES::Optimizer
 
