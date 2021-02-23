@@ -488,6 +488,64 @@ TEST_F(SourceTest, testSenseSource) {
     std::cout << "Success" << std::endl;
 }
 
+TEST_F(SourceTest, testLambdaSource) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = this->nodeEngine;
+
+    uint64_t numBuffers = 1;
+    uint64_t numberOfTuplesToProduce = 30;
+    SchemaPtr schema = Schema::create()
+                           ->addField("user_id", UINT64)
+                           ->addField("page_id", UINT64)
+                           ->addField("campaign_id", UINT64)
+                           ->addField("ad_type", UINT64)
+                           ->addField("event_type", UINT64)
+                           ->addField("current_ms", UINT64)
+                           ->addField("ip", UINT64)
+                           ->addField("d1", UINT64)
+                           ->addField("d2", UINT64)
+                           ->addField("d3", UINT32)
+                           ->addField("d4", UINT16);
+
+    auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        uint64_t currentEventType = 0;
+        for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            auto ysbRecords = buffer.getBufferAs<YSBSource::YsbRecord>();
+            auto record = ysbRecords[i];
+            record.userId = 1;
+            record.pageId = 0;
+            record.adType = 0;
+
+            record.campaignId = rand() % 10000;
+
+            record.eventType = (currentEventType++) % 3;
+
+            record.currentMs = time(0);
+
+            record.ip = 0x01020304;
+        }
+    };
+
+    DataSourcePtr lambdaSource = createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers,
+                                                    std::chrono::milliseconds(0), func, 1);
+
+    while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
+        auto optBuf = lambdaSource->receiveData();
+        auto ysbRecords = optBuf->getBufferAs<YSBSource::YsbRecord>();
+
+        for (int i = 0; i < numberOfTuplesToProduce; i++) {
+            auto record = ysbRecords[i];
+            std::cout << "i=" << i << " record.current_ms: " << record.currentMs << ", record.ad_type: " << record.adType
+                      << ", record.event_type: " << record.eventType << std::endl;
+            EXPECT_TRUE(0 <= record.campaignId && record.campaignId < 10000);
+            EXPECT_TRUE(0 <= record.eventType && record.eventType < 3);
+        }
+    }
+
+    EXPECT_EQ(lambdaSource->getNumberOfGeneratedBuffers(), numBuffers);
+    EXPECT_EQ(lambdaSource->getNumberOfGeneratedTuples(), numBuffers * numberOfTuplesToProduce);
+}
+
 TEST_F(SourceTest, testYSBSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;

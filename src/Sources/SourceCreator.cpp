@@ -26,6 +26,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/KafkaSource.hpp>
+#include <Sources/LambdaSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
@@ -64,6 +65,13 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(Nod
                                            queryManager, /**bufferCnt*/ 1, /*frequency*/ 1000, operatorId);
 }
 
+
+const DataSourcePtr createLambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                                       const uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+                                       std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction, OperatorId operatorId) {
+    return std::make_shared<LambdaSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, std::move(generationFunction), operatorId);
+}
+
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, const std::string& host, const uint16_t port,
                                     OperatorId operatorId) {
@@ -92,11 +100,10 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
 }
 
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
+                                       NodeEngine::QueryManagerPtr queryManager,
                                        std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                       std::chrono::milliseconds frequency) {
-    return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess,
-                                          frequency, operatorId);
+                                       std::chrono::milliseconds frequency, OperatorId operatorId) {
+    return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess, frequency, operatorId);
 }
 
 const DataSourcePtr createYSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,

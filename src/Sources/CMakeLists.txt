@@ -25,6 +25,7 @@ add_source_nes(
         YSBSource.cpp
         MonitoringSource.cpp
         MemorySource.cpp
+        LambdaSource.cpp
 )
 
 if(NES_USE_KAFKA)
