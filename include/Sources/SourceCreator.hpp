@@ -161,16 +161,6 @@ const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManag
                                        std::chrono::milliseconds frequency, OperatorId operatorId);
 
 /**
- * @brief function to create a ysb source
- * @param schema of data source
- * @param operatorId
- * @return a const data source pointer
- */
-const DataSourcePtr createYSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                    uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                    OperatorId operatorId);
-
-/**
  * @brief function to create a network source
  * @param schema
  * @param bufferManager

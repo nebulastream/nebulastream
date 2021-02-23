@@ -31,7 +31,6 @@
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Sources/YSBSource.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <chrono>
 
@@ -104,13 +103,6 @@ const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManag
                                        std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
                                        std::chrono::milliseconds frequency, OperatorId operatorId) {
     return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess, frequency, operatorId);
-}
-
-const DataSourcePtr createYSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                    uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                    OperatorId operatorId) {
-    return std::make_shared<YSBSource>(bufferManager, queryManager, numBuffersToProcess, numberOfTuplesToProducePerBuffer,
-                                       frequency, operatorId);
 }
 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
