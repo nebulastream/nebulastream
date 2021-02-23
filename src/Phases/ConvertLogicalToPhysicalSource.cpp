@@ -113,9 +113,9 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
     } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
-        return createMemorySource(memorySourceDescriptor->getSchema(), bufferManager, queryManager, operatorId,
+        return createMemorySource(memorySourceDescriptor->getSchema(), bufferManager, queryManager,
                                   memorySourceDescriptor->getMemoryArea(), memorySourceDescriptor->getMemoryAreaSize(),
-                                  memorySourceDescriptor->getNumBuffersToProcess(), memorySourceDescriptor->getFrequency());
+                                  memorySourceDescriptor->getNumBuffersToProcess(), memorySourceDescriptor->getFrequency(), operatorId);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

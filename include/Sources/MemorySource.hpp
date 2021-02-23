@@ -35,7 +35,8 @@ class MemorySource : public DataSource {
      * @param memoryArea the non-null memory area that stores the data that will be used by the source
      * @param memoryAreaSize the non-zero size of the memory area
      * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the buffer manager
+     * @param queryManager valid pointer to the query manager
+     * @param
      * @param operatorId the valid id of the source
      */
     explicit MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
