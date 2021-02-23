@@ -65,12 +65,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
     SchemaPtr outputSchema = operatorNode->getOutputSchema();
 
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        //Will return a Z3 expression equivalent to: streamName = <logical stream name>
+        NES_TRACE("QuerySignatureUtil: Computing Signature for Source operator");
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
-        std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
 
-        //Compute attribute mapping and columns based on output schema for source operator
-        //        std::map<std::string, std::vector<std::string>> attributeMap;
+        //Compute the column expressions for the source
         std::map<std::string, std::vector<z3::ExprPtr>> columns;
         for (auto& field : outputSchema->fields) {
             auto attributeName = field->getName();
@@ -79,12 +77,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         }
 
         //Create an equality expression for example: <logical stream name>.streamName == "<logical stream name>"
+        std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
         auto streamNameVarName = streamName + ".streamName";
         auto streamNameVar = context->constant(context->str_symbol(streamNameVarName.c_str()), context->string_sort());
         auto streamNameVal = context->string_val(streamName);
         auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, streamNameVar, streamNameVal)));
-
-        //Compute signature
         return QuerySignature::create(conditions, columns, {});
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
@@ -110,25 +107,20 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         return createQuerySignatureForWindow(context, windowOperator);
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
+
         NES_ASSERT(children.size() == 1 && children[0], "Project operator should only have one non null children.");
         auto childQuerySignature = children[0]->as<LogicalOperatorNode>()->getSignature();
-        //        auto sources = childQuerySignature->getSources();
 
+        //Extract projected columns
         auto columns = childQuerySignature->getColumns();
-        //        auto attributeMap = childQuerySignature->getAttributeMap();
-
         std::map<std::string, std::vector<z3::ExprPtr>> updatedColumns;
-        //        std::map<std::string, std::vector<std::string>> updatedAttributeMap;
-
         for (auto& field : outputSchema->fields) {
             auto attributeName = field->getName();
-            auto derivedAttributeName = attributeName;
-            if (columns.find(derivedAttributeName) == columns.end()) {
-                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unable to find projected attribute in children column set.");
+            if (columns.find(attributeName) == columns.end()) {
+                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unable to find projected attribute " + attributeName
+                                        + " in children column set.");
             }
-            updatedColumns[derivedAttributeName] = columns[derivedAttributeName];
-            //            updatedAttributeMap[attributeName] = attributeMap[attributeName];
-            //            attributeMap[attributeName] = {derivedAttributeName};
+            updatedColumns[attributeName] = columns[attributeName];
         }
 
         auto conditions = childQuerySignature->getConditions();
@@ -148,7 +140,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         return createQuerySignatureForRenameStream(context, renameStreamOperator);
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
-    return nullptr;
 }
 
 QuerySignaturePtr QuerySignatureUtil::buildQuerySignatureForChildren(z3::ContextPtr context, std::vector<NodePtr> children) {
