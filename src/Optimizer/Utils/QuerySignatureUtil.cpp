@@ -96,7 +96,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         return createQuerySignatureForUnion(context, unionOperator);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Broadcast operator");
-        return buildQuerySignatureForChildren(context, children);
+        NES_ASSERT(children.size() == 1 && children[0], "Broadcast operator should only have one and non null children.");
+        return children[0]->as<LogicalOperatorNode>()->getSignature();
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
         auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
@@ -108,7 +109,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
 
-        NES_ASSERT(children.size() == 1 && children[0], "Project operator should only have one non null children.");
+        NES_ASSERT(children.size() == 1 && children[0], "Project operator should only have one and non null children.");
         auto childQuerySignature = children[0]->as<LogicalOperatorNode>()->getSignature();
 
         //Extract projected columns
@@ -155,55 +156,32 @@ QuerySignaturePtr QuerySignatureUtil::buildQuerySignatureForChildren(z3::Context
         //Fetch signature of the child operator
         auto childSignature = child->as<LogicalOperatorNode>()->getSignature();
 
-        /* if (sources.empty()) {
-            sources = childSignature->getSources();
-        } else {
-            auto childSources = childSignature->getSources();
-
-            //Check if sources and sources from child signature have common stream source name
-            // This is done to prevent from creating conflicting attribute names
-            std::vector<std::string> commonSources;
-            std::sort(sources.begin(), sources.end());
-            std::sort(childSources.begin(), childSources.end());
-            //We use std intersection api to compute intersection between two vectors
-            std::set_intersection(sources.begin(), sources.end(), childSources.begin(), childSources.end(),
-                                  back_inserter(commonSources));
-
-            if (!commonSources.empty()) {
-                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Can not compute signature for query with children upstreams based "
-                                        "on source with same logical name");
-            }
-            sources.insert(sources.end(), childSources.begin(), childSources.end());
-        }*/
-
-        //Merge the attribute map together
-        /* if (attributeMap.empty()) {
-            attributeMap = childSignature->getAttributeMap();
-        } else {
-            for (auto [originalAttributeName, derivedAttributeNames] : childSignature->getAttributeMap()) {
-                if (attributeMap.find(originalAttributeName) == attributeMap.end()) {
-                    attributeMap[originalAttributeName] = derivedAttributeNames;
-                } else {
-                    auto existingDerivedAttributes = attributeMap[originalAttributeName];
-                    existingDerivedAttributes.insert(existingDerivedAttributes.end(), derivedAttributeNames.begin(),
-                                                     derivedAttributeNames.end());
-                    attributeMap[originalAttributeName] = existingDerivedAttributes;
-                }
-            }
-        }*/
-
         //Merge the columns from different children signatures together
         if (columns.empty()) {
             columns = childSignature->getColumns();
         } else {
-            columns.merge(childSignature->getColumns());
+            //Iterate over all columns in the child signature
+            for (auto& [columnName, columnExpressions] : childSignature->getColumns()) {
+                //Check if the column from child signature already exists
+                if (columns.find(columnName) != columns.end()) {
+                    //Insert the columns expressions from child into existing expression list
+                    auto existingColumnExpressions = columns[columnName];
+                    existingColumnExpressions.insert(existingColumnExpressions.end(), columnExpressions.begin(),
+                                                     columnExpressions.end());
+                    columns[columnName] = existingColumnExpressions;
+                } else {
+                    columns[columnName] = columnExpressions;
+                }
+            }
         }
 
         //Merge the window definitions together
         if (windowExpressions.empty()) {
             windowExpressions = childSignature->getWindowsExpressions();
         } else {
-            for (auto [windowKey, windowExpression] : childSignature->getWindowsExpressions()) {
+            //Iterate over all windows in the child signature
+            for (auto& [windowKey, windowExpression] : childSignature->getWindowsExpressions()) {
+                //Check if the window from child signature already exists
                 if (windowExpressions.find(windowKey) != windowExpressions.end()) {
                     //FIXME: when we receive more than one window expressions for same window in issue #1272
                     NES_NOT_IMPLEMENTED();
