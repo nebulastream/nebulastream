@@ -40,13 +40,17 @@ LambdaSource::LambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr buffer
 std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
     auto buffer = this->bufferManager->getBufferBlocking();
+    buffer.setOriginId(123);
+    auto numberOfTuplesToProduce = buffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
-    auto numberOfTuplesToProduce = buffer.getBufferSize() /schema->getSchemaSizeInBytes();
     generationFunction(buffer, numberOfTuplesToProduce);
 
     buffer.setNumberOfTuples(numberOfTuplesToProduce);
+    generatedTuples += buffer.getNumberOfTuples();
+    generatedBuffers++;
 
-    NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
+              << " outOrgID=" << buffer.getOriginId());
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
@@ -54,9 +58,8 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     }
 
     NES_ASSERT(false, "this must not be invoked");
-
 }
 
-SourceType LambdaSource::getType() const { return DEFAULT_SOURCE; }
+SourceType LambdaSource::getType() const { return LAMBDA_SOURCE; }
 
 }// namespace NES
