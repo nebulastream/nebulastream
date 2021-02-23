@@ -181,7 +181,9 @@ void E2EBase::setupSources() {
                 //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                 records[i].value = i % 10;
                 records[i].timestamp = i;
+                std::cout << "id=" <<records[i].id << std::endl;
             }
+            return;
         };
 
         NES::AbstractPhysicalStreamConfigPtr conf =
