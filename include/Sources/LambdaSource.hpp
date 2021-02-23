@@ -35,15 +35,15 @@ class LambdaSource : public GeneratorSource {
    * @param operatorId the valid id of the source
    */
     LambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                  const uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
-                 const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction, OperatorId operatorId);
+                  uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+                 std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction, OperatorId operatorId);
 
     SourceType getType() const override;
 
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
   private:
-    const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction;
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
 };
 
 typedef std::shared_ptr<LambdaSource> LambdaSourcePtr;

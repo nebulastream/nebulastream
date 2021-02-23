@@ -34,7 +34,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      */
     explicit LambdaSourceDescriptor(
         SchemaPtr schema,
-        const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction,
+        std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         uint64_t numBuffersToProcess, std::chrono::milliseconds frequency);
 
     /**
@@ -47,7 +47,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      */
     static std::shared_ptr<LambdaSourceDescriptor>
     create(SchemaPtr schema,
-           const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction,
+           std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProcess, std::chrono::milliseconds frequency);
 
     /**
@@ -67,13 +67,13 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @brief returns the the generator function
      * @return generator function
      */
-    const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& getGeneratorFunction();
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& getGeneratorFunction();
 
     uint64_t getNumBuffersToProcess() const;
     std::chrono::milliseconds getFrequency() const;
 
   private:
-    const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction;
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;
     std::chrono::milliseconds frequency;
 };

@@ -83,7 +83,7 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(Nod
  * @return a const data source pointer */
 const DataSourcePtr createLambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                        uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
-                                       const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction,
+                                       std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
                                        OperatorId operatorId);
 
 

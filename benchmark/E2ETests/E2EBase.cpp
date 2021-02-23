@@ -166,86 +166,49 @@ void E2EBase::setupSources() {
         }
     } else if (mode == InputOutputMode::MemMode) {
         std::cout << "memory source mode" << std::endl;
-        struct Record {
-            uint64_t id;
-            uint64_t value;
-            uint64_t timestamp;
-        };
 
         auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-            uint64_t currentEventType = 0;
-            struct __attribute__((packed)) Record {
-                //          Record() = default;
-                Record(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType,
-                       uint64_t currentMs, uint64_t ip)
-                    : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
-                      currentMs(currentMs), ip(ip) {}
-
-                uint64_t userId;
-                uint64_t pageId;
-                uint64_t campaignId;
-                uint64_t adType;
-                uint64_t eventType;
-                uint64_t currentMs;
-                uint64_t ip;
-
-                // placeholder to reach 78 bytes
-                uint64_t dummy1{0};
-                uint64_t dummy2{0};
-                uint32_t dummy3{0};
-                uint16_t dummy4{0};
-
-                Record(const Record& rhs) {
-                    userId = rhs.userId;
-                    pageId = rhs.pageId;
-                    campaignId = rhs.campaignId;
-                    adType = rhs.adType;
-                    eventType = rhs.eventType;
-                    currentMs = rhs.currentMs;
-                    ip = rhs.ip;
-                }
-
-                std::string toString() const {
-                    return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
-                        + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
-                        + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
-                }
+            struct Record {
+                uint64_t id;
+                uint64_t value;
+                uint64_t timestamp;
             };
-            auto ysbRecords = buffer.getBufferAs<Record>();
-            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-                //            auto record = ysbRecords[i];
-                ysbRecords[i].userId = i;
-                ysbRecords[i].pageId = 0;
-                ysbRecords[i].adType = 0;
-                ysbRecords[i].campaignId = rand() % 10000;
-                ysbRecords[i].eventType = (currentEventType++) % 3;
-                ysbRecords[i].currentMs = time(0);
-                ysbRecords[i].ip = 0x01020304;
-                std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(Record)
-                          << " addr=" << &ysbRecords[i] << std::endl;
-            }
-        };
 
-        for (uint64_t i = 0; i < sourceCnt; i++) {
-            //we put 170 tuples of size 24 Byte into a 4KB buffer
-            auto memAreaSize = sizeof(Record) * 170;//nearly full buffer
-            auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
-            memoryAreas.push_back(memArea);
-            auto* records = reinterpret_cast<Record*>(memArea);
-            size_t recordSize = schema->getSchemaSizeInBytes();
-            size_t numRecords = memAreaSize / recordSize;
-            for (auto i = 0u; i < numRecords; ++i) {
+            auto records = buffer.getBufferAs<Record>();
+
+            for (auto i = 0u; i < numberOfTuplesToProduce; ++i) {
                 records[i].id = i;
                 //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                 records[i].value = i % 10;
                 records[i].timestamp = i;
             }
+        };
 
-            NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream", "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+        NES::AbstractPhysicalStreamConfigPtr conf =
+            NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream", "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
 
-            wrk1->registerPhysicalStream(conf);
-        }
+        wrk1->registerPhysicalStream(conf);
+        //
+        //        for (uint64_t i = 0; i < sourceCnt; i++) {
+        //            //we put 170 tuples of size 24 Byte into a 4KB buffer
+        //            auto memAreaSize = sizeof(Record) * 170;//nearly full buffer
+        //            auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
+        //            memoryAreas.push_back(memArea);
+        //            auto* records = reinterpret_cast<Record*>(memArea);
+        //            size_t recordSize = schema->getSchemaSizeInBytes();
+        //            size_t numRecords = memAreaSize / recordSize;
+        //            for (auto i = 0u; i < numRecords; ++i) {
+        //                records[i].id = i;
+        //                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+        //                records[i].value = i % 10;
+        //                records[i].timestamp = i;
+        //            }
+        //
+        //            NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
+        //                "LambdaSource", "test_stream", "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+        //
+        //            wrk1->registerPhysicalStream(conf);
+        //        }
     } else {
         NES_ASSERT(false, "input output mode not supported");
     }

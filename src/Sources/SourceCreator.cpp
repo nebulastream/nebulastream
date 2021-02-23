@@ -67,8 +67,8 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(Nod
 
 const DataSourcePtr createLambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                        uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
-                                       const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction, OperatorId operatorId) {
-    return std::make_shared<LambdaSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, generationFunction, operatorId);
+                                       std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction, OperatorId operatorId) {
+    return std::make_shared<LambdaSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, std::move(generationFunction), operatorId);
 }
 
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
