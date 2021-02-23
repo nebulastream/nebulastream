@@ -24,7 +24,6 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
-#include <Sources/YSBSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
@@ -1468,90 +1467,6 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     NES_INFO("ExpContent=" << expectedContent);
 
     EXPECT_EQ(content, expectedContent);
-
-    bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
-
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
-TEST_F(ContinuousSourceTest, testYSB) {
-
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
-
-    //TODO: writing of csv file works, now make test green
-    NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
-
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    sourceConfig->setSourceType("YSBSource");
-    sourceConfig->setSourceConfig("");
-    sourceConfig->setSourceFrequency(1);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(5);
-    sourceConfig->setNumberOfBuffersToProduce(2);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("ysb");
-    //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
-
-    std::string filePath = "contTestOut.csv";
-    remove(filePath.c_str());
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register query
-    std::string queryString =
-        R"(Query::from("ysb").windowByKey(Attribute("campaign_id"), TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(1)), Sum(Attribute("user_id"))).sink(FileSinkDescriptor::create(")"
-        + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-    auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
-
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    NES_INFO("ContinuousSourceTest: content=" << content);
-    EXPECT_TRUE(!content.empty());
-
-    std::ifstream infile(filePath.c_str());
-    std::string line;
-    int lineCnt = 0;
-    while (std::getline(infile, line)) {
-        if (lineCnt > 0) {
-            auto token = UtilityFunctions::split(line, ',');
-            YSBSource::YsbRecord rec{};
-            rec.campaignId = stoi(token[2]);
-            EXPECT_TRUE(rec.campaignId >= 0 && rec.campaignId < 10000);
-        }
-        lineCnt++;
-    }
-
-    EXPECT_EQ(sizeof(YSBSource::YsbRecord), 78);
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);

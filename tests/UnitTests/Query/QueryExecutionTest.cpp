@@ -51,7 +51,6 @@
 
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Sources/YSBSource.hpp>
 
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -956,95 +955,5 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     testSink->shutdown();
     testSource1->stop();
     testSource2->stop();
-    nodeEngine->stop();
-}
-
-TEST_F(QueryExecutionTest, ysbQueryTest) {
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, PhysicalStreamConfig::createEmpty());
-    int numBuf = 1;
-    int numTup = 50;
-
-    auto updatedYSBSchema = Schema::create()
-                                ->addField("ysb$user_id", UINT64)
-                                ->addField("ysb$page_id", UINT64)
-                                ->addField("ysb$campaign_id", UINT64)
-                                ->addField("ysb$ad_type", UINT64)
-                                ->addField("ysb$event_type", UINT64)
-                                ->addField("ysb$current_ms", UINT64)
-                                ->addField("ysb$ip", UINT64)
-                                ->addField("ysb$d1", UINT64)
-                                ->addField("ysb$d2", UINT64)
-                                ->addField("ysb$d3", UINT32)
-                                ->addField("ysb$d4", UINT16);
-
-    auto ysbSource =
-        std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuf, numTup, 1, 1);
-
-    ysbSource->getSchema()->clear();
-    ysbSource->getSchema()->copyFields(updatedYSBSchema);
-
-    //TODO: make query work
-    auto query = TestQuery::from(ysbSource->getSchema())
-                     .filter(Attribute("event_type") > 1)
-                     .windowByKey(Attribute("campaign_id", INT64),
-                                  TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(10)), Count())
-                     .sink(DummySink::create());
-
-    auto ysbResultSchema = Schema::create()
-                               ->addField(createField("_$start", UINT64))
-                               ->addField(createField("_$end", UINT64))
-                               ->addField(createField("key", INT64))
-                               ->addField("value", INT64);
-    auto testSink = TestSink::create(/*expected result buffer*/ numBuf, ysbResultSchema, nodeEngine->getBufferManager());
-
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
-    queryPlan = distributeWindowRule->apply(queryPlan);
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-
-    std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
-        generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
-    std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
-        queryPlan->getRootOperators()[0]->getNodesByType<SourceLogicalOperatorNode>();
-
-    auto builder = GeneratedQueryExecutionPlanBuilder::create()
-                       .setQueryManager(nodeEngine->getQueryManager())
-                       .setBufferManager(nodeEngine->getBufferManager())
-                       .setCompiler(nodeEngine->getCompiler())
-                       .setQueryId(1)
-                       .setQuerySubPlanId(1)
-                       .addSource(ysbSource)
-                       .addSink(testSink)
-                       .addOperatorQueryPlan(generatableOperators);
-
-    auto plan = builder.build();
-    nodeEngine->registerQueryInNodeEngine(plan);
-    nodeEngine->startQuery(1);
-
-    // wait till all buffers have been produced
-    bool completed = testSink->completed.get_future().get();
-    EXPECT_TRUE(completed);
-
-    // get result buffer, which should contain two results.
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), numBuf);
-
-    EXPECT_TRUE(!testSink->resultBuffers.empty());
-    uint64_t noBufs = 0;
-    for (auto buf : testSink->resultBuffers) {
-        noBufs++;
-        auto resultLayout = NodeEngine::createRowLayout(ysbResultSchema);
-        for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
-            auto campaignId = resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 2)->read(buf);
-            EXPECT_TRUE(0 <= campaignId && campaignId < 10000);
-
-            auto eventType = resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(buf);
-            EXPECT_TRUE(0 <= eventType && eventType < 3);
-        }
-    }
-    EXPECT_EQ(noBufs, numBuf);
-
-    nodeEngine->stopQuery(1);
     nodeEngine->stop();
 }

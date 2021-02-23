@@ -24,7 +24,6 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
-#include <Sources/YSBSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>

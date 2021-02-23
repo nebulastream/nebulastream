@@ -29,7 +29,7 @@ SourceConfig::SourceConfig() {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
     sourceType = ConfigOption<std::string>::create(
         "sourceType", "DefaultSource",
-        "Type of the Source (available options: DefaultSource, CSVSource, BinarySource, YSBSource).");
+        "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).");
     sourceConfig = ConfigOption<std::string>::create(
         "sourceConfig", "1",
         "Source configuration. Options depend on source type. See Source Configurations on our wiki page for further details.");

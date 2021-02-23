@@ -36,7 +36,6 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Sources/MonitoringSource.hpp>
-#include <Sources/YSBSource.hpp>
 
 namespace NES {
 
@@ -616,34 +615,6 @@ TEST_F(SourceTest, testLambdaSource) {
 
     EXPECT_EQ(lambdaSource->getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(lambdaSource->getNumberOfGeneratedTuples(), numBuffers * numberOfTuplesToProduce);
-}
-
-TEST_F(SourceTest, testYSBSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
-
-    uint64_t numBuffers = 2;
-    uint64_t numTuples = 30;
-
-    auto source =
-        std::make_shared<YSBSource>(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, numTuples, 1, 1);
-    SchemaPtr schema = source->getSchema();
-
-    while (source->getNumberOfGeneratedBuffers() < numBuffers) {
-        auto optBuf = source->receiveData();
-        auto ysbRecords = optBuf->getBufferAs<YSBSource::YsbRecord>();
-
-        for (int i = 0; i < numTuples; i++) {
-            auto record = ysbRecords[i];
-            std::cout << "i=" << i << " record.current_ms: " << record.currentMs << ", record.ad_type: " << record.adType
-                      << ", record.event_type: " << record.eventType << std::endl;
-            EXPECT_TRUE(0 <= record.campaignId && record.campaignId < 10000);
-            EXPECT_TRUE(0 <= record.eventType && record.eventType < 3);
-        }
-    }
-
-    EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numBuffers);
-    EXPECT_EQ(source->getNumberOfGeneratedTuples(), numBuffers * numTuples);
 }
 
 TEST_F(SourceTest, testMonitoringSource) {
