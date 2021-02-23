@@ -26,15 +26,15 @@ using namespace Benchmarking;
 int main() {
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 2, 1);
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 2, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
-    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     // source mode
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::FileMode,
