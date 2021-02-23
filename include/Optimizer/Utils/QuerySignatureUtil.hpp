@@ -157,9 +157,22 @@ class QuerySignatureUtil {
      * @param columns: the column map containing operand values used for substitution
      * @return the updated expression with substituted operands
      */
-    static z3::ExprPtr substituteIntoInputExpression(z3::ContextPtr context, z3::ExprPtr inputExpr,
-                                                     std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                     std::map<std::string, std::vector<z3::ExprPtr>>& columns);
+    static std::vector<z3::ExprPtr> substituteIntoInputExpression(z3::ContextPtr context, z3::ExprPtr inputExpr,
+                                                           std::map<std::string, z3::ExprPtr>& operandFieldMap,
+                                                           std::map<std::string, std::vector<z3::ExprPtr>>& columns);
+
+    /**
+     * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
+     * operators and stored in column map of the child operator
+     * @param context: the z3 context
+     * @param inputExpr: the input expression
+     * @param operandFieldMap: the operand field map containing list of operands inside the input expression
+     * @param columns: the column map containing operand values used for substitution
+     * @return the updated expression with substituted operands
+     */
+    static z3::ExprPtr substituteIntoInputExpressionFilter(z3::ContextPtr context, z3::ExprPtr inputExpr,
+                                                           std::map<std::string, z3::ExprPtr>& operandFieldMap,
+                                                           std::map<std::string, std::vector<z3::ExprPtr>>& columns);
 };
 }// namespace NES::Optimizer
 

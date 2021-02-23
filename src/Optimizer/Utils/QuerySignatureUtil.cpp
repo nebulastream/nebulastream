@@ -353,9 +353,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
     //Fetch the signature of only children and get the column values
     auto columns = childQuerySignature->getColumns();
 
-    std::string fieldName = mapOperator->getMapExpression()->getField()->getFieldName();
-
-    //Find if the LHS operand is a new attribute or not
+    /*    //Find if the LHS operand is a new attribute or not
     bool isNewAttribute = true;
     auto inputSchema = mapOperator->getInputSchema();
     for (auto inputField : inputSchema->fields) {
@@ -363,36 +361,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
             isNewAttribute = false;
             break;
         }
-    }
+    }*/
 
     //Substitute rhs operands with actual values computed previously
-    //    for (auto source : sources) {
-    //
-    //        //Compute the derived attribute name
-    //        auto derivedAttributeName = fieldName;
-    //
-    //        //Add the derived attribute to the attribute map
-    //        if (isNewAttribute) {
-    //            //Add the newly derived attribute to the attribute map
-    //            if (attributeMap.find(fieldName) == attributeMap.end()) {
-    //                attributeMap[fieldName] = {derivedAttributeName};
-    //            } else {
-    //                //Add the newly derived attribute to attribute map
-    //                auto derivedAttributes = attributeMap[fieldName];
-    //                derivedAttributes.push_back(derivedAttributeName);
-    //                attributeMap[fieldName] = derivedAttributes;
-    //            }
-    //        } else if (!isNewAttribute && columns.find(derivedAttributeName) == columns.end()) {
-    //            // this attribute doesn't exists in the stream source and hence should not be created
-    //            continue;
-    //        }
-
-    z3::ExprPtr updatedExpr = substituteIntoInputExpression(context, expr, rhsOperandFieldMap, columns);
-    columns[fieldName] = {updatedExpr};
-    //    }
-
-    //Prepare all combinations of col expression for the given map by substituting the previous col values in the assignment expression
-    std::vector<z3::ExprPtr> allColExprForMap{expr};
+    std::vector<z3::ExprPtr> updatedExpr = substituteIntoInputExpression(context, expr, rhsOperandFieldMap, columns);
+    std::string fieldName = mapOperator->getMapExpression()->getField()->getFieldName();
+    columns[fieldName] = updatedExpr;
 
     return QuerySignature::create(childQuerySignature->getConditions(), columns, childQuerySignature->getWindowsExpressions());
 }
@@ -416,18 +390,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
     auto columns = childQuerySignature->getColumns();
     //    auto sources = childQuerySignature->getSources();
 
-    z3::expr_vector filterExpressions(*context);
     //    for (auto source : sources) {
-    auto updatedExpression = substituteIntoInputExpression(context, filterExpr, filterFieldMap, columns);
-    filterExpressions.push_back(*updatedExpression);
-    //    }
-
-    //Compute a DNF condition for all different conditions identified by substituting the col values
-    auto filterConditions = z3::mk_or(filterExpressions);
+    auto filterCondition = substituteIntoInputExpressionFilter(context, filterExpr, filterFieldMap, columns);
 
     //Compute a CNF condition using the children and filter conditions
     auto childConditions = childQuerySignature->getConditions();
-    Z3_ast array[] = {filterConditions, *childConditions};
+    Z3_ast array[] = {*filterCondition, *childConditions};
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
     return QuerySignature::create(conditions, columns, childQuerySignature->getWindowsExpressions());
 }
@@ -764,30 +732,76 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForRenameStream(z3::Co
     return nullptr;
 }
 
-z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr context, const z3::ExprPtr inputExpr,
-                                                              std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                              std::map<std::string, std::vector<z3::ExprPtr>>& columns) {
-    z3::ExprPtr updatedExpr = inputExpr;
+std::vector<z3::ExprPtr>
+QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr context, const z3::ExprPtr inputExpr,
+                                                  std::map<std::string, z3::ExprPtr>& operandFieldMap,
+                                                  std::map<std::string, std::vector<z3::ExprPtr>>& columns) {
+    std::vector<z3::ExprPtr> outputExpr;
     //Loop over the Operand Fields contained in the input expression
-    for (auto [operandExprName, operandExpr] : operandFieldMap) {
 
-        if (columns.find(operandExprName) == columns.end()) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + operandExprName + " that doesn't exists");
+    auto size = columns.begin()->second.size();
+
+    for (uint32_t i = 0; i < size; i++) {
+        z3::ExprPtr updatedExpr = inputExpr;
+        for (auto [operandExprName, operandExpr] : operandFieldMap) {
+
+            if (columns.find(operandExprName) == columns.end()) {
+                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + operandExprName
+                                        + " that doesn't exists");
+            }
+
+            //Change from
+            z3::expr_vector from(*context);
+            from.push_back(*operandExpr);
+
+            //Change to
+            //Fetch the modified operand expression to be substituted
+            auto derivedOperandExpr = columns[operandExprName][i];
+            z3::expr_vector to(*context);
+            to.push_back(*derivedOperandExpr);
+
+            //Perform replacement
+            updatedExpr = std::make_shared<z3::expr>(updatedExpr->substitute(from, to));
         }
-
-        //Change from
-        z3::expr_vector from(*context);
-        from.push_back(*operandExpr);
-
-        //Change to
-        //Fetch the modified operand expression to be substituted
-        auto derivedOperandExpr = columns[operandExprName];
-        z3::expr_vector to(*context);
-        to.push_back(*derivedOperandExpr);
-
-        //Perform replacement
-        updatedExpr = std::make_shared<z3::expr>(updatedExpr->substitute(from, to));
+        outputExpr.push_back(updatedExpr);
     }
-    return updatedExpr;
+    return outputExpr;
+}
+
+z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpressionFilter(z3::ContextPtr context, z3::ExprPtr inputExpr,
+                                                                    std::map<std::string, z3::ExprPtr>& operandFieldMap,
+                                                                    std::map<std::string, std::vector<z3::ExprPtr>>& columns) {
+    z3::ExprPtr outputExpr;
+    //Loop over the Operand Fields contained in the input expression
+
+    auto size = columns.begin()->second.size();
+
+    z3::expr_vector filterExpressions(*context);
+
+    for (uint32_t i = 0; i < size; i++) {
+        z3::ExprPtr updatedExpr = inputExpr;
+        for (auto [operandExprName, operandExpr] : operandFieldMap) {
+
+            if (columns.find(operandExprName) == columns.end()) {
+                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + operandExprName
+                                        + " that doesn't exists");
+            }
+
+            //Change from
+            z3::expr_vector from(*context);
+            from.push_back(*operandExpr);
+
+            //Change to
+            //Fetch the modified operand expression to be substituted
+            auto derivedOperandExpr = columns[operandExprName][i];
+            z3::expr_vector to(*context);
+            to.push_back(*derivedOperandExpr);
+
+            //Perform replacement
+            updatedExpr = std::make_shared<z3::expr>(updatedExpr->substitute(from, to));
+        }
+        filterExpressions.push_back(*updatedExpr);
+    }
+    return std::make_shared<z3::expr>(z3::mk_or(filterExpressions));
 }
 }// namespace NES::Optimizer
