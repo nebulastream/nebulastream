@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <util/E2EBase.hpp>
 
@@ -32,7 +33,9 @@ using namespace NES;
 std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     if (mode == E2EBase::InputOutputMode::FileMode) {
         return "FileMode";
-    } else if (mode == E2EBase::InputOutputMode::MemoryMode) {
+    } else if (mode == E2EBase::InputOutputMode::CacheMode) {
+        return "CacheMode";
+    } else if (mode == E2EBase::InputOutputMode::MemMode) {
         return "MemoryMode";
     } else {
         return "Unkown mode";
@@ -43,7 +46,7 @@ std::string E2EBase::runExperiment(std::string query) {
     std::cout << "setup experiment with parameter threadCntWorker=" << numberOfWorkerThreads
               << " threadCntCoordinator=" << numberOfCoordinatorThreads << " sourceCnt=" << sourceCnt
               << " mode=" << getInputOutputModeAsString(mode) << " query=" << query << std::endl;
-//    E2EBasePtr test = std::make_shared<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, mode);
+    //    E2EBasePtr test = std::make_shared<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, mode);
 
     std::cout << "run query" << std::endl;
     runQuery(query);
@@ -100,9 +103,6 @@ E2EBase::~E2EBase() {
     statisticsVec.clear();
     queryService.reset();
     queryCatalog.reset();
-//    for (auto ptr : memoryAreas) {
-//        delete ptr;
-//    }
 }
 
 void E2EBase::setupSources() {
@@ -136,8 +136,8 @@ void E2EBase::setupSources() {
             NES::PhysicalStreamConfigPtr inputStream = NES::PhysicalStreamConfig::create(srcConf);
             wrk1->registerPhysicalStream(inputStream);
         }
-    } else if (mode == InputOutputMode::MemoryMode) {
-        std::cout << "memory source mode" << std::endl;
+    } else if (mode == InputOutputMode::CacheMode) {
+        std::cout << "cache mode" << std::endl;
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -164,17 +164,102 @@ void E2EBase::setupSources() {
 
             wrk1->registerPhysicalStream(conf);
         }
+    } else if (mode == InputOutputMode::MemMode) {
+        std::cout << "memory source mode" << std::endl;
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+        };
+
+        auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+            uint64_t currentEventType = 0;
+            struct __attribute__((packed)) Record {
+                //          Record() = default;
+                Record(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType,
+                       uint64_t currentMs, uint64_t ip)
+                    : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
+                      currentMs(currentMs), ip(ip) {}
+
+                uint64_t userId;
+                uint64_t pageId;
+                uint64_t campaignId;
+                uint64_t adType;
+                uint64_t eventType;
+                uint64_t currentMs;
+                uint64_t ip;
+
+                // placeholder to reach 78 bytes
+                uint64_t dummy1{0};
+                uint64_t dummy2{0};
+                uint32_t dummy3{0};
+                uint16_t dummy4{0};
+
+                Record(const Record& rhs) {
+                    userId = rhs.userId;
+                    pageId = rhs.pageId;
+                    campaignId = rhs.campaignId;
+                    adType = rhs.adType;
+                    eventType = rhs.eventType;
+                    currentMs = rhs.currentMs;
+                    ip = rhs.ip;
+                }
+
+                std::string toString() const {
+                    return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
+                        + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
+                        + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
+                }
+            };
+            auto ysbRecords = buffer.getBufferAs<Record>();
+            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+                //            auto record = ysbRecords[i];
+                ysbRecords[i].userId = i;
+                ysbRecords[i].pageId = 0;
+                ysbRecords[i].adType = 0;
+                ysbRecords[i].campaignId = rand() % 10000;
+                ysbRecords[i].eventType = (currentEventType++) % 3;
+                ysbRecords[i].currentMs = time(0);
+                ysbRecords[i].ip = 0x01020304;
+                std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(Record)
+                          << " addr=" << &ysbRecords[i] << std::endl;
+            }
+        };
+
+        for (uint64_t i = 0; i < sourceCnt; i++) {
+            //we put 170 tuples of size 24 Byte into a 4KB buffer
+            auto memAreaSize = sizeof(Record) * 170;//nearly full buffer
+            auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
+            memoryAreas.push_back(memArea);
+            auto* records = reinterpret_cast<Record*>(memArea);
+            size_t recordSize = schema->getSchemaSizeInBytes();
+            size_t numRecords = memAreaSize / recordSize;
+            for (auto i = 0u; i < numRecords; ++i) {
+                records[i].id = i;
+                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                records[i].value = i % 10;
+                records[i].timestamp = i;
+            }
+
+            NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
+                "LambdaSource", "test_stream", "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+
+            wrk1->registerPhysicalStream(conf);
+        }
+    } else {
+        NES_ASSERT(false, "input output mode not supported");
     }
 }
+
 void E2EBase::setup() {
     std::cout << "setup" << std::endl;
 
     NES::setupLogging("E2EBase.log", DEBUGL_LEVEL);
     std::cout << "Setup E2EBase test class." << std::endl;
 
-    portOffset += 13 ;
+    portOffset += 13;
 
-    NES::CoordinatorConfigPtr crdConf =NES::CoordinatorConfig::create();
+    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
     crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
     crdConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
     crdConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
@@ -190,7 +275,8 @@ void E2EBase::setup() {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10 + portOffset);
     wrkConf->setDataPort(port + 11 + portOffset);
-    std::cout << "Cport=" << port << " CsetRpcPort=" << 4000 + portOffset << " CsetRestPort=" << 8081 + portOffset << " WsetRpcPort=" << port + 10 + portOffset << " WsetDataPort=" << port + 11 + portOffset << std::endl;
+    std::cout << "Cport=" << port << " CsetRpcPort=" << 4000 + portOffset << " CsetRestPort=" << 8081 + portOffset
+              << " WsetRpcPort=" << port + 10 + portOffset << " WsetDataPort=" << port + 11 + portOffset << std::endl;
     wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
     wrkConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
     wrkConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);

@@ -37,9 +37,10 @@ int main() {
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     // source mode
-    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::FileMode,
-                                                         E2EBase::InputOutputMode::MemoryMode};
+    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::CacheMode,
+                                                         E2EBase::InputOutputMode::MemMode};
     //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemoryMode};
+    //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::CacheMode};
     //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
 
     //roughly 50% selectivity
@@ -63,8 +64,7 @@ int main() {
                     std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
                     ss << time(0) << "," << benchmarkName << "," << nesVersion << "," << workerThreadCnt << ","
                        << coordinatorThreadCnt << "," << dataSourceCnt << "," << E2EBase::getInputOutputModeAsString(sourceMode);
-                    auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
-                                                          sourceMode);
+                    auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode);
                     ss << test->runExperiment(query);
                 }
             }
