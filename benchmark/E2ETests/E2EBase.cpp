@@ -17,11 +17,11 @@
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <util/E2EBase.hpp>
 
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 100000;//600000
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 2;//600000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
-const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
+const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_DEBUG;
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576 * 4;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 

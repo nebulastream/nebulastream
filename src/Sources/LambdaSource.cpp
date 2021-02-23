@@ -29,10 +29,10 @@
 namespace NES {
 
 LambdaSource::LambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                           const uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
-                           std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction, OperatorId operatorId)
+                           uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+                           const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction, OperatorId operatorId)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, operatorId),
-      generationFunction(std::move(generationFunction)) {
+      generationFunction(generationFunction) {
     NES_DEBUG("LambdaSource:" << this << " creating");
     this->gatheringInterval = std::chrono::milliseconds(frequency);
 }
