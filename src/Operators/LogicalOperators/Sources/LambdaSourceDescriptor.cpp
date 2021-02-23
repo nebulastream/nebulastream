@@ -21,17 +21,17 @@ namespace NES {
 
 LambdaSourceDescriptor::LambdaSourceDescriptor(
     SchemaPtr schema,
-    const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction,
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess, std::chrono::milliseconds frequency)
-    : SourceDescriptor(std::move(schema)), generationFunction(generationFunction),
+    : SourceDescriptor(std::move(schema)), generationFunction(std::move(generationFunction)),
       numBuffersToProcess(numBuffersToProcess), frequency(frequency) {}
 
 std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     SchemaPtr schema,
-    const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction,
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess, std::chrono::milliseconds frequency) {
     NES_ASSERT(schema, "invalid schema");
-    return std::make_shared<LambdaSourceDescriptor>(schema, generationFunction, numBuffersToProcess, frequency);
+    return std::make_shared<LambdaSourceDescriptor>(schema, std::move(generationFunction), numBuffersToProcess, frequency);
 }
 std::string LambdaSourceDescriptor::toString() { return "LambdaSourceDescriptor"; }
 
@@ -43,9 +43,9 @@ bool LambdaSourceDescriptor::equal(SourceDescriptorPtr other) {
     return schema == otherMemDescr->schema;
 }
 
-const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&
+std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&&
 LambdaSourceDescriptor::getGeneratorFunction() {
-    return generationFunction;
+    return std::move(generationFunction);
 }
 
 uint64_t LambdaSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }

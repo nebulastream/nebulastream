@@ -36,7 +36,7 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig{
      * @param memoryAreaSize the size of the memory area
      */
     explicit LambdaSourceStreamConfig(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
-                                      const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction,
+                                      std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
                                       uint64_t numBuffersToProcess, uint64_t frequency);
 
     /**
@@ -79,12 +79,13 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig{
      * @return a constructed LambdaSourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName,
-                                                  std::string logicalStreamName, const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction,
+                                                  std::string logicalStreamName,
+                                                  std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
                                                   uint64_t numBuffersToProcess, uint64_t frequency);
 
   private:
     std::string sourceType;
-    const std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>& generationFunction;
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
 };
 
 }// namespace NES
