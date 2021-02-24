@@ -17,11 +17,11 @@
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <util/E2EBase.hpp>
 
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 500000;//600000
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//600000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
-const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
+const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_NONE;
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576 * 4;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
@@ -242,7 +242,7 @@ void E2EBase::runQuery(std::string query) {
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     //give the system some seconds to come to steady mode
-    sleep(2);
+    sleep(1);
 
     auto start = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(start);
@@ -259,20 +259,35 @@ void E2EBase::runQuery(std::string query) {
     runtime = std::chrono::duration_cast<std::chrono::nanoseconds>(stop.time_since_epoch() - start.time_since_epoch());
 }
 
+struct dotted : std::numpunct<char> {
+    char do_thousands_sep()   const { return '.'; }  // separate with dots
+    std::string do_grouping() const { return "\3"; } // groups of 3 digits
+    static void imbue(std::ostream &os) {
+        os.imbue(std::locale(os.getloc(), new dotted));
+    }
+};
+
 std::string E2EBase::getResult() {
     std::stringstream out;
+    out.precision(1);
     std::cout << "aggregate " << statisticsVec.size() << " measurements" << std::endl;
+    if(statisticsVec.size() == 0)
+    {
+        NES_ERROR("result is empty");
+        return "X,X,X,X";
+    }
 
     NES_ASSERT(statisticsVec.size() != 0, "stats too small");
 
-    auto tuplesProcessd = statisticsVec[statisticsVec.size() - 1]->getProcessedTuple() - statisticsVec[0]->getProcessedTuple();
+    auto tuplesProcessed = statisticsVec[statisticsVec.size() - 1]->getProcessedTuple() - statisticsVec[0]->getProcessedTuple();
     auto bufferProcessed =
         statisticsVec[statisticsVec.size() - 1]->getProcessedBuffers() - statisticsVec[0]->getProcessedBuffers();
     auto tasksProcessed = statisticsVec[statisticsVec.size() - 1]->getProcessedTasks() - statisticsVec[0]->getProcessedTasks();
 
-    out << "," << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessd << ","
-        << tuplesProcessd * schema->getSchemaSizeInBytes() << "," << tuplesProcessd * 1'000'000'000.0 / runtime.count() << ","
-        << (tuplesProcessd * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() << std::endl;
+    out << "," << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
+        << tuplesProcessed * schema->getSchemaSizeInBytes() << ","
+        << std::fixed <<tuplesProcessed * 1'000'000'000.0 / runtime.count() << ","
+        << std::fixed << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 << std::endl;
 
     std::cout << "runtime in sec=" << runtime.count() << std::endl;
     return out.str();

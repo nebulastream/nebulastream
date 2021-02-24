@@ -39,6 +39,8 @@ class CompilerFlags {
     // warning: equality comparison with extraneous parentheses
     inline static const std::string WPARENTHESES_EQUALITY = "-Wparentheses-equality";
 
+    inline static const std::string LOGGING_FATAL_FLAG = "-DNES_LOGGING_LEVEL=FATAL_ERROR";
+
     inline static const std::string ALL_OPTIMIZATIONS = "-O3";
     inline static const std::string DEBUGGING = "-g";
 

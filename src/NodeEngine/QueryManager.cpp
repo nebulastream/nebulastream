@@ -255,15 +255,7 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
-    for (const auto& source : qep->getSources()) {
-        NES_DEBUG("QueryManager: start source " << source << " str=" << source->toString());
-        if (!source->start()) {
-            NES_WARNING("QueryManager: source " << source << " could not started as it is already running");
-        } else {
-            NES_DEBUG("QueryManager: source " << source << " started successfully");
-        }
-    }
-
+    //TODO: NEVER CHANGE THE ORDER HERE !!!
     for (const auto& sink : qep->getSinks()) {
         NES_DEBUG("QueryManager: start sink " << sink);
         sink->setup();
@@ -272,6 +264,15 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
     if (!qep->setup() || !qep->start()) {
         NES_FATAL_ERROR("QueryManager: query execution plan could not started");
         return false;
+    }
+
+    for (const auto& source : qep->getSources()) {
+        NES_DEBUG("QueryManager: start source " << source << " str=" << source->toString());
+        if (!source->start()) {
+            NES_WARNING("QueryManager: source " << source << " could not started as it is already running");
+        } else {
+            NES_DEBUG("QueryManager: source " << source << " started successfully");
+        }
     }
 
     {
