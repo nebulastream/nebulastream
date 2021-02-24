@@ -28,70 +28,69 @@ namespace NES
     /**
      * KafkaUnitTest tests kafka sources and sinks
      */
-    class KafkaUnitTest: public testing::Test
-    {
-        public:
+    class KafkaUnitTest : public testing::Test {
+    public:
 
-            /**
-             * SetUp the test
-             */
-            void SetUp()
-            {
-                // create log file
-                NES::setupLogging("KafkaUnitTest.log", NES::LOG_DEBUG);
+        /**
+         * SetUp the test
+         */
+        void SetUp()
+        {
+            // create log file
+            NES::setupLogging("KafkaUnitTest.log", NES::LOG_DEBUG);
 
-                // start node engine
-                NES_INFO("KafkaUnitTest: Start NodeEngine");
-                PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-                this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-                NES_INFO("KafkaUnitTest: NodeEngine started");
+            // start node engine
+            NES_INFO("KafkaUnitTest: Start NodeEngine");
+            PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+            this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+            NES_INFO("KafkaUnitTest: NodeEngine started");
 
-                // create schema, buffer manager and query manager
-                NES_INFO("KafkaUnitTest: Create Schema, Buffer Manager and Query Manager");
-                this->schema = Schema::create()
-                        ->addField("user_id", UINT16)
-                        ->addField("page_id", UINT16)
-                        ->addField("campaign_id", UINT16)
-                        ->addField("ad_type", DataTypeFactory::createFixedChar(9))
-                        ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                        ->addField("current_ms", UINT64)
-                        ->addField("ip", INT32);
+            // create schema, buffer manager and query manager
+            NES_INFO("KafkaUnitTest: Create Schema, Buffer Manager and Query Manager");
+            this->schema = Schema::create()
+                    ->addField("user_id", UINT16)
+                    ->addField("page_id", UINT16)
+                    ->addField("campaign_id", UINT16)
+                    ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+                    ->addField("event_type", DataTypeFactory::createFixedChar(9))
+                    ->addField("current_ms", UINT64)
+                    ->addField("ip", INT32);
 
-                this->bufferManager = nodeEngine->getBufferManager();
-                this->queryManager = nodeEngine->getQueryManager();
-                NES_INFO("KafkaUnitTest: Created Schema, Buffer Manager and Query Manager");
+            this->bufferManager = nodeEngine->getBufferManager();
+            this->queryManager = nodeEngine->getQueryManager();
+            NES_INFO("KafkaUnitTest: Created Schema, Buffer Manager and Query Manager");
 
 
-                NES_INFO("Setup KafkaUnitTest test class");
-            }
+            NES_INFO("Setup KafkaUnitTest test class");
+        }
 
-            /**
-             * TearDown the test
-             */
-            void TearDown()
-            {
-                NES_DEBUG("Tear down KafkaUnitTest");
-            }
+        /**
+         * TearDown the test
+         */
+        void TearDown() {
+            NES_DEBUG("Tear down KafkaUnitTest");
+        }
 
-        protected:
-            SchemaPtr schema;
-            NodeEngine::QueryManagerPtr queryManager;
-            NodeEngine::BufferManagerPtr bufferManager;
-            NodeEngine::NodeEnginePtr nodeEngine;
+    protected:
+        SchemaPtr schema;
+        NodeEngine::QueryManagerPtr queryManager;
+        NodeEngine::BufferManagerPtr bufferManager;
+        NodeEngine::NodeEnginePtr nodeEngine;
     };
 
 
     /**
      * Tests creation of kafka source connector configuration
      */
-    TEST_F(KafkaUnitTest, KafkaSourceConnectorInit)
-    {
+    TEST_F(KafkaUnitTest, KafkaSourceConnectorInit) {
         // connector configuration
-        KafkaConnectorConfiguration* connectorConfiguration = new KafkaConnectorConfiguration(KafkaConnectorConfiguration::SOURCE);
+        KafkaConnectorConfiguration *connectorConfiguration = new KafkaConnectorConfiguration(
+                KafkaConnectorConfiguration::SOURCE);
         connectorConfiguration->setProperty("bootstrap.servers", "localhost:29092");
 
         // conf string
         std::string confString = "bootstrap.servers=localhost:29092";
+
 
         // check that confString string matches given configuration
         NES_DEBUG("Coniguration string: " + connectorConfiguration->toString());
@@ -108,7 +107,7 @@ namespace NES
         NES_INFO("KafkaUnitTest: Create source configuration");
         Topics topics = {"nes"};
 
-        KafkaConnectorConfiguration* conf = new KafkaConnectorConfiguration(KafkaConnectorConfiguration::SOURCE);
+        KafkaConnectorConfiguration *conf = new KafkaConnectorConfiguration(KafkaConnectorConfiguration::SOURCE);
         conf->setProperty("bootstrap.servers", "localhost:29092");
         conf->setProperty("auto.offset.reset", "beginning");
         NES_INFO("KafkaUnitTest: Source configuration created");
@@ -128,7 +127,5 @@ namespace NES
         // check that content is the same
         EXPECT_EQ(bufferContent, fileContent.str());
     }
-
-
 }
 

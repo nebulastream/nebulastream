@@ -32,6 +32,7 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
+#include <Sinks/Mediums/NewKafkaSink.hpp>
 
 namespace NES {
 
@@ -98,6 +99,12 @@ const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanI
     return std::make_shared<Network::NetworkSink>(schema, parentPlanId, nodeEngine->getNetworkManager(), nodeLocation,
                                                   nesPartition, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                   waitTime, retryTimes);
+}
+const DataSinkPtr createKafkaSink(SchemaPtr schema, QuerySubPlanId querySubPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                  Topics topics, Partitions partitions, KafkaConnectorConfiguration connectorConfiguration) //, KafkaSinkConfigurationPtr configuration)
+{
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_unique<KafkaSink>(format, querySubPlanId,connectorConfiguration, topics, partitions);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

@@ -16,7 +16,6 @@
 
 #include <Sources/KafkaSourcee.hpp>
 
-
 namespace NES
 {
     KafkaSource::KafkaSource
@@ -42,7 +41,6 @@ namespace NES
         }
         else
         {
-
             auto iterator = partitions.begin();
             NES_KAFKA::TopicPartitions topicPartitions;
 
@@ -181,7 +179,6 @@ namespace NES
         }
 
         buffer.setNumberOfTuples(tupleCount);
-
         return buffer;
     }
 
