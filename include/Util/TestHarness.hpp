@@ -209,7 +209,7 @@ class TestHarness {
          * @return output string
          */
     template<typename T>
-    std::vector<T> getOutput(uint64_t numberOfContentToExpect) {
+    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName="BottomUp") {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
                                     << std::to_string(physicalStreamNames.size())
@@ -255,7 +255,7 @@ class TestHarness {
         //register query
         std::string queryString =
             queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, placementStrategyName);
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
