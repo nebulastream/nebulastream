@@ -21,7 +21,7 @@ const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//600000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
-const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_NONE;
+const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576 * 4;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
@@ -76,11 +76,18 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             currentStat->setProcessedTuple(it->getProcessedTuple());
             auto start = std::chrono::system_clock::now();
             auto in_time_t = std::chrono::system_clock::to_time_t(start);
-            std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
-                      << " measurement=" << it->getQueryStatisticsAsString() << std::endl;
+
             if (currentStat->getProcessedTuple() == 0) {
-                NES_WARNING("we already consumed all data size=" << statisticsVec.size());
+                NES_ERROR("we already consumed all data size=" << statisticsVec.size());
             } else {
+                if(statisticsVec.size() > 1)
+                {
+                    auto prev = statisticsVec.back();
+                    std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
+                              << " processedBuffers=" << currentStat->getProcessedBuffers() - prev->getProcessedBuffers()
+                              << " processedTasks=" << currentStat->getProcessedTasks() - prev->getProcessedTasks()
+                              << " processedTuples=" << currentStat->getProcessedTuple() - prev->getProcessedTuple() << std::endl;
+                }
                 statisticsVec.push_back(currentStat);
             }
         }
@@ -274,7 +281,7 @@ std::string E2EBase::getResult() {
     if(statisticsVec.size() == 0)
     {
         NES_ERROR("result is empty");
-        return "X,X,X,X";
+        return "X,X,X,X \n";
     }
 
     NES_ASSERT(statisticsVec.size() != 0, "stats too small");
@@ -287,7 +294,7 @@ std::string E2EBase::getResult() {
     out << "," << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
         << tuplesProcessed * schema->getSchemaSizeInBytes() << ","
         << std::fixed <<tuplesProcessed * 1'000'000'000.0 / runtime.count() << ","
-        << std::fixed << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 << std::endl;
+        << std::fixed << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024 << std::endl;
 
     std::cout << "runtime in sec=" << runtime.count() << std::endl;
     return out.str();
