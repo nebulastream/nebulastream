@@ -36,16 +36,22 @@ int main() {
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
+    // source mode
+    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::CacheMode, E2EBase::InputOutputMode::MemMode};
+    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemMode};
+    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::CacheMode};
+    //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
+
+    //roughly 2 out of 3 filds were removed
     string query = "Query::from(\"input\").project(Attribute(\"id\")).sink(FileSinkDescriptor::create(\"test.out\"));";
 
-    std::string benchmarkName = "E2EProjectBenchmark";
+    std::string benchmarkName = "E2ESelectionBenchmark";
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
-    ss << "Time,BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffers,ProcessedTasks,ProcessedTuples,"
-          "ProcessedBytes"
+    ss << "Time,BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffersTotal,ProcessedTasksTotal,"
+          "ProcessedTuplesTotal,ProcessedBytesTotal,ThroughputInTupsPerSec,ThroughputInMBPerSec"
        << std::endl;
-    ss << time(0) << ",";
 
     for (auto workerThreadCnt : allWorkerThreads) {
         std::cout << "workerThreadCnt=" << workerThreadCnt << std::endl;
@@ -53,11 +59,13 @@ int main() {
             std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
             for (auto dataSourceCnt : allDataSources) {
                 std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
-                ss << benchmarkName << "," << nesVersion << "," << workerThreadCnt << "," << coordinatorThreadCnt << ","
-                   << dataSourceCnt << ",FileMode";
-                auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt,
-                                       E2EBase::InputOutputMode::FileMode);
-                ss << test->runExperiment(query);
+                for (auto sourceMode : allSourceModes) {
+                    std::cout << "sourceMode=" << E2EBase::getInputOutputModeAsString(sourceMode) << std::endl;
+                    ss << time(0) << "," << benchmarkName << "," << nesVersion << "," << workerThreadCnt << ","
+                       << coordinatorThreadCnt << "," << dataSourceCnt << "," << E2EBase::getInputOutputModeAsString(sourceMode);
+                    auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode);
+                    ss << test->runExperiment(query);
+                }
             }
         }
     }

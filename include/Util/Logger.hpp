@@ -217,7 +217,6 @@ struct LoggingBlackHole {
     do {                                                                                                                         \
         NES::detail::LoggingBlackHole bh;                                                                                        \
         ((void) (bh << __VA_ARGS__));                                                                                            \
-        ;                                                                                                                        \
     } while (0)
 #define NES_INFO(...)                                                                                                            \
     do {                                                                                                                         \
