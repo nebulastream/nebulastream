@@ -22,13 +22,10 @@ const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
 const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
-const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576 * 4;
+const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
 static uint64_t portOffset = 13;
-
-//TODO: remove this once we can access NES_ASSERT without
-using namespace NES;
 
 std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     if (mode == E2EBase::InputOutputMode::FileMode) {

@@ -277,7 +277,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
-                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
@@ -295,7 +295,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
-                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
@@ -310,7 +310,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << __VA_ARGS__);                      \
             {                                                                                                                    \
-                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
@@ -322,7 +322,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 
 #define NES_THROW_RUNTIME_ERROR(...)                                                                                             \
     do {                                                                                                                         \
-        auto __stacktrace = collectAndPrintStacktrace();                                                                         \
+        auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                        \
         std::stringbuf __buffer;                                                                                                 \
         std::ostream __os(&__buffer);                                                                                            \
         __os << __VA_ARGS__;                                                                                                     \

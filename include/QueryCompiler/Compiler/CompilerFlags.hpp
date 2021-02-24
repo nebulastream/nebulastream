@@ -40,7 +40,7 @@ class CompilerFlags {
     inline static const std::string WPARENTHESES_EQUALITY = "-Wparentheses-equality";
 
 //    inline static const std::string LOGGING_FATAL_FLAG = "-DNES_LOGGING_FATAL_ERROR_LEVEL=1";
-    inline static const std::string LOGGING_FATAL_FLAG = "-DNES_LOGGING_TRACE_LEVEL=1";
+//    inline static const std::string LOGGING_FATAL_FLAG = "-DNES_LOGGING_TRACE_LEVEL=1";
 
     inline static const std::string ALL_OPTIMIZATIONS = "-O3";
     inline static const std::string DEBUGGING = "-g";
