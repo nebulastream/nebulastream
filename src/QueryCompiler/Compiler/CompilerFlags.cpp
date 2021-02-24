@@ -29,6 +29,7 @@ CompilerFlagsPtr CompilerFlags::createDefaultCompilerFlags() {
     flags->addFlag(CompilerFlags::FPIC);
     flags->addFlag(CompilerFlags::WERROR);
     flags->addFlag(CompilerFlags::WPARENTHESES_EQUALITY);
+    flags->addFlag(CompilerFlags::LOGGING_FATAL_FLAG);
     return flags;
 }
 
